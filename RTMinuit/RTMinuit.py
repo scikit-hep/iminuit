@@ -7,8 +7,8 @@ from FCN import FCN
 
 class Minuit:
     
-    def __init__(self,f,printlevel=0,**kwds):
-        self.fcn = FCN(f)
+    def __init__(self,f,f_verbose=False,printlevel=0,**kwds):
+        self.fcn = FCN(f,verbose=f_verbose)
         
         args = better_arg_spec(f)
         narg = len(args)
