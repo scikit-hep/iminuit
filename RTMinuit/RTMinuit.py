@@ -8,6 +8,19 @@ from FCN import FCN
 class Minuit:
     
     def __init__(self,f,f_verbose=False,printlevel=0,**kwds):
+        """
+        construct minuit object
+        
+        arguments of f are pased automatically by the following order
+        1) using f.func_code.co_varnames,f.func_code.co_argcount (all python function has this)
+        2) using f.__call__.func_code.co_varnames, f.__call__.co_argcount (with self docked off)
+        3) using inspect.getargspec(for some rare builtin function)
+        
+        user can set limit on paramater by passing limit_<varname>=(min,max) keyword argument
+        user can set initial value onparameter by passing <varname>=value keyword argument
+        user can fix parameter by doing fix_<varname>=True
+        user can set initial step by passing error_<varname>=initialstep keyword argument
+        """
         self.fcn = FCN(f,verbose=f_verbose)
         
         args = better_arg_spec(f)
