@@ -1,1 +1,1 @@
-cd RTMinuit; cython -a FCN.pyx --fast-fail;
+cd RTMinuit; cython -a FCN.pyx --fast-fail --line-directives;
