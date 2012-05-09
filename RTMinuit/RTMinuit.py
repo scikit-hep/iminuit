@@ -20,6 +20,8 @@ class Minuit:
         user can set initial value onparameter by passing <varname>=value keyword argument
         user can fix parameter by doing fix_<varname>=True
         user can set initial step by passing error_<varname>=initialstep keyword argument
+        
+        if f_verbose is set to True FCN will be built for verbosity printing value and argument for every function call
         """
         self.fcn = FCN(f,verbose=f_verbose)
         
