@@ -1,10 +1,10 @@
-from inspect import getargspec
+from util import better_arg_spec
 cdef class FCN:
     cdef f
     cdef int narg
     def __init__(self,f):
         self.f = f
-        args,_,_,_ = getargspec(f)
+        args = better_arg_spec(f)
         narg = len(args)
         self.narg = narg
     def __call__(self,npar,gin,f,par,flag):

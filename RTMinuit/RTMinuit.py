@@ -2,20 +2,15 @@ import ROOT
 from inspect import getargspec
 import sys
 from array import array
+from util import *
 from FCN import FCN
-
-class Struct:
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
-    def __str__(self):
-        return self.__dict__.__str__()
 
 class Minuit:
     
     def __init__(self,f,printlevel=0,**kwds):
         self.fcn = FCN(f)
         
-        args,_,_,_ = getargspec(f)
+        args = better_arg_spec(f)
         narg = len(args)
         
         #maintain 2 dictionary 1 is position to varname
