@@ -29,11 +29,14 @@ class TestRTMinuit(unittest.TestCase):
         val = m.values
         self.assertAlmostEqual(val['x'],2.)
         self.assertAlmostEqual(val['y'],5.)
-                
+        self.assertAlmostEqual(m.fmin(),10.)
+           
     def test_f1(self):
         self.functesthelper(Func1())
+    
     def test_f2(self):
         self.functesthelper(Func2())
+    
     def test_f3(self):
         self.functesthelper(func3)
 

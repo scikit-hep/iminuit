@@ -137,6 +137,9 @@ class Minuit:
         ret = Struct(fmin=float(fmin),fedm=float(fedm),ferrdef=float(errdef),npari=int(npari),nparx=int(nparx),istat=int(istat))
         return ret
     
+    def fmin(self):
+        return self.mnstat().fmin
+    
     def matrix_accurate(self):
         """check whether error matrix is accurate"""
         if self.tmin.fLimset: print "Warning: some parameter are up against limit"
