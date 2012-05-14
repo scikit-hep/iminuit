@@ -1,5 +1,8 @@
 import unittest
 from RTMinuit import Minuit
+import numpy as np
+from numpy.testing import assert_array_almost_equal
+
 class Func_Code:
     def __init__(self,varname):
         self.co_varnames=varname
@@ -18,11 +21,13 @@ class Func2:
         return (arg[0]-2.)**2 + (arg[1]-5.)**2 + 10
 
 def func3(x,y):
-    return (x-2.)**2 + (y-5.)**2 + 10
+    return 0.2*(x-2.)**2 + (y-5.)**2 + 10
 
 class TestRTMinuit(unittest.TestCase):
-    def setup(self):
-        pass
+    def setUp(self):
+        self.m = Minuit(func3,printlevel=-1)
+        self.m.migrad()
+        
     def functesthelper(self,f):
         m = Minuit(f,printlevel=-1)
         m.migrad()
@@ -39,6 +44,16 @@ class TestRTMinuit(unittest.TestCase):
     
     def test_f3(self):
         self.functesthelper(func3)
+
+    def test_error_matrix(self):
+        m = self.m.error_matrix()
+        expected = np.array([[5.,0.],[0.,1.]])
+        assert_array_almost_equal(m,expected)
+
+    def test_error_matrix_correlation(self):
+        m = self.m.error_matrix(correlation=True)
+        expected = np.array([[1.,0.],[0.,1.]])
+        assert_array_almost_equal(m,expected)
 
 if __name__ == '__main__':
     unittest.main()   

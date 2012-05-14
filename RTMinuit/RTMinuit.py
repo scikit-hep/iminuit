@@ -4,6 +4,7 @@ import sys
 from array import array
 from util import *
 from FCN import FCN
+import numpy as np
 
 class Minuit:
     
@@ -145,13 +146,21 @@ class Minuit:
         if self.tmin.fLimset: print "Warning: some parameter are up against limit"
         return self.mnstat().istat == 3
     
-    def error_matrix(self):
+    def error_matrix(self,correlation=False):
+        ndim = self.mnstat().npari
         #void mnemat(Double_t* emat, Int_t ndim)
-        pass
-    def correlation_matrix(self):
-        #void mnemat(Double_t* emat, Int_t ndim)
-        pass
-        
+        tmp = array('d',[0.]*(ndim*ndim))
+        self.tmin.mnemat(tmp,ndim)
+        ret = np.array(tmp)
+        ret = ret.reshape((ndim,ndim))
+        if correlation:
+            diag = np.diagonal(ret)
+            sigma_col = np.sqrt(diag[:, np.newaxis])
+            sigma_row =  sigma_col.T
+            ret = ret/sigma_col/sigma_row
+        return ret
+    
+    
     def mnmatu(self):
         """print correlation coefficient"""
         return self.tmin.mnmatu(1)
