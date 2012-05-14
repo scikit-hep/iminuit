@@ -23,10 +23,12 @@ class Func2:
 def func3(x,y):
     return 0.2*(x-2.)**2 + (y-5.)**2 + 10
 
+
+def func4(x,y,z):
+    return 0.2*(x-2.)**2 + 0.1*(y-5.)**2 + 0.25*(z-7.)**2 + 10
+
 class TestRTMinuit(unittest.TestCase):
-    def setUp(self):
-        self.m = Minuit(func3,printlevel=-1)
-        self.m.migrad()
+    
         
     def functesthelper(self,f):
         m = Minuit(f,printlevel=-1)
@@ -45,6 +47,38 @@ class TestRTMinuit(unittest.TestCase):
     def test_f3(self):
         self.functesthelper(func3)
 
+    def test_fix_param(self):
+        m = Minuit(func4,printlevel=-1)
+        m.migrad()
+        m.minos()
+        val = m.values
+        self.assertAlmostEqual(val['x'],2.)
+        self.assertAlmostEqual(val['y'],5.)
+        self.assertAlmostEqual(val['z'],7.)
+        err = m.errors#second derivative
+        # self.assertAlmostEqual(err['x'],5.)
+        # self.assertAlmostEqual(err['y'],10.)
+        # self.assertAlmostEqual(err['z'],4.)
+        
+        #now fix z = 10
+        m = Minuit(func4,printlevel=-1,y=10.,fix_y=True)
+        m.migrad()
+        val = m.values
+        self.assertAlmostEqual(val['x'],2.)
+        self.assertAlmostEqual(val['y'],10.)
+        self.assertAlmostEqual(val['z'],7.)
+        self.assertAlmostEqual(m.fmin(),10.+2.5)
+        
+        self.assertIn('x',m.free_param) 
+        self.assertNotIn('x',m.fix_param) 
+        self.assertIn('y',m.fix_param) 
+        self.assertNotIn('y',m.free_param) 
+        self.assertNotIn('z',m.fix_param)
+
+class TestErrorMatrix(unittest.TestCase):        
+    def setUp(self):
+        self.m = Minuit(func3,printlevel=-1)
+        self.m.migrad()
     def test_error_matrix(self):
         m = self.m.error_matrix()
         expected = np.array([[5.,0.],[0.,1.]])
@@ -54,6 +88,7 @@ class TestRTMinuit(unittest.TestCase):
         m = self.m.error_matrix(correlation=True)
         expected = np.array([[1.,0.],[0.,1.]])
         assert_array_almost_equal(m,expected)
+
 
 if __name__ == '__main__':
     unittest.main()   

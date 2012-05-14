@@ -44,7 +44,8 @@ class Minuit:
         
     def prepare(self,**kwds):
         self.tmin.SetFCN(self.fcn)
-        
+        self.fix_param = []
+        self.free_param = []
         for i,varname in self.pos2var.items():
             initialvalue = kwds[varname] if varname in kwds else 0.
             initialstep = kwds['error_'+varname] if 'error_'+varname in kwds else 0.1
@@ -52,9 +53,13 @@ class Minuit:
             ierflg = self.tmin.DefineParameter(i,varname,initialvalue,initialstep,lrange,urange)
             assert(ierflg==0)
         #now fix parameter
-        for i,varname in self.pos2var.items():
-            if 'fix_'+varname in kwds: self.tmin.FixParameter(i)
-        
+        for varname in self.varname:
+            if 'fix_'+varname in kwds: 
+                self.tmin.FixParameter(self.var2pos[varname])
+                self.fix_param.append(varname)
+            else:
+                self.free_param.append(varname)
+            
     def set_up(self,up):
         """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
         return self.tmin.SetErrorDef(up)
@@ -145,7 +150,7 @@ class Minuit:
         """check whether error matrix is accurate"""
         if self.tmin.fLimset: print "Warning: some parameter are up against limit"
         return self.mnstat().istat == 3
-    
+
     def error_matrix(self,correlation=False):
         ndim = self.mnstat().npari
         #void mnemat(Double_t* emat, Int_t ndim)
@@ -159,7 +164,6 @@ class Minuit:
             sigma_row =  sigma_col.T
             ret = ret/sigma_col/sigma_row
         return ret
-    
     
     def mnmatu(self):
         """print correlation coefficient"""
