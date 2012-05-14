@@ -20,3 +20,23 @@ def better_arg_spec(f):
         #print e
         pass
     return inspect.getargspec(f)[0]
+
+def fitarg_rename(fitarg, ren):
+    """
+    rename variable names in fitarg with rename function ren
+    taking care of limit_, fix_, error_
+    """
+    tmp = ren
+    if isinstance(ren, basestring): ren = lambda x: tmp+'_'+x
+    ret = {}
+    prefix = ['limit_','fix_','error_',]
+    for k,v in fitarg.items():
+        vn = k
+        pf = ''
+        for p in prefix:
+            if k.startswith(p): 
+                vn = k[len(p):]
+                pf = p
+        newvn = pf+ren(vn)
+        ret[newvn] = v
+    return ret
