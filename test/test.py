@@ -74,7 +74,28 @@ class TestRTMinuit(unittest.TestCase):
         self.assertIn('y',m.fix_param) 
         self.assertNotIn('y',m.free_param) 
         self.assertNotIn('z',m.fix_param)
-
+    
+    def test_fitarg(self):
+        m = Minuit(func4,printlevel=-1,y=10.,fix_y=True,limit_x=(0,20.))
+        fitarg = m.fitarg
+        self.assertAlmostEqual(fitarg['y'],10.)
+        self.assertTrue(fitarg['fix_y'])
+        self.assertEqual(fitarg['limit_x'],(0,20))
+        m.migrad()
+        
+        fitarg = m.fitarg
+        
+        self.assertAlmostEqual(fitarg['y'],10.)
+        self.assertAlmostEqual(fitarg['x'],2.,delta=1)
+        self.assertAlmostEqual(fitarg['z'],7.,delta=1)
+        
+        self.assertIn('error_y',fitarg)
+        self.assertIn('error_x',fitarg)
+        self.assertIn('error_z',fitarg)
+        
+        self.assertTrue(fitarg['fix_y'])
+        self.assertEqual(fitarg['limit_x'],(0,20))
+        
 class TestErrorMatrix(unittest.TestCase):        
     def setUp(self):
         self.m = Minuit(func3,printlevel=-1)

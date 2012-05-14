@@ -29,6 +29,7 @@ class Minuit:
         args = better_arg_spec(f)
         narg = len(args)
         
+        self.fitarg={}
         #maintain 2 dictionary 1 is position to varname
         #and varname to position
         self.varname = args
@@ -42,6 +43,11 @@ class Minuit:
         self.last_migrad_result = 0
         self.args,self.values,self.errors=None,None,None
         
+        for vn in self.varname:
+            if vn in kwds: self.fitarg[vn] = kwds[vn]
+            if 'limit_'+vn in kwds: self.fitarg['limit_'+vn] = kwds['limit_'+vn]
+            if 'fix_'+vn in kwds: self.fitarg['fix_'+vn] = kwds['fix_'+vn]
+         
     def prepare(self,**kwds):
         self.tmin.SetFCN(self.fcn)
         self.fix_param = []
@@ -127,7 +133,10 @@ class Minuit:
         for arg in self.varname:
             tmparg.append(val[arg])
         self.args = tuple(tmparg)
-
+        self.fitarg.update(self.values)
+        for k,v in self.errors.items():
+            self.fitarg['error_'+k]=v
+        
     def mnstat(self):
         """
         return named tuple of fmin,fedm,errdef,npari,nparx,istat
