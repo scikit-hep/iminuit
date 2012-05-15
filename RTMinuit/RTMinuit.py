@@ -123,7 +123,7 @@ class Minuit:
         else:
             val2pl = ROOT.Double(0.)
             val2pi = ROOT.Double(0.)
-            pos = self.var2pos[varname]
+            pos = self.var2pos[varname]+1
             self.tmin.mnmnot(pos,0,val2pl,val2pi)
         self.set_ave()
     
