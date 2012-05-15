@@ -5,10 +5,11 @@ from array import array
 from util import *
 from FCN import FCN
 import numpy as np
+from warnings import warn
 
 class Minuit:
     
-    def __init__(self,f,f_verbose=False,printlevel=0,**kwds):
+    def __init__(self,f,f_verbose=False,printlevel=0,pedantic=False,**kwds):
         """
         construct minuit object
         
@@ -47,7 +48,12 @@ class Minuit:
             if vn in kwds: self.fitarg[vn] = kwds[vn]
             if 'limit_'+vn in kwds: self.fitarg['limit_'+vn] = kwds['limit_'+vn]
             if 'fix_'+vn in kwds: self.fitarg['fix_'+vn] = kwds['fix_'+vn]
-         
+        
+        if pedantic:
+            for vn in self.varname:
+                if vn not in kwds:
+                    warn('Parameter %s does not have initial value assume 0.'%(vn))
+        
     def prepare(self,**kwds):
         self.tmin.SetFCN(self.fcn)
         self.fix_param = []
@@ -109,10 +115,16 @@ class Minuit:
         self.tmin.mnhess()
         self.set_ave()
     
-    def minos(self):
+    def minos(self,varname=None):
         """run minos"""
         self.tmin.SetFCN(self.fcn)
-        self.tmin.mnmnos()
+        if varname is None:
+            self.tmin.mnmnos()
+        else:
+            val2pl = ROOT.Double(0.)
+            val2pi = ROOT.Double(0.)
+            pos = self.var2pos[varname]
+            self.tmin.mnmnot(pos,0,val2pl,val2pi)
         self.set_ave()
     
     def set_ave(self):
@@ -181,6 +193,18 @@ class Minuit:
     def help(self,cmd):
         """print out help"""
         self.tmin.mnhelp(cmd)
+    
+    def minos_errors(self):
+        ret = {}
+        for i,v in self.pos2var.items():
+            eplus = ROOT.Double(0.)
+            eminus = ROOT.Double(0.)
+            eparab = ROOT.Double(0.)
+            gcc = ROOT.Double(0.)
+            self.tmin.mnerrs(i,eplus,eminus,eparab,gcc)
+            #void mnerrs(Int_t number, Double_t& eplus, Double_t& eminus, Double_t& eparab, Double_t& gcc)
+            ret[v] = Struct(eplus=eplus,eminus=eminus,eparab=eparab,gcc=gcc)
+        return ret
 
 def main():
     def test(x,y):

@@ -85,4 +85,17 @@ print m.args
 
 # <codecell>
 
+#getting minos error
+mne = m.minos_errors()
+print mne
+print mne['x'].eplus
+
+# <codecell>
+
+
+# <codecell>
+
+
+# <codecell>
+
 
