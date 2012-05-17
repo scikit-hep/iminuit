@@ -80,7 +80,7 @@ print m.args
 
 m = Minuit(f, error_y=1.)#initial step for y
 m.migrad()
-m.minos()
+m.minos('y')
 print m.args
 
 # <codecell>
@@ -89,6 +89,12 @@ print m.args
 mne = m.minos_errors()
 print mne
 print mne['x'].eplus
+
+# <codecell>
+
+
+# <codecell>
+
 
 # <codecell>
 

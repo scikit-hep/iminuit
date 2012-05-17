@@ -26,4 +26,3 @@ cdef class FCN:
             token = '%6s=%7.4f '%(self.varnames[i],par)
             fmt += token
         print fmt
-        

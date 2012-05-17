@@ -42,3 +42,28 @@ def fitarg_rename(fitarg, ren):
         newvn = pf+ren(vn)
         ret[newvn] = v
     return ret
+
+def true_param(p):
+    return not p.startswith('limit_') and not p.startswith('error_') and not p.startswith('fix_')
+
+def param_name(p):
+    prefix = ['limit_','error_','fix_']
+    for prf in prefix:
+        if p.startswith(prf):
+            return p[len(prf):]
+    return p
+
+def extract_iv(b):
+    return {k:v for k,v in b.items() if true_param(k)}
+
+def extract_limit(b):
+    return {k:v for k,v in b.items() if k.startswith('limit_')}
+
+def extract_error(b):
+    return {k:v for k,v in b.items() if k.startswith('error_')}
+
+def extract_fix(b):
+    return {k:v for k,v in b.items() if k.startswith('fix_')}
+
+def remove_var(b,exclude):
+    return {k:v for k,v in b.items() if param_name(k) not in exclude}
