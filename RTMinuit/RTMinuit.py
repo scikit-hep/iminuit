@@ -1,12 +1,13 @@
 import ROOT
 from array import array
+from minuit_html import MinuitHTMLResult
 from util import *
 from FCN import FCN
 import numpy as np
 from warnings import warn
 
 class Minuit:
-    def __init__(self, f, f_verbose=False, printlevel=0, pedantic=False, **kwds):
+    def __init__(self, f, f_verbose=False, printlevel=0, pedantic=True, **kwds):
         """
         construct minuit object
         
@@ -46,10 +47,22 @@ class Minuit:
             if 'limit_' + vn in kwds: self.fitarg['limit_' + vn] = kwds['limit_' + vn]
             if 'fix_' + vn in kwds: self.fitarg['fix_' + vn] = kwds['fix_' + vn]
 
-        if pedantic:
-            for vn in self.varname:
-                if vn not in kwds:
-                    warn('Parameter %s does not have initial value assume 0.' % (vn))
+        if pedantic: self.pedantic(kwds)
+
+    def pedantic(self, kwds):
+        for vn in self.varname:
+            if vn not in kwds:
+                warn('Parameter %s does not have initial value assume 0.' % (vn))
+        for vlim in extract_limit(kwds):
+            if param_name(vlim) not in self.varname:
+                warn('%s is given. But there is no parameter %s.Ignore.' % (vlim, param_name(vlim)))
+        for vlim in extract_fix(kwds):
+            if param_name(vlim) not in self.varname:
+                warn('%s is given. But there is no parameter %s.Ignore.' % (vlim, param_name(vlim)))
+        for vlim in extract_error(kwds):
+            if param_name(vlim) not in self.varname:
+                warn('%s is given. But there is no parameter %s.Ignore.' % (vlim, param_name(vlim)))
+
 
     def prepare(self, **kwds):
         self.tmin.SetFCN(self.fcn)
@@ -69,9 +82,11 @@ class Minuit:
             else:
                 self.free_param.append(varname)
 
+
     def set_up(self, up):
         """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
         return self.tmin.SetErrorDef(up)
+
 
     def set_printlevel(self, lvl):
         """
@@ -79,22 +94,25 @@ class Minuit:
         """
         return self.tmin.SetPrintLevel(lvl)
 
+
     def set_strategy(self, strategy):
         """
         set strategy
         """
         return self.tmin.Command('SET STR %d' % strategy)
 
+
     def command(self, cmd):
         """execute a command"""
         return self.tmin.Command(cmd)
+
 
     def migrad(self):
         """
             run migrad
             user can check if the return status is not 0
         """
-        #internally PyRoot store 1 FCN globally 
+        #internally PyRoot store 1 FCN globally
         #so we need to change it to the correct one every time
         #It's limitation of C++
         self.tmin.SetFCN(self.fcn)
@@ -102,15 +120,18 @@ class Minuit:
         self.set_ave()
         return self.last_migrad_result
 
+
     def migrad_ok(self):
         """check whether last migrad call result is OK"""
         return self.last_migrad_result == 0
+
 
     def hesse(self):
         """run hesse"""
         self.tmin.SetFCN(self.fcn)
         self.tmin.mnhess()
         self.set_ave()
+
 
     def minos(self, varname=None):
         """run minos"""
@@ -123,6 +144,7 @@ class Minuit:
             pos = self.var2pos[varname] + 1
             self.tmin.mnmnot(pos, 0, val2pl, val2pi)
         self.set_ave()
+
 
     def set_ave(self):
         """set args values and errors"""
@@ -146,6 +168,7 @@ class Minuit:
         for k, v in self.errors.items():
             self.fitarg['error_' + k] = v
 
+
     def mnstat(self):
         """
         return named tuple of fmin,fedm,errdef,npari,nparx,istat
@@ -162,13 +185,16 @@ class Minuit:
             istat=int(istat))
         return ret
 
+
     def fmin(self):
         return self.mnstat().fmin
+
 
     def matrix_accurate(self):
         """check whether error matrix is accurate"""
         if self.tmin.fLimset: print "Warning: some parameter are up against limit"
         return self.mnstat().istat == 3
+
 
     def error_matrix(self, correlation=False):
         ndim = self.mnstat().npari
@@ -184,13 +210,16 @@ class Minuit:
             ret = ret / sigma_col / sigma_row
         return ret
 
+
     def mnmatu(self):
         """print correlation coefficient"""
         return self.tmin.mnmatu(1)
 
+
     def help(self, cmd):
         """print out help"""
         self.tmin.mnhelp(cmd)
+
 
     def minos_errors(self):
         ret = {}
@@ -205,3 +234,25 @@ class Minuit:
             ret[v] = Struct(eplus=eplus, eminus=eminus, eparab=eparab, gcc=gcc)
         return ret
 
+    def html_results(self):
+        return MinuitHTMLResult(self)
+
+    def list_of_fixed_param(self):
+        tmp_ret = list()
+        for i in range(self.tmin.GetNumFixedPars()):
+            tmp_ret.append(self.tmin.fIpfix[i])
+        tmp_ret.sort()
+        for i in range(len(tmp_ret)):
+            tmp_ret[i]-=1 #convert to position
+        ret = [self.pos2var[x] for x in tmp_ret]
+        return ret
+
+    def list_of_vary_param(self):#note that this is fortran internal index
+        tmp_ret = list()
+        for i in range(self.tmin.GetNumFixedPars()):
+            tmp_ret.append(self.tmin.fIpfix[i])
+
+        for i in range(len(tmp_ret)):
+            tmp_ret[i]-=1 #convert to position
+        ret = [v for x,v in self.pos2var.items() if x not in tmp_ret]
+        return ret

@@ -3,7 +3,7 @@
 
 # <codecell>
 
-from RTMinuit import Minuit
+from RTMinuit import *
 
 # <codecell>
 
@@ -21,6 +21,7 @@ m.hesse()
 print m.args
 print m.values
 print m.errors
+display( m.html_results())
 
 # <codecell>
 
