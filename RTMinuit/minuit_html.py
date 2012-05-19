@@ -40,7 +40,7 @@ class MinuitCorrelationMatrixHTML:
     def _repr_html_(self):
         header = ''
         for i in range(self.nparams):
-            header+='<td style="text-align:center"><div style="-webkit-writing-mode:vertical-rl;">%s</div></td>\n'%self.params[i]
+            header+='<td style="text-align:left"><div style="-webkit-writing-mode:vertical-rl;">%s</div></td>\n'%self.params[i]
         header = '<tr><td></td>\n%s</tr>\n'%header
         lines = list()
         for i in range(self.nparams):
