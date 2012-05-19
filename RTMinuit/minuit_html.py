@@ -66,5 +66,5 @@ class Gradient:
 
     @classmethod
     def rgb_color_for(cls,v):
-        c = cls.color_for(v)
+        c = cls.color_for(abs(v))
         return 'rgb(%d,%d,%d)'%c
