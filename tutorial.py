@@ -22,6 +22,8 @@ print m.args
 print m.values
 print m.errors
 display( m.html_results())
+display( m.html_error_matrix())
+x = m.html_error_matrix()
 
 # <codecell>
 
@@ -67,9 +69,11 @@ print m.args
 #limiting and fixing parameter example
 def f(x,y,z):
     return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
-m = Minuit(f, x=5., fix_x=True)#make start value
+m = Minuit(f, x=5., fix_z=True)#make start value
 m.migrad()
 print m.args
+m.list_of_fixed_param()
+m.list_of_vary_param()
 
 # <codecell>
 

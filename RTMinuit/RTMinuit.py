@@ -1,6 +1,6 @@
 import ROOT
 from array import array
-from minuit_html import MinuitHTMLResult
+from minuit_html import *
 from util import *
 from FCN import FCN
 import numpy as np
@@ -48,6 +48,13 @@ class Minuit:
             if 'fix_' + vn in kwds: self.fitarg['fix_' + vn] = kwds['fix_' + vn]
 
         if pedantic: self.pedantic(kwds)
+
+    def release_all_params(self):
+        pass
+    def prepare_fix_params(self):
+        pass
+    def fix_param(self):
+        pass
 
     def pedantic(self, kwds):
         for vn in self.varname:
@@ -238,21 +245,24 @@ class Minuit:
         return MinuitHTMLResult(self)
 
     def list_of_fixed_param(self):
-        tmp_ret = list()
+        tmp_ret = list()#fortran index
         for i in range(self.tmin.GetNumFixedPars()):
             tmp_ret.append(self.tmin.fIpfix[i])
+        #now get the constants
+        for i in range(self.tmin.GetNumPars()):
+            if self.tmin.fNvarl[i] == 0:
+                tmp_ret.append(i+1)
+        tmp_ret = list(set(tmp_ret))
         tmp_ret.sort()
         for i in range(len(tmp_ret)):
             tmp_ret[i]-=1 #convert to position
         ret = [self.pos2var[x] for x in tmp_ret]
         return ret
 
-    def list_of_vary_param(self):#note that this is fortran internal index
-        tmp_ret = list()
-        for i in range(self.tmin.GetNumFixedPars()):
-            tmp_ret.append(self.tmin.fIpfix[i])
-
-        for i in range(len(tmp_ret)):
-            tmp_ret[i]-=1 #convert to position
-        ret = [v for x,v in self.pos2var.items() if x not in tmp_ret]
+    def list_of_vary_param(self):
+        fix_pars = self.list_of_fixed_param()
+        ret = [v for v in self.varname if v not in fix_pars]
         return ret
+
+    def html_error_matrix(self):
+        return MinuitCorrelationMatrixHTML(self)
