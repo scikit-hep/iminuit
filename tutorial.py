@@ -17,13 +17,15 @@ m = Minuit(f)#if you don't like verbosity of minuit pass printlevel=-1
 #m.set_strategy(2)
 m.migrad()#look at your terminal for usual minuit printout
 print m.matrix_accurate(), m.migrad_ok() #some useful function for checking result
-m.hesse()
+#m.hesse()
 print m.args
 print m.values
 print m.errors
 display( m.html_results())
 display( m.html_error_matrix())
 x = m.html_error_matrix()
+print m.list_of_fixed_param()
+m.html_error_matrix()._repr_html_()
 
 # <codecell>
 
@@ -69,10 +71,10 @@ print m.args
 #limiting and fixing parameter example
 def f(x,y,z):
     return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
-m = Minuit(f, x=5., fix_z=True)#make start value
+m = Minuit(f, x=5., fix_z=True,fix_y=True)#make start value
 m.migrad()
 print m.args
-m.list_of_fixed_param()
+print m.list_of_fixed_param()
 m.list_of_vary_param()
 
 # <codecell>
@@ -97,9 +99,14 @@ print mne['x'].eplus
 
 # <codecell>
 
+i = 10
+'d{i:e}d'.format(**locals())
 
 # <codecell>
 
+a = ['a','b','c']
+i = 2
+'{a[i]:s}'.format(**locals())
 
 # <codecell>
 

@@ -35,9 +35,7 @@ class MinuitCorrelationMatrixHTML:
         assert(self.matrix.shape==(self.nparams,self.nparams))
 
     def style(self,val):
-        if val>0.8:
-            return 'font-weight:bold;'
-        return ''
+        return 'background-color:%s'%Gradient.rgb_color_for(val)
 
     def _repr_html_(self):
         header = ''
@@ -54,3 +52,19 @@ class MinuitCorrelationMatrixHTML:
             lines.append(line)
         ret = '<table>\n%s%s</table>\n'%(header,''.join(lines))
         return ret
+
+class Gradient:
+    #A3FEBA pastel green
+    #FF7575 pastel red
+    #from http://code.activestate.com/recipes/266466-html-colors-tofrom-rgb-tuples/
+    @classmethod
+    def color_for(cls,v,min=0.,max=1.,startcolor=(163,254,186),stopcolor=(255,117,117)):
+        c = [0]*3
+        for i,sc in enumerate(startcolor):
+            c[i] = round(startcolor[i] + 1.0*(v-min)*(stopcolor[i]-startcolor[i])/(max-min))
+        return tuple(c)
+
+    @classmethod
+    def rgb_color_for(cls,v):
+        c = cls.color_for(v)
+        return 'rgb(%d,%d,%d)'%c
