@@ -9,8 +9,8 @@ from RTMinuit import *
 
 #There are three ways to define a function for minuit
 #first like normal function
-def f(x,y,z):
-    return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
+def f(xabc,y,z):
+    return (xabc-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
 m = Minuit(f)#if you don't like verbosity of minuit pass printlevel=-1
 #You may want to do these two. 
 #m.set_up(0.5)
