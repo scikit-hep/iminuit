@@ -9,19 +9,31 @@ class MinuitHTMLResult:
         self.varnames = m.varname
         self.values = m.values
         self.errors = m.errors
+        self.mnerrors = m.minos_errors()
     def _repr_html_(self):
         tmp = []
-        header = u'<tr><td></td><td>Parameter</td><td>Value</td><td>Error</td></tr>'
+        header = u"""<tr>
+            <td></td>
+            <td>Parameter</td>
+            <td>Value</td>
+            <td>Parab Error</td>
+            <td>Minos Error-</td>
+            <td>Minos Error+</td>
+            </tr>"""
         keys = sorted(self.values)
         for i,k in enumerate(self.varnames):
             val = self.values[k]
             err = self.errors[k]
+            mnp = self.mnerrors[k].eplus
+            mnm = self.mnerrors[k].eminus
             varno = i+1
             line = u"""<tr>
                     <td align="right">{varno:d}</td>
                     <td align="left">{k}</td>
                     <td align="right">{val:e}</td>
                     <td align="left"> &plusmn;{err:e}</td>
+                    <td align="left">{mnm:e}</td>
+                    <td align="left">+{mnp:e}</td>
                     </tr>""".format(**locals())
             tmp.append(line)
         ret =  '<table>%s\n%s\n</table>'%(header,'\n'.join(tmp))
