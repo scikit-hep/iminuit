@@ -25,7 +25,9 @@ display( m.html_results())
 display( m.html_error_matrix())
 x = m.html_error_matrix()
 print m.list_of_fixed_param()
-m.html_error_matrix()._repr_html_()
+m.minos_errors()
+m.minos()
+m.minos_errors()
 
 # <codecell>
 
@@ -94,19 +96,16 @@ print m.args
 
 #getting minos error
 mne = m.minos_errors()
-print mne
-print mne['x'].eplus
+display(m.html_results())
 
 # <codecell>
 
-i = 10
-'d{i:e}d'.format(**locals())
 
 # <codecell>
 
-a = ['a','b','c']
-i = 2
-'{a[i]:s}'.format(**locals())
+
+# <codecell>
+
 
 # <codecell>
 

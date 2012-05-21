@@ -238,7 +238,7 @@ class Minuit:
             gcc = ROOT.Double(0.)
             self.tmin.mnerrs(i, eplus, eminus, eparab, gcc)
             #void mnerrs(Int_t number, Double_t& eplus, Double_t& eminus, Double_t& eparab, Double_t& gcc)
-            ret[v] = Struct(eplus=eplus, eminus=eminus, eparab=eparab, gcc=gcc)
+            ret[v] = Struct(eplus=float(eplus), eminus=float(eminus), eparab=float(eparab), gcc=float(gcc))
         return ret
 
     def html_results(self):
