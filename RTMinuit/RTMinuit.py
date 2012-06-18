@@ -83,7 +83,7 @@ class Minuit:
             assert(ierflg == 0)
             #now fix parameter
         for varname in self.varname:
-            if 'fix_' + varname in kwds:
+            if 'fix_' + varname in kwds and kwds['fix_'+varname]:
                 self.tmin.FixParameter(self.var2pos[varname])
                 self.fix_param.append(varname)
             else:

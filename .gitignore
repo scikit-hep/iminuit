@@ -6,5 +6,6 @@
 build
 *.pyc
 test_*
+.idea
 
 !tutorial.ipynb
