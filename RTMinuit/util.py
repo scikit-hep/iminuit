@@ -28,6 +28,10 @@ def better_arg_spec(f):
     return inspect.getargspec(f)[0]
 
 
+def describe(f):
+    print better_arg_spec(f)
+
+
 def fitarg_rename(fitarg, ren):
     """
     rename variable names in fitarg with rename function ren

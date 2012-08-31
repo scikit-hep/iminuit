@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# <nbformat>3</nbformat>
+# <nbformat>3.0</nbformat>
 
 # <codecell>
 
@@ -100,12 +100,63 @@ display(m.html_results())
 
 # <codecell>
 
+#a neat trick if you want to plot it
+#example of class that take generic function and compute chi^2
+#see also https://github.com/piti118/dist_fit
+#for a collection of this kind of functions to do unbinned/binned likelihood and chi^2 plus some useful plotting function
+class Chi2:
+    #this assume that f is of the form y = f(x,p1,p2,p3)
+    def __init__(self,f,x,y,erry):
+        assert(len(x)==len(y))
+        self.x = np.array(x)
+        self.y = np.array(y)
+        self.erry = np.array(erry)
+        self.f = f
+        self.vf = np.vectorize(f)
+        #making signature of chi2(p1,p2,p3)
+        varnames = better_arg_spec(f)
+        varnames = varnames[1:] #dock off x
+        argcount = len(varnames)
+        self.func_code = Struct(co_argcount=argcount,co_varnames=varnames)
+        self.func_defaults = None #keep vectorize happy
+    
+    def expy(self,x,*arg):
+        return self.vf(x,*arg)
+    
+    def __call__(self,*arg):
+        expy = self.expy(self.x,*arg)
+        x2 = (self.y-expy)**2/self.erry
+        ndof = len(self.x)-self.func_code.co_argcount 
+        return np.sum(x2)/ndof
 
 # <codecell>
 
+#lets make some polynomial
+def f(x,a,b,c):
+    return a*x**2+b*x+c
+#now lets make some data
+ta,tb,tc = 2.,-2.,100.
+numpoints = 30
+x = np.linspace(1,10,numpoints)
+vf = vectorize(f)
+y = f(x,ta,tb,tc)
+noise = randn(numpoints) #gaussian with 0 mean width of 1
+y = y+noise
+erry = np.array(numpoints)
+erry.fill(1.)
+errorbar(x,y,erry,fmt='.')
 
 # <codecell>
 
+x2 = Chi2(f,x,y,erry)
+m = Minuit(x2)
+m.migrad()
+display(m.html_results())
+
+fitted_y = vf(x,*m.args)
+
+errorbar(x,y,erry,fmt='.')
+plot(x,fitted_y,'-')
 
 # <codecell>
 
