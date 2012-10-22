@@ -152,7 +152,7 @@ x2 = Chi2(f,x,y,erry)
 m = Minuit(x2)
 m.migrad()
 display(m.html_results())
-
+display(m.html_error_matrix())
 fitted_y = vf(x,*m.args)
 
 errorbar(x,y,erry,fmt='.')
