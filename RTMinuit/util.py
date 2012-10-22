@@ -28,8 +28,9 @@ def better_arg_spec(f):
     return inspect.getargspec(f)[0]
 
 
-def describe(f):
-    print better_arg_spec(f)
+def describe(f,quiet=False):
+    if not quiet: print better_arg_spec(f)
+    return better_arg_spec(f)
 
 
 def fitarg_rename(fitarg, ren):
