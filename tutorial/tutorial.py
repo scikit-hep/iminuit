@@ -160,9 +160,35 @@ plot(x,fitted_y,'-')
 
 # <codecell>
 
+#some of you may want to use cython
+# for speeding up
+#here is how
+%load_ext cythonmagic
 
 # <codecell>
 
+%%cython
+cimport cython
+@cython.binding(True) #you need this for cython to export function signature
+def f(double x, double y, double z):
+    return (x-2)**2 + (y-3)**2 + (z-4)**2
+
+# <codecell>
+
+def python_f(x, y, z):
+    return (x-2)**2 + (y-3)**2 + (z-4)**2
+
+# <codecell>
+
+%%timeit
+m = Minuit(f)
+m.migrad()
+
+# <codecell>
+
+%%timeit
+m = Minuit(python_f)
+m.migrad()
 
 # <codecell>
 
