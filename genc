@@ -1,1 +1,1 @@
-cd RTMinuit; cython -a FCN.pyx --fast-fail --line-directives;
+cd RTMinuit; cython -a --cplus _libRTMinuit.pyx --fast-fail --line-directives;

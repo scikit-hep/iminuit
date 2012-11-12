@@ -1,2 +1,1 @@
-from RTMinuit import Minuit
-from util import *
+from RTMinuit import *
