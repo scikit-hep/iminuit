@@ -33,7 +33,6 @@ inline std::string format(const char* fmt, ...){
 
 int raise_py_err(){
     try{
-        printf("%016x\n",PyErr_Occurred());
         if(PyErr_Occurred()){
             return NULL;
         }else{

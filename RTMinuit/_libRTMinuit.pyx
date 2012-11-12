@@ -18,6 +18,13 @@ cdef extern from "PythonFCN.h":
         double call "operator()" (vector[double] x) except +#raise_py_err
         double up()
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
 
 #look up map with default
 cdef maplookup(m,k,d):
@@ -217,7 +224,7 @@ cdef class Minuit:
         self.cfmin = call_mnapplication_wrapper(deref(self.minimizer),ncall,tolerance)
         print 'after ncall', self.cfmin.nfcn()
 
-        if print_at_the_end: self.print_cfmin()
+        if print_at_the_end: self.print_cfmin(tolerance)
 
     def hesse(self):
         if self.cfmin is NULL:
@@ -226,10 +233,10 @@ cdef class Minuit:
     def html_state(self):
         pass
 
-    def print_cfmin(self):
+    def print_cfmin(self,tolerance):
         cdef MnUserParameterState ust = MnUserParameterState(self.cfmin.userState())
         fmin = cfmin2struct(self.cfmin)
-        pprint(fmin)
+        self.print_cfmin_only(tolerance)
         self.print_state(ust)
 
     cdef print_state(self,MnUserParameterState upst):
@@ -254,6 +261,27 @@ cdef class Minuit:
 
     def print_initial_state(self):
         pass
+
+    def print_cfmin_only(self,tolerance=None, ncalls = None):
+        fmin = cfmin2struct(self.cfmin)
+        goaledm = 0.001*tolerance*fmin.up if tolerance is not None else ''
+        #http://wwwasdoc.web.cern.ch/wwwasdoc/hbook_html3/node125.html
+        flatlocal = dict(locals().items()+fmin.__dict__.items())
+        info1 = 'fval = %(fval)r | nfcn = %(nfcn)r | ncalls = %(ncalls)r\n'%flatlocal
+        info2 = 'edm = %(edm)r (Goal: %(goaledm)r) | up = %(up)r\n'%flatlocal
+        header1 = '|' + (' %14s |'*5)%('Valid','Valid Param','Accurate Covar','Posdef','Made Posdef')+'\n'
+        hline = '-'*len(header1)+'\n'
+        status1 = '|' + (' %14r |'*5)%(fmin.isValid, fmin.has_valid_parameters,
+                fmin.has_accurate_covar,fmin.has_posdef_covar,fmin.has_made_posdef_covar)+'\n'
+        header2 = '|' + (' %14s |'*5)%('Hesse Fail','Has Cov','Above EDM','','Reach calllim')+'\n'
+        status2 = '|' + (' %14r |'*5)%(fmin.hesse_failed, fmin.has_covariance,
+                fmin.is_above_max_edm,'',fmin.has_reached_call_limit)+'\n'
+
+        print hline + info1 + info2 +\
+            hline + header1 + hline + status1 +\
+            hline + header2 + hline+ status2 +\
+            hline
+
 
     def print_state_template(self,vnames, values, errs, minos_minus=None, minos_plus=None,
             lim_minus=None, lim_plus=None, fixstate=None):
