@@ -51,6 +51,10 @@ cdef extern from "Minuit/MnUserParameterState.h":
         MnUserCovariance covariance()
         MnGlobalCorrelationCoeff globalCC()
 
+        double fval()
+        double edm()
+        unsigned int nfcn()
+
         void fix(char*)
         void release(char*)
         void setValue(char*, double)

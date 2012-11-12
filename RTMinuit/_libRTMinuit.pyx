@@ -102,16 +102,32 @@ cdef minoserror2struct(MinosError m):
 
 cdef class Minuit:
     #standard stuff
-    cdef readonly object fcn
-    cdef public object fitarg
-    cdef readonly object narg
-    cdef readonly object varname
+    cdef readonly object fcn #:fcn
+    cdef readonly object varname #:variable names
     cdef readonly object pos2var
     cdef readonly object var2pos
-    cdef public int strategy
-    cdef readonly bint thrownan
+
+    #Initial settings
+    cdef object initialvalue #:hold initial values
+    cdef object initialerror #:hold initial errors
+    cdef object initiallimit #:hold initial limits
+    cdef object initialfix #:hold initial fix state
+
+    #C++ object state
+    cdef PythonFCN* pyfcn #:FCN
+    cdef MnApplication* minimizer #:migrad
+    cdef FunctionMinimum* cfmin #:last migrad result
+    cdef MnUserParameterState* last_upst #:last parameter state(from hesse/migrad)
+
+    #PyMinuit compatible field
+    cdef public double up #:UP parameter
+    cdef public double tol #:tolerance migrad stops when edm>0.0001*tol*UP
+    cdef public unsigned int strategy #:
+    cdef public print_mode
+    cdef readonly bint throw_nan
 
     #PyMinuit Compatible interface
+    cdef readonly object parameters
     cdef readonly object args
     cdef readonly object values
     cdef readonly object errors
@@ -121,28 +137,13 @@ cdef class Minuit:
     cdef readonly double edm
     cdef readonly object merrors
 
-    #additional state variable
-    cdef public object fmin
-    cdef readonly int last_migrad_result
-    cdef readonly int last
-    cdef object initialvalue
-    cdef object initialerror
-    cdef object initiallimit
-    cdef object initialfix
-    cdef double errordef
-
-    #C++ object state
-    cdef PythonFCN* pyfcn
-    cdef MnApplication* minimizer
-    cdef FunctionMinimum* cfmin
-    cdef MnUserParameterState* last_upst
-
-    #minos list
-    cdef public object mnerrors
+    #and some extra
+    cdef public object fitarg
+    cdef readonly object narg
+    cdef public object merrors_struct
 
 
-    def __init__(self, fcn, thrownan=False, printmode=0, pedantic=True,
-            errdef=1.0, strategy=1, **kwds):
+    def __init__(self, fcn, throw_nan=False, print_mode=0, pedantic=True, **kwds):
         """
         construct minuit object
         arguments of f are pased automatically by the following order
@@ -185,17 +186,40 @@ cdef class Minuit:
         self.minimizer = NULL
         self.cfmin = NULL
         self.last_upst = NULL
-        self.mnerrors = {}
 
-        self.strategy = strategy
-        self.errordef = errdef
+        self.up = 1.0
+        self.tol = 0.1
+        self.strategy = 1
+        self.print_mode = print_mode
+        self.throw_nan = throw_nan
+
+        self.parameters = args
+        self.args = None
+        self.values = None
+        self.errors = None
+        self.covariance = None
+        self.fval = None
+        self.ncalls = 0
+        self.edm = 0
+        self.merrors = {}
+        self.fitarg = {}
+        fitarg.update(self.initialvalue)
+        fitarg.update({'error_'+k:v for k,v in self.initialerror.items()})
+        fitarg.update({'limit_'+k:v for k,v in self.initiallimit.items()})
+        fitarg.update({'fix_'+k:v for k,v in self.initialfix.items()})
+        self.narg = len(varname)
+
+        self.merrors_struct = {}
+
 
     cdef construct_FCN(self):
         del self.pyfcn
         self.pyfcn = new PythonFCN(self.fcn,self.errordef,self.varname,False)
 
+
     def is_clean_state(self):
         return self.pyfcn is NULL and self.minimizer is NULL and self.cfmin is NULL
+
 
     cdef void clear_cobj(self):
 
@@ -226,10 +250,32 @@ cdef class Minuit:
         for verr in extract_error(kwds):
             if param_name(verr) not in self.varname :
                 warn('%s float. But there is no parameter %s.Ignore.' % (verr, param_name(verr)))
-
+        
     def refreshInternalState(self):
         #this is only to keep backward compatible with PyMinuit
         #it should be in a function instead of a state for lazy-callable
+        cdef vector[MinuitParameter] mpv
+
+        if self.last_upst is not NULL:
+            mpv = self.last_upst.minuitParameters()
+            self.values = {}
+            self.errors = {}
+            self.args = []
+            for i in range(mpv.size()):
+                self.args = mpv[i].value()
+                self.values[mpv[i].name()] = mpv[i].value()
+                self.errors[mpv[i].name()] = mpv[i].value()
+            self.args = tuple(self.args)
+            self.fitarg.update(self.values)
+            self.covariance =\
+                {(varname[i],varname[j]):self.last_upst.covariance().get(i,j)\
+                    for i in range(self.narg) for j in range(self.narg)}
+            self.fval = self.last_upst.fval()
+            self.ncalls = self.last_upst.nfcn()
+            self.edm = self.last_upst.edm()
+            self.gcc = {v:self.last_upst.globalCC().globalCC()[i] for i,v in enumerate(varname)}
+        self.merrors = {(k,1.0):v.upper for k,v in self.merrors_struct}
+        self.merrors.update({(k,-1.0):v.lower for k,v in self.merrors_struct})
         pass
 
     cdef MnUserParameterState* initialParameterState(self):
@@ -271,7 +317,7 @@ cdef class Minuit:
         self.cfmin = call_mnapplication_wrapper(deref(self.minimizer),ncall,tolerance)
         del self.last_upst
         self.last_upst = new MnUserParameterState(self.cfmin.userState())
-
+        self.refreshInternalState()
         if print_at_the_end: self.print_cfmin(tolerance)
 
 
@@ -287,11 +333,11 @@ cdef class Minuit:
 
         del self.last_upst
         self.last_upst = new MnUserParameterState(upst)
-
+        self.refreshInternalState()
         del hesse
 
 
-    def minos(self, var = None, unsigned int strategy=1, unsigned int maxcall=1000):
+    def minos(self, var = None, sigma = 1, unsigned int strategy=1, unsigned int maxcall=1000):
         cdef unsigned int index = 0
         cdef MnMinos* minos = NULL
         cdef MinosError mnerror
@@ -304,7 +350,7 @@ cdef class Minuit:
                 return None
             minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
             mnerror = minos.minos(index,maxcall)
-            self.mnerrors[var]=minoserror2struct(mnerror)
+            self.merrors_struct[var]=minoserror2struct(mnerror)
             self.print_mnerror(var,self.mnerrors[var])
         else:
             for vname in self.varname:
@@ -313,15 +359,15 @@ cdef class Minuit:
                     continue
                 minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
                 mnerror = minos.minos(index,maxcall)
-                self.mnerrors[vname]=minoserror2struct(mnerror)
+                self.merrors_struct[vname]=minoserror2struct(mnerror)
                 self.print_mnerror(vname,self.mnerrors[vname])
+        self.refreshInternalState()
         del minos
         return self.mnerrors
 
 
-    def matrix(self,correlation=True):
-        raise NotImplementedError
-
+    def matrix(self, correlation=False, skip_fixed=False):
+        pass
 
     def scan(self):
         raise NotImplementedError
@@ -448,7 +494,9 @@ cdef class Minuit:
 
 
     def print_all_minos(self,cmd):
-
+        for vname in varnames:
+            if vname in self.merrors_struct:
+                self.print_mnerror(vname,self.merrors_struct[vname])
 
     # def prepare(self, **kwds):
     #     self.tmin.SetFCN(self.fcn)
@@ -469,9 +517,9 @@ cdef class Minuit:
     #             self.free_param.append(varname)
 
 
-    # def set_up(self, up):
-    #     """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
-    #     return self.errordef=up
+    def set_up(self, up):
+        """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
+        self.up = up
 
 
     # def set_printlevel(self, lvl):
