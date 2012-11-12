@@ -80,12 +80,37 @@ cdef extern from "Minuit/MnMigrad.h":
         MnMigrad(FCNBase fcn, MnUserParameterState par, MnStrategy str ) except+
         FunctionMinimum call "operator()" (int,double) except+
 
+cdef extern from "Minuit/MnHesse.h":
+    cdef cppclass MnHesse:
+        MnHesse(unsigned int stra)
+        MnUserParameterState call "operator()" (FCNBase , MnUserParameterState, unsigned int maxcalls=0) except+
+
+cdef extern from "Minuit/MnMinos.h":
+    cdef cppclass MnMinos:
+        MnMinos(FCNBase fcn, FunctionMinimum min, unsigned int stra)
+        MinosError minos(unsigned int par, unsigned int maxcalls) except +
+
+cdef extern from "Minuit/MinosError.h":
+    cdef cppclass MinosError:
+        double lower()
+        double upper()
+        bint isValid()
+        bint lowerValid()
+        bint upperValid()
+        bint atLowerLimit()
+        bint atUpperLimit()
+        bint atLowerMaxFcn()
+        bint atUpperMaxFcn()
+        bint lowerNewMin()
+        bint upperNewMin()
+        unsigned int nfcn()
+        double min()
+
 cdef extern from "Minuit/FunctionMinimum.h":
     cdef cppclass FunctionMinimum:
         FunctionMinimum(FunctionMinimum)
         MnUserParameterState userState()
         MnUserCovariance userCovariance()
-        
         # const_MinimumParameter parameters()
         # const_MinimumError error()
 

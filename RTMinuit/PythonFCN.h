@@ -60,6 +60,7 @@ public:
     double up_parm;
     vector<string> pname;
     bool thrownan;
+    unsigned int* ncall;//a hack around operator() const 
     PythonFCN(){}//for cython stack allocate but don't call this
     PythonFCN(PyObject* fcn,
         double up_parm,
@@ -68,6 +69,7 @@ public:
         :fcn(fcn),up_parm(up_parm),pname(pname),
         thrownan(thrownan)
     {
+        ncall = new unsigned int(0);
         Py_INCREF(fcn);
     }
 
@@ -75,11 +77,13 @@ public:
         :fcn(pfcn.fcn),up_parm(pfcn.up_parm),pname(pfcn.pname),
         thrownan(pfcn.thrownan)
     {
+        ncall = new unsigned int(0);
         Py_INCREF(fcn);
     }
 
     virtual ~PythonFCN()
     {
+        delete ncall;
         Py_DECREF(fcn);
     }
 
@@ -114,6 +118,7 @@ public:
 
         Py_DECREF(tuple);
         Py_DECREF(result);
+        (*ncall)++;
         return ret;
     }
     //warn but do not reset the error flag
@@ -148,6 +153,7 @@ public:
         }
         return tuple;
     }
-
+    int getNumCall() const{return *ncall;}
+    void resetNumCall(){*ncall = 0;}
     virtual double up() const{return up_parm;}
 };
