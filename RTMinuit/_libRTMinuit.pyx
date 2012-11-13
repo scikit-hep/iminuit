@@ -1,3 +1,4 @@
+__all__ = ['Minuit']
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from cpython cimport exc
@@ -21,16 +22,6 @@ cdef extern from "PythonFCN.h":
         double up()
         int getNumCall()
         void resetNumCall()
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-
 
 #look up map with default
 cdef maplookup(m,k,d):
@@ -249,6 +240,7 @@ cdef class Minuit:
 
 
     cdef construct_FCN(self):
+        """(re)construct FCN"""
         del self.pyfcn
         self.pyfcn = new PythonFCN(
                 self.fcn,
@@ -258,19 +250,17 @@ cdef class Minuit:
 
 
     def is_clean_state(self):
+        """check if minuit is at clean state ie. no migrad call"""
         return self.pyfcn is NULL and \
             self.minimizer is NULL and self.cfmin is NULL
 
 
     cdef void clear_cobj(self):
-        del self.pyfcn
-        del self.minimizer
-        del self.cfmin
-        del self.last_upst
-        self.pyfcn = NULL
-        self.minimizer = NULL
-        self.cfmin = NULL
-        self.last_upst = NULL
+        #clear C++ internal state
+        del self.pyfcn;self.pyfcn = NULL
+        del self.minimizer;self.minimizer = NULL
+        del self.cfmin;self.cfmin = NULL
+        del self.last_upst;self.last_upst = NULL
 
 
     def __dealloc__(self):
@@ -299,9 +289,12 @@ cdef class Minuit:
                     Ignore.') % (verr, param_name(verr)))
 
 
-    def refreshInternalState(self):
-        #this is only to keep backward compatible with PyMinuit
-        #it should be in a function instead of a state for lazy-callable
+    cdef refreshInternalState(self):
+        """
+        refresh internal state attributes.
+        These attributes should be in a function instead
+        but kept here for PyMinuit compatiblity
+        """
         cdef vector[MinuitParameter] mpv
         cdef MnUserCovariance cov
         if self.last_upst is not NULL:
@@ -331,6 +324,10 @@ cdef class Minuit:
 
 
     cdef MnUserParameterState* initialParameterState(self):
+        """
+        construct parameter state from initial array.
+        caller is responsible for cleaning up the pointer 
+        """
         cdef MnUserParameterState* ret = new MnUserParameterState()
         cdef double lb
         cdef double ub
@@ -349,8 +346,8 @@ cdef class Minuit:
     def migrad(self,int ncall=1000,resume=True,double tolerance=0.1,
             print_interval=100, print_at_the_end=True):
         """
-            run migrad
-            user can check if the return status is not 0
+        run migrad, the age-tested(stable over 20 years old),
+        super robust minizer.
         """
         #construct new fcn and migrad if
         #it's a clean state or resume=False
@@ -377,14 +374,18 @@ cdef class Minuit:
         if print_at_the_end: self.print_cfmin(tolerance)
 
 
-    def hesse(self,unsigned int strategy=1):
+    def hesse(self):
+        """
+        run HESSE.
+        HESSE estimate error by the second derivative at the minimim.
+        """
 
         cdef MnHesse* hesse = NULL
         cdef MnUserParameterState upst
         self.print_banner('HESSE')
         #if self.cfmin is NULL:
             #raise RuntimeError('Run migrad first')
-        hesse = new MnHesse(strategy)
+        hesse = new MnHesse(self.strategy)
         upst = hesse.call(deref(self.pyfcn),self.cfmin.userState())
 
         del self.last_upst
@@ -393,8 +394,12 @@ cdef class Minuit:
         del hesse
 
 
-    def minos(self, var = None, sigma = 1, unsigned int strategy=1,
+    def minos(self, var = None, sigma = 1,
                 unsigned int maxcall=1000):
+        """
+        run minos for paramter *var* n *sigma* uncertainty.
+        If *var* is None it runs minos for all parameters
+        """
         cdef unsigned int index = 0
         cdef MnMinos* minos = NULL
         cdef MinosError mnerror
@@ -425,10 +430,7 @@ cdef class Minuit:
 
 
     def matrix(self, correlation=False, skip_fixed=False):
-        """
-        error / correlation matrix in form of
-        tuple of tuple
-        """
+        """return error/correlation matrix in tuple or tuple format."""
         if self.last_upst is NULL:
             raise RuntimeError("Run migrad/hesse first")
         cdef MnUserCovariance cov = self.last_upst.covariance()
@@ -441,10 +443,39 @@ cdef class Minuit:
                 )
         return ret
 
+
     def np_matrix(self, correlation=False, skip_fixed=False):
+        """return error/correlation matrix in numpy array format."""
         import numpy as np
         #TODO make a not so lazy one
         return np.array(matrix)
+
+    # def error_matrix(self, correlation=False):
+    #     ndim = self.mnstat().npari
+    #     #void mnemat(Double_t* emat, Int_t ndim)
+    #     tmp = array('d', [0.] * (ndim * ndim))
+    #     self.tmin.mnemat(tmp, ndim)
+    #     ret = np.array(tmp)
+    #     ret = ret.reshape((ndim, ndim))
+    #     if correlation:
+    #         diag = np.diagonal(ret)
+    #         sigma_col = np.sqrt(diag[:, np.newaxis])
+    #         sigma_row = sigma_col.T
+    #         ret = ret / sigma_col / sigma_row
+    #     return ret
+
+    # def minos_errors(self):
+    #     ret = {}
+    #     self.tmin.SetFCN(self.fcn)
+    #     for i, v in self.pos2var.items():
+    #         eplus = ROOT.Double(0.)
+    #         eminus = ROOT.Double(0.)
+    #         eparab = ROOT.Double(0.)
+    #         gcc = ROOT.Double(0.)
+    #         self.tmin.mnerrs(i, eplus, eminus, eparab, gcc)
+    #         #void mnerrs(Int_t number, Double_t& eplus, Double_t& eminus, Double_t& eparab, Double_t& gcc)
+    #         ret[v] = Struct(eplus=float(eplus), eminus=float(eminus), eparab=float(eparab), gcc=float(gcc))
+    #     return ret
 
     def is_fixed(self,vname):
         if vname not in self.parameters:
@@ -454,6 +485,7 @@ cdef class Minuit:
             return self.initialfix[vname]
         else:
             return self.last_upst.minuitParameters()[index].isFixed()
+
 
     def scan(self):
         #anyone actually use this?
@@ -641,162 +673,41 @@ cdef class Minuit:
         self.up = up
 
 
-    # def set_print_mode(self, lvl):
-    #     """
-    #     set printlevel -1 quiet, 0 normal, 1 verbose
-    #     """
-    #     return self.tmin.SetPrintLevel(lvl)
+    def set_strategy(self,stra):
+        """set strategy 0=fast , 1=default, 2=slow but accurate"""
+        self.strategy=stra
 
 
-    # def set_strategy(self, strategy):
-    #     """
-    #     set strategy
-    #     """
-    #     return self.tmin.Command('SET STR %d' % strategy)
+    def set_print_mode(self, lvl):
+        """set printlevel 0 quiet, 1 normal, 2 paranoid, 3 really paranoid """
+        self.printMode = lvl
 
 
-    # def command(self, cmd):
-    #     """execute a command"""
-    #     return self.tmin.Command(cmd)
+    def migrad_ok(self):
+        """check if minimum is valid"""
+        return self.cfmin is not NULL and self.fmin.isValid()
 
 
-
-    # def migrad_ok(self):
-    #     """check whether last migrad call result is OK"""
-    #     return self.last_migrad_result == 0
-
-
-    # def hesse(self):
-    #     """run hesse"""
-    #     self.tmin.SetFCN(self.fcn)
-    #     self.tmin.mnhess()
-    #     self.set_ave()
+    def matrix_acurate(self):
+        """check if covariance is accurate"""
+        return self.last_upst is not NULL and self.last_upst.hasCovariance()
 
 
-    # def minos(self, varname=None):
-    #     """run minos"""
-    #     self.tmin.SetFCN(self.fcn)
-    #     if varname is None:
-    #         self.tmin.mnmnos()
-    #     else:
-    #         val2pl = ROOT.Double(0.)
-    #         val2pi = ROOT.Double(0.)
-    #         pos = self.var2pos[varname] + 1
-    #         self.tmin.mnmnot(pos, 0, val2pl, val2pi)
-    #     self.set_ave()
+    def html_results(self):
+        """show result in html form"""
+        return MinuitHTMLResult(self)
 
 
-    # def set_ave(self):
-    #     """set args values and errors"""
-    #     tmp_values = {}
-    #     tmp_errors = {}
-    #     for i, varname in self.pos2var.items():
-    #         tmp_val = ROOT.Double(0.)
-    #         tmp_err = ROOT.Double(0.)
-    #         self.tmin.GetParameter(i, tmp_val, tmp_err)
-    #         tmp_values[varname] = float(tmp_val)
-    #         tmp_errors[varname] = float(tmp_err)
-    #     self.values = tmp_values
-    #     self.errors = tmp_errors
-
-    #     val = self.values
-    #     tmparg = []
-    #     for arg in self.varname:
-    #         tmparg.append(val[arg])
-    #     self.args = tuple(tmparg)
-    #     self.fitarg.update(self.values)
-    #     for k, v in self.errors.items():
-    #         self.fitarg['error_' + k] = v
+    def html_error_matrix(self):
+        """show error matrix in html form"""
+        return MinuitCorrelationMatrixHTML(self)
 
 
-    # def mnstat(self):
-    #     """
-    #     return named tuple of cfmin,fedm,errdef,npari,nparx,istat
-    #     """
-    #     cfmin = ROOT.Double(0.)
-    #     fedm = ROOT.Double(0.)
-    #     errdef = ROOT.Double(0.)
-    #     npari = ROOT.Long(0.)
-    #     nparx = ROOT.Long(0.)
-    #     istat = ROOT.Long(0.)
-    #     #void mnstat(Double_t& cfmin, Double_t& fedm, Double_t& errdef, Int_t& npari, Int_t& nparx, Int_t& istat)
-    #     self.tmin.mnstat(cfmin, fedm, errdef, npari, nparx, istat)
-    #     ret = Struct(cfmin=float(cfmin), fedm=float(fedm), ferrdef=float(errdef), npari=int(npari), nparx=int(nparx),
-    #         istat=int(istat))
-    #     return ret
+    def list_of_fixed_param(self):
+        """return list of (initially) fixed parameters"""
+        return [v for v in self.parameters if self.initialfix[v]]
 
 
-    # def cfmin(self):
-    #     return self.mnstat().cfmin
-
-
-    # def matrix_accurate(self):
-    #     """check whether error matrix is accurate"""
-    #     if self.tmin.fLimset: print "Warning: some parameter are up against limit"
-    #     return self.mnstat().istat == 3
-
-
-    # def error_matrix(self, correlation=False):
-    #     ndim = self.mnstat().npari
-    #     #void mnemat(Double_t* emat, Int_t ndim)
-    #     tmp = array('d', [0.] * (ndim * ndim))
-    #     self.tmin.mnemat(tmp, ndim)
-    #     ret = np.array(tmp)
-    #     ret = ret.reshape((ndim, ndim))
-    #     if correlation:
-    #         diag = np.diagonal(ret)
-    #         sigma_col = np.sqrt(diag[:, np.newaxis])
-    #         sigma_row = sigma_col.T
-    #         ret = ret / sigma_col / sigma_row
-    #     return ret
-
-
-    # def mnmatu(self):
-    #     """print correlation coefficient"""
-    #     return self.tmin.mnmatu(1)
-
-
-    # def help(self, cmd):
-    #     """print out help"""
-    #     self.tmin.mnhelp(cmd)
-
-
-    # def minos_errors(self):
-    #     ret = {}
-    #     self.tmin.SetFCN(self.fcn)
-    #     for i, v in self.pos2var.items():
-    #         eplus = ROOT.Double(0.)
-    #         eminus = ROOT.Double(0.)
-    #         eparab = ROOT.Double(0.)
-    #         gcc = ROOT.Double(0.)
-    #         self.tmin.mnerrs(i, eplus, eminus, eparab, gcc)
-    #         #void mnerrs(Int_t number, Double_t& eplus, Double_t& eminus, Double_t& eparab, Double_t& gcc)
-    #         ret[v] = Struct(eplus=float(eplus), eminus=float(eminus), eparab=float(eparab), gcc=float(gcc))
-    #     return ret
-
-    # def html_results(self):
-    #     return MinuitHTMLResult(self)
-
-    # def list_of_fixed_param(self):
-    #     tmp_ret = list()#fortran index
-    #     for i in range(self.tmin.GetNumFixedPars()):
-    #         tmp_ret.append(self.tmin.fIpfix[i])
-    #     #now get the constants
-    #     for i in range(self.tmin.GetNumPars()):
-    #         if self.tmin.fNvarl[i] == 0:
-    #             tmp_ret.append(i+1)
-    #     tmp_ret = list(set(tmp_ret))
-    #     tmp_ret.sort()
-    #     for i in range(len(tmp_ret)):
-    #         tmp_ret[i]-=1 #convert to position
-    #     ret = [self.pos2var[x] for x in tmp_ret]
-    #     return ret
-
-    # def list_of_vary_param(self):
-    #     fix_pars = self.list_of_fixed_param()
-    #     ret = [v for v in self.varname if v not in fix_pars]
-    #     return ret
-
-    # def html_error_matrix(self):
-    #     return MinuitCorrelationMatrixHTML(self)
-
+    def list_of_vary_param(self):
+        """return list of (initially) float vary parameters"""
+        return
