@@ -12,9 +12,11 @@ include "Lcg_Minuit.pxi"
 #our wrapper
 cdef extern from "PythonFCN.h":
     #int raise_py_err()#this is very important we need custom error handler
-    FunctionMinimum* call_mnapplication_wrapper(MnApplication app,unsigned int i, double tol) except +
+    FunctionMinimum* call_mnapplication_wrapper(\
+        MnApplication app,unsigned int i, double tol) except +
     cdef cppclass PythonFCN(FCNBase):
-        PythonFCN(object fcn, double up_parm, vector[string] pname,bint thrownan)
+        PythonFCN(\
+            object fcn, double up_parm, vector[string] pname,bint thrownan)
         double call "operator()" (vector[double] x) except +#raise_py_err
         double up()
         int getNumCall()
@@ -45,7 +47,8 @@ cdef cfmin2struct(FunctionMinimum* cfmin):
             has_valid_parameters = cfmin.hasValidParameters(),
             has_accurate_covar = cfmin.hasAccurateCovar(),
             has_posdef_covar = cfmin.hasPosDefCovar(),
-            has_made_posdef_covar = cfmin.hasMadePosDefCovar(),#forced to be posdef
+            #forced to be posdef
+            has_made_posdef_covar = cfmin.hasMadePosDefCovar(),
             hesse_failed = cfmin.hesseFailed(),
             has_covariance = cfmin.hasCovariance(),
             is_above_max_edm = cfmin.isAboveMaxEdm(),
@@ -72,13 +75,16 @@ cdef minuitparam2struct(MinuitParameter* mp):
 cdef cfmin2covariance(FunctionMinimum cfmin, int n):
     #not depending on numpy on purpose
     #cdef int n = cfmin.userState().params.size()
-    return [[cfmin.userCovariance().get(i,j) for i in range(n)] for j in range(n)]
+    return [[cfmin.userCovariance().get(i,j) \
+        for i in range(n)] for j in range(n)]
 
 
 cdef cfmin2correlation(FunctionMinimum cfmin, int n):
     #cdef int n = cfmin.userState().params.size()
     #not depending on numpy on purpose
-    return [[cfmin.userCovariance().get(i,j)/sqrt(cfmin.userCovariance().get(i,i))/sqrt(cfmin.userCovariance().get(j,j)) \
+    return [[cfmin.userCovariance().get(i,j)/\
+        sqrt(cfmin.userCovariance().get(i,i))/\
+        sqrt(cfmin.userCovariance().get(j,j)) \
         for i in range(n)] for j in range(n)]
 
 cdef minoserror2struct(MinosError m):
@@ -103,9 +109,9 @@ cdef minoserror2struct(MinosError m):
 cdef class Minuit:
     #standard stuff
     cdef readonly object fcn #:fcn
-    cdef readonly object varname #:variable names
-    cdef readonly object pos2var
-    cdef readonly object var2pos
+    #cdef readonly object varname #:variable names
+    cdef readonly object pos2var#:map variable position to varname
+    cdef readonly object var2pos#:map varname to position
 
     #Initial settings
     cdef object initialvalue #:hold initial values
@@ -117,46 +123,72 @@ cdef class Minuit:
     cdef PythonFCN* pyfcn #:FCN
     cdef MnApplication* minimizer #:migrad
     cdef FunctionMinimum* cfmin #:last migrad result
-    cdef MnUserParameterState* last_upst #:last parameter state(from hesse/migrad)
+    #:last parameter state(from hesse/migrad)
+    cdef MnUserParameterState* last_upst
 
     #PyMinuit compatible field
     cdef public double up #:UP parameter
     cdef public double tol #:tolerance migrad stops when edm>0.0001*tol*UP
-    cdef public unsigned int strategy #:
-    cdef public print_mode
+    cdef public unsigned int strategy #:0 fast 1 default 2 slow but accurate
+    #: 0: quiet 1: print stuff the end 2: 1+fit status during call
+    #: yes I know the case is wrong but this is to keep it compatible with
+    #: PyMinuit
+    cdef public printMode
+    #: raise runtime error if function evaluate to nan
     cdef readonly bint throw_nan
 
     #PyMinuit Compatible interface
-    cdef readonly object parameters
-    cdef readonly object args
-    cdef readonly object values
-    cdef readonly object errors
-    cdef readonly object covariance
-    cdef readonly double fval
-    cdef readonly double ncalls
-    cdef readonly double edm
+    cdef readonly object parameters#:tuple of parameter name(correct order)
+    cdef readonly object args#:tuple of values
+    cdef readonly object values#:map varname -> value
+    cdef readonly object errors#:map varname -> parabolic error
+    cdef readonly object covariance#:map (v1,v2)->covariance
+    cdef readonly double fval#:last value of fcn
+    cdef readonly double ncalls#:number of fcn call of last migrad/minos/hesse
+    cdef readonly double edm#Estimate distance to minimum
+    #:minos error ni a funny map from
+    #:(vname,direction)->error
+    #:direction is 1.0 for positive error and -1.0 for negative error
     cdef readonly object merrors
-
+    #:global correlation coefficient
+    cdef readonly object gcc
     #and some extra
+    #:map of
+    #:varname -> value
+    #:error_varname -> error
+    #:limit_varname -> limit
+    #:fix_varname -> True/False
+    #:user can just use python keyword expansion to use all the argument like
+    #:Minuit(fcn,**fitargs)
     cdef public object fitarg
-    cdef readonly object narg
+    cdef readonly object narg#: number of arguments
+    #: map vname-> struct with various minos error calcumation information
     cdef public object merrors_struct
+    cdef public object printer
 
-
-    def __init__(self, fcn, throw_nan=False, print_mode=0, pedantic=True, **kwds):
+    def __init__(self, fcn,
+            throw_nan=False,  pedantic=True,
+            printMode=0, printer=None, **kwds):
         """
         construct minuit object
         arguments of f are pased automatically by the following order
-        1) using f.func_code.co_varnames,f.func_code.co_argcount (all python function has this)
-        2) using f.__call__.func_code.co_varnames, f.__call__.co_argcount (with self docked off)
+        1) using f.func_code.co_varnames,f.func_code.co_argcount
+        (all python function has this)
+        2) using f.__call__.func_code.co_varnames, f.__call__.co_argcount
+        (with self docked off)
         3) using inspect.getargspec(for some rare builtin function)
 
-        user can set limit on paramater by passing limit_<varname>=(min,max) keyword argument
-        user can set initial value onparameter by passing <varname>=value keyword argument
-        user can fix parameter by doing fix_<varname>=True
-        user can set initial step by passing error_<varname>=initialstep keyword argument
+        user can set limit on paramater by passing
+        limit_<varname>=(min,max) keyword argument
+        user can set initial value onparameter by passing
+        <varname>=value keyword argument
+        user can fix parameter by doing
+        fix_<varname>=True
+        user can set initial step by passing
+        error_<varname>=initialstep keyword argument
 
-        if f_verbose is set to True FCN will be built for verbosity printing value and argument for every function call
+        if f_verbose is set to True FCN will be built for verbosity
+        printing value and argument for every function call
         """
 
         args = better_arg_spec(fcn)
@@ -165,22 +197,19 @@ cdef class Minuit:
 
         #maintain 2 dictionary 1 is position to varname
         #and varname to position
-        self.varname = args
+        #self.varname = args
         self.pos2var = {i: k for i, k in enumerate(args)}
         self.var2pos = {k: i for i, k in enumerate(args)}
 
-        #self.set_printlevel(printlevel)
-        #self.prepare(**kwds)
-
-        self.last_migrad_result = 0
         self.args, self.values, self.errors = None, None, None
 
-        if pedantic: self.pedantic(kwds)
-
-        self.initialvalue = {x:maplookup(kwds,x,0.) for x in self.varname}
-        self.initialerror = {x:maplookup(kwds,'error_'+x,1.) for x in self.varname}
-        self.initiallimit = {x:maplookup(kwds,'limit_'+x,None) for x in self.varname}
-        self.initialfix = {x:maplookup(kwds,'fix_'+x,False) for x in self.varname}
+        self.initialvalue = {x:maplookup(kwds,x,0.) for x in args}
+        self.initialerror = \
+            {x:maplookup(kwds,'error_'+x,1.) for x in args}
+        self.initiallimit = \
+            {x:maplookup(kwds,'limit_'+x,None) for x in args}
+        self.initialfix = \
+            {x:maplookup(kwds,'fix_'+x,False) for x in args}
 
         self.pyfcn = NULL
         self.minimizer = NULL
@@ -190,7 +219,7 @@ cdef class Minuit:
         self.up = 1.0
         self.tol = 0.1
         self.strategy = 1
-        self.print_mode = print_mode
+        self.printMode = printMode
         self.throw_nan = throw_nan
 
         self.parameters = args
@@ -198,31 +227,42 @@ cdef class Minuit:
         self.values = None
         self.errors = None
         self.covariance = None
-        self.fval = None
+        self.fval = 0.
         self.ncalls = 0
-        self.edm = 0
+        self.edm = 1.
         self.merrors = {}
+        self.gcc = {}
+        if pedantic: self.pedantic(kwds)
+
         self.fitarg = {}
-        fitarg.update(self.initialvalue)
-        fitarg.update({'error_'+k:v for k,v in self.initialerror.items()})
-        fitarg.update({'limit_'+k:v for k,v in self.initiallimit.items()})
-        fitarg.update({'fix_'+k:v for k,v in self.initialfix.items()})
-        self.narg = len(varname)
+        self.fitarg.update(self.initialvalue)
+        self.fitarg.update(
+            {'error_'+k:v for k,v in self.initialerror.items()})
+        self.fitarg.update(
+            {'limit_'+k:v for k,v in self.initiallimit.items()})
+        self.fitarg.update(
+            {'fix_'+k:v for k,v in self.initialfix.items()})
+
+        self.narg = len(self.parameters)
 
         self.merrors_struct = {}
 
 
     cdef construct_FCN(self):
         del self.pyfcn
-        self.pyfcn = new PythonFCN(self.fcn,self.errordef,self.varname,False)
+        self.pyfcn = new PythonFCN(
+                self.fcn,
+                self.up,
+                self.parameters,
+                self.throw_nan)
 
 
     def is_clean_state(self):
-        return self.pyfcn is NULL and self.minimizer is NULL and self.cfmin is NULL
+        return self.pyfcn is NULL and \
+            self.minimizer is NULL and self.cfmin is NULL
 
 
     cdef void clear_cobj(self):
-
         del self.pyfcn
         del self.minimizer
         del self.cfmin
@@ -232,68 +272,82 @@ cdef class Minuit:
         self.cfmin = NULL
         self.last_upst = NULL
 
+
     def __dealloc__(self):
         self.clear_cobj()
 
+
     def pedantic(self, kwds):
-        for vn in self.varname:
+        for vn in self.parameters:
             if vn not in kwds:
-                warn('Parameter %s does not have initial value. Assume 0.' % (vn))
+                warn(('Parameter %s does not have initial value. '
+                    'Assume 0.') % (vn))
             if 'error_'+vn not in kwds and 'fix_'+param_name(vn) not in kwds:
-                warn('Parameter %s is floating but does not have initial step size. Assume 1.' % (vn))
+                warn(('Parameter %s is floating but does not '
+                    'have initial step size. Assume 1.') % (vn))
         for vlim in extract_limit(kwds):
-            if param_name(vlim) not in self.varname:
-                warn('%s is given. But there is no parameter %s.Ignore.' % (vlim, param_name(vlim)))
+            if param_name(vlim) not in self.parameters:
+                warn(('%s is given. But there is no parameter %s. '
+                    'Ignore.') % (vlim, param_name(vlim)))
         for vfix in extract_fix(kwds):
-            if param_name(vfix) not in self.varname:
-                warn('%s is given. But there is no parameter %s.Ignore.' % (vfix, param_name(vfix)))
+            if param_name(vfix) not in self.parameters:
+                warn(('%s is given. But there is no parameter %s. \
+                    Ignore.') % (vfix, param_name(vfix)))
         for verr in extract_error(kwds):
-            if param_name(verr) not in self.varname :
-                warn('%s float. But there is no parameter %s.Ignore.' % (verr, param_name(verr)))
-        
+            if param_name(verr) not in self.parameters:
+                warn(('%s float. But there is no parameter %s. \
+                    Ignore.') % (verr, param_name(verr)))
+
+
     def refreshInternalState(self):
         #this is only to keep backward compatible with PyMinuit
         #it should be in a function instead of a state for lazy-callable
         cdef vector[MinuitParameter] mpv
-
+        cdef MnUserCovariance cov
         if self.last_upst is not NULL:
             mpv = self.last_upst.minuitParameters()
             self.values = {}
             self.errors = {}
             self.args = []
             for i in range(mpv.size()):
-                self.args = mpv[i].value()
+                self.args.append(mpv[i].value())
                 self.values[mpv[i].name()] = mpv[i].value()
                 self.errors[mpv[i].name()] = mpv[i].value()
             self.args = tuple(self.args)
             self.fitarg.update(self.values)
+            cov = self.last_upst.covariance()
             self.covariance =\
-                {(varname[i],varname[j]):self.last_upst.covariance().get(i,j)\
+                {(self.parameters[i],self.parameters[j]):cov.get(i,j)\
                     for i in range(self.narg) for j in range(self.narg)}
             self.fval = self.last_upst.fval()
             self.ncalls = self.last_upst.nfcn()
             self.edm = self.last_upst.edm()
-            self.gcc = {v:self.last_upst.globalCC().globalCC()[i] for i,v in enumerate(varname)}
-        self.merrors = {(k,1.0):v.upper for k,v in self.merrors_struct}
-        self.merrors.update({(k,-1.0):v.lower for k,v in self.merrors_struct})
-        pass
+            self.gcc = {v:self.last_upst.globalCC().globalCC()[i]\
+                        for i,v in enumerate(self.parameters)}
+        self.merrors = {(k,1.0):v.upper
+                       for k,v in self.merrors_struct.items()}
+        self.merrors.update({(k,-1.0):v.lower
+                       for k,v in self.merrors_struct.items()})
+
 
     cdef MnUserParameterState* initialParameterState(self):
         cdef MnUserParameterState* ret = new MnUserParameterState()
         cdef double lb
         cdef double ub
-        for v in self.varname:
+        for v in self.parameters:
             ret.add(v,self.initialvalue[v],self.initialerror[v])
-        for v in self.varname:
+        for v in self.parameters:
             if self.initiallimit[v] is not None:
                 lb,ub = self.initiallimit[v]
                 ret.setLimits(v,lb,ub)
-        for v in self.varname:
+        for v in self.parameters:
             if self.initialfix[v]:
                 ret.fix(v)
         return ret
 
-    def migrad(self,int ncall=1000,resume=True,double tolerance=0.1, print_interval=100, print_at_the_end=True):
+
+    def migrad(self,int ncall=1000,resume=True,double tolerance=0.1,
+            print_interval=100, print_at_the_end=True):
         """
             run migrad
             user can check if the return status is not 0
@@ -308,13 +362,15 @@ cdef class Minuit:
             if self.minimizer is not NULL: del self.minimizer
             ups = self.initialParameterState()
             strat = new MnStrategy(self.strategy)
-            self.minimizer = new MnMigrad(deref(self.pyfcn),deref(ups),deref(strat))
+            self.minimizer = \
+                    new MnMigrad(deref(self.pyfcn),deref(ups),deref(strat))
             del ups; ups=NULL
             del strat; strat=NULL
 
         del self.cfmin #remove the old one
         #this returns a real object need to copy
-        self.cfmin = call_mnapplication_wrapper(deref(self.minimizer),ncall,tolerance)
+        self.cfmin = call_mnapplication_wrapper(
+                deref(self.minimizer),ncall,tolerance)
         del self.last_upst
         self.last_upst = new MnUserParameterState(self.cfmin.userState())
         self.refreshInternalState()
@@ -337,7 +393,8 @@ cdef class Minuit:
         del hesse
 
 
-    def minos(self, var = None, sigma = 1, unsigned int strategy=1, unsigned int maxcall=1000):
+    def minos(self, var = None, sigma = 1, unsigned int strategy=1,
+                unsigned int maxcall=1000):
         cdef unsigned int index = 0
         cdef MnMinos* minos = NULL
         cdef MinosError mnerror
@@ -351,36 +408,68 @@ cdef class Minuit:
             minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
             mnerror = minos.minos(index,maxcall)
             self.merrors_struct[var]=minoserror2struct(mnerror)
-            self.print_mnerror(var,self.mnerrors[var])
+            self.print_mnerror(var,self.merrors_struct[var])
         else:
-            for vname in self.varname:
+            for vname in self.parameters:
                 index = self.cfmin.userState().index(vname)
                 if self.cfmin.userState().minuitParameters()[index].isFixed():
                     continue
-                minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
+                minos = \
+                    new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
                 mnerror = minos.minos(index,maxcall)
                 self.merrors_struct[vname]=minoserror2struct(mnerror)
-                self.print_mnerror(vname,self.mnerrors[vname])
+                self.print_mnerror(vname,self.merrors_struct[vname])
         self.refreshInternalState()
         del minos
-        return self.mnerrors
+        return self.merrors_struct
 
 
     def matrix(self, correlation=False, skip_fixed=False):
-        pass
+        """
+        error / correlation matrix in form of
+        tuple of tuple
+        """
+        if self.last_upst is NULL:
+            raise RuntimeError("Run migrad/hesse first")
+        cdef MnUserCovariance cov = self.last_upst.covariance()
+        ret = tuple(
+                tuple(cov.get(iv1,iv2)
+                    for iv1,v1 in self.parameters \
+                        if not skip_fixed or self.is_fixed(v1))
+                    for iv2,v2 in enumerate(self.parameters) \
+                        if not skip_fixed or self.is_fixed(v2)
+                )
+        return ret
+
+    def np_matrix(self, correlation=False, skip_fixed=False):
+        import numpy as np
+        #TODO make a not so lazy one
+        return np.array(matrix)
+
+    def is_fixed(self,vname):
+        if vname not in self.parameters:
+            raise RuntimeError('Cannot find %s in list of variables.')
+        cdef unsigned int index = var2pos[vname]
+        if self.last_upst is NULL:
+            return self.initialfix[vname]
+        else:
+            return self.last_upst.minuitParameters()[index].isFixed()
 
     def scan(self):
+        #anyone actually use this?
         raise NotImplementedError
 
 
     def contour(self):
+        #and this?
         raise NotImplementedError
 
     #TODO: Modularize this
     #######Terminal Display Stuff######################
     #This is 2012 USE IPYTHON PEOPLE!!! :P
     def print_cfmin(self,tolerance):
-        cdef MnUserParameterState ust = MnUserParameterState(self.cfmin.userState())
+        cdef MnUserParameterState ust = MnUserParameterState(
+                                        self.cfmin.userState())
         ncalls = 0 if self.pyfcn is NULL else self.pyfcn.getNumCall()
         fmin = cfmin2struct(self.cfmin)
         print '*'*30
@@ -395,18 +484,37 @@ cdef class Minuit:
         summary = 'Minos Status for %s: %s\n'%\
                 (vname,stat)
 
-        error = '| {:^15s} | {: >12g} | {: >12g} |\n'\
-                .format('Error',smnerr.lower,smnerr.upper)
-        valid = '| {:^15s} | {:^12s} | {:^12s} |\n'\
-                .format('Valid',str(smnerr.lower_valid),str(smnerr.upper_valid))
-        at_limit='| {:^15s} | {:^12s} | {:^12s} |\n'\
-                .format('At Limit',str(smnerr.at_lower_limit),str(smnerr.at_upper_limit))
-        max_fcn='| {:^15s} | {:^12s} | {:^12s} |\n'\
-                .format('Max FCN',str(smnerr.at_lower_max_fcn),str(smnerr.at_upper_max_fcn))
-        new_min='| {:^15s} | {:^12s} | {:^12s} |\n'\
-                .format('New Min',str(smnerr.lower_new_min),str(smnerr.upper_new_min))
+        error = '| {:^15s} | {: >12g} | {: >12g} |\n'.format(
+                    'Error',
+                    smnerr.
+                    lower,
+                    smnerr.upper)
+        valid = '| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+                    'Valid',
+                    str(smnerr.lower_valid),
+                    str(smnerr.upper_valid))
+        at_limit='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+                    'At Limit',
+                    str(smnerr.at_lower_limit),
+                    str(smnerr.at_upper_limit))
+        max_fcn='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+                    'Max FCN',
+                    str(smnerr.at_lower_max_fcn),
+                    str(smnerr.at_upper_max_fcn))
+        new_min='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+                    'New Min',
+                    str(smnerr.lower_new_min),
+                    str(smnerr.upper_new_min))
         hline = '-'*len(error)+'\n'
-        print hline + summary +hline + error + valid + at_limit + max_fcn + new_min + hline
+        print hline +\
+              summary +\
+              hline +\
+              error +\
+              valid +\
+              at_limit +\
+              max_fcn +\
+              new_min +\
+              hline
 
 
     cdef print_state(self,MnUserParameterState upst):
@@ -423,10 +531,18 @@ cdef class Minuit:
             values.append(mps[i].value())
             errs.append(mps[i].error())
             fixstate.append(mps[i].isFixed())
-            lim_plus.append(mps[i].upperLimit() if mps[i].hasUpperLimit() else None)
-            lim_minus.append(mps[i].lowerLimit() if mps[i].hasLowerLimit() else None)
+            lim_plus.append(
+                mps[i].upperLimit() if mps[i].hasUpperLimit() else None)
+            lim_minus.append(
+                mps[i].lowerLimit() if mps[i].hasLowerLimit() else None)
 
-        self.print_state_template(vnames, values, errs, lim_minus = lim_minus, lim_plus = lim_plus, fixstate = fixstate)
+        self.print_state_template(
+                vnames,
+                values,
+                errs,
+                lim_minus = lim_minus,
+                lim_plus = lim_plus,
+                fixstate = fixstate)
 
 
     def print_initial_state(self):
@@ -439,15 +555,34 @@ cdef class Minuit:
         #despite what the doc said the code is actually 1e-4
         #http://wwwasdoc.web.cern.ch/wwwasdoc/hbook_html3/node125.html
         flatlocal = dict(locals().items()+fmin.__dict__.items())
-        info1 = 'fval = %(fval)r | nfcn = %(nfcn)r | ncalls = %(ncalls)r\n'%flatlocal
+        info1 = 'fval = %(fval)r | nfcn = %(nfcn)r | ncalls = %(ncalls)r\n'%\
+                flatlocal
         info2 = 'edm = %(edm)r (Goal: %(goaledm)r) | up = %(up)r\n'%flatlocal
-        header1 = '|' + (' %14s |'*5)%('Valid','Valid Param','Accurate Covar','Posdef','Made Posdef')+'\n'
+        header1 = '|' + (' %14s |'*5)%(
+                    'Valid',
+                    'Valid Param',
+                    'Accurate Covar',
+                    'Posdef',
+                    'Made Posdef')+'\n'
         hline = '-'*len(header1)+'\n'
-        status1 = '|' + (' %14r |'*5)%(fmin.is_valid, fmin.has_valid_parameters,
-                fmin.has_accurate_covar,fmin.has_posdef_covar,fmin.has_made_posdef_covar)+'\n'
-        header2 = '|' + (' %14s |'*5)%('Hesse Fail','Has Cov','Above EDM','','Reach calllim')+'\n'
-        status2 = '|' + (' %14r |'*5)%(fmin.hesse_failed, fmin.has_covariance,
-                fmin.is_above_max_edm,'',fmin.has_reached_call_limit)+'\n'
+        status1 = '|' + (' %14r |'*5)%(
+                    fmin.is_valid,
+                    fmin.has_valid_parameters,
+                    fmin.has_accurate_covar,
+                    fmin.has_posdef_covar,
+                    fmin.has_made_posdef_covar)+'\n'
+        header2 = '|' + (' %14s |'*5)%(
+                    'Hesse Fail',
+                    'Has Cov',
+                    'Above EDM',
+                    '',
+                    'Reach calllim')+'\n'
+        status2 = '|' + (' %14r |'*5)%(
+                    fmin.hesse_failed,
+                    fmin.has_covariance,
+                    fmin.is_above_max_edm,
+                    '',
+                    fmin.has_reached_call_limit)+'\n'
 
         print hline + info1 + info2 +\
             hline + header1 + hline + status1 +\
@@ -455,14 +590,16 @@ cdef class Minuit:
             hline
 
 
-    def print_state_template(self,vnames, values, errs, minos_minus=None, minos_plus=None,
+    def print_state_template(self,vnames, values, errs, 
+            minos_minus=None, minos_plus=None,
             lim_minus=None, lim_plus=None, fixstate=None):
         #for anyone using terminal
         maxlength = max([len(x) for x in vnames])
         maxlength = max(5,maxlength)
 
-        header = ('| {:^4s} | {:^%ds} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} |\n'%maxlength).format(
-                    '','Name', 'Value','Para Err', "Err-","Err+","Limit-","Limit+"," ")
+        header = ('| {:^4s} | {:^%ds} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} |\n'%maxlength)\
+                .format(
+                '','Name', 'Value','Para Err', "Err-","Err+","Limit-","Limit+"," ")
         hline = '-'*len(header)+'\n'
         linefmt = '| {:>4d} | {:>%ds} = {:<8s} ± {:<8s} | {:<8s} | {:<8s} | {:<8s} | {:<8s} | {:^8s} |\n'%maxlength
         nfmt = '{:< 8.4G}'
@@ -498,31 +635,13 @@ cdef class Minuit:
             if vname in self.merrors_struct:
                 self.print_mnerror(vname,self.merrors_struct[vname])
 
-    # def prepare(self, **kwds):
-    #     self.tmin.SetFCN(self.fcn)
-    #     self.fix_param = []
-    #     self.free_param = []
-    #     for i, varname in self.pos2var.items():
-    #         initialvalue = kwds[varname] if varname in kwds else 0.
-    #         initialstep = kwds['error_' + varname] if 'error_' + varname in kwds else 0.1
-    #         lrange, urange = kwds['limit_' + varname] if 'limit_' + varname in kwds else (0., 0.)
-    #         ierflg = self.tmin.DefineParameter(i, varname, initialvalue, initialstep, lrange, urange)
-    #         assert(ierflg == 0)
-    #         #now fix parameter
-    #     for varname in self.varname:
-    #         if 'fix_' + varname in kwds and kwds['fix_'+varname]:
-    #             self.tmin.FixParameter(self.var2pos[varname])
-    #             self.fix_param.append(varname)
-    #         else:
-    #             self.free_param.append(varname)
-
 
     def set_up(self, up):
         """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
         self.up = up
 
 
-    # def set_printlevel(self, lvl):
+    # def set_print_mode(self, lvl):
     #     """
     #     set printlevel -1 quiet, 0 normal, 1 verbose
     #     """
