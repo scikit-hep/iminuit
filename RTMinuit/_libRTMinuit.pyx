@@ -394,8 +394,7 @@ cdef class Minuit:
         del hesse
 
 
-    def minos(self, var = None, sigma = 1,
-                unsigned int maxcall=1000):
+    def minos(self, var = None, sigma = 1, unsigned int maxcall=1000):
         """
         run minos for paramter *var* n *sigma* uncertainty.
         If *var* is None it runs minos for all parameters
@@ -419,8 +418,8 @@ cdef class Minuit:
                 index = self.cfmin.userState().index(vname)
                 if self.cfmin.userState().minuitParameters()[index].isFixed():
                     continue
-                minos = \
-                    new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
+                minos = new MnMinos(deref(
+                    self.pyfcn), deref(self.cfmin),self.strategy)
                 mnerror = minos.minos(index,maxcall)
                 self.merrors_struct[vname]=minoserror2struct(mnerror)
                 self.print_mnerror(vname,self.merrors_struct[vname])
@@ -434,13 +433,22 @@ cdef class Minuit:
         if self.last_upst is NULL:
             raise RuntimeError("Run migrad/hesse first")
         cdef MnUserCovariance cov = self.last_upst.covariance()
-        ret = tuple(
-                tuple(cov.get(iv1,iv2)
-                    for iv1,v1 in self.parameters \
+        if correlation:
+            ret = tuple(
+                tuple(cov.get(iv1,iv2)/sqrt(cov.get(iv1,iv1)*cov.get(iv2,iv2))
+                    for iv1,v1 in enumerate(self.parameters)\
                         if not skip_fixed or self.is_fixed(v1))
                     for iv2,v2 in enumerate(self.parameters) \
                         if not skip_fixed or self.is_fixed(v2)
                 )
+        else:
+            ret = tuple(
+                    tuple(cov.get(iv1,iv2)
+                        for iv1,v1 in enumerate(self.parameters)\
+                            if not skip_fixed or self.is_fixed(v1))
+                        for iv2,v2 in enumerate(self.parameters) \
+                            if not skip_fixed or self.is_fixed(v2)
+                    )
         return ret
 
 
