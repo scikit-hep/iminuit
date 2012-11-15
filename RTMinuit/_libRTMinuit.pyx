@@ -1,3 +1,4 @@
+#cython: embedsignature=True
 __all__ = ['Minuit']
 from libcpp.vector cimport vector
 from libcpp.string cimport string
@@ -8,7 +9,9 @@ from warnings import warn
 from cython.operator cimport dereference as deref
 from libc.math cimport sqrt
 from pprint import pprint
+from ConsoleFrontend import ConsoleFrontend
 include "Lcg_Minuit.pxi"
+include "Minuit2Struct.pxi"
 
 #our wrapper
 cdef extern from "PythonFCN.h":
@@ -21,87 +24,23 @@ cdef extern from "PythonFCN.h":
         double call "operator()" (vector[double] x) except +#raise_py_err
         double up()
         int getNumCall()
+        void set_up(double up)
         void resetNumCall()
+
 
 #look up map with default
 cdef maplookup(m,k,d):
     return m[k] if k in m else d
 
 
-cdef cfmin2struct(FunctionMinimum* cfmin):
-    cfmin_struct = Struct(
-            fval = cfmin.fval(),
-            edm = cfmin.edm(),
-            nfcn = cfmin.nfcn(),
-            up = cfmin.up(),
-            is_valid = cfmin.isValid(),
-            has_valid_parameters = cfmin.hasValidParameters(),
-            has_accurate_covar = cfmin.hasAccurateCovar(),
-            has_posdef_covar = cfmin.hasPosDefCovar(),
-            #forced to be posdef
-            has_made_posdef_covar = cfmin.hasMadePosDefCovar(),
-            hesse_failed = cfmin.hesseFailed(),
-            has_covariance = cfmin.hasCovariance(),
-            is_above_max_edm = cfmin.isAboveMaxEdm(),
-            has_reached_call_limit = cfmin.hasReachedCallLimit()
-        )
-    return cfmin_struct
-
-cdef minuitparam2struct(MinuitParameter* mp):
-    ret = Struct(
-            number = mp.number(),
-            naem = mp.name(),
-            value = mp.value(),
-            error = mp.error(),
-            is_const = mp.isConst(),
-            is_fixed = mp.isFixed(),
-            has_limits = mp.hasLimits(),
-            has_lower_limit = mp.hasLowerLimit(),
-            has_upper_limit = mp.hasUpperLimit(),
-            lower_limit = mp.lowerLimit(),
-            upper_limit = mp.upperLimit(),
-        )
-    return ret
-
-cdef cfmin2covariance(FunctionMinimum cfmin, int n):
-    #not depending on numpy on purpose
-    #cdef int n = cfmin.userState().params.size()
-    return [[cfmin.userCovariance().get(i,j) \
-        for i in range(n)] for j in range(n)]
-
-
-cdef cfmin2correlation(FunctionMinimum cfmin, int n):
-    #cdef int n = cfmin.userState().params.size()
-    #not depending on numpy on purpose
-    return [[cfmin.userCovariance().get(i,j)/\
-        sqrt(cfmin.userCovariance().get(i,i))/\
-        sqrt(cfmin.userCovariance().get(j,j)) \
-        for i in range(n)] for j in range(n)]
-
-cdef minoserror2struct(MinosError m):
-        ret = Struct(
-            lower = m.lower(),
-            upper = m.upper(),
-            is_valid = m.isValid(),
-            lower_valid = m.lowerValid(),
-            upper_valid = m.upperValid(),
-            at_lower_limit = m.atLowerLimit(),
-            at_upper_limit = m.atUpperLimit(),
-            at_lower_max_fcn = m.atLowerMaxFcn(),
-            at_upper_max_fcn = m.atUpperMaxFcn(),
-            lower_new_min = m.lowerNewMin(),
-            upper_new_min = m.upperNewMin(),
-            nfcn = m.nfcn(),
-            min = m.min()
-            )
-        return ret
-
-
 cdef class Minuit:
     #standard stuff
+
     cdef readonly object fcn #:fcn
     #cdef readonly object varname #:variable names
+    """this should work"""
     cdef readonly object pos2var#:map variable position to varname
+    """or this should work"""
     cdef readonly object var2pos#:map varname to position
 
     #Initial settings
@@ -155,19 +94,20 @@ cdef class Minuit:
     cdef readonly object narg#: number of arguments
     #: map vname-> struct with various minos error calcumation information
     cdef public object merrors_struct
-    cdef public object printer
+    cdef public object frontend
 
     def __init__(self, fcn,
             throw_nan=False,  pedantic=True,
-            printMode=0, printer=None, **kwds):
-        """
-        construct minuit object
+            frontend=None, forced_parameters=None, printMode=1, **kwds):
+        """construct minuit object
         arguments of f are pased automatically by the following order
         1) using f.func_code.co_varnames,f.func_code.co_argcount
         (all python function has this)
         2) using f.__call__.func_code.co_varnames, f.__call__.co_argcount
         (with self docked off)
         3) using inspect.getargspec(for some rare builtin function)
+        *forced_parameters*: ignore all the auto argument discovery
+        mechanism and use this given list of parameter names
 
         user can set limit on paramater by passing
         limit_<varname>=(min,max) keyword argument
@@ -182,9 +122,12 @@ cdef class Minuit:
         printing value and argument for every function call
         """
 
-        args = better_arg_spec(fcn)
+        args = better_arg_spec(fcn) if forced_parameters is None\
+               else forced_parameters
         narg = len(args)
         self.fcn = fcn
+
+        self.frontend = self.auto_frontend() if frontend is None else frontend
 
         #maintain 2 dictionary 1 is position to varname
         #and varname to position
@@ -239,6 +182,341 @@ cdef class Minuit:
         self.merrors_struct = {}
 
 
+    def auto_frontend(self):
+        """determine front end automatically.
+        If this session is an IPYTHON session then use Html frontend,
+        Console Frontend otherwise.
+        """
+        try:
+            __IPYTHON__
+            from HtmlFrontend import HtmlFrontend
+            return HtmlFrontend()
+        except NameError:
+            return ConsoleFrontend()
+
+
+    def migrad(self,int ncall=1000,resume=True, forced_parameters=None):
+        """run migrad, the age-tested(over 40 years old, no kidding), super
+        robust and stable minimization algorithm.
+        You can read how it does the magic at
+        `here <http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/minmain.html>`_.
+
+        Arguments:
+
+            *ncall*: integer (approximate) maximum number of call before
+            migrad stop trying. Default 1000
+
+            *resume*: boolean indicating whether migrad should start from
+            previous minimizer attempt(True) or should start from the
+            beginning(False). Default False.
+
+        Return:
+
+            FunctionMinum Struct, list of parameter states -- DOCUMENT THIS
+        """
+        #construct new fcn and migrad if
+        #it's a clean state or resume=False
+        cdef MnUserParameterState* ups = NULL
+        cdef MnStrategy* strat = NULL
+
+        if self.printMode>0: self.frontend.print_banner('MIGRAD')
+
+        if not resume or self.is_clean_state():
+            self.construct_FCN()
+            if self.minimizer is not NULL: del self.minimizer
+            ups = self.initialParameterState()
+            strat = new MnStrategy(self.strategy)
+            self.minimizer = \
+                    new MnMigrad(deref(self.pyfcn),deref(ups),deref(strat))
+            del ups; ups=NULL
+            del strat; strat=NULL
+
+        if not resume: self.pyfcn.resetNumCall()
+
+        del self.cfmin #remove the old one
+
+        #this returns a real object need to copy
+        self.cfmin = call_mnapplication_wrapper(
+                deref(self.minimizer),ncall,self.tol)
+
+        del self.last_upst
+
+        self.last_upst = new MnUserParameterState(self.cfmin.userState())
+        self.refreshInternalState()
+
+        if self.printMode>0: self.print_fmin()
+
+        return self.get_fmin(), self.get_param_states()
+
+
+    def hesse(self):
+        """run HESSE.
+        HESSE estimate error by the second derivative at the minimim.
+
+        return list of MinuitParameter struct
+        """
+
+        cdef MnHesse* hesse = NULL
+        cdef MnUserParameterState upst
+        if self.printMode>1: self.frontend.print_banner('HESSE')
+        if self.cfmin is NULL:
+            raise RuntimeError('Run migrad first')
+        hesse = new MnHesse(self.strategy)
+        upst = hesse.call(deref(self.pyfcn),self.cfmin.userState())
+
+        del self.last_upst
+        self.last_upst = new MnUserParameterState(upst)
+        self.refreshInternalState()
+        del hesse
+        if self.printMode>1: self.print_param()
+        return self.get_param_states()
+
+
+    def minos(self, var = None, sigma = None, unsigned int maxcall=1000):
+        """run minos for paramter *var* n *sigma* uncertainty.
+        If *var* is None it runs minos for all parameters
+
+        return dictionary of varname to minos struct if minos is requested
+        for all parameters. If minos is requested only for one parameter,
+        minos error struct is returned.
+        """
+        cdef unsigned int index = 0
+        cdef MnMinos* minos = NULL
+        cdef MinosError mnerror
+        cdef char* name = NULL
+        if self.printMode>0: self.frontend.print_banner('MINOS')
+        if sigma is not None:
+            raise RuntimeError(
+                'sigma is deprecated use set_up(up*sigma*sigma) instead')
+        if not self.cfmin.isValid():
+            raise RuntimeError(('Function mimimum is not valid. Make sure'
+                ' migrad converge first'))
+        ret = None
+        if var is not None:
+            name = var
+            index = self.cfmin.userState().index(var)
+            if self.cfmin.userState().minuitParameters()[i].isFixed():
+                return None
+            minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
+            mnerror = minos.minos(index,maxcall)
+            ret = minoserror2struct(mnerror)
+            self.merrors_struct[var]=ret
+            if self.printMode>0:
+                self.frontend.print_merror(var,self.merrors_struct[var])
+        else:
+            for vname in self.parameters:
+                index = self.cfmin.userState().index(vname)
+                if self.cfmin.userState().minuitParameters()[index].isFixed():
+                    continue
+                minos = new MnMinos(deref(
+                    self.pyfcn), deref(self.cfmin),self.strategy)
+                mnerror = minos.minos(index,maxcall)
+                self.merrors_struct[vname]=minoserror2struct(mnerror)
+                if self.printMode>0:
+                    self.frontend.print_merror(
+                        vname,self.merrors_struct[vname])
+        self.refreshInternalState()
+        del minos
+
+        return self.merrors_struct if ret is None else ret
+
+
+    def matrix(self, correlation=False, skip_fixed=False):
+        """return error/correlation matrix in tuple or tuple format."""
+        if self.last_upst is NULL:
+            raise RuntimeError("Run migrad/hesse first")
+        cdef MnUserCovariance cov = self.last_upst.covariance()
+        if correlation:
+            ret = tuple(
+                tuple(cov.get(iv1,iv2)/sqrt(cov.get(iv1,iv1)*cov.get(iv2,iv2))
+                    for iv1,v1 in enumerate(self.parameters)\
+                        if not skip_fixed or not self.is_fixed(v1))
+                    for iv2,v2 in enumerate(self.parameters) \
+                        if not skip_fixed or not self.is_fixed(v2)
+                )
+        else:
+            ret = tuple(
+                    tuple(cov.get(iv1,iv2)
+                        for iv1,v1 in enumerate(self.parameters)\
+                            if not skip_fixed or not self.is_fixed(v1))
+                        for iv2,v2 in enumerate(self.parameters) \
+                            if not skip_fixed or not self.is_fixed(v2)
+                    )
+        return ret
+
+
+    def print_matrix(self):
+        matrix = self.matrix(correlation=True, skip_fixed=True)
+        vnames = self.list_of_vary_param()
+        self.frontend.print_matrix(vnames, matrix)
+
+
+    def np_matrix(self, correlation=False, skip_fixed=False):
+        """return error/correlation matrix in numpy array format."""
+        import numpy as np
+        #TODO make a not so lazy one
+        return np.array(matrix)
+
+
+    # def error_matrix(self, correlation=False):
+    #     ndim = self.mnstat().npari
+    #     #void mnemat(Double_t* emat, Int_t ndim)
+    #     tmp = array('d', [0.] * (ndim * ndim))
+    #     self.tmin.mnemat(tmp, ndim)
+    #     ret = np.array(tmp)
+    #     ret = ret.reshape((ndim, ndim))
+    #     if correlation:
+    #         diag = np.diagonal(ret)
+    #         sigma_col = np.sqrt(diag[:, np.newaxis])
+    #         sigma_row = sigma_col.T
+    #         ret = ret / sigma_col / sigma_row
+    #     return ret
+
+
+    def is_fixed(self,vname):
+        """check if variable *vname* is (initialy) fixed"""
+        if vname not in self.parameters:
+            raise RuntimeError('Cannot find %s in list of variables.')
+        cdef unsigned int index = self.var2pos[vname]
+        if self.last_upst is NULL:
+            return self.initialfix[vname]
+        else:
+            return self.last_upst.minuitParameters()[index].isFixed()
+
+
+    def scan(self):
+        """NOT IMPLEMENTED"""
+        #anyone actually use this?
+        raise NotImplementedError
+
+
+    def contour(self):
+        """NOT IMPLEMENTED"""
+        #and this?
+        raise NotImplementedError
+
+
+    #dealing with frontend conversion
+    def print_param(self):
+        """print current parameter state"""
+        if self.last_upst is NULL:
+            self.print_initial_param()
+        cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
+        cdef int i
+        tmp = []
+        for i in range(vmps.size()):
+            tmp.append(minuitparam2struct(vmps[i]))
+        self.frontend.print_param(tmp, self.merrors_struct)
+
+
+    def print_initial_param(self):
+        """Print initial parameters"""
+        raise NotImplementedError
+
+
+    def print_fmin(self):
+        """print current function minimum state"""
+        #cdef MnUserParameterState ust = MnUserParameterState(
+        #                               self.cfmin.userState())
+        sfmin = cfmin2struct(self.cfmin)
+        ncalls = 0 if self.pyfcn is NULL else self.pyfcn.getNumCall()
+
+        self.frontend.print_hline()
+        self.frontend.print_fmin(sfmin,self.tol,ncalls)
+        self.print_param()
+        self.frontend.print_hline()
+
+
+
+    def print_all_minos(self):
+        """print all minos errors(and its states)"""
+        for vname in varnames:
+            if vname in self.merrors_struct:
+                self.frontend.print_mnerror(vname,self.merrors_struct[vname])
+
+
+    def set_up(self, double up):
+        """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
+        self.up = up
+        if self.pyfcn is not NULL:
+            self.pyfcn.set_up(up)
+
+
+    def set_strategy(self,stra):
+        """set strategy 0=fast , 1=default, 2=slow but accurate"""
+        self.strategy=stra
+
+
+    def set_print_mode(self, lvl):
+        """set printlevel 0 quiet, 1 normal, 2 paranoid, 3 really paranoid """
+        self.printMode = lvl
+
+
+    def get_fmin(self):
+        """return current FunctionMinimum Struct"""
+        return cfmin2struct(self.cfmin) if self.cfmin is not NULL else None
+
+
+    #expose internal state using various struct
+    def get_param_states(self):
+        """Return a list of current MinuitParameter Struct
+        for all parameters
+        """
+        if self.last_upst is NULL:
+            return self.get_initial_param_state()
+        cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
+        cdef int i
+        ret = []
+        for i in range(vmps.size()):
+            ret.append(minuitparam2struct(vmps[i]))
+        return ret
+
+
+    def get_merrors(self):
+        """Returns a dictionary of varname-> MinosError Struct"""
+        return self.merrors_struct
+
+
+    def get_initial_param_state(self):
+        """get initiail setting inform of MinuitParameter Struct"""
+        raise NotImplementedError
+
+
+    def get_num_call_fcn(self):
+        """return number of total call to fcn(not just the last operation)"""
+        return 0 if self.pyfcn is NULL else self.pyfcn.getNumCall()
+
+
+    def migrad_ok(self):
+        """check if minimum is valid"""
+        return self.cfmin is not NULL and self.fmin.isValid()
+
+
+    def matrix_acurate(self):
+        """check if covariance is accurate"""
+        return self.last_upst is not NULL and self.last_upst.hasCovariance()
+
+    #html* function has to go away
+    def html_results(self):
+        """show result in html form"""
+        return MinuitHTMLResult(self)
+
+
+    def html_error_matrix(self):
+        """show error matrix in html form"""
+        return MinuitCorrelationMatrixHTML(self)
+
+
+    def list_of_fixed_param(self):
+        """return list of (initially) fixed parameters"""
+        return [v for v in self.parameters if self.initialfix[v]]
+
+
+    def list_of_vary_param(self):
+        """return list of (initially) float vary parameters"""
+        return [v for v in self.parameters if not self.initialfix[v]]
+
+    #Various utility functions
     cdef construct_FCN(self):
         """(re)construct FCN"""
         del self.pyfcn
@@ -290,8 +568,7 @@ cdef class Minuit:
 
 
     cdef refreshInternalState(self):
-        """
-        refresh internal state attributes.
+        """refresh internal state attributes.
         These attributes should be in a function instead
         but kept here for PyMinuit compatiblity
         """
@@ -324,9 +601,8 @@ cdef class Minuit:
 
 
     cdef MnUserParameterState* initialParameterState(self):
-        """
-        construct parameter state from initial array.
-        caller is responsible for cleaning up the pointer 
+        """construct parameter state from initial array.
+        caller is responsible for cleaning up the pointer
         """
         cdef MnUserParameterState* ret = new MnUserParameterState()
         cdef double lb
@@ -341,381 +617,3 @@ cdef class Minuit:
             if self.initialfix[v]:
                 ret.fix(v)
         return ret
-
-
-    def migrad(self,int ncall=1000,resume=True,double tolerance=0.1,
-            print_interval=100, print_at_the_end=True):
-        """
-        run migrad, the age-tested(stable over 20 years old),
-        super robust minizer.
-        """
-        #construct new fcn and migrad if
-        #it's a clean state or resume=False
-        cdef MnUserParameterState* ups = NULL
-        cdef MnStrategy* strat = NULL
-        self.print_banner('MIGRAD')
-        if not resume or self.is_clean_state():
-            self.construct_FCN()
-            if self.minimizer is not NULL: del self.minimizer
-            ups = self.initialParameterState()
-            strat = new MnStrategy(self.strategy)
-            self.minimizer = \
-                    new MnMigrad(deref(self.pyfcn),deref(ups),deref(strat))
-            del ups; ups=NULL
-            del strat; strat=NULL
-
-        del self.cfmin #remove the old one
-        #this returns a real object need to copy
-        self.cfmin = call_mnapplication_wrapper(
-                deref(self.minimizer),ncall,tolerance)
-        del self.last_upst
-        self.last_upst = new MnUserParameterState(self.cfmin.userState())
-        self.refreshInternalState()
-        if print_at_the_end: self.print_cfmin(tolerance)
-
-
-    def hesse(self):
-        """
-        run HESSE.
-        HESSE estimate error by the second derivative at the minimim.
-        """
-
-        cdef MnHesse* hesse = NULL
-        cdef MnUserParameterState upst
-        self.print_banner('HESSE')
-        #if self.cfmin is NULL:
-            #raise RuntimeError('Run migrad first')
-        hesse = new MnHesse(self.strategy)
-        upst = hesse.call(deref(self.pyfcn),self.cfmin.userState())
-
-        del self.last_upst
-        self.last_upst = new MnUserParameterState(upst)
-        self.refreshInternalState()
-        del hesse
-
-
-    def minos(self, var = None, sigma = 1, unsigned int maxcall=1000):
-        """
-        run minos for paramter *var* n *sigma* uncertainty.
-        If *var* is None it runs minos for all parameters
-        """
-        cdef unsigned int index = 0
-        cdef MnMinos* minos = NULL
-        cdef MinosError mnerror
-        cdef char* name = NULL
-        self.print_banner('MINOS')
-        if var is not None:
-            name = var
-            index = self.cfmin.userState().index(var)
-            if self.cfmin.userState().minuitParameters()[i].isFixed():
-                return None
-            minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
-            mnerror = minos.minos(index,maxcall)
-            self.merrors_struct[var]=minoserror2struct(mnerror)
-            self.print_mnerror(var,self.merrors_struct[var])
-        else:
-            for vname in self.parameters:
-                index = self.cfmin.userState().index(vname)
-                if self.cfmin.userState().minuitParameters()[index].isFixed():
-                    continue
-                minos = new MnMinos(deref(
-                    self.pyfcn), deref(self.cfmin),self.strategy)
-                mnerror = minos.minos(index,maxcall)
-                self.merrors_struct[vname]=minoserror2struct(mnerror)
-                self.print_mnerror(vname,self.merrors_struct[vname])
-        self.refreshInternalState()
-        del minos
-        return self.merrors_struct
-
-
-    def matrix(self, correlation=False, skip_fixed=False):
-        """return error/correlation matrix in tuple or tuple format."""
-        if self.last_upst is NULL:
-            raise RuntimeError("Run migrad/hesse first")
-        cdef MnUserCovariance cov = self.last_upst.covariance()
-        if correlation:
-            ret = tuple(
-                tuple(cov.get(iv1,iv2)/sqrt(cov.get(iv1,iv1)*cov.get(iv2,iv2))
-                    for iv1,v1 in enumerate(self.parameters)\
-                        if not skip_fixed or self.is_fixed(v1))
-                    for iv2,v2 in enumerate(self.parameters) \
-                        if not skip_fixed or self.is_fixed(v2)
-                )
-        else:
-            ret = tuple(
-                    tuple(cov.get(iv1,iv2)
-                        for iv1,v1 in enumerate(self.parameters)\
-                            if not skip_fixed or self.is_fixed(v1))
-                        for iv2,v2 in enumerate(self.parameters) \
-                            if not skip_fixed or self.is_fixed(v2)
-                    )
-        return ret
-
-
-    def np_matrix(self, correlation=False, skip_fixed=False):
-        """return error/correlation matrix in numpy array format."""
-        import numpy as np
-        #TODO make a not so lazy one
-        return np.array(matrix)
-
-    # def error_matrix(self, correlation=False):
-    #     ndim = self.mnstat().npari
-    #     #void mnemat(Double_t* emat, Int_t ndim)
-    #     tmp = array('d', [0.] * (ndim * ndim))
-    #     self.tmin.mnemat(tmp, ndim)
-    #     ret = np.array(tmp)
-    #     ret = ret.reshape((ndim, ndim))
-    #     if correlation:
-    #         diag = np.diagonal(ret)
-    #         sigma_col = np.sqrt(diag[:, np.newaxis])
-    #         sigma_row = sigma_col.T
-    #         ret = ret / sigma_col / sigma_row
-    #     return ret
-
-    # def minos_errors(self):
-    #     ret = {}
-    #     self.tmin.SetFCN(self.fcn)
-    #     for i, v in self.pos2var.items():
-    #         eplus = ROOT.Double(0.)
-    #         eminus = ROOT.Double(0.)
-    #         eparab = ROOT.Double(0.)
-    #         gcc = ROOT.Double(0.)
-    #         self.tmin.mnerrs(i, eplus, eminus, eparab, gcc)
-    #         #void mnerrs(Int_t number, Double_t& eplus, Double_t& eminus, Double_t& eparab, Double_t& gcc)
-    #         ret[v] = Struct(eplus=float(eplus), eminus=float(eminus), eparab=float(eparab), gcc=float(gcc))
-    #     return ret
-
-    def is_fixed(self,vname):
-        if vname not in self.parameters:
-            raise RuntimeError('Cannot find %s in list of variables.')
-        cdef unsigned int index = var2pos[vname]
-        if self.last_upst is NULL:
-            return self.initialfix[vname]
-        else:
-            return self.last_upst.minuitParameters()[index].isFixed()
-
-
-    def scan(self):
-        #anyone actually use this?
-        raise NotImplementedError
-
-
-    def contour(self):
-        #and this?
-        raise NotImplementedError
-
-    #TODO: Modularize this
-    #######Terminal Display Stuff######################
-    #This is 2012 USE IPYTHON PEOPLE!!! :P
-    def print_cfmin(self,tolerance):
-        cdef MnUserParameterState ust = MnUserParameterState(
-                                        self.cfmin.userState())
-        ncalls = 0 if self.pyfcn is NULL else self.pyfcn.getNumCall()
-        fmin = cfmin2struct(self.cfmin)
-        print '*'*30
-        self.print_cfmin_only(tolerance,ncalls)
-        self.print_state(ust)
-        print '*'*30
-
-
-    def print_mnerror(self,vname,smnerr):
-        stat = 'VALID' if smnerr.is_valid else 'PROBLEM'
-
-        summary = 'Minos Status for %s: %s\n'%\
-                (vname,stat)
-
-        error = '| {:^15s} | {: >12g} | {: >12g} |\n'.format(
-                    'Error',
-                    smnerr.
-                    lower,
-                    smnerr.upper)
-        valid = '| {:^15s} | {:^12s} | {:^12s} |\n'.format(
-                    'Valid',
-                    str(smnerr.lower_valid),
-                    str(smnerr.upper_valid))
-        at_limit='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
-                    'At Limit',
-                    str(smnerr.at_lower_limit),
-                    str(smnerr.at_upper_limit))
-        max_fcn='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
-                    'Max FCN',
-                    str(smnerr.at_lower_max_fcn),
-                    str(smnerr.at_upper_max_fcn))
-        new_min='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
-                    'New Min',
-                    str(smnerr.lower_new_min),
-                    str(smnerr.upper_new_min))
-        hline = '-'*len(error)+'\n'
-        print hline +\
-              summary +\
-              hline +\
-              error +\
-              valid +\
-              at_limit +\
-              max_fcn +\
-              new_min +\
-              hline
-
-
-    cdef print_state(self,MnUserParameterState upst):
-        cdef vector[MinuitParameter] mps = upst.minuitParameters()
-        cdef int i
-        vnames=list()
-        values=list()
-        errs=list()
-        lim_minus = list()
-        lim_plus = list()
-        fixstate = list()
-        for i in range(mps.size()):
-            vnames.append(mps[i].name())
-            values.append(mps[i].value())
-            errs.append(mps[i].error())
-            fixstate.append(mps[i].isFixed())
-            lim_plus.append(
-                mps[i].upperLimit() if mps[i].hasUpperLimit() else None)
-            lim_minus.append(
-                mps[i].lowerLimit() if mps[i].hasLowerLimit() else None)
-
-        self.print_state_template(
-                vnames,
-                values,
-                errs,
-                lim_minus = lim_minus,
-                lim_plus = lim_plus,
-                fixstate = fixstate)
-
-
-    def print_initial_state(self):
-        raise NotImplementedError
-
-
-    def print_cfmin_only(self,tolerance=None, ncalls = 0):
-        fmin = cfmin2struct(self.cfmin)
-        goaledm = 0.0001*tolerance*fmin.up if tolerance is not None else ''
-        #despite what the doc said the code is actually 1e-4
-        #http://wwwasdoc.web.cern.ch/wwwasdoc/hbook_html3/node125.html
-        flatlocal = dict(locals().items()+fmin.__dict__.items())
-        info1 = 'fval = %(fval)r | nfcn = %(nfcn)r | ncalls = %(ncalls)r\n'%\
-                flatlocal
-        info2 = 'edm = %(edm)r (Goal: %(goaledm)r) | up = %(up)r\n'%flatlocal
-        header1 = '|' + (' %14s |'*5)%(
-                    'Valid',
-                    'Valid Param',
-                    'Accurate Covar',
-                    'Posdef',
-                    'Made Posdef')+'\n'
-        hline = '-'*len(header1)+'\n'
-        status1 = '|' + (' %14r |'*5)%(
-                    fmin.is_valid,
-                    fmin.has_valid_parameters,
-                    fmin.has_accurate_covar,
-                    fmin.has_posdef_covar,
-                    fmin.has_made_posdef_covar)+'\n'
-        header2 = '|' + (' %14s |'*5)%(
-                    'Hesse Fail',
-                    'Has Cov',
-                    'Above EDM',
-                    '',
-                    'Reach calllim')+'\n'
-        status2 = '|' + (' %14r |'*5)%(
-                    fmin.hesse_failed,
-                    fmin.has_covariance,
-                    fmin.is_above_max_edm,
-                    '',
-                    fmin.has_reached_call_limit)+'\n'
-
-        print hline + info1 + info2 +\
-            hline + header1 + hline + status1 +\
-            hline + header2 + hline+ status2 +\
-            hline
-
-
-    def print_state_template(self,vnames, values, errs, 
-            minos_minus=None, minos_plus=None,
-            lim_minus=None, lim_plus=None, fixstate=None):
-        #for anyone using terminal
-        maxlength = max([len(x) for x in vnames])
-        maxlength = max(5,maxlength)
-
-        header = ('| {:^4s} | {:^%ds} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} | {:^8s} |\n'%maxlength)\
-                .format(
-                '','Name', 'Value','Para Err', "Err-","Err+","Limit-","Limit+"," ")
-        hline = '-'*len(header)+'\n'
-        linefmt = '| {:>4d} | {:>%ds} = {:<8s} ± {:<8s} | {:<8s} | {:<8s} | {:<8s} | {:<8s} | {:^8s} |\n'%maxlength
-        nfmt = '{:< 8.4G}'
-        blank = ' '*8
-
-        ret = hline+header+hline
-        for i,v in enumerate(vnames):
-            allnum = [i,v]
-            for n in [values,errs,minos_minus,minos_plus,lim_minus,lim_plus]:
-                if n is not None and n[i] is not None:
-                    allnum+=[nfmt.format(n[i])]
-                else:
-                    allnum+=[blank]
-            if fixstate is not None:
-                allnum += ['FIXED' if fixstate[i] else ' ']
-            else:
-                allnum += ['']
-            line = linefmt.format(*allnum)
-            ret+=line
-        ret+=hline
-        print ret
-
-
-    def print_banner(self, cmd):
-        ret = '*'*50+'\n'
-        ret += '*{:^48}*'.format(cmd)+'\n'
-        ret += '*'*50+'\n'
-        print ret
-
-
-    def print_all_minos(self,cmd):
-        for vname in varnames:
-            if vname in self.merrors_struct:
-                self.print_mnerror(vname,self.merrors_struct[vname])
-
-
-    def set_up(self, up):
-        """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
-        self.up = up
-
-
-    def set_strategy(self,stra):
-        """set strategy 0=fast , 1=default, 2=slow but accurate"""
-        self.strategy=stra
-
-
-    def set_print_mode(self, lvl):
-        """set printlevel 0 quiet, 1 normal, 2 paranoid, 3 really paranoid """
-        self.printMode = lvl
-
-
-    def migrad_ok(self):
-        """check if minimum is valid"""
-        return self.cfmin is not NULL and self.fmin.isValid()
-
-
-    def matrix_acurate(self):
-        """check if covariance is accurate"""
-        return self.last_upst is not NULL and self.last_upst.hasCovariance()
-
-
-    def html_results(self):
-        """show result in html form"""
-        return MinuitHTMLResult(self)
-
-
-    def html_error_matrix(self):
-        """show error matrix in html form"""
-        return MinuitCorrelationMatrixHTML(self)
-
-
-    def list_of_fixed_param(self):
-        """return list of (initially) fixed parameters"""
-        return [v for v in self.parameters if self.initialfix[v]]
-
-
-    def list_of_vary_param(self):
-        """return list of (initially) float vary parameters"""
-        return

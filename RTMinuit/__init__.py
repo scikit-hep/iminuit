@@ -1,1 +1,4 @@
-from RTMinuit import *
+__all__ = [
+    'Minuit'
+]
+from _libRTMinuit import *

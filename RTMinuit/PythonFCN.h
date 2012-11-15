@@ -155,5 +155,6 @@ public:
     }
     int getNumCall() const{return *ncall;}
     void resetNumCall(){*ncall = 0;}
+    void set_up(double up){up_parm = up;}
     virtual double up() const{return up_parm;}
 };
