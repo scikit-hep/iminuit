@@ -99,27 +99,83 @@ cdef class Minuit:
     def __init__(self, fcn,
             throw_nan=False,  pedantic=True,
             frontend=None, forced_parameters=None, printMode=1, **kwds):
-        """construct minuit object
-        arguments of f are pased automatically by the following order
-        1) using f.func_code.co_varnames,f.func_code.co_argcount
-        (all python function has this)
-        2) using f.__call__.func_code.co_varnames, f.__call__.co_argcount
-        (with self docked off)
-        3) using inspect.getargspec(for some rare builtin function)
-        *forced_parameters*: ignore all the auto argument discovery
-        mechanism and use this given list of parameter names
+        """
+        Construct minuit object from given *fcn*
 
-        user can set limit on paramater by passing
-        limit_<varname>=(min,max) keyword argument
-        user can set initial value onparameter by passing
-        <varname>=value keyword argument
-        user can fix parameter by doing
-        fix_<varname>=True
-        user can set initial step by passing
-        error_<varname>=initialstep keyword argument
+        **Arguments:**
 
-        if f_verbose is set to True FCN will be built for verbosity
-        printing value and argument for every function call
+            * *fcn*: function to optimized. Minuit automomagically find how to
+              call the function and each parameters. More information about how
+              Minuit detects function signature can be found in
+              :ref:`this section <function-sig-label>`
+
+        **Builtin Keyword Arguments:**
+
+            * *throw_nan*: fcn can be set to raise RuntimeError when it
+              encounters *nan*. (Default False)
+
+            * *pedantic*: warns about parameters that does not have initial
+              value or initial error/stepsize.
+
+            * *frontend*: Minuit frontend. There are two builting frontends.
+
+                1. ConsoleFrontend which is design to print out to terminal.
+
+                2. HtmlFrontend which is designed to give a nice output in
+                   IPython notebook session.
+
+              By Default, Minuit switch to HtmlFrontend automatically if it
+              is called in IPython session. It uses ConsoleFrontend otherwise.
+
+            * *forced_parameters*: tell Minuit not to do function signature
+              detection and use this argument instead. (Default None
+              (automagically detect signature)
+
+            * *printMode*: set the printMode for this Minuit. 0 is quiet.
+              1 print out at the end of migrad/hesse/minos. The reason it
+              has this cAmEl case is to keep it compatible with PyMinuit.
+
+        **Parameter Keyword Arguments:**
+
+            Similar to PyMinuit. RTMinuit allows user to set initial value,
+            initial stepsize/error, limits of parameters and whether
+            parameter should be fixed or not by passing keyword arguments to
+            Minuit. This is best explained through an example::
+
+                def f(x,y):
+                    return (x-2)**2 + (y-3)**2
+
+            * Initial value(varname)::
+
+                #initial value for x and y
+                m = Minuit(f, x=1, y=2)
+
+            * Initial step size/error(fix_varname)::
+
+                #initial step size for x and y
+                m = Minuit(f, error_x=0.5, error_y=0.5)
+
+            * Limits (limit_varname=tuple)::
+
+                #limits x and y
+                m = Minuit(f, limit_x=(-10,10), limit_y=(-20,20))
+
+            * Fixing parameters::
+
+                #fix x but vary y
+                m = Minuit(f, fix_x=True)
+
+            Of Course you can combine them in your application or use
+            dictionary expansion
+            ::
+
+                m = Minuit(f, x=1., error_x=0.5)
+
+            ::
+
+                kwdarg = dict(x=1., error_x=0.5)
+                m = Minuit(f, **kwdarg)
+
         """
 
         args = better_arg_spec(fcn) if forced_parameters is None\
@@ -195,20 +251,20 @@ cdef class Minuit:
             return ConsoleFrontend()
 
 
-    def migrad(self,int ncall=1000,resume=True, forced_parameters=None):
+    def migrad(self, int ncall=1000, resume=True, forced_parameters=None):
         """run migrad, the age-tested(over 40 years old, no kidding), super
         robust and stable minimization algorithm.
         You can read how it does the magic at
         `here <http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/minmain.html>`_.
 
-        Arguments:
+        **Arguments:**
 
-            *ncall*: integer (approximate) maximum number of call before
-            migrad stop trying. Default 1000
+            * *ncall*: integer (approximate) maximum number of call before
+              migrad stop trying. Default 1000
 
-            *resume*: boolean indicating whether migrad should start from
-            previous minimizer attempt(True) or should start from the
-            beginning(False). Default False.
+            * *resume*: boolean indicating whether migrad should resume from
+              previous minimizer attempt(True) or should start from the
+              beginning(False). Default True.
 
         Return:
 
@@ -251,7 +307,14 @@ cdef class Minuit:
 
     def hesse(self):
         """run HESSE.
-        HESSE estimate error by the second derivative at the minimim.
+        HESSE estimate error matrix by the `second derivative at the minimim
+        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This error matrix
+        is good if your chi^2 or likelihood profile is parabolic at
+        the minimum. From my experience, most of simple fits are.
+
+        But, :meth:minos makes no parabolic assumption and scan the likelihood
+        and give the correct error asymmetric error in all cases(Unless your
+        likelihood profile is utterly discontinuous near the minimum).
 
         return list of MinuitParameter struct
         """
@@ -346,6 +409,7 @@ cdef class Minuit:
 
 
     def print_matrix(self):
+        """show error_matrix"""
         matrix = self.matrix(correlation=True, skip_fixed=True)
         vnames = self.list_of_vary_param()
         self.frontend.print_matrix(vnames, matrix)

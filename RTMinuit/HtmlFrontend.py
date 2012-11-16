@@ -1,8 +1,7 @@
 __all__ = ['HtmlFrontend']
 from IPython.core.display import display, HTML, display_html
+from util import Struct
 class Gradient:
-    #A3FEBA pastel green
-    #FF7575 pastel red
     #from http://code.activestate.com/recipes/266466-html-colors-tofrom-rgb-tuples/
     @classmethod
     def color_for(cls, v, min=0., max=1., startcolor=(163,254,186),
@@ -18,12 +17,55 @@ class Gradient:
         c = cls.color_for(abs(v))
         return 'rgb(%d,%d,%d)'%c
 
+good_style = 'background-color:#92CCA6'
+bad_style = 'background-color:#FF7878'
+warn_style = 'background-color:#FFF79A'
+
+def good(x,should_be):
+    return good_style if x == should_be else bad_style
+
+def caution(x,should_be):
+    return good_style if x == should_be else warn_style
+
+def fmin_style(sfmin):
+    """convert sfmin to style"""
+    return Struct(
+        is_valid=good(sfmin.is_valid,True),
+        has_valid_parameters=good(sfmin.has_valid_parameters,True),
+        has_accurate_covar=good(sfmin.has_accurate_covar,True),
+        has_posdef_covar=good(sfmin.has_posdef_covar,True),
+        has_made_posdef_covar=good(sfmin.has_made_posdef_covar,False),
+        hesse_failed=good(sfmin.hesse_failed,False),
+        has_covariance=good(sfmin.has_covariance,True),
+        is_above_max_edm=good(sfmin.is_above_max_edm,False),
+        has_reached_call_limit=caution(sfmin.has_reached_call_limit,False),
+        )
+
+
+def minos_style(smerr):
+    """Convert minos error to style"""
+    return Struct(
+        is_valid = good(smerr.is_valid,True),
+        lower_valid = good(smerr.lower_valid,True),
+        upper_valid = good(smerr.upper_valid,True),
+        at_lower_limit = good(smerr.at_lower_limit,False),
+        at_upper_limit = good(smerr.at_upper_limit,False),
+        at_lower_max_fcn = good(smerr.at_lower_max_fcn,False),
+        at_upper_max_fcn = good(smerr.at_upper_max_fcn,False),
+        lower_new_min = good(smerr.lower_new_min,False),
+        upper_new_min = good(smerr.upper_new_min,False),
+        )
+
 
 class HtmlFrontend:
 
     def print_fmin(self, sfmin, tolerance=None, ncalls=0):
-        """Display FunctionMinum in html representation"""
+        """Display FunctionMinum in html representation. 
+
+        .. note: Would appreciate if someone would make jquery hover 
+        description for each item."""
         goaledm = 0.0001*tolerance*sfmin.up
+        style = fmin_style(sfmin)
         header = u"""
         <table>
             <tr>
@@ -48,11 +90,11 @@ class HtmlFrontend:
                 <td align="center">Made PosDef</td>
             </tr>
             <tr>
-                <td align="center">{sfmin.is_valid!r}</td>
-                <td align="center">{sfmin.has_valid_parameters!r}</td>
-                <td align="center">{sfmin.has_accurate_covar!r}</td>
-                <td align="center">{sfmin.has_posdef_covar!r}</td>
-                <td align="center">{sfmin.has_made_posdef_covar!r}</td>
+                <td align="center" style="{style.is_valid}">{sfmin.is_valid!r}</td>
+                <td align="center" style="{style.has_valid_parameters}">{sfmin.has_valid_parameters!r}</td>
+                <td align="center" style="{style.has_accurate_covar}">{sfmin.has_accurate_covar!r}</td>
+                <td align="center" style="{style.has_posdef_covar}">{sfmin.has_posdef_covar!r}</td>
+                <td align="center" style="{style.has_made_posdef_covar}">{sfmin.has_made_posdef_covar!r}</td>
             </tr>
             <tr>
                 <td align="center">Hesse Fail</td>
@@ -62,11 +104,11 @@ class HtmlFrontend:
                 <td align="center">Reach calllim</td>
             </tr>
             <tr>
-                <td align="center">{sfmin.hesse_failed!r}</td>
-                <td align="center">{sfmin.has_covariance!r}</td>
-                <td align="center">{sfmin.is_above_max_edm!r}</td>
+                <td align="center" style="{style.hesse_failed}">{sfmin.hesse_failed!r}</td>
+                <td align="center" style="{style.has_covariance}">{sfmin.has_covariance!r}</td>
+                <td align="center" style="{style.is_above_max_edm}">{sfmin.is_above_max_edm!r}</td>
                 <td align="center"></td>
-                <td align="center">{sfmin.has_reached_call_limit!r}</td>
+                <td align="center" style="{style.has_reached_call_limit}">{sfmin.has_reached_call_limit!r}</td>
             </tr>
         </table>
         """.format(**locals())
@@ -75,9 +117,9 @@ class HtmlFrontend:
 
     def print_merror(self, vname, smerr):
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
-
+        style = minos_style(smerr)
         to_print = """
-        <span>Minos status for {vname}: {stat}<span>
+        <span>Minos status for {vname}: <span style="{style.is_valid}">{stat}</span></span>
         <table>
             <tr>
                 <td>Error</td>
@@ -86,23 +128,23 @@ class HtmlFrontend:
             </tr>
             <tr>
                 <td>Valid</td>
-                <td>{smerr.lower_valid}</td>
-                <td>{smerr.upper_valid}</td>
+                <td style="{style.lower_valid}">{smerr.lower_valid}</td>
+                <td style="{style.upper_valid}">{smerr.upper_valid}</td>
             </tr>
             <tr>
                 <td>At Limit</td>
-                <td>{smerr.at_lower_limit}</td>
-                <td>{smerr.at_upper_limit}</td>
+                <td style="{style.at_lower_limit}">{smerr.at_lower_limit}</td>
+                <td style="{style.at_upper_limit}">{smerr.at_upper_limit}</td>
             </tr>
             <tr>
                 <td>Max FCN</td>
-                <td>{smerr.at_lower_max_fcn}</td>
-                <td>{smerr.at_upper_max_fcn}</td>
+                <td style="{style.at_lower_max_fcn}">{smerr.at_lower_max_fcn}</td>
+                <td style="{style.at_upper_max_fcn}">{smerr.at_upper_max_fcn}</td>
             </tr>
             <tr>
                 <td>New Min</td>
-                <td>{smerr.lower_new_min}</td>
-                <td>{smerr.upper_new_min}</td>
+                <td style="{style.lower_new_min}">{smerr.lower_new_min}</td>
+                <td style="{style.upper_new_min}">{smerr.upper_new_min}</td>
             </tr>
         </table>
         """.format(**locals())
