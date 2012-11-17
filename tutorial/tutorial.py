@@ -3,193 +3,238 @@
 
 # <codecell>
 
-from RTMinuit import *
+from RTMinuit import Minuit, describe, Struct
+
+# <headingcell level=2>
+
+# Really Quick Start
+
+# <rawcell>
+
+# Let go through a quick course about how to minimize things
 
 # <codecell>
 
-#There are three ways to define a function for minuit
-#first like normal function
-def f(xabc,y,z):
-    return (xabc-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
-m = Minuit(f)#if you don't like verbosity of minuit pass printlevel=-1
-#You may want to do these two. 
-#m.set_up(0.5)
-#m.set_strategy(2)
-m.migrad()#look at your terminal for usual minuit printout
-print m.matrix_accurate(), m.migrad_ok() #some useful function for checking result
-#m.hesse()
-print m.args
-print m.values
-print m.errors
-display( m.html_results())
-display( m.html_error_matrix())
-x = m.html_error_matrix()
-print m.list_of_fixed_param()
-m.minos_errors()
-m.minos()
-m.minos_errors()
-
-# <codecell>
-
-#second way is to pass a callable object
-#this is useful if your function needs to be computed on data
-class F:
-    def __init__(self,data):
-        self.data = data
-    def __call__(self,x,y,z):
-        return (x-self.data[0])**2 + (y-self.data[1])**2 + (z-self.data[2])**2 -1.
-f = F([1,2,3])
-m = Minuit(f)
-m.migrad()
-print m.values,m.errors
-
-# <codecell>
-
-#third way is a more advanced one if you need to construct function that take variable number of argument
-#this is the way dist_fit makes magic generic chi^2 ML function
-class Struct:
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
-class CustomFunction:
-    def __init__(self, order):
-        self.order=order
-        varnames = ['c%d'%i for i in range(order)]
-        #now Poly has signature of f(c0,c1,.....,c<order-1>)
-        self.func_code = Struct(co_argcount=order,co_varnames=varnames)
-        self.func_defaults = None#optional but makes vectorize happy
-    def __call__(self,*arg):
-        s = 0
-        for i in range(self.order):
-            s+=(arg[i]-i)**2
-        return s
-f=CustomFunction(10)
-m = Minuit(f)
-m.migrad()
-print m.values,m.errors
-print m.args
-
-# <codecell>
-
-#limiting and fixing parameter example
+#Let's try to minimize simple (x-1)**2 + (y-2)**2 + (z-3)**2 - 1
+#we know easily that the answer has to be
+#x=1, y=2, z=3
 def f(x,y,z):
     return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
-m = Minuit(f, x=5., fix_z=True,fix_y=True)#make start value
-m.migrad()
-print m.args
-print m.list_of_fixed_param()
-m.list_of_vary_param()
+describe(f) #RTMinuit magically extract function signature
 
 # <codecell>
 
-m = Minuit(f, limit_y=(-10,10))#bound y to some range
-m.migrad()
-print m.args
+m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=2, fix_y=True)
+#The initial value/error are optional but it's nice to do it
+#and here is how to use it
+#x=2 set intial value of x to 2
+#error_x=0.2 set the initial stepsize
+#limit_x = (-1,1) set the range for x
+#y=2, fix_y=True fix y value to 2
+#We do not put any constain on z
+#Minuit will warn you about missig initial error/step
+#but most of the time you will be fine
 
 # <codecell>
 
-m = Minuit(f, error_y=1.)#initial step for y
-m.migrad()
-m.minos('y')
-print m.args
+#Boom done!!!!
+m.migrad();
 
 # <codecell>
 
-#getting minos error
-mne = m.minos_errors()
-display(m.html_results())
+#and this is how you get the the value
+print 'parameters', m.parameters
+print 'args', m.args
+print 'value', m.values
 
 # <codecell>
 
-#a neat trick if you want to plot it
-#example of class that take generic function and compute chi^2
-#see also https://github.com/piti118/dist_fit
-#for a collection of this kind of functions to do unbinned/binned likelihood and chi^2 plus some useful plotting function
-class Chi2:
-    #this assume that f is of the form y = f(x,p1,p2,p3)
-    def __init__(self,f,x,y,erry):
-        assert(len(x)==len(y))
-        self.x = np.array(x)
-        self.y = np.array(y)
-        self.erry = np.array(erry)
-        self.f = f
-        self.vf = np.vectorize(f)
-        #making signature of chi2(p1,p2,p3)
-        varnames = better_arg_spec(f)
-        varnames = varnames[1:] #dock off x
-        argcount = len(varnames)
-        self.func_code = Struct(co_argcount=argcount,co_varnames=varnames)
-        self.func_defaults = None #keep vectorize happy
-    
-    def expy(self,x,*arg):
-        return self.vf(x,*arg)
-    
-    def __call__(self,*arg):
-        expy = self.expy(self.x,*arg)
-        x2 = (self.y-expy)**2/self.erry
-        ndof = len(self.x)-self.func_code.co_argcount 
-        return np.sum(x2)/ndof
+#and the error
+print 'error', m.errors
 
 # <codecell>
 
-#lets make some polynomial
-def f(x,a,b,c):
-    return a*x**2+b*x+c
-#now lets make some data
-ta,tb,tc = 2.,-2.,100.
-numpoints = 30
-x = np.linspace(1,10,numpoints)
-vf = vectorize(f)
-y = f(x,ta,tb,tc)
-noise = randn(numpoints) #gaussian with 0 mean width of 1
-y = y+noise
-erry = np.array(numpoints)
-erry.fill(1.)
-errorbar(x,y,erry,fmt='.')
+#and function value at the minimum
+print 'fval', m.fval
 
 # <codecell>
 
-x2 = Chi2(f,x,y,erry)
-m = Minuit(x2)
-m.migrad()
-display(m.html_results())
-display(m.html_error_matrix())
-fitted_y = vf(x,*m.args)
-
-errorbar(x,y,erry,fmt='.')
-plot(x,fitted_y,'-')
+#covariance, correlation matrix
+#remember y is fixed
+print 'covariance', m.covariance
+print 'matrix()', m.matrix() #covariance
+print 'matrix(correlation=True)', m.matrix(correlation=True) #correlation
+m.print_matrix() #correlation
 
 # <codecell>
 
-#some of you may want to use cython
-# for speeding up
-#here is how
+#get mimization status
+print m.get_fmin()
+print m.get_fmin().is_valid
+
+# <codecell>
+
+#you can run hesse() to get (re)calculate hessian matrix
+#What you care is value and Parab(olic) error.
+m.hesse()
+
+# <codecell>
+
+#to get minos error you do
+m.minos()
+print m.get_merrors()['x']
+print m.get_merrors()['x'].lower
+print m.get_merrors()['x'].upper
+
+# <headingcell level=1>
+
+# Alternative Ways to define function
+
+# <headingcell level=4>
+
+# Cython
+
+# <codecell>
+
+#sometimes we want speeeeeeed
 %load_ext cythonmagic
 
 # <codecell>
 
 %%cython
 cimport cython
-@cython.binding(True) #you need this for cython to export function signature
-def f(double x, double y, double z):
-    return (x-2)**2 + (y-3)**2 + (z-4)**2
+
+@cython.binding(True)#you need this otherwise RTMinuit can't extract signature
+def cython_f(double x,double y,double z):
+    return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
 
 # <codecell>
 
-def python_f(x, y, z):
-    return (x-2)**2 + (y-3)**2 + (z-4)**2
+#you can always see what RTMinuit will see
+print describe(cython_f)
 
 # <codecell>
 
-%%timeit
-m = Minuit(f)
+m = Minuit(cython_f,printMode=0) #tell it to be quiet
 m.migrad()
+print m.values
+
+# <headingcell level=4>
+
+# Callable object ie: __call__
 
 # <codecell>
 
-%%timeit
-m = Minuit(python_f)
+x = [1,2,3,4,5]
+y = [2,4,6,8,10]# y=2x
+class StraightLineChi2:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+    def __call__(self,m,c): #lets try to find slope and intercept
+        chi2 = sum((y - m*x+c)**2 for x,y in zip(self.x,self.y))
+        return chi2
+
+# <codecell>
+
+chi2 = StraightLineChi2(x,y)
+describe(chi2)
+
+# <codecell>
+
+m = Minuit(chi2,printMode=0)
 m.migrad()
+print m.values
+
+# <headingcell level=4>
+
+# Faking a function signature
 
 # <codecell>
 
+#this is very useful if you want to build a generic cost functor
+#this is actually how dist_fit is implemented
+x = [1,2,3,4,5]
+y = [2,4,6,8,10]# y=2x
+class Chi2Functor:
+    def __init__(self,f,x,y):
+        self.f = f
+        self.x = x
+        self.y = y
+        f_sig = describe(f)
+        #this is how you fake function 
+        #signature dynamically
+        self.func_code = Struct(
+                                co_varnames = f_sig[1:], #dock off independent variable
+                                co_argcount = len(f_sig)-1
+                                )
+        self.func_defaults = None #this keeps np.vectorize happy
+    def __call__(self,*arg):
+        #notice that it accept variable length
+        #positional arguments
+        chi2 = sum((y-self.f(x,*arg))**2 for x,y in zip(self.x,self.y))
+        return chi2
+
+# <codecell>
+
+def linear(x,m,c):
+    return m*x+c
+
+def parabola(x,a,b,c):
+    return a*x**2 + b*x + c 
+
+# <codecell>
+
+linear_chi2 = Chi2Functor(linear,x,y)
+describe(linear_chi2)
+
+# <codecell>
+
+m = Minuit(linear_chi2, printMode=0)
+m.migrad();
+print m.values
+
+# <codecell>
+
+#now here is the beauty
+#you can use the same Chi2Functor now for parabola
+parab_chi2 = Chi2Functor(parabola,x,y)
+describe(parab_chi2)
+
+# <codecell>
+
+m = Minuit(parab_chi2,x,y, printMode=0)
+m.migrad()
+print m.values
+
+# <headingcell level=4>
+
+# Last Resort: Forcing function signature
+
+# <codecell>
+
+%%cython
+#sometimes you get a function with absolutely no signature
+#We didn't put cython.binding(True) here 
+def nosig_f(x,y):
+    return x**2+(y-4)**2
+
+# <codecell>
+
+#something from swig will give you a function with no
+#signature information
+try:
+    describe(nosig_f)#it raise error
+except:
+    print 'OH NOOOOOOOO!!!!!'
+
+# <codecell>
+
+#Use forced_parameters
+m = Minuit(nosig_f, forced_parameters=('x','y'), printMode=0)
+
+# <codecell>
+
+m.migrad()
+print m.values
 

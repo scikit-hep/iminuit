@@ -7,7 +7,6 @@ cdef extern from "Minuit/FCNBase.h":
     cdef cppclass FCNBase:
         double call "operator()" (vector[double] x) except+
         double errorDef()
-        double up()
 
 cdef extern from "Minuit/MnApplication.h":
     cdef cppclass MnApplication:
@@ -31,6 +30,7 @@ cdef extern from "Minuit/MinuitParameter.h":
 
 cdef extern from "Minuit/MnUserCovariance.h":
     cdef cppclass MnUserCovariance:
+        unsigned int nrow()
         double get "operator()" (unsigned int row, unsigned int col)
 
 cdef extern from "Minuit/MnGlobalCorrelationCoeff.h":

@@ -173,7 +173,7 @@ class HtmlFrontend:
         for i,mp in enumerate(mps):
             minos_p, minos_m = (0.,0.) if merr is None or mp.name not in merr else\
                                (merr[mp.name].upper, merr[mp.name].lower)
-            limit_p, limit_m = ('','') if mp.has_limits else\
+            limit_p, limit_m = ('','') if not mp.has_limits else\
                                (mp.upper_limit, mp.lower_limit)
             fixed = 'FIXED' if mp.is_fixed else ''
             j = i+1
@@ -198,7 +198,8 @@ class HtmlFrontend:
 
 
     def print_banner(self, cmd):
-        display_html('<h2>%s</h2>'%cmd, raw=True)
+        #display_html('<h2>%s</h2>'%cmd, raw=True)
+        pass
 
 
     def print_matrix(self, vnames, matrix, varno=None):

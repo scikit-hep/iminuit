@@ -28,7 +28,7 @@ def better_arg_spec(f):
     return inspect.getargspec(f)[0]
 
 
-def describe(f,quiet=False):
+def describe(f,quiet=True):
     if not quiet: print better_arg_spec(f)
     return better_arg_spec(f)
 

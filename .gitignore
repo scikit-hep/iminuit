@@ -8,5 +8,7 @@ build
 test_*
 .idea
 _build
+archive
 
+!tutorial.html
 !tutorial.ipynb

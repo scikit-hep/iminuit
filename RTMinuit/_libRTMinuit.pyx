@@ -58,7 +58,7 @@ cdef class Minuit:
 
     #PyMinuit compatible field
     cdef public double up #:UP parameter
-    cdef public double tol #:tolerance migrad stops when edm>0.0001*tol*UP
+    cdef public double tol #:tolerance migrad stops when edm<0.0001*tol*UP
     cdef public unsigned int strategy #:0 fast 1 default 2 slow but accurate
     #: 0: quiet 1: print stuff the end 2: 1+fit status during call
     #: yes I know the case is wrong but this is to keep it compatible with
@@ -107,15 +107,15 @@ cdef class Minuit:
             * *fcn*: function to optimized. Minuit automomagically find how to
               call the function and each parameters. More information about how
               Minuit detects function signature can be found in
-              :ref:`this section <function-sig-label>`
+              :ref:`function-sig-label`
 
         **Builtin Keyword Arguments:**
 
             * *throw_nan*: fcn can be set to raise RuntimeError when it
               encounters *nan*. (Default False)
 
-            * *pedantic*: warns about parameters that does not have initial
-              value or initial error/stepsize.
+            * *pedantic*: warns about parameters that do not have initial
+              value or initial error/stepsize set.
 
             * *frontend*: Minuit frontend. There are two builting frontends.
 
@@ -183,7 +183,7 @@ cdef class Minuit:
         narg = len(args)
         self.fcn = fcn
 
-        self.frontend = self.auto_frontend() if frontend is None else frontend
+        self.frontend = self._auto_frontend() if frontend is None else frontend
 
         #maintain 2 dictionary 1 is position to varname
         #and varname to position
@@ -238,22 +238,12 @@ cdef class Minuit:
         self.merrors_struct = {}
 
 
-    def auto_frontend(self):
-        """determine front end automatically.
-        If this session is an IPYTHON session then use Html frontend,
-        Console Frontend otherwise.
-        """
-        try:
-            __IPYTHON__
-            from HtmlFrontend import HtmlFrontend
-            return HtmlFrontend()
-        except NameError:
-            return ConsoleFrontend()
-
-
     def migrad(self, int ncall=1000, resume=True, forced_parameters=None):
-        """run migrad, the age-tested(over 40 years old, no kidding), super
-        robust and stable minimization algorithm.
+        """Run migrad.
+
+        Migrad is an age-tested(over 40 years old, no kidding), super
+        robust and stable minimization algorithm. It even has
+        `wiki page <http://en.wikipedia.org/wiki/MINUIT>`_.
         You can read how it does the magic at
         `here <http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/minmain.html>`_.
 
@@ -266,9 +256,9 @@ cdef class Minuit:
               previous minimizer attempt(True) or should start from the
               beginning(False). Default True.
 
-        Return:
+        **Return:**
 
-            FunctionMinum Struct, list of parameter states -- DOCUMENT THIS
+            :ref:`function-minimum-sruct`, list of :ref:`minuit-param-struct`
         """
         #construct new fcn and migrad if
         #it's a clean state or resume=False
@@ -306,51 +296,64 @@ cdef class Minuit:
 
 
     def hesse(self):
-        """run HESSE.
+        """Run HESSE.
+
         HESSE estimate error matrix by the `second derivative at the minimim
         <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This error matrix
-        is good if your chi^2 or likelihood profile is parabolic at
+        is good if your :math:`\chi^2` or likelihood profile is parabolic at
         the minimum. From my experience, most of simple fits are.
 
-        But, :meth:minos makes no parabolic assumption and scan the likelihood
+        :meth:`minos` makes no parabolic assumption and scan the likelihood
         and give the correct error asymmetric error in all cases(Unless your
         likelihood profile is utterly discontinuous near the minimum).
 
-        return list of MinuitParameter struct
+        **Returns**
+            list of :ref:`minuit-param-struct`
         """
 
         cdef MnHesse* hesse = NULL
         cdef MnUserParameterState upst
-        if self.printMode>1: self.frontend.print_banner('HESSE')
+        if self.printMode>0: self.frontend.print_banner('HESSE')
         if self.cfmin is NULL:
             raise RuntimeError('Run migrad first')
         hesse = new MnHesse(self.strategy)
         upst = hesse.call(deref(self.pyfcn),self.cfmin.userState())
-
         del self.last_upst
         self.last_upst = new MnUserParameterState(upst)
         self.refreshInternalState()
         del hesse
-        if self.printMode>1: self.print_param()
+
+        if self.printMode>0:
+            self.print_param()
+            self.print_matrix()
+
         return self.get_param_states()
 
 
-    def minos(self, var = None, sigma = None, unsigned int maxcall=1000):
-        """run minos for paramter *var* n *sigma* uncertainty.
+    def minos(self, var = None, sigma = 1., unsigned int maxcall=1000):
+        """Run minos for parameter *var*
+
         If *var* is None it runs minos for all parameters
 
-        return dictionary of varname to minos struct if minos is requested
-        for all parameters. If minos is requested only for one parameter,
-        minos error struct is returned.
+        **Arguments:**
+
+            sigma: number of :math:`\sigma` error. Default 1.0.
+
+        **Returns**
+
+            Dictionary of varname to :ref:`minos-error-struct` 
+            if minos is requested for all parameters. 
+
+            If minos is requested only for one parameter,
+            :ref:`minos-error-struct` is returned.
         """
         cdef unsigned int index = 0
         cdef MnMinos* minos = NULL
         cdef MinosError mnerror
         cdef char* name = NULL
+        cdef double oldup = self.pyfcn.up()
+        self.pyfcn.set_up(oldup*sigma*sigma)
         if self.printMode>0: self.frontend.print_banner('MINOS')
-        if sigma is not None:
-            raise RuntimeError(
-                'sigma is deprecated use set_up(up*sigma*sigma) instead')
         if not self.cfmin.isValid():
             raise RuntimeError(('Function mimimum is not valid. Make sure'
                 ' migrad converge first'))
@@ -380,42 +383,41 @@ cdef class Minuit:
                         vname,self.merrors_struct[vname])
         self.refreshInternalState()
         del minos
-
+        self.pyfcn.set_up(oldup)
         return self.merrors_struct if ret is None else ret
 
 
-    def matrix(self, correlation=False, skip_fixed=False):
+    def matrix(self, correlation=False, skip_fixed=True):
         """return error/correlation matrix in tuple or tuple format."""
         if self.last_upst is NULL:
             raise RuntimeError("Run migrad/hesse first")
+        if not skip_fixed:
+            raise RunTimeError('skip_fixed=False is not supported')
         cdef MnUserCovariance cov = self.last_upst.covariance()
+        params = self.list_of_vary_param()
         if correlation:
             ret = tuple(
                 tuple(cov.get(iv1,iv2)/sqrt(cov.get(iv1,iv1)*cov.get(iv2,iv2))
-                    for iv1,v1 in enumerate(self.parameters)\
-                        if not skip_fixed or not self.is_fixed(v1))
-                    for iv2,v2 in enumerate(self.parameters) \
-                        if not skip_fixed or not self.is_fixed(v2)
+                    for iv1,v1 in enumerate(params))\
+                    for iv2,v2 in enumerate(params)
                 )
         else:
             ret = tuple(
-                    tuple(cov.get(iv1,iv2)
-                        for iv1,v1 in enumerate(self.parameters)\
-                            if not skip_fixed or not self.is_fixed(v1))
-                        for iv2,v2 in enumerate(self.parameters) \
-                            if not skip_fixed or not self.is_fixed(v2)
-                    )
+                tuple(cov.get(iv1,iv2)
+                    for iv1,v1 in enumerate(params))\
+                    for iv2,v2 in enumerate(params)
+                )
         return ret
 
 
     def print_matrix(self):
         """show error_matrix"""
-        matrix = self.matrix(correlation=True, skip_fixed=True)
+        matrix = self.matrix(correlation=True)
         vnames = self.list_of_vary_param()
         self.frontend.print_matrix(vnames, matrix)
 
 
-    def np_matrix(self, correlation=False, skip_fixed=False):
+    def np_matrix(self, correlation=False):
         """return error/correlation matrix in numpy array format."""
         import numpy as np
         #TODO make a not so lazy one
@@ -500,7 +502,7 @@ cdef class Minuit:
 
 
     def set_up(self, double up):
-        """set UP parameter 1 for chi^2 and 0.5 for log likelihood"""
+        """set UP parameter 1 for :math:`\chi^2` and 0.5 for log likelihood"""
         self.up = up
         if self.pyfcn is not NULL:
             self.pyfcn.set_up(up)
@@ -559,16 +561,6 @@ cdef class Minuit:
     def matrix_acurate(self):
         """check if covariance is accurate"""
         return self.last_upst is not NULL and self.last_upst.hasCovariance()
-
-    #html* function has to go away
-    def html_results(self):
-        """show result in html form"""
-        return MinuitHTMLResult(self)
-
-
-    def html_error_matrix(self):
-        """show error matrix in html form"""
-        return MinuitCorrelationMatrixHTML(self)
 
 
     def list_of_fixed_param(self):
@@ -646,13 +638,15 @@ cdef class Minuit:
             for i in range(mpv.size()):
                 self.args.append(mpv[i].value())
                 self.values[mpv[i].name()] = mpv[i].value()
-                self.errors[mpv[i].name()] = mpv[i].value()
+                self.errors[mpv[i].name()] = mpv[i].error()
             self.args = tuple(self.args)
             self.fitarg.update(self.values)
             cov = self.last_upst.covariance()
+            vary_param = self.list_of_vary_param()
             self.covariance =\
-                {(self.parameters[i],self.parameters[j]):cov.get(i,j)\
-                    for i in range(self.narg) for j in range(self.narg)}
+                {(v1,v2):cov.get(i,j)\
+                    for i,v1 in enumerate(vary_param)\
+                    for j,v2 in enumerate(vary_param)}
             self.fval = self.last_upst.fval()
             self.ncalls = self.last_upst.nfcn()
             self.edm = self.last_upst.edm()
@@ -681,3 +675,17 @@ cdef class Minuit:
             if self.initialfix[v]:
                 ret.fix(v)
         return ret
+
+
+    def _auto_frontend(self):
+        """determine front end automatically.
+        If this session is an IPYTHON session then use Html frontend,
+        Console Frontend otherwise.
+        """
+        try:
+            __IPYTHON__
+            from HtmlFrontend import HtmlFrontend
+            return HtmlFrontend()
+        except NameError:
+            return ConsoleFrontend()
+
