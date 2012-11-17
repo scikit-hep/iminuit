@@ -11,7 +11,7 @@ from RTMinuit import Minuit, describe, Struct
 
 # <rawcell>
 
-# Let go through a quick course about how to minimize things
+# Let go through a quick course about how to minimize things. If you use PyMinuit before you will find that RTMinuit is very similar to PyMinuit. One notable different is that there is no printMode (we use print_level).
 
 # <codecell>
 
@@ -38,6 +38,7 @@ m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=2, fix_y=True)
 # <codecell>
 
 #Boom done!!!!
+#you can use m.migrad(print_level=0) to make it quiet
 m.migrad();
 
 # <codecell>
@@ -237,4 +238,18 @@ m = Minuit(nosig_f, forced_parameters=('x','y'), printMode=0)
 
 m.migrad()
 print m.values
+
+# <headingcell level=1>
+
+# Console Environment
+
+# <codecell>
+
+#this is just showing off console frontend (you can force it)
+from RTMinuit.ConsoleFrontend import ConsoleFrontend
+m = Minuit(f, frontend=ConsoleFrontend())
+
+# <codecell>
+
+m.migrad();
 

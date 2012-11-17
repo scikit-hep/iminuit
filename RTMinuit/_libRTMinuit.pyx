@@ -63,7 +63,7 @@ cdef class Minuit:
     #: 0: quiet 1: print stuff the end 2: 1+fit status during call
     #: yes I know the case is wrong but this is to keep it compatible with
     #: PyMinuit
-    cdef public printMode
+    cdef public print_level
     #: raise runtime error if function evaluate to nan
     cdef readonly bint throw_nan
 
@@ -98,7 +98,7 @@ cdef class Minuit:
 
     def __init__(self, fcn,
             throw_nan=False,  pedantic=True,
-            frontend=None, forced_parameters=None, printMode=1, **kwds):
+            frontend=None, forced_parameters=None, print_level=1, **kwds):
         """
         Construct minuit object from given *fcn*
 
@@ -131,7 +131,7 @@ cdef class Minuit:
               detection and use this argument instead. (Default None
               (automagically detect signature)
 
-            * *printMode*: set the printMode for this Minuit. 0 is quiet.
+            * *print_level*: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos. The reason it
               has this cAmEl case is to keep it compatible with PyMinuit.
 
@@ -180,6 +180,7 @@ cdef class Minuit:
 
         args = better_arg_spec(fcn) if forced_parameters is None\
                else forced_parameters
+        self._check_extra_args(args,kwds)
         narg = len(args)
         self.fcn = fcn
 
@@ -209,7 +210,7 @@ cdef class Minuit:
         self.up = 1.0
         self.tol = 0.1
         self.strategy = 1
-        self.printMode = printMode
+        self.print_level = print_level
         self.throw_nan = throw_nan
 
         self.parameters = args
@@ -262,7 +263,7 @@ cdef class Minuit:
               for getting progress. However, you need to make sure that
               ncall/nsplit is large enough. Otherwise, migrad will think
               that the minimum is invalid due to exceeding max call
-              (ncall/nsplit).
+              (ncall/nsplit). Default 1(no split).
 
         **Return:**
 
@@ -273,7 +274,7 @@ cdef class Minuit:
         cdef MnUserParameterState* ups = NULL
         cdef MnStrategy* strat = NULL
 
-        if self.printMode>0: self.frontend.print_banner('MIGRAD')
+        if self.print_level>0: self.frontend.print_banner('MIGRAD')
 
         if not resume or self.is_clean_state():
             self.construct_FCN()
@@ -302,13 +303,13 @@ cdef class Minuit:
             del self.last_upst
             self.last_upst = new MnUserParameterState(self.cfmin.userState())
             totalcalls+=ncall_round#self.cfmin.nfcn()
-            if self.printMode>1: self.print_fmin()
+            if self.print_level>1: self.print_fmin()
 
         del self.last_upst
         self.last_upst = new MnUserParameterState(self.cfmin.userState())
         self.refreshInternalState()
 
-        if self.printMode>0: self.print_fmin()
+        if self.print_level>0: self.print_fmin()
 
         return self.get_fmin(), self.get_param_states()
 
@@ -331,7 +332,7 @@ cdef class Minuit:
 
         cdef MnHesse* hesse = NULL
         cdef MnUserParameterState upst
-        if self.printMode>0: self.frontend.print_banner('HESSE')
+        if self.print_level>0: self.frontend.print_banner('HESSE')
         if self.cfmin is NULL:
             raise RuntimeError('Run migrad first')
         hesse = new MnHesse(self.strategy)
@@ -341,7 +342,7 @@ cdef class Minuit:
         self.refreshInternalState()
         del hesse
 
-        if self.printMode>0:
+        if self.print_level>0:
             self.print_param()
             self.print_matrix()
 
@@ -371,7 +372,7 @@ cdef class Minuit:
         cdef char* name = NULL
         cdef double oldup = self.pyfcn.up()
         self.pyfcn.set_up(oldup*sigma*sigma)
-        if self.printMode>0: self.frontend.print_banner('MINOS')
+        if self.print_level>0: self.frontend.print_banner('MINOS')
         if not self.cfmin.isValid():
             raise RuntimeError(('Function mimimum is not valid. Make sure'
                 ' migrad converge first'))
@@ -385,7 +386,7 @@ cdef class Minuit:
             mnerror = minos.minos(index,maxcall)
             ret = minoserror2struct(mnerror)
             self.merrors_struct[var]=ret
-            if self.printMode>0:
+            if self.print_level>0:
                 self.frontend.print_merror(var,self.merrors_struct[var])
         else:
             for vname in self.parameters:
@@ -396,7 +397,7 @@ cdef class Minuit:
                     self.pyfcn), deref(self.cfmin),self.strategy)
                 mnerror = minos.minos(index,maxcall)
                 self.merrors_struct[vname]=minoserror2struct(mnerror)
-                if self.printMode>0:
+                if self.print_level>0:
                     self.frontend.print_merror(
                         vname,self.merrors_struct[vname])
         self.refreshInternalState()
@@ -533,7 +534,7 @@ cdef class Minuit:
 
     def set_print_mode(self, lvl):
         """set printlevel 0 quiet, 1 normal, 2 paranoid, 3 really paranoid """
-        self.printMode = lvl
+        self.print_level = lvl
 
 
     def get_fmin(self):
@@ -706,4 +707,18 @@ cdef class Minuit:
             return HtmlFrontend()
         except NameError:
             return ConsoleFrontend()
+
+    def _check_extra_args(self,parameters,kwd):
+        """check keyword arguments to find unwanted/typo keyword arguments"""
+        fixed_param = set('fix_'+p for p in parameters)
+        limit_param = set('limit_'+p for p in parameters)
+        error_param = set('error_'+p for p in parameters)
+        for k in kwd.keys():
+            if k not in parameters and\
+                    k not in fixed_param and\
+                    k not in limit_param and\
+                    k not in error_param:
+                raise RuntimeError(
+                        'Cannot understand keyword %s. May be typo?'%k)
+
 
