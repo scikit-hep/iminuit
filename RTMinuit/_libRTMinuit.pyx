@@ -238,7 +238,7 @@ cdef class Minuit:
         self.merrors_struct = {}
 
 
-    def migrad(self, int ncall=1000, resume=True, forced_parameters=None):
+    def migrad(self, int ncall=10000, resume=True, int nsplit=1):
         """Run migrad.
 
         Migrad is an age-tested(over 40 years old, no kidding), super
@@ -250,11 +250,19 @@ cdef class Minuit:
         **Arguments:**
 
             * *ncall*: integer (approximate) maximum number of call before
-              migrad stop trying. Default 1000
+              migrad stop trying. Default 10000
 
             * *resume*: boolean indicating whether migrad should resume from
               previous minimizer attempt(True) or should start from the
               beginning(False). Default True.
+
+            * *split*: split migrad in to *split* runs. Max fcn call
+              for each run is ncall/nsplit. Migrad stops when it found the
+              function minimum to be valid or ncall is reached. This is useful
+              for getting progress. However, you need to make sure that
+              ncall/nsplit is large enough. Otherwise, migrad will think
+              that the minimum is invalid due to exceeding max call
+              (ncall/nsplit).
 
         **Return:**
 
@@ -282,11 +290,21 @@ cdef class Minuit:
         del self.cfmin #remove the old one
 
         #this returns a real object need to copy
-        self.cfmin = call_mnapplication_wrapper(
-                deref(self.minimizer),ncall,self.tol)
+        ncall_round = round(1.0*(ncall)/nsplit)
+        assert(ncall_round>0)
+        totalcalls = 0
+        first = True
+        while (first) or \
+                (not self.cfmin.isValid() and totalcalls < ncall):
+            first=False
+            self.cfmin = call_mnapplication_wrapper(
+                    deref(self.minimizer),ncall_round,self.tol)
+            del self.last_upst
+            self.last_upst = new MnUserParameterState(self.cfmin.userState())
+            totalcalls+=ncall_round#self.cfmin.nfcn()
+            if self.printMode>1: self.print_fmin()
 
         del self.last_upst
-
         self.last_upst = new MnUserParameterState(self.cfmin.userState())
         self.refreshInternalState()
 
