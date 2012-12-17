@@ -1,0 +1,48 @@
+<Architecture name=rh73_gcc32>
+# <external ref=g77gcc3></external>
+# <lib name=g2c></lib>
+# <lib name=m></lib>
+</Architecture>
+
+
+<Architecture name=rh73_gcc32_dbg>
+# <external ref=g77gcc3></external>
+# <lib name=g2c></lib>
+# <lib name=m></lib>
+</Architecture>
+
+<Architecture name=cel3-i386_gcc323>
+# <external ref=g77gcc3></external>
+# <lib name=g2c></lib>
+# <lib name=m></lib>
+</Architecture>
+
+<Architecture name=rh73_icc71>
+# <lib name=imf></lib>
+# <lib name=F90></lib>
+# <lib name=intrins></lib>
+# <lib name=CEPCF90></lib>
+# <lib name=IEPCF90></lib>
+# <lib name=m></lib>
+</Architecture>
+
+<Architecture name=rh73_icc71_dbg>
+# <lib name=imf></lib>
+# <lib name=F90></lib>
+# <lib name=intrins></lib>
+# <lib name=CEPCF90></lib>
+# <lib name=IEPCF90></lib>
+# <lib name=m></lib>
+</Architecture>
+
+<include_path path=.>
+<export>
+  <lib name=lcg_Minuit>
+</export>
+
+# uncomment for stack allocator 
+
+#CPPFLAGS += -D_MN_NO_THREAD_SAVE_
+
+#uncomment for more debug print out
+#CPPFLAGS += -DDEBUG

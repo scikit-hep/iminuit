@@ -1,0 +1,49 @@
+<environment>
+
+<use name=MathLibs/Minuit></use>
+
+<bin file=Quad1FMain.cpp></bin>
+<bin file=Quad2FMain.cpp></bin>
+<bin file=Quad3FMain.cpp></bin>
+<bin file=Quad4FMain.cpp></bin>
+<bin file=Quad8FMain.cpp></bin>
+<bin file=Quad12FMain.cpp></bin>
+
+</environment>
+
+<environment>
+
+<external ref=root></external>
+
+<use name=MathLibs/Minuit></use>
+
+<lib name=Core></lib>
+<lib name=Cint></lib>
+<lib name=Hist></lib>
+<lib name=Graf></lib>
+<lib name=Graf3d></lib>
+<lib name=Tree></lib>
+<lib name=Matrix></lib>
+<lib name=GX11></lib>
+<lib name=New></lib>
+
+<bin file=Quad1FMainHisto.cpp></bin>
+<bin file=Quad4FMainHisto.cpp></bin>
+<bin file=Quad8FMainHisto.cpp></bin>
+<bin file=Quad12FMainHisto.cpp></bin>
+
+</environment>
+
+
+<environment>
+
+<external ref=cppunit></external>
+
+<use name=MathLibs/Minuit></use>
+
+<bin name=test_Minuit_Quad1F file=Quad1FMain.cpp></bin>
+<bin name=test_Minuit_Quad4F file=Quad4FMain.cpp></bin>
+<bin name=test_Minuit_Quad4FCppUnit file=Quad4FCppUnit.cpp></bin>
+<bin name=test_Package_X_test1 file=test_Package_X_test1.cpp></bin>
+
+</environment>

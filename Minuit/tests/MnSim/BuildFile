@@ -1,0 +1,62 @@
+<environment>
+<use name=MathLibs/Minuit></use>
+
+
+<use name=Foundation/SealUtil></use>
+<use name=Foundation/SealBase></use>
+
+CPPFLAGS += -DUSE_SEALBASE
+
+<lib name=TestMnSim></lib>
+# <lib name=lcg_F77Minuit></lib>
+# <lib name=TestF77MnExamples></lib>
+
+<external ref=CLHEP>
+
+
+<bin name=test_Minuit_ReneTest file=ReneTest.cpp>
+<bin name=test_Minuit_PaulTest file=PaulTest.cpp>
+<bin name=test_Minuit_PaulTest2 file=PaulTest2.cpp>
+<bin name=test_Minuit_PaulTest3 file=PaulTest3.cpp>
+<bin name=test_Minuit_PaulTest4 file=PaulTest4.cpp>
+
+
+#<bin file=DemoGaussSimZ2.cpp>
+<bin name=test_Minuit_Fumili file=TestFumili.cpp>
+<bin name=test_Minuit_DemoFumili file=DemoFumili.cpp>
+
+<bin name=test_Minuit_SimpleGaussSim file=DemoGaussSim.cpp>
+#<bin name=test_Minuit_SimpleGaussSimZ2 file=DemoGaussSimZ2.cpp>
+# <bin name=test_Minuit_SimpleGaussSim file=SimpleGaussSim.cpp>
+# <bin name=test_Minuit_MigradGaussSim file=MigradGaussSim.cpp>
+# <bin name=test_Minuit_MinosGaussSim file=MinosGaussSim.cpp>
+# <bin file=SimpleGaussSim.cpp>
+# <bin file=MigradGaussSim.cpp>
+# <bin file=MinosGaussSim.cpp>
+# <bin file=ContoursGaussSim.cpp>
+
+</environment>
+
+<environment>
+<external ref=root>
+
+<use name=MathLibs/Minuit></use>
+
+
+<lib name=TestMnSim></lib>
+
+<lib name=Core></lib>
+<lib name=Cint></lib>
+<lib name=Hist></lib>
+<lib name=Graf></lib>
+<lib name=Graf3d></lib>
+<lib name=Tree></lib>
+<lib name=Matrix></lib>
+<lib name=GX11></lib>
+<lib name=New></lib>
+
+# <bin name=test_Minuit_GaussHistoData file=GaussHistoData.cpp>
+<bin name=test_Minuit_GaussHistoData file=GaussHistoData.cpp>
+
+</environment>
+

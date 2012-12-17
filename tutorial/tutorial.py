@@ -191,7 +191,7 @@ describe(linear_chi2)
 
 # <codecell>
 
-m = Minuit(linear_chi2, printMode=0)
+m = Minuit(linear_chi2)
 m.migrad();
 print m.values
 
@@ -204,7 +204,7 @@ describe(parab_chi2)
 
 # <codecell>
 
-m = Minuit(parab_chi2,x,y, printMode=0)
+m = Minuit(parab_chi2,x,y)
 m.migrad()
 print m.values
 
