@@ -116,7 +116,7 @@ print describe(cython_f)
 
 # <codecell>
 
-m = Minuit(cython_f,printMode=0) #tell it to be quiet
+m = Minuit(cython_f)
 m.migrad()
 print m.values
 
@@ -143,7 +143,7 @@ describe(chi2)
 
 # <codecell>
 
-m = Minuit(chi2,printMode=0)
+m = Minuit(chi2)
 m.migrad()
 print m.values
 
@@ -232,7 +232,7 @@ except:
 # <codecell>
 
 #Use forced_parameters
-m = Minuit(nosig_f, forced_parameters=('x','y'), printMode=0)
+m = Minuit(nosig_f, forced_parameters=('x','y'))
 
 # <codecell>
 
@@ -252,4 +252,7 @@ m = Minuit(f, frontend=ConsoleFrontend())
 # <codecell>
 
 m.migrad();
+
+# <codecell>
+
 
