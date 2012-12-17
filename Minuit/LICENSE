@@ -1,0 +1,4 @@
+I(Piti O.) Believe they are GPL.
+But I can't really find their license. It's not maintain anymore.
+http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
+It has the same cstdio patch as one in PyMinuit page.
