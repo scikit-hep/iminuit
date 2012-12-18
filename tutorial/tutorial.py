@@ -53,6 +53,8 @@ m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=3., fix_y=True, print_level=
 # We did not put any constain on z. Minuit will howerver warn you about missig initial error/step(using python builtin warning).
 # 
 # ###Run Migrad
+# 
+# Migrad performs is Variable Metric Minimizer. In a nutshell, it combines steepest descends algorithm along with line search strategy. Migrad is very popular in high energy physics field because of its robustness.
 
 # <codecell>
 
@@ -145,7 +147,8 @@ clabel(cs)
 
 # <markdowncell>
 
-# ####Minos
+# ####Hesse
+# Hesse find the error by finding the inverse of second derivative matrix(hessian). The error assume parabolic shape at the minimum. Hesse error is symmetric by construct. Hesse is always called at the end of migrad to get the error. You normally don't need to call it manually.
 
 # <codecell>
 
@@ -153,7 +156,9 @@ m.hesse()
 
 # <markdowncell>
 
-# ####Run Minos and access asymmetric error
+# ####minos
+# 
+# minos multidimensionally scan likelihood/$\chi^2$ until to find the contour where the value of the cost function increase by `UP`(see `set_up`). It takes really long time but give the correct error(unless it fails). 
 
 # <codecell>
 
