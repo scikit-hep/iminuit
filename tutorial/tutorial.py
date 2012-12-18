@@ -9,7 +9,7 @@ from iminuit import Minuit, describe, Struct
 # <markdowncell>
 
 # ##Really Quick Start
-# Let go through a quick course about how to minimize things. If you use PyMinuit before you will find that iminuit is very similar to PyMinuit. One notable different is that there is no printMode (we use print_level).
+# Let go through a quick course about how to minimize things. If you use PyMinuit before you will find that iminuit is very similar to PyMinuit.
 # 
 # Our first example is about trying to minimize a simple function:
 # 
