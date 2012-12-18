@@ -637,10 +637,10 @@ cdef class Minuit:
             * *bound*
                 If bound is tuple, (left, right) scanning bound.
                 If bound is a number, it specifies how many :math:`\sigma`
-                symmetrically from minimum (minimum+- bound*:math:`\sigma`).
+                symmetrically from minimum (minimum+- bound* :math:`\sigma`).
                 Default 2
 
-            *subtract_min* subtract_minimum off from return value. This
+            * *subtract_min* subtract_minimum off from return value. This
                 makes it easy to label confidence interval. Default False.
 
         **Returns**
@@ -823,6 +823,6 @@ cdef class Minuit:
                     k not in limit_param and\
                     k not in error_param:
                 raise RuntimeError(
-                        'Cannot understand keyword %s. May be typo?'%k)
+                        'Cannot understand keyword %s. May be a typo?'%k)
 
 

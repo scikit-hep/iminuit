@@ -1,7 +1,6 @@
 from distutils.core import setup, Extension
 import distutils.util
 import subprocess
-import numpy as np
 from os.path import dirname, join
 from glob import glob
 #static link
@@ -10,7 +9,7 @@ minuit_src = glob(join(cwd,'Minuit/src/*.cpp'))
 minuit_header = join(cwd,'Minuit')
 libiminuit = Extension('iminuit._libiminuit',
                     sources = ['iminuit/_libiminuit.cpp'] + minuit_src,
-                    include_dirs= [np.get_include(),minuit_header],
+                    include_dirs= [minuit_header],
                     libraries = [],
                     extra_compile_args = ['-Wno-write-strings'],
                     extra_link_args = [])

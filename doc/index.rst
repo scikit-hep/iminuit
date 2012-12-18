@@ -39,8 +39,7 @@ Install
 Tutorial
 ========
 
-The tutorial is in tutorial directory. You can view it online
-:download:`here <tutorial.html>`.
+The tutorial is in tutorial directory. You can view it online here.
 
 API
 ===
