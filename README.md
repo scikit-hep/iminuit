@@ -1,17 +1,11 @@
 RTMinuit
 --------
 
-Interactive Python Friendly Mimizer based on SEAL Minuit.
+Interactive Python Friendly Mimizer based on [SEAL Minuit](http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/release/download.html).
+(It's included in the package no need to install it separately)
 
 RTMinuit is mostly compatible with PyMinuit(with very few exception). Existing
 code can be ported to RTMinuit by just changing the import statement.
-
-Requirement
------------
-
-SEAL Minuit http://seal.web.cern.ch/seal/minuit/releases/Minuit-1_7_9.tar.gz
-Patched version on http://code.google.com/p/pyminuit/downloads/list PyMinuit
-website works too
 
 Tutorial
 --------

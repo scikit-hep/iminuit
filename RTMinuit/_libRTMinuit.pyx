@@ -13,7 +13,7 @@ from ConsoleFrontend import ConsoleFrontend
 from RTMinuitWarnings import *
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
-
+import array
 #our wrapper
 cdef extern from "PythonFCN.h":
     #int raise_py_err()#this is very important we need custom error handler
@@ -98,7 +98,7 @@ cdef class Minuit:
     cdef public object frontend
 
     def __init__(self, fcn,
-            throw_nan=False,  pedantic=True,
+            throw_nan=False, pedantic=True,
             frontend=None, forced_parameters=None, print_level=1, **kwds):
         """
         Construct minuit object from given *fcn*
@@ -451,21 +451,6 @@ cdef class Minuit:
         return np.array(matrix)
 
 
-    # def error_matrix(self, correlation=False):
-    #     ndim = self.mnstat().npari
-    #     #void mnemat(Double_t* emat, Int_t ndim)
-    #     tmp = array('d', [0.] * (ndim * ndim))
-    #     self.tmin.mnemat(tmp, ndim)
-    #     ret = np.array(tmp)
-    #     ret = ret.reshape((ndim, ndim))
-    #     if correlation:
-    #         diag = np.diagonal(ret)
-    #         sigma_col = np.sqrt(diag[:, np.newaxis])
-    #         sigma_row = sigma_col.T
-    #         ret = ret / sigma_col / sigma_row
-    #     return ret
-
-
     def is_fixed(self,vname):
         """check if variable *vname* is (initialy) fixed"""
         if vname not in self.parameters:
@@ -475,18 +460,6 @@ cdef class Minuit:
             return self.initialfix[vname]
         else:
             return self.last_upst.minuitParameters()[index].isFixed()
-
-
-    def scan(self):
-        """NOT IMPLEMENTED"""
-        #anyone actually use this?
-        raise NotImplementedError
-
-
-    def contour(self):
-        """NOT IMPLEMENTED"""
-        #and this?
-        raise NotImplementedError
 
 
     #dealing with frontend conversion
@@ -649,6 +622,117 @@ cdef class Minuit:
             if param_name(verr) not in self.parameters:
                 warn(('%s float. But there is no parameter %s. \
                     Ignore.') % (verr, param_name(verr)), RTMinuitInitialParamWarning)
+
+
+    def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
+        """calculate cost function profile around specify range.
+        Useful for plotting likelihood scan
+
+        **Arguments**
+
+            * *vname* variable name to scan
+
+            * *bins* number of scanning bin
+
+            * *bound*
+                If bound is tuple, (left, right) scanning bound.
+                If bound is a number, it specifies how many :math:`\sigma`
+                symmetrically from minimum (minimum+- bound*:math:`\sigma`).
+                Default 2
+
+        **Returns**
+
+            bins(center point), value
+        """
+        if isinstance(bound, (int,long,float)):
+            start = self.values[vname]
+            sigma = self.errors[vname]
+            bound = (start+bound*sigma,
+                    start-bound*sigma)
+        blength = bound[1]-bound[0]
+        binstep = blength/(bins-1)
+        args = list(self.args) if args is None else args
+        #center value
+        bins = array.array('d',(bound[0]+binstep*i for i in xrange(bins)))
+        ret = array.array('d')
+        pos = self.var2pos[vname]
+        if subtract_min and self.cfmin is NULL:
+            raise RunTimeError("Request for minimization "
+                "subtraction but no minimization has been done. "
+                "Run migrad first.")
+        minval = self.cfmin.fval() if subtract_min else 0.
+        for val in bins:
+            args[pos] = val
+            ret.append(self.fcn(*args)-minval)
+        return bins, ret
+
+
+    def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
+        """2D countour scan.
+        **Arguments**
+
+            *x* variable name for X axis of scan
+
+            *y* variable name for Y axis of scan
+
+            *bound*
+                If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
+                If bound is a number, it specifies how many :math:`\sigma`
+                symmetrically from minimum (minimum+- bound*:math:`\sigma`).
+                Default 2
+
+        **Returns**
+
+            x_bins, y_bins, values
+
+            values[y, x] <-- this choice is so that you can pass it
+            to through matplotlib contour()
+        """
+        #don't want to use numpy as requirement for this
+        if isinstance(bound, (int,long,float)):
+            x_start = self.values[x]
+            x_sigma = self.errors[x]
+            x_bound = (x_start+bound*x_sigma, x_start-bound*x_sigma)
+            y_start = self.values[y]
+            y_sigma = self.errors[y]
+            y_bound = (y_start+bound*y_sigma, y_start-bound*y_sigma)
+        else:
+            x_bound = bound[0]
+            y_bound = bound[1]
+
+        x_bins = 20#bins
+        y_bins = 50#bins
+
+        x_blength = x_bound[1]-x_bound[0]
+        x_binstep = x_blength/(x_bins-1)
+
+        y_blength = y_bound[1]-y_bound[0]
+        y_binstep = y_blength/(y_bins-1)
+
+        x_val = array.array('d',(x_bound[0]+x_binstep*i for i in xrange(x_bins)))
+        y_val = array.array('d',(y_bound[0]+y_binstep*i for i in xrange(y_bins)))
+
+        x_pos = self.var2pos[x]
+        y_pos = self.var2pos[y]
+
+        args = list(self.args) if args is None else args
+
+        if subtract_min and self.cfmin is NULL:
+            raise RunTimeError("Request for minimization "
+                "subtraction but no minimization has been done. "
+                "Run migrad first.")
+        minval = self.cfmin.fval() if subtract_min else 0.
+
+        ret = list()
+        for yy in y_val:
+            args[y_pos] = yy
+            tmp = array.array('d')
+            for xx in x_val:
+                args[x_pos] = xx
+                tmp.append(self.fcn(*args)-minval)
+            ret.append(tmp)
+
+        return x_val, y_val, ret
 
 
     cdef refreshInternalState(self):
