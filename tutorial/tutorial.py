@@ -54,7 +54,7 @@ m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=3., fix_y=True, print_level=
 # 
 # ###Run Migrad
 # 
-# Migrad performs is Variable Metric Minimizer. In a nutshell, it combines steepest descends algorithm along with line search strategy. Migrad is very popular in high energy physics field because of its robustness.
+# Migrad performs Variable Metric Minimization. In a nutshell, it combines steepest descends algorithm along with line search strategy. Migrad is very popular in high energy physics field because of its robustness.
 
 # <codecell>
 
