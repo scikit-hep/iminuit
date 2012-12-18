@@ -706,8 +706,8 @@ cdef class Minuit:
             x_bound = bound[0]
             y_bound = bound[1]
 
-        x_bins = 20#bins
-        y_bins = 50#bins
+        x_bins = bins
+        y_bins = bins
 
         x_blength = x_bound[1]-x_bound[0]
         x_binstep = x_blength/(x_bins-1)

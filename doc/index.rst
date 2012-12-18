@@ -39,7 +39,8 @@ Install
 Tutorial
 ========
 
-The tutorial is in tutorial directory. You can view it online here.
+The tutorial is in tutorial directory. You can view it online
+`here <http://nbviewer.ipython.org/urls/raw.github.com/piti118/iminuit/master/tutorial/tutorial.ipynb>`_.
 
 API
 ===
