@@ -642,7 +642,6 @@ cdef class Minuit:
 
             *subtract_min* subtract_minimum off from return value. This
                 makes it easy to label confidence interval. Default False.
-        
 
         **Returns**
 

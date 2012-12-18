@@ -166,7 +166,7 @@ class HtmlFrontend:
                 <td>Minos Error+</td>
                 <td>Limit-</td>
                 <td>Limit+</td>
-                <td></td>
+                <td>FIXED</td>
             </tr>
         """.format(**locals())
         to_print += header
