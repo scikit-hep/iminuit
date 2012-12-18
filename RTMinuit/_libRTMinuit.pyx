@@ -640,6 +640,10 @@ cdef class Minuit:
                 symmetrically from minimum (minimum+- bound*:math:`\sigma`).
                 Default 2
 
+            *subtract_min* subtract_minimum off from return value. This
+                makes it easy to label confidence interval. Default False.
+        
+
         **Returns**
 
             bins(center point), value
@@ -680,6 +684,9 @@ cdef class Minuit:
                 If bound is a number, it specifies how many :math:`\sigma`
                 symmetrically from minimum (minimum+- bound*:math:`\sigma`).
                 Default 2
+
+            *subtract_min* subtract_minimum off from return value. This
+                makes it easy to label confidence interval. Default False.
 
         **Returns**
 
