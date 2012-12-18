@@ -3,7 +3,7 @@
 Full API Documentation
 ======================
 
-.. currentmodule:: RTMinuit
+.. currentmodule:: iminuit
 
 .. autosummary::
 
@@ -93,7 +93,7 @@ Full API Documentation
 Return Value Struct:
 ====================
 
-RTMinuit uses various structs as return value. This section lists the struct
+iminuit uses various structs as return value. This section lists the struct
 and all it's field
 
 .. _function-minimum-sruct:

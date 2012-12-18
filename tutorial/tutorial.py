@@ -3,12 +3,12 @@
 
 # <codecell>
 
-from RTMinuit import Minuit, describe, Struct
+from iminuit import Minuit, describe, Struct
 
 # <markdowncell>
 
 # ##Really Quick Start
-# Let go through a quick course about how to minimize things. If you use PyMinuit before you will find that RTMinuit is very similar to PyMinuit. One notable different is that there is no printMode (we use print_level).
+# Let go through a quick course about how to minimize things. If you use PyMinuit before you will find that iminuit is very similar to PyMinuit. One notable different is that there is no printMode (we use print_level).
 
 # <codecell>
 
@@ -17,7 +17,7 @@ from RTMinuit import Minuit, describe, Struct
 #x=1, y=2, z=3
 def f(x,y,z):
     return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
-describe(f) #RTMinuit magically extract function signature
+describe(f) #iminuit magically extract function signature
 
 # <codecell>
 
@@ -119,13 +119,13 @@ m.print_matrix()
 %%cython
 cimport cython
 
-@cython.binding(True)#you need this otherwise RTMinuit can't extract signature
+@cython.binding(True)#you need this otherwise iminuit can't extract signature
 def cython_f(double x,double y,double z):
     return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
 
 # <codecell>
 
-#you can always see what RTMinuit will see
+#you can always see what iminuit will see
 print describe(cython_f)
 
 # <codecell>
@@ -260,7 +260,7 @@ print m.values
 # <codecell>
 
 #this is just showing off console frontend (you can force it)
-from RTMinuit.ConsoleFrontend import ConsoleFrontend
+from iminuit.ConsoleFrontend import ConsoleFrontend
 m = Minuit(f, frontend=ConsoleFrontend())
 
 # <codecell>

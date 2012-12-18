@@ -1,1 +1,1 @@
-cd RTMinuit; cython -a --cplus --fast-fail --line-directives _libRTMinuit.pyx ;
+cd iminuit; cython -a --cplus --fast-fail --line-directives _libiminuit.pyx ;

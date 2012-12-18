@@ -8,23 +8,32 @@ from glob import glob
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd,'Minuit/src/*.cpp'))
 minuit_header = join(cwd,'Minuit')
-RTMinuit = Extension('RTMinuit._libRTMinuit',
-                    sources = ['RTMinuit/_libRTMinuit.cpp'] + minuit_src,
+libiminuit = Extension('iminuit._libiminuit',
+                    sources = ['iminuit/_libiminuit.cpp'] + minuit_src,
                     include_dirs= [np.get_include(),minuit_header],
                     libraries = [],
                     extra_compile_args = ['-Wno-write-strings'],
                     extra_link_args = [])
 
-execfile('RTMinuit/info.py')
+execfile('iminuit/info.py')
 
 setup (
-    name = 'RTMinuit',
+    name = 'iminuit',
     version = __version__,
-    description = 'Another Minuit wrapper',
+    description = 'Interactive Minimization Tools based on MINUIT',
     author='Piti Ongmongkolkul',
     author_email='piti118@gmail.com',
-    url='https://github.com/piti118/RTMinuit',
-    package_dir = {'RTMinuit': 'RTMinuit'},
-    packages = ['RTMinuit'],
-    ext_modules = [RTMinuit]
+    url='https://github.com/piti118/iminuit',
+    package_dir = {'iminuit': 'iminuit'},
+    packages = ['iminuit'],
+    ext_modules = [libiminuit],
+    classifiers=[
+        "Programming Language :: Python",
+        'Topic :: Scientific/Engineering :: Physics',
+        'Topic :: Scientific/Engineering :: Mathematics',
+        'Intended Audience :: Science/Research',
+        'Development Status :: 4 - Beta',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'License :: OSI Approved :: MIT License'
+        ]
     )

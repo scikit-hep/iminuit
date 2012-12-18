@@ -10,7 +10,7 @@ from cython.operator cimport dereference as deref
 from libc.math cimport sqrt
 from pprint import pprint
 from ConsoleFrontend import ConsoleFrontend
-from RTMinuitWarnings import *
+from iminuit_warnings import *
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
 import array
@@ -138,7 +138,7 @@ cdef class Minuit:
 
         **Parameter Keyword Arguments:**
 
-            Similar to PyMinuit. RTMinuit allows user to set initial value,
+            Similar to PyMinuit. iminuit allows user to set initial value,
             initial stepsize/error, limits of parameters and whether
             parameter should be fixed or not by passing keyword arguments to
             Minuit. This is best explained through an example::
@@ -341,7 +341,7 @@ cdef class Minuit:
         upst = hesse.call(deref(self.pyfcn),self.cfmin.userState())
         if not upst.hasCovariance():
             warn("HESSE Failed. Covariance and GlobalCC will not be available",
-                RTMinuitHesseFailedWarning)
+                HesseFailedWarning)
         del self.last_upst
         self.last_upst = new MnUserParameterState(upst)
         self.refreshInternalState()
@@ -605,23 +605,23 @@ cdef class Minuit:
         for vn in self.parameters:
             if vn not in kwds:
                 warn(('Parameter %s does not have initial value. '
-                    'Assume 0.') % (vn), RTMinuitInitialParamWarning)
+                    'Assume 0.') % (vn), InitialParamWarning)
             if 'error_'+vn not in kwds and 'fix_'+param_name(vn) not in kwds:
                 warn(('Parameter %s is floating but does not '
                     'have initial step size. Assume 1.') % (vn),
-                    RTMinuitInitialParamWarning)
+                    InitialParamWarning)
         for vlim in extract_limit(kwds):
             if param_name(vlim) not in self.parameters:
                 warn(('%s is given. But there is no parameter %s. '
-                    'Ignore.' % (vlim, param_name(vlim)), RTMinuitInitialParamWarning))
+                    'Ignore.' % (vlim, param_name(vlim)), InitialParamWarning))
         for vfix in extract_fix(kwds):
             if param_name(vfix) not in self.parameters:
                 warn(('%s is given. But there is no parameter %s. \
-                    Ignore.' % (vfix, param_name(vfix)), RTMinuitInitialParamWarning))
+                    Ignore.' % (vfix, param_name(vfix)), InitialParamWarning))
         for verr in extract_error(kwds):
             if param_name(verr) not in self.parameters:
                 warn(('%s float. But there is no parameter %s. \
-                    Ignore.') % (verr, param_name(verr)), RTMinuitInitialParamWarning)
+                    Ignore.') % (verr, param_name(verr)), InitialParamWarning)
 
 
     def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):

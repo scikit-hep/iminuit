@@ -1,12 +1,7 @@
-.. RTMinuit documentation master file, created by
-   sphinx-quickstart on Tue Nov 13 10:50:10 2012.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-RTMinuit
+iminuit
 ========
 
-RTMinuit is a python (espcially ) friendly
+iminuit is a python (espcially ) friendly
 wrapper of `lcg-minuit`_ . The popular most minimizer used in High Energy
 Physics which has been around for more than 40 years(for a good reason).
 
@@ -30,14 +25,8 @@ Download
 
 ::
 
-    git clone git://github.com/piti118/RTMinuit.git
+    git clone git://github.com/piti118/iminuit.git
 
-Prerequisite
-============
-
-* `lcg-minuit`_. You can also use patched version from `PyMinuit`_.
-  Both will works just fine. This means if you have PyMinuit installed
-  you do not need to reinstall Minuit.
 
 Install
 =======
@@ -50,7 +39,7 @@ Install
 Tutorial
 ========
 
-The tutorial is in tutorial directory. You can view it online 
+The tutorial is in tutorial directory. You can view it online
 :download:`here <tutorial.html>`.
 
 API
