@@ -133,3 +133,6 @@ cdef extern from "Minuit/FunctionMinimum.h":
         bint hasCovariance()
         bint hasReachedCallLimit()
         bint isAboveMaxEdm()
+
+cdef extern from "Minuit/VariableMetricBuilder.h":
+    void set_migrad_print_level "VariableMetricBuilder::setPrintLevel" (int p)

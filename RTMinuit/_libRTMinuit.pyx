@@ -211,6 +211,7 @@ cdef class Minuit:
         self.tol = 0.1
         self.strategy = 1
         self.print_level = print_level
+        set_migrad_print_level(print_level)
         self.throw_nan = throw_nan
 
         self.parameters = args
@@ -532,9 +533,10 @@ cdef class Minuit:
         self.strategy=stra
 
 
-    def set_print_mode(self, lvl):
+    def set_print_level(self, lvl):
         """set printlevel 0 quiet, 1 normal, 2 paranoid, 3 really paranoid """
         self.print_level = lvl
+        set_migrad_print_level(lvl)
 
 
     def get_fmin(self):

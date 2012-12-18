@@ -25,7 +25,7 @@ public:
 
   ~MnUserParameters() {}
 
-  MnUserParameters(const MnUserParameters& par) : 
+  MnUserParameters(const MnUserParameters& par) :
     theTransformation(par.theTransformation) {}
 
   MnUserParameters& operator=(const MnUserParameters& par) {
@@ -42,7 +42,7 @@ public:
   /// access to parameters (row-wise)
   const std::vector<MinuitParameter>& parameters() const;
 
-  /// access to parameters and errors in column-wise representation 
+  /// access to parameters and errors in column-wise representation
   std::vector<double> params() const;
   std::vector<double> errors() const;
 
@@ -68,7 +68,7 @@ public:
 
   double value(unsigned int) const;
   double error(unsigned int) const;
-  
+
   /// interaction via name of parameter
   void fix(const char*);
   void release(const char*);
@@ -81,7 +81,7 @@ public:
 
   double value(const char*) const;
   double error(const char*) const;
-  
+
   //convert name into external number of parameter
   unsigned int index(const char*) const;
   //convert external number into name of parameter

@@ -10,7 +10,7 @@ class MnStrategy;
 class MinimumBuilder {
 
 public:
-  
+
   virtual ~MinimumBuilder() {}
 
   virtual FunctionMinimum minimum(const MnFcn&, const GradientCalculator&, const MinimumSeed&, const MnStrategy&, unsigned int, double) const = 0;

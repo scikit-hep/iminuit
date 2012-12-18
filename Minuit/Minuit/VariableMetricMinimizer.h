@@ -16,7 +16,7 @@ public:
 
   VariableMetricMinimizer() : theMinSeedGen(MnSeedGenerator()),
 			      theMinBuilder(VariableMetricBuilder()) {}
-  
+
   ~VariableMetricMinimizer() {}
 
   const MinimumSeedGenerator& seedGenerator() const {return theMinSeedGen;}

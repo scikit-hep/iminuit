@@ -46,7 +46,7 @@ protected:
   MnStrategy theStrategy;
   unsigned int theNumCall;
 
-public:  
+public:
 
 // facade: forward interface of MnUserParameters and MnUserTransformation
 // via MnUserParameterState

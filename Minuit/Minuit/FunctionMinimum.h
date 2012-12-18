@@ -58,10 +58,12 @@ public:
   const FunctionGradient& grad() const {return theData->grad();}
   double fval() const {return theData->fval();}
   double edm() const {return theData->edm();}
-  int nfcn() const {return theData->nfcn();}  
-  
+  int nfcn() const {return theData->nfcn();}
+
   double up() const {return theData->up();}
   bool isValid() const {return theData->isValid();}
+  bool isValid_ignoreMaxCall() const{return theData->isValid_ignoreMaxCall();}
+
   bool hasValidParameters() const {return theData->hasValidParameters();}
   bool hasValidCovariance() const {return theData->hasValidCovariance();}
   bool hasAccurateCovar() const {return theData->hasAccurateCovar();}
@@ -71,7 +73,7 @@ public:
   bool hasCovariance() const {return theData->hasCovariance();}
   bool isAboveMaxEdm() const {return theData->isAboveMaxEdm();}
   bool hasReachedCallLimit() const {return theData->hasReachedCallLimit();}
-
+  void print() const{return theData->print();}
 private:
 
   MnRefCountedPointer<BasicFunctionMinimum> theData;

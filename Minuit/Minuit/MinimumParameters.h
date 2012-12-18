@@ -8,16 +8,16 @@ class MinimumParameters {
 
 public:
 
-  MinimumParameters(unsigned int n) : 
+  MinimumParameters(unsigned int n) :
    theData(MnRefCountedPointer<BasicMinimumParameters>(new BasicMinimumParameters(n))) {}
 
   /** takes the parameter vector */
-  MinimumParameters(const MnAlgebraicVector& avec, double fval) : 
+  MinimumParameters(const MnAlgebraicVector& avec, double fval) :
    theData(MnRefCountedPointer<BasicMinimumParameters>(new BasicMinimumParameters(avec, fval)))  {}
-  
+
   /** takes the parameter vector plus step size x1 - x0 = dirin */
   MinimumParameters(const MnAlgebraicVector& avec, const MnAlgebraicVector& dirin, double fval) : theData(MnRefCountedPointer<BasicMinimumParameters>(new BasicMinimumParameters(avec, dirin, fval)))  {}
-  
+
   ~MinimumParameters() {}
 
   MinimumParameters(const MinimumParameters& par) : theData(par.theData) {}

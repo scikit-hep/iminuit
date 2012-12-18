@@ -43,6 +43,10 @@ m.migrad();
 
 # <codecell>
 
+m.hesse()
+
+# <codecell>
+
 #and this is how you get the the value
 print 'parameters', m.parameters
 print 'args', m.args
@@ -86,6 +90,11 @@ m.minos()
 print m.get_merrors()['x']
 print m.get_merrors()['x'].lower
 print m.get_merrors()['x'].upper
+
+# <codecell>
+
+#you can force use print_* to do various html display
+m.print_param()
 
 # <headingcell level=1>
 
@@ -252,6 +261,9 @@ m = Minuit(f, frontend=ConsoleFrontend())
 # <codecell>
 
 m.migrad();
+
+# <codecell>
+
 
 # <codecell>
 

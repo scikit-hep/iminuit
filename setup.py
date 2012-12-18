@@ -15,9 +15,11 @@ RTMinuit = Extension('RTMinuit._libRTMinuit',
                     extra_compile_args = ['-Wno-write-strings'],
                     extra_link_args = [])
 
+execfile('RTMinuit/info.py')
+
 setup (
     name = 'RTMinuit',
-    version = '1.00',
+    version = __version__,
     description = 'Another Minuit wrapper',
     author='Piti Ongmongkolkul',
     author_email='piti118@gmail.com',
@@ -25,4 +27,4 @@ setup (
     package_dir = {'RTMinuit': 'RTMinuit'},
     packages = ['RTMinuit'],
     ext_modules = [RTMinuit]
-       )
+    )

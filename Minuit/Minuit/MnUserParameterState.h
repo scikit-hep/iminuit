@@ -71,7 +71,7 @@ public:
 
   double fval() const {return theFVal;}
   double edm() const {return theEDM;}
-  unsigned int nfcn() const {return theNFcn;}  
+  unsigned int nfcn() const {return theNFcn;}
 
 private:
   

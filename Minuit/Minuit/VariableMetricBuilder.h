@@ -23,7 +23,8 @@ public:
 
   const VariableMetricEDMEstimator& estimator() const {return theEstimator;}
   const DavidonErrorUpdator& errorUpdator() const {return theErrorUpdator;}
-
+  static int print_level;
+  static void setPrintLevel(int p);
 private:
 
   VariableMetricEDMEstimator theEstimator;
