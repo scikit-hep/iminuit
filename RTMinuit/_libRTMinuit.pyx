@@ -10,6 +10,7 @@ from cython.operator cimport dereference as deref
 from libc.math cimport sqrt
 from pprint import pprint
 from ConsoleFrontend import ConsoleFrontend
+from RTMinuitWarnings import *
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
 
@@ -626,22 +627,23 @@ cdef class Minuit:
         for vn in self.parameters:
             if vn not in kwds:
                 warn(('Parameter %s does not have initial value. '
-                    'Assume 0.') % (vn))
+                    'Assume 0.') % (vn), RTMinuitInitialParamWarning)
             if 'error_'+vn not in kwds and 'fix_'+param_name(vn) not in kwds:
                 warn(('Parameter %s is floating but does not '
-                    'have initial step size. Assume 1.') % (vn))
+                    'have initial step size. Assume 1.') % (vn),
+                    RTMinuitInitialParamWarning)
         for vlim in extract_limit(kwds):
             if param_name(vlim) not in self.parameters:
                 warn(('%s is given. But there is no parameter %s. '
-                    'Ignore.') % (vlim, param_name(vlim)))
+                    'Ignore.' % (vlim, param_name(vlim)), RTMinuitInitialParamWarning))
         for vfix in extract_fix(kwds):
             if param_name(vfix) not in self.parameters:
                 warn(('%s is given. But there is no parameter %s. \
-                    Ignore.') % (vfix, param_name(vfix)))
+                    Ignore.' % (vfix, param_name(vfix)), RTMinuitInitialParamWarning))
         for verr in extract_error(kwds):
             if param_name(verr) not in self.parameters:
                 warn(('%s float. But there is no parameter %s. \
-                    Ignore.') % (verr, param_name(verr)))
+                    Ignore.') % (verr, param_name(verr)), RTMinuitInitialParamWarning)
 
 
     cdef refreshInternalState(self):
