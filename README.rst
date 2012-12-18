@@ -1,7 +1,7 @@
 iminuit
 --------
 
-Interactive IPython Friendly Mimizer based on [SEAL Minuit](http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/release/download.html).
+Interactive IPython Friendly Mimizer based on `SEAL Minuit`<http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/release/download.html>_.
 (It's included in the package no need to install it separately)
 
 iminuit is mostly compatible with PyMinuit(with very few exception). Existing
