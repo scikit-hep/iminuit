@@ -1,5 +1,5 @@
 import unittest
-from RTMinuit.util import *
+from iminuit.util import *
 class TestUtil(unittest.TestCase):
     def setUp(self):
         pass
@@ -86,4 +86,3 @@ class TestUtil(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    
