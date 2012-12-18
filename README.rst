@@ -23,3 +23,9 @@ Tutorial
 --------
 
 see tutorial.ipynb notebook or tutorial.py if you don't have ipython notebook
+
+
+Documentation
+-------------
+
+http://piti118.github.com/iminuit/
