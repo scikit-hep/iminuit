@@ -22,7 +22,9 @@ setup (
     description = 'Interactive Minimization Tools based on MINUIT',
     author='Piti Ongmongkolkul',
     author_email='piti118@gmail.com',
-    url='https://github.com/piti118/iminuit',
+    url='https://piti118@github.com/iminuit',
+    download_url='http://pypi.python.org/packages/source/i/'
+            'root_numpy/iminuit-%s.tar.gz' % __version__,
     package_dir = {'iminuit': 'iminuit'},
     packages = ['iminuit'],
     ext_modules = [libiminuit],
