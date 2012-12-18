@@ -1,3 +1,8 @@
+.. -*- mode: rst -*-
+
+.. image:: https://travis-ci.org/piti118/iminuit.png?branch=master
+   :target: https://travis-ci.org/piti118/iminuit
+
 iminuit
 --------
 
