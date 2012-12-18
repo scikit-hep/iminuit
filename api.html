@@ -1,0 +1,804 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Full API Documentation &mdash; iminuit 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="iminuit 1.0.0 documentation" href="index.html" />
+    <link rel="prev" title="iminuit" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="iminuit"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">iminuit 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Full API Documentation</a></li>
+<li><a class="reference internal" href="#return-value-struct">Return Value Struct:</a><ul>
+<li><a class="reference internal" href="#function-minimum-struct">Function Minimum Struct</a></li>
+<li><a class="reference internal" href="#minos-error-struct">Minos Error Struct</a></li>
+<li><a class="reference internal" href="#minuit-parameter-struct">Minuit Parameter Struct</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#function-signature-extraction-ordering">Function Signature Extraction Ordering</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">iminuit</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="full-api-documentation">
+<span id="api-doc"></span><h1>Full API Documentation<a class="headerlink" href="#full-api-documentation" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+</tbody>
+</table>
+<dl class="class">
+<dt id="iminuit.Minuit">
+<em class="property">class </em><tt class="descclassname">iminuit.</tt><tt class="descname">Minuit</tt><a class="headerlink" href="#iminuit.Minuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwds)</p>
+<p>Construct minuit object from given <em>fcn</em></p>
+<p><strong>Arguments:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><em>fcn</em>: function to optimized. Minuit automomagically find how to
+call the function and each parameters. More information about how
+Minuit detects function signature can be found in
+<a class="reference internal" href="#function-sig-label"><em>Function Signature Extraction Ordering</em></a></li>
+</ul>
+</div></blockquote>
+<p><strong>Builtin Keyword Arguments:</strong></p>
+<blockquote>
+<div><ul>
+<li><p class="first"><em>throw_nan</em>: fcn can be set to raise RuntimeError when it
+encounters <em>nan</em>. (Default False)</p>
+</li>
+<li><p class="first"><em>pedantic</em>: warns about parameters that do not have initial
+value or initial error/stepsize set.</p>
+</li>
+<li><p class="first"><em>frontend</em>: Minuit frontend. There are two builting frontends.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>ConsoleFrontend which is design to print out to terminal.</li>
+<li>HtmlFrontend which is designed to give a nice output in
+IPython notebook session.</li>
+</ol>
+</div></blockquote>
+<p>By Default, Minuit switch to HtmlFrontend automatically if it
+is called in IPython session. It uses ConsoleFrontend otherwise.</p>
+</li>
+<li><p class="first"><em>forced_parameters</em>: tell Minuit not to do function signature
+detection and use this argument instead. (Default None
+(automagically detect signature)</p>
+</li>
+<li><p class="first"><em>print_level</em>: set the print_level for this Minuit. 0 is quiet.
+1 print out at the end of migrad/hesse/minos. The reason it
+has this cAmEl case is to keep it compatible with PyMinuit.</p>
+</li>
+</ul>
+</div></blockquote>
+<p><strong>Parameter Keyword Arguments:</strong></p>
+<blockquote>
+<div><p>Similar to PyMinuit. iminuit allows user to set initial value,
+initial stepsize/error, limits of parameters and whether
+parameter should be fixed or not by passing keyword arguments to
+Minuit. This is best explained through an example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+</pre></div>
+</div>
+<ul>
+<li><p class="first">Initial value(varname):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#initial value for x and y</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Initial step size/error(fix_varname):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#initial step size for x and y</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">error_y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Limits (limit_varname=tuple):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#limits x and y</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">limit_x</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">limit_y</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">))</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Fixing parameters:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#fix x but vary y</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">fix_x</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Of Course you can combine them in your application or use
+dictionary expansion</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">kwdarg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwdarg</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<dl class="method">
+<dt id="iminuit.Minuit.migrad">
+<tt class="descname">migrad</tt><big>(</big><em>self</em>, <em>int ncall=10000</em>, <em>resume=True</em>, <em>int nsplit=1</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.migrad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run migrad.</p>
+<p>Migrad is an age-tested(over 40 years old, no kidding), super
+robust and stable minimization algorithm. It even has
+<a class="reference external" href="http://en.wikipedia.org/wiki/MINUIT">wiki page</a>.
+You can read how it does the magic at
+<a class="reference external" href="http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/minmain.html">here</a>.</p>
+<p><strong>Arguments:</strong></p>
+<blockquote>
+<div><ul class="simple">
+<li><em>ncall</em>: integer (approximate) maximum number of call before
+migrad stop trying. Default 10000</li>
+<li><em>resume</em>: boolean indicating whether migrad should resume from
+previous minimizer attempt(True) or should start from the
+beginning(False). Default True.</li>
+<li><em>split</em>: split migrad in to <em>split</em> runs. Max fcn call
+for each run is ncall/nsplit. Migrad stops when it found the
+function minimum to be valid or ncall is reached. This is useful
+for getting progress. However, you need to make sure that
+ncall/nsplit is large enough. Otherwise, migrad will think
+that the minimum is invalid due to exceeding max call
+(ncall/nsplit). Default 1(no split).</li>
+</ul>
+</div></blockquote>
+<p><strong>Return:</strong></p>
+<blockquote>
+<div><a class="reference internal" href="#function-minimum-sruct"><em>Function Minimum Struct</em></a>, list of <a class="reference internal" href="#minuit-param-struct"><em>Minuit Parameter Struct</em></a></div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.hesse">
+<tt class="descname">hesse</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.hesse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run HESSE.</p>
+<p>HESSE estimate error matrix by the <a class="reference external" href="http://en.wikipedia.org/wiki/Hessian_matrix">second derivative at the minimim</a>. This error matrix
+is good if your <span class="math">\(\chi^2\)</span> or likelihood profile is parabolic at
+the minimum. From my experience, most of simple fits are.</p>
+<p><a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-meth docutils literal"><span class="pre">minos()</span></tt></a> makes no parabolic assumption and scan the likelihood
+and give the correct error asymmetric error in all cases(Unless your
+likelihood profile is utterly discontinuous near the minimum).</p>
+<dl class="docutils">
+<dt><strong>Returns</strong></dt>
+<dd>list of <a class="reference internal" href="#minuit-param-struct"><em>Minuit Parameter Struct</em></a></dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.minos">
+<tt class="descname">minos</tt><big>(</big><em>self</em>, <em>var=None</em>, <em>sigma=1.0</em>, <em>unsigned int maxcall=1000</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.minos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run minos for parameter <em>var</em></p>
+<p>If <em>var</em> is None it runs minos for all parameters</p>
+<p><strong>Arguments:</strong></p>
+<blockquote>
+<div>sigma: number of <span class="math">\(\sigma\)</span> error. Default 1.0.</div></blockquote>
+<p><strong>Returns</strong></p>
+<blockquote>
+<div><p>Dictionary of varname to <a class="reference internal" href="#minos-error-struct"><em>Minos Error Struct</em></a>
+if minos is requested for all parameters.</p>
+<p>If minos is requested only for one parameter,
+<a class="reference internal" href="#minos-error-struct"><em>Minos Error Struct</em></a> is returned.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.args">
+<tt class="descname">args</tt><a class="headerlink" href="#iminuit.Minuit.args" title="Permalink to this definition">¶</a></dt>
+<dd><p>args: object</p>
+<p>current values of parameters in form of tuple(var1,var2, ...)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.values">
+<tt class="descname">values</tt><a class="headerlink" href="#iminuit.Minuit.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>values: object</p>
+<p>curret values of parameters in form of dictionary(name -&gt; value)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.errors">
+<tt class="descname">errors</tt><a class="headerlink" href="#iminuit.Minuit.errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>errors: object</p>
+<p>curret values of parameters in form of dictionary(name -&gt; error)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.fitarg">
+<tt class="descname">fitarg</tt><a class="headerlink" href="#iminuit.Minuit.fitarg" title="Permalink to this definition">¶</a></dt>
+<dd><p>fitarg: object</p>
+<p>current value state in form of
+dictionary(name-&gt;value, error_name-&gt;error, fix_name-&gt;fix
+, limit_name-&gt;(lower, upper)).
+This is very useful when you wan to save the fit parameters and
+use it later. For example,:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">migrad</span><span class="p">()</span>
+<span class="n">fitarg</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fitarg</span>
+
+<span class="n">m2</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="o">**</span><span class="n">fitarg</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.merrors">
+<tt class="descname">merrors</tt><a class="headerlink" href="#iminuit.Minuit.merrors" title="Permalink to this definition">¶</a></dt>
+<dd><p>merrors: object</p>
+<p>last minos error in form of dictionary((name,1.0)-&gt;upper, (name,-1.0)
+-&gt;lower). It is here for PyMinuit compatibility.</p>
+<p>This is not recommend
+use <a class="reference internal" href="#iminuit.Minuit.get_merrors" title="iminuit.Minuit.get_merrors"><tt class="xref py py-meth docutils literal"><span class="pre">get_merrors()</span></tt></a> which return dictionary of
+name-&gt; <a class="reference internal" href="#minos-error-struct"><em>Minos Error Struct</em></a> instead.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.fval">
+<tt class="descname">fval</tt><a class="headerlink" href="#iminuit.Minuit.fval" title="Permalink to this definition">¶</a></dt>
+<dd><p>fval: &#8216;double&#8217;</p>
+<p>current function value</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.get_fmin" title="iminuit.Minuit.get_fmin"><tt class="xref py py-meth docutils literal"><span class="pre">get_fmin()</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.edm">
+<tt class="descname">edm</tt><a class="headerlink" href="#iminuit.Minuit.edm" title="Permalink to this definition">¶</a></dt>
+<dd><p>edm: &#8216;double&#8217;</p>
+<p>estimated distance to minimum</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.get_fmin" title="iminuit.Minuit.get_fmin"><tt class="xref py py-meth docutils literal"><span class="pre">get_fmin()</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.covariance">
+<tt class="descname">covariance</tt><a class="headerlink" href="#iminuit.Minuit.covariance" title="Permalink to this definition">¶</a></dt>
+<dd><p>covariance: object</p>
+<p>covariance matrix in form of dictionary(v1,v2)-&gt;covariance</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.matrix" title="iminuit.Minuit.matrix"><tt class="xref py py-meth docutils literal"><span class="pre">matrix()</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.gcc">
+<tt class="descname">gcc</tt><a class="headerlink" href="#iminuit.Minuit.gcc" title="Permalink to this definition">¶</a></dt>
+<dd><p>gcc: object</p>
+<p>global correlation coefficiencts in form of
+dict(varname-&gt;gcc)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.up">
+<tt class="descname">up</tt><a class="headerlink" href="#iminuit.Minuit.up" title="Permalink to this definition">¶</a></dt>
+<dd><p>up: &#8216;double&#8217;</p>
+<p>UP parameter. This determines how migrad/hesse define error. Default
+value is 1.0. Up should be 1.0 for <span class="math">\(\chi^2\)</span> cost
+funciton and 0.5 for negative log likelihood function.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.tol">
+<tt class="descname">tol</tt><a class="headerlink" href="#iminuit.Minuit.tol" title="Permalink to this definition">¶</a></dt>
+<dd><p>tol: &#8216;double&#8217;</p>
+<p>Tolerance. One fo migrad convergence criteria is edm &lt; maxedm.
+Maxedm is calculated by 0.0001*tol*UP.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.contour">
+<tt class="descname">contour</tt><big>(</big><em>self</em>, <em>x</em>, <em>y</em>, <em>bins=20</em>, <em>bound=2</em>, <em>args=None</em>, <em>subtract_min=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.contour" title="Permalink to this definition">¶</a></dt>
+<dd><p>2D countour scan.
+<strong>Arguments</strong></p>
+<blockquote>
+<div><p><em>x</em> variable name for X axis of scan</p>
+<p><em>y</em> variable name for Y axis of scan</p>
+<dl class="docutils">
+<dt><em>bound</em></dt>
+<dd>If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
+If bound is a number, it specifies how many <span class="math">\(\sigma\)</span>
+symmetrically from minimum (minimum+- bound*:math:<cite>sigma</cite>).
+Default 2</dd>
+<dt><em>subtract_min</em> subtract_minimum off from return value. This</dt>
+<dd>makes it easy to label confidence interval. Default False.</dd>
+</dl>
+</div></blockquote>
+<p><strong>Returns</strong></p>
+<blockquote>
+<div><p>x_bins, y_bins, values</p>
+<p>values[y, x] &lt;&#8211; this choice is so that you can pass it
+to through matplotlib contour()</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.get_fmin">
+<tt class="descname">get_fmin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.get_fmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>return current FunctionMinimum Struct</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.get_initial_param_state">
+<tt class="descname">get_initial_param_state</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.get_initial_param_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>get initiail setting inform of MinuitParameter Struct</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.get_merrors">
+<tt class="descname">get_merrors</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.get_merrors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary of varname-&gt; MinosError Struct</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.get_num_call_fcn">
+<tt class="descname">get_num_call_fcn</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.get_num_call_fcn" title="Permalink to this definition">¶</a></dt>
+<dd><p>return number of total call to fcn(not just the last operation)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.get_param_states">
+<tt class="descname">get_param_states</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.get_param_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of current MinuitParameter Struct
+for all parameters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.is_clean_state">
+<tt class="descname">is_clean_state</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.is_clean_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if minuit is at clean state ie. no migrad call</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.is_fixed">
+<tt class="descname">is_fixed</tt><big>(</big><em>self</em>, <em>vname</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.is_fixed" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if variable <em>vname</em> is (initialy) fixed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.list_of_fixed_param">
+<tt class="descname">list_of_fixed_param</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.list_of_fixed_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>return list of (initially) fixed parameters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.list_of_vary_param">
+<tt class="descname">list_of_vary_param</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.list_of_vary_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>return list of (initially) float vary parameters</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.matrix">
+<tt class="descname">matrix</tt><big>(</big><em>self</em>, <em>correlation=False</em>, <em>skip_fixed=True</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>return error/correlation matrix in tuple or tuple format.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.matrix_acurate">
+<tt class="descname">matrix_acurate</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.matrix_acurate" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if covariance(of the last migrad) is accurate.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<tt class="descname">merrors</tt></dt>
+<dd><p>merrors: object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.merrors_struct">
+<tt class="descname">merrors_struct</tt><a class="headerlink" href="#iminuit.Minuit.merrors_struct" title="Permalink to this definition">¶</a></dt>
+<dd><p>merrors_struct: object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.migrad_ok">
+<tt class="descname">migrad_ok</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.migrad_ok" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if minimum is valid</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.narg">
+<tt class="descname">narg</tt><a class="headerlink" href="#iminuit.Minuit.narg" title="Permalink to this definition">¶</a></dt>
+<dd><p>narg: object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.ncalls">
+<tt class="descname">ncalls</tt><a class="headerlink" href="#iminuit.Minuit.ncalls" title="Permalink to this definition">¶</a></dt>
+<dd><p>ncalls: &#8216;double&#8217;</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.np_matrix">
+<tt class="descname">np_matrix</tt><big>(</big><em>self</em>, <em>correlation=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.np_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>return error/correlation matrix in numpy array format.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.parameters">
+<tt class="descname">parameters</tt><a class="headerlink" href="#iminuit.Minuit.parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>parameters: object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.pos2var">
+<tt class="descname">pos2var</tt><a class="headerlink" href="#iminuit.Minuit.pos2var" title="Permalink to this definition">¶</a></dt>
+<dd><p>pos2var: object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.print_all_minos">
+<tt class="descname">print_all_minos</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_all_minos" title="Permalink to this definition">¶</a></dt>
+<dd><p>print all minos errors(and its states)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.print_fmin">
+<tt class="descname">print_fmin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_fmin" title="Permalink to this definition">¶</a></dt>
+<dd><p>print current function minimum state</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.print_initial_param">
+<tt class="descname">print_initial_param</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_initial_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print initial parameters</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.print_level">
+<tt class="descname">print_level</tt><a class="headerlink" href="#iminuit.Minuit.print_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>print_level: object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.print_matrix">
+<tt class="descname">print_matrix</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>show error_matrix</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.print_param">
+<tt class="descname">print_param</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>print current parameter state</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.profile">
+<tt class="descname">profile</tt><big>(</big><em>self</em>, <em>vname</em>, <em>bins=100</em>, <em>bound=2</em>, <em>args=None</em>, <em>subtract_min=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate cost function profile around specify range.
+Useful for plotting likelihood scan</p>
+<p><strong>Arguments</strong></p>
+<blockquote>
+<div><ul>
+<li><p class="first"><em>vname</em> variable name to scan</p>
+</li>
+<li><p class="first"><em>bins</em> number of scanning bin</p>
+</li>
+<li><dl class="first docutils">
+<dt><em>bound</em></dt>
+<dd><p class="first last">If bound is tuple, (left, right) scanning bound.
+If bound is a number, it specifies how many <span class="math">\(\sigma\)</span>
+symmetrically from minimum (minimum+- bound*:math:<cite>sigma</cite>).
+Default 2</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="docutils">
+<dt><em>subtract_min</em> subtract_minimum off from return value. This</dt>
+<dd>makes it easy to label confidence interval. Default False.</dd>
+</dl>
+</div></blockquote>
+<p><strong>Returns</strong></p>
+<blockquote>
+<div>bins(center point), value</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.set_print_level">
+<tt class="descname">set_print_level</tt><big>(</big><em>self</em>, <em>lvl</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.set_print_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>set printlevel 0 quiet, 1 normal, 2 paranoid, 3 really paranoid</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.set_strategy">
+<tt class="descname">set_strategy</tt><big>(</big><em>self</em>, <em>stra</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.set_strategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>set strategy 0=fast , 1=default, 2=slow but accurate</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.set_up">
+<tt class="descname">set_up</tt><big>(</big><em>self</em>, <em>double up</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.set_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>set UP parameter 1 for <span class="math">\(\chi^2\)</span> and 0.5 for log likelihood</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.strategy">
+<tt class="descname">strategy</tt><a class="headerlink" href="#iminuit.Minuit.strategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>strategy: &#8216;unsigned int&#8217;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="iminuit.Minuit.var2pos">
+<tt class="descname">var2pos</tt><a class="headerlink" href="#iminuit.Minuit.var2pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>var2pos: object</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="return-value-struct">
+<h1>Return Value Struct:<a class="headerlink" href="#return-value-struct" title="Permalink to this headline">¶</a></h1>
+<p>iminuit uses various structs as return value. This section lists the struct
+and all it&#8217;s field</p>
+<div class="section" id="function-minimum-struct">
+<span id="function-minimum-sruct"></span><h2>Function Minimum Struct<a class="headerlink" href="#function-minimum-struct" title="Permalink to this headline">¶</a></h2>
+<p>They are usually return value from <a class="reference internal" href="#iminuit.Minuit.get_fmin" title="iminuit.Minuit.get_fmin"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_fmin()</span></tt></a>
+and <a class="reference internal" href="#iminuit.Minuit.migrad" title="iminuit.Minuit.migrad"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.migrad()</span></tt></a>
+Function Mimum Struct has the following attributes:</p>
+<blockquote>
+<div><ul>
+<li><p class="first"><em>fval</em>: FCN minimum value</p>
+</li>
+<li><p class="first"><em>edm</em>: <a class="reference external" href="http://en.wikipedia.org/wiki/Minimum_distance_estimation">Estimated Distance to Minimum</a>.</p>
+</li>
+<li><p class="first"><em>nfcn</em>: Number of function call in last mimizier call</p>
+</li>
+<li><p class="first"><em>up</em>: UP parameter. This determine how minimizer define 1 <span class="math">\(\sigma\)</span>
+error</p>
+</li>
+<li><dl class="first docutils">
+<dt><em>is_valid</em>: Validity of function minimum. This is defined as</dt>
+<dd><ul class="first last simple">
+<li>has_valid_parameters</li>
+<li>and not has_reached_call_limit</li>
+<li>and not is_above_max_edm</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><em>has_valid_parameters</em>: Validity of parameters. This means:</dt>
+<dd><ol class="first last arabic simple">
+<li>The parameters must have valid error(if it&#8217;s not fixed).
+Valid error is not necessarily accurate.</li>
+<li>The parameters value must be valid</li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p class="first"><em>has_accurate_covariance</em>: Boolean indicating whether covariance matrix
+is accurate.</p>
+</li>
+<li><p class="first"><em>has_pos_def_covar</em>: Positive definiteness of covariance</p>
+</li>
+<li><p class="first"><em>has_made_posdef_covar</em>: Whether minimizer has to force covariance matrix
+to be positive definite by adding diagonal matrix.</p>
+</li>
+<li><p class="first"><em>hesse_failed</em>: Successfulness of the hesse call after minimizer.</p>
+</li>
+<li><p class="first"><em>has_covaraince</em>: Has Covariance.</p>
+</li>
+<li><p class="first"><em>is_above_max_edm</em>: Is EDM above 0.0001*tolerance*up? The convergence
+of migrad is defined by EDM being below this number.</p>
+</li>
+<li><p class="first"><em>has_reached_call_limit</em>: Whether the last minimizer exceeds number of
+FCN calls it is allowd.</p>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="minos-error-struct">
+<span id="id3"></span><h2>Minos Error Struct<a class="headerlink" href="#minos-error-struct" title="Permalink to this headline">¶</a></h2>
+<p>Minos Error Struct is used in return value from <a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.minos()</span></tt></a>.
+You can also call <a class="reference internal" href="#iminuit.Minuit.get_merrors" title="iminuit.Minuit.get_merrors"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_merrors()</span></tt></a> to get accumulated dictionary
+all minos errors that has been calculated. It contains various minos status:</p>
+<blockquote>
+<div><ul class="simple">
+<li><em>lower</em>: lower error value</li>
+<li><em>upper</em>: upper error value</li>
+<li><em>is_valid</em>: Validity of minos error value. This means <cite>lower_valid</cite>
+and <cite>upper_valid</cite></li>
+<li><em>lower_valid</em>: Validity of lower error</li>
+<li><em>upper_valid</em>: Validity of upper error</li>
+<li><em>at_lower_limit</em>: minos calculation hits the lower limit on parameters</li>
+<li><em>at_upper_limit</em>: minos calculation hits the upper limit on parameters</li>
+<li><em>lower_new_min</em>: found a new minimum while scanning cost function for
+lower error value</li>
+<li><em>upper_new_min</em>: found a new minimum while scanning cost function for
+upper error value</li>
+<li><em>nfn</em>: number of call to FCN in the last minos scan</li>
+<li><em>min</em>: the value of the parameter at the minimum</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="minuit-parameter-struct">
+<span id="minuit-param-struct"></span><h2>Minuit Parameter Struct<a class="headerlink" href="#minuit-parameter-struct" title="Permalink to this headline">¶</a></h2>
+<p>Minuit Parameter Struct is return value from <a class="reference internal" href="#iminuit.Minuit.hesse" title="iminuit.Minuit.hesse"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.hesse()</span></tt></a>
+You can, however, access the latest parameter by calling
+<a class="reference internal" href="#iminuit.Minuit.get_param_states" title="iminuit.Minuit.get_param_states"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_param_states()</span></tt></a>. Minuit Parameter Struct has the following
+attrubutes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><em>number</em>: parameter number</li>
+<li><em>name</em>: parameter name</li>
+<li><em>value</em>: parameter value</li>
+<li><em>error</em>: parameter parabolic error(like those from hesse)</li>
+<li><em>is_fixed</em>: is the parameter fixed</li>
+<li><em>is_const</em>: is the parameter a constant(We do not support const but
+you can alway use fixing parameter instead)</li>
+<li><em>has_limits</em>: parameter has limits set</li>
+<li><em>has_lower_limit</em>: parameter has lower limit set. We do not support one
+sided limit though.</li>
+<li><em>has_upper_limit</em>: parameter has upper limit set.</li>
+<li><em>lower_limit</em>: value of lower limit for this parameter</li>
+<li><em>upper_limit</em>: value of upper limit for this parameter</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="function-signature-extraction-ordering">
+<span id="function-sig-label"></span><h1>Function Signature Extraction Ordering<a class="headerlink" href="#function-signature-extraction-ordering" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">Using <tt class="docutils literal"><span class="pre">f.func_code.co_varnames</span></tt>, <tt class="docutils literal"><span class="pre">f.func_code.co_argcount</span></tt>
+All functions that is defined like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+</pre></div>
+</div>
+<p>Has these two attributes.</p>
+</li>
+<li><p class="first">Using <tt class="docutils literal"><span class="pre">f.__call__.func_code.co_varnames</span></tt>, <tt class="docutils literal"><span class="pre">f.__call__.co_argcount</span></tt>.
+Minuit knows how to dock off self parameter. This allow you to do
+things like encapsulate your data with in fitting algorithm:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MyChi2</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">m</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">c</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">c</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">([(</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">c</span><span class="p">)</span><span class="o">-</span><span class="n">y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+                   <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)])</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">If all fail, Minuit will call <tt class="docutils literal"><span class="pre">inspect.getargspec</span></tt> for
+function signature.
+Builtin C functions will fall into this category since
+they have no signature information. <tt class="docutils literal"><span class="pre">inspect.getargspec</span></tt> will parse
+docstring to get function signature.</p>
+</li>
+</ol>
+<p>This order is very similar to PyMinuit signature detection. Actually,
+it is a superset of PyMinuit signature detection.
+The difference is that it allows you to fake function
+signature by having func_code attribute in the object. This allows you
+to make a generic functor of your custom cost function. This is how
+<a class="reference external" href="https://github.com/piti118/dist_fit">dist_fit</a> was written:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">c</span><span class="p">:</span> <span class="n">m</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">c</span>
+<span class="c">#the beauty here is that all you need to build</span>
+<span class="c">#a Chi^2 is just your function and data</span>
+<span class="k">class</span> <span class="nc">GenericChi2</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">describe</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="c">#extract function signature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func_code</span> <span class="o">=</span> <span class="n">Struct</span><span class="p">(</span>
+                <span class="n">co_varnames</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span><span class="c">#dock off independent param</span>
+                <span class="n">co_argcount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+            <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="o">*</span><span class="n">arg</span><span class="p">)</span><span class="o">-</span><span class="n">y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">))</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">GenericChi2</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you are unsure what minuit will parse your function signature as
+, you can use <tt class="xref py py-func docutils literal"><span class="pre">describe()</span></tt> which returns tuple of arument names
+minuit will use as call signature.</p>
+</div>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="index.html" title="iminuit"
+             >previous</a> |</li>
+        <li><a href="index.html">iminuit 1.0.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Piti Ongmongkolkul.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
