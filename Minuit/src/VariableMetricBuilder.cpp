@@ -109,7 +109,6 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
             min.add( result.back() );
         }
 
-
         // end loop on iterations
         // ? need a maximum here (or max of function calls is enough ? )
         // continnue iteration (re-calculate funciton minimum if edm IS NOT sufficient)
@@ -120,7 +119,8 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
         if(VariableMetricBuilder::print_level >= 1) min.print();
         ipass++;
     }  while (edm > edmval );
-
+    //add hessian calculation back
+    min.add( result.back() );
     return min;
 }
 

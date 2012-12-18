@@ -7,9 +7,9 @@
 
 class MinimumState;
 
-/** class which holds the external user and/or internal Minuit representation 
-    of the parameters and errors; 
-    transformation internal <-> external on demand;  
+/** class which holds the external user and/or internal Minuit representation
+    of the parameters and errors;
+    transformation internal <-> external on demand;
  */
 
 class MnUserParameterState {
@@ -74,7 +74,7 @@ public:
   unsigned int nfcn() const {return theNFcn;}
 
 private:
-  
+
   bool theValid;
   bool theCovarianceValid;
   bool theGCCValid;

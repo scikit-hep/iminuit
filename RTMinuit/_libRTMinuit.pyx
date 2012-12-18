@@ -224,7 +224,7 @@ cdef class Minuit:
         self.ncalls = 0
         self.edm = 1.
         self.merrors = {}
-        self.gcc = {}
+        self.gcc = None
         if pedantic: self.pedantic(kwds)
 
         self.fitarg = {}
@@ -339,6 +339,9 @@ cdef class Minuit:
             raise RuntimeError('Run migrad first')
         hesse = new MnHesse(self.strategy)
         upst = hesse.call(deref(self.pyfcn),self.cfmin.userState())
+        if not upst.hasCovariance():
+            warn("HESSE Failed. Covariance and GlobalCC will not be available",
+                RTMinuitHesseFailedWarning)
         del self.last_upst
         self.last_upst = new MnUserParameterState(upst)
         self.refreshInternalState()
@@ -362,8 +365,8 @@ cdef class Minuit:
 
         **Returns**
 
-            Dictionary of varname to :ref:`minos-error-struct` 
-            if minos is requested for all parameters. 
+            Dictionary of varname to :ref:`minos-error-struct`
+            if minos is requested for all parameters.
 
             If minos is requested only for one parameter,
             :ref:`minos-error-struct` is returned.
@@ -414,6 +417,9 @@ cdef class Minuit:
             raise RuntimeError("Run migrad/hesse first")
         if not skip_fixed:
             raise RunTimeError('skip_fixed=False is not supported')
+        if not self.last_upst.hasCovariance():
+            raise RuntimeError("Covariance is not valid. May be the last Hesse call failed?")
+
         cdef MnUserCovariance cov = self.last_upst.covariance()
         params = self.list_of_vary_param()
         if correlation:
@@ -581,9 +587,8 @@ cdef class Minuit:
 
 
     def matrix_acurate(self):
-        """check if covariance is accurate"""
-        return self.last_upst is not NULL and self.last_upst.hasCovariance()
-
+        """check if covariance(of the last migrad) is accurate."""
+        return self.last_upst is not NULL and self.cfmin.hasAccurateCovar()
 
     def list_of_fixed_param(self):
         """return list of (initially) fixed parameters"""
@@ -664,17 +669,22 @@ cdef class Minuit:
                 self.errors[mpv[i].name()] = mpv[i].error()
             self.args = tuple(self.args)
             self.fitarg.update(self.values)
-            cov = self.last_upst.covariance()
             vary_param = self.list_of_vary_param()
-            self.covariance =\
-                {(v1,v2):cov.get(i,j)\
-                    for i,v1 in enumerate(vary_param)\
-                    for j,v2 in enumerate(vary_param)}
+            if self.last_upst.hasCovariance():
+                cov = self.last_upst.covariance()
+                self.covariance =\
+                     {(v1,v2):cov.get(i,j)\
+                         for i,v1 in enumerate(vary_param)\
+                         for j,v2 in enumerate(vary_param)}
+            else:
+                self.covariance = None
             self.fval = self.last_upst.fval()
             self.ncalls = self.last_upst.nfcn()
             self.edm = self.last_upst.edm()
-            self.gcc = {v:self.last_upst.globalCC().globalCC()[i]\
-                        for i,v in enumerate(self.parameters)}
+
+            self.gcc = None if not self.last_upst.hasGlobalCC() else\
+                        {v:self.last_upst.globalCC().globalCC()[i]\
+                            for i,v in enumerate(self.parameters)}
         self.merrors = {(k,1.0):v.upper
                        for k,v in self.merrors_struct.items()}
         self.merrors.update({(k,-1.0):v.lower

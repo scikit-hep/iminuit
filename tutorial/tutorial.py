@@ -3,15 +3,15 @@
 
 # <codecell>
 
-from RTMinuit import Minuit, describe, Struct
+from RTMinuit import Minuit, describe
 
-# <headingcell level=2>
+# <markdowncell>
 
-# Really Quick Start
+# ##Really Quick Start
+# Let go through a quick course about how to minimize things. If you use PyMinuit before you will find that RTMinuit is very similar to PyMinuit. One notable different is that there is no printMode (we use print_level).
 
 # <rawcell>
 
-# Let go through a quick course about how to minimize things. If you use PyMinuit before you will find that RTMinuit is very similar to PyMinuit. One notable different is that there is no printMode (we use print_level).
 
 # <codecell>
 
@@ -19,12 +19,12 @@ from RTMinuit import Minuit, describe, Struct
 #we know easily that the answer has to be
 #x=1, y=2, z=3
 def f(x,y,z):
-    return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
+    return y**2*(x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
 describe(f) #RTMinuit magically extract function signature
 
 # <codecell>
 
-m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=2, fix_y=True)
+m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=10000., fix_y=True, print_level=1)
 #The initial value/error are optional but it's nice to do it
 #and here is how to use it
 #x=2 set intial value of x to 2
@@ -261,9 +261,6 @@ m = Minuit(f, frontend=ConsoleFrontend())
 # <codecell>
 
 m.migrad();
-
-# <codecell>
-
 
 # <codecell>
 
