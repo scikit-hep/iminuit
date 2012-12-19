@@ -1,6 +1,9 @@
 __all__ = ['HtmlFrontend']
+
 from IPython.core.display import display, HTML, display_html
-from util import Struct
+from .util import Struct
+
+
 class Gradient:
     #from http://code.activestate.com/recipes/266466-html-colors-tofrom-rgb-tuples/
     @classmethod
