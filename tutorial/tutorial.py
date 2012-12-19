@@ -181,7 +181,7 @@ m.print_matrix()
 
 # ##Alternative Ways to define function
 # ###Cython
-# If you want speed with minimal code change this is the way to do it.
+# If you want speed with minimal code change this is the way to do it. This is a quick way to use cython. For a hard core cython see this tutorial.
 
 # <codecell>
 
@@ -192,6 +192,8 @@ m.print_matrix()
 
 %%cython
 cimport cython
+import numpy as np
+cimport numpy as np #overwritten those from python with cython
 
 @cython.binding(True)#you need this otherwise iminuit can't extract signature
 def cython_f(double x,double y,double z):

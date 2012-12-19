@@ -780,10 +780,10 @@ cdef class Minuit:
             self.fval = self.last_upst.fval()
             self.ncalls = self.last_upst.nfcn()
             self.edm = self.last_upst.edm()
-
-            self.gcc = None if not self.last_upst.hasGlobalCC() else\
-                        {v:self.last_upst.globalCC().globalCC()[i]\
-                            for i,v in enumerate(self.parameters)}
+            #isValid()
+            # self.gcc = None if not self.last_upst.hasGlobalCC() else\
+            #             {v:self.last_upst.globalCC().globalCC()[i]\
+            #                 for i,v in enumerate(self.parameters)}
         self.merrors = {(k,1.0):v.upper
                        for k,v in self.merrors_struct.items()}
         self.merrors.update({(k,-1.0):v.lower
