@@ -76,11 +76,11 @@ class TestRTMinuit(unittest.TestCase):
         self.assertAlmostEqual(m.fval,10.+2.5)
         free_param = m.list_of_vary_param()
         fix_param = m.list_of_fixed_param()
-        self.assertIn('x', free_param) 
-        self.assertNotIn('x', fix_param) 
-        self.assertIn('y', fix_param) 
-        self.assertNotIn('y', free_param) 
-        self.assertNotIn('z', fix_param)
+        self.assertTrue('x' in free_param)
+        self.assertFalse('x' in fix_param)
+        self.assertTrue('y' in fix_param)
+        self.assertFalse('y' in free_param)
+        self.assertFalse('z' in fix_param)
 
 
     def test_fitarg(self):
@@ -94,12 +94,12 @@ class TestRTMinuit(unittest.TestCase):
         fitarg = m.fitarg
 
         self.assertAlmostEqual(fitarg['y'],10.)
-        self.assertAlmostEqual(fitarg['x'],2.,delta=1)
-        self.assertAlmostEqual(fitarg['z'],7.,delta=1)
+        self.assertAlmostEqual(fitarg['x'],2.,places=2)
+        self.assertAlmostEqual(fitarg['z'],7.,places=2)
 
-        self.assertIn('error_y',fitarg)
-        self.assertIn('error_x',fitarg)
-        self.assertIn('error_z',fitarg)
+        self.assertTrue('error_y' in fitarg)
+        self.assertTrue('error_x' in fitarg)
+        self.assertTrue('error_z' in fitarg)
 
         self.assertTrue(fitarg['fix_y'])
         self.assertEqual(fitarg['limit_x'],(0,20))
