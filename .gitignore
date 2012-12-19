@@ -5,7 +5,6 @@
 *.html
 build
 *.pyc
-test_*
 .idea
 _build
 archive
