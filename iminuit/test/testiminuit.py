@@ -1,7 +1,19 @@
-import unittest
+from unittest import TestCase
+from nose.tools import (raises, assert_in, assert_not_in,
+    assert_equal, assert_true, assert_false, assert_almost_equal)
 from iminuit import Minuit
-import numpy as np
-from numpy.testing import assert_array_almost_equal
+
+def assert_array_almost_equal(actual, expected):
+    """
+    Helper function to test if all elements of a list of lists
+    are almost equal.
+    Like numpy.testing.assert_array_almost_equal,
+    which we can't user here because we don't
+    want to depend on numpy.
+    """
+    for row in range(len(actual)):
+        for col in range(len(actual[0])):
+            assert_almost_equal(actual[row][col], expected[row][col])
 
 class Func_Code:
     def __init__(self,varname):
@@ -27,16 +39,15 @@ def func3(x,y):
 def func4(x,y,z):
     return 0.2*(x-2.)**2 + 0.1*(y-5.)**2 + 0.25*(z-7.)**2 + 10
 
-class TestRTMinuit(unittest.TestCase):
-
+class TestMinuit(TestCase):
 
     def functesthelper(self,f):
         m = Minuit(f,print_level=0)
         m.migrad()
         val = m.values
-        self.assertAlmostEqual(val['x'],2.)
-        self.assertAlmostEqual(val['y'],5.)
-        self.assertAlmostEqual(m.fval,10.)
+        assert_almost_equal(val['x'],2.)
+        assert_almost_equal(val['y'],5.)
+        assert_almost_equal(m.fval,10.)
 
 
     def test_f1(self):
@@ -50,17 +61,19 @@ class TestRTMinuit(unittest.TestCase):
     def test_f3(self):
         self.functesthelper(func3)
 
+    @raises(RuntimeError)
     def test_typo(self):
-        self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
+        Minuit(func4, printlevel=0)
+        #self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
 
     def test_fix_param(self):
         m = Minuit(func4,print_level=0)
         m.migrad()
         m.minos()
         val = m.values
-        self.assertAlmostEqual(val['x'],2.)
-        self.assertAlmostEqual(val['y'],5.)
-        self.assertAlmostEqual(val['z'],7.)
+        assert_almost_equal(val['x'],2.)
+        assert_almost_equal(val['y'],5.)
+        assert_almost_equal(val['z'],7.)
         err = m.errors#second derivative
         # self.assertAlmostEqual(err['x'],5.)
         # self.assertAlmostEqual(err['y'],10.)
@@ -70,41 +83,42 @@ class TestRTMinuit(unittest.TestCase):
         m = Minuit(func4,print_level=-1,y=10.,fix_y=True)
         m.migrad()
         val = m.values
-        self.assertAlmostEqual(val['x'],2.)
-        self.assertAlmostEqual(val['y'],10.)
-        self.assertAlmostEqual(val['z'],7.)
-        self.assertAlmostEqual(m.fval,10.+2.5)
+        assert_almost_equal(val['x'],2.)
+        assert_almost_equal(val['y'],10.)
+        assert_almost_equal(val['z'],7.)
+        assert_almost_equal(m.fval,10.+2.5)
         free_param = m.list_of_vary_param()
         fix_param = m.list_of_fixed_param()
-        self.assertTrue('x' in free_param)
-        self.assertFalse('x' in fix_param)
-        self.assertTrue('y' in fix_param)
-        self.assertFalse('y' in free_param)
-        self.assertFalse('z' in fix_param)
+        assert_in('x', free_param)
+        assert_not_in('x', fix_param)
+        assert_in('y', fix_param)
+        assert_not_in('y', free_param)
+        assert_not_in('z', fix_param)
 
 
     def test_fitarg(self):
         m = Minuit(func4,print_level=-1,y=10.,fix_y=True,limit_x=(0,20.))
         fitarg = m.fitarg
-        self.assertAlmostEqual(fitarg['y'],10.)
-        self.assertTrue(fitarg['fix_y'])
-        self.assertEqual(fitarg['limit_x'],(0,20))
+        assert_almost_equal(fitarg['y'],10.)
+        assert_true(fitarg['fix_y'])
+        assert_equal(fitarg['limit_x'],(0,20))
         m.migrad()
 
         fitarg = m.fitarg
 
-        self.assertAlmostEqual(fitarg['y'],10.)
-        self.assertAlmostEqual(fitarg['x'],2.,places=2)
-        self.assertAlmostEqual(fitarg['z'],7.,places=2)
+        assert_almost_equal(fitarg['y'],10.)
+        assert_almost_equal(fitarg['x'],2.,places=2)
+        assert_almost_equal(fitarg['z'],7.,places=2)
 
-        self.assertTrue('error_y' in fitarg)
-        self.assertTrue('error_x' in fitarg)
-        self.assertTrue('error_z' in fitarg)
+        assert_in('error_y', fitarg)
+        assert_in('error_x', fitarg)
+        assert_in('error_z', fitarg)
 
-        self.assertTrue(fitarg['fix_y'])
-        self.assertEqual(fitarg['limit_x'],(0,20))
+        assert_true(fitarg['fix_y'])
+        assert_equal(fitarg['limit_x'],(0,20))
 
-class TestErrorMatrix(unittest.TestCase):
+
+class TestErrorMatrix(TestCase):
 
     def setUp(self):
         self.m = Minuit(func3,print_level=0)
@@ -112,15 +126,15 @@ class TestErrorMatrix(unittest.TestCase):
 
 
     def test_error_matrix(self):
-        m = np.array(self.m.matrix())
-        expected = np.array([[5.,0.],[0.,1.]])
-        assert_array_almost_equal(m,expected)
+        actual = self.m.matrix()
+        expected = [[5.,0.],[0.,1.]]
+        assert_array_almost_equal(actual, expected)
 
 
     def test_error_matrix_correlation(self):
-        m = np.array(self.m.matrix(correlation=True))
-        expected = np.array([[1.,0.],[0.,1.]])
-        assert_array_almost_equal(m,expected)
+        actual = self.m.matrix(correlation=True)
+        expected = [[1.,0.],[0.,1.]]
+        assert_array_almost_equal(actual, expected)
 
 
 if __name__ == '__main__':
