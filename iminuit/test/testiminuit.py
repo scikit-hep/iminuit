@@ -1,6 +1,6 @@
 from unittest import TestCase
-from nose.tools import (raises, assert_in, assert_not_in,
-    assert_equal, assert_true, assert_false, assert_almost_equal)
+from nose.tools import (raises, assert_equal, assert_true, assert_false,
+    assert_almost_equal)
 from iminuit import Minuit
 
 def assert_array_almost_equal(actual, expected):
@@ -89,11 +89,11 @@ class TestMinuit(TestCase):
         assert_almost_equal(m.fval,10.+2.5)
         free_param = m.list_of_vary_param()
         fix_param = m.list_of_fixed_param()
-        assert_in('x', free_param)
-        assert_not_in('x', fix_param)
-        assert_in('y', fix_param)
-        assert_not_in('y', free_param)
-        assert_not_in('z', fix_param)
+        assert_true('x' in free_param)
+        assert_false('x' in fix_param)
+        assert_true('y' in fix_param)
+        assert_false('y' in free_param)
+        assert_false('z' in fix_param)
 
 
     def test_fitarg(self):
@@ -110,9 +110,9 @@ class TestMinuit(TestCase):
         assert_almost_equal(fitarg['x'],2.,places=2)
         assert_almost_equal(fitarg['z'],7.,places=2)
 
-        assert_in('error_y', fitarg)
-        assert_in('error_x', fitarg)
-        assert_in('error_z', fitarg)
+        assert_true('error_y' in fitarg)
+        assert_true('error_x' in fitarg)
+        assert_true('error_z' in fitarg)
 
         assert_true(fitarg['fix_y'])
         assert_equal(fitarg['limit_x'],(0,20))

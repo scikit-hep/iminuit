@@ -1,6 +1,5 @@
 from unittest import TestCase
-from nose.tools import (assert_in, assert_not_in,
-    assert_equal, assert_true, assert_false)
+from nose.tools import (assert_equal, assert_true, assert_false)
 from iminuit.util import *
 
 class TestUtil(TestCase):
@@ -9,19 +8,19 @@ class TestUtil(TestCase):
         fitarg = {'x':1,'limit_x':(2,3),'fix_x':True,'error_x':10}
         ren = lambda x: 'z_'+x
         newfa = fitarg_rename(fitarg,ren)
-        assert_in('z_x', newfa)
-        assert_in('limit_z_x', newfa)
-        assert_in('error_z_x', newfa)
-        assert_in('fix_z_x', newfa)
+        assert_true('z_x' in newfa)
+        assert_true('limit_z_x' in newfa)
+        assert_true('error_z_x' in newfa)
+        assert_true('fix_z_x' in newfa)
         assert_equal(len(newfa),4)
 
     def test_fitarg_rename_strprefix(self):
         fitarg = {'x':1,'limit_x':(2,3),'fix_x':True,'error_x':10}
         newfa = fitarg_rename(fitarg,'z')
-        assert_in('z_x', newfa)
-        assert_in('limit_z_x', newfa)
-        assert_in('error_z_x', newfa)
-        assert_in('fix_z_x', newfa)
+        assert_true('z_x' in newfa)
+        assert_true('limit_z_x' in newfa)
+        assert_true('error_z_x' in newfa)
+        assert_true('fix_z_x' in newfa)
         assert_equal(len(newfa),4)
 
     def test_true_param(self):
@@ -39,34 +38,34 @@ class TestUtil(TestCase):
     def test_extract_iv(self):
         d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
         ret = extract_iv(d)
-        assert_in('k', ret)
-        assert_not_in('limit_k', ret)
-        assert_not_in('error_k', ret)
-        assert_not_in('fix_k', ret)
+        assert_true('k' in ret)
+        assert_false('limit_k' in ret)
+        assert_false('error_k' in ret)
+        assert_false('fix_k' in ret)
 
     def test_extract_limit(self):
         d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
         ret = extract_limit(d)
-        assert_not_in('k', ret)
-        assert_in('limit_k', ret)
-        assert_not_in('error_k', ret)
-        assert_not_in('fix_k', ret)
+        assert_false('k' in ret)
+        assert_true('limit_k' in ret)
+        assert_false('error_k' in ret)
+        assert_false('fix_k' in ret)
 
     def test_extract_error(self):
         d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
         ret = extract_error(d)
-        assert_not_in('k', ret)
-        assert_not_in('limit_k', ret)
-        assert_in('error_k', ret)
-        assert_not_in('fix_k', ret)
+        assert_false('k' in ret)
+        assert_false('limit_k' in ret)
+        assert_true('error_k' in ret)
+        assert_false('fix_k' in ret)
 
     def test_extract_fix(self):
         d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
         ret = extract_fix(d)
-        assert_not_in('k', ret)
-        assert_not_in('limit_k', ret)
-        assert_not_in('error_k', ret)
-        assert_in('fix_k', ret)
+        assert_false('k' in ret)
+        assert_false('limit_k' in ret)
+        assert_false('error_k' in ret)
+        assert_true('fix_k' in ret)
 
     def test_remove_var(self):
         dk = dict(k=1,limit_k=1,error_k=1,fix_k=1)
@@ -80,10 +79,10 @@ class TestUtil(TestCase):
         d.update(dn)
 
         ret = remove_var(d,['k','m'])
-        for k in dk: assert_not_in(k, ret)
-        for k in dl: assert_in(k, ret)
-        for k in dm: assert_not_in(k, ret)
-        for k in dn: assert_in(k, ret)
+        for k in dk: assert_false(k in ret)
+        for k in dl: assert_true(k in ret)
+        for k in dm: assert_false(k in ret)
+        for k in dn: assert_true(k in ret)
 
 if __name__ == '__main__':
     unittest.main()
