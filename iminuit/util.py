@@ -45,7 +45,6 @@ def arguments_from_docstring(doc):
     sig = p.search(line)
     if sig is None:
         return []
-    print sig.groups()
     # iterable[, key=func]' -> ['iterable[' ,' key=func]']
     sig = sig.groups()[0].split(',')
     ret = []
