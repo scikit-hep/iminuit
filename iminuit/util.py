@@ -77,7 +77,7 @@ def fitarg_rename(fitarg, ren):
         #{'prefix_x':1, 'limit_prefix_x':1, 'fix_prefix_x':1, 'error_prefix_x':1}
     """
     tmp = ren
-    if isinstance(ren, basestring): ren = lambda x: tmp + '_' + x
+    if isinstance(ren, str): ren = lambda x: tmp + '_' + x
     ret = {}
     prefix = ['limit_', 'fix_', 'error_', ]
     for k, v in fitarg.items():
