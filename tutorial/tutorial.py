@@ -162,7 +162,7 @@ m.hesse()
 
 # <codecell>
 
-m.minos()
+m.minos() #call m.minos('x') if you need minos error for just 1 variable
 print m.get_merrors()['x']
 print m.get_merrors()['x'].lower
 print m.get_merrors()['x'].upper

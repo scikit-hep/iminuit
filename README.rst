@@ -71,3 +71,5 @@ Here is some areas you can help.
 - Test test test. This package is realtively your there might be some kinks to
   it let me know how you broke it.
 - Performance. I you are a C/cython/python hacker go ahead and make it faster.
+- Console output could use some color.
+
