@@ -66,6 +66,20 @@ class TestMinuit(TestCase):
         Minuit(func4, printlevel=0)
         #self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
 
+
+    def test_non_invertible(self):
+        #making sure it doesn't crash
+        def f(x,y):
+            return (x*y)**2
+        m = Minuit(f,pedantic=False, print_level=0)
+        result = m.migrad()
+        m.hesse()
+        try:
+            m.matrix()
+        except RuntimeError as e:
+            pass
+
+
     def test_fix_param(self):
         m = Minuit(func4,print_level=0, pedantic=False)
         m.migrad()

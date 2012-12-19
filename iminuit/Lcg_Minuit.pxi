@@ -36,6 +36,7 @@ cdef extern from "Minuit/MnUserCovariance.h":
 cdef extern from "Minuit/MnGlobalCorrelationCoeff.h":
     cdef cppclass MnGlobalCorrelationCoeff:
         vector[double] globalCC()
+        bint isValid()
 
 cdef extern from "Minuit/MnUserParameterState.h":
     cdef cppclass MnUserParameterState:
