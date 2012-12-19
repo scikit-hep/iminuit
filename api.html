@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,7 +9,7 @@
     
     <title>Full API Documentation &mdash; iminuit 1.0.0 documentation</title>
     
-    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -37,48 +36,14 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="index.html" title="iminuit"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">iminuit 1.0.0 documentation</a> &raquo;</li> 
       </ul>
-    </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Full API Documentation</a></li>
-<li><a class="reference internal" href="#return-value-struct">Return Value Struct:</a><ul>
-<li><a class="reference internal" href="#function-minimum-struct">Function Minimum Struct</a></li>
-<li><a class="reference internal" href="#minos-error-struct">Minos Error Struct</a></li>
-<li><a class="reference internal" href="#minuit-parameter-struct">Minuit Parameter Struct</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#function-signature-extraction-ordering">Function Signature Extraction Ordering</a></li>
-</ul>
-
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">iminuit</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/api.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
+    </div>  
 
     <div class="document">
       <div class="documentwrapper">
@@ -87,23 +52,50 @@
             
   <div class="section" id="full-api-documentation">
 <span id="api-doc"></span><h1>Full API Documentation<a class="headerlink" href="#full-api-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="quick-summary">
+<h2>Quick Summary<a class="headerlink" href="#quick-summary" title="Permalink to this headline">¶</a></h2>
+<p>These are the things you will use a lot.</p>
 <table border="1" class="longtable docutils">
 <colgroup>
 <col width="10%" />
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit" title="iminuit.Minuit"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit</span></tt></a></td>
+<td>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwds)</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.migrad" title="iminuit.Minuit.migrad"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.migrad</span></tt></a>(self,&nbsp;int&nbsp;ncall=10000[,&nbsp;resume])</td>
+<td>Run migrad.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.minos</span></tt></a>(self[,&nbsp;var,&nbsp;sigma])</td>
+<td>Run minos for parameter <em>var</em></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.values" title="iminuit.Minuit.values"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.values</span></tt></a></td>
+<td>values: object</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.errors" title="iminuit.Minuit.errors"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.errors</span></tt></a></td>
+<td>errors: object</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.merrors" title="iminuit.Minuit.merrors"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.merrors</span></tt></a></td>
+<td>merrors: object</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.util.describe" title="iminuit.util.describe"><tt class="xref py py-obj docutils literal"><span class="pre">util.describe</span></tt></a>(f[,&nbsp;verbose])</td>
+<td>try to extract function arguements name</td>
+</tr>
 </tbody>
 </table>
+</div>
+<div class="section" id="minuit">
+<h2>Minuit<a class="headerlink" href="#minuit" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="iminuit.Minuit">
 <em class="property">class </em><tt class="descclassname">iminuit.</tt><tt class="descname">Minuit</tt><a class="headerlink" href="#iminuit.Minuit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwds)</p>
+<dd><p>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwds)</p>
 <p>Construct minuit object from given <em>fcn</em></p>
 <p><strong>Arguments:</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li><em>fcn</em>: function to optimized. Minuit automomagically find how to
+<li><em>fcn</em>: function to optimized. Minuit automagically find how to
 call the function and each parameters. More information about how
 Minuit detects function signature can be found in
 <a class="reference internal" href="#function-sig-label"><em>Function Signature Extraction Ordering</em></a></li>
@@ -175,14 +167,23 @@ Minuit. This is best explained through an example:</p>
 </div>
 </li>
 </ul>
-<p>Of Course you can combine them in your application or use
-dictionary expansion</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-</pre></div>
-</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Tips: you can use python dictionary expansion to
+programatically change fitting argument.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">kwdarg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwdarg</span><span class="p">)</span>
 </pre></div>
+</div>
+<p>You can obtain also obtain fit argument from Minuit object
+to reuse it later too. Note that fitarg will be automatically
+updated to minimum value and corresponding error when you ran
+migrad/hesse:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">my_fitarg</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fitarg</span>
+<span class="n">anotther_fit</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">my_fitarg</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div></blockquote>
 <dl class="method">
@@ -220,12 +221,13 @@ that the minimum is invalid due to exceeding max call
 <dt id="iminuit.Minuit.hesse">
 <tt class="descname">hesse</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.hesse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run HESSE.</p>
-<p>HESSE estimate error matrix by the <a class="reference external" href="http://en.wikipedia.org/wiki/Hessian_matrix">second derivative at the minimim</a>. This error matrix
+<p>HESSE estimates error matrix by the <a class="reference external" href="http://en.wikipedia.org/wiki/Hessian_matrix">second derivative at the minimim</a>. This error matrix
 is good if your <span class="math">\(\chi^2\)</span> or likelihood profile is parabolic at
 the minimum. From my experience, most of simple fits are.</p>
 <p><a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-meth docutils literal"><span class="pre">minos()</span></tt></a> makes no parabolic assumption and scan the likelihood
 and give the correct error asymmetric error in all cases(Unless your
-likelihood profile is utterly discontinuous near the minimum).</p>
+likelihood profile is utterly discontinuous near the minimum). But
+it is much more computationally expensive.</p>
 <dl class="docutils">
 <dt><strong>Returns</strong></dt>
 <dd>list of <a class="reference internal" href="#minuit-param-struct"><em>Minuit Parameter Struct</em></a></dd>
@@ -601,14 +603,110 @@ Default 2</p>
 </dd></dl>
 
 </div>
+<div class="section" id="utility-functions">
+<h2>Utility Functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline">¶</a></h2>
+<p>:mod:util module provides describe function and various function to manipulate
+fitarguments.</p>
+<span class="target" id="module-iminuit.util"></span><dl class="class">
+<dt id="iminuit.util.Struct">
+<em class="property">class </em><tt class="descclassname">iminuit.util.</tt><tt class="descname">Struct</tt><big>(</big><em>**kwds</em><big>)</big><a class="headerlink" href="#iminuit.util.Struct" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.arguments_from_docstring">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">arguments_from_docstring</tt><big>(</big><em>doc</em><big>)</big><a class="headerlink" href="#iminuit.util.arguments_from_docstring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse first line of docstring for argument name</p>
+<blockquote>
+<div>Docstring should be of the form &#8216;min(iterable[, key=func])</div></blockquote>
+<dl class="docutils">
+<dt>&#8216;.</dt>
+<dd>It can also parse cython docstring of the form
+Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.describe">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">describe</tt><big>(</big><em>f</em>, <em>verbose=False</em><big>)</big><a class="headerlink" href="#iminuit.util.describe" title="Permalink to this definition">¶</a></dt>
+<dd><p>try to extract function arguements name</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#function-sig-label"><em>Function Signature Extraction Ordering</em></a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.fitarg_rename">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">fitarg_rename</tt><big>(</big><em>fitarg</em>, <em>ren</em><big>)</big><a class="headerlink" href="#iminuit.util.fitarg_rename" title="Permalink to this definition">¶</a></dt>
+<dd><p>rename variable names in fitarg with rename function</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#simple renaming</span>
+<span class="n">fitarg_rename</span><span class="p">({</span><span class="s">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;limit_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;fix_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;error_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">},</span>
+    <span class="k">lambda</span> <span class="n">pname</span><span class="p">:</span> <span class="s">&#39;y&#39;</span> <span class="k">if</span> <span class="n">pname</span><span class="o">==</span><span class="s">&#39;x&#39;</span> <span class="k">else</span> <span class="n">pname</span><span class="p">)</span>
+<span class="c">#{&#39;y&#39;:1, &#39;limit_y&#39;:1, &#39;fix_y&#39;:1, &#39;error_y&#39;:1},</span>
+
+<span class="c">#prefixing</span>
+<span class="n">figarg_rename</span><span class="p">({</span><span class="s">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;limit_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;fix_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;error_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">},</span>
+    <span class="k">lambda</span> <span class="n">pname</span><span class="p">:</span> <span class="s">&#39;prefix_&#39;</span><span class="o">+</span><span class="n">pname</span><span class="p">)</span>
+<span class="c">#{&#39;prefix_x&#39;:1, &#39;limit_prefix_x&#39;:1, &#39;fix_prefix_x&#39;:1, &#39;error_prefix_x&#39;:1}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.true_param">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">true_param</tt><big>(</big><em>p</em><big>)</big><a class="headerlink" href="#iminuit.util.true_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if p is parameter name not a limit/error/fix attributes</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.param_name">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">param_name</tt><big>(</big><em>p</em><big>)</big><a class="headerlink" href="#iminuit.util.param_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract parameter name from attributes eg</p>
+<p>fix_x -&gt; x
+error_x -&gt; x
+limit_x -&gt; x</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.extract_iv">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">extract_iv</tt><big>(</big><em>b</em><big>)</big><a class="headerlink" href="#iminuit.util.extract_iv" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract initial value from fitargs dictionary</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.extract_limit">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">extract_limit</tt><big>(</big><em>b</em><big>)</big><a class="headerlink" href="#iminuit.util.extract_limit" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract limit from fitargs dictionary</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.extract_error">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">extract_error</tt><big>(</big><em>b</em><big>)</big><a class="headerlink" href="#iminuit.util.extract_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract error from fitargs dictionary</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.extract_fix">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">extract_fix</tt><big>(</big><em>b</em><big>)</big><a class="headerlink" href="#iminuit.util.extract_fix" title="Permalink to this definition">¶</a></dt>
+<dd><p>extract fix attribute from fitargs dictionary</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="iminuit.util.remove_var">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">remove_var</tt><big>(</big><em>b</em>, <em>exclude</em><big>)</big><a class="headerlink" href="#iminuit.util.remove_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>exclude variable in exclude list from b</p>
+</dd></dl>
+
+</div>
 <div class="section" id="return-value-struct">
-<h1>Return Value Struct:<a class="headerlink" href="#return-value-struct" title="Permalink to this headline">¶</a></h1>
+<h2>Return Value Struct:<a class="headerlink" href="#return-value-struct" title="Permalink to this headline">¶</a></h2>
 <p>iminuit uses various structs as return value. This section lists the struct
 and all it&#8217;s field</p>
+</div>
 <div class="section" id="function-minimum-struct">
 <span id="function-minimum-sruct"></span><h2>Function Minimum Struct<a class="headerlink" href="#function-minimum-struct" title="Permalink to this headline">¶</a></h2>
-<p>They are usually return value from <a class="reference internal" href="#iminuit.Minuit.get_fmin" title="iminuit.Minuit.get_fmin"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_fmin()</span></tt></a>
-and <a class="reference internal" href="#iminuit.Minuit.migrad" title="iminuit.Minuit.migrad"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.migrad()</span></tt></a>
+<p>They are usually return value from <tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_fmin()</span></tt>
+and <tt class="xref py py-meth docutils literal"><span class="pre">Minuit.migrad()</span></tt>
 Function Mimum Struct has the following attributes:</p>
 <blockquote>
 <div><ul>
@@ -663,9 +761,9 @@ FCN calls it is allowd.</p>
 </div></blockquote>
 </div>
 <div class="section" id="minos-error-struct">
-<span id="id3"></span><h2>Minos Error Struct<a class="headerlink" href="#minos-error-struct" title="Permalink to this headline">¶</a></h2>
-<p>Minos Error Struct is used in return value from <a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.minos()</span></tt></a>.
-You can also call <a class="reference internal" href="#iminuit.Minuit.get_merrors" title="iminuit.Minuit.get_merrors"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_merrors()</span></tt></a> to get accumulated dictionary
+<span id="id5"></span><h2>Minos Error Struct<a class="headerlink" href="#minos-error-struct" title="Permalink to this headline">¶</a></h2>
+<p>Minos Error Struct is used in return value from <tt class="xref py py-meth docutils literal"><span class="pre">Minuit.minos()</span></tt>.
+You can also call <tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_merrors()</span></tt> to get accumulated dictionary
 all minos errors that has been calculated. It contains various minos status:</p>
 <blockquote>
 <div><ul class="simple">
@@ -688,9 +786,9 @@ upper error value</li>
 </div>
 <div class="section" id="minuit-parameter-struct">
 <span id="minuit-param-struct"></span><h2>Minuit Parameter Struct<a class="headerlink" href="#minuit-parameter-struct" title="Permalink to this headline">¶</a></h2>
-<p>Minuit Parameter Struct is return value from <a class="reference internal" href="#iminuit.Minuit.hesse" title="iminuit.Minuit.hesse"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.hesse()</span></tt></a>
+<p>Minuit Parameter Struct is return value from <tt class="xref py py-meth docutils literal"><span class="pre">Minuit.hesse()</span></tt>
 You can, however, access the latest parameter by calling
-<a class="reference internal" href="#iminuit.Minuit.get_param_states" title="iminuit.Minuit.get_param_states"><tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_param_states()</span></tt></a>. Minuit Parameter Struct has the following
+<tt class="xref py py-meth docutils literal"><span class="pre">Minuit.get_param_states()</span></tt>. Minuit Parameter Struct has the following
 attrubutes:</p>
 <blockquote>
 <div><ul class="simple">
@@ -710,9 +808,8 @@ sided limit though.</li>
 </ul>
 </div></blockquote>
 </div>
-</div>
 <div class="section" id="function-signature-extraction-ordering">
-<span id="function-sig-label"></span><h1>Function Signature Extraction Ordering<a class="headerlink" href="#function-signature-extraction-ordering" title="Permalink to this headline">¶</a></h1>
+<span id="function-sig-label"></span><h2>Function Signature Extraction Ordering<a class="headerlink" href="#function-signature-extraction-ordering" title="Permalink to this headline">¶</a></h2>
 <blockquote>
 <div><ol class="arabic">
 <li><p class="first">Using <tt class="docutils literal"><span class="pre">f.func_code.co_varnames</span></tt>, <tt class="docutils literal"><span class="pre">f.func_code.co_argcount</span></tt>
@@ -774,14 +871,55 @@ to make a generic functor of your custom cost function. This is how
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">If you are unsure what minuit will parse your function signature as
-, you can use <tt class="xref py py-func docutils literal"><span class="pre">describe()</span></tt> which returns tuple of arument names
+, you can use <a class="reference internal" href="#iminuit.util.describe" title="iminuit.util.describe"><tt class="xref py py-func docutils literal"><span class="pre">describe()</span></tt></a> which returns tuple of arument names
 minuit will use as call signature.</p>
 </div>
 </div></blockquote>
 </div>
+</div>
 
 
           </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Full API Documentation</a><ul>
+<li><a class="reference internal" href="#quick-summary">Quick Summary</a></li>
+<li><a class="reference internal" href="#minuit">Minuit</a></li>
+<li><a class="reference internal" href="#utility-functions">Utility Functions</a></li>
+<li><a class="reference internal" href="#return-value-struct">Return Value Struct:</a></li>
+<li><a class="reference internal" href="#function-minimum-struct">Function Minimum Struct</a></li>
+<li><a class="reference internal" href="#minos-error-struct">Minos Error Struct</a></li>
+<li><a class="reference internal" href="#minuit-parameter-struct">Minuit Parameter Struct</a></li>
+<li><a class="reference internal" href="#function-signature-extraction-ordering">Function Signature Extraction Ordering</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">iminuit</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -792,6 +930,9 @@ minuit will use as call signature.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="index.html" title="iminuit"
              >previous</a> |</li>

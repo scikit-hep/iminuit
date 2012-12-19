@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -10,7 +9,7 @@
     
     <title>iminuit &mdash; iminuit 1.0.0 documentation</title>
     
-    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -37,22 +36,86 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="api.html" title="Full API Documentation"
              accesskey="N">next</a> |</li>
         <li><a href="#">iminuit 1.0.0 documentation</a> &raquo;</li> 
       </ul>
-    </div>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="iminuit">
+<h1>iminuit<a class="headerlink" href="#iminuit" title="Permalink to this headline">¶</a></h1>
+<p>Interactive IPython Friendly Mimizer based on <a class="reference external" href="http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/">SEAL Minuit</a>.
+(It&#8217;s included in the package no need to install it separately)</p>
+<p>It is designed from ground up to be fast, interactive and cython friendly. iminuit
+extract function signature very permissively starting from checking <em>func_code</em>
+down to last resort of parsing docstring(or you could tell iminuit to stop looking
+and take your answer). The interface is inspired heavily
+by PyMinuit and the status printout is inspired by ROOT Minuit. iminuit is
+mostly compatible with PyMinuit(with few exceptions). Existing PyMinuit
+code can be ported to iminuit by just changing the import statement.</p>
+<p>In a nutshell,:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">iminuit</span> <span class="kn">import</span> <span class="n">Minuit</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">migrads</span><span class="p">()</span>
+<span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">values</span> <span class="c">#{&#39;x&#39;:2,&#39;y&#39;:3,&#39;z&#39;:4}</span>
+<span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">errors</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="download-and-install">
+<h2>Download and Install<a class="headerlink" href="#download-and-install" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><pre>pip install iminuit</pre>
+</div>
+<p>You can find our repository at <a class="reference external" href="https://github.com/iminuit/iminuit">github</a>.</p>
+<div class="highlight-python"><pre>git clone git://github.com/iminuit/iminuit.git</pre>
+</div>
+</div>
+<div class="section" id="tutorial">
+<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id1">
+<h2>Tutorial<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>All the tutorials are in tutorial directory. You can view it online too.</p>
+<ul class="simple">
+<li><a class="reference external" href="http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb">Quick start</a></li>
+<li><a class="reference external" href="http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb">Hard Core Cython tutorial</a>.
+If you need to do a huge likelihood fit that need speed.
+This is for you. If you don&#8217;t care, just use dist_fit. It&#8217;s a fun
+read though I think.</li>
+</ul>
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<p>See <a class="reference internal" href="api.html#api-doc"><em>Full API Documentation</em></a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">iminuit</a><ul>
+<li><a class="reference internal" href="#download-and-install">Download and Install</a></li>
+<li><a class="reference internal" href="#tutorial">Tutorial</a></li>
+<li><a class="reference internal" href="#id1">Tutorial</a></li>
+<li><a class="reference internal" href="#api">API</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#download">Download</a></li>
-<li><a class="reference internal" href="#install">Install</a></li>
-<li><a class="reference internal" href="#tutorial">Tutorial</a></li>
-<li><a class="reference internal" href="#api">API</a></li>
 </ul>
 
   <h4>Next topic</h4>
@@ -78,48 +141,6 @@
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
-
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body">
-            
-  <div class="section" id="iminuit">
-<h1>iminuit<a class="headerlink" href="#iminuit" title="Permalink to this headline">¶</a></h1>
-<p>iminuit is a python (espcially ) friendly
-wrapper of <a class="reference external" href="http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/">lcg-minuit</a> . The popular most minimizer used in High Energy
-Physics which has been around for more than 40 years(for a good reason).</p>
-<p>It&#8217;s designed from ground up to be used in an interactive fitting environment
-taking full advantage of <a class="reference external" href="ipythonnb">IPython notebook</a>.
-To make transition from the popular <a class="reference external" href="http://code.google.com/p/pyminuit/">PyMinuit</a> easy, RTMinuit is (mostly)
-compatible with PyMinuit (just change the import statement).</p>
-<div class="toctree-wrapper compound">
-</div>
-</div>
-<div class="section" id="download">
-<h1>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-python"><pre>git clone git://github.com/piti118/iminuit.git</pre>
-</div>
-</div>
-<div class="section" id="install">
-<h1>Install<a class="headerlink" href="#install" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-python"><pre>python setup.py install</pre>
-</div>
-</div>
-<div class="section" id="tutorial">
-<h1>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h1>
-<p>The tutorial is in tutorial directory. You can view it online
-<a class="reference external" href="http://nbviewer.ipython.org/urls/raw.github.com/piti118/iminuit/master/tutorial/tutorial.ipynb">here</a>.</p>
-</div>
-<div class="section" id="api">
-<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
-<p>See <a class="reference internal" href="api.html#api-doc"><em>Full API Documentation</em></a></p>
-</div>
-
-
-          </div>
-        </div>
-      </div>
       <div class="clearer"></div>
     </div>
     <div class="related">
@@ -128,6 +149,9 @@ compatible with PyMinuit (just change the import statement).</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="right" >
           <a href="api.html" title="Full API Documentation"
              >next</a> |</li>
