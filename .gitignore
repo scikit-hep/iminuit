@@ -1,7 +1,6 @@
 *.root
 .DS_Store
 *.so
-*.ipynb
 *.html
 build
 *.pyc
