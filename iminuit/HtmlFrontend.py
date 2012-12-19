@@ -66,7 +66,7 @@ class HtmlFrontend:
         description for each item."""
         goaledm = 0.0001*tolerance*sfmin.up
         style = fmin_style(sfmin)
-        header = u"""
+        header = """
         <table>
             <tr>
                 <td>FCN = {sfmin.fval}</td>
@@ -80,7 +80,7 @@ class HtmlFrontend:
             </tr>
         </table>
         """.format(**locals())
-        status = u"""
+        status = """
         <table>
             <tr>
                 <td align="center">Valid</td>
