@@ -9,8 +9,11 @@ __all__ = [
     'extract_error',
     'extract_fix',
     'remove_var',
+    'arguments_from_docstring',
 ]
 import inspect
+import StringIO
+import re
 
 class Struct:
     def __init__(self, **kwds):
@@ -23,6 +26,55 @@ class Struct:
         return self.__str__()
 
 
+def arguments_from_docstring(doc):
+    """Parse first line of docstring for argument name
+
+    Docstring should be of the form 'min(iterable[, key=func])\n'.
+    It can also parse cython docstring of the form
+    Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])
+    """
+    if doc is None:
+        raise RuntimeError('__doc__ is None')
+    sio = StringIO.StringIO(doc.lstrip())
+    #care only the firstline
+    #docstring can be long
+    line = sio.readline()
+    if line.startswith("('...',)"): line=sio.readline()#stupid cython
+    p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
+    #'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
+    sig = p.search(line)
+    if sig is None:
+        return []
+    # iterable[, key=func]' -> ['iterable[' ,' key=func]']
+    sig = sig.groups()[0].split(',')
+    ret = []
+    for s in sig:
+        #print s
+        #get the last one after all space after =
+        #ex: int x= True
+        tmp = s.split('=')[0].split()[-1]
+        #clean up non _+alphanum character
+        ret.append(''.join(filter(lambda x :str.isalnum(x) or x=='_', tmp)))
+        #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
+        #ret += self.docstring_kwd_re.findall(s)
+    ret = filter(lambda x: x!='',ret)
+
+    if len(ret)==0:
+        raise RuntimeError('Your doc is unparsable\n'+doc)
+
+    return ret
+
+
+def is_bound(f):
+    """test whether f is bound function"""
+    return getattr(f,'im_self',None) is not None
+
+
+def dock_if_bound(f, v):
+    """dock off self if bound function is passed"""
+    return v[1:] if is_bound(f) else v
+
+
 def better_arg_spec(f, verbose=False):
     """extract function signature
 
@@ -30,23 +82,70 @@ def better_arg_spec(f, verbose=False):
 
         :ref:`function-sig-label`
     """
+
     try:
-        return f.func_code.co_varnames[:f.func_code.co_argcount]
+        vnames = f.func_code.co_varnames
+        #bound method and fake function will be None
+        if is_bound(f):
+            #bound method dock off self
+            return list(vnames[1:f.func_code.co_argcount])
+        else:
+            #unbound and fakefunc
+            return list(vnames[:f.func_code.co_argcount])
     except Exception as e:
         if verbose:
             print e #this might not be such a good dea.
             print "f.func_code.co_varnames[:f.func_code.co_argcount] fails"
         #using __call__ funccode
+
     try:
         #vnames = f.__call__.func_code.co_varnames
-        return f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount]
+        return list(f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount])
     except Exception as e:
         if verbose:
             print e #this too
             print "f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails"
 
-    return inspect.getargspec(f)[0]
+    try:
+        return list(inspect.getargspec(f.__call__)[0][1:])
+    except TypeError as e:
+        if verbose:
+            print e
+            print "inspect.getargspec(f)[0] fails"
 
+    try:
+        return list(inspect.getargspec(f)[0])
+    except TypeError as e:
+        if verbose:
+            print e
+            print "inspect.getargspec(f)[0] fails"
+
+    #now we are parsing __call__.__doc__
+    #we assume that __call__.__doc__ doesn't have self
+    #this is what cython gives
+    try:
+        t = arguments_from_docstring(f.__call__.__doc__)
+        if t[0]=='self':
+            t = t[1:]
+        return t
+    except Exception as e:
+        if verbose:
+            print e
+            print "fail parsing __call__.__doc__"
+
+    #how about just __doc__
+    try:
+        t = arguments_from_docstring(f.__doc__)
+        if t[0]=='self':
+            t = t[1:]
+        return t
+    except Exception as e:
+        if verbose:
+            print e
+            print "fail parsing __doc__"
+
+    raise TypeError("Unable to obtain function signature")
+    return None
 
 def describe(f,verbose=False):
     """try to extract function arguements name
@@ -137,3 +236,13 @@ def extract_fix(b):
 def remove_var(b, exclude):
     """exclude variable in exclude list from b"""
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
+
+def make_func_code(params=None):
+    """make a func_code object to fake function signature
+
+        you can make a funccode from describeable object by::
+
+            make_func_code(describe(f))
+    """
+    return Struct(co_varnames=params,co_argcount=len(params))
+

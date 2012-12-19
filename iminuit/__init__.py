@@ -1,7 +1,7 @@
 __all__ = [
     'Minuit',
     'describe',
-    'Struct'
+    'Struct',
     'InitialParamWarning'
 ]
 from _libiminuit import *

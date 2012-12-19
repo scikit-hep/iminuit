@@ -73,7 +73,7 @@ public:
   bool hasCovariance() const {return theData->hasCovariance();}
   bool isAboveMaxEdm() const {return theData->isAboveMaxEdm();}
   bool hasReachedCallLimit() const {return theData->hasReachedCallLimit();}
-  void print() const{return theData->print();}
+  void print(bool progress=false) const{return theData->print(progress);}
 private:
 
   MnRefCountedPointer<BasicFunctionMinimum> theData;
