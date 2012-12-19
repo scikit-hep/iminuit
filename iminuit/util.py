@@ -116,24 +116,24 @@ def param_name(p):
 
 def extract_iv(b):
     """extract initial value from fitargs dictionary"""
-    return {k: v for k, v in b.items() if true_param(k)}
+    return dict((k, v) for k, v in b.items() if true_param(k))
 
 
 def extract_limit(b):
     """extract limit from fitargs dictionary"""
-    return {k: v for k, v in b.items() if k.startswith('limit_')}
+    return dict((k, v) for k, v in b.items() if k.startswith('limit_'))
 
 
 def extract_error(b):
     """extract error from fitargs dictionary"""
-    return {k: v for k, v in b.items() if k.startswith('error_')}
+    return dict((k, v) for k, v in b.items() if k.startswith('error_'))
 
 
 def extract_fix(b):
     """extract fix attribute from fitargs dictionary"""
-    return {k: v for k, v in b.items() if k.startswith('fix_')}
+    return dict((k, v) for k, v in b.items() if k.startswith('fix_'))
 
 
 def remove_var(b, exclude):
     """exclude variable in exclude list from b"""
-    return {k: v for k, v in b.items() if param_name(k) not in exclude}
+    return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
