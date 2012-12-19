@@ -1,0 +1,6 @@
+recursive-include iminuit *.h *.cpp *.pyx *.pxi *.py
+recursive-include tutorial *
+recursive-include Minuit *
+include *.py
+include README.rst
+include LICENSE
