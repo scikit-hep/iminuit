@@ -20,6 +20,7 @@ setup (
     name = 'iminuit',
     version = __version__,
     description = 'Interactive Minimization Tools based on MINUIT',
+    long_description=''.join(open('README.rst').readlines()[4:]),
     author='Piti Ongmongkolkul',
     author_email='piti118@gmail.com',
     url='https://piti118.github.com/iminuit',

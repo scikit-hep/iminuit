@@ -28,6 +28,7 @@ import sys, os
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.mathjax',
               'sphinx.ext.autosummary']
 autoclass_content = 'both'
+autosummary_generate = True
 # def skip(app, what, name, obj, skip, options):
 #     if name == "__init__":
 #         return False
@@ -102,7 +103,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
+html_theme = 'nature'
 autodoc_member_order = 'bysource'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

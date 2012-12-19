@@ -10,6 +10,8 @@ test_*
 _build
 archive
 html
+dist
+MANIFEST
 
 !tutorial.html
 !tutorial.ipynb

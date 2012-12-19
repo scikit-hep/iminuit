@@ -166,16 +166,24 @@ cdef class Minuit:
                 #fix x but vary y
                 m = Minuit(f, fix_x=True)
 
-            Of Course you can combine them in your application or use
-            dictionary expansion
-            ::
+            .. note::
 
-                m = Minuit(f, x=1., error_x=0.5)
+                Tips: you can use python dictionary expansion to
+                programatically change fitting argument.
 
-            ::
+                ::
 
-                kwdarg = dict(x=1., error_x=0.5)
-                m = Minuit(f, **kwdarg)
+                    kwdarg = dict(x=1., error_x=0.5)
+                    m = Minuit(f, **kwdarg)
+
+                You can obtain also obtain fit argument from Minuit object
+                to reuse it later too. Note that fitarg will be automatically
+                updated to minimum value and corresponding error when you ran
+                migrad/hesse::
+
+                    m = Minuit(f, x=1, error_x=0.5)
+                    my_fitarg = m.fitarg
+                    anotther_fit = Minuit(f, **my_fitarg)
 
         """
 
@@ -759,6 +767,7 @@ cdef class Minuit:
                 self.errors[mpv[i].name()] = mpv[i].error()
             self.args = tuple(self.args)
             self.fitarg.update(self.values)
+            self.fitarg.update(self.errors)
             vary_param = self.list_of_vary_param()
             if self.last_upst.hasCovariance():
                 cov = self.last_upst.covariance()
