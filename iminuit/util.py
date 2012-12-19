@@ -102,7 +102,7 @@ def better_arg_spec(f, verbose=False):
 
     #now we are parsing __call__.__doc__
     try:
-        return arguments_from_docstring(f.__call__.__doc__)
+        return arguments_from_docstring(f.__call__.__doc__)[1:]
     except Exception as e:
         if verbose:
             print e
