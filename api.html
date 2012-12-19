@@ -95,7 +95,7 @@
 <p><strong>Arguments:</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li><em>fcn</em>: function to optimized. Minuit automomagically find how to
+<li><em>fcn</em>: function to optimized. Minuit automagically find how to
 call the function and each parameters. More information about how
 Minuit detects function signature can be found in
 <a class="reference internal" href="#function-sig-label"><em>Function Signature Extraction Ordering</em></a></li>
@@ -221,12 +221,13 @@ that the minimum is invalid due to exceeding max call
 <dt id="iminuit.Minuit.hesse">
 <tt class="descname">hesse</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.hesse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run HESSE.</p>
-<p>HESSE estimate error matrix by the <a class="reference external" href="http://en.wikipedia.org/wiki/Hessian_matrix">second derivative at the minimim</a>. This error matrix
+<p>HESSE estimates error matrix by the <a class="reference external" href="http://en.wikipedia.org/wiki/Hessian_matrix">second derivative at the minimim</a>. This error matrix
 is good if your <span class="math">\(\chi^2\)</span> or likelihood profile is parabolic at
 the minimum. From my experience, most of simple fits are.</p>
 <p><a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-meth docutils literal"><span class="pre">minos()</span></tt></a> makes no parabolic assumption and scan the likelihood
 and give the correct error asymmetric error in all cases(Unless your
-likelihood profile is utterly discontinuous near the minimum).</p>
+likelihood profile is utterly discontinuous near the minimum). But
+it is much more computationally expensive.</p>
 <dl class="docutils">
 <dt><strong>Returns</strong></dt>
 <dd>list of <a class="reference internal" href="#minuit-param-struct"><em>Minuit Parameter Struct</em></a></dd>
@@ -612,11 +613,25 @@ fitarguments.</p>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="iminuit.util.arguments_from_docstring">
+<tt class="descclassname">iminuit.util.</tt><tt class="descname">arguments_from_docstring</tt><big>(</big><em>doc</em><big>)</big><a class="headerlink" href="#iminuit.util.arguments_from_docstring" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse first line of docstring for argument name</p>
+<blockquote>
+<div>Docstring should be of the form &#8216;min(iterable[, key=func])</div></blockquote>
+<dl class="docutils">
+<dt>&#8216;.</dt>
+<dd>It can also parse cython docstring of the form
+Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="iminuit.util.describe">
 <tt class="descclassname">iminuit.util.</tt><tt class="descname">describe</tt><big>(</big><em>f</em>, <em>verbose=False</em><big>)</big><a class="headerlink" href="#iminuit.util.describe" title="Permalink to this definition">¶</a></dt>
 <dd><p>try to extract function arguements name</p>
-<p>..seealso:</p>
-<div class="highlight-python"><pre>:ref:`function-sig-label`</pre>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#function-sig-label"><em>Function Signature Extraction Ordering</em></a></p>
 </div>
 </dd></dl>
 
@@ -628,12 +643,12 @@ fitarguments.</p>
 <span class="n">fitarg_rename</span><span class="p">({</span><span class="s">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;limit_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;fix_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;error_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">},</span>
     <span class="k">lambda</span> <span class="n">pname</span><span class="p">:</span> <span class="s">&#39;y&#39;</span> <span class="k">if</span> <span class="n">pname</span><span class="o">==</span><span class="s">&#39;x&#39;</span> <span class="k">else</span> <span class="n">pname</span><span class="p">)</span>
 <span class="c">#{&#39;y&#39;:1, &#39;limit_y&#39;:1, &#39;fix_y&#39;:1, &#39;error_y&#39;:1},</span>
+
+<span class="c">#prefixing</span>
+<span class="n">figarg_rename</span><span class="p">({</span><span class="s">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;limit_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;fix_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;error_x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">},</span>
+    <span class="k">lambda</span> <span class="n">pname</span><span class="p">:</span> <span class="s">&#39;prefix_&#39;</span><span class="o">+</span><span class="n">pname</span><span class="p">)</span>
+<span class="c">#{&#39;prefix_x&#39;:1, &#39;limit_prefix_x&#39;:1, &#39;fix_prefix_x&#39;:1, &#39;error_prefix_x&#39;:1}</span>
 </pre></div>
-</div>
-<div class="highlight-python"><pre>#prefixing
-figarg_rename(fitarg_rename({'x':1, 'limit_x':1, 'fix_x':1, 'error_x':1},
-    lambda pname: 'prefix_'+pname)
-#{'prefix_x':1, 'limit_prefix_x':1, 'fix_prefix_x':1, 'error_prefix_x':1}</pre>
 </div>
 </dd></dl>
 

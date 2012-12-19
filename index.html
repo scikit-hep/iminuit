@@ -52,28 +52,23 @@
             
   <div class="section" id="iminuit">
 <h1>iminuit<a class="headerlink" href="#iminuit" title="Permalink to this headline">¶</a></h1>
-<p>Interactive IPython friendly minimizer based on`lcg-minuit`_ .
-The popular most minimizer used in High Energy
-Physics which has been around for more than 40 years(for a good reason).</p>
-<p>It&#8217;s designed from ground up to be used in an interactive fitting environment
-taking full advantage of <a class="reference external" href="ipythonnb">IPython notebook</a> and Python introspection.
-The package is heavily influenced by <a class="reference external" href="http://code.google.com/p/pyminuit/">PyMinuit</a> and ROOT version of MINUIT.
-To make transition from the popular <a class="reference external" href="http://code.google.com/p/pyminuit/">PyMinuit</a> easy, RTMinuit is (mostly)
-compatible with PyMinuit (just change the import statement).</p>
-<p>Very Basic Usage. See <a class="reference external" href="http://nbviewer.ipython.org/urls/raw.github.com/piti118/iminuit/master/tutorial/tutorial.ipynb">tutorial</a> for more comprehensive one:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mf">1.</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mf">2.</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span><span class="o">-</span><span class="mf">3.</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span><span class="mf">1.</span>
-<span class="c">#all parameter constraints are optional</span>
-<span class="n">m</span><span class="o">=</span><span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">limit_x</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">10.</span><span class="p">,</span><span class="mf">10.</span><span class="p">),</span>
-        <span class="n">y</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span> <span class="n">fix_y</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">print_level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">m</span><span class="o">.</span><span class="n">migrad</span><span class="p">()</span>
-
-<span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">values</span>
-<span class="c">#{&#39;y&#39;: 3.0, &#39;x&#39;: 1.0014335661136275, &#39;z&#39;: 3.000257377796712}</span>
-
+<p>Interactive IPython Friendly Mimizer based on <a class="reference external" href="http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/">SEAL Minuit</a>.
+(It&#8217;s included in the package no need to install it separately)</p>
+<p>It is designed from ground up to be fast, interactive and cython friendly. iminuit
+extract function signature very permissively starting from checking <em>func_code</em>
+down to last resort of parsing docstring(or you could tell iminuit to stop looking
+and take your answer). The interface is inspired heavily
+by PyMinuit and the status printout is inspired by ROOT Minuit. iminuit is
+mostly compatible with PyMinuit(with few exceptions). Existing PyMinuit
+code can be ported to iminuit by just changing the import statement.</p>
+<p>In a nutshell,:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">iminuit</span> <span class="kn">import</span> <span class="n">Minuit</span>
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">migrads</span><span class="p">()</span>
+<span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">values</span> <span class="c">#{&#39;x&#39;:2,&#39;y&#39;:3,&#39;z&#39;:4}</span>
 <span class="k">print</span> <span class="n">m</span><span class="o">.</span><span class="n">errors</span>
-<span class="c">#{&#39;y&#39;: 1.0, &#39;x&#39;: 0.9983245142197408, &#39;z&#39;: 0.9999999998503251}</span>
 </pre></div>
 </div>
 <div class="toctree-wrapper compound">
@@ -86,10 +81,19 @@ compatible with PyMinuit (just change the import statement).</p>
 <div class="highlight-python"><pre>git clone git://github.com/iminuit/iminuit.git</pre>
 </div>
 </div>
+<div class="section" id="tutorial">
+<h2>Tutorial<a class="headerlink" href="#tutorial" title="Permalink to this headline">¶</a></h2>
+</div>
 <div class="section" id="id1">
 <h2>Tutorial<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<p>The tutorial is in tutorial directory. You can view it online
-<a class="reference external" href="http://nbviewer.ipython.org/urls/raw.github.com/piti118/iminuit/master/tutorial/tutorial.ipynb">here</a>.</p>
+<p>All the tutorials are in tutorial directory. You can view it online too.</p>
+<ul class="simple">
+<li><a class="reference external" href="http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb">Quick start</a></li>
+<li><a class="reference external" href="http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb">Hard Core Cython tutorial</a>.
+If you need to do a huge likelihood fit that need speed.
+This is for you. If you don&#8217;t care, just use dist_fit. It&#8217;s a fun
+read though I think.</li>
+</ul>
 </div>
 <div class="section" id="api">
 <h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
@@ -107,6 +111,7 @@ compatible with PyMinuit (just change the import statement).</p>
   <ul>
 <li><a class="reference internal" href="#">iminuit</a><ul>
 <li><a class="reference internal" href="#download-and-install">Download and Install</a></li>
+<li><a class="reference internal" href="#tutorial">Tutorial</a></li>
 <li><a class="reference internal" href="#id1">Tutorial</a></li>
 <li><a class="reference internal" href="#api">API</a></li>
 </ul>
