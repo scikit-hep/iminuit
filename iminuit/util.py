@@ -34,16 +34,16 @@ def better_arg_spec(f, verbose=False):
         return f.func_code.co_varnames[:f.func_code.co_argcount]
     except Exception as e:
         if verbose:
-            print e #this might not be such a good dea.
-            print "f.func_code.co_varnames[:f.func_code.co_argcount] fails"
+            print(e) #this might not be such a good dea.
+            print("f.func_code.co_varnames[:f.func_code.co_argcount] fails")
         #using __call__ funccode
     try:
         #vnames = f.__call__.func_code.co_varnames
         return f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount]
     except Exception as e:
         if verbose:
-            print e #this too
-            print "f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails"
+            print(e) #this too
+            print("f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails")
 
     return inspect.getargspec(f)[0]
 
