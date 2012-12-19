@@ -9,8 +9,11 @@ __all__ = [
     'extract_error',
     'extract_fix',
     'remove_var',
+    'arguments_from_docstring',
 ]
 import inspect
+import StringIO
+import re
 
 class Struct:
     def __init__(self, **kwds):
@@ -36,6 +39,7 @@ def arguments_from_docstring(doc):
     #care only the firstline
     #docstring can be long
     line = sio.readline()
+    if line.startswith("('...',)"): line=sio.readline()#stupid cython
     p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
     #'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
@@ -54,6 +58,9 @@ def arguments_from_docstring(doc):
         ret.append(''.join(filter(lambda x :str.isalnum(x) or x=='_', tmp)))
         #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         #ret += self.docstring_kwd_re.findall(s)
+    ret = filter(lambda x: x!='',ret)
+    if len(ret)==0:
+        raise RuntimeError('Your doc is unparsable\n'+doc)
     return ret
 
 
@@ -71,6 +78,7 @@ def better_arg_spec(f, verbose=False):
             print e #this might not be such a good dea.
             print "f.func_code.co_varnames[:f.func_code.co_argcount] fails"
         #using __call__ funccode
+
     try:
         #vnames = f.__call__.func_code.co_varnames
         return f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount]
@@ -80,17 +88,37 @@ def better_arg_spec(f, verbose=False):
             print "f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails"
 
     try:
+        return inspect.getargspec(f.__call__)[0][1:]
+    except TypeError as e:
+        if verbose:
+            print e
+            print "inspect.getargspec(f)[0] fails"
+
+    try:
         return inspect.getargspec(f)[0]
     except TypeError as e:
         if verbose:
             print e
             print "inspect.getargspec(f)[0] fails"
 
-    #now we are parsing __doc__
+    #now we are parsing __call__.__doc__
     try:
-        return 
+        return arguments_from_docstring(f.__call__.__doc__)
+    except Exception as e:
+        if verbose:
+            print e
+            print "fail parsing __call__.__doc__"
+
+    #how about just __doc__
+    try:
+        return arguments_from_docstring(f.__doc__)
+    except Exception as e:
+        if verbose:
+            print e
+            print "fail parsing __doc__"
 
     raise TypeError("Unable to obtain function signature")
+    return None
 
 def describe(f,verbose=False):
     """try to extract function arguements name
@@ -190,4 +218,4 @@ def make_func_code(params=None):
             make_func_code(describe(f))
     """
     return Struct(co_varnames=params,co_argcount=len(params))
-    
+
