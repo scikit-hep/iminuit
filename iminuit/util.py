@@ -10,6 +10,8 @@ __all__ = [
     'extract_fix',
     'remove_var',
 ]
+
+import sys
 import inspect
 
 class Struct:
@@ -31,19 +33,31 @@ def better_arg_spec(f, verbose=False):
         :ref:`function-sig-label`
     """
     try:
-        return f.func_code.co_varnames[:f.func_code.co_argcount]
+        if sys.version_info[0] == 3:
+            return f.__code__.co_varnames[:f.__code__.co_argcount]
+        else:
+            return f.func_code.co_varnames[:f.func_code.co_argcount]
     except Exception as e:
         if verbose:
-            print(e) #this might not be such a good dea.
-            print("f.func_code.co_varnames[:f.func_code.co_argcount] fails")
+            print(e) # TODO: this might not be such a good dea.
+            if sys.version_info[0] == 3:
+                print("f.__code__.co_varnames[:f.__code__.co_argcount] fails")
+            else:
+                print("f.func_code.co_varnames[:f.func_code.co_argcount] fails")
         #using __call__ funccode
     try:
         #vnames = f.__call__.func_code.co_varnames
-        return f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount]
+        if sys.version_info[0] == 3:
+            return f.__call__.__code__.co_varnames[1:f.__call__.__code__.co_argcount]
+        else:
+            return f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount]
     except Exception as e:
         if verbose:
-            print(e) #this too
-            print("f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails")
+            print(e) # TODO: this might not be such a good dea.
+            if sys.version_info[0] == 3:
+                print("f.__call__.__code__.co_varnames[1:f.__call__.__code__.co_argcount] fails")
+            else:
+                print("f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails")
 
     return inspect.getargspec(f)[0]
 
