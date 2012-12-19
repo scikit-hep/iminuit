@@ -51,6 +51,18 @@ m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=3., fix_y=True, print_level=
 # - `y=2`, `fix_y=True` fix `y` value to 2
 # 
 # We did not put any constain on z. Minuit will howerver warn you about missig initial error/step(using python builtin warning).
+
+# <markdowncell>
+
+# ####Check that initial setting you put in is what you want
+
+# <codecell>
+
+m.print_param()#or call print_initial_param
+
+# <markdowncell>
+
+# 
 # 
 # ###Run Migrad
 # 
@@ -101,6 +113,8 @@ print 'error', m.errors
 
 #and function value at the minimum
 print 'fval', m.fval
+#Tip: you can also obtain value at current state by
+print 'current state', f(*m.args)
 
 # <markdowncell>
 

@@ -1,31 +1,26 @@
 iminuit
 ========
 
-Interactive IPython friendly minimizer based on`lcg-minuit`_ .
-The popular most minimizer used in High Energy
-Physics which has been around for more than 40 years(for a good reason).
+Interactive IPython Friendly Mimizer based on `SEAL Minuit <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/>`_.
+(It's included in the package no need to install it separately)
 
-It's designed from ground up to be used in an interactive fitting environment
-taking full advantage of `IPython notebook <ipythonnb>`_ and Python introspection.
-The package is heavily influenced by `PyMinuit`_ and ROOT version of MINUIT.
-To make transition from the popular `PyMinuit`_ easy, RTMinuit is (mostly)
-compatible with PyMinuit (just change the import statement).
+It is designed from ground up to be fast, interactive and cython friendly. iminuit
+extract function signature very permissively starting from checking *func_code*
+down to last resort of parsing docstring(or you could tell iminuit to stop looking
+and take your answer). The interface is inspired heavily
+by PyMinuit and the status printout is inspired by ROOT Minuit. iminuit is
+mostly compatible with PyMinuit(with few exceptions). Existing PyMinuit
+code can be ported to iminuit by just changing the import statement.
 
-Very Basic Usage. See `tutorial <http://nbviewer.ipython.org/urls/raw.github.com/piti118/iminuit/master/tutorial/tutorial.ipynb>`_ for more comprehensive one::
+In a nutshell,::
 
+    from iminuit import Minuit
     def f(x,y,z):
-        return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
-    #all parameter constraints are optional
-    m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.),
-            y=3., fix_y=True,
-            print_level=1)
-    m.migrad()
-
-    print m.values
-    #{'y': 3.0, 'x': 1.0014335661136275, 'z': 3.000257377796712}
-
+        return (x-2)**2 + (y-3)**2 + (z-4)**2
+    m = Minuit(f)
+    m.migrads()
+    print m.values #{'x':2,'y':3,'z':4}
     print m.errors
-    #{'y': 1.0, 'x': 0.9983245142197408, 'z': 0.9999999998503251}
 
 .. _lcg-minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
 .. _PyMinuit: http://code.google.com/p/pyminuit/
@@ -54,8 +49,17 @@ You can find our repository at `github <https://github.com/iminuit/iminuit>`_.
 Tutorial
 --------
 
-The tutorial is in tutorial directory. You can view it online
-`here <http://nbviewer.ipython.org/urls/raw.github.com/piti118/iminuit/master/tutorial/tutorial.ipynb>`_.
+Tutorial
+--------
+
+All the tutorials are in tutorial directory. You can view it online too.
+
+- `Quick start <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb>`_
+- `Hard Core Cython tutorial <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb>`_.
+  If you need to do a huge likelihood fit that need speed.
+  This is for you. If you don't care, just use dist_fit. It's a fun
+  read though I think.
+
 
 API
 ---
