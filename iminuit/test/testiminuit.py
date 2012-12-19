@@ -42,12 +42,12 @@ def func4(x,y,z):
 class TestMinuit(TestCase):
 
     def functesthelper(self,f):
-        m = Minuit(f,print_level=0)
+        m = Minuit(f, print_level=0, pedantic=False)
         m.migrad()
         val = m.values
-        assert_almost_equal(val['x'],2.)
-        assert_almost_equal(val['y'],5.)
-        assert_almost_equal(m.fval,10.)
+        assert_almost_equal(val['x'], 2.)
+        assert_almost_equal(val['y'], 5.)
+        assert_almost_equal(m.fval, 10.)
 
 
     def test_f1(self):
@@ -67,7 +67,7 @@ class TestMinuit(TestCase):
         #self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
 
     def test_fix_param(self):
-        m = Minuit(func4,print_level=0)
+        m = Minuit(func4,print_level=0, pedantic=False)
         m.migrad()
         m.minos()
         val = m.values
@@ -80,7 +80,7 @@ class TestMinuit(TestCase):
         # self.assertAlmostEqual(err['z'],4.)
 
         #now fix z = 10
-        m = Minuit(func4,print_level=-1,y=10.,fix_y=True)
+        m = Minuit(func4,print_level=-1,y=10.,fix_y=True, pedantic=False)
         m.migrad()
         val = m.values
         assert_almost_equal(val['x'],2.)
@@ -97,7 +97,8 @@ class TestMinuit(TestCase):
 
 
     def test_fitarg(self):
-        m = Minuit(func4,print_level=-1,y=10.,fix_y=True,limit_x=(0,20.))
+        m = Minuit(func4,print_level=-1,y=10.,fix_y=True,limit_x=(0,20.),
+            pedantic=False)
         fitarg = m.fitarg
         assert_almost_equal(fitarg['y'],10.)
         assert_true(fitarg['fix_y'])
@@ -121,7 +122,7 @@ class TestMinuit(TestCase):
 class TestErrorMatrix(TestCase):
 
     def setUp(self):
-        self.m = Minuit(func3,print_level=0)
+        self.m = Minuit(func3,print_level=0, pedantic=False)
         self.m.migrad()
 
 

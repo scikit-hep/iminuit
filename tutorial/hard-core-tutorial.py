@@ -60,11 +60,11 @@ def fast_f(int n):
 
 # <codecell>
 
-%timeit slow_f(100)
+%timeit -n10 -r10 slow_f(100)
 
 # <codecell>
 
-%timeit fast_f(100)
+%timeit -n10 -r10 fast_f(100)
 
 # <markdowncell>
 
@@ -78,14 +78,15 @@ hist(data,bins=100, histtype='step');
 
 # <codecell>
 
-%%cython
+%%cython --force
 #use --annotate if you wonder what kind of code it generates
 cimport cython
 import numpy as np
 cimport numpy as np #overwritten those from python with cython
 from libc.math cimport exp, M_PI, sqrt, log
+from iminuit.util import describe, make_func_code
 
-@cython.embedsignature(True)
+@cython.embedsignature(True)#dump the signatre so describe works
 cpdef mypdf(double x, double mu, double sigma):
     #cpdef means generate both c function and python function
     cdef double norm = 1./(sqrt(2*M_PI)*sigma)
@@ -95,17 +96,13 @@ cpdef mypdf(double x, double mu, double sigma):
 cdef class QuickAndDirtyLogLH:#cdef is here to reduce name lookup for __call__
     cdef np.ndarray data
     cdef int ndata
-    cdef public func_code
-    cdef object pdf
     
     def __init__(self, data):
         self.data = data
         self.ndata = len(data)
     
-    #@cython.boundscheck(False)#you can turn off bound checking   
-    @cython.embedsignature(True)#you need this for describe to work
-    def __call__(self, double mu, double sigma):
-        """__call__(self, mu, sigma)"""
+    @cython.embedsignature(True)#you need this to dump function signature in docstring
+    def compute(self, double mu, double sigma):
         cdef np.ndarray[np.double_t, ndim=1] mydata = self.data
         cdef double loglh = 0.
         cdef tuple t
@@ -117,22 +114,61 @@ cdef class QuickAndDirtyLogLH:#cdef is here to reduce name lookup for __call__
 
 # <codecell>
 
-lh = QuickAndDirtyLogLH(data)
-
-# <codecell>
-
 describe(mypdf)
 
 # <codecell>
 
-describe(lh, verbose=True)
+lh = QuickAndDirtyLogLH(data)
+describe(lh.compute)
 
 # <codecell>
 
-m = Minuit(lh)
+m = Minuit(lh.compute, mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0))
 
 # <codecell>
 
+%timeit -n1 -r1 m.migrad()
+
+# <markdowncell>
+
+# Have your cython PDF in a separate file
+# ---------------------------------------
+# 
+# Lots of time your stuff is incredibly complicated and doesn't fit in ipython notebook. Or you may want to reuse your PDF in many notebooks. We have external_pdf.pyx in the same directory as this tutorial. This is how you load it.
+
+# <codecell>
+
+import pyximport;
+pyximport.install(
+    setup_args=dict(
+        include_dirs=[np.get_include()],#include directory
+    #    libraries = ['m']#'stuff you need to link (no -l)
+    #    library_dirs ['some/dir']#library dir
+    #    extra_compile_args = ['-g','-O2'],
+    #    extra_link_args=['-some-link-flags'],
+    ),
+    reload_support=True,#you may also find this useful
+) #if anything funny is going on look at your console
+import external_pdf
+
+# <codecell>
+
+#reload(external_pdf) #you may find this useful for reloading your module
+
+# <codecell>
+
+data = randn(1e6)
+lh = external_pdf.External_LogLH(data)
+
+# <codecell>
+
+m = Minuit(lh.compute,mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0))
+
+# <codecell>
+
+%timeit -r1 -n1 m.migrad()
 
 # <markdowncell>
 
@@ -140,23 +176,11 @@ m = Minuit(lh)
 # 
 # Sometime we want to write a cost function that will take in any pdf and data and compute appropriate
 # cost function. This is slower than the previous example but will make your code much more reusable.
-# 
-# Let's say we want to do a unbinned likelihood fit of a million data points to a guassian.
-# This is to show how dist_fit was written. You are welcome to contribute to dist_fit with your favorite likelihood function.
 
 # <codecell>
 
 data = randn(1e6)*3+2 #mu=2, sigma=3
 hist(data,bins=100, histtype='step');
-
-# <codecell>
-
-
-# <codecell>
-
-
-# <codecell>
-
 
 # <markdowncell>
 
@@ -181,7 +205,8 @@ cdef class LogLH:#cdef is here to reduce name lookup for __call__
     def __init__(self, pdf, data):
         self.data = data
         self.ndata = len(data)
-        self.func_code = make_func_code(describe(pdf)[1:])#for auto signature extraction
+        #the important line is here
+        self.func_code = make_func_code(describe(pdf)[1:])#1: dock off independent param
         self.pdf = pdf
     
     #@cython.boundscheck(False)#you can turn off bound checking
@@ -222,12 +247,13 @@ mylh = LogLH(mypdf,data)
 
 # <codecell>
 
-describe(mylh)
+print describe(mypdf)
+print describe(mylh)
 
 # <codecell>
 
 m=Minuit(mylh, mu=1.5, sigma=2.5, error_mu=0.1, 
-    error_sigma=0.1, limit_sigma=(0.1,10.0), forced_parameters=['mu','sigma'])
+    error_sigma=0.1, limit_sigma=(0.1,10.0))
 
 # <codecell>
 
@@ -243,78 +269,10 @@ describe(mypdf)
 x = linspace(-10,12,100)
 before = np.fromiter((mypdf(xx,1.5,2.5) for xx in x), float);
 after = np.fromiter((mypdf(xx,m.values['mu'],m.values['sigma']) for xx in x), float);
-
-# <codecell>
-
 plot(x,before, label='before')
 plot(x,after, label='after')
 hist(data, normed=True, bins=100,histtype='step',label='data')
 legend();
-
-# <codecell>
-
-
-# <markdowncell>
-
-# Have your cython PDF in a separate file
-# ---------------------------------------
-# 
-# Lots of time your stuff is incredibly complicated and doesn't fit in ipython notebook. Or you may want to reuse your PDF in many notebooks. Here is how you do it.
-
-# <codecell>
-
-
-# <codecell>
-
-
-# <codecell>
-
-import StringIO
-import re
-def arguments_from_docstring(doc):
-    """Parse first line of docstring for argument name
-
-    Docstring should be of the form 'min(iterable[, key=func])\n'.
-    It can also parse cython docstring of the form
-    Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])
-    """
-    if doc is None:
-        raise RuntimeError('__doc__ is None')
-    sio = StringIO.StringIO(doc.lstrip())
-    #care only the firstline
-    #docstring can be long
-    line = sio.readline()
-    p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
-    #'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
-    sig = p.search(line)
-    if sig is None:
-        return []
-    print sig.groups()
-    # iterable[, key=func]' -> ['iterable[' ,' key=func]']
-    sig = sig.groups()[0].split(',')
-    ret = []
-    for s in sig:
-        #print s
-        tmp = s.split('=')[0].split()[-1]
-        ret.append(''.join(filter(lambda x :str.isalnum(x) or x=='_', tmp)))
-        #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
-        #ret += self.docstring_kwd_re.findall(s)
-    return ret
-
-# <codecell>
-
-s = 'Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])'
-arguments_from_docstring(s)
-
-# <codecell>
-
-filter(lambda x :str.isalnum(x) or x=='_', s)
-
-# <codecell>
-
-
-# <codecell>
-
 
 # <codecell>
 

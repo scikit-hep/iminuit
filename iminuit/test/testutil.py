@@ -89,9 +89,9 @@ class TestUtil(TestCase):
         a = arguments_from_docstring(s)
         assert_equal(a, ['x','y','z'])
         #this is a hard one
-        s = 'Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])'
+        s = 'Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])'
         a = arguments_from_docstring(s)
-        assert_equal(a, ['self','ncall_me','resume','nsplit'])
+        assert_equal(a, ['ncall_me','resume','nsplit'])
 
 
 if __name__ == '__main__':
