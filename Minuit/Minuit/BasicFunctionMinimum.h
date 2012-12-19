@@ -135,7 +135,7 @@ public:
     bool hasCovariance() const {return state().error().isAvailable();}
     bool isAboveMaxEdm() const {return theAboveMaxEdm;}
     bool hasReachedCallLimit() const {return theReachedCallLimit;}
-    void print(){
+    void print(bool progress=false){
         /*
          FCN=6.7306e-18 FROM MIGRAD    STATUS=CONVERGED      35 CALLS          36 TOTAL
                      EDM=1.34612e-17    STRATEGY= 1      ERROR MATRIX ACCURATE 
@@ -150,13 +150,14 @@ public:
         const vector<MinuitParameter>& values = mup.parameters();
         printf(//FCN line
             "FCN=%10e FROM MIGRAD  STATUS=%5s   %d CALLS\n"
-            "EDM=%10e ERROR MATRIX %s %s\n",
+            "EDM=%10e %s %s %s\n",
             fval(),//FCN
-            isValid()?"VALID":"PROGR",
+            progress?"PRGRS":(isValid()?"VALID":"INVALID"),
             nfcn(),
             edm(),
-            hasAccurateCovar()?"ACCURATE":"NOT ACCURATE",
-            hasPosDefCovar()?"POSDEF":"NOT POSDEF"
+            progress?"":"ERROR MATRIX",
+            progress?"":(hasAccurateCovar()?"ACCURATE":"NOT ACCURATE"),
+            progress?"":(hasPosDefCovar()?"POSDEF":"NOT POSDEF")
             );
 
 
