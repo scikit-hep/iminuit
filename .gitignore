@@ -12,6 +12,8 @@ archive
 html
 dist
 MANIFEST
+.coverage
+coverage
 
 !tutorial.html
 !tutorial.ipynb
