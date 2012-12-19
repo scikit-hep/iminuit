@@ -150,7 +150,7 @@ def better_arg_spec(f, verbose=False):
 def describe(f,verbose=False):
     """try to extract function arguements name
 
-    ..seealso::
+    .. seealso::
 
         :ref:`function-sig-label`
     """
@@ -168,12 +168,11 @@ def fitarg_rename(fitarg, ren):
             lambda pname: 'y' if pname=='x' else pname)
         #{'y':1, 'limit_y':1, 'fix_y':1, 'error_y':1},
 
-    ::
-
         #prefixing
-        figarg_rename(fitarg_rename({'x':1, 'limit_x':1, 'fix_x':1, 'error_x':1},
+        figarg_rename({'x':1, 'limit_x':1, 'fix_x':1, 'error_x':1},
             lambda pname: 'prefix_'+pname)
         #{'prefix_x':1, 'limit_prefix_x':1, 'fix_prefix_x':1, 'error_prefix_x':1}
+
     """
     tmp = ren
     if isinstance(ren, basestring): ren = lambda x: tmp + '_' + x

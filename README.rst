@@ -43,9 +43,10 @@ Tutorial
 
 All the tutorials are in tutorial directory. You can view it online too.
 
-- Quick start
-- Hard Core Cython tutorial. If you need to do a huge likelihood fit that
-  need speed. This is for you. If you don't care, just use dist_fit. It's a fun
+- `Quick start <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb>`_
+- `Hard Core Cython tutorial <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb>`_.
+  If you need to do a huge likelihood fit that need speed.
+  This is for you. If you don't care, just use dist_fit. It's a fun
   read though I think.
 
 
@@ -70,3 +71,5 @@ Here is some areas you can help.
 - Test test test. This package is realtively your there might be some kinks to
   it let me know how you broke it.
 - Performance. I you are a C/cython/python hacker go ahead and make it faster.
+- Console output could use some color.
+
