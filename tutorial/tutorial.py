@@ -181,7 +181,7 @@ m.print_matrix()
 
 # ##Alternative Ways to define function
 # ###Cython
-# If you want speed with minimal code change this is the way to do it. This is a quick way to use cython. For a hard core cython see this tutorial.
+# If you want speed with minimal code change this is the way to do it. This is a quick way to use cython. For a hard core cython see hard-core-tutorial.ipynb.
 
 # <codecell>
 
@@ -195,7 +195,8 @@ cimport cython
 import numpy as np
 cimport numpy as np #overwritten those from python with cython
 
-@cython.binding(True)#you need this otherwise iminuit can't extract signature
+#@cython.binding(True) this works too
+@cython.embedsignature(True)#dump signature in pydoc so describe can extract signature
 def cython_f(double x,double y,double z):
     return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
 
@@ -247,6 +248,7 @@ print m.values
 
 #this is very useful if you want to build a generic cost functor
 #this is actually how dist_fit is implemented
+from iminuit.util import make_func_code
 x = [1,2,3,4,5]
 y = [2,4,6,8,10]# y=2x
 class Chi2Functor:
@@ -257,10 +259,7 @@ class Chi2Functor:
         f_sig = describe(f)
         #this is how you fake function 
         #signature dynamically
-        self.func_code = Struct(
-                                co_varnames = f_sig[1:], #dock off independent variable
-                                co_argcount = len(f_sig)-1
-                                )
+        self.func_code = make_func_code(f_sig[1:])
         self.func_defaults = None #this keeps np.vectorize happy
     def __call__(self,*arg):
         #notice that it accept variable length
@@ -310,7 +309,6 @@ print m.values
 
 %%cython
 #sometimes you get a function with absolutely no signature
-#We didn't put cython.binding(True) here 
 def nosig_f(x,y):
     return x**2+(y-4)**2
 
