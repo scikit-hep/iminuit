@@ -187,7 +187,7 @@ cdef class Minuit:
 
         """
 
-        args = better_arg_spec(fcn) if forced_parameters is None\
+        args = describe(fcn) if forced_parameters is None\
                else forced_parameters
         self._check_extra_args(args,kwds)
         narg = len(args)
@@ -767,7 +767,7 @@ cdef class Minuit:
                 self.errors[mpv[i].name()] = mpv[i].error()
             self.args = tuple(self.args)
             self.fitarg.update(self.values)
-            self.fitarg.update(self.errors)
+            self.fitarg.update({'error_'+k:v for k,v in self.errors.items()})
             vary_param = self.list_of_vary_param()
             if self.last_upst.hasCovariance():
                 cov = self.last_upst.covariance()

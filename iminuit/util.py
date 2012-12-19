@@ -23,7 +23,7 @@ class Struct:
         return self.__str__()
 
 
-def better_arg_spec(f, verbose):
+def better_arg_spec(f, verbose=False):
     """extract function signature
 
     ..seealso::
@@ -70,7 +70,7 @@ def fitarg_rename(fitarg, ren):
         #{'y':1, 'limit_y':1, 'fix_y':1, 'error_y':1},
 
     ::
-    
+
         #prefixing
         figarg_rename(fitarg_rename({'x':1, 'limit_x':1, 'fix_x':1, 'error_x':1},
             lambda pname: 'prefix_'+pname)
