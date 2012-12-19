@@ -7,6 +7,9 @@ python:
   # Python 3.3. is not deployed on travis-ci yet, using it results in an error.
   #- 3.3
 
+install:
+  - pip install --use-mirrors ipython
+
 script:
   - make install
   - find /home/travis -name '*libiminuit*'
