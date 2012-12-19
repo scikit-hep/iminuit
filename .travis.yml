@@ -1,7 +1,18 @@
 language: python
+
 python:
   - 2.6
   - 2.7
+  - 3.2
+  # Python 3.3. is not deployed on travis-ci yet, using it results in an error.
+  #- 3.3
+
+install:
+  - pip install --use-mirrors ipython
+
 script:
-    - python setup.py build_ext -i
-    - nosetests
+  - make install
+  - find /home/travis -name '*libiminuit*'
+  - make
+  - cd /tmp
+  - python -c 'import iminuit'

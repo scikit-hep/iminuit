@@ -4,6 +4,6 @@ __all__ = [
     'Struct'
     'InitialParamWarning'
 ]
-from _libiminuit import *
-from util import describe, Struct
-from iminuit_warnings import *
+from ._libiminuit import *
+from .util import describe, Struct
+from .iminuit_warnings import *

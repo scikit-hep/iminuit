@@ -14,7 +14,7 @@ libiminuit = Extension('iminuit._libiminuit',
                     extra_compile_args = ['-Wno-write-strings', '-Wno-sign-compare'],
                     extra_link_args = [])
 
-execfile('iminuit/info.py')
+exec(compile(open('iminuit/info.py').read(), 'iminuit/info.py', 'exec'))
 
 setup (
     name = 'iminuit',

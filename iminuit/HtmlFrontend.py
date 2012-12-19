@@ -1,6 +1,9 @@
 __all__ = ['HtmlFrontend']
+
 from IPython.core.display import display, HTML, display_html
-from util import Struct
+from .util import Struct
+
+
 class Gradient:
     #from http://code.activestate.com/recipes/266466-html-colors-tofrom-rgb-tuples/
     @classmethod
@@ -66,7 +69,7 @@ class HtmlFrontend:
         description for each item."""
         goaledm = 0.0001*tolerance*sfmin.up
         style = fmin_style(sfmin)
-        header = u"""
+        header = """
         <table>
             <tr>
                 <td>FCN = {sfmin.fval}</td>
@@ -80,7 +83,7 @@ class HtmlFrontend:
             </tr>
         </table>
         """.format(**locals())
-        status = u"""
+        status = """
         <table>
             <tr>
                 <td align="center">Valid</td>

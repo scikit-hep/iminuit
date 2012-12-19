@@ -9,8 +9,12 @@ __all__ = [
     'extract_error',
     'extract_fix',
     'remove_var',
+    'arguments_from_docstring',
 ]
+
 import inspect
+import io
+import re
 
 class Struct:
     def __init__(self, **kwds):
@@ -21,6 +25,43 @@ class Struct:
 
     def __repr__(self):
         return self.__str__()
+
+
+def arguments_from_docstring(doc):
+    """Parse first line of docstring for argument name
+
+    Docstring should be of the form 'min(iterable[, key=func])\n'.
+    It can also parse cython docstring of the form
+    Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])
+    """
+    if doc is None:
+        raise RuntimeError('__doc__ is None')
+    sio = io.StringIO(doc.lstrip())
+    #care only the firstline
+    #docstring can be long
+    line = sio.readline()
+    if line.startswith("('...',)"): line=sio.readline()#stupid cython
+    p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
+    #'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
+    sig = p.search(line)
+    if sig is None:
+        return []
+    # iterable[, key=func]' -> ['iterable[' ,' key=func]']
+    sig = sig.groups()[0].split(',')
+    ret = []
+    for s in sig:
+        #print s
+        #get the last one after all space after =
+        #ex: int x= True
+        tmp = s.split('=')[0].split()[-1]
+        #clean up non _+alphanum character
+        ret.append(''.join(filter(lambda x :str.isalnum(x) or x=='_', tmp)))
+        #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
+        #ret += self.docstring_kwd_re.findall(s)
+    ret = filter(lambda x: x!='',ret)
+    if len(ret)==0:
+        raise RuntimeError('Your doc is unparsable\n'+doc)
+    return ret
 
 
 def better_arg_spec(f, verbose=False):
@@ -34,19 +75,50 @@ def better_arg_spec(f, verbose=False):
         return f.func_code.co_varnames[:f.func_code.co_argcount]
     except Exception as e:
         if verbose:
-            print e #this might not be such a good dea.
-            print "f.func_code.co_varnames[:f.func_code.co_argcount] fails"
+            print(e) #this might not be such a good dea.
+            print("f.func_code.co_varnames[:f.func_code.co_argcount] fails")
         #using __call__ funccode
+
     try:
         #vnames = f.__call__.func_code.co_varnames
         return f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount]
     except Exception as e:
         if verbose:
-            print e #this too
-            print "f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails"
+            print(e) #this too
+            print("f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails")
 
-    return inspect.getargspec(f)[0]
+    try:
+        return inspect.getargspec(f.__call__)[0][1:]
+    except TypeError as e:
+        if verbose:
+            print(e)
+            print("inspect.getargspec(f)[0] fails")
 
+    try:
+        return inspect.getargspec(f)[0]
+    except TypeError as e:
+        if verbose:
+            print(e)
+            print("inspect.getargspec(f)[0] fails")
+
+    #now we are parsing __call__.__doc__
+    try:
+        return arguments_from_docstring(f.__call__.__doc__)[1:]
+    except Exception as e:
+        if verbose:
+            print(e)
+            print("fail parsing __call__.__doc__")
+
+    #how about just __doc__
+    try:
+        return arguments_from_docstring(f.__doc__)
+    except Exception as e:
+        if verbose:
+            print(e)
+            print("fail parsing __doc__")
+
+    raise TypeError("Unable to obtain function signature")
+    return None
 
 def describe(f,verbose=False):
     """try to extract function arguements name
@@ -77,7 +149,7 @@ def fitarg_rename(fitarg, ren):
         #{'prefix_x':1, 'limit_prefix_x':1, 'fix_prefix_x':1, 'error_prefix_x':1}
     """
     tmp = ren
-    if isinstance(ren, basestring): ren = lambda x: tmp + '_' + x
+    if isinstance(ren, str): ren = lambda x: tmp + '_' + x
     ret = {}
     prefix = ['limit_', 'fix_', 'error_', ]
     for k, v in fitarg.items():
@@ -137,3 +209,12 @@ def extract_fix(b):
 def remove_var(b, exclude):
     """exclude variable in exclude list from b"""
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
+
+def make_func_code(params=None):
+    """make a func_code object to fake function signature
+
+        you can make a funccode from describeable object by::
+
+            make_func_code(describe(f))
+    """
+    return Struct(co_varnames=params,co_argcount=len(params))

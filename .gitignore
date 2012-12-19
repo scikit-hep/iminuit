@@ -5,13 +5,14 @@
 *.html
 build
 *.pyc
-test_*
 .idea
 _build
 archive
 html
 dist
 MANIFEST
+.coverage
+coverage
 
 !tutorial.html
 !tutorial.ipynb
