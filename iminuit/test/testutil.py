@@ -93,5 +93,6 @@ class TestUtil(TestCase):
         a = arguments_from_docstring(s)
         assert_equal(a, ['self','ncall_me','resume','nsplit'])
 
+
 if __name__ == '__main__':
     unittest.main()
