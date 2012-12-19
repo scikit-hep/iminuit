@@ -85,8 +85,8 @@ import numpy as np
 cimport numpy as np #overwritten those from python with cython
 from libc.math cimport exp, M_PI, sqrt, log
 
+@cython.embedsignature(True)
 cpdef mypdf(double x, double mu, double sigma):
-    """mypdf( x, mu, sigma)"""
     #cpdef means generate both c function and python function
     cdef double norm = 1./(sqrt(2*M_PI)*sigma)
     cdef double ret = exp(-1*(x-mu)*(x-mu)/(2.*sigma*sigma))*norm
@@ -103,7 +103,7 @@ cdef class QuickAndDirtyLogLH:#cdef is here to reduce name lookup for __call__
         self.ndata = len(data)
     
     #@cython.boundscheck(False)#you can turn off bound checking   
-    #unfortunately cython doesn't do embedded pydoc correctly
+    @cython.embedsignature(True)#you need this for describe to work
     def __call__(self, double mu, double sigma):
         """__call__(self, mu, sigma)"""
         cdef np.ndarray[np.double_t, ndim=1] mydata = self.data
@@ -122,6 +122,10 @@ lh = QuickAndDirtyLogLH(data)
 # <codecell>
 
 describe(mypdf)
+
+# <codecell>
+
+describe(lh, verbose=True)
 
 # <codecell>
 
@@ -305,6 +309,12 @@ arguments_from_docstring(s)
 # <codecell>
 
 filter(lambda x :str.isalnum(x) or x=='_', s)
+
+# <codecell>
+
+
+# <codecell>
+
 
 # <codecell>
 
