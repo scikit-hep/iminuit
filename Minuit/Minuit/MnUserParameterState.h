@@ -96,7 +96,7 @@ public:
 
   //access to parameters (row-wise)
   const std::vector<MinuitParameter>& minuitParameters() const;
-  //access to parameters and errors in column-wise representation 
+  //access to parameters and errors in column-wise representation
   std::vector<double> params() const;
   std::vector<double> errors() const;
 

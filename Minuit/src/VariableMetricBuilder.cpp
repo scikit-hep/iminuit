@@ -244,7 +244,10 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
 #ifdef DEBUG
         std::cout << "edm corrected = " << edm << std::endl;
 #endif
-
+        FunctionMinimum tmp(seed, result, fcn.up());
+        if(VariableMetricBuilder::print_level >= 2){
+            tmp.print(true);
+        }
     } while(edm > edmval && fcn.numOfCalls() < maxfcn);
 
     if(fcn.numOfCalls() >= maxfcn) {

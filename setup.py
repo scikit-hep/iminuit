@@ -3,10 +3,13 @@ import distutils.util
 import subprocess
 from os.path import dirname, join
 from glob import glob
+from distutils.ccompiler import new_compiler
+
 #static link
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd,'Minuit/src/*.cpp'))
 minuit_header = join(cwd,'Minuit')
+
 libiminuit = Extension('iminuit._libiminuit',
                     sources = ['iminuit/_libiminuit.cpp'] + minuit_src,
                     include_dirs= [minuit_header],
