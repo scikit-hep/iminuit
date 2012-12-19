@@ -5,7 +5,22 @@ Full API Documentation
 
 .. currentmodule:: iminuit
 
+Quick Summary
+-------------
+These are the things you will use a lot.
+
 .. autosummary::
+    Minuit
+    Minuit.migrad
+    Minuit.minos
+    Minuit.values
+    Minuit.errors
+    Minuit.merrors
+    util.describe
+
+
+Minuit
+------
 
 .. autoclass:: Minuit
     :members:
@@ -89,9 +104,18 @@ Full API Documentation
         Tolerance. One fo migrad convergence criteria is edm < maxedm.
         Maxedm is calculated by 0.0001*tol*UP.
 
+Utility Functions
+-----------------
+
+:mod:util module provides describe function and various function to manipulate
+fitarguments.
+
+.. automodule:: iminuit.util
+    :members:
+    :undoc-members:
 
 Return Value Struct:
-====================
+--------------------
 
 iminuit uses various structs as return value. This section lists the struct
 and all it's field
@@ -214,7 +238,7 @@ attrubutes:
 .. _function-sig-label:
 
 Function Signature Extraction Ordering
-======================================
+--------------------------------------
 
     1. Using ``f.func_code.co_varnames``, ``f.func_code.co_argcount``
        All functions that is defined like::
