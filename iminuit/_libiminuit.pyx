@@ -105,7 +105,7 @@ cdef class Minuit:
 
         **Arguments:**
 
-            * *fcn*: function to optimized. Minuit automomagically find how to
+            * *fcn*: function to optimized. Minuit automagically find how to
               call the function and each parameters. More information about how
               Minuit detects function signature can be found in
               :ref:`function-sig-label`
@@ -327,14 +327,15 @@ cdef class Minuit:
     def hesse(self):
         """Run HESSE.
 
-        HESSE estimate error matrix by the `second derivative at the minimim
+        HESSE estimates error matrix by the `second derivative at the minimim
         <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This error matrix
         is good if your :math:`\chi^2` or likelihood profile is parabolic at
         the minimum. From my experience, most of simple fits are.
 
         :meth:`minos` makes no parabolic assumption and scan the likelihood
         and give the correct error asymmetric error in all cases(Unless your
-        likelihood profile is utterly discontinuous near the minimum).
+        likelihood profile is utterly discontinuous near the minimum). But
+        it is much more computationally expensive.
 
         **Returns**
             list of :ref:`minuit-param-struct`
@@ -475,6 +476,7 @@ cdef class Minuit:
         """print current parameter state"""
         if self.last_upst is NULL:
             self.print_initial_param()
+            return
         cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
         cdef int i
         tmp = []
@@ -485,7 +487,25 @@ cdef class Minuit:
 
     def print_initial_param(self):
         """Print initial parameters"""
-        raise NotImplementedError
+        tmp = []
+        for i,vname in enumerate(self.parameters):
+            mps = Struct(
+            number = i+1,
+            name = vname,
+            value = self.initialvalue[vname],
+            error = self.initialerror[vname],
+            is_const = False,
+            is_fixed = self.initialfix[vname],
+            has_limits = self.initiallimit[vname] is not None,
+            lower_limit = self.initiallimit[vname][0]
+                if self.initiallimit[vname] is not None else -999,
+            upper_limit = self.initiallimit[vname][1]
+                if self.initiallimit[vname] is not None else 999,
+            has_lower_limit = self.initiallimit[vname] is not None,
+            has_upper_limit = self.initiallimit[vname] is not None
+            )
+            tmp.append(mps)
+        self.frontend.print_param(tmp, {})
 
 
     def print_fmin(self):
