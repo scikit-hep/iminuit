@@ -8,6 +8,7 @@ python:
 
 script:
   - make install
+  - find /home/travis -name '*libiminuit*'
   - cd /tmp
   - python -c 'import iminuit'
   # - make
