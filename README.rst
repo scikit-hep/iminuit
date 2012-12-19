@@ -1,7 +1,7 @@
 .. -*- mode: rst -*-
 
-.. image:: https://travis-ci.org/piti118/iminuit.png?branch=master
-   :target: https://travis-ci.org/piti118/iminuit
+.. image:: https://travis-ci.org/iminuit/iminuit.png?branch=master
+   :target: https://travis-ci.org/iminuit/iminuit
 
 iminuit
 --------
@@ -28,4 +28,4 @@ see tutorial.ipynb notebook or tutorial.py if you don't have ipython notebook
 Documentation
 -------------
 
-http://piti118.github.com/iminuit/
+http://iminuit.github.com/iminuit/
