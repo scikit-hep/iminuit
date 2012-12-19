@@ -28,11 +28,7 @@ class Func1:
 
 class Func2:
     def __init__(self):
-        import sys
-        if sys.version_info[0] == 3:
-            self.__code__ = Func_Code(['x','y'])
-        else:
-            self.func_code = Func_Code(['x','y'])
+        self.func_code = Func_Code(['x','y'])
     def __call__(self,*arg):
         return (arg[0]-2.)**2 + (arg[1]-5.)**2 + 10
 
