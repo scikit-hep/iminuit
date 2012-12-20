@@ -3,7 +3,7 @@
 
 # <codecell>
 
-#%pylab inline
+%pylab inline
 from iminuit import Minuit, describe, Struct
 
 # <markdowncell>
@@ -201,6 +201,8 @@ m.print_matrix()
 
 #sometimes we want speeeeeeed
 %load_ext cythonmagic
+%pylab inline
+from iminuit import Minuit, describe, Struct
 
 # <codecell>
 
@@ -232,6 +234,11 @@ print m.values
 
 # <codecell>
 
+%pylab inline
+from iminuit import Minuit, describe, Struct
+
+# <codecell>
+
 x = [1,2,3,4,5]
 y = [2,4,6,8,10]# y=2x
 class StraightLineChi2:
@@ -260,6 +267,11 @@ print m.values
 
 # <codecell>
 
+%pylab inline
+from iminuit import Minuit, describe, Struct
+
+# <codecell>
+
 #this is very useful if you want to build a generic cost functor
 #this is actually how dist_fit is implemented
 from iminuit.util import make_func_code
@@ -273,7 +285,7 @@ class Chi2Functor:
         f_sig = describe(f)
         #this is how you fake function 
         #signature dynamically
-        self.func_code = make_func_code(f_sig[1:])
+        self.func_code = make_func_code(f_sig[1:])#docking off independent variable
         self.func_defaults = None #this keeps np.vectorize happy
     def __call__(self,*arg):
         #notice that it accept variable length
@@ -321,6 +333,11 @@ print m.values
 
 # <codecell>
 
+%pylab inline
+from iminuit import Minuit, describe, Struct
+
+# <codecell>
+
 %%cython
 #sometimes you get a function with absolutely no signature
 def nosig_f(x,y):
@@ -345,6 +362,10 @@ m = Minuit(nosig_f, forced_parameters=('x','y'))
 m.migrad()
 print m.values
 
+# <codecell>
+
+print f
+
 # <markdowncell>
 
 # ###Frontend
@@ -352,8 +373,15 @@ print m.values
 
 # <codecell>
 
+%pylab inline
+from iminuit import Minuit, describe, Struct
+
+# <codecell>
+
 #this is just showing off console frontend (you can force it)
 from iminuit.ConsoleFrontend import ConsoleFrontend
+def f(x,y,z):
+    return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
 m = Minuit(f, frontend=ConsoleFrontend())
 
 # <codecell>
