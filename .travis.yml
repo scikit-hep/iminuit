@@ -20,8 +20,4 @@ script:
       - cd tutorial;
       - time ../devscripts/checkipnb.py tutorial.ipynb;
       - time ../devscripts/checkipnb.py hard-core-tutorial.ipynb;
-      # TODO: The .py scripts don't run at the moment.
-      # https://github.com/iminuit/iminuit/issues/2
-      # When they do add this test:
-      #- python tutorial.py
     fi
