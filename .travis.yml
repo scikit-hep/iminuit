@@ -5,7 +5,7 @@ python:
   - 2.7
 
 install:
-  - bash devscripts/travis_install.sh
+  - bash -x devscripts/travis_install.sh
 
 script:
-  - bash devscripts/travis_script.sh
+  - bash -x devscripts/travis_script.sh
