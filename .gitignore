@@ -11,6 +11,7 @@ archive
 html
 dist
 MANIFEST
+*.o
 
 !tutorial.html
 !tutorial.ipynb

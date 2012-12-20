@@ -274,6 +274,109 @@ plot(x,after, label='after')
 hist(data, normed=True, bins=100,histtype='step',label='data')
 legend();
 
+# <markdowncell>
+
+# ###Parallel Computing With Cython and OpenMP
+# Computer nowadays are multi-core machine so it makes sense to utilize all of them. This method is fast but quite restricted and cubersome since you need to write function such that cython can figure out its reentrant-ness. And you need some understanding of thread-local and thread-share variable.
+# 
+# You can read [prange](http://wiki.cython.org/enhancements/prange) from cython wiki for more information and how to gain a more complete control over paralelization. The official documentation is [here](http://docs.cython.org/src/userguide/parallelism.html)
+
+# <codecell>
+
+%load_ext cythonmagic
+from iminuit import Minuit
+
+# <codecell>
+
+%%cython -f -c-fopenmp --link-args=-fopenmp -c-g
+#use --annotate if you wonder what kind of code it generates
+cimport cython
+import numpy as np
+cimport numpy as np #overwritten those from python with cython
+from libc.math cimport exp, M_PI, sqrt, log
+from iminuit.util import describe, make_func_code
+import multiprocessing
+from cython.parallel import prange
+
+
+#notice nogil a the end (no global intepreter lock)
+#cython doesn't do a super thorough check for this
+#so make sure your function is reentrant this means approximately 
+#just simple function compute simple stuff based on local stuff and no read/write to global 
+@cython.embedsignature(True)#dump the signatre so describe works
+@cython.cdivision(True)
+cpdef double mypdf(double x, double mu, double sigma) nogil:
+    #cpdef means generate both c function and python function
+    cdef double norm
+    cdef double ret
+    norm = 1./(sqrt(2*M_PI)*sigma)
+    ret = exp(-1*(x-mu)*(x-mu)/(2.*sigma*sigma))*norm
+    return ret
+
+cdef class ParallelLogLH:#cdef is here to reduce name lookup for __call__
+    cdef np.ndarray data
+    cdef int ndata
+    cdef int njobs
+    cdef np.ndarray buf#buffer for storing result from each job
+    def __init__(self, data, njobs=None):
+        self.data = data
+        self.ndata = len(data)
+        self.njobs = njobs if njobs is not None else multiprocessing.cpu_count()
+        self.buf = np.empty(njobs)
+    
+    @cython.boundscheck(False)
+    @cython.embedsignature(True)#you need this to dump function signature in docstring
+    def compute(self, double mu, double sigma):
+        cdef np.ndarray[np.double_t, ndim=1] mydata = self.data
+        cdef double loglh = 0.
+        cdef tuple t
+        cdef double thisdata
+        cdef int i=0
+        #in parallel computing you need to be careful which variable is
+        #thread private which variable is shared between thread
+        #otherwise you will get into hard to detect racing condition
+        #cython rule of thumb(guess rule) is
+        # 1) assigned before use is thread private
+        # 2) read-only is thread-shared
+        # 3) inplace modification only is thread shared
+        cdef int njobs = self.njobs
+        cdef double tmp
+        with nogil:
+            for i in prange(self.ndata, 
+                            num_threads=njobs, 
+                            chunksize=10000, 
+                            schedule='dynamic'):#split into many threads
+                thisdata = mydata[i] #this is assigned before read so it's thread private
+                tmp  = mypdf(thisdata,mu,sigma) #also here assigne before read
+                loglh -= log(tmp) #inplace modification so loglh is thread shared
+        return loglh
+
+# <codecell>
+
+data = randn(1e7)#10 millions
+
+# <codecell>
+
+plh = ParallelLogLH(data)
+
+# <codecell>
+
+plh.compute(1.5,2.0)
+
+# <codecell>
+
+describe(plh.compute)
+
+# <codecell>
+
+m=Minuit(plh.compute,mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0))
+
+# <codecell>
+
+%%timeit -n1 -r1
+m.migrad()
+
 # <codecell>
 
 
