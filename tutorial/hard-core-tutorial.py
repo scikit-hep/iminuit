@@ -72,7 +72,7 @@ from iminuit import Minuit
 
 # <codecell>
 
-data = randn(1e6)*3+2 #mu=2, sigma=3
+data = randn(2e6)*3+2 #mu=2, sigma=3
 hist(data,bins=100, histtype='step');
 
 # <codecell>
@@ -163,7 +163,7 @@ import external_pdf
 
 # <codecell>
 
-data = randn(1e6)
+data = randn(2e6)*3+2
 lh = external_pdf.External_LogLH(data)
 
 # <codecell>
@@ -190,8 +190,7 @@ from iminuit import Minuit
 
 # <codecell>
 
-data = randn(1e6)*3+2 #mu=2, sigma=3
-hist(data,bins=100, histtype='step');
+data = randn(2e6)*3+2 #mu=2, sigma=3
 
 # <markdowncell>
 
@@ -221,17 +220,19 @@ cdef class LogLH:#cdef is here to reduce name lookup for __call__
         self.pdf = pdf
     
     #@cython.boundscheck(False)#you can turn off bound checking
-    def __call__(self, *arg):
-        cdef np.ndarray[np.double_t, ndim=1] mydata = self.data
+    def __call__(self, *args):
+        cdef np.ndarray[np.double_t, ndim=1] mydata = self.data#this line is very important
+        #with out this line cython will have no idea about type
         cdef double loglh = 0.
-        cdef tuple t
+        cdef list larg = [0.]+list(args)
+        
         for i in range(self.ndata):
             #it's slower because we need to do so many python stuff
             #to do generic function call
             #if you are python hacker and know how to get around this
             #please let us know
-            t = (mydata[i],) + arg
-            loglh -= log(self.pdf(*t))
+            larg[0] = mydata[i]
+            loglh -= log(self.pdf(*larg))
         return loglh
 
 # <markdowncell>
@@ -287,8 +288,151 @@ legend();
 
 # <markdowncell>
 
+# ###Parallel processing with `multiprocessing`
+# This example is most likely not working on windows. You need to implement a bunch of workaround for lack of fork() on Windows such that it's easier to install a decent linux on your computer.
+# 
+# The idea here on how to parallelize your cost function is to separate you data into multiple chunks and have each worker calculate your cost function, collect them at the end and add them up.
+# 
+# The tool we will be showing here is Python multiprocess. The implementation here has a big overhead you need 4-8 cpu to see the difference.
+# 
+# You might be worried about that forking process will copy your data. Most modern OS use [Copy On Write]http://en.wikipedia.org/wiki/Copy-on-write mechanism(look at wiki)
+# what this means is that when it forks a process
+# it doesn't copy memory there unless you are writing it
+
+# <codecell>
+
+%load_ext cythonmagic
+from iminuit import Minuit
+
+# <codecell>
+
+%%cython -f
+cimport cython
+import numpy as np
+cimport numpy as np #overwritten those from python with cython
+from libc.math cimport exp, M_PI, sqrt, log, floor
+from libc.stdio cimport printf
+from iminuit.util import make_func_code, describe
+import multiprocessing as mp
+from multiprocessing.queues import SimpleQueue
+import os
+#import logging
+#logger = multiprocessing.log_to_stderr()
+#don't do this in ipython either it will crash(watch ipython #2438)
+#logger.setLevel(multiprocessing.SUBDEBUG)
+
+@cython.embedsignature(True)#dump the signatre so describe works
+cpdef double mypdf(double x, double mu, double sigma):
+    #cpdef means generate both c function and python function
+    cdef double norm
+    cdef double ret
+    norm = 1./(sqrt(2*M_PI)*sigma)
+    ret = exp(-1*(x-mu)*(x-mu)/(2.*sigma*sigma))*norm
+    return ret
+
+cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
+    cdef np.ndarray data
+    #cdef double* databuffer#i'm not really sure if numpy will do copy on write only or not
+    cdef int ndata
+    cdef public func_code
+    cdef object pdf
+    cdef int njobs
+    cdef list starts
+    cdef list stops
+    cdef object pool
+    cdef int i
+    def __init__(self, pdf, np.ndarray[np.double_t] data, njobs=None):
+        self.data = data
+        #self.databuffer = <double*>data.data
+        self.ndata = len(data)
+        
+        #the important line is here
+        self.func_code = make_func_code(describe(pdf)[1:])#1: dock off independent param
+        self.pdf = pdf
+        
+        #worker pool stuff
+        self.njobs = njobs if njobs is not None else mp.cpu_count()
+        
+        #determine chunk size
+        chunk_size = floor(self.ndata/self.njobs)
+        self.starts = [i*chunk_size for i in range(self.njobs)]
+        self.stops = [(i+1)*chunk_size for i in range(self.njobs)]
+        self.stops[-1] = self.ndata #add back last couple data from round off
+        self.i=0
+    
+    @cython.embedsignature(True)
+    def process_chunk(self, 
+            int pid, int start, int stop, tuple args, object results): #start stop is [start, stop) 
+        #be careful here there is a bug in ipython which preventing
+        #child process from printing to stdout/stderr (you will get a segfault)
+        #for now to debug this use printf and see if anyone fix ipython #2438
+        #or redirect fd of stdout and stderr
+        #do something like this if you need to debug
+        #msg = str(('Start Worker:', pid, start, stop,os.getpid()))+'\n'
+        #printf(msg)
+        #it will run fine as a python script though
+        cdef np.ndarray[np.double_t, ndim=1] mydata = self.data#get cython to know the type
+        cdef int i
+        cdef double loglh = 0.
+        cdef double tmp = 0.
+        cdef tuple t
+        #calculate lh for this chunk
+        cdef list larg = [0.]+list(args)
+        for i in range(start,stop):
+            tmp = mydata[i]
+            larg[0] = tmp
+            loglh -= log(self.pdf(*larg))
+        results.put(loglh) #put result in multiprocessing.queue
+        return loglh#return isn't necessary since it will be ignored but useful for testing
+
+    def __call__(self, *args):
+        cdef double ret=0
+        results = SimpleQueue()#this will store results from the worker
+        #you may think that forking this many time is inefficient
+        #We can do better but this is not bad. Since most of the time
+        #will be spend on calculating your loglh this is cheap compared to those
+        pool = [mp.Process(target=self.process_chunk,
+                           args=(i,self.starts[i],self.stops[i],args,results)) 
+                    for i in range(self.njobs)]
+        self.i+=1
+        for p in pool: p.start() #start everyone
+        for p in pool: p.join() #wait for everyon to finish
+        while not results.empty(): #collect the result
+            tmp = results.get()
+            ret += tmp
+        return ret
+
+# <codecell>
+
+data = randn(2e6)*3+2 #10 millions
+mlh = Multiprocess_LogLH(mypdf,data)
+
+# <codecell>
+
+#good idea to debug it in non-multiprocess environment first
+import multiprocessing as mp
+q = mp.Queue()
+mlh.process_chunk(0,0,10,(0,1),q)
+
+# <codecell>
+
+mlh(0,1)
+
+# <codecell>
+
+m = Minuit(mlh,mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0),print_level=1)
+
+# <codecell>
+
+%timeit -r1 -n1 m.migrad()
+
+# <markdowncell>
+
 # ###Parallel Computing With Cython and OpenMP
 # *For this tutorial you will need a compiler with openmp support. GCC has one. However, clang does NOT support it.*
+# 
+# **This is not recommended. Do this only when overhead of multiprocessing is too big for you. The performance gain is probaly not worth your headache.**
 # 
 # Computer nowadays are multi-core machines so it makes sense to utilize all of them. This method is fast but quite restricted and cubersome since you need to write function such that cython can figure out its reentrant-ness. And you need some understanding of thread-local and thread-share variable.
 # 
@@ -366,7 +510,7 @@ cdef class ParallelLogLH:#cdef is here to reduce name lookup for __call__
 
 # <codecell>
 
-data = randn(1e7)#10 millions
+data = randn(2e6)*3+2
 
 # <codecell>
 
@@ -389,6 +533,13 @@ m=Minuit(plh.compute,mu=1.5, sigma=2.5, error_mu=0.1,
 
 %%timeit -n1 -r1
 m.migrad()
+
+# <markdowncell>
+
+# ###OpenCL
+# **Want to do fitting using parallel GPU core? If you have multicore GPU Cluster/Machine figure out how to do it and let me know.**
+# 
+# I don't have the machine with such capability so I never bother....Interested in buying one for me? :P
 
 # <codecell>
 
