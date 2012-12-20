@@ -4,22 +4,9 @@
 # <markdowncell>
 
 # Hard Core Tutorial
-# ------------------
+# ==================
 # 
 # Typically in fitting, performance matters. Python is slow since it does tons of extra stuff(name lookup etc.). We can fix that with cython and numpy. This tutorial will demonstate how one would write a model which can take data and fit to the data. We will be demonstrating two ways: fastway and generic way.
-
-# <codecell>
-
-#otherwise import those missing library
-%pylab inline
-
-# <codecell>
-
-%load_ext cythonmagic
-
-# <codecell>
-
-from iminuit import *
 
 # <markdowncell>
 
@@ -27,6 +14,12 @@ from iminuit import *
 # Before we go on lets talk about how to use cython efficiently. Cython speed things up by using static type where it can. Generally the more type information you tell them the better it can generate C code.
 # 
 # Cython has a very handy option call annotate which lets you know which line of code is static type which one make a call to python object.
+
+# <codecell>
+
+%pylab inline
+%load_ext cythonmagic
+from iminuit import Minuit
 
 # <codecell>
 
@@ -70,6 +63,12 @@ def fast_f(int n):
 
 # ###Quick And Dirty way
 # Let's look at how to write a cython cost function
+
+# <codecell>
+
+%pylab inline
+%load_ext cythonmagic
+from iminuit import Minuit
 
 # <codecell>
 
@@ -139,6 +138,12 @@ m = Minuit(lh.compute, mu=1.5, sigma=2.5, error_mu=0.1,
 
 # <codecell>
 
+%pylab inline
+%load_ext cythonmagic
+from iminuit import Minuit
+
+# <codecell>
+
 import pyximport;
 pyximport.install(
     setup_args=dict(
@@ -176,6 +181,12 @@ m = Minuit(lh.compute,mu=1.5, sigma=2.5, error_mu=0.1,
 # 
 # Sometime we want to write a cost function that will take in any pdf and data and compute appropriate
 # cost function. This is slower than the previous example but will make your code much more reusable.
+
+# <codecell>
+
+%pylab inline
+%load_ext cythonmagic
+from iminuit import Minuit
 
 # <codecell>
 
@@ -277,7 +288,9 @@ legend();
 # <markdowncell>
 
 # ###Parallel Computing With Cython and OpenMP
-# Computer nowadays are multi-core machine so it makes sense to utilize all of them. This method is fast but quite restricted and cubersome since you need to write function such that cython can figure out its reentrant-ness. And you need some understanding of thread-local and thread-share variable.
+# *For this tutorial you will need a compiler with openmp support. GCC has one. However, clang does NOT support it.*
+# 
+# Computer nowadays are multi-core machines so it makes sense to utilize all of them. This method is fast but quite restricted and cubersome since you need to write function such that cython can figure out its reentrant-ness. And you need some understanding of thread-local and thread-share variable.
 # 
 # You can read [prange](http://wiki.cython.org/enhancements/prange) from cython wiki for more information and how to gain a more complete control over paralelization. The official documentation is [here](http://docs.cython.org/src/userguide/parallelism.html)
 
