@@ -108,14 +108,14 @@ def better_arg_spec(f, verbose=False):
 
     try:
         return list(inspect.getargspec(f.__call__)[0][1:])
-    except TypeError as e:
+    except Exception as e:
         if verbose:
             print e
             print "inspect.getargspec(f)[0] fails"
 
     try:
         return list(inspect.getargspec(f)[0])
-    except TypeError as e:
+    except Exception as e:
         if verbose:
             print e
             print "inspect.getargspec(f)[0] fails"
