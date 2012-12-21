@@ -6,7 +6,7 @@
 # Hard Core Tutorial
 # ==================
 # 
-# Typically in fitting, performance matters. Python is slow since it does tons of extra stuff(name lookup etc.). We can fix that with cython and numpy. This tutorial will demonstate how one would write a model which can take data and fit to the data. We will be demonstrating two ways: fastway and generic way.
+# Typically in fitting, performance matters. Python is slow since it does tons of extra stuff(name lookup etc.) for a good reason. We can fix that with cython and numpy. This tutorial will demonstate how one would write a model which can take data and fit to the data. We will be demonstrating two ways: fastway and generic way. As a bonus we will show how to parallelize your cost function.
 
 # <markdowncell>
 
@@ -217,7 +217,7 @@ cimport numpy as np #overwritten those from python with cython
 from iminuit.util import make_func_code, describe
 from libc.math cimport log
 
-cdef class LogLH:#cdef is here to reduce name lookup for __call__
+cdef class LogLH:#cdef is here to reduce name lookup for __call__(think of struct)
     cdef np.ndarray data
     cdef int ndata
     cdef public func_code
@@ -233,7 +233,7 @@ cdef class LogLH:#cdef is here to reduce name lookup for __call__
     #@cython.boundscheck(False)#you can turn off bound checking
     def __call__(self, *args):
         cdef np.ndarray[np.double_t, ndim=1] mydata = self.data#this line is very important
-        #with out this line cython will have no idea about type
+        #with out this line cython will have no idea about data type
         cdef double loglh = 0.
         cdef list larg = [0.]+list(args)
         
@@ -309,7 +309,7 @@ legend();
 # 
 # The idea here on how to parallelize your cost function is to separate you data into multiple chunks and have each worker calculate your cost function, collect them at the end and add them up.
 # 
-# The tool we will be showing here is Python multiprocess.
+# The tool we will be showing here is Python multiprocess. We will be rewriting our generic cost funciton but now with multiprocessing.
 # 
 # You might be worried about that forking process will copy your data. Most modern OS use [Copy On Write](http://en.wikipedia.org/wiki/Copy-on-write mechanism)(look at wiki)
 # what this means is that when it forks a process
@@ -379,7 +379,7 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
     @cython.embedsignature(True)
     cpdef process_chunk(self, 
             int pid, int start, int stop, tuple args, object results): #start stop is [start, stop) 
-        #be careful here there is a bug in ipython which preventing
+        #be careful here there is a bug in ipython preventing
         #child process from printing to stdout/stderr (you will get a segfault)
         #I submitted a patch https://github.com/ipython/ipython/pull/2712
         #Ex: For now, do something like this if you need to debug
@@ -403,13 +403,15 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
     def __call__(self, *args):
         cdef double ret=0
         results = SimpleQueue()#this will store results from the worker
-        #you may think that forking this many time is inefficient
-        #We can do better but this is not bad. Since most of the time
-        #will be spend on calculating your loglh this is cheap compared to those.
-        #Copy on write ensures that data points will never be copy (unless your write to it)
         pool = [mp.Process(target=self.process_chunk,
                            args=(i,self.starts[i],self.stops[i],args,results)) 
                     for i in range(self.njobs)]
+        #you may think that forking this many time is inefficient
+        #We can do better but this is not bad. Since most of the time
+        #will be spend on calculating your loglh this is cheap compared to those.
+        #If forking is more expensive than what each worker does then... 
+        #your problem is something else.
+        #Copy on write ensures that data points will never be copied (unless your write to it)
         self.i+=1
         for p in pool: p.start() #start everyone
         for p in pool: p.join() #wait for everyone to finish
