@@ -72,6 +72,7 @@ from iminuit import Minuit
 
 # <codecell>
 
+np.random.seed(0)
 data = randn(2e6)*3+2 #mu=2, sigma=3
 hist(data,bins=100, histtype='step');
 
@@ -102,9 +103,9 @@ cdef class QuickAndDirtyLogLH:#cdef is here to reduce name lookup for __call__
     
     @cython.embedsignature(True)#you need this to dump function signature in docstring
     def compute(self, double mu, double sigma):
+        #this line is a cast not a copy. Let cython knows mydata will spit out double
         cdef np.ndarray[np.double_t, ndim=1] mydata = self.data
         cdef double loglh = 0.
-        cdef tuple t
         cdef double thisdata
         for i in range(self.ndata):
             thisdata = mydata[i]
@@ -124,10 +125,14 @@ describe(lh.compute)
 
 m = Minuit(lh.compute, mu=1.5, sigma=2.5, error_mu=0.1, 
     error_sigma=0.1, limit_sigma=(0.1,10.0))
+m.migrad();
 
 # <codecell>
 
-%timeit -n1 -r1 m.migrad()
+%%timeit -n2 -r2 #-n1 -r1 
+m = Minuit(lh.compute, mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0),print_level=0)
+m.migrad()
 
 # <markdowncell>
 
@@ -163,6 +168,7 @@ import external_pdf
 
 # <codecell>
 
+np.random.seed(0)
 data = randn(2e6)*3+2
 lh = external_pdf.External_LogLH(data)
 
@@ -170,10 +176,14 @@ lh = external_pdf.External_LogLH(data)
 
 m = Minuit(lh.compute,mu=1.5, sigma=2.5, error_mu=0.1, 
     error_sigma=0.1, limit_sigma=(0.1,10.0))
+m.migrad();
 
 # <codecell>
 
-%timeit -r1 -n1 m.migrad()
+%%timeit -r2 -n2 
+m = Minuit(lh.compute,mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0),print_level=0)
+m.migrad()
 
 # <markdowncell>
 
@@ -190,6 +200,7 @@ from iminuit import Minuit
 
 # <codecell>
 
+np.random.seed(0)
 data = randn(2e6)*3+2 #mu=2, sigma=3
 
 # <markdowncell>
@@ -264,16 +275,21 @@ print describe(mylh)
 
 # <codecell>
 
-m=Minuit(mylh, mu=1.5, sigma=2.5, error_mu=0.1, 
-    error_sigma=0.1, limit_sigma=(0.1,10.0))
-
-# <codecell>
-
 describe(mypdf)
 
 # <codecell>
 
-%timeit -n1 -r1 m.migrad() #you can feel it's much slower than before
+m=Minuit(mylh, mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0))
+#you can feel it's much slower than before
+m.migrad();
+
+# <codecell>
+
+%%timeit -r2 -n2
+m=Minuit(mylh, mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0), print_level=0)
+m.migrad() #you can feel it's much slower than before
 
 # <codecell>
 
@@ -293,9 +309,9 @@ legend();
 # 
 # The idea here on how to parallelize your cost function is to separate you data into multiple chunks and have each worker calculate your cost function, collect them at the end and add them up.
 # 
-# The tool we will be showing here is Python multiprocess. The implementation here has a big overhead you need 4-8 cpu to see the difference.
+# The tool we will be showing here is Python multiprocess.
 # 
-# You might be worried about that forking process will copy your data. Most modern OS use [Copy On Write]http://en.wikipedia.org/wiki/Copy-on-write mechanism(look at wiki)
+# You might be worried about that forking process will copy your data. Most modern OS use [Copy On Write](http://en.wikipedia.org/wiki/Copy-on-write mechanism)(look at wiki)
 # what this means is that when it forks a process
 # it doesn't copy memory there unless you are writing it
 
@@ -352,7 +368,7 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
         
         #worker pool stuff
         self.njobs = njobs if njobs is not None else mp.cpu_count()
-        
+        print 'Number of CPU: ',self.njobs
         #determine chunk size
         chunk_size = floor(self.ndata/self.njobs)
         self.starts = [i*chunk_size for i in range(self.njobs)]
@@ -361,13 +377,12 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
         self.i=0
     
     @cython.embedsignature(True)
-    def process_chunk(self, 
+    cpdef process_chunk(self, 
             int pid, int start, int stop, tuple args, object results): #start stop is [start, stop) 
         #be careful here there is a bug in ipython which preventing
         #child process from printing to stdout/stderr (you will get a segfault)
-        #for now to debug this use printf and see if anyone fix ipython #2438
-        #or redirect fd of stdout and stderr
-        #do something like this if you need to debug
+        #I submitted a patch https://github.com/ipython/ipython/pull/2712
+        #Ex: For now, do something like this if you need to debug
         #msg = str(('Start Worker:', pid, start, stop,os.getpid()))+'\n'
         #printf(msg)
         #it will run fine as a python script though
@@ -390,13 +405,14 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
         results = SimpleQueue()#this will store results from the worker
         #you may think that forking this many time is inefficient
         #We can do better but this is not bad. Since most of the time
-        #will be spend on calculating your loglh this is cheap compared to those
+        #will be spend on calculating your loglh this is cheap compared to those.
+        #Copy on write ensures that data points will never be copy (unless your write to it)
         pool = [mp.Process(target=self.process_chunk,
                            args=(i,self.starts[i],self.stops[i],args,results)) 
                     for i in range(self.njobs)]
         self.i+=1
         for p in pool: p.start() #start everyone
-        for p in pool: p.join() #wait for everyon to finish
+        for p in pool: p.join() #wait for everyone to finish
         while not results.empty(): #collect the result
             tmp = results.get()
             ret += tmp
@@ -404,6 +420,7 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
 
 # <codecell>
 
+np.random.seed(0)
 data = randn(2e6)*3+2 #10 millions
 mlh = Multiprocess_LogLH(mypdf,data)
 
@@ -416,16 +433,21 @@ mlh.process_chunk(0,0,10,(0,1),q)
 
 # <codecell>
 
+#then see if it works on one point
 mlh(0,1)
 
 # <codecell>
 
 m = Minuit(mlh,mu=1.5, sigma=2.5, error_mu=0.1, 
-    error_sigma=0.1, limit_sigma=(0.1,10.0),print_level=1)
+    error_sigma=0.1, limit_sigma=(0.1,10.0))
+m.migrad();
 
 # <codecell>
 
-%timeit -r1 -n1 m.migrad()
+%%timeit -r2 -n2
+m = Minuit(mlh,mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0),print_level=0)
+m.migrad()
 
 # <markdowncell>
 
@@ -479,7 +501,7 @@ cdef class ParallelLogLH:#cdef is here to reduce name lookup for __call__
         self.data = data
         self.ndata = len(data)
         self.njobs = njobs if njobs is not None else multiprocessing.cpu_count()
-        self.buf = np.empty(njobs)
+        print 'Number of CPU: ',self.njobs
     
     @cython.boundscheck(False)
     @cython.embedsignature(True)#you need this to dump function signature in docstring
@@ -501,7 +523,7 @@ cdef class ParallelLogLH:#cdef is here to reduce name lookup for __call__
         with nogil:
             for i in prange(self.ndata, 
                             num_threads=njobs, 
-                            chunksize=10000, 
+                            chunksize=100000, 
                             schedule='dynamic'):#split into many threads
                 thisdata = mydata[i] #this is assigned before read so it's thread private
                 tmp  = mypdf(thisdata,mu,sigma) #also here assigne before read
@@ -510,6 +532,7 @@ cdef class ParallelLogLH:#cdef is here to reduce name lookup for __call__
 
 # <codecell>
 
+np.random.seed(0)
 data = randn(2e6)*3+2
 
 # <codecell>
@@ -527,11 +550,14 @@ describe(plh.compute)
 # <codecell>
 
 m=Minuit(plh.compute,mu=1.5, sigma=2.5, error_mu=0.1, 
-    error_sigma=0.1, limit_sigma=(0.1,10.0))
+    error_sigma=0.1, limit_sigma=(0.1,10.0),print_level=0)
+m.migrad();
 
 # <codecell>
 
-%%timeit -n1 -r1
+%%timeit -n2 -r2
+m=Minuit(plh.compute,mu=1.5, sigma=2.5, error_mu=0.1, 
+    error_sigma=0.1, limit_sigma=(0.1,10.0),print_level=0)
 m.migrad()
 
 # <markdowncell>
@@ -540,7 +566,4 @@ m.migrad()
 # **Want to do fitting using parallel GPU core? If you have multicore GPU Cluster/Machine figure out how to do it and let me know.**
 # 
 # I don't have the machine with such capability so I never bother....Interested in buying one for me? :P
-
-# <codecell>
-
 
