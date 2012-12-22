@@ -60,11 +60,11 @@ Technical Stuff
 Here are some fun read. I don't want you to use it as a black box. Here are
 some useful information about how it works.
 
-Original Paper: `MINUIT —  A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf>` by Fred James and Matts Roos.
+Original Paper: `MINUIT —  A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf>`_ by Fred James and Matts Roos.
 
-`A New Approach to Variable Metric Algorithm. <http://comjnl.oxfordjournals.org/content/13/3/317.full.pdf+html>` (R.Fletcher 1970)
+`A New Approach to Variable Metric Algorithm. <http://comjnl.oxfordjournals.org/content/13/3/317.full.pdf+html>`_ (R.Fletcher 1970)
 
-Wikipedia for `DFP formula <http://en.wikipedia.org/wiki/Davidon–Fletcher–Powell_formula>`. The magic behind migrad.
+Wikipedia for `DFP formula <http://en.wikipedia.org/wiki/Davidon–Fletcher–Powell_formula>`_. The magic behind migrad.
 
 
 You can help
