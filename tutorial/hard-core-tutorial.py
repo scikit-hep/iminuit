@@ -11,7 +11,7 @@
 # <markdowncell>
 
 # ##Basic Cython
-# Before we go on lets talk about how to use cython efficiently. Cython speed things up by using static type where it can. Generally the more type information you tell them the better it can generate C code.
+# Before we go on let's talk about how to use cython efficiently. Cython speed things up by using static type where it can. Generally the more type information you tell them the better it can generate C code.
 # 
 # Cython has a very handy option call annotate which lets you know which line of code is static type which one make a call to python object.
 
@@ -87,7 +87,7 @@ from libc.math cimport exp, M_PI, sqrt, log
 from iminuit.util import describe, make_func_code
 
 @cython.embedsignature(True)#dump the signatre so describe works
-cpdef mypdf(double x, double mu, double sigma):
+cpdef double mypdf(double x, double mu, double sigma):
     #cpdef means generate both c function and python function
     cdef double norm = 1./(sqrt(2*M_PI)*sigma)
     cdef double ret = exp(-1*(x-mu)*(x-mu)/(2.*sigma*sigma))*norm
@@ -330,7 +330,7 @@ from libc.math cimport exp, M_PI, sqrt, log, floor
 from libc.stdio cimport printf
 from iminuit.util import make_func_code, describe
 import multiprocessing as mp
-from multiprocessing.queues import SimpleQueue
+from multiprocessing import Manager
 import os
 #import logging
 #logger = multiprocessing.log_to_stderr()
@@ -357,6 +357,8 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
     cdef list stops
     cdef object pool
     cdef int i
+    cdef object manager
+    cdef object results
     def __init__(self, pdf, np.ndarray[np.double_t] data, njobs=None):
         self.data = data
         #self.databuffer = <double*>data.data
@@ -375,6 +377,8 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
         self.stops = [(i+1)*chunk_size for i in range(self.njobs)]
         self.stops[-1] = self.ndata #add back last couple data from round off
         self.i=0
+        self.manager = Manager()
+        self.results = self.manager.Queue()
     
     @cython.embedsignature(True)
     cpdef process_chunk(self, 
@@ -402,9 +406,8 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
 
     def __call__(self, *args):
         cdef double ret=0
-        results = SimpleQueue()#this will store results from the worker
         pool = [mp.Process(target=self.process_chunk,
-                           args=(i,self.starts[i],self.stops[i],args,results)) 
+                           args=(i,self.starts[i],self.stops[i],args,self.results)) 
                     for i in range(self.njobs)]
         #you may think that forking this many time is inefficient
         #We can do better but this is not bad. Since most of the time
@@ -415,8 +418,8 @@ cdef class Multiprocess_LogLH:#cdef is here to reduce name lookup for __call__
         self.i+=1
         for p in pool: p.start() #start everyone
         for p in pool: p.join() #wait for everyone to finish
-        while not results.empty(): #collect the result
-            tmp = results.get()
+        while not self.results.empty(): #collect the result
+            tmp = self.results.get()
             ret += tmp
         return ret
 

@@ -1,5 +1,5 @@
 recursive-include iminuit *.h *.cpp *.pyx *.pxi *.py
-recursive-include tutorial *
+recursive-include tutorial *.py *.ipynb *.pyx
 recursive-include Minuit *
 include *.py
 include README.rst
