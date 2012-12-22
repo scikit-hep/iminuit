@@ -46,7 +46,7 @@ All the tutorials are in tutorial directory. You can view it online too.
 - `Quick start <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb>`_
 - `Hard Core Cython tutorial <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb>`_.
   If you need to do a huge likelihood fit that need speed or learn how to
-  parallize your stuff, this is for you.
+  parallelize your stuff, this is for you.
 
 
 Documentation
@@ -57,7 +57,7 @@ http://iminuit.github.com/iminuit/
 Technical Stuff
 ---------------
 
-Here are some fun read. I don't want you to use it as a black box.
+Here are some fun read. Using it as a black box is a bad idea.
 
 Original Paper: `MINUIT —  A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf>`_ by Fred James and Matts Roos.
 
