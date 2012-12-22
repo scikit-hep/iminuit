@@ -57,8 +57,7 @@ http://iminuit.github.com/iminuit/
 Technical Stuff
 ---------------
 
-Here are some fun read. I don't want you to use it as a black box. Here are
-some useful information about how it works.
+Here are some fun read. I don't want you to use it as a black box.
 
 Original Paper: `MINUIT —  A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf>`_ by Fred James and Matts Roos.
 
