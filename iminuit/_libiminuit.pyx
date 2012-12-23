@@ -591,6 +591,7 @@ cdef class Minuit:
         """check if covariance(of the last migrad) is accurate."""
         return self.last_upst is not NULL and self.cfmin.hasAccurateCovar()
 
+
     def list_of_fixed_param(self):
         """return list of (initially) fixed parameters"""
         return [v for v in self.parameters if self.initialfix[v]]
@@ -599,6 +600,7 @@ cdef class Minuit:
     def list_of_vary_param(self):
         """return list of (initially) float vary parameters"""
         return [v for v in self.parameters if not self.initialfix[v]]
+
 
     #Various utility functions
     cdef construct_FCN(self):
@@ -840,6 +842,7 @@ cdef class Minuit:
             return HtmlFrontend()
         except NameError:
             return ConsoleFrontend()
+
 
     def _check_extra_args(self,parameters,kwd):
         """check keyword arguments to find unwanted/typo keyword arguments"""
