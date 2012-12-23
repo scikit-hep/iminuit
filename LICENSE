@@ -1,5 +1,5 @@
-Minuit is from lcg_Minuit which I can't find license for it I'm guessing
-it's GPL.
+Minuit is from SEAL Minuit It's LGPL v2
+http://seal.web.cern.ch/seal/main/license.html.
 
 For iminuit, I'm releasing it as MIT license:
 
