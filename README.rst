@@ -57,14 +57,18 @@ http://iminuit.github.com/iminuit/
 Technical Stuff
 ---------------
 
-Here are some fun read. Using it as a black box is a bad idea.
+Using it as a black box is a bad idea. Here are some fun read the order is given
+by the order I think you should read.
 
-Original Paper: `MINUIT —  A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf>`_ by Fred James and Matts Roos.
+Wikipedia for `Quasi Newton Method <http://en.wikipedia.org/wiki/Quasi-Newton_method>`_ and
+`DFP formula <http://en.wikipedia.org/wiki/Davidon–Fletcher–Powell_formula>`_.
+The magic behind migrad.
+
+`Variable Metric Method for Minimization <http://www.ii.uib.no/~lennart/drgrad/Davidon1991.pdf>`_ William Davidon 1991
 
 `A New Approach to Variable Metric Algorithm. <http://comjnl.oxfordjournals.org/content/13/3/317.full.pdf+html>`_ (R.Fletcher 1970)
 
-Wikipedia for `DFP formula <http://en.wikipedia.org/wiki/Davidon–Fletcher–Powell_formula>`_. The magic behind migrad.
-
+Original Paper: `MINUIT —  A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf>`_ by Fred James and Matts Roos.
 
 You can help
 ------------

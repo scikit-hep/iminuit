@@ -584,7 +584,7 @@ cdef class Minuit:
 
     def migrad_ok(self):
         """check if minimum is valid"""
-        return self.cfmin is not NULL and self.fmin.isValid()
+        return self.cfmin is not NULL and self.cfmin.isValid()
 
 
     def matrix_accurate(self):
