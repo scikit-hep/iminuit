@@ -587,7 +587,7 @@ cdef class Minuit:
         return self.cfmin is not NULL and self.fmin.isValid()
 
 
-    def matrix_acurate(self):
+    def matrix_accurate(self):
         """check if covariance(of the last migrad) is accurate."""
         return self.last_upst is not NULL and self.cfmin.hasAccurateCovar()
 
