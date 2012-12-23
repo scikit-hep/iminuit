@@ -48,7 +48,8 @@ def functesthelper(f):
     assert_almost_equal(val['x'], 2.)
     assert_almost_equal(val['y'], 5.)
     assert_almost_equal(m.fval, 10.)
-
+    assert(m.matrix_accurate())
+    assert(m.migrad_ok())
 
 def test_f1():
     functesthelper(Func1())
