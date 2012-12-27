@@ -15,10 +15,12 @@ def assert_array_almost_equal(actual, expected):
         for col in range(len(actual[0])):
             assert_almost_equal(actual[row][col], expected[row][col])
 
+
 class Func_Code:
     def __init__(self,varname):
         self.co_varnames=varname
         self.co_argcount=len(varname)
+
 
 class Func1:
     def __init__(self):
@@ -26,11 +28,13 @@ class Func1:
     def __call__(self,x,y):
         return (x-2.)**2 + (y-5.)**2 + 10
 
+
 class Func2:
     def __init__(self):
         self.func_code = Func_Code(['x','y'])
     def __call__(self,*arg):
         return (arg[0]-2.)**2 + (arg[1]-5.)**2 + 10
+
 
 def func3(x,y):
     return 0.2*(x-2.)**2 + (y-5.)**2 + 10
@@ -38,7 +42,6 @@ def func3(x,y):
 
 def func4(x,y,z):
     return 0.2*(x-2.)**2 + 0.1*(y-5.)**2 + 0.25*(z-7.)**2 + 10
-
 
 
 def functesthelper(f):
@@ -51,6 +54,7 @@ def functesthelper(f):
     assert(m.matrix_accurate())
     assert(m.migrad_ok())
 
+
 def test_f1():
     functesthelper(Func1())
 
@@ -61,6 +65,7 @@ def test_f2():
 
 def test_f3():
     functesthelper(func3)
+
 
 @raises(RuntimeError)
 def test_typo():
@@ -138,10 +143,12 @@ class TestErrorMatrix(TestCase):
         self.m = Minuit(func3,print_level=0, pedantic=False)
         self.m.migrad()
 
+
     def test_error_matrix(self):
         actual = self.m.matrix()
         expected = [[5.,0.],[0.,1.]]
         assert_array_almost_equal(actual, expected)
+
 
     def test_error_matrix_correlation(self):
         actual = self.m.matrix(correlation=True)
