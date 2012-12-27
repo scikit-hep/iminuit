@@ -16,6 +16,10 @@ These are the things you will use a lot.
     Minuit.values
     Minuit.errors
     Minuit.merrors
+    Minuit.profile
+    Minuit.draw_profile
+    Minuit.contour
+    Minuit.draw_contour
     util.describe
 
 
@@ -103,6 +107,7 @@ Minuit
 
         Tolerance. One fo migrad convergence criteria is edm < maxedm.
         Maxedm is calculated by 0.0001*tol*UP.
+
 
 Utility Functions
 -----------------
