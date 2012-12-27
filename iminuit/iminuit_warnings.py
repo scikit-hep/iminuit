@@ -8,4 +8,5 @@ class InitialParamWarning(IMinuitWarning):
 
 class HesseFailedWarning(IMinuitWarning):
     pass
+
 warnings.simplefilter('always', InitialParamWarning, append=True);

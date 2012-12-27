@@ -11,6 +11,7 @@ from libc.math cimport sqrt
 from pprint import pprint
 from ConsoleFrontend import ConsoleFrontend
 from iminuit_warnings import *
+import _plotting
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
 import array
@@ -105,20 +106,20 @@ cdef class Minuit:
 
         **Arguments:**
 
-            * *fcn*: function to optimized. Minuit automagically find how to
+            - **fcn**: function to optimized. Minuit automagically find how to
               call the function and each parameters. More information about how
               Minuit detects function signature can be found in
               :ref:`function-sig-label`
 
         **Builtin Keyword Arguments:**
 
-            * *throw_nan*: fcn can be set to raise RuntimeError when it
+            - **throw_nan**: fcn can be set to raise RuntimeError when it
               encounters *nan*. (Default False)
 
-            * *pedantic*: warns about parameters that do not have initial
+            - **pedantic**: warns about parameters that do not have initial
               value or initial error/stepsize set.
 
-            * *frontend*: Minuit frontend. There are two builting frontends.
+            - **frontend**: Minuit frontend. There are two builtin frontends.
 
                 1. ConsoleFrontend which is design to print out to terminal.
 
@@ -128,11 +129,11 @@ cdef class Minuit:
               By Default, Minuit switch to HtmlFrontend automatically if it
               is called in IPython session. It uses ConsoleFrontend otherwise.
 
-            * *forced_parameters*: tell Minuit not to do function signature
+            - **forced_parameters**: tell Minuit not to do function signature
               detection and use this argument instead. (Default None
               (automagically detect signature)
 
-            * *print_level*: set the print_level for this Minuit. 0 is quiet.
+            - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos. The reason it
               has this cAmEl case is to keep it compatible with PyMinuit.
 
@@ -176,14 +177,14 @@ cdef class Minuit:
                     kwdarg = dict(x=1., error_x=0.5)
                     m = Minuit(f, **kwdarg)
 
-                You can obtain also obtain fit argument from Minuit object
+                You can obtain also obtain fit arguments from Minuit object
                 to reuse it later too. Note that fitarg will be automatically
                 updated to minimum value and corresponding error when you ran
                 migrad/hesse::
 
                     m = Minuit(f, x=1, error_x=0.5)
                     my_fitarg = m.fitarg
-                    anotther_fit = Minuit(f, **my_fitarg)
+                    another_fit = Minuit(f, **my_fitarg)
 
         """
 
@@ -260,14 +261,14 @@ cdef class Minuit:
 
         **Arguments:**
 
-            * *ncall*: integer (approximate) maximum number of call before
+            * **ncall**: integer (approximate) maximum number of call before
               migrad stop trying. Default 10000
 
-            * *resume*: boolean indicating whether migrad should resume from
+            * **resume**: boolean indicating whether migrad should resume from
               previous minimizer attempt(True) or should start from the
               beginning(False). Default True.
 
-            * *split*: split migrad in to *split* runs. Max fcn call
+            * **split**: split migrad in to *split* runs. Max fcn call
               for each run is ncall/nsplit. Migrad stops when it found the
               function minimum to be valid or ncall is reached. This is useful
               for getting progress. However, you need to make sure that
@@ -370,7 +371,7 @@ cdef class Minuit:
 
         **Arguments:**
 
-            sigma: number of :math:`\sigma` error. Default 1.0.
+            - **sigma**: number of :math:`\sigma` error. Default 1.0.
 
         **Returns**
 
@@ -660,17 +661,17 @@ cdef class Minuit:
 
         **Arguments**
 
-            * *vname* variable name to scan
+            * **vname** variable name to scan
 
-            * *bins* number of scanning bin
+            * **bins** number of scanning bin. Default 100.
 
-            * *bound*
+            * **bound**
                 If bound is tuple, (left, right) scanning bound.
                 If bound is a number, it specifies how many :math:`\sigma`
                 symmetrically from minimum (minimum+- bound* :math:`\sigma`).
                 Default 2
 
-            * *subtract_min* subtract_minimum off from return value. This
+            * **subtract_min** subtract_minimum off from return value. This
                 makes it easy to label confidence interval. Default False.
 
         **Returns**
@@ -700,21 +701,37 @@ cdef class Minuit:
         return bins, ret
 
 
+    def draw_profile(self, vname, bins=100, bound=2, args=None,
+        subtract_min=False):
+        """
+        A convenient wrapper for drawing profile using matplotlib
+
+        .. seealso::
+
+            :meth:`profile`
+        """
+        return _plotting.draw_profile(self, vname, bins, bound, args,
+            subtract_min)
+
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
         """2D countour scan.
+
+        The contour returns is obtained by fixing all others parameters and
+        varying **x** and **y**.
+
         **Arguments**
 
-            *x* variable name for X axis of scan
+            - **x** variable name for X axis of scan
 
-            *y* variable name for Y axis of scan
+            - **y** variable name for Y axis of scan
 
-            *bound*
+            - **bound**
                 If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
                 If bound is a number, it specifies how many :math:`\sigma`
                 symmetrically from minimum (minimum+- bound*:math:`\sigma`).
                 Default 2
 
-            *subtract_min* subtract_minimum off from return value. This
+            - **subtract_min** subtract_minimum off from return value. This
                 makes it easy to label confidence interval. Default False.
 
         **Returns**
@@ -723,6 +740,15 @@ cdef class Minuit:
 
             values[y, x] <-- this choice is so that you can pass it
             to through matplotlib contour()
+
+        .. note::
+
+            If `subtract_min=True`, the return value has the minimum subtracted
+            off. The value on the contour can be interpreted *loosely* as
+            :math:`i^2 \\times \\textrm{up}` where i is number of standard
+            deviation away from the fitted value *WITHOUT* taking into account
+            correlation with other parameters that's fixed.
+
         """
         #don't want to use numpy as requirement for this
         if isinstance(bound, (int,long,float)):
@@ -770,6 +796,25 @@ cdef class Minuit:
 
         return x_val, y_val, ret
 
+
+    def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=True):
+        """
+        Convenient wrapper for drawing contour. The argument is the same as
+        :meth:`contour`. If `show_sigma=True`(Default), the label on the
+        contour lines will show how many :math:`\sigma` away from the optimal
+        value instead of raw value.
+
+        .. note::
+
+            Like :meth:`contour`. The error shown on the plot is not strictly
+            1 :math:`\sigma` contour since the other parameters are fixed.
+
+        .. seealso::
+
+            :meth:`contour`
+
+        """
+        return _plotting.draw_contour(self, x, y, bins, bound, args, show_sigma)
 
     cdef refreshInternalState(self):
         """refresh internal state attributes.
