@@ -49,9 +49,6 @@ You can find our repository at `github <https://github.com/iminuit/iminuit>`_.
 Tutorial
 --------
 
-Tutorial
---------
-
 All the tutorials are in tutorial directory. You can view it online too.
 
 - `Quick start <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb>`_

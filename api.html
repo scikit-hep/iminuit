@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Full API Documentation &mdash; iminuit 1.0.0 documentation</title>
+    <title>Full API Documentation &mdash; iminuit 1.0.2 documentation</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '1.0.0',
+        VERSION:     '1.0.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="iminuit 1.0.0 documentation" href="index.html" />
+    <link rel="top" title="iminuit 1.0.2 documentation" href="index.html" />
     <link rel="prev" title="iminuit" href="index.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="index.html" title="iminuit"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">iminuit 1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">iminuit 1.0.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -79,6 +79,18 @@
 <tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.merrors" title="iminuit.Minuit.merrors"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.merrors</span></tt></a></td>
 <td>merrors: object</td>
 </tr>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.profile" title="iminuit.Minuit.profile"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.profile</span></tt></a>(self,&nbsp;vname[,&nbsp;bins,&nbsp;bound,&nbsp;...])</td>
+<td>calculate cost function profile around specify range.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.draw_profile" title="iminuit.Minuit.draw_profile"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.draw_profile</span></tt></a>(self,&nbsp;vname[,&nbsp;bins,&nbsp;...])</td>
+<td>A convenient wrapper for drawing profile using matplotlib  ..</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.contour" title="iminuit.Minuit.contour"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.contour</span></tt></a>(self,&nbsp;x,&nbsp;y[,&nbsp;bins,&nbsp;bound,&nbsp;...])</td>
+<td>2D countour scan.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.draw_contour" title="iminuit.Minuit.draw_contour"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.draw_contour</span></tt></a>(self,&nbsp;x,&nbsp;y[,&nbsp;bins,&nbsp;...])</td>
+<td>Convenient wrapper for drawing contour.</td>
+</tr>
 <tr class="row-odd"><td><a class="reference internal" href="#iminuit.util.describe" title="iminuit.util.describe"><tt class="xref py py-obj docutils literal"><span class="pre">util.describe</span></tt></a>(f[,&nbsp;verbose])</td>
 <td>try to extract function arguements name</td>
 </tr>
@@ -95,7 +107,7 @@
 <p><strong>Arguments:</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li><em>fcn</em>: function to optimized. Minuit automagically find how to
+<li><strong>fcn</strong>: function to optimized. Minuit automagically find how to
 call the function and each parameters. More information about how
 Minuit detects function signature can be found in
 <a class="reference internal" href="#function-sig-label"><em>Function Signature Extraction Ordering</em></a></li>
@@ -104,13 +116,13 @@ Minuit detects function signature can be found in
 <p><strong>Builtin Keyword Arguments:</strong></p>
 <blockquote>
 <div><ul>
-<li><p class="first"><em>throw_nan</em>: fcn can be set to raise RuntimeError when it
+<li><p class="first"><strong>throw_nan</strong>: fcn can be set to raise RuntimeError when it
 encounters <em>nan</em>. (Default False)</p>
 </li>
-<li><p class="first"><em>pedantic</em>: warns about parameters that do not have initial
+<li><p class="first"><strong>pedantic</strong>: warns about parameters that do not have initial
 value or initial error/stepsize set.</p>
 </li>
-<li><p class="first"><em>frontend</em>: Minuit frontend. There are two builting frontends.</p>
+<li><p class="first"><strong>frontend</strong>: Minuit frontend. There are two builtin frontends.</p>
 <blockquote>
 <div><ol class="arabic simple">
 <li>ConsoleFrontend which is design to print out to terminal.</li>
@@ -121,11 +133,11 @@ IPython notebook session.</li>
 <p>By Default, Minuit switch to HtmlFrontend automatically if it
 is called in IPython session. It uses ConsoleFrontend otherwise.</p>
 </li>
-<li><p class="first"><em>forced_parameters</em>: tell Minuit not to do function signature
+<li><p class="first"><strong>forced_parameters</strong>: tell Minuit not to do function signature
 detection and use this argument instead. (Default None
 (automagically detect signature)</p>
 </li>
-<li><p class="first"><em>print_level</em>: set the print_level for this Minuit. 0 is quiet.
+<li><p class="first"><strong>print_level</strong>: set the print_level for this Minuit. 0 is quiet.
 1 print out at the end of migrad/hesse/minos. The reason it
 has this cAmEl case is to keep it compatible with PyMinuit.</p>
 </li>
@@ -175,13 +187,13 @@ programatically change fitting argument.</p>
 <span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwdarg</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>You can obtain also obtain fit argument from Minuit object
+<p>You can obtain also obtain fit arguments from Minuit object
 to reuse it later too. Note that fitarg will be automatically
 updated to minimum value and corresponding error when you ran
 migrad/hesse:</p>
 <div class="last highlight-python"><div class="highlight"><pre><span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">error_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 <span class="n">my_fitarg</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">fitarg</span>
-<span class="n">anotther_fit</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">my_fitarg</span><span class="p">)</span>
+<span class="n">another_fit</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">my_fitarg</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -198,12 +210,12 @@ You can read how it does the magic at
 <p><strong>Arguments:</strong></p>
 <blockquote>
 <div><ul class="simple">
-<li><em>ncall</em>: integer (approximate) maximum number of call before
+<li><strong>ncall</strong>: integer (approximate) maximum number of call before
 migrad stop trying. Default 10000</li>
-<li><em>resume</em>: boolean indicating whether migrad should resume from
+<li><strong>resume</strong>: boolean indicating whether migrad should resume from
 previous minimizer attempt(True) or should start from the
 beginning(False). Default True.</li>
-<li><em>split</em>: split migrad in to <em>split</em> runs. Max fcn call
+<li><strong>split</strong>: split migrad in to <em>split</em> runs. Max fcn call
 for each run is ncall/nsplit. Migrad stops when it found the
 function minimum to be valid or ncall is reached. This is useful
 for getting progress. However, you need to make sure that
@@ -241,7 +253,10 @@ it is much more computationally expensive.</p>
 <p>If <em>var</em> is None it runs minos for all parameters</p>
 <p><strong>Arguments:</strong></p>
 <blockquote>
-<div>sigma: number of <span class="math">\(\sigma\)</span> error. Default 1.0.</div></blockquote>
+<div><ul class="simple">
+<li><strong>sigma</strong>: number of <span class="math">\(\sigma\)</span> error. Default 1.0.</li>
+</ul>
+</div></blockquote>
 <p><strong>Returns</strong></p>
 <blockquote>
 <div><p>Dictionary of varname to <a class="reference internal" href="#minos-error-struct"><em>Minos Error Struct</em></a>
@@ -362,20 +377,32 @@ Maxedm is calculated by 0.0001*tol*UP.</p>
 <dl class="method">
 <dt id="iminuit.Minuit.contour">
 <tt class="descname">contour</tt><big>(</big><em>self</em>, <em>x</em>, <em>y</em>, <em>bins=20</em>, <em>bound=2</em>, <em>args=None</em>, <em>subtract_min=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.contour" title="Permalink to this definition">¶</a></dt>
-<dd><p>2D countour scan.
-<strong>Arguments</strong></p>
+<dd><p>2D countour scan.</p>
+<p>The contour returns is obtained by fixing all others parameters and
+varying <strong>x</strong> and <strong>y</strong>.</p>
+<p><strong>Arguments</strong></p>
 <blockquote>
-<div><p><em>x</em> variable name for X axis of scan</p>
-<p><em>y</em> variable name for Y axis of scan</p>
-<dl class="docutils">
-<dt><em>bound</em></dt>
-<dd>If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
+<div><ul>
+<li><p class="first"><strong>x</strong> variable name for X axis of scan</p>
+</li>
+<li><p class="first"><strong>y</strong> variable name for Y axis of scan</p>
+</li>
+<li><dl class="first docutils">
+<dt><strong>bound</strong></dt>
+<dd><p class="first last">If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
 If bound is a number, it specifies how many <span class="math">\(\sigma\)</span>
 symmetrically from minimum (minimum+- bound*:math:<cite>sigma</cite>).
-Default 2</dd>
-<dt><em>subtract_min</em> subtract_minimum off from return value. This</dt>
-<dd>makes it easy to label confidence interval. Default False.</dd>
+Default 2</p>
+</dd>
 </dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>subtract_min</strong> subtract_minimum off from return value. This</dt>
+<dd><p class="first last">makes it easy to label confidence interval. Default False.</p>
+</dd>
+</dl>
+</li>
+</ul>
 </div></blockquote>
 <p><strong>Returns</strong></p>
 <blockquote>
@@ -383,6 +410,42 @@ Default 2</dd>
 <p>values[y, x] &lt;&#8211; this choice is so that you can pass it
 to through matplotlib contour()</p>
 </div></blockquote>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If <cite>subtract_min=True</cite>, the return value has the minimum subtracted
+off. The value on the contour can be interpreted <em>loosely</em> as
+<span class="math">\(i^2 \times \textrm{up}\)</span> where i is number of standard
+deviation away from the fitted value <em>WITHOUT</em> taking into account
+correlation with other parameters that&#8217;s fixed.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.draw_contour">
+<tt class="descname">draw_contour</tt><big>(</big><em>self</em>, <em>x</em>, <em>y</em>, <em>bins=20</em>, <em>bound=2</em>, <em>args=None</em>, <em>show_sigma=True</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.draw_contour" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenient wrapper for drawing contour. The argument is the same as
+<a class="reference internal" href="#iminuit.Minuit.contour" title="iminuit.Minuit.contour"><tt class="xref py py-meth docutils literal"><span class="pre">contour()</span></tt></a>. If <cite>show_sigma=True`(Default), the label on the
+contour lines will show how many :math:</cite>sigma` away from the optimal
+value instead of raw value.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Like <a class="reference internal" href="#iminuit.Minuit.contour" title="iminuit.Minuit.contour"><tt class="xref py py-meth docutils literal"><span class="pre">contour()</span></tt></a>. The error shown on the plot is not strictly
+1 <span class="math">\(\sigma\)</span> contour since the other parameters are fixed.</p>
+</div>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.contour" title="iminuit.Minuit.contour"><tt class="xref py py-meth docutils literal"><span class="pre">contour()</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.draw_profile">
+<tt class="descname">draw_profile</tt><big>(</big><em>self</em>, <em>vname</em>, <em>bins=100</em>, <em>bound=2</em>, <em>args=None</em>, <em>subtract_min=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.draw_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>A convenient wrapper for drawing profile using matplotlib</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.profile" title="iminuit.Minuit.profile"><tt class="xref py py-meth docutils literal"><span class="pre">profile()</span></tt></a></p>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -447,8 +510,8 @@ for all parameters</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="iminuit.Minuit.matrix_acurate">
-<tt class="descname">matrix_acurate</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.matrix_acurate" title="Permalink to this definition">¶</a></dt>
+<dt id="iminuit.Minuit.matrix_accurate">
+<tt class="descname">matrix_accurate</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.matrix_accurate" title="Permalink to this definition">¶</a></dt>
 <dd><p>check if covariance(of the last migrad) is accurate.</p>
 </dd></dl>
 
@@ -544,12 +607,12 @@ Useful for plotting likelihood scan</p>
 <p><strong>Arguments</strong></p>
 <blockquote>
 <div><ul>
-<li><p class="first"><em>vname</em> variable name to scan</p>
+<li><p class="first"><strong>vname</strong> variable name to scan</p>
 </li>
-<li><p class="first"><em>bins</em> number of scanning bin</p>
+<li><p class="first"><strong>bins</strong> number of scanning bin. Default 100.</p>
 </li>
 <li><dl class="first docutils">
-<dt><em>bound</em></dt>
+<dt><strong>bound</strong></dt>
 <dd><p class="first last">If bound is tuple, (left, right) scanning bound.
 If bound is a number, it specifies how many <span class="math">\(\sigma\)</span>
 symmetrically from minimum (minimum+- bound* <span class="math">\(\sigma\)</span>).
@@ -558,7 +621,7 @@ Default 2</p>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt><em>subtract_min</em> subtract_minimum off from return value. This</dt>
+<dt><strong>subtract_min</strong> subtract_minimum off from return value. This</dt>
 <dd><p class="first last">makes it easy to label confidence interval. Default False.</p>
 </dd>
 </dl>
@@ -936,7 +999,7 @@ minuit will use as call signature.</p>
         <li class="right" >
           <a href="index.html" title="iminuit"
              >previous</a> |</li>
-        <li><a href="index.html">iminuit 1.0.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">iminuit 1.0.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
