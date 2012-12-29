@@ -395,9 +395,9 @@ cdef class Minuit:
         if var is not None:
             name = var
             index = self.cfmin.userState().index(var)
-            if self.cfmin.userState().minuitParameters()[i].isFixed():
+            if self.cfmin.userState().minuitParameters()[index].isFixed():
                 return None
-            minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),strategy)
+            minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),self.strategy)
             mnerror = minos.minos(index,maxcall)
             ret = minoserror2struct(mnerror)
             self.merrors_struct[var]=ret
