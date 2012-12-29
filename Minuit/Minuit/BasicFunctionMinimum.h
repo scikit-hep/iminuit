@@ -168,7 +168,7 @@ public:
             "%3d %10s  %12e  %12e  %5s\n";
         for(int i=0;i<values.size();++i){
             const MinuitParameter& p = values[i];
-            printf(fmt, i, p.name(), p.value(), p.isFixed()?"FIXED":"");
+            printf(fmt, i, p.name(), p.value(), p.error(), p.isFixed()?"FIXED":"");
         }
         cout << "--------------------------------------" << endl;
     }
