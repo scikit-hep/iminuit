@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 from distutils.core import setup, Extension
 import distutils.util
 import subprocess
@@ -40,5 +41,5 @@ setup (
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'License :: OSI Approved :: MIT License'
-        ]
-    )
+    ]
+)

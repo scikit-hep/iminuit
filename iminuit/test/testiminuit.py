@@ -2,7 +2,7 @@ from unittest import TestCase
 from nose.tools import (raises, assert_equal, assert_true, assert_false,
     assert_almost_equal)
 from iminuit import Minuit
-
+from math import sqrt
 def assert_array_almost_equal(actual, expected):
     """
     Helper function to test if all elements of a list of lists
@@ -137,10 +137,27 @@ def test_fitarg():
     assert_equal(fitarg['limit_x'],(0,20))
 
 
+def test_minos_all():
+    m = Minuit(func3, pedantic=False, print_level=0)
+    m.migrad()
+    m.minos()
+    assert_almost_equal(m.merrors[('x',-1.0)],-sqrt(5))
+    assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
+    assert_almost_equal(m.merrors[('y',1.0)],1.)
+
+
+def test_minos_single():
+    m = Minuit(func3, pedantic=False, print_level=0)
+    m.migrad()
+    m.minos('x')
+    assert_almost_equal(m.merrors[('x',-1.0)],-sqrt(5))
+    assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
+
+
 class TestErrorMatrix(TestCase):
 
     def setUp(self):
-        self.m = Minuit(func3,print_level=0, pedantic=False)
+        self.m = Minuit(func3,print_level=0, pedantic=False,)
         self.m.migrad()
 
 
