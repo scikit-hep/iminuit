@@ -225,9 +225,9 @@ cdef class Minuit:
         self.throw_nan = throw_nan
 
         self.parameters = args
-        self.args = None
-        self.values = None
-        self.errors = None
+        self.args = tuple(self.initialvalue[k] for k in args)
+        self.values = {k:self.initialvalue[k] for k in args}
+        self.errors = {k:self.initialerror[k] for k in args}
         self.covariance = None
         self.fval = 0.
         self.ncalls = 0
