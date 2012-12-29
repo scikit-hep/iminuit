@@ -156,7 +156,8 @@ def test_minos_single():
 
 def test_initalvalue():
     m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
-    assert_almost_equal(m.args,(1.,2.))
+    assert_almost_equal(m.args[0],1.)
+    assert_almost_equal(m.args[1],2.)
     assert_almost_equal(m.values['x'],1.)
     assert_almost_equal(m.values['y'],2.)
     assert_almost_equal(m.errors['x'],3.)
