@@ -371,6 +371,8 @@ cdef class Minuit:
 
         **Arguments:**
 
+            - **var**: optional variable name. Default None.(run minos for
+              every variable)
             - **sigma**: number of :math:`\sigma` error. Default 1.0.
 
         **Returns**
@@ -391,28 +393,16 @@ cdef class Minuit:
         if not self.cfmin.isValid():
             raise RuntimeError(('Function mimimum is not valid. Make sure'
                 ' migrad converge first'))
+        if var is not None and var not in self.parameters:
+                raise RuntimeError('Specified parameters(%r) cannot be found'
+                    ' in parameter list :'%var+str(self.parameters))
 
         varlist = [var] if var is not None else self.parameters
 
-        # if var is not None:
-        #     name = [var]
-
-        #     index = self.cfmin.userState().index(var)
-
-        #     if self.cfmin.userState().minuitParameters()[index].isFixed():
-        #         return None
-        #     minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),self.strategy)
-        #     mnerror = minos.minos(index,maxcall)
-        #     ret = minoserror2struct(mnerror)
-        #     self.merrors_struct[var]=ret
-        #     if self.print_level>0:
-        #         self.frontend.print_merror(var,self.merrors_struct[var])
-        # else:
         fixed_param = self.list_of_fixed_param()
         for vname in varlist:
             index = self.cfmin.userState().index(vname)
-            #if self.cfmin.userState().minuitParameters()[index].isFixed():
-            #    continue
+
             if vname in fixed_param:
                 if var is not None:#specifying vname but it's fixed
                     warnings.warn(RuntimeWarning('Specified variable name for minos is set to fixed'))
