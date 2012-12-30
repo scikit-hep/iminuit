@@ -378,9 +378,9 @@ cdef class Minuit:
             Dictionary of varname to :ref:`minos-error-struct`
             if minos is requested for all parameters.
 
-            If minos is requested only for one parameter,
-            :ref:`minos-error-struct` is returned.
         """
+        if self.pyfcn is NULL or self.cfmin is NULL:
+            raise RuntimeError('Minos require function to be at the minimum. Run migrad first.')
         cdef unsigned int index = 0
         cdef MnMinos* minos = NULL
         cdef MinosError mnerror
@@ -391,34 +391,44 @@ cdef class Minuit:
         if not self.cfmin.isValid():
             raise RuntimeError(('Function mimimum is not valid. Make sure'
                 ' migrad converge first'))
-        ret = None
-        if var is not None:
-            name = var
-            index = self.cfmin.userState().index(var)
-            if self.cfmin.userState().minuitParameters()[index].isFixed():
-                return None
-            minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),self.strategy)
+
+        varlist = [var] if var is not None else self.parameters
+
+        # if var is not None:
+        #     name = [var]
+
+        #     index = self.cfmin.userState().index(var)
+
+        #     if self.cfmin.userState().minuitParameters()[index].isFixed():
+        #         return None
+        #     minos = new MnMinos(deref(self.pyfcn), deref(self.cfmin),self.strategy)
+        #     mnerror = minos.minos(index,maxcall)
+        #     ret = minoserror2struct(mnerror)
+        #     self.merrors_struct[var]=ret
+        #     if self.print_level>0:
+        #         self.frontend.print_merror(var,self.merrors_struct[var])
+        # else:
+        fixed_param = self.list_of_fixed_param()
+        for vname in varlist:
+            index = self.cfmin.userState().index(vname)
+            #if self.cfmin.userState().minuitParameters()[index].isFixed():
+            #    continue
+            if vname in fixed_param:
+                if var is not None:#specifying vname but it's fixed
+                    warnings.warn(RuntimeWarning('Specified variable name for minos is set to fixed'))
+                    return None
+                continue
+            minos = new MnMinos(deref(
+                self.pyfcn), deref(self.cfmin),self.strategy)
             mnerror = minos.minos(index,maxcall)
-            ret = minoserror2struct(mnerror)
-            self.merrors_struct[var]=ret
+            self.merrors_struct[vname]=minoserror2struct(mnerror)
             if self.print_level>0:
-                self.frontend.print_merror(var,self.merrors_struct[var])
-        else:
-            for vname in self.parameters:
-                index = self.cfmin.userState().index(vname)
-                if self.cfmin.userState().minuitParameters()[index].isFixed():
-                    continue
-                minos = new MnMinos(deref(
-                    self.pyfcn), deref(self.cfmin),self.strategy)
-                mnerror = minos.minos(index,maxcall)
-                self.merrors_struct[vname]=minoserror2struct(mnerror)
-                if self.print_level>0:
-                    self.frontend.print_merror(
-                        vname,self.merrors_struct[vname])
+                self.frontend.print_merror(
+                    vname,self.merrors_struct[vname])
         self.refreshInternalState()
         del minos
         self.pyfcn.set_up(oldup)
-        return self.merrors_struct if ret is None else ret
+        return self.merrors_struct
 
 
     def matrix(self, correlation=False, skip_fixed=True):
