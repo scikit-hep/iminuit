@@ -154,6 +154,24 @@ def test_minos_single():
     assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
 
 
+def test_minos_single_fixed():
+    m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
+    m.migrad()
+    ret = m.minos('x')
+    assert_equal(ret, None)
+    #assert_almost_equal(m.merrors[('x',-1.0)],-sqrt(5))
+    #assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
+
+@raises(RuntimeError)
+def test_minos_single_no_migrad():
+    #making sure it doesn't crash
+    m = Minuit(func3, pedantic=False, print_level=0)
+    #m.migrad()
+    m.minos('x')
+    #assert_almost_equal(m.merrors[('x',-1.0)],-sqrt(5))
+    #assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
+
+
 def test_initalvalue():
     m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
     assert_almost_equal(m.args[0],1.)
