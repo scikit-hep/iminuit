@@ -164,12 +164,14 @@ def test_minos_single_fixed():
 
 @raises(RuntimeError)
 def test_minos_single_no_migrad():
-    #making sure it doesn't crash
     m = Minuit(func3, pedantic=False, print_level=0)
-    #m.migrad()
     m.minos('x')
-    #assert_almost_equal(m.merrors[('x',-1.0)],-sqrt(5))
-    #assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
+
+@raises(RuntimeError)
+def test_minos_single_nonsense_variable():
+    m = Minuit(func3, pedantic=False, print_level=0)
+    m.migrad()
+    m.minos('nonsense')
 
 
 def test_initalvalue():
