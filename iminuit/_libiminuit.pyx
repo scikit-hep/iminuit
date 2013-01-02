@@ -900,4 +900,5 @@ cdef class Minuit:
                     k not in limit_param and\
                     k not in error_param:
                 raise RuntimeError(
-                        'Cannot understand keyword %s. May be a typo?'%k)
+                        ('Cannot understand keyword %s. May be a typo?\n'
+                        'The parameters are %r')%(k,parameters))
