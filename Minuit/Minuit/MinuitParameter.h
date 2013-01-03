@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
+#include <iostream>
 
 /** class for the individual Minuit parameter with name and number;
     contains the input numbers for the minimization or the output result
@@ -16,44 +18,42 @@ public:
 
   //constructor for constant parameter
   MinuitParameter(unsigned int num, const char* name, double val) :
-    theNum(num), theValue(val), theError(0.), theConst(true), theFix(false),
+    theNum(num), theName(name), theValue(val), theError(0.), theConst(true), theFix(false),
     theLoLimit(0.), theUpLimit(0.), theLoLimValid(false), theUpLimValid(false){
-    setName(name);
-  }
+    }
 
   //constructor for standard parameter
   MinuitParameter(unsigned int num, const char* name, double val, double err) :
-    theNum(num), theValue(val), theError(err), theConst(false), theFix(false),
+    theNum(num), theName(name), theValue(val), theError(err), theConst(false), theFix(false),
     theLoLimit(0.), theUpLimit(0.), theLoLimValid(false), theUpLimValid(false){
-    setName(name);
-  }
+    }
 
   //constructor for limited parameter
   MinuitParameter(unsigned int num, const char* name, double val, double err,
 		  double min, double max) :
-    theNum(num),theValue(val), theError(err), theConst(false), theFix(false),
-    theLoLimit(min), theUpLimit(max), theLoLimValid(true), theUpLimValid(true){
+    theNum(num), theName(name),theValue(val), theError(err), theConst(false),
+    theFix(false), theLoLimit(min), theUpLimit(max), theLoLimValid(true),
+    theUpLimValid(true){
     assert(min != max);
     if(min > max) {
       theLoLimit = max;
       theUpLimit = min;
     }
-    setName(name);
   }
 
   ~MinuitParameter() {}
 
   MinuitParameter(const MinuitParameter& par) :
-    theNum(par.theNum), theValue(par.theValue), theError(par.theError),
+    theNum(par.theNum), theName(par.theName), theValue(par.theValue), theError(par.theError),
     theConst(par.theConst), theFix(par.theFix), theLoLimit(par.theLoLimit),
     theUpLimit(par.theUpLimit), theLoLimValid(par.theLoLimValid),
     theUpLimValid(par.theUpLimValid) {
-    memcpy(theName, par.name(), 11*sizeof(char));
+
   }
 
   MinuitParameter& operator=(const MinuitParameter& par) {
     theNum = par.theNum;
-    memcpy(theName, par.theName, 11*sizeof(char));
+    theName = par.theName;
     theValue = par.theValue;
     theError = par.theError;
     theConst = par.theConst;
@@ -67,7 +67,7 @@ public:
 
   //access methods
   unsigned int number() const {return theNum;}
-  const char* name() const {return theName;}
+  const char* name() const {return theName.c_str();}
   double value() const {return theValue;}
   double error() const {return theError;}
 
@@ -123,7 +123,7 @@ public:
 private:
 
   unsigned int theNum;
-  char theName[11];
+  std::string theName;
   double theValue;
   double theError;
   bool theConst;
@@ -133,14 +133,6 @@ private:
   bool theLoLimValid;
   bool theUpLimValid;
 
-private:
-
-  void setName(const char* name) {
-    int l = std::min(int(strlen(name)), 11);
-    memset(theName, 0, 11*sizeof(char));
-    memcpy(theName, name, l*sizeof(char));
-    theName[10] = '\0';
-  }
 };
 
 #endif //MN_MinuitParameter_H_

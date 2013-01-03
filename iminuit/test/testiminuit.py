@@ -44,10 +44,14 @@ def func4(x,y,z):
     return 0.2*(x-2.)**2 + 0.1*(y-5.)**2 + 0.25*(z-7.)**2 + 10
 
 
+def func5(x, long_variable_name_really_long_why_does_it_has_to_be_this_long, z):
+    return (x**2)+(z**2)+long_variable_name_really_long_why_does_it_has_to_be_this_long**2
+
 def functesthelper(f):
     m = Minuit(f, print_level=0, pedantic=False)
     m.migrad()
     val = m.values
+    print val
     assert_almost_equal(val['x'], 2.)
     assert_almost_equal(val['y'], 5.)
     assert_almost_equal(m.fval, 10.)
@@ -173,6 +177,11 @@ def test_minos_single_nonsense_variable():
     m.migrad()
     m.minos('nonsense')
 
+def test_fixing_long_variablename():
+    m = Minuit(func5, pedantic=False, print_level=0,
+    fix_long_variable_name_really_long_why_does_it_has_to_be_this_long=True,
+    long_variable_name_really_long_why_does_it_has_to_be_this_long=0)
+    m.migrad()
 
 def test_initalvalue():
     m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
