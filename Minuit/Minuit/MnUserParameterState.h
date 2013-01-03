@@ -122,7 +122,7 @@ public:
 
   double value(unsigned int) const;
   double error(unsigned int) const;
-  
+
   //interaction via name of parameter
   void fix(const char*);
   void release(const char*);
@@ -135,7 +135,7 @@ public:
 
   double value(const char*) const;
   double error(const char*) const;
-  
+
   //convert name into external number of parameter
   unsigned int index(const char*) const;
   //convert external number into name of parameter

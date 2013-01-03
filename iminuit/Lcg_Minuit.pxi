@@ -1,6 +1,8 @@
 from libcpp.vector cimport vector
 from libcpp cimport bool
 
+cdef extern from *:
+    ctypedef char* const_char_ptr "const char*"
 
 #LCG Minuit
 cdef extern from "Minuit/FCNBase.h":
@@ -56,21 +58,21 @@ cdef extern from "Minuit/MnUserParameterState.h":
         double edm()
         unsigned int nfcn()
 
-        void fix(char*)
-        void release(char*)
-        void setValue(char*, double)
-        void setError(char*, double)
-        void setLimits(char*, double, double)
-        void setUpperLimit(char*, double)
-        void setLowerLimit(char*, double)
-        void removeLimits(char*)
+        void fix(const_char_ptr)
+        void release(const_char_ptr)
+        void setValue(const_char_ptr, double)
+        void setError(const_char_ptr, double)
+        void setLimits(const_char_ptr, double, double)
+        void setUpperLimit(const_char_ptr, double)
+        void setLowerLimit(const_char_ptr, double)
+        void removeLimits(const_char_ptr)
 
         bint isValid()
         bint hasCovariance()
         bint hasGlobalCC()
 
-        double value(char*)
-        double error(char*)
+        double value(const_char_ptr)
+        double error(const_char_ptr)
 
         unsigned int index(char*)
         char* name(unsigned int)
