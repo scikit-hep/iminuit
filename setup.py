@@ -15,7 +15,7 @@ libiminuit = Extension('iminuit._libiminuit',
                     sources = ['iminuit/_libiminuit.cpp'] + minuit_src,
                     include_dirs= [minuit_header],
                     libraries = [],
-                    extra_compile_args = ['-Wno-write-strings', '-Wno-sign-compare'],
+                    extra_compile_args = ['-Wall','-Wno-sign-compare'],
                     extra_link_args = [])
 
 execfile('iminuit/info.py')

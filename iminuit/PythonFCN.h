@@ -94,14 +94,14 @@ public:
         PyObject* result = PyObject_Call(fcn,tuple,NULL);
         //check result exception etc
         PyObject* exc = NULL;
-        if(exc = PyErr_Occurred()){
+        if((exc = PyErr_Occurred())){
             string msg = "Exception Occured \n"+errormsg(x);
             warn_preserve_error(msg.c_str());
             throw runtime_error(msg);
         }
 
         double ret = PyFloat_AsDouble(result);
-        if(exc = PyErr_Occurred()){
+        if((exc = PyErr_Occurred())){
             string msg = "Cannot convert fcn(*arg) to double \n"+errormsg(x);
             warn_preserve_error(msg.c_str());
             throw runtime_error(msg);
