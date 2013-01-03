@@ -12,6 +12,7 @@ from pprint import pprint
 from ConsoleFrontend import ConsoleFrontend
 from iminuit_warnings import *
 import _plotting
+
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
 import array
@@ -864,15 +865,16 @@ cdef class Minuit:
         cdef MnUserParameterState* ret = new MnUserParameterState()
         cdef double lb
         cdef double ub
+        cdef string v
         for v in self.parameters:
-            ret.add(v,self.initialvalue[v],self.initialerror[v])
+            ret.add(v.c_str(),self.initialvalue[v],self.initialerror[v])
         for v in self.parameters:
             if self.initiallimit[v] is not None:
                 lb,ub = self.initiallimit[v]
-                ret.setLimits(v,lb,ub)
+                ret.setLimits(v.c_str(),lb,ub)
         for v in self.parameters:
             if self.initialfix[v]:
-                ret.fix(v)
+                ret.fix(v.c_str())
         return ret
 
 
