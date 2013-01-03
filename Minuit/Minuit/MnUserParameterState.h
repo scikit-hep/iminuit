@@ -36,7 +36,13 @@ public:
 
   ~MnUserParameterState() {}
 
-  MnUserParameterState(const MnUserParameterState& state) : theValid(state.theValid), theCovarianceValid(state.theCovarianceValid), theGCCValid(state.theGCCValid), theFVal(state.theFVal), theEDM(state.theEDM), theNFcn(state.theNFcn), theParameters(state.theParameters), theCovariance(state.theCovariance), theGlobalCC(state.theGlobalCC), theIntParameters(state.theIntParameters), theIntCovariance(state.theIntCovariance) {}
+  MnUserParameterState(const MnUserParameterState& state) :
+    theValid(state.theValid),
+    theCovarianceValid(state.theCovarianceValid), theGCCValid(state.theGCCValid),
+    theFVal(state.theFVal), theEDM(state.theEDM), theNFcn(state.theNFcn),
+    theParameters(state.theParameters), theCovariance(state.theCovariance),
+    theGlobalCC(state.theGlobalCC), theIntParameters(state.theIntParameters),
+    theIntCovariance(state.theIntCovariance) {}
 
   MnUserParameterState& operator=(const MnUserParameterState& state) {
     theValid = state.theValid;
