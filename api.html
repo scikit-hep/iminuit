@@ -7,15 +7,20 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Full API Documentation &mdash; iminuit 1.0.2 documentation</title>
+
+    <title>Full API Documentation &mdash; iminuit 1.0.4-dev documentation</title>
+
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
+
+
     
-    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/rtd.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '1.0.2',
+        VERSION:     '1.0.4-dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +30,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="iminuit 1.0.2 documentation" href="index.html" />
+    <script type="text/javascript" src="_static/searchtools.js"></script>
+    <link rel="top" title="iminuit 1.0.4-dev documentation" href="index.html" />
     <link rel="prev" title="iminuit" href="index.html" /> 
   </head>
   <body>
@@ -41,7 +47,7 @@
         <li class="right" >
           <a href="index.html" title="iminuit"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">iminuit 1.0.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">iminuit 1.0.4-dev documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -254,16 +260,15 @@ it is much more computationally expensive.</p>
 <p><strong>Arguments:</strong></p>
 <blockquote>
 <div><ul class="simple">
+<li><strong>var</strong>: optional variable name. Default None.(run minos for
+every variable)</li>
 <li><strong>sigma</strong>: number of <span class="math">\(\sigma\)</span> error. Default 1.0.</li>
 </ul>
 </div></blockquote>
 <p><strong>Returns</strong></p>
 <blockquote>
-<div><p>Dictionary of varname to <a class="reference internal" href="#minos-error-struct"><em>Minos Error Struct</em></a>
-if minos is requested for all parameters.</p>
-<p>If minos is requested only for one parameter,
-<a class="reference internal" href="#minos-error-struct"><em>Minos Error Struct</em></a> is returned.</p>
-</div></blockquote>
+<div>Dictionary of varname to <a class="reference internal" href="#minos-error-struct"><em>Minos Error Struct</em></a>
+if minos is requested for all parameters.</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
@@ -913,7 +918,7 @@ it is a superset of PyMinuit signature detection.
 The difference is that it allows you to fake function
 signature by having func_code attribute in the object. This allows you
 to make a generic functor of your custom cost function. This is how
-<a class="reference external" href="https://github.com/piti118/dist_fit">dist_fit</a> was written:</p>
+<a class="reference external" href="http://github.com/iminuit/probfit">probfit</a> was written:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">m</span><span class="p">,</span><span class="n">c</span><span class="p">:</span> <span class="n">m</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">c</span>
 <span class="c">#the beauty here is that all you need to build</span>
 <span class="c">#a Chi^2 is just your function and data</span>
@@ -999,12 +1004,19 @@ minuit will use as call signature.</p>
         <li class="right" >
           <a href="index.html" title="iminuit"
              >previous</a> |</li>
-        <li><a href="index.html">iminuit 1.0.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">iminuit 1.0.4-dev documentation</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
-        &copy; Copyright 2012, Piti Ongmongkolkul.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
-    </div>
+<div class="footer">
+    &copy; Copyright 2012, Piti Ongmongkolkul.
+  Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+  <br />Theme based on <a href="http://readthedocs.org/">Read The Docs</a>
+
+</div>
+
+
+
+
+
   </body>
 </html>
