@@ -282,7 +282,7 @@ Function Signature Extraction Ordering
     The difference is that it allows you to fake function
     signature by having func_code attribute in the object. This allows you
     to make a generic functor of your custom cost function. This is how
-    `dist_fit <https://github.com/piti118/dist_fit>`_ was written::
+    `probfit <http://github.com/iminuit/probfit>`_ was written::
 
         f = lambda x,m,c: m*x+c
         #the beauty here is that all you need to build
