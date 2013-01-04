@@ -16,7 +16,7 @@ def draw_profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
     ymin = y[minpos]
     tmpy = y - ymin
     #now scan for minpos to the right until greater than one
-    up = self.up
+    up = self.errordef
     righty = np.power(tmpy[minpos:] - up, 2)
     #print righty
     right_min = np.argmin(righty)
@@ -41,7 +41,7 @@ def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
     #                            bound1=bound1, bound2=bound2)
     #y -= np.min(y)
 
-    v = [self.up*(i**2) for i in range(1,4)]
+    v = [self.errordef*(i**2) for i in range(1,4)]
 
     CS = plt.contour(vx, vy, vz, v, colors=['b', 'k', 'r'])
     if not show_sigma:
