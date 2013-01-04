@@ -59,7 +59,7 @@ cdef class Minuit:
     cdef MnUserParameterState* last_upst
 
     #PyMinuit compatible field
-    cdef public double up #:UP parameter
+    cdef public double errordef #:UP parameter
     cdef public double tol #:tolerance migrad stops when edm<0.0001*tol*UP
     cdef public unsigned int strategy #:0 fast 1 default 2 slow but accurate
     #: 0: quiet 1: print stuff the end 2: 1+fit status during call
@@ -100,7 +100,8 @@ cdef class Minuit:
 
     def __init__(self, fcn,
             throw_nan=False, pedantic=True,
-            frontend=None, forced_parameters=None, print_level=1, **kwds):
+            frontend=None, forced_parameters=None, print_level=1,
+            errordef=None, **kwds):
         """
         Construct minuit object from given *fcn*
 
@@ -136,6 +137,12 @@ cdef class Minuit:
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos. The reason it
               has this cAmEl case is to keep it compatible with PyMinuit.
+
+            - **error_def**: Optionals. Amount of increase in fcn to be defined
+              as 1 :math:`\sigma`. If None is given, it will look at
+              `fcn.default_errordef()`. If `fcn.default_errordef()` is not defined or
+              not callable iminuit will give a warning and set errordef to 1.
+              Default None(which means errordef=1 with a warning).
 
         **Parameter Keyword Arguments:**
 
@@ -217,7 +224,16 @@ cdef class Minuit:
         self.cfmin = NULL
         self.last_upst = NULL
 
-        self.up = 1.0
+        if errordef is None:
+            default_errordef = getattr(fcn,'default_errordef', None)
+            if not callable(default_errordef):
+                if pedantic:
+                    warn(InitialParamWarning('errordef is not given. Default to 1.'))
+                self.errordef = 1.0
+            else:
+                self.errordef = default_errordef()
+        else:
+            self.errordef = errordef
         self.tol = 0.1
         self.strategy = 1
         self.print_level = print_level
@@ -530,11 +546,24 @@ cdef class Minuit:
                 self.frontend.print_mnerror(vname,self.merrors_struct[vname])
 
 
-    def set_up(self, double up):
-        """set UP parameter 1 for :math:`\chi^2` and 0.5 for log likelihood"""
-        self.up = up
+    def set_up(self, double errordef):
+        """
+        alias for :meth:`set_errordef`
+        """
+        self.set_errordef(errordef)
+
+
+    def set_errordef(self, double errordef):
+        """
+        set error parameter 1 for :math:`\chi^2` and 0.5 for log likelihood
+
+        .. seealso::
+            http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node31.html
+
+        """
+        self.errordef = errordef
         if self.pyfcn is not NULL:
-            self.pyfcn.set_up(up)
+            self.pyfcn.set_up(errordef)
 
 
     def set_strategy(self,stra):
@@ -609,7 +638,7 @@ cdef class Minuit:
         del self.pyfcn
         self.pyfcn = new PythonFCN(
                 self.fcn,
-                self.up,
+                self.errordef,
                 self.parameters,
                 self.throw_nan)
 
