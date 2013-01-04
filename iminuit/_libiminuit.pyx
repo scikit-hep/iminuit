@@ -138,7 +138,7 @@ cdef class Minuit:
               1 print out at the end of migrad/hesse/minos. The reason it
               has this cAmEl case is to keep it compatible with PyMinuit.
 
-            - **error_def**: Optionals. Amount of increase in fcn to be defined
+            - **errordef**: Optionals. Amount of increase in fcn to be defined
               as 1 :math:`\sigma`. If None is given, it will look at
               `fcn.default_errordef()`. If `fcn.default_errordef()` is not defined or
               not callable iminuit will give a warning and set errordef to 1.
