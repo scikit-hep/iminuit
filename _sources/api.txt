@@ -30,7 +30,7 @@ Minuit
     :members:
     :undoc-members:
     :exclude-members: migrad, hesse, minos, args, values, errors,
-        merror, fval, edm, fitarg, covariance, gcc, up,
+        merror, fval, edm, fitarg, covariance, gcc, errordef,
         fcn, frontend, pedantic, throw_nan, tol
 
     .. automethod:: migrad
@@ -97,10 +97,10 @@ Minuit
         global correlation coefficiencts in form of
         dict(varname->gcc)
 
-    .. autoattribute:: up
+    .. autoattribute:: errordef
 
-        UP parameter. This determines how migrad/hesse define error. Default
-        value is 1.0. Up should be 1.0 for :math:`\chi^2` cost
+        Amount of change in fcn that defines 1 :math:`sigma` error.
+        Default value is 1.0. `errordef` should be 1.0 for :math:`\chi^2` cost
         funciton and 0.5 for negative log likelihood function.
 
     .. autoattribute:: tol

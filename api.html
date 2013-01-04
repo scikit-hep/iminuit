@@ -68,7 +68,7 @@
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit" title="iminuit.Minuit"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit</span></tt></a></td>
-<td>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwds)</td>
+<td>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, errordef=None, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwds)</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.migrad" title="iminuit.Minuit.migrad"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.migrad</span></tt></a>(self,&nbsp;int&nbsp;ncall=10000[,&nbsp;resume])</td>
 <td>Run migrad.</td>
@@ -108,7 +108,7 @@
 <dl class="class">
 <dt id="iminuit.Minuit">
 <em class="property">class </em><tt class="descclassname">iminuit.</tt><tt class="descname">Minuit</tt><a class="headerlink" href="#iminuit.Minuit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwds)</p>
+<dd><p>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, errordef=None, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwds)</p>
 <p>Construct minuit object from given <em>fcn</em></p>
 <p><strong>Arguments:</strong></p>
 <blockquote>
@@ -146,6 +146,12 @@ detection and use this argument instead. (Default None
 <li><p class="first"><strong>print_level</strong>: set the print_level for this Minuit. 0 is quiet.
 1 print out at the end of migrad/hesse/minos. The reason it
 has this cAmEl case is to keep it compatible with PyMinuit.</p>
+</li>
+<li><p class="first"><strong>errordef</strong>: Optionals. Amount of increase in fcn to be defined
+as 1 <span class="math">\(\sigma\)</span>. If None is given, it will look at
+<cite>fcn.default_errordef()</cite>. If <cite>fcn.default_errordef()</cite> is not defined or
+not callable iminuit will give a warning and set errordef to 1.
+Default None(which means errordef=1 with a warning).</p>
 </li>
 </ul>
 </div></blockquote>
@@ -363,11 +369,11 @@ dict(varname-&gt;gcc)</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="iminuit.Minuit.up">
-<tt class="descname">up</tt><a class="headerlink" href="#iminuit.Minuit.up" title="Permalink to this definition">¶</a></dt>
-<dd><p>up: &#8216;double&#8217;</p>
-<p>UP parameter. This determines how migrad/hesse define error. Default
-value is 1.0. Up should be 1.0 for <span class="math">\(\chi^2\)</span> cost
+<dt id="iminuit.Minuit.errordef">
+<tt class="descname">errordef</tt><a class="headerlink" href="#iminuit.Minuit.errordef" title="Permalink to this definition">¶</a></dt>
+<dd><p>errordef: &#8216;double&#8217;</p>
+<p>Amount of change in fcn that defines 1 <span class="math">\(sigma\)</span> error.
+Default value is 1.0. <cite>errordef</cite> should be 1.0 for <span class="math">\(\chi^2\)</span> cost
 funciton and 0.5 for negative log likelihood function.</p>
 </dd></dl>
 
@@ -639,6 +645,16 @@ Default 2</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="iminuit.Minuit.set_errordef">
+<tt class="descname">set_errordef</tt><big>(</big><em>self</em>, <em>double errordef</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.set_errordef" title="Permalink to this definition">¶</a></dt>
+<dd><p>set error parameter 1 for <span class="math">\(\chi^2\)</span> and 0.5 for log likelihood</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference external" href="http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node31.html">http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node31.html</a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="iminuit.Minuit.set_print_level">
 <tt class="descname">set_print_level</tt><big>(</big><em>self</em>, <em>lvl</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.set_print_level" title="Permalink to this definition">¶</a></dt>
 <dd><p>set printlevel 0 quiet, 1 normal, 2 paranoid, 3 really paranoid</p>
@@ -652,8 +668,8 @@ Default 2</p>
 
 <dl class="method">
 <dt id="iminuit.Minuit.set_up">
-<tt class="descname">set_up</tt><big>(</big><em>self</em>, <em>double up</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.set_up" title="Permalink to this definition">¶</a></dt>
-<dd><p>set UP parameter 1 for <span class="math">\(\chi^2\)</span> and 0.5 for log likelihood</p>
+<tt class="descname">set_up</tt><big>(</big><em>self</em>, <em>double errordef</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.set_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias for <a class="reference internal" href="#iminuit.Minuit.set_errordef" title="iminuit.Minuit.set_errordef"><tt class="xref py py-meth docutils literal"><span class="pre">set_errordef()</span></tt></a></p>
 </dd></dl>
 
 <dl class="attribute">
