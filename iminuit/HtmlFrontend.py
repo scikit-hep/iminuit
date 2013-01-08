@@ -211,9 +211,11 @@ class HtmlFrontend:
         for v in vnames:
             to_print += """
             <td>
-            <span style="-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
+            <div style="width:20px;position:relative; width: -moz-fit-content;">
+            <div style="display:inline-block;-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
             {v}
-            </span>
+            </div>
+            </div>
             </td>
             """.format(**locals())
         to_print += """
