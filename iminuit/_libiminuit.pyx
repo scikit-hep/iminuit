@@ -735,6 +735,11 @@ cdef class Minuit:
         """
         A convenient wrapper for drawing profile using matplotlib
 
+        .. note::
+            This is not a real minos profile. It's just a simple 1D scan.
+            The number shown on the plot is taken from the green band.
+            They are not minos error.
+
         .. seealso::
 
             :meth:`profile`
