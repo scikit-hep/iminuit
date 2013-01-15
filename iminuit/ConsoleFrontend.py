@@ -88,7 +88,7 @@ class ConsoleFrontend:
               hline
 
 
-    def print_param(self, mps, merr=None):
+    def print_param(self, mps, merr=None, float_format=None):
         """Print parameter states
 
         Arguments:
@@ -96,6 +96,8 @@ class ConsoleFrontend:
             *mps*: list of MinuitParameter struct
 
             *merr*: dictionary of vname->minos error struct
+
+            *float_format*: ignored
         """
         def lud(m,k,d):
             #lookup map with default
@@ -146,7 +148,7 @@ class ConsoleFrontend:
         print ret
 
 
-    def print_matrix(self,vnames, matrix, varno=None):
+    def print_matrix(self,vnames, matrix):
         """TODO: properly implement this"""
         print vnames
         print matrix
