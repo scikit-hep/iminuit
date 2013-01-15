@@ -11,6 +11,7 @@ from libc.math cimport sqrt
 from pprint import pprint
 from ConsoleFrontend import ConsoleFrontend
 from iminuit_warnings import *
+from latex import LatexFactory
 import _plotting
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
@@ -470,6 +471,13 @@ cdef class Minuit:
         self.frontend.print_matrix(vnames, matrix)
 
 
+    def latex_matrix(self):
+        """Build :class:`LatexFactory` object that contains correlation matrix"""
+        matrix = self.matrix(correlation=True)
+        vnames = self.list_of_vary_param()
+        return LatexFactory.build_matrix(vnames, matrix)
+
+
     def np_matrix(self, correlation=False):
         """return error/correlation matrix in numpy array format."""
         import numpy as np
@@ -487,6 +495,13 @@ cdef class Minuit:
         else:
             return self.last_upst.minuitParameters()[index].isFixed()
 
+    def _prepare_param(self):
+        cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
+        cdef int i
+        tmp = []
+        for i in range(vmps.size()):
+            tmp.append(minuitparam2struct(vmps[i]))
+        return tmp
 
     #dealing with frontend conversion
     def print_param(self):
@@ -494,16 +509,18 @@ cdef class Minuit:
         if self.last_upst is NULL:
             self.print_initial_param()
             return
-        cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
-        cdef int i
-        tmp = []
-        for i in range(vmps.size()):
-            tmp.append(minuitparam2struct(vmps[i]))
-        self.frontend.print_param(tmp, self.merrors_struct)
+        p = self._prepare_param()
+        self.frontend.print_param(p, self.merrors_struct)
 
 
-    def print_initial_param(self):
-        """Print initial parameters"""
+    def latex_param(self):
+        """build :class:`iminuit.latex.LatexTable` for current
+        parameter"""
+        p = self._prepare_param()
+        return LatexFactory.build_param_table(p, self.merrors_struct)
+
+
+    def _prepare_initial_param(self):
         tmp = []
         for i,vname in enumerate(self.parameters):
             mps = Struct(
@@ -522,7 +539,20 @@ cdef class Minuit:
             has_upper_limit = self.initiallimit[vname] is not None
             )
             tmp.append(mps)
-        self.frontend.print_param(tmp, {})
+        return tmp
+
+
+    def print_initial_param(self):
+        """Print initial parameters"""
+        p = self._prepare_initial_param()
+        self.frontend.print_param(p, {})
+
+
+    def latex_initial_param(self):
+        """build :class:`iminuit.latex.LatexTable` for initial
+        parameter"""
+        p = self._prepare_initial_param()
+        return LatexFactory.build_param_table(p, {})
 
 
     def print_fmin(self):
@@ -734,6 +764,11 @@ cdef class Minuit:
         subtract_min=False):
         """
         A convenient wrapper for drawing profile using matplotlib
+
+        .. note::
+            This is not a real minos profile. It's just a simple 1D scan.
+            The number shown on the plot is taken from the green band.
+            They are not minos error.
 
         .. seealso::
 

@@ -1,21 +1,10 @@
 __all__ = ['HtmlFrontend']
 from IPython.core.display import display, HTML, display_html
 from util import Struct
-class Gradient:
-    #from http://code.activestate.com/recipes/266466-html-colors-tofrom-rgb-tuples/
-    @classmethod
-    def color_for(cls, v, min=0., max=1., startcolor=(163,254,186),
-                  stopcolor=(255,117,117)):
-        c = [0]*3
-        for i,sc in enumerate(startcolor):
-            c[i] = round(startcolor[i] + \
-                   1.0*(v-min)*(stopcolor[i]-startcolor[i])/(max-min))
-        return tuple(c)
-
-    @classmethod
-    def rgb_color_for(cls,v):
-        c = cls.color_for(abs(v))
-        return 'rgb(%d,%d,%d)'%c
+import random
+from latex import LatexFactory
+import string
+from color import Gradient
 
 good_style = 'background-color:#92CCA6'
 bad_style = 'background-color:#FF7878'
@@ -41,6 +30,8 @@ def fmin_style(sfmin):
         has_reached_call_limit=caution(sfmin.has_reached_call_limit,False),
         )
 
+def randid():
+     return ''.join(random.choice(string.ascii_letters) for x in range(10))
 
 def minos_style(smerr):
     """Convert minos error to style"""
@@ -151,14 +142,22 @@ class HtmlFrontend:
         display_html(to_print, raw=True)
 
 
+
     def print_param(self, mps, merr=None):
-        """print list of parameters"""
-        #todo: how to make it right clickable to export to latex
+        """print list of parameters
+        Arguments:
+
+            *mps* : minuit parameters struct
+            *merr* : minos error
+            *float_format* : control the format of latex floating point output
+                default None ('%4.3e')
+        """
         to_print = ""
+        uid = randid()
         header = """
         <table>
             <tr>
-                <td></td>
+                <td><a href="#" onclick="$('#{uid}').toggle()">+</a></td>
                 <td>Name</td>
                 <td>Value</td>
                 <td>Parab Error</td>
@@ -194,6 +193,10 @@ class HtmlFrontend:
         to_print += """
             </table>
         """
+        ltable = LatexFactory.build_param_table(mps, merr)
+
+        rows = str(ltable).count('\n')+1
+        to_print += self.hidden_table(str(ltable), uid)
         display_html(to_print, raw=True)
 
 
@@ -201,13 +204,26 @@ class HtmlFrontend:
         #display_html('<h2>%s</h2>'%cmd, raw=True)
         pass
 
+    def toggle_sign(self, uid):
+        return """<a onclick="$('#%s').toggle()" href="#">+</a>"""%uid
 
-    def print_matrix(self, vnames, matrix, varno=None):
+    def hidden_table(self, s, uid):
+        rows = s.count('\n')+2
+        ret = r"""
+            <pre id="%s" style="display:none;">
+            <textarea rows="%d" cols="50" onclick="this.select()" readonly>%s</textarea>
+            </pre>
+            """%(uid, rows, s)
+        return ret
+
+    def print_matrix(self, vnames, matrix):
+        latexuid = randid()
+        latextable = LatexFactory.build_matrix(vnames, matrix)
         to_print = """
             <table>
                 <tr>
-                    <td></td>
-        """
+                    <td>%s</td>
+        """%self.toggle_sign(latexuid)
         for v in vnames:
             to_print += """
             <td>
@@ -237,7 +253,8 @@ class HtmlFrontend:
             to_print += """
             </tr>
             """
-        to_print += '</table>'
+        to_print += '</table>\n'
+        to_print += self.hidden_table(str(latextable), latexuid)
         display_html(to_print, raw=True)
 
 

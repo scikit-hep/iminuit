@@ -12,6 +12,8 @@ html
 dist
 MANIFEST
 *.o
+Untitled*.ipynb
+Untitled*.py
 
 !tutorial.html
 !tutorial.ipynb
