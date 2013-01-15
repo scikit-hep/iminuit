@@ -16,6 +16,8 @@
 #include "Minuit/MnHesse.h"
 #include "Minuit/MnPrint.h"
 #include <iostream>
+#include <ctime>
+#include <cstdio>
 //#define DEBUG 0
 
 #ifdef DEBUG
@@ -28,6 +30,16 @@ int VariableMetricBuilder::print_level = 1;
 
 void VariableMetricBuilder::setPrintLevel(int p){
     VariableMetricBuilder::print_level = p;
+}
+
+void VariableMetricBuilder::printProgress(const MnFcn& fcn) const{
+    time_t now = time(NULL);
+    double dif = difftime(now, start);
+    int numcall = fcn.numOfCalls();
+    double percall = dif/numcall;
+    double etm = (absolute_maxfcn-numcall) * percall;
+    printf("Elapsed Time: %.0f sec Call: %d/%d (%.4f sec/call).\nEst. time to maxcall: %.2f sec.\n",
+        dif, numcall, absolute_maxfcn, percall, etm);
 }
 
 FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
@@ -71,6 +83,9 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
     int maxfcn_eff = maxfcn;
     int ipass = 0;
 
+    //start timer
+    start = time(NULL);
+    absolute_maxfcn = maxfcn;
     do {
 
 
@@ -89,21 +104,21 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
         if( (strategy.strategy() == 2) ||
             (strategy.strategy() == 1 && min.error().dcovar() > 0.05) ) {
 
-#ifdef DEBUG
-            std::cout<<"MnMigrad will verify convergence and error matrix. "<< std::endl;
-            std::cout<<"dcov is =  "<<  min.error().dcovar() << std::endl;
-#endif
+            #ifdef DEBUG
+                std::cout<<"MnMigrad will verify convergence and error matrix. "<< std::endl;
+                std::cout<<"dcov is =  "<<  min.error().dcovar() << std::endl;
+            #endif
 
             MinimumState st = MnHesse(strategy)(fcn, min.state(), min.seed().trafo());
             result.push_back( st );
 
             // check edm
             edm = st.edm();
-#ifdef DEBUG
-            std::cout << "edm after Hesse calculation " << edm << std::endl;
-#endif
+            #ifdef DEBUG
+                std::cout << "edm after Hesse calculation " << edm << std::endl;
+            #endif
             if (edm > edmval) {
-                std::cout << "VariableMetricBuilder: Tolerance is not sufficient - edm is " << edm << " requested " << edmval 
+                std::cout << "VariableMetricBuilder: Tolerance is not sufficient - edm is " << edm << " requested " << edmval
                 << " continue the minimization" << std::endl;
             }
             min.add( result.back() );
@@ -116,7 +131,10 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
         // count the pass to exit second time when function minimum is invalid
         // increase by 20% maxfcn for doing some more tests
         if (ipass == 0) maxfcn_eff = int(maxfcn*1.3);
-        if(VariableMetricBuilder::print_level >= 1) min.print();
+        if(VariableMetricBuilder::print_level >= 1){
+            printProgress(fcn);
+            min.print();
+        }
         ipass++;
     }  while (edm > edmval );
     //add hessian calculation back
@@ -139,13 +157,13 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
     double edm = initialState.edm();
 
 
-#ifdef DEBUG
-    std::cout << "\n\nDEBUG Variable Metric Builder  \nInitial State: "
-    << " Parameter " << initialState.vec()
-    << " Gradient " << initialState.gradient().vec()
-    << " Inv Hessian " << initialState.error().invHessian()
-    << " edm = " << initialState.edm() << std::endl;
-#endif
+    #ifdef DEBUG
+        std::cout << "\n\nDEBUG Variable Metric Builder  \nInitial State: "
+        << " Parameter " << initialState.vec()
+        << " Gradient " << initialState.gradient().vec()
+        << " Inv Hessian " << initialState.error().invHessian()
+        << " edm = " << initialState.edm() << std::endl;
+    #endif
 
 
 
@@ -163,12 +181,12 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
 
         step = -1.*s0.error().invHessian()*s0.gradient().vec();
 
-#ifdef DEBUG
-        std::cout << "\n\n---> Iteration - " << result.size()
-        << "\nFval = " << s0.fval() << " numOfCall = " << fcn.numOfCalls()
-        << "\nInternal Parameter values " << s0.vec()
-        << " Newton step " << step << std::endl;
-#endif
+        #ifdef DEBUG
+                std::cout << "\n\n---> Iteration - " << result.size()
+                << "\nFval = " << s0.fval() << " numOfCall = " << fcn.numOfCalls()
+                << "\nInternal Parameter values " << s0.vec()
+                << " Newton step " << step << std::endl;
+        #endif
 
 
         double gdel = inner_product(step, s0.gradient().grad());
@@ -178,9 +196,9 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
             MnPosDef psdf;
             s0 = psdf(s0, prec);
             step = -1.*s0.error().invHessian()*s0.gradient().vec();
-// #ifdef DEBUG
-//       std::cout << "After MnPosdef - error  " << s0.error().invHessian() << " gradient " << s0.gradient().vec() << " step " << step << std::endl;
-// #endif
+            // #ifdef DEBUG
+            //       std::cout << "After MnPosdef - error  " << s0.error().invHessian() << " gradient " << s0.gradient().vec() << " step " << step << std::endl;
+            // #endif
             gdel = inner_product(step, s0.gradient().grad());
             std::cout<<"gdel: "<<gdel<<std::endl;
             if(gdel > 0.) {
@@ -191,7 +209,7 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
         MnParabolaPoint pp = lsearch(fcn, s0.parameters(), step, gdel, prec);
         if(fabs(pp.y() - s0.fval()) < fabs(s0.fval())*prec.eps() ) {
             std::cout<<"VariableMetricBuilder: warning: no improvement in line search  " << std::endl;
-// no improvement exit   (is it really needed LM ? in vers. 1.22 tried alternative )
+            // no improvement exit   (is it really needed LM ? in vers. 1.22 tried alternative )
             break;
 
 
@@ -246,6 +264,7 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
 #endif
         FunctionMinimum tmp(seed, result, fcn.up());
         if(VariableMetricBuilder::print_level >= 2){
+            printProgress(fcn);
             tmp.print(true);
         }
     } while(edm > edmval && fcn.numOfCalls() < maxfcn);

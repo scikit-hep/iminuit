@@ -331,7 +331,7 @@ cdef class Minuit:
             del self.last_upst
             self.last_upst = new MnUserParameterState(self.cfmin.userState())
             totalcalls+=ncall_round#self.cfmin.nfcn()
-            if self.print_level>1: self.print_fmin()
+            if self.print_level>1 and nsplit!=1: self.print_fmin()
 
         del self.last_upst
         self.last_upst = new MnUserParameterState(self.cfmin.userState())

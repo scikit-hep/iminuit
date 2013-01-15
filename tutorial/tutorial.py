@@ -219,7 +219,7 @@ from iminuit import Minuit, describe, Struct
 
 # <codecell>
 
-%%cython
+%%cython --force
 cimport cython
 import numpy as np
 cimport numpy as np #overwritten those from python with cython
@@ -400,4 +400,7 @@ m = Minuit(f, frontend=ConsoleFrontend())
 # <codecell>
 
 m.migrad();
+
+# <codecell>
+
 
