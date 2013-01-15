@@ -59,6 +59,8 @@ m=Minuit(f, x=2, error_x=0.2, limit_x=(-10.,10.), y=3., fix_y=True, print_level=
 # <codecell>
 
 m.print_param()#or call print_initial_param
+#bonus: if you click the + button on the top left corner it will show latex table
+#which you can copy and paste to your beamer/latex document
 
 # <markdowncell>
 
@@ -128,6 +130,7 @@ print 'covariance', m.covariance
 print 'matrix()', m.matrix() #covariance
 print 'matrix(correlation=True)', m.matrix(correlation=True) #correlation
 m.print_matrix() #correlation
+#again click the + button on the top left corner for latex code
 
 # <markdowncell>
 
@@ -151,9 +154,19 @@ plot(x,y) #if you have matplotlib
 
 # <codecell>
 
+#we also provide convenience wrapper for drawing it
+m.draw_profile('x');
+
+# <codecell>
+
 x,y,z = m.contour('x','z',subtract_min=True)
 cs = contour(x,y,z)
 clabel(cs)
+
+# <codecell>
+
+#also a convenience method to show sigma contour(it's not strictly 1-sigma contour read note in documentation)
+m.draw_contour('x','z');
 
 # <markdowncell>
 
@@ -387,7 +400,4 @@ m = Minuit(f, frontend=ConsoleFrontend())
 # <codecell>
 
 m.migrad();
-
-# <codecell>
-
 

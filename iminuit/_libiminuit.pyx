@@ -496,9 +496,6 @@ cdef class Minuit:
             return self.last_upst.minuitParameters()[index].isFixed()
 
     def _prepare_param(self):
-        if self.last_upst is NULL:
-            self.print_initial_param()
-            return
         cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
         cdef int i
         tmp = []
@@ -509,6 +506,9 @@ cdef class Minuit:
     #dealing with frontend conversion
     def print_param(self):
         """print current parameter state"""
+        if self.last_upst is NULL:
+            self.print_initial_param()
+            return
         p = self._prepare_param()
         self.frontend.print_param(p, self.merrors_struct)
 
