@@ -28,14 +28,13 @@ def draw_profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
     le = x[minpos] - x[leftpos]
     re = x[rightpos] - x[minpos]
     #print (le, re)
-    p = plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
+    plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
     plt.figtext(0.5, 0.5, '%s = %7.3e ( -%7.3e , +%7.3e)' % (vname, x[minpos], le, re), ha='center')
     return x,y
 
 def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
 #def draw_contour(self, var1, var2, bins=12, bound1=None, bound2=None, lh=True):
     from matplotlib import pyplot as plt
-    import numpy as np
     vx, vy, vz = self.contour(x, y, bins, bound, args, subtract_min=True)
     #x1s, x2s, y = val_contour2d(fit, m, var1, var2, bins=bins,
     #                            bound1=bound1, bound2=bound2)
@@ -58,7 +57,6 @@ def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
 
 def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, edges=False):
     import numpy as np
-    from matplotlib import pyplot as plt
     from matplotlib import mlab
     dfcn = []
     xps = []
@@ -112,9 +110,8 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
     return xgrid, ygrid, g, (xps, yps, dfcn)
 
 def draw_mncontour(self, x, y, bins=100, nsigma=2, numpoints=20, sig_res=4):
-    import numpy as np
+
     from matplotlib import pyplot as plt
-    from matplotlib import mlab
 
     xgrid, ygrid, g, r = mncontour_grid(self, x, y, numpoints, nsigma, sig_res, bins)
     #g[g.mask] = nsigma+1 #remove the mask
