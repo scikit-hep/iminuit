@@ -805,6 +805,10 @@ cdef class Minuit:
             values[y, x] <-- this choice is so that you can pass it
             to through matplotlib contour()
 
+        .. seealso::
+
+            :meth:`mncontour`
+
         .. note::
 
             If `subtract_min=True`, the return value has the minimum subtracted
@@ -861,7 +865,129 @@ cdef class Minuit:
         return x_val, y_val, ret
 
 
-    def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=True):
+    def mncontour(self, x, y, int numpoints=20, sigma=1.0):
+        """
+        Minos contour scan. A proper n **sigma** contour scan. This is line
+        where the minimum of fcn  with x,y is fixed at points on the line and
+        letting the rest of variable varied is change by **sigma** * errordef^2
+        . The calculation is very very expensive since it has to run migrad
+        at various points.
+
+        .. note::
+            See http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node7.html
+
+        **Arguments**
+
+            - **x** string variable name of the first parameter
+
+            - **y** string variable name of the second parameter
+
+            - **numpoints** number of points on the line to find. Default 20.
+
+            - **sigma** number of sigma for the contour line. Default 1.0.
+
+        **Returns**
+
+            x minos error struct, y minos error struct, contour line
+
+            contour line is a list of the form
+            [[x1,y1]...[xn,yn]]
+
+        """
+        if self.pyfcn is NULL or self.cfmin is NULL:
+            raise ValueError('Run Migrad first')
+
+        cdef unsigned int ix = self.var2pos[x]
+        cdef unsigned int iy = self.var2pos[y]
+
+        vary_param = self.list_of_vary_param()
+
+        if x not in vary_param or y not in vary_param:
+            raise ValueError('mncontour has to be run on vary parameters.')
+
+        cdef double oldup = self.pyfcn.up()
+        self.pyfcn.set_up(oldup*sigma*sigma)
+
+        cdef auto_ptr[MnContours] mnc = auto_ptr[MnContours](
+                                            new MnContours(deref(self.pyfcn),
+                                                    deref(self.cfmin),
+                                                    self.strategy))
+
+        cdef ContoursError cerr = mnc.get().contour(ix, iy, numpoints)
+
+        xminos = minoserror2struct(cerr.xMinosError())
+        yminos = minoserror2struct(cerr.yMinosError())
+
+        self.pyfcn.set_up(oldup)
+
+        return xminos, yminos, cerr.points() #using type coersion here
+
+
+    def mncontour_grid(self, x, y, bins=100, nsigma=2, numpoints=20,
+                        int sigma_res=4, edges=False):
+        """
+        compute gridded minos contour.
+
+        **Arguments**
+
+            - **x**,**y** parameter name
+
+            - **bins** number of bins in the grid. The boundary of the grid is
+              selected automatically by the minos error computed. Default 100.
+
+            - **nsigma** number of sigma to draw. Default 2
+
+            - **numpoints** number of points to calculate mncontour for each
+              sigma points(there are sigma_res*nsigma total)
+
+            - **sigma_res** number of sigma level to calculate MnContours
+
+            - **edges** Return bin edges instead of mid value(pass True if you
+              want to draw it using pcolormesh)
+
+        **Returns**
+
+            xgrid, ygrid, sigma, rawdata
+
+            rawdata is tuple of (x,y,sigma_level)
+
+        .. seealso
+
+            :meth:`draw_mncontour`
+
+        """
+        return _plotting.mncontour_grid(self, x, y, numpoints,
+                                        nsigma, sigma_res, bins, edges)
+
+
+    def draw_mncontour(self, x, y, bins=100, nsigma=2,
+                        numpoints=20, sigma_points=10):
+        """
+        draw minos contour
+
+        **Arguments**
+
+            - **x**, **y** parameter name
+
+            - **bins** number of bin in contour grid.
+
+            - **nsigma** number of sigma contour to draw
+
+            - **numpoint** number of points to calculate for each contour
+
+            - **sigma_res** number of points between n*sigma and n+1*sigma to
+              calculate. Default(4)
+
+        **returns**
+
+            x, y, gridvalue, contour
+
+            gridvalue is interorlated nsigma
+        """
+        return _plotting.draw_mncontour(self, x, y, bins, nsigma, numpoints)
+
+
+    def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
         """
         Convenient wrapper for drawing contour. The argument is the same as
         :meth:`contour`. If `show_sigma=True`(Default), the label on the
@@ -876,9 +1002,11 @@ cdef class Minuit:
         .. seealso::
 
             :meth:`contour`
+            :meth:`mncontour`
 
         """
         return _plotting.draw_contour(self, x, y, bins, bound, args, show_sigma)
+
 
     cdef refreshInternalState(self):
         """refresh internal state attributes.

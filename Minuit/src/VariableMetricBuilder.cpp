@@ -208,11 +208,11 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
         }
         MnParabolaPoint pp = lsearch(fcn, s0.parameters(), step, gdel, prec);
         if(fabs(pp.y() - s0.fval()) < fabs(s0.fval())*prec.eps() ) {
-            std::cout<<"VariableMetricBuilder: warning: no improvement in line search  " << std::endl;
+            if(VariableMetricBuilder::print_level>=1){
+                std::cout<<"VariableMetricBuilder: warning: no improvement in line search  " << std::endl;
+            }
             // no improvement exit   (is it really needed LM ? in vers. 1.22 tried alternative )
             break;
-
-
         }
 
 #ifdef DEBUG
