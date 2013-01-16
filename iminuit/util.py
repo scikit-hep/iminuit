@@ -25,6 +25,9 @@ class Struct:
     def __repr__(self):
         return self.__str__()
 
+    def __getitem__(self, s):
+        return self.__dict__[s]
+
 
 def arguments_from_docstring(doc):
     """Parse first line of docstring for argument name

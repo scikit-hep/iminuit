@@ -1,6 +1,12 @@
 from libcpp.vector cimport vector
+from libcpp.utility cimport pair
 from libcpp cimport bool
 
+cdef extern from "<memory>" namespace "std":
+    cdef cppclass auto_ptr[T]:
+        auto_ptr()
+        auto_ptr(T* ptr)
+        T* get()
 
 #LCG Minuit
 cdef extern from "Minuit/FCNBase.h":
@@ -137,3 +143,15 @@ cdef extern from "Minuit/FunctionMinimum.h":
 
 cdef extern from "Minuit/VariableMetricBuilder.h":
     void set_migrad_print_level "VariableMetricBuilder::setPrintLevel" (int p)
+
+cdef extern from "Minuit/MnContours.h":
+    cdef cppclass MnContours:
+        MnContours(FCNBase fcn, FunctionMinimum fm, unsigned int stra)
+        ContoursError contour(unsigned int, unsigned int, unsigned int npoints)
+
+cdef extern from "Minuit/ContoursError.h":
+    cdef cppclass ContoursError:
+        ContoursError()
+        vector[pair[double, double]] points()
+        MinosError xMinosError()
+        MinosError yMinosError()

@@ -191,6 +191,31 @@ def test_initalvalue():
     assert_almost_equal(m.values['y'],2.)
     assert_almost_equal(m.errors['x'],3.)
 
+def test_mncontour():
+    m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
+    m.migrad()
+    xminos, yminos, ctr = m.mncontour('x','y', numpoints=30)
+    xminos_t = m.minos('x')['x']
+    yminos_t = m.minos('y')['y']
+    assert_almost_equal(xminos.upper, xminos_t.upper)
+    assert_almost_equal(xminos.lower, xminos_t.lower)
+    assert_almost_equal(yminos.upper, yminos_t.upper)
+    assert_almost_equal(yminos.lower, yminos_t.lower)
+    assert_equal(len(ctr), 30)
+    assert_equal(len(ctr[0]), 2)
+
+def test_mncontour_sigma():
+    m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
+    m.migrad()
+    xminos, yminos, ctr = m.mncontour('x','y', numpoints=30, sigma=2.0)
+    xminos_t = m.minos('x',sigma=2.0)['x']
+    yminos_t = m.minos('y',sigma=2.0)['y']
+    assert_almost_equal(xminos.upper, xminos_t.upper)
+    assert_almost_equal(xminos.lower, xminos_t.lower)
+    assert_almost_equal(yminos.upper, yminos_t.upper)
+    assert_almost_equal(yminos.lower, yminos_t.lower)
+    assert_equal(len(ctr), 30)
+    assert_equal(len(ctr[0]), 2)
 
 class TestErrorMatrix(TestCase):
 

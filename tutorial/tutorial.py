@@ -21,7 +21,7 @@ from iminuit import Minuit, describe, Struct
 # <codecell>
 
 def f(x,y,z):
-    return (x-1.)**2 + (y-2.)**2 + (z-3.)**2 -1.
+    return (x-1.)**2 + (y-2*x)**2 + (z-3.*x)**2 -1.
 
 # <markdowncell>
 
@@ -149,6 +149,25 @@ print m.get_fmin().is_valid
 
 # <codecell>
 
+#minos contour
+xminos, zminos, ctr = m.mncontour('x','z')
+fill(*zip(*ctr)) #looks kinda ugly, right?
+
+# <codecell>
+
+#drawing it nicely
+m.draw_mncontour('x','z', nsigma=4);
+
+# <codecell>
+
+#or you can get the gridded data
+x, y, g, r = m.mncontour_grid('x','z', nsigma=3) # r is the raw data
+pcolormesh(x,y,g)
+colorbar()
+
+# <codecell>
+
+#1D value Scan
 x,y = m.profile('x',subtract_min=True);
 plot(x,y) #if you have matplotlib
 
@@ -159,13 +178,14 @@ m.draw_profile('x');
 
 # <codecell>
 
-x,y,z = m.contour('x','z',subtract_min=True)
+#2d contour NOT minos contour
+x,y,z = m.contour('x','y',subtract_min=True)
 cs = contour(x,y,z)
 clabel(cs)
 
 # <codecell>
 
-#also a convenience method to show sigma contour(it's not strictly 1-sigma contour read note in documentation)
+#or a convenience wrapper
 m.draw_contour('x','z');
 
 # <markdowncell>

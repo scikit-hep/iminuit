@@ -23,31 +23,34 @@ class MnContours {
 
 public:
 
-  /// construct from FCN + minimum
-  MnContours(const FCNBase& fcn, const FunctionMinimum& min) : theFCN(fcn), theMinimum(min), theStrategy(MnStrategy(1)) {} 
+    /// construct from FCN + minimum
+    MnContours(const FCNBase& fcn, const FunctionMinimum& min) :
+        theFCN(fcn), theMinimum(min), theStrategy(MnStrategy(1)) {}
 
-  /// construct from FCN + minimum + strategy
-  MnContours(const FCNBase& fcn, const FunctionMinimum& min, unsigned int stra) : theFCN(fcn), theMinimum(min), theStrategy(MnStrategy(stra)) {} 
+    /// construct from FCN + minimum + strategy
+    MnContours(const FCNBase& fcn, const FunctionMinimum& min, unsigned int stra) :
+        theFCN(fcn), theMinimum(min), theStrategy(MnStrategy(stra)) {}
 
-  /// construct from FCN + minimum + strategy
-  MnContours(const FCNBase& fcn, const FunctionMinimum& min, const MnStrategy& stra) : theFCN(fcn), theMinimum(min), theStrategy(stra) {} 
+    /// construct from FCN + minimum + strategy
+    MnContours(const FCNBase& fcn, const FunctionMinimum& min, const MnStrategy& stra) :
+        theFCN(fcn), theMinimum(min), theStrategy(stra) {}
 
-  ~MnContours() {}
+    ~MnContours() {}
 
-  /// ask for one contour (points only)
-  std::vector<std::pair<double,double> > operator()(unsigned int, unsigned int, unsigned int npoints = 20) const;
+    /// ask for one contour (points only)
+    std::vector<std::pair<double,double> > operator()(unsigned int, unsigned int, unsigned int npoints = 20) const;
 
-  /// ask for one contour ContoursError (MinosErrors + points)
-  /// can be printed via std::cout
-  ContoursError contour(unsigned int, unsigned int, unsigned int npoints = 20) const;
+    /// ask for one contour ContoursError (MinosErrors + points)
+    /// can be printed via std::cout
+    ContoursError contour(unsigned int, unsigned int, unsigned int npoints = 20) const;
 
-  const MnStrategy& strategy() const {return theStrategy;}
+    const MnStrategy& strategy() const {return theStrategy;}
 
 private:
 
-  const FCNBase& theFCN;
-  const FunctionMinimum& theMinimum;
-  MnStrategy theStrategy;
+    const FCNBase& theFCN;
+    const FunctionMinimum& theMinimum;
+    MnStrategy theStrategy;
 };
 
 #endif //MN_MnContours_H_
