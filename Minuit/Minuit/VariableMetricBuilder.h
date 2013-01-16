@@ -21,7 +21,7 @@ public:
     virtual FunctionMinimum minimum(const MnFcn&, const GradientCalculator&,
         const MinimumSeed&, const MnStrategy&, unsigned int, double) const;
 
-    FunctionMinimum minimum(const MnFcn&, const GradientCalculator&, 
+    FunctionMinimum minimum(const MnFcn&, const GradientCalculator&,
         const MinimumSeed&, std::vector<MinimumState> &, unsigned int, double) const;
 
     const VariableMetricEDMEstimator& estimator() const {return theEstimator;}
