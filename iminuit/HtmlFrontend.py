@@ -1,5 +1,5 @@
 __all__ = ['HtmlFrontend']
-from IPython.core.display import display, HTML, display_html
+from IPython.core.display import display_html
 from util import Struct
 import random
 from latex import LatexFactory
@@ -10,50 +10,55 @@ good_style = 'background-color:#92CCA6'
 bad_style = 'background-color:#FF7878'
 warn_style = 'background-color:#FFF79A'
 
-def good(x,should_be):
+
+def good(x, should_be):
     return good_style if x == should_be else bad_style
 
-def caution(x,should_be):
+
+def caution(x, should_be):
     return good_style if x == should_be else warn_style
+
 
 def fmin_style(sfmin):
     """convert sfmin to style"""
     return Struct(
-        is_valid=good(sfmin.is_valid,True),
-        has_valid_parameters=good(sfmin.has_valid_parameters,True),
-        has_accurate_covar=good(sfmin.has_accurate_covar,True),
-        has_posdef_covar=good(sfmin.has_posdef_covar,True),
-        has_made_posdef_covar=good(sfmin.has_made_posdef_covar,False),
-        hesse_failed=good(sfmin.hesse_failed,False),
-        has_covariance=good(sfmin.has_covariance,True),
-        is_above_max_edm=good(sfmin.is_above_max_edm,False),
-        has_reached_call_limit=caution(sfmin.has_reached_call_limit,False),
+        is_valid=good(sfmin.is_valid, True),
+        has_valid_parameters=good(sfmin.has_valid_parameters, True),
+        has_accurate_covar=good(sfmin.has_accurate_covar, True),
+        has_posdef_covar=good(sfmin.has_posdef_covar, True),
+        has_made_posdef_covar=good(sfmin.has_made_posdef_covar, False),
+        hesse_failed=good(sfmin.hesse_failed, False),
+        has_covariance=good(sfmin.has_covariance, True),
+        is_above_max_edm=good(sfmin.is_above_max_edm, False),
+        has_reached_call_limit=caution(sfmin.has_reached_call_limit, False),
         )
 
+
 def randid():
-     return ''.join(random.choice(string.ascii_letters) for x in range(10))
+    return ''.join(random.choice(string.ascii_letters) for x in range(10))
+
 
 def minos_style(smerr):
     """Convert minos error to style"""
     return Struct(
-        is_valid = good(smerr.is_valid,True),
-        lower_valid = good(smerr.lower_valid,True),
-        upper_valid = good(smerr.upper_valid,True),
-        at_lower_limit = good(smerr.at_lower_limit,False),
-        at_upper_limit = good(smerr.at_upper_limit,False),
-        at_lower_max_fcn = good(smerr.at_lower_max_fcn,False),
-        at_upper_max_fcn = good(smerr.at_upper_max_fcn,False),
-        lower_new_min = good(smerr.lower_new_min,False),
-        upper_new_min = good(smerr.upper_new_min,False),
+        is_valid=good(smerr.is_valid, True),
+        lower_valid=good(smerr.lower_valid, True),
+        upper_valid=good(smerr.upper_valid, True),
+        at_lower_limit=good(smerr.at_lower_limit, False),
+        at_upper_limit=good(smerr.at_upper_limit, False),
+        at_lower_max_fcn=good(smerr.at_lower_max_fcn, False),
+        at_upper_max_fcn=good(smerr.at_upper_max_fcn, False),
+        lower_new_min=good(smerr.lower_new_min, False),
+        upper_new_min=good(smerr.upper_new_min, False),
         )
 
 
 class HtmlFrontend:
 
     def print_fmin(self, sfmin, tolerance=None, ncalls=0):
-        """Display FunctionMinum in html representation. 
+        """Display FunctionMinum in html representation.
 
-        .. note: Would appreciate if someone would make jquery hover 
+        .. note: Would appreciate if someone would make jquery hover
         description for each item."""
         goaledm = 0.0001*tolerance*sfmin.up
         style = fmin_style(sfmin)
@@ -103,8 +108,7 @@ class HtmlFrontend:
             </tr>
         </table>
         """.format(**locals())
-        display_html(header+status,raw=True)
-
+        display_html(header+status, raw=True)
 
     def print_merror(self, vname, smerr):
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
@@ -141,8 +145,6 @@ class HtmlFrontend:
         """.format(**locals())
         display_html(to_print, raw=True)
 
-
-
     def print_param(self, mps, merr=None):
         """print list of parameters
         Arguments:
@@ -169,10 +171,10 @@ class HtmlFrontend:
             </tr>
         """.format(**locals())
         to_print += header
-        for i,mp in enumerate(mps):
-            minos_p, minos_m = (0.,0.) if merr is None or mp.name not in merr else\
+        for i, mp in enumerate(mps):
+            minos_p, minos_m = (0., 0.) if merr is None or mp.name not in merr else\
                                (merr[mp.name].upper, merr[mp.name].lower)
-            limit_p, limit_m = ('','') if not mp.has_limits else\
+            limit_p, limit_m = ('', '') if not mp.has_limits else\
                                (mp.upper_limit, mp.lower_limit)
             fixed = 'FIXED' if mp.is_fixed else ''
             j = i+1
@@ -195,10 +197,9 @@ class HtmlFrontend:
         """
         ltable = LatexFactory.build_param_table(mps, merr)
 
-        rows = str(ltable).count('\n')+1
+        #rows = str(ltable).count('\n')+1
         to_print += self.hidden_table(str(ltable), uid)
         display_html(to_print, raw=True)
-
 
     def print_banner(self, cmd):
         #display_html('<h2>%s</h2>'%cmd, raw=True)
@@ -237,12 +238,12 @@ class HtmlFrontend:
         to_print += """
                 </tr>
                 """
-        for i,v1 in enumerate(vnames):
+        for i, v1 in enumerate(vnames):
             to_print += """
             <tr>
                 <td>{v1}</td>
             """.format(**locals())
-            for j,v2 in enumerate(vnames):
+            for j, v2 in enumerate(vnames):
                 val = matrix[i][j]
                 color = Gradient.rgb_color_for(val)
                 to_print += """
@@ -257,7 +258,6 @@ class HtmlFrontend:
         to_print += self.hidden_table(str(latextable), latexuid)
         display_html(to_print, raw=True)
 
-
     def print_hline(self):
         display_html('<hr>', raw=True)
 
@@ -265,5 +265,6 @@ class HtmlFrontend:
 class HTMLWrapper:
     def __init__(self, txt):
         self.data = txt
+
     def _repr_html_(self):
-        return txt
+        return self.txt

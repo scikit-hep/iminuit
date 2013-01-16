@@ -1,5 +1,6 @@
 from color import Gradient
 
+
 class LatexTable:
     float_format = '%10.5g'
     int_format = '%d'
@@ -21,6 +22,7 @@ class LatexTable:
         'Tau', 'Upsilon', 'Phi',
         'Chi', 'Psi', 'Omega',
     ]
+
     def __init__(self, data, headers=None, smart_latex=True,
                 alignment=None):
         if headers is not None:
@@ -38,7 +40,7 @@ class LatexTable:
         return '|'+'c|'*self.num_col
 
     def _xcolor_from_tuple(self, c):
-        return '[RGB]{%d,%d,%d}'%(c[0],c[1],c[2])
+        return '[RGB]{%d,%d,%d}'%(c[0], c[1], c[2])
 
     def _format(self, s):
         if isinstance(s, float):
@@ -50,7 +52,7 @@ class LatexTable:
         else:
             return s
 
-    def _convert_smart_latex(self,s):
+    def _convert_smart_latex(self, s):
         """convert greek symbol to latex one
         transform
         a to $a$ if a is greek letter else just a
@@ -82,7 +84,7 @@ class LatexTable:
         i=0 is header if header is present. If header is not present then
         i=0 refer to first data row.
         """
-        self.cell_color[(i,j)] = c
+        self.cell_color[(i, j)] = c
 
     def _prepare(self): #return list of list
         ret = []
@@ -102,7 +104,7 @@ class LatexTable:
         ret += hline
         tdata = self._prepare()
         #decorate it
-        for (i,j), c in self.cell_color.items():
+        for (i, j), c in self.cell_color.items():
             tdata[i][j] = '\\cellcolor' + self._xcolor_from_tuple(c) +\
                           ' ' + tdata[i][j]
 
@@ -122,14 +124,13 @@ class LatexFactory:
         #ret_link  = '<a onclick="$(\'#%s\').toggle()" href="#">Show Latex</a>'%uid
         headers = ['']+list(vnames)
         data = []
-        ret = ''
         color = {}
-        for i,v1 in enumerate(vnames):
+        for i, v1 in enumerate(vnames):
             tmp = [v1]
-            for j,v2 in enumerate(vnames):
+            for j, v2 in enumerate(vnames):
                 m = matrix[i][j]
                 tmp.append(m)
-                color[(i+1,j+1)] = Gradient.color_for(abs(m))
+                color[(i+1, j+1)] = Gradient.color_for(abs(m))
                 # +1 for header on the side and top
             data.append(tmp)
 
@@ -143,13 +144,13 @@ class LatexFactory:
     def build_param_table(self, mps, merr=None, float_format='%5.3e'):
         """build latex parameter table"""
         headers = ['', 'Name', 'Value', 'Para Error', 'Error+',
-        'Error-', 'Limit+', 'Limit-', 'FIXED' ]
+                   'Error-', 'Limit+', 'Limit-', 'FIXED', ]
 
         data =[]
-        for i,mp in enumerate(mps):
-            minos_p, minos_m = ('','') if merr is None or mp.name not in merr else\
+        for i, mp in enumerate(mps):
+            minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else\
                                (merr[mp.name].upper, merr[mp.name].lower)
-            limit_p, limit_m = ('','') if not mp.has_limits else\
+            limit_p, limit_m = ('', '') if not mp.has_limits else\
                                (mp.upper_limit, mp.lower_limit)
             fixed = 'FIXED' if mp.is_fixed else ''
             j = i+1
