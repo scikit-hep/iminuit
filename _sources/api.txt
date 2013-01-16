@@ -16,6 +16,9 @@ These are the things you will use a lot.
     Minuit.values
     Minuit.errors
     Minuit.merrors
+    Minuit.mncontour
+    Minuit.mncontour_grid
+    Minuit.draw_mncontour
     Minuit.profile
     Minuit.draw_profile
     Minuit.contour
