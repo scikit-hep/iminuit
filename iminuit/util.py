@@ -15,6 +15,7 @@ import inspect
 import StringIO
 import re
 
+
 class Struct:
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
@@ -42,7 +43,8 @@ def arguments_from_docstring(doc):
     #care only the firstline
     #docstring can be long
     line = sio.readline()
-    if line.startswith("('...',)"): line=sio.readline()#stupid cython
+    if line.startswith("('...',)"):
+        line=sio.readline()#stupid cython
     p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
     #'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
@@ -57,10 +59,10 @@ def arguments_from_docstring(doc):
         #ex: int x= True
         tmp = s.split('=')[0].split()[-1]
         #clean up non _+alphanum character
-        ret.append(''.join(filter(lambda x :str.isalnum(x) or x=='_', tmp)))
+        ret.append(''.join(filter(lambda x: str.isalnum(x) or x=='_', tmp)))
         #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         #ret += self.docstring_kwd_re.findall(s)
-    ret = filter(lambda x: x!='',ret)
+    ret = filter(lambda x: x!='', ret)
 
     if len(ret)==0:
         raise RuntimeError('Your doc is unparsable\n'+doc)
@@ -70,7 +72,7 @@ def arguments_from_docstring(doc):
 
 def is_bound(f):
     """test whether f is bound function"""
-    return getattr(f,'im_self',None) is not None
+    return getattr(f, 'im_self', None) is not None
 
 
 def dock_if_bound(f, v):
@@ -150,7 +152,7 @@ def better_arg_spec(f, verbose=False):
     raise TypeError("Unable to obtain function signature")
     return None
 
-def describe(f,verbose=False):
+def describe(f, verbose=False):
     """try to extract function arguements name
 
     .. seealso::
@@ -178,7 +180,8 @@ def fitarg_rename(fitarg, ren):
 
     """
     tmp = ren
-    if isinstance(ren, basestring): ren = lambda x: tmp + '_' + x
+    if isinstance(ren, basestring):
+        ren = lambda x: tmp + '_' + x
     ret = {}
     prefix = ['limit_', 'fix_', 'error_', ]
     for k, v in fitarg.items():
@@ -239,6 +242,7 @@ def remove_var(b, exclude):
     """exclude variable in exclude list from b"""
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
 
+
 def make_func_code(params=None):
     """make a func_code object to fake function signature
 
@@ -246,5 +250,4 @@ def make_func_code(params=None):
 
             make_func_code(describe(f))
     """
-    return Struct(co_varnames=params,co_argcount=len(params))
-
+    return Struct(co_varnames=params, co_argcount=len(params))
