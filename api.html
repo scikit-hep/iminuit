@@ -8,7 +8,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
 
-    <title>Full API Documentation &mdash; iminuit 1.0.5-dev documentation</title>
+    <title>Full API Documentation &mdash; iminuit 1.0.6-dev documentation</title>
 
 <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
 
@@ -20,7 +20,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '1.0.5-dev',
+        VERSION:     '1.0.6-dev',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -31,7 +31,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/searchtools.js"></script>
-    <link rel="top" title="iminuit 1.0.5-dev documentation" href="index.html" />
+    <link rel="top" title="iminuit 1.0.6-dev documentation" href="index.html" />
     <link rel="prev" title="iminuit" href="index.html" /> 
   </head>
   <body>
@@ -47,7 +47,7 @@
         <li class="right" >
           <a href="index.html" title="iminuit"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">iminuit 1.0.5-dev documentation</a> &raquo;</li> 
+        <li><a href="index.html">iminuit 1.0.6-dev documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -67,23 +67,41 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit" title="iminuit.Minuit"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit</span></tt></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.util.describe" title="iminuit.util.describe"><tt class="xref py py-obj docutils literal"><span class="pre">util.describe</span></tt></a>(f[,&nbsp;verbose])</td>
+<td>try to extract function arguements name</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit" title="iminuit.Minuit"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit</span></tt></a></td>
 <td>Minuit(fcn, throw_nan=False, pedantic=True, frontend=None, forced_parameters=None, print_level=1, errordef=None, <a href="#id1"><span class="problematic" id="id2">**</span></a>kwds)</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.migrad" title="iminuit.Minuit.migrad"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.migrad</span></tt></a>(self,&nbsp;int&nbsp;ncall=10000[,&nbsp;resume])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.migrad" title="iminuit.Minuit.migrad"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.migrad</span></tt></a>(self,&nbsp;int&nbsp;ncall=10000[,&nbsp;resume])</td>
 <td>Run migrad.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.minos</span></tt></a>(self[,&nbsp;var,&nbsp;sigma])</td>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.minos</span></tt></a>(self[,&nbsp;var,&nbsp;sigma])</td>
 <td>Run minos for parameter <em>var</em></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.values" title="iminuit.Minuit.values"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.values</span></tt></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.values" title="iminuit.Minuit.values"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.values</span></tt></a></td>
 <td>values: object</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.args" title="iminuit.Minuit.args"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.args</span></tt></a></td>
+<td>args: object</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.errors" title="iminuit.Minuit.errors"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.errors</span></tt></a></td>
 <td>errors: object</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.merrors" title="iminuit.Minuit.merrors"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.merrors</span></tt></a></td>
-<td>merrors: object</td>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.get_merrors" title="iminuit.Minuit.get_merrors"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.get_merrors</span></tt></a>(self)</td>
+<td>Returns a dictionary of varname-&gt; MinosError Struct</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.fval" title="iminuit.Minuit.fval"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.fval</span></tt></a></td>
+<td>fval: &#8216;double&#8217;</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.fitarg" title="iminuit.Minuit.fitarg"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.fitarg</span></tt></a></td>
+<td>fitarg: object</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.mnprofile" title="iminuit.Minuit.mnprofile"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.mnprofile</span></tt></a>(self,&nbsp;vname[,&nbsp;bins,&nbsp;bound,&nbsp;...])</td>
+<td>calculate minos profile around specify range ie. Migrad results</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.draw_mnprofile" title="iminuit.Minuit.draw_mnprofile"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.draw_mnprofile</span></tt></a>(self,&nbsp;vname[,&nbsp;bins,&nbsp;...])</td>
+<td>Draw minos profile around specify range ie.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.mncontour" title="iminuit.Minuit.mncontour"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.mncontour</span></tt></a>(self,&nbsp;x,&nbsp;y,&nbsp;int&nbsp;numpoints=20)</td>
 <td>Minos contour scan.</td>
@@ -93,21 +111,6 @@
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.draw_mncontour" title="iminuit.Minuit.draw_mncontour"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.draw_mncontour</span></tt></a>(self,&nbsp;x,&nbsp;y[,&nbsp;bins,&nbsp;...])</td>
 <td>draw minos contour</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.profile" title="iminuit.Minuit.profile"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.profile</span></tt></a>(self,&nbsp;vname[,&nbsp;bins,&nbsp;bound,&nbsp;...])</td>
-<td>calculate cost function profile around specify range.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.draw_profile" title="iminuit.Minuit.draw_profile"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.draw_profile</span></tt></a>(self,&nbsp;vname[,&nbsp;bins,&nbsp;...])</td>
-<td>A convenient wrapper for drawing profile using matplotlib  ..</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#iminuit.Minuit.contour" title="iminuit.Minuit.contour"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.contour</span></tt></a>(self,&nbsp;x,&nbsp;y[,&nbsp;bins,&nbsp;bound,&nbsp;...])</td>
-<td>2D countour scan.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#iminuit.Minuit.draw_contour" title="iminuit.Minuit.draw_contour"><tt class="xref py py-obj docutils literal"><span class="pre">Minuit.draw_contour</span></tt></a>(self,&nbsp;x,&nbsp;y[,&nbsp;bins,&nbsp;...])</td>
-<td>Convenient wrapper for drawing contour.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#iminuit.util.describe" title="iminuit.util.describe"><tt class="xref py py-obj docutils literal"><span class="pre">util.describe</span></tt></a>(f[,&nbsp;verbose])</td>
-<td>try to extract function arguements name</td>
 </tr>
 </tbody>
 </table>
@@ -158,7 +161,8 @@ has this cAmEl case is to keep it compatible with PyMinuit.</p>
 </li>
 <li><p class="first"><strong>errordef</strong>: Optionals. Amount of increase in fcn to be defined
 as 1 <span class="math">\(\sigma\)</span>. If None is given, it will look at
-<cite>fcn.default_errordef()</cite>. If <cite>fcn.default_errordef()</cite> is not defined or
+<cite>fcn.default_errordef()</cite>. If <cite>fcn.default_errordef()</cite> is not 
+defined or
 not callable iminuit will give a warning and set errordef to 1.
 Default None(which means errordef=1 with a warning).</p>
 </li>
@@ -486,18 +490,90 @@ calculate. Default(4)</li>
 </dd></dl>
 
 <dl class="method">
+<dt id="iminuit.Minuit.draw_mnprofile">
+<tt class="descname">draw_mnprofile</tt><big>(</big><em>self</em>, <em>vname</em>, <em>bins=30</em>, <em>bound=2</em>, <em>subtract_min=False</em>, <em>band=True</em>, <em>text=True</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.draw_mnprofile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw minos profile around specify range ie. Migrad results
+with <strong>vname</strong> fixed at various places within <strong>bound</strong></p>
+<p><strong>Arguments</strong></p>
+<blockquote>
+<div><ul>
+<li><p class="first"><strong>vname</strong> variable name to scan</p>
+</li>
+<li><p class="first"><strong>bins</strong> number of scanning bin. Default 30.</p>
+</li>
+<li><dl class="first docutils">
+<dt><strong>bound</strong></dt>
+<dd><p class="first last">If bound is tuple, (left, right) scanning bound.
+If bound is a number, it specifies how many <span class="math">\(\sigma\)</span>
+symmetrically from minimum (minimum+- bound* <span class="math">\(\sigma\)</span>).
+Default 2</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>subtract_min</strong> subtract_minimum off from return value. This</dt>
+<dd><p class="first last">makes it easy to label confidence interval. Default False.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>band</strong> show green band to indicate the increase of fcn by
+<em>errordef</em>. Default True.</p>
+</li>
+<li><p class="first"><strong>text</strong> show text for the location where the fcn is increased
+by <em>errordef</em>. This is less accurate than <a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-meth docutils literal"><span class="pre">minos()</span></tt></a>.
+Default True.</p>
+</li>
+</ul>
+</div></blockquote>
+<p><strong>Returns</strong></p>
+<blockquote>
+<div>bins(center point), value, migrad results</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">iminuit</span> <span class="kn">import</span> <span class="n">Minuit</span>
+
+
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">x</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pedantic</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">migrad</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">draw_mnprofile</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href="./pyplots/draw_mnprofile.py">Source code</a>, <a class="reference external" href="./pyplots/draw_mnprofile.png">png</a>, <a class="reference external" href="./pyplots/draw_mnprofile.hires.png">hires.png</a>, <a class="reference external" href="./pyplots/draw_mnprofile.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/draw_mnprofile.png" src="_images/draw_mnprofile.png" />
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="iminuit.Minuit.draw_profile">
-<tt class="descname">draw_profile</tt><big>(</big><em>self</em>, <em>vname</em>, <em>bins=100</em>, <em>bound=2</em>, <em>args=None</em>, <em>subtract_min=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.draw_profile" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">draw_profile</tt><big>(</big><em>self</em>, <em>vname</em>, <em>bins=100</em>, <em>bound=2</em>, <em>args=None</em>, <em>subtract_min=False</em>, <em>band=True</em>, <em>text=True</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.draw_profile" title="Permalink to this definition">¶</a></dt>
 <dd><p>A convenient wrapper for drawing profile using matplotlib</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">This is not a real minos profile. It&#8217;s just a simple 1D scan.
 The number shown on the plot is taken from the green band.
-They are not minos error.</p>
+They are not minos error. To get a real minos profile call
+<a class="reference internal" href="#iminuit.Minuit.mnprofile" title="iminuit.Minuit.mnprofile"><tt class="xref py py-meth docutils literal"><span class="pre">mnprofile()</span></tt></a> or <a class="reference internal" href="#iminuit.Minuit.draw_mnprofile" title="iminuit.Minuit.draw_mnprofile"><tt class="xref py py-meth docutils literal"><span class="pre">draw_mnprofile()</span></tt></a></p>
 </div>
+<p><strong>Arguments</strong></p>
+<blockquote>
+<div><p>In addition to argument listed on <a class="reference internal" href="#iminuit.Minuit.profile" title="iminuit.Minuit.profile"><tt class="xref py py-meth docutils literal"><span class="pre">profile()</span></tt></a>. draw_profile
+take these addition argument:</p>
+<ul class="simple">
+<li><strong>band</strong> show green band to indicate the increase of fcn by
+<em>errordef</em>. Note again that this is NOT minos error in general.
+Default True.</li>
+<li><strong>text</strong> show text for the location where the fcn is increased
+by <em>errordef</em>. This is less accurate than <a class="reference internal" href="#iminuit.Minuit.minos" title="iminuit.Minuit.minos"><tt class="xref py py-meth docutils literal"><span class="pre">minos()</span></tt></a>
+Note again that this is NOT minos error in general. Default True.</li>
+</ul>
+</div></blockquote>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#iminuit.Minuit.profile" title="iminuit.Minuit.profile"><tt class="xref py py-meth docutils literal"><span class="pre">profile()</span></tt></a></p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.mnprofile" title="iminuit.Minuit.mnprofile"><tt class="xref py py-meth docutils literal"><span class="pre">mnprofile()</span></tt></a>
+<a class="reference internal" href="#iminuit.Minuit.draw_mnprofile" title="iminuit.Minuit.draw_mnprofile"><tt class="xref py py-meth docutils literal"><span class="pre">draw_mnprofile()</span></tt></a>
+<a class="reference internal" href="#iminuit.Minuit.profile" title="iminuit.Minuit.profile"><tt class="xref py py-meth docutils literal"><span class="pre">profile()</span></tt></a></p>
 </div>
 </dd></dl>
 
@@ -554,7 +630,8 @@ parameter</p>
 <dl class="method">
 <dt id="iminuit.Minuit.latex_matrix">
 <tt class="descname">latex_matrix</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.latex_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Build <tt class="xref py py-class docutils literal"><span class="pre">LatexFactory</span></tt> object that contains correlation matrix</p>
+<dd><p>Build <tt class="xref py py-class docutils literal"><span class="pre">LatexFactory</span></tt> object that contains correlation 
+matrix</p>
 </dd></dl>
 
 <dl class="method">
@@ -658,6 +735,59 @@ want to draw it using pcolormesh)</li>
 <div><p>xgrid, ygrid, sigma, rawdata</p>
 <p>rawdata is tuple of (x,y,sigma_level)</p>
 </div></blockquote>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.draw_mncontour" title="iminuit.Minuit.draw_mncontour"><tt class="xref py py-meth docutils literal"><span class="pre">draw_mncontour()</span></tt></a></p>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">iminuit</span> <span class="kn">import</span> <span class="n">Minuit</span>
+
+
+<span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">x</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">z</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">Minuit</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">print_level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pedantic</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">migrad</span><span class="p">()</span>
+<span class="n">m</span><span class="o">.</span><span class="n">draw_mncontour</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;y&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href="./pyplots/draw_mncontour.py">Source code</a>, <a class="reference external" href="./pyplots/draw_mncontour.png">png</a>, <a class="reference external" href="./pyplots/draw_mncontour.hires.png">hires.png</a>, <a class="reference external" href="./pyplots/draw_mncontour.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/draw_mncontour.png" src="_images/draw_mncontour.png" />
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="iminuit.Minuit.mnprofile">
+<tt class="descname">mnprofile</tt><big>(</big><em>self</em>, <em>vname</em>, <em>bins=30</em>, <em>bound=2</em>, <em>subtract_min=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.mnprofile" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculate minos profile around specify range ie. Migrad results
+with <strong>vname</strong> fixed at various places within <strong>bound</strong></p>
+<p><strong>Arguments</strong></p>
+<blockquote>
+<div><ul>
+<li><p class="first"><strong>vname</strong> variable name to scan</p>
+</li>
+<li><p class="first"><strong>bins</strong> number of scanning bin. Default 30.</p>
+</li>
+<li><dl class="first docutils">
+<dt><strong>bound</strong></dt>
+<dd><p class="first last">If bound is tuple, (left, right) scanning bound.
+If bound is a number, it specifies how many <span class="math">\(\sigma\)</span>
+symmetrically from minimum (minimum+- bound* <span class="math">\(\sigma\)</span>).
+Default 2</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><strong>subtract_min</strong> subtract_minimum off from return value. This</dt>
+<dd><p class="first last">makes it easy to label confidence interval. Default False.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p><strong>Returns</strong></p>
+<blockquote>
+<div>bins(center point), value, migrad results</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
@@ -729,8 +859,7 @@ want to draw it using pcolormesh)</li>
 <dl class="method">
 <dt id="iminuit.Minuit.profile">
 <tt class="descname">profile</tt><big>(</big><em>self</em>, <em>vname</em>, <em>bins=100</em>, <em>bound=2</em>, <em>args=None</em>, <em>subtract_min=False</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.profile" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculate cost function profile around specify range.
-Useful for plotting likelihood scan</p>
+<dd><p>calculate cost function profile around specify range.</p>
 <p><strong>Arguments</strong></p>
 <blockquote>
 <div><ul>
@@ -738,14 +867,11 @@ Useful for plotting likelihood scan</p>
 </li>
 <li><p class="first"><strong>bins</strong> number of scanning bin. Default 100.</p>
 </li>
-<li><dl class="first docutils">
-<dt><strong>bound</strong></dt>
-<dd><p class="first last">If bound is tuple, (left, right) scanning bound.
+<li><p class="first"><strong>bound</strong>
+If bound is tuple, (left, right) scanning bound.
 If bound is a number, it specifies how many <span class="math">\(\sigma\)</span>
 symmetrically from minimum (minimum+- bound* <span class="math">\(\sigma\)</span>).
 Default 2</p>
-</dd>
-</dl>
 </li>
 <li><dl class="first docutils">
 <dt><strong>subtract_min</strong> subtract_minimum off from return value. This</dt>
@@ -758,6 +884,10 @@ Default 2</p>
 <p><strong>Returns</strong></p>
 <blockquote>
 <div>bins(center point), value</div></blockquote>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#iminuit.Minuit.mnprofile" title="iminuit.Minuit.mnprofile"><tt class="xref py py-meth docutils literal"><span class="pre">mnprofile()</span></tt></a></p>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -1136,7 +1266,7 @@ minuit will use as call signature.</p>
         <li class="right" >
           <a href="index.html" title="iminuit"
              >previous</a> |</li>
-        <li><a href="index.html">iminuit 1.0.5-dev documentation</a> &raquo;</li> 
+        <li><a href="index.html">iminuit 1.0.6-dev documentation</a> &raquo;</li> 
       </ul>
     </div>
 <div class="footer">
