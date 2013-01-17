@@ -1,12 +1,15 @@
-#profile(self, vname, bins=100, bound=2, args=None, subtract_min=False)
-def draw_profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
+def draw_profile(self, vname, x, y, s=None, band=True, text=True):
     from matplotlib import pyplot as plt
     import numpy as np
-    x, y = self.profile(vname, bins, bound, args, subtract_min)
+
     x = np.array(x)
     y = np.array(y)
+    if s is not None:
+        s = np.array(s, dtype=bool)
+        x = x[s]
+        y = y[s]
 
-    plt.plot(x,y)
+    plt.plot(x, y)
     plt.grid(True)
     plt.xlabel(vname)
     plt.ylabel('FCN')
@@ -28,9 +31,17 @@ def draw_profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
     le = x[minpos] - x[leftpos]
     re = x[rightpos] - x[minpos]
     #print (le, re)
-    plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
-    plt.figtext(0.5, 0.5, '%s = %7.3e ( -%7.3e , +%7.3e)' % (vname, x[minpos], le, re), ha='center')
-    return x,y
+
+    if band:
+        plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
+
+    if text:
+        plt.figtext(0.5, 0.5,
+            '%s = %7.3e ( -%7.3e , +%7.3e)' % (vname, x[minpos], le, re),
+            ha='center')
+
+    return x, y, s
+
 
 def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
 #def draw_contour(self, var1, var2, bins=12, bound1=None, bound2=None, lh=True):

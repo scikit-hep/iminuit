@@ -141,7 +141,8 @@ cdef class Minuit:
 
             - **errordef**: Optionals. Amount of increase in fcn to be defined
               as 1 :math:`\sigma`. If None is given, it will look at
-              `fcn.default_errordef()`. If `fcn.default_errordef()` is not defined or
+              `fcn.default_errordef()`. If `fcn.default_errordef()` is not 
+              defined or
               not callable iminuit will give a warning and set errordef to 1.
               Default None(which means errordef=1 with a warning).
 
@@ -229,7 +230,8 @@ cdef class Minuit:
             default_errordef = getattr(fcn,'default_errordef', None)
             if not callable(default_errordef):
                 if pedantic:
-                    warn(InitialParamWarning('errordef is not given. Default to 1.'))
+                    warn(InitialParamWarning(
+                        'errordef is not given. Default to 1.'))
                 self.errordef = 1.0
             else:
                 self.errordef = default_errordef()
@@ -399,7 +401,8 @@ cdef class Minuit:
 
         """
         if self.pyfcn is NULL or self.cfmin is NULL:
-            raise RuntimeError('Minos require function to be at the minimum. Run migrad first.')
+            raise RuntimeError('Minos require function to be at the minimum.'
+                               ' Run migrad first.')
         cdef unsigned int index = 0
         cdef MnMinos* minos = NULL
         cdef MinosError mnerror
@@ -422,7 +425,8 @@ cdef class Minuit:
 
             if vname in fixed_param:
                 if var is not None:#specifying vname but it's fixed
-                    warnings.warn(RuntimeWarning('Specified variable name for minos is set to fixed'))
+                    warnings.warn(RuntimeWarning(
+                        'Specified variable name for minos is set to fixed'))
                     return None
                 continue
             minos = new MnMinos(deref(
@@ -445,7 +449,8 @@ cdef class Minuit:
         if not skip_fixed:
             raise RunTimeError('skip_fixed=False is not supported')
         if not self.last_upst.hasCovariance():
-            raise RuntimeError("Covariance is not valid. May be the last Hesse call failed?")
+            raise RuntimeError(
+                "Covariance is not valid. May be the last Hesse call failed?")
 
         cdef MnUserCovariance cov = self.last_upst.covariance()
         params = self.list_of_vary_param()
@@ -472,7 +477,9 @@ cdef class Minuit:
 
 
     def latex_matrix(self):
-        """Build :class:`LatexFactory` object that contains correlation matrix"""
+        """Build :class:`LatexFactory` object that contains correlation 
+        matrix
+        """
         matrix = self.matrix(correlation=True)
         vnames = self.list_of_vary_param()
         return LatexFactory.build_matrix(vnames, matrix)
@@ -649,7 +656,9 @@ cdef class Minuit:
 
     def matrix_accurate(self):
         """check if covariance(of the last migrad) is accurate."""
-        return self.last_upst is not NULL and self.cfmin.hasAccurateCovar()
+        return self.last_upst is not NULL and\
+               self.cfmin is not NULL and\
+               self.cfmin.hasAccurateCovar()
 
 
     def list_of_fixed_param(self):
@@ -714,15 +723,16 @@ cdef class Minuit:
                     Ignore.') % (verr, param_name(verr)), InitialParamWarning)
 
 
-    def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
-        """calculate cost function profile around specify range.
-        Useful for plotting likelihood scan
+    def mnprofile(self, vname, bins=30, bound=2,
+            subtract_min=False):
+        """calculate minos profile around specify range ie. Migrad results
+        with **vname** fixed at various places within **bound**
 
         **Arguments**
 
             * **vname** variable name to scan
 
-            * **bins** number of scanning bin. Default 100.
+            * **bins** number of scanning bin. Default 30.
 
             * **bound**
                 If bound is tuple, (left, right) scanning bound.
@@ -735,7 +745,110 @@ cdef class Minuit:
 
         **Returns**
 
+            bins(center point), value, migrad results
+        """
+        if vname not in self.parameters:
+            raise ValueError('Unknown parameter %s'%vname)
+
+        if isinstance(bound, (int,long,float)):
+            if not self.matrix_accurate():
+                warn('Specify nsigma bound but error '
+                     'but error matrix is not accurate.')
+            start = self.values[vname]
+            sigma = self.errors[vname]
+            bound = (start+  bound*sigma, start - bound*sigma)
+        blength = bound[1]-bound[0]
+        binstep = blength/(bins-1)
+        
+        values = array.array('d',(bound[0]+binstep*i for i in xrange(bins)))
+        results = array.array('d')
+        migrad_status = []
+        for i, v in enumerate(values):
+            fitparam = self.fitarg.copy()
+            fitparam[vname] = v
+            fitparam['fix_%s'%vname] = True
+            m = Minuit(self.fcn, print_level=0,
+                    pedantic=False, forced_parameters=self.parameters,
+                    **fitparam)
+            m.migrad()
+            migrad_status.append(m.migrad_ok())
+            if not m.migrad_ok():
+                warn(('Migrad fails to converge for %s=%f')%(vname, v))
+            results.append(m.fval)
+
+        if subtract_min:
+            themin = min(results)
+            result = array.array('d',(x-themin for x in results))
+
+        return values, results, migrad_status
+
+
+    def draw_mnprofile(self, vname, bins=30, bound=2, subtract_min=False,
+        band=True, text=True):
+        """Draw minos profile around specify range ie. Migrad results
+        with **vname** fixed at various places within **bound**
+
+        **Arguments**
+
+            * **vname** variable name to scan
+
+            * **bins** number of scanning bin. Default 30.
+
+            * **bound**
+                If bound is tuple, (left, right) scanning bound.
+                If bound is a number, it specifies how many :math:`\sigma`
+                symmetrically from minimum (minimum+- bound* :math:`\sigma`).
+                Default 2
+
+            * **subtract_min** subtract_minimum off from return value. This
+                makes it easy to label confidence interval. Default False.
+
+            * **band** show green band to indicate the increase of fcn by
+              *errordef*. Default True.
+
+            * **text** show text for the location where the fcn is increased
+              by *errordef*. This is less accurate than :meth:`minos`.
+              Default True.
+
+        **Returns**
+
+            bins(center point), value, migrad results
+
+        .. plot:: pyplots/draw_mnprofile.py
+            :include-source:
+
+        """
+        x, y, s= self.mnprofile(vname, bins, bound, subtract_min)
+        return _plotting.draw_profile(self, vname, x, y, s, 
+                                      band=band, text=text)
+
+
+    def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
+        """calculate cost function profile around specify range.
+
+        **Arguments**
+
+            * **vname** variable name to scan
+
+            * **bins** number of scanning bin. Default 100.
+
+            * **bound**
+              If bound is tuple, (left, right) scanning bound.
+              If bound is a number, it specifies how many :math:`\sigma`
+              symmetrically from minimum (minimum+- bound* :math:`\sigma`).
+              Default 2
+
+            * **subtract_min** subtract_minimum off from return value. This
+                makes it easy to label confidence interval. Default False.
+
+        **Returns**
+
             bins(center point), value
+
+        .. seealso::
+
+            :meth:`mnprofile`
+
         """
         if isinstance(bound, (int,long,float)):
             start = self.values[vname]
@@ -761,21 +874,38 @@ cdef class Minuit:
 
 
     def draw_profile(self, vname, bins=100, bound=2, args=None,
-        subtract_min=False):
+        subtract_min=False, band=True, text=True):
         """
         A convenient wrapper for drawing profile using matplotlib
 
         .. note::
             This is not a real minos profile. It's just a simple 1D scan.
             The number shown on the plot is taken from the green band.
-            They are not minos error.
+            They are not minos error. To get a real minos profile call
+            :meth:`mnprofile` or :meth:`draw_mnprofile`
+
+        **Arguments**
+
+            In addition to argument listed on :meth:`profile`. draw_profile
+            take these addition argument:
+
+            * **band** show green band to indicate the increase of fcn by
+              *errordef*. Note again that this is NOT minos error in general.
+              Default True.
+
+            * **text** show text for the location where the fcn is increased
+              by *errordef*. This is less accurate than :meth:`minos`
+              Note again that this is NOT minos error in general. Default True.
 
         .. seealso::
-
+            :meth:`mnprofile`
+            :meth:`draw_mnprofile`
             :meth:`profile`
         """
-        return _plotting.draw_profile(self, vname, bins, bound, args,
-            subtract_min)
+        x, y = self.profile(vname, bins, bound, args, subtract_min)
+        x, y, s = _plotting.draw_profile(self, vname, x, y,
+                                         band=band, text=text)
+        return x, y
 
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
         """2D countour scan.
@@ -951,9 +1081,12 @@ cdef class Minuit:
 
             rawdata is tuple of (x,y,sigma_level)
 
-        .. seealso
+        .. seealso::
 
             :meth:`draw_mncontour`
+
+        .. plot:: pyplots/draw_mncontour.py
+            :include-source:
 
         """
         return _plotting.mncontour_grid(self, x, y, numpoints,
@@ -987,7 +1120,8 @@ cdef class Minuit:
         return _plotting.draw_mncontour(self, x, y, bins, nsigma, numpoints)
 
 
-    def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
+    def draw_contour(self, x, y, bins=20, bound=2, args=None, 
+                     show_sigma=False):
         """
         Convenient wrapper for drawing contour. The argument is the same as
         :meth:`contour`. If `show_sigma=True`(Default), the label on the
@@ -1005,7 +1139,8 @@ cdef class Minuit:
             :meth:`mncontour`
 
         """
-        return _plotting.draw_contour(self, x, y, bins, bound, args, show_sigma)
+        return _plotting.draw_contour(self, x, y, bins, 
+                                      bound, args, show_sigma)
 
 
     cdef refreshInternalState(self):
@@ -1062,7 +1197,8 @@ cdef class Minuit:
             if self.initiallimit[v] is not None:
                 lb,ub = self.initiallimit[v]
                 if lb >= ub:
-                    raise ValueError('limit for parameter %s is invalid. %r'(v,(lb,ub)))
+                    raise ValueError(
+                        'limit for parameter %s is invalid. %r'(v,(lb,ub)))
                 ret.setLimits(v,lb,ub)
         for v in self.parameters:
             if self.initialfix[v]:
