@@ -10,7 +10,7 @@ using namespace std;
 #include <cstdarg>
 #include <algorithm>
 #include <cstdio>
-# include <cmath>
+#include <cmath>
 //missing string printf
 //this is safe and convenient but not exactly efficient
 inline std::string format(const char* fmt, ...){
