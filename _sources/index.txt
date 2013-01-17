@@ -28,7 +28,7 @@ In a nutshell,::
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 4
     :hidden:
 
     api.rst
