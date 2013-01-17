@@ -10,21 +10,21 @@ Quick Summary
 These are the things you will use a lot.
 
 .. autosummary::
+    util.describe
     Minuit
     Minuit.migrad
     Minuit.minos
     Minuit.values
+    Minuit.args
     Minuit.errors
-    Minuit.merrors
+    Minuit.get_merrors
+    Minuit.fval
+    Minuit.fitarg
+    Minuit.mnprofile
+    Minuit.draw_mnprofile
     Minuit.mncontour
     Minuit.mncontour_grid
     Minuit.draw_mncontour
-    Minuit.profile
-    Minuit.draw_profile
-    Minuit.contour
-    Minuit.draw_contour
-    util.describe
-
 
 Minuit
 ------
