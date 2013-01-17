@@ -60,30 +60,31 @@ public:
     double up_parm;
     vector<string> pname;
     bool thrownan;
-    unsigned int* ncall;//a hack around operator() const 
-    PythonFCN(){}//for cython stack allocate but don't call this
+    mutable unsigned int ncall; 
+    
+    PythonFCN():fcn(), up_parm(), pname(), 
+    thrownan(), ncall(0)
+    {}//for cython stack allocate but don't call this
+
     PythonFCN(PyObject* fcn,
         double up_parm,
         const vector<string>& pname,
         bool thrownan = false)
         :fcn(fcn),up_parm(up_parm),pname(pname),
-        thrownan(thrownan)
+        thrownan(thrownan), ncall(0)
     {
-        ncall = new unsigned int(0);
         Py_INCREF(fcn);
     }
 
     PythonFCN(const PythonFCN& pfcn)
         :fcn(pfcn.fcn),up_parm(pfcn.up_parm),pname(pfcn.pname),
-        thrownan(pfcn.thrownan)
+        thrownan(pfcn.thrownan), ncall(pfcn.ncall)
     {
-        ncall = new unsigned int(0);
         Py_INCREF(fcn);
     }
 
     virtual ~PythonFCN()
     {
-        delete ncall;
         Py_DECREF(fcn);
     }
 
@@ -118,9 +119,10 @@ public:
 
         Py_DECREF(tuple);
         Py_DECREF(result);
-        (*ncall)++;
+        ncall++;
         return ret;
     }
+
     //warn but do not reset the error flag
     inline void warn_preserve_error(const string& msg)const{
         PyObject *ptype,*pvalue,*ptraceback;
@@ -153,8 +155,8 @@ public:
         }
         return tuple;
     }
-    int getNumCall() const{return *ncall;}
-    void resetNumCall(){*ncall = 0;}
+    int getNumCall() const{return ncall;}
+    void resetNumCall(){ncall = 0;}
     void set_up(double up){up_parm = up;}
     virtual double up() const{return up_parm;}
 };

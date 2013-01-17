@@ -229,7 +229,8 @@ cdef class Minuit:
             default_errordef = getattr(fcn,'default_errordef', None)
             if not callable(default_errordef):
                 if pedantic:
-                    warn(InitialParamWarning('errordef is not given. Default to 1.'))
+                    warn(InitialParamWarning(
+                        'errordef is not given. Default to 1.'))
                 self.errordef = 1.0
             else:
                 self.errordef = default_errordef()
@@ -422,7 +423,8 @@ cdef class Minuit:
 
             if vname in fixed_param:
                 if var is not None:#specifying vname but it's fixed
-                    warnings.warn(RuntimeWarning('Specified variable name for minos is set to fixed'))
+                    warnings.warn(RuntimeWarning(
+                        'Specified variable name for minos is set to fixed'))
                     return None
                 continue
             minos = new MnMinos(deref(
@@ -445,7 +447,8 @@ cdef class Minuit:
         if not skip_fixed:
             raise RunTimeError('skip_fixed=False is not supported')
         if not self.last_upst.hasCovariance():
-            raise RuntimeError("Covariance is not valid. May be the last Hesse call failed?")
+            raise RuntimeError(
+                "Covariance is not valid. May be the last Hesse call failed?")
 
         cdef MnUserCovariance cov = self.last_upst.covariance()
         params = self.list_of_vary_param()
@@ -472,7 +475,9 @@ cdef class Minuit:
 
 
     def latex_matrix(self):
-        """Build :class:`LatexFactory` object that contains correlation matrix"""
+        """Build :class:`LatexFactory` object that contains correlation 
+        matrix
+        """
         matrix = self.matrix(correlation=True)
         vnames = self.list_of_vary_param()
         return LatexFactory.build_matrix(vnames, matrix)
