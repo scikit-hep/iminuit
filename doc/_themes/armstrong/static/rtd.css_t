@@ -66,8 +66,13 @@ div.documentwrapper {
     background-color: {{ theme_light_color }};
 }
 
+.lightbox{
+    height: 240px;
+}
 
 /* HEADINGS --------------------------------------------------------------- */
+
+
 
 h1 {
     margin: 0;
@@ -89,6 +94,11 @@ h3 {
     margin: 1em 0 -0.3em 0;
     font-size: 1.2em;
     color: {{ theme_h3 }};
+}
+
+h1, h2, h3{
+    background-color : {{ theme_dirty_white }};
+    padding-left: 5px;
 }
 
 div.body h1 a, div.body h2 a, div.body h3 a, div.body h4 a, div.body h5 a, div.body h6 a {
@@ -174,6 +184,7 @@ div.body a.headerlink:hover {
 
 div.related ul {
     height: 2.5em;
+    padding-right: 140px;
 }
 
 div.related ul li {
