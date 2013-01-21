@@ -778,7 +778,7 @@ cdef class Minuit:
 
         if subtract_min:
             themin = min(results)
-            result = array.array('d',(x-themin for x in results))
+            results = array.array('d',(x-themin for x in results))
 
         return values, results, migrad_status
 
