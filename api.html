@@ -473,7 +473,7 @@ value instead of raw value.</p>
 
 <dl class="method">
 <dt id="iminuit.Minuit.draw_mncontour">
-<tt class="descname">draw_mncontour</tt><big>(</big><em>self</em>, <em>x</em>, <em>y</em>, <em>bins=100</em>, <em>nsigma=2</em>, <em>numpoints=20</em>, <em>sigma_points=10</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.draw_mncontour" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">draw_mncontour</tt><big>(</big><em>self</em>, <em>x</em>, <em>y</em>, <em>bins=100</em>, <em>nsigma=2</em>, <em>numpoints=20</em>, <em>sigma_res=4</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.draw_mncontour" title="Permalink to this definition">¶</a></dt>
 <dd><p>draw minos contour</p>
 <p><strong>Arguments</strong></p>
 <blockquote>
@@ -481,9 +481,9 @@ value instead of raw value.</p>
 <li><strong>x</strong>, <strong>y</strong> parameter name</li>
 <li><strong>bins</strong> number of bin in contour grid.</li>
 <li><strong>nsigma</strong> number of sigma contour to draw</li>
-<li><strong>numpoint</strong> number of points to calculate for each contour</li>
-<li><strong>sigma_res</strong> number of points between n*sigma and n+1*sigma to
-calculate. Default(4)</li>
+<li><strong>numpoints</strong> number of points to calculate for each contour</li>
+<li><strong>sigma_res</strong> number of sigma level to calculate MnContours.
+Default 4.</li>
 </ul>
 </div></blockquote>
 <p><strong>returns</strong></p>
