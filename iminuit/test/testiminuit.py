@@ -105,7 +105,7 @@ def test_fix_param():
     assert_almost_equal(val['y'], 5.)
     assert_almost_equal(val['z'], 7.)
     err = m.errors#second derivative
-
+    m.print_all_minos()
     #now fix z = 10
     m = Minuit(func4, print_level=-1, y=10., fix_y=True, pedantic=False)
     m.migrad()
