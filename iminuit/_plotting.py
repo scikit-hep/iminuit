@@ -4,6 +4,7 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
 
     x = np.array(x)
     y = np.array(y)
+    #print x
     if s is not None:
         s = np.array(s, dtype=bool)
         x = x[s]
@@ -28,6 +29,7 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
     left_min = np.argmin(lefty)
     leftpos = left_min
     #print leftpos, rightpos
+    #print x, y
     le = x[minpos] - x[leftpos]
     re = x[rightpos] - x[minpos]
     #print (le, re)

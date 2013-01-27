@@ -756,7 +756,7 @@ cdef class Minuit:
                      'but error matrix is not accurate.')
             start = self.values[vname]
             sigma = self.errors[vname]
-            bound = (start+  bound*sigma, start - bound*sigma)
+            bound = (start -  bound*sigma, start + bound*sigma)
         blength = bound[1]-bound[0]
         binstep = blength/(bins-1)
         
@@ -853,8 +853,8 @@ cdef class Minuit:
         if isinstance(bound, (int,long,float)):
             start = self.values[vname]
             sigma = self.errors[vname]
-            bound = (start+bound*sigma,
-                    start-bound*sigma)
+            bound = (start-bound*sigma,
+                    start+bound*sigma)
         blength = bound[1]-bound[0]
         binstep = blength/(bins-1)
         args = list(self.args) if args is None else args
@@ -952,10 +952,10 @@ cdef class Minuit:
         if isinstance(bound, (int,long,float)):
             x_start = self.values[x]
             x_sigma = self.errors[x]
-            x_bound = (x_start+bound*x_sigma, x_start-bound*x_sigma)
+            x_bound = (x_start-bound*x_sigma, x_start+bound*x_sigma)
             y_start = self.values[y]
             y_sigma = self.errors[y]
-            y_bound = (y_start+bound*y_sigma, y_start-bound*y_sigma)
+            y_bound = (y_start-bound*y_sigma, y_start+bound*y_sigma)
         else:
             x_bound = bound[0]
             y_bound = bound[1]
