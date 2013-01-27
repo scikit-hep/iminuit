@@ -430,12 +430,12 @@ cdef class Minuit:
                     return None
                 continue
             minos = new MnMinos(deref(
-                self.pyfcn), deref(self.cfmin),self.strategy)
+                self.pyfcn), deref(self.cfmin), self.strategy)
             mnerror = minos.minos(index,maxcall)
             self.merrors_struct[vname]=minoserror2struct(mnerror)
             if self.print_level>0:
                 self.frontend.print_merror(
-                    vname,self.merrors_struct[vname])
+                    vname, self.merrors_struct[vname])
         self.refreshInternalState()
         del minos
         self.pyfcn.set_up(oldup)
@@ -578,9 +578,9 @@ cdef class Minuit:
 
     def print_all_minos(self):
         """print all minos errors(and its states)"""
-        for vname in varnames:
+        for vname in self.list_of_vary_param():
             if vname in self.merrors_struct:
-                self.frontend.print_mnerror(vname,self.merrors_struct[vname])
+                self.frontend.print_merror(vname, self.merrors_struct[vname])
 
 
     def set_up(self, double errordef):
@@ -1094,7 +1094,7 @@ cdef class Minuit:
 
 
     def draw_mncontour(self, x, y, bins=100, nsigma=2,
-                        numpoints=20, sigma_points=10):
+                        numpoints=20, sigma_res=4):
         """
         draw minos contour
 
@@ -1106,10 +1106,10 @@ cdef class Minuit:
 
             - **nsigma** number of sigma contour to draw
 
-            - **numpoint** number of points to calculate for each contour
+            - **numpoints** number of points to calculate for each contour
 
-            - **sigma_res** number of points between n*sigma and n+1*sigma to
-              calculate. Default(4)
+            - **sigma_res** number of sigma level to calculate MnContours.
+              Default 4.
 
         **returns**
 
@@ -1117,7 +1117,8 @@ cdef class Minuit:
 
             gridvalue is interorlated nsigma
         """
-        return _plotting.draw_mncontour(self, x, y, bins, nsigma, numpoints)
+        return _plotting.draw_mncontour(self, x, y, bins, nsigma,
+                                        numpoints, sigma_res)
 
 
     def draw_contour(self, x, y, bins=20, bound=2, args=None, 
