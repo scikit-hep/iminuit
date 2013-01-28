@@ -1,3 +1,4 @@
+import warnings
 def draw_profile(self, vname, x, y, s=None, band=True, text=True):
     from matplotlib import pyplot as plt
     import numpy as np
@@ -15,32 +16,36 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
     plt.xlabel(vname)
     plt.ylabel('FCN')
 
-    minpos = np.argmin(y)
 
-    ymin = y[minpos]
-    tmpy = y - ymin
-    #now scan for minpos to the right until greater than one
-    up = self.errordef
-    righty = np.power(tmpy[minpos:] - up, 2)
-    #print righty
-    right_min = np.argmin(righty)
-    rightpos = right_min + minpos
-    lefty = np.power((tmpy[:minpos] - up), 2)
-    left_min = np.argmin(lefty)
-    leftpos = left_min
-    #print leftpos, rightpos
-    #print x, y
-    le = x[minpos] - x[leftpos]
-    re = x[rightpos] - x[minpos]
-    #print (le, re)
+    try:
+        minpos = np.argmin(y)
+        ymin = y[minpos]
+        tmpy = y - ymin
+        #now scan for minpos to the right until greater than one
+        up = self.errordef
+        righty = np.power(tmpy[minpos:] - up, 2)
+        #print righty
+        right_min = np.argmin(righty)
+        rightpos = right_min + minpos
+        lefty = np.power((tmpy[:minpos] - up), 2)
+        left_min = np.argmin(lefty)
+        leftpos = left_min
+        #print leftpos, rightpos
+        #print x, y
+        le = x[minpos] - x[leftpos]
+        re = x[rightpos] - x[minpos]
+        #print (le, re)
 
-    if band:
-        plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
+        if band:
+            plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
 
-    if text:
-        plt.figtext(0.5, 0.5,
-            '%s = %7.3e ( -%7.3e , +%7.3e)' % (vname, x[minpos], le, re),
-            ha='center')
+        if text:
+            plt.figtext(0.5, 0.5,
+                '%s = %7.3e ( -%7.3e , +%7.3e)' % (vname, x[minpos], le, re),
+                ha='center')
+    except ValueError:
+        warnings.warn(RuntimeWarning('band and text is requested but'
+                                     ' the bound is too narrow.'))
 
     return x, y, s
 
