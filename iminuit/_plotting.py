@@ -84,7 +84,9 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
         xminos, yminos, pts = self.mncontour(x, y, numpoints=numpoints,
                                                 sigma=this_sig)
         if len(pts)==0:
-            raise RuntimeError('Fail mncontour for %s, %s, sigma=%f'%(x,y,this_sig))
+            warnings.warn(RuntimeWarning('Fail mncontour for %s, %s, sigma=%f'%(x,y,this_sig)))
+            continue
+        
         xp, yp = zip(*pts)
         xps.append(xp)
         yps.append(yp)
