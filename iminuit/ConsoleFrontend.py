@@ -54,24 +54,24 @@ class ConsoleFrontend:
         summary = 'Minos Status for %s: %s\n'%\
                 (vname, stat)
 
-        error = '| {:^15s} | {: >12g} | {: >12g} |\n'.format(
+        error = '| {0:^15s} | {1: >12g} | {2: >12g} |\n'.format(
                     'Error',
                     smerr.
                     lower,
                     smerr.upper)
-        valid = '| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+        valid = '| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
                     'Valid',
                     str(smerr.lower_valid),
                     str(smerr.upper_valid))
-        at_limit='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+        at_limit='| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
                     'At Limit',
                     str(smerr.at_lower_limit),
                     str(smerr.at_upper_limit))
-        max_fcn='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+        max_fcn='| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
                     'Max FCN',
                     str(smerr.at_lower_max_fcn),
                     str(smerr.at_upper_max_fcn))
-        new_min='| {:^15s} | {:^12s} | {:^12s} |\n'.format(
+        new_min='| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
                     'New Min',
                     str(smerr.lower_new_min),
                     str(smerr.upper_new_min))
@@ -105,14 +105,14 @@ class ConsoleFrontend:
         maxlength = max([len(x) for x in vnames])
         maxlength = max(5, maxlength)
 
-        header = (('| {:^4s} | {:^%ds} | {:^8s} | {:^8s} | {:^8s} |'
-                  ' {:^8s} | {:^8s} | {:^8s} | {:^8s} |\n')%maxlength).format(
+        header = (('| {0:^4s} | {1:^%ds} | {2:^8s} | {3:^8s} | {4:^8s} |'
+                  ' {5:^8s} | {6:^8s} | {7:^8s} | {8:^8s} |\n')%maxlength).format(
                     '', 'Name', 'Value', 'Para Err',
                     "Err-", "Err+", "Limit-", "Limit+", " ")
         hline = '-'*len(header)+'\n'
-        linefmt = ('| {:>4d} | {:>%ds} = {:<8s} | {:<8s} | {:<8s} |'
-                  ' {:<8s} | {:<8s} | {:<8s} | {:^8s} |\n')%maxlength
-        nfmt = '{:< 8.4G}'
+        linefmt = ('| {0:>4d} | {1:>%ds} = {2:<8s} | {3:<8s} | {4:<8s} |'
+                  ' {5:<8s} | {6:<8s} | {7:<8s} | {8:^8s} |\n')%maxlength
+        nfmt = '{0:< 8.4G}'
         nformat = nfmt.format
         blank = ' '*8
 
