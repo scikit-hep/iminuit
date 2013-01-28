@@ -856,7 +856,7 @@ cdef class Minuit:
             bound = (start-bound*sigma,
                     start+bound*sigma)
         blength = bound[1]-bound[0]
-        binstep = blength/(bins-1)
+        binstep = blength/(bins-1.)
         args = list(self.args) if args is None else args
         #center value
         bins = array.array('d',(bound[0]+binstep*i for i in xrange(bins)))
@@ -959,15 +959,15 @@ cdef class Minuit:
         else:
             x_bound = bound[0]
             y_bound = bound[1]
-
+        
         x_bins = bins
         y_bins = bins
 
         x_blength = x_bound[1]-x_bound[0]
-        x_binstep = x_blength/(x_bins-1)
+        x_binstep = x_blength/(x_bins-1.)
 
         y_blength = y_bound[1]-y_bound[0]
-        y_binstep = y_blength/(y_bins-1)
+        y_binstep = y_blength/(y_bins-1.)
 
         x_val = array.array('d',(x_bound[0]+x_binstep*i for i in xrange(x_bins)))
         y_val = array.array('d',(y_bound[0]+y_binstep*i for i in xrange(y_bins)))
