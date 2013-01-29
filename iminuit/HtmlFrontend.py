@@ -65,25 +65,26 @@ class HtmlFrontend:
         header = u"""
         <table>
             <tr>
-                <td>FCN = {sfmin.fval}</td>
-                <td>NFCN = {sfmin.nfcn}</td>
-                <td>NCALLS = {ncalls}</td>
+                <td title="Minimum value of function">FCN = {sfmin.fval}</td>
+                <td title="Total number of call to FCN so far">TOTAL NCALL = {ncalls}</td>
+                <td title="Number of call in last migrad">NCALLS = {sfmin.nfcn}</td>
             </tr>
             <tr>
-                <td>EDM = {sfmin.edm}</td>
-                <td>GOAL EDM = {goaledm}</td>
-                <td>UP = {sfmin.up}</td>
+                <td title="Estimated distance to minimum">EDM = {sfmin.edm}</td>
+                <td title="Maximum EDM definition of convergence">GOAL EDM = {goaledm}</td>
+                <td title="Error def. Amount of increase in FCN to be defined as 1 standard deviation">
+                UP = {sfmin.up}</td>
             </tr>
         </table>
         """.format(**locals())
         status = u"""
         <table>
             <tr>
-                <td align="center">Valid</td>
-                <td align="center">Valid Param</td>
-                <td align="center">Accurate Covar</td>
-                <td align="center">PosDef</td>
-                <td align="center">Made PosDef</td>
+                <td align="center" title="Validity of the migrad call">Valid</td>
+                <td align="center" title="Validity of parameters">Valid Param</td>
+                <td align="center" title="Is Covariance matrix accurate?">Accurate Covar</td>
+                <td align="center" title="Positive definiteness of covariance matrix">PosDef</td>
+                <td align="center" title="Was covariance matrix made posdef by adding diagonal element">Made PosDef</td>
             </tr>
             <tr>
                 <td align="center" style="{style.is_valid}">{sfmin.is_valid!r}</td>
@@ -93,11 +94,11 @@ class HtmlFrontend:
                 <td align="center" style="{style.has_made_posdef_covar}">{sfmin.has_made_posdef_covar!r}</td>
             </tr>
             <tr>
-                <td align="center">Hesse Fail</td>
-                <td align="center">HasCov</td>
-                <td align="center">Above EDM</td>
+                <td align="center" title="Was last hesse call fail?">Hesse Fail</td>
+                <td align="center" title="Validity of covariance">HasCov</td>
+                <td align="center" title="Is EDM above goal EDM?">Above EDM</td>
                 <td align="center"></td>
-                <td align="center">Reach calllim</td>
+                <td align="center" title="Did last migrad call reach max call limit?">Reach calllim</td>
             </tr>
             <tr>
                 <td align="center" style="{style.hesse_failed}">{sfmin.hesse_failed!r}</td>
@@ -117,27 +118,27 @@ class HtmlFrontend:
         <span>Minos status for {vname}: <span style="{style.is_valid}">{stat}</span></span>
         <table>
             <tr>
-                <td>Error</td>
+                <td title="lower and upper minos error of the parameter">Error</td>
                 <td>{smerr.lower}</td>
                 <td>{smerr.upper}</td>
             </tr>
             <tr>
-                <td>Valid</td>
+                <td title="Validity of minos error">Valid</td>
                 <td style="{style.lower_valid}">{smerr.lower_valid}</td>
                 <td style="{style.upper_valid}">{smerr.upper_valid}</td>
             </tr>
             <tr>
-                <td>At Limit</td>
+                <td title="Did minos error search hit limit of any paramter?">At Limit</td>
                 <td style="{style.at_lower_limit}">{smerr.at_lower_limit}</td>
                 <td style="{style.at_upper_limit}">{smerr.at_upper_limit}</td>
             </tr>
             <tr>
-                <td>Max FCN</td>
+                <td title="I don't really know what this one means... Post it in issue if you know">Max FCN</td>
                 <td style="{style.at_lower_max_fcn}">{smerr.at_lower_max_fcn}</td>
                 <td style="{style.at_upper_max_fcn}">{smerr.at_upper_max_fcn}</td>
             </tr>
             <tr>
-                <td>New Min</td>
+                <td title="New minimum found when doing minos scan.">New Min</td>
                 <td style="{style.lower_new_min}">{smerr.lower_new_min}</td>
                 <td style="{style.upper_new_min}">{smerr.upper_new_min}</td>
             </tr>
@@ -160,14 +161,14 @@ class HtmlFrontend:
         <table>
             <tr>
                 <td><a href="#" onclick="$('#{uid}').toggle()">+</a></td>
-                <td>Name</td>
-                <td>Value</td>
-                <td>Parab Error</td>
-                <td>Minos Error-</td>
-                <td>Minos Error+</td>
-                <td>Limit-</td>
-                <td>Limit+</td>
-                <td>FIXED</td>
+                <td title="Variable name">Name</td>
+                <td title="Value of parameter">Value</td>
+                <td title="Parabolic error">Parab Error</td>
+                <td title="Minos lower error">Minos Error-</td>
+                <td title="Minos upper error">Minos Error+</td>
+                <td title="Lower limit of the parameter">Limit-</td>
+                <td title="Upper limit of the parameter">Limit+</td>
+                <td title="Is the parameter fixed in the fit">FIXED</td>
             </tr>
         """.format(**locals())
         to_print += header
