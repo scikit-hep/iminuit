@@ -77,7 +77,7 @@ cdef class Minuit:
     cdef readonly object errors#:map varname -> parabolic error
     cdef readonly object covariance#:map (v1,v2)->covariance
     cdef readonly double fval#:last value of fcn
-    cdef readonly double ncalls#:number of fcn call of last migrad/minos/hesse
+    cdef readonly int ncalls#:number of fcn call of last migrad/minos/hesse
     cdef readonly double edm#Estimate distance to minimum
     #:minos error ni a funny map from
     #:(vname,direction)->error
