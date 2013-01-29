@@ -13,7 +13,7 @@ class ConsoleFrontend:
         #despite what the doc said the code is actually 1e-4
         #http://wwwasdoc.web.cern.ch/wwwasdoc/hbook_html3/node125.html
         flatlocal = dict(locals().items()+fmin.__dict__.items())
-        info1 = 'fval = %(fval)r | nfcn = %(nfcn)r | ncalls = %(ncalls)r\n' %\
+        info1 = 'fval = %(fval)r | total call = %(ncalls)r | ncalls = %(nfcn)r\n' %\
                 flatlocal
         info2 = 'edm = %(edm)r (Goal: %(goaledm)r) | up = %(up)r\n' % flatlocal
         header1 = '|' + (' %14s |'*5) % (
