@@ -146,14 +146,17 @@ class HtmlFrontend:
         """.format(**locals())
         display_html(to_print, raw=True)
 
-    def print_param(self, mps, merr=None):
+    def print_param(self, mps, merr=None, float_format='%5.3e',
+                    smart_latex=True):
         """print list of parameters
         Arguments:
 
             *mps* : minuit parameters struct
             *merr* : minos error
             *float_format* : control the format of latex floating point output
-                default None ('%4.3e')
+                default '%5.3e'
+            *smart_latex* : convert greek symbols and underscores to latex 
+                symbol. default True
         """
         to_print = ""
         uid = randid()
@@ -196,7 +199,8 @@ class HtmlFrontend:
         to_print += """
             </table>
         """
-        ltable = LatexFactory.build_param_table(mps, merr)
+        ltable = LatexFactory.build_param_table(mps, merr,
+                float_format=float_format, smart_latex=smart_latex)
 
         #rows = str(ltable).count('\n')+1
         to_print += self.hidden_table(str(ltable), uid)

@@ -23,8 +23,8 @@ class LatexTable:
         'Chi', 'Psi', 'Omega',
     ]
 
-    def __init__(self, data, headers=None, smart_latex=True,
-                alignment=None):
+    def __init__(self, data, headers=None, smart_latex=True, 
+                escape_under_score=True, alignment=None):
         if headers is not None:
             assert(len(headers) == len(data[0]))
 
@@ -32,6 +32,7 @@ class LatexTable:
         self.data = data
         self.num_col = len(data[0])
         self.smart_latex = smart_latex
+        self.escape_under_score = escape_under_score
         self.alignment = self._auto_align() if alignment is None else alignment
 
         self.cell_color = {}#map of tuple (i,j)=>(r, g, b) #i,j include header
@@ -49,6 +50,8 @@ class LatexTable:
             return self.int_format%s
         elif self.smart_latex:
             return self._convert_smart_latex(s)
+        elif self.escape_under_score:
+            return s.replace('_',r'\_')
         else:
             return s
 
@@ -141,7 +144,8 @@ class LatexFactory:
         return table
 
     @classmethod
-    def build_param_table(self, mps, merr=None, float_format='%5.3e'):
+    def build_param_table(self, mps, merr=None, float_format='%5.3e',
+                        smart_latex=True):
         """build latex parameter table"""
         headers = ['', 'Name', 'Value', 'Para Error', 'Error+',
                    'Error-', 'Limit+', 'Limit-', 'FIXED', ]
@@ -167,6 +171,7 @@ class LatexFactory:
             ]
             data.append(tmp)
         alignment = '|c|r|r|r|r|r|r|r|c|'
-        ret = LatexTable(data, headers=headers, alignment=alignment)
-        ret.float_format = '%5.3e'
+        ret = LatexTable(data, headers=headers, alignment=alignment,
+                        smart_latex=smart_latex)
+        ret.float_format = float_format
         return ret
