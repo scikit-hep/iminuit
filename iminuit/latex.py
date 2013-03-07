@@ -24,7 +24,8 @@ class LatexTable:
     ]
 
     def __init__(self, data, headers=None, smart_latex=True, 
-                escape_under_score=True, alignment=None):
+                escape_under_score=True, alignment=None, rotate_header=False,
+                latex_map=None):
         if headers is not None:
             assert(len(headers) == len(data[0]))
 
@@ -34,7 +35,8 @@ class LatexTable:
         self.smart_latex = smart_latex
         self.escape_under_score = escape_under_score
         self.alignment = self._auto_align() if alignment is None else alignment
-
+        self.rotate_header = rotate_header
+        self.latex_map = {} if latex_map is None else latex_map
         self.cell_color = {}#map of tuple (i,j)=>(r, g, b) #i,j include header
 
     def _auto_align(self):
@@ -44,7 +46,9 @@ class LatexTable:
         return '[RGB]{%d,%d,%d}'%(c[0], c[1], c[2])
 
     def _format(self, s):
-        if isinstance(s, float):
+        if s in self.latex_map:
+            return self.latex_map[s]
+        elif isinstance(s, float):
             return self.float_format%s
         elif isinstance(s, int):
             return self.int_format%s
@@ -92,7 +96,11 @@ class LatexTable:
     def _prepare(self): #return list of list
         ret = []
         if self.headers:
-            ret.append(map(self._format, self.headers))
+            tmp = map(self._format, self.headers)
+            if self.rotate_header:
+                tmp = map(lambda x: '\\rotatebox{90}{%s}'%x, tmp)
+
+            ret.append(tmp)
         for x in self.data:
             ret.append(map(self._format, x))
         return ret
@@ -102,6 +110,7 @@ class LatexTable:
         ret = ''
         if len(self.cell_color) != 0:
             ret += '%\\usepackage[table]{xcolor} % include this for color\n'
+            ret += '%\\usepackage{rotating} % include this for rotate header\n'
             ret += '%\\documentclass[xcolor=table]{beamer} % for beamer\n'
         ret += '\\begin{tabular}{%s}\n'%(self.alignment)
         ret += hline
@@ -122,7 +131,7 @@ class LatexTable:
 class LatexFactory:
 
     @classmethod
-    def build_matrix(self, vnames, matrix):
+    def build_matrix(self, vnames, matrix, latex_map=None):
         """build latex correlation matrix"""
         #ret_link  = '<a onclick="$(\'#%s\').toggle()" href="#">Show Latex</a>'%uid
         headers = ['']+list(vnames)
@@ -137,7 +146,8 @@ class LatexFactory:
                 # +1 for header on the side and top
             data.append(tmp)
 
-        table = LatexTable(headers=headers, data=data)
+        table = LatexTable(headers=headers, data=data, rotate_header=True,
+                           latex_map=latex_map)
         table.float_format = '%3.2f'
         for (i, j), c in color.items():
             table.set_cell_color(i, j, c)
@@ -145,7 +155,7 @@ class LatexFactory:
 
     @classmethod
     def build_param_table(self, mps, merr=None, float_format='%5.3e',
-                        smart_latex=True):
+                        smart_latex=True, latex_map=None):
         """build latex parameter table"""
         headers = ['', 'Name', 'Value', 'Para Error', 'Error+',
                    'Error-', 'Limit+', 'Limit-', 'FIXED', ]
@@ -172,6 +182,6 @@ class LatexFactory:
             data.append(tmp)
         alignment = '|c|r|r|r|r|r|r|r|c|'
         ret = LatexTable(data, headers=headers, alignment=alignment,
-                        smart_latex=smart_latex)
+                        smart_latex=smart_latex, latex_map=latex_map)
         ret.float_format = float_format
         return ret

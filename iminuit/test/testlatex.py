@@ -11,9 +11,16 @@ def test_table_color():
     ltt = LatexTable(data=[['alpha',10.123],['alpha_s',30]])
     ltt.set_cell_color(0,0,(111,123,95))
     assert_equal(str(ltt),
-    '%\\usepackage[table]{xcolor} % include this for color\n%\\documentclass[xcolor=table]{beamer} % for beamer\n\\begin{tabular}{|c|c|}\n\\hline\n\\cellcolor[RGB]{111,123,95} $\\alpha$ &     10.123\\\\\n\\hline\n$\\alpha_{s}$ & 30\\\\\n\\hline\n\\end{tabular}'
+    '%\\usepackage[table]{xcolor} % include this for color\n%\\usepackage{rotating} % include this for rotate header\n%\\documentclass[xcolor=table]{beamer} % for beamer\n\\begin{tabular}{|c|c|}\n\\hline\n\\cellcolor[RGB]{111,123,95} $\\alpha$ &     10.123\\\\\n\\hline\n$\\alpha_{s}$ & 30\\\\\n\\hline\n\\end{tabular}'
     )
 
+def test_latexmap():
+    ltt = LatexTable(data=[['alpha',10.123,20],['alpha_s',30,40]],
+                     latex_map={'alpha':'beta'})
+    assert_equal(
+        ltt._format('alpha'),
+        'beta'
+        )
 
 def test_smartlatex():
     ltt = LatexTable(data=[['alpha',10.123,20],['alpha_s',30,40]])

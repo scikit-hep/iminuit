@@ -147,7 +147,7 @@ class HtmlFrontend:
         display_html(to_print, raw=True)
 
     def print_param(self, mps, merr=None, float_format='%5.3e',
-                    smart_latex=True):
+                    smart_latex=True, latex_map=None):
         """print list of parameters
         Arguments:
 
@@ -200,7 +200,8 @@ class HtmlFrontend:
             </table>
         """
         ltable = LatexFactory.build_param_table(mps, merr,
-                float_format=float_format, smart_latex=smart_latex)
+                float_format=float_format, smart_latex=smart_latex,
+                latex_map=latex_map)
 
         #rows = str(ltable).count('\n')+1
         to_print += self.hidden_table(str(ltable), uid)
@@ -222,9 +223,10 @@ class HtmlFrontend:
             """%(uid, rows, s)
         return ret
 
-    def print_matrix(self, vnames, matrix):
+    def print_matrix(self, vnames, matrix, latex_map=None):
         latexuid = randid()
-        latextable = LatexFactory.build_matrix(vnames, matrix)
+        latextable = LatexFactory.build_matrix(vnames, matrix,
+                                               latex_map=latex_map)
         to_print = """
             <table>
                 <tr>
