@@ -469,11 +469,11 @@ cdef class Minuit:
         return ret
 
 
-    def print_matrix(self):
+    def print_matrix(self, **kwds):
         """show error_matrix"""
         matrix = self.matrix(correlation=True)
         vnames = self.list_of_vary_param()
-        self.frontend.print_matrix(vnames, matrix)
+        self.frontend.print_matrix(vnames, matrix, **kwds)
 
 
     def latex_matrix(self):
