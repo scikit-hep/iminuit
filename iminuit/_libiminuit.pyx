@@ -511,13 +511,14 @@ cdef class Minuit:
         return tmp
 
     #dealing with frontend conversion
-    def print_param(self):
-        """print current parameter state"""
+    def print_param(self, **kwds):
+        """print current parameter state. Extra keyword arguments will
+        be passed to frontend.print_param"""
         if self.last_upst is NULL:
-            self.print_initial_param()
+            self.print_initial_param(**kwds)
             return
         p = self._prepare_param()
-        self.frontend.print_param(p, self.merrors_struct)
+        self.frontend.print_param(p, self.merrors_struct, **kwds)
 
 
     def latex_param(self):
@@ -549,10 +550,10 @@ cdef class Minuit:
         return tmp
 
 
-    def print_initial_param(self):
+    def print_initial_param(self, **kwds):
         """Print initial parameters"""
         p = self._prepare_initial_param()
-        self.frontend.print_param(p, {})
+        self.frontend.print_param(p, {}, **kwds)
 
 
     def latex_initial_param(self):
