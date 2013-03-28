@@ -803,7 +803,7 @@ Default 2</p>
 <dl class="attribute">
 <dt id="iminuit.Minuit.ncalls">
 <tt class="descname">ncalls</tt><a class="headerlink" href="#iminuit.Minuit.ncalls" title="Permalink to this definition">¶</a></dt>
-<dd><p>ncalls: &#8216;double&#8217;</p>
+<dd><p>ncalls: &#8216;int&#8217;</p>
 </dd></dl>
 
 <dl class="method">
@@ -838,7 +838,7 @@ Default 2</p>
 
 <dl class="method">
 <dt id="iminuit.Minuit.print_initial_param">
-<tt class="descname">print_initial_param</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_initial_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">print_initial_param</tt><big>(</big><em>self</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_initial_param" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print initial parameters</p>
 </dd></dl>
 
@@ -850,14 +850,15 @@ Default 2</p>
 
 <dl class="method">
 <dt id="iminuit.Minuit.print_matrix">
-<tt class="descname">print_matrix</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_matrix" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">print_matrix</tt><big>(</big><em>self</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>show error_matrix</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="iminuit.Minuit.print_param">
-<tt class="descname">print_param</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_param" title="Permalink to this definition">¶</a></dt>
-<dd><p>print current parameter state</p>
+<tt class="descname">print_param</tt><big>(</big><em>self</em>, <em>**kwds</em><big>)</big><a class="headerlink" href="#iminuit.Minuit.print_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>print current parameter state. Extra keyword arguments will
+be passed to frontend.print_param</p>
 </dd></dl>
 
 <dl class="method">

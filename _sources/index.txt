@@ -22,6 +22,8 @@ In a nutshell,::
     print m.values #{'x':2,'y':3,'z':4}
     print m.errors
 
+If you are interested in fitting a curve/distribution, take a look at `probfit <http://iminuit.github.com/probfit/>`_. 
+
 .. _lcg-minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
 .. _PyMinuit: http://code.google.com/p/pyminuit/
 .. _ipythonnb: http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html
@@ -54,7 +56,7 @@ All the tutorials are in tutorial directory. You can view it online too.
 - `Quick start <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb>`_
 - `Hard Core Cython tutorial <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb>`_.
   If you need to do a huge likelihood fit that need speed.
-  This is for you. If you don't care, just use dist_fit. It's a fun
+  This is for you. If you don't care, just use `probfit <http://iminuit.github.com/probfit/>`_. It's a fun
   read though I think.
 
 
