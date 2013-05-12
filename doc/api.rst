@@ -7,7 +7,7 @@ Full API Documentation
 
 Quick Summary
 -------------
-These are the things you will use a lot.
+These are the things you will use a lot:
 
 .. autosummary::
     util.describe
@@ -122,8 +122,8 @@ fitarguments.
     :members:
     :undoc-members:
 
-Return Value Struct:
---------------------
+Return Value Struct
+-------------------
 
 iminuit uses various structs as return value. This section lists the struct
 and all it's field
@@ -307,5 +307,5 @@ Function Signature Extraction Ordering
     .. note::
 
         If you are unsure what minuit will parse your function signature as
-        , you can use :func:`describe` which returns tuple of arument names
+        , you can use :func:`describe` which returns tuple of argument names
         minuit will use as call signature.
