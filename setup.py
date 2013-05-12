@@ -25,7 +25,7 @@ setup(
     long_description=''.join(open('README.rst').readlines()[4:]),
     author='Piti Ongmongkolkul',
     author_email='piti118@gmail.com',
-    url='https://piti118.github.com/iminuit',
+    url='http://iminuit.github.io/iminuit/',
     download_url='http://pypi.python.org/packages/source/i/'
             'iminuit/iminuit-%s.tar.gz' % __version__,
     package_dir={'iminuit': 'iminuit'},

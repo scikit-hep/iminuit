@@ -4,7 +4,7 @@
    :target: https://travis-ci.org/iminuit/iminuit
 
 iminuit
---------
+-------
 
 Interactive IPython Friendly Mimizer based on `SEAL Minuit <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/release/download.html>`_.
 (It's included in the package no need to install it separately)
@@ -52,7 +52,7 @@ All the tutorials are in tutorial directory. You can view it online too.
 Documentation
 -------------
 
-http://iminuit.github.com/iminuit/
+http://iminuit.github.io/iminuit/
 
 Technical Stuff
 ---------------

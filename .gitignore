@@ -12,6 +12,9 @@ html
 dist
 MANIFEST
 *.o
+.project
+.pydevproject
+.settings
 Untitled*.ipynb
 Untitled*.py
 
