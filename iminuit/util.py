@@ -33,9 +33,10 @@ class Struct:
 def arguments_from_docstring(doc):
     """Parse first line of docstring for argument name
 
-    Docstring should be of the form 'min(iterable[, key=func])\n'.
+    Docstring should be of the form ``min(iterable[, key=func])``.
+
     It can also parse cython docstring of the form
-    Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])
+    ``Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])``
     """
     if doc is None:
         raise RuntimeError('__doc__ is None')

@@ -306,7 +306,7 @@ from iminuit import Minuit, describe, Struct
 # <codecell>
 
 #this is very useful if you want to build a generic cost functor
-#this is actually how dist_fit is implemented
+#this is actually how probfit is implemented
 from iminuit.util import make_func_code
 x = [1,2,3,4,5]
 y = [2,4,6,8,10]# y=2x
