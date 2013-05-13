@@ -249,6 +249,12 @@ def test_mnprofile():
     m.migrad()
     m.mnprofile('y')
 
+@raises(RuntimeError)
+def test_printfmin_uninitialized():
+    #issue 85
+    def f(x): return 2 + 3 * x
+    fitter = Minuit(f)
+    fitter.print_fmin()
 
 class TestErrorMatrix(TestCase):
 
