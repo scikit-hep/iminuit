@@ -567,6 +567,8 @@ cdef class Minuit:
         """print current function minimum state"""
         #cdef MnUserParameterState ust = MnUserParameterState(
         #                               self.cfmin.userState())
+        if self.cfmin is NULL:
+            raise RuntimeError("Function minimum has not been calculated.")
         sfmin = cfmin2struct(self.cfmin)
         ncalls = 0 if self.pyfcn is NULL else self.pyfcn.getNumCall()
 
