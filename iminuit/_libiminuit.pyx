@@ -1188,7 +1188,7 @@ cdef class Minuit:
                        for k,v in self.merrors_struct.items()})
 
 
-    cdef MnUserParameterState* initialParameterState(self):
+    cdef MnUserParameterState* initialParameterState(self) except *:
         """construct parameter state from initial array.
         caller is responsible for cleaning up the pointer
         """
@@ -1202,7 +1202,7 @@ cdef class Minuit:
                 lb,ub = self.initiallimit[v]
                 if lb >= ub:
                     raise ValueError(
-                        'limit for parameter %s is invalid. %r'(v,(lb,ub)))
+                        'limit for parameter %s is invalid. %r'%(v,(lb,ub)))
                 ret.setLimits(v,lb,ub)
         for v in self.parameters:
             if self.initialfix[v]:
