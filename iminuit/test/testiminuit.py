@@ -256,6 +256,14 @@ def test_printfmin_uninitialized():
     fitter = Minuit(f)
     fitter.print_fmin()
 
+@raises(ValueError)
+def test_reverse_limit():
+    #issue 94
+    def f(x,y,z):
+        return (x-2)**2 + (y-3)**2 + (z-4)**2
+    m = Minuit(f, limit_x=(3., 2.))
+    m.migrad()
+
 class TestErrorMatrix(TestCase):
 
     def setUp(self):
