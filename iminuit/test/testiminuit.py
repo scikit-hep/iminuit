@@ -122,6 +122,27 @@ def test_fix_param():
     assert_false('y' in free_param)
     assert_false('z' in fix_param)
 
+def test_fitarg_oneside():
+    m = Minuit(func4, print_level=-1, y=10., fix_y=True, limit_x=(None, 20.),
+        pedantic=False)
+    fitarg = m.fitarg
+    assert_almost_equal(fitarg['y'], 10.)
+    assert_true(fitarg['fix_y'])
+    assert_equal(fitarg['limit_x'], (None, 20))
+    m.migrad()
+
+    fitarg = m.fitarg
+
+    assert_almost_equal(fitarg['y'], 10.)
+    assert_almost_equal(fitarg['x'], 2., places=2)
+    assert_almost_equal(fitarg['z'], 7., places=2)
+
+    assert_true('error_y' in fitarg)
+    assert_true('error_x' in fitarg)
+    assert_true('error_z' in fitarg)
+
+    assert_true(fitarg['fix_y'])
+    assert_equal(fitarg['limit_x'], (None, 20))
 
 def test_fitarg():
     m = Minuit(func4, print_level=-1, y=10., fix_y=True, limit_x=(0, 20.),
