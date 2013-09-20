@@ -540,11 +540,13 @@ cdef class Minuit:
             is_fixed = self.initialfix[vname],
             has_limits = self.initiallimit[vname] is not None,
             lower_limit = self.initiallimit[vname][0]
-                if self.initiallimit[vname] is not None else -999,
+                if self.initiallimit[vname] is not None else None,
             upper_limit = self.initiallimit[vname][1]
-                if self.initiallimit[vname] is not None else 999,
-            has_lower_limit = self.initiallimit[vname] is not None,
+                if self.initiallimit[vname] is not None else None,
+            has_lower_limit = self.initiallimit[vname] is not None
+                                and self.initiallimit[vname][0] is not None,
             has_upper_limit = self.initiallimit[vname] is not None
+                                and self.initiallimit[vname][1] is not None
             )
             tmp.append(mps)
         return tmp
@@ -1193,8 +1195,8 @@ cdef class Minuit:
         caller is responsible for cleaning up the pointer
         """
         cdef MnUserParameterState* ret = new MnUserParameterState()
-        cdef double lb
-        cdef double ub
+        cdef object lb
+        cdef object ub
         for v in self.parameters:
             ret.add(v,self.initialvalue[v],self.initialerror[v])
         for v in self.parameters:
@@ -1203,7 +1205,8 @@ cdef class Minuit:
                 if lb >= ub:
                     raise ValueError(
                         'limit for parameter %s is invalid. %r'%(v,(lb,ub)))
-                ret.setLimits(v,lb,ub)
+                if lb is not None: ret.setLowerLimit(v, lb)
+                if ub is not None: ret.setUpperLimit(v, ub)
         for v in self.parameters:
             if self.initialfix[v]:
                 ret.fix(v)
