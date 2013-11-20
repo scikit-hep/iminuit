@@ -1202,7 +1202,7 @@ cdef class Minuit:
         for v in self.parameters:
             if self.initiallimit[v] is not None:
                 lb,ub = self.initiallimit[v]
-                if lb >= ub:
+                if lb is not None and ub is not None and lb >= ub:
                     raise ValueError(
                         'limit for parameter %s is invalid. %r'%(v,(lb,ub)))
                 if lb is not None: ret.setLowerLimit(v, lb)
