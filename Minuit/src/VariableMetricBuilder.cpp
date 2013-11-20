@@ -65,7 +65,7 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
     FunctionMinimum min(seed, fcn.up() );
 
     if(edm < 0.) {
-        std::cout<<"VariableMetricBuilder: initial matrix not pos.def."<<std::endl;
+        //std::cout<<"VariableMetricBuilder: initial matrix not pos.def."<<std::endl;
         //assert(!seed.error().isPosDef());
         return min;
     }
@@ -93,7 +93,7 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
         // second time check for validity of function minimum
         if (ipass > 0) {
             if(!min.isValid()) {
-                std::cout<<"FunctionMinimum is invalid."<<std::endl;
+                //std::cout<<"FunctionMinimum is invalid."<<std::endl;
                 return min;
             }
         }
@@ -117,10 +117,10 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
             #ifdef DEBUG
                 std::cout << "edm after Hesse calculation " << edm << std::endl;
             #endif
-            if (edm > edmval) {
-                std::cout << "VariableMetricBuilder: Tolerance is not sufficient - edm is " << edm << " requested " << edmval
-                << " continue the minimization" << std::endl;
-            }
+            //if (edm > edmval) {
+                //std::cout << "VariableMetricBuilder: Tolerance is not sufficient - edm is " << edm << " requested " << edmval
+                //<< " continue the minimization" << std::endl;
+           // }
             min.add( result.back() );
         }
 
@@ -191,8 +191,8 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
 
         double gdel = inner_product(step, s0.gradient().grad());
         if(gdel > 0.) {
-            std::cout<<"VariableMetricBuilder: matrix not pos.def."<<std::endl;
-            std::cout<<"gdel > 0: "<<gdel<<std::endl;
+            //std::cout<<"VariableMetricBuilder: matrix not pos.def."<<std::endl;
+            //std::cout<<"gdel > 0: "<<gdel<<std::endl;
             MnPosDef psdf;
             s0 = psdf(s0, prec);
             step = -1.*s0.error().invHessian()*s0.gradient().vec();
@@ -200,7 +200,7 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
             //       std::cout << "After MnPosdef - error  " << s0.error().invHessian() << " gradient " << s0.gradient().vec() << " step " << step << std::endl;
             // #endif
             gdel = inner_product(step, s0.gradient().grad());
-            std::cout<<"gdel: "<<gdel<<std::endl;
+            //std::cout<<"gdel: "<<gdel<<std::endl;
             if(gdel > 0.) {
                 result.push_back(s0);
                 return FunctionMinimum(seed, result, fcn.up());
@@ -208,9 +208,9 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
         }
         MnParabolaPoint pp = lsearch(fcn, s0.parameters(), step, gdel, prec);
         if(fabs(pp.y() - s0.fval()) < fabs(s0.fval())*prec.eps() ) {
-            if(VariableMetricBuilder::print_level>=1){
-                std::cout<<"VariableMetricBuilder: warning: no improvement in line search  " << std::endl;
-            }
+            //if(VariableMetricBuilder::print_level>=1){
+            //    std::cout<<"VariableMetricBuilder: warning: no improvement in line search  " << std::endl;
+            //}
             // no improvement exit   (is it really needed LM ? in vers. 1.22 tried alternative )
             break;
         }
@@ -232,8 +232,8 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
 
 
         if(edm < 0.) {
-            std::cout<<"VariableMetricBuilder: matrix not pos.def."<<std::endl;
-            std::cout<<"edm < 0"<<std::endl;
+            //std::cout<<"VariableMetricBuilder: matrix not pos.def."<<std::endl;
+            //std::cout<<"edm < 0"<<std::endl;
             MnPosDef psdf;
             s0 = psdf(s0, prec);
             edm = estimator().estimate(g, s0.error());
@@ -270,19 +270,19 @@ FunctionMinimum VariableMetricBuilder::minimum(const MnFcn& fcn,
     } while(edm > edmval && fcn.numOfCalls() < maxfcn);
 
     if(fcn.numOfCalls() >= maxfcn) {
-        std::cout<<"VariableMetricBuilder: call limit exceeded."<<std::endl;
+        //std::cout<<"VariableMetricBuilder: call limit exceeded."<<std::endl;
         return FunctionMinimum(seed, result, fcn.up(), FunctionMinimum::MnReachedCallLimit());
     }
 
     if(edm > edmval) {
         if(edm < fabs(prec.eps2()*result.back().fval())) {
-            std::cout<<"VariableMetricBuilder: machine accuracy limits further improvement."<<std::endl;
+            //std::cout<<"VariableMetricBuilder: machine accuracy limits further improvement."<<std::endl;
             return FunctionMinimum(seed, result, fcn.up());
         } else if(edm < 10.*edmval) {
             return FunctionMinimum(seed, result, fcn.up());
         } else {
-            std::cout<<"VariableMetricBuilder: finishes without convergence."<<std::endl;
-            std::cout<<"VariableMetricBuilder: edm= "<<edm<<" requested: "<<edmval<<std::endl;
+            //std::cout<<"VariableMetricBuilder: finishes without convergence."<<std::endl;
+            //std::cout<<"VariableMetricBuilder: edm= "<<edm<<" requested: "<<edmval<<std::endl;
             return FunctionMinimum(seed, result, fcn.up(), FunctionMinimum::MnAboveMaxEdm());
         }
     }
