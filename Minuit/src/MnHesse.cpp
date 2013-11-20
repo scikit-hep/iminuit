@@ -102,8 +102,8 @@ MinimumState MnHesse::operator()(const MnFcn& mfcn, const MinimumState& st, cons
       }
       
 L26:  
-      std::cout<<"MnHesse: 2nd derivative zero for parameter "<<i<<std::endl;
-      std::cout<<"MnHesse fails and will return diagonal matrix "<<std::endl;
+      //std::cout<<"MnHesse: 2nd derivative zero for parameter "<<i<<std::endl;
+      //std::cout<<"MnHesse fails and will return diagonal matrix "<<std::endl;
 
       for(unsigned int j = 0; j < n; j++) {
 	double tmp = g2(j) < prec.eps2() ? 1. : 1./g2(j);
@@ -133,8 +133,8 @@ L30:
     vhmat(i,i) = g2(i);
     if(mfcn.numOfCalls()  > maxcalls) {
       //std::cout<<"maxcalls " << maxcalls << " " << mfcn.numOfCalls() << "  " <<   st.nfcn() << std::endl;
-      std::cout<<"MnHesse: maximum number of allowed function calls exhausted."<<std::endl;  
-      std::cout<<"MnHesse fails and will return diagonal matrix "<<std::endl;
+      //std::cout<<"MnHesse: maximum number of allowed function calls exhausted."<<std::endl;  
+      //std::cout<<"MnHesse fails and will return diagonal matrix "<<std::endl;
       for(unsigned int j = 0; j < n; j++) {
 	double tmp = g2(j) < prec.eps2() ? 1. : 1./g2(j);
 	vhmat(j,j) = tmp < prec.eps2() ? 1. : tmp;
@@ -170,8 +170,8 @@ L30:
   vhmat = tmp.invHessian();
   int ifail = invert(vhmat);
   if(ifail != 0) {
-    std::cout<<"MnHesse: matrix inversion fails!"<<std::endl;
-    std::cout<<"MnHesse fails and will return diagonal matrix."<<std::endl;
+    //std::cout<<"MnHesse: matrix inversion fails!"<<std::endl;
+    //std::cout<<"MnHesse fails and will return diagonal matrix."<<std::endl;
 
     MnAlgebraicSymMatrix tmpsym(vhmat.nrow());
     for(unsigned int j = 0; j < n; j++) {
@@ -241,8 +241,8 @@ MinimumError MnHesse::hessian(const MnFcn& mfcn, const MinimumState& st, const M
 	if(sag > prec.eps2()) break;
 	if(trafo.parameter(i).hasLimits()) {
 	  if(d > 0.5) {
-	    std::cout<<"second derivative zero for parameter "<<i<<std::endl;
-	    std::cout<<"return diagonal matrix "<<std::endl;
+	    //std::cout<<"second derivative zero for parameter "<<i<<std::endl;
+	    //std::cout<<"return diagonal matrix "<<std::endl;
 	    for(unsigned int j = 0; j < n; j++) {
 	      vhmat(j,j) = (g2(j) < prec.eps2() ? 1. : 1./g2(j));
  	      return MinimumError(vhmat, 1., false);
@@ -255,7 +255,7 @@ MinimumError MnHesse::hessian(const MnFcn& mfcn, const MinimumState& st, const M
 	d *= 10.;
       }
       if(sag < prec.eps2()) {
-	std::cout<<"MnHesse: internal loop exhausted, return diagonal matrix."<<std::endl;
+	//std::cout<<"MnHesse: internal loop exhausted, return diagonal matrix."<<std::endl;
 	for(unsigned int i = 0; i < n; i++)
 	  vhmat(i,i) = (g2(i) < prec.eps2() ? 1. : 1./g2(i));
 	return MinimumError(vhmat, 1., false);

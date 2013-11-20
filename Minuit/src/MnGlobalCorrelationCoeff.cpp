@@ -7,7 +7,7 @@ MnGlobalCorrelationCoeff::MnGlobalCorrelationCoeff(const MnAlgebraicSymMatrix& c
   MnAlgebraicSymMatrix inv(cov);
   int ifail = invert(inv);
   if(ifail != 0) {
-    std::cout<<"MnGlobalCorrelationCoeff: inversion of matrix fails."<<std::endl;
+    //std::cout<<"MnGlobalCorrelationCoeff: inversion of matrix fails."<<std::endl;
     theValid = false;
   } else {
 
