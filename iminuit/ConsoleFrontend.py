@@ -126,8 +126,8 @@ class ConsoleFrontend:
             tmp.append(nformat(merr[v].lower) if v in merr else blank)
             tmp.append(nformat(merr[v].upper) if v in merr else blank)
 
-            tmp.append(nformat(mp.lower_limit) if mp.has_limits else blank)
-            tmp.append(nformat(mp.upper_limit) if mp.has_limits else blank)
+            tmp.append(nformat(mp.lower_limit) if mp.has_upper_limit else blank)
+            tmp.append(nformat(mp.upper_limit) if mp.has_lower_limit else blank)
 
             tmp.append(
                 'FIXED' if mp.is_fixed else 'CONST' if mp.is_const else '')
