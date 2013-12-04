@@ -312,7 +312,9 @@ cdef class Minuit:
             ups = self.initialParameterState()
             strat = new MnStrategy(self.strategy)
             self.minimizer = \
-                    new MnMigrad(deref(self.pyfcn),deref(ups),deref(strat))
+                    new MnMigrad(deref(self.pyfcn), deref(ups), deref(strat))
+            for v in self.parameters:
+                print 'xxx', v, ups.value(v)
             del ups; ups=NULL
             del strat; strat=NULL
 
@@ -329,7 +331,7 @@ cdef class Minuit:
                 (not self.cfmin.isValid() and totalcalls < ncall):
             first=False
             self.cfmin = call_mnapplication_wrapper(
-                    deref(self.minimizer),ncall_round,self.tol)
+                    deref(self.minimizer), ncall_round, self.tol)
             del self.last_upst
             self.last_upst = new MnUserParameterState(self.cfmin.userState())
             totalcalls+=ncall_round#self.cfmin.nfcn()
@@ -1198,7 +1200,8 @@ cdef class Minuit:
         cdef object lb
         cdef object ub
         for v in self.parameters:
-            ret.add(v,self.initialvalue[v],self.initialerror[v])
+            ret.add(v, self.initialvalue[v], self.initialerror[v])
+
         for v in self.parameters:
             if self.initiallimit[v] is not None:
                 lb,ub = self.initiallimit[v]
@@ -1207,6 +1210,11 @@ cdef class Minuit:
                         'limit for parameter %s is invalid. %r'%(v,(lb,ub)))
                 if lb is not None: ret.setLowerLimit(v, lb)
                 if ub is not None: ret.setUpperLimit(v, ub)
+                #need to set value again
+                #taking care of internal/external transformation
+                ret.setValue(v, self.initialvalue[v])
+                ret.setError(v, self.initialerror[v])
+
         for v in self.parameters:
             if self.initialfix[v]:
                 ret.fix(v)
