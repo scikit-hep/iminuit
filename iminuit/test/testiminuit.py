@@ -274,7 +274,7 @@ def test_mnprofile():
 def test_printfmin_uninitialized():
     #issue 85
     def f(x): return 2 + 3 * x
-    fitter = Minuit(f)
+    fitter = Minuit(f, pedantic=False)
     fitter.print_fmin()
 
 @raises(ValueError)
@@ -282,7 +282,7 @@ def test_reverse_limit():
     #issue 94
     def f(x,y,z):
         return (x-2)**2 + (y-3)**2 + (z-4)**2
-    m = Minuit(f, limit_x=(3., 2.))
+    m = Minuit(f, limit_x=(3., 2.), pedantic=False)
     m.migrad()
 
 class TestErrorMatrix(TestCase):
