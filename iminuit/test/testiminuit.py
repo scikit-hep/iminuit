@@ -53,6 +53,18 @@ def func4(x, y, z):
 def func5(x, long_variable_name_really_long_why_does_it_has_to_be_this_long, z):
     return (x**2)+(z**2)+long_variable_name_really_long_why_does_it_has_to_be_this_long**2
 
+def func6(x, m, s, A):
+    return A/((x - m) ** 2 + s ** 2)
+
+data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
+          3.372, 2.377, 4.307, 2.784, 3.328, 2.143, 1.402, 1.44,
+          1.313, 1.682, 0.886, 0.0, 0.266, 0.3]
+data_x = list(range(len(data_y)))
+
+def chi2(m, s, A):
+    '''Chi2 fitting routine'''
+    return sum(((func6(x, m, s, A)-y) ** 2 for x, y in zip(data_x, data_y)))
+
 
 def functesthelper(f):
     m = Minuit(f, print_level=0, pedantic=False)
@@ -318,3 +330,15 @@ class TestErrorMatrix(TestCase):
         actual = self.m.matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]
         assert_array_almost_equal(actual, expected)
+
+def test_chi2_fit():
+    '''Fit a curve to data.
+    '''
+    m = Minuit(chi2, s=2., error_A=0.1, errordef=0.01,
+               print_level=0,pedantic=False)
+    m.migrad()
+    output = [round(10 * m.values['A']), round(100 * m.values['s']),
+              round(100 * m.values['m'])]
+    expected = [round(10 * 64.375993), round(100 * 4.267970), 
+                round(100 * 9.839172)]
+    assert_array_almost_equal(output, expected)
