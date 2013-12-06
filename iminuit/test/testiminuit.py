@@ -5,18 +5,19 @@ from nose.tools import (raises, assert_equal, assert_true, assert_false,
 from iminuit import Minuit
 from math import sqrt
 
-
-def assert_array_almost_equal(actual, expected):
-    """
-    Helper function to test if all elements of a list of lists
-    are almost equal.
-    Like numpy.testing.assert_array_almost_equal,
-    which we can't use here because we don't
-    want to depend on numpy.
-    """
-    for row in range(len(actual)):
-        for col in range(len(actual[0])):
-            assert_almost_equal(actual[row][col], expected[row][col])
+try:
+   from numpy.testing import assert_array_almost_equal
+except ImportError:
+    def assert_array_almost_equal(actual, expected):
+        """
+        Helper function to test if all elements of a list of lists
+        are almost equal.
+        A replacement for numpy.testing.assert_array_almost_equal,
+        if it is not installed
+        """
+        for row in range(len(actual)):
+            for col in range(len(actual[0])):
+                assert_almost_equal(actual[row][col], expected[row][col])
 
 
 class Func_Code:
