@@ -89,10 +89,16 @@ def test_non_invertible():
         return (x*y)**2
     m = Minuit(f, pedantic=False, print_level=0)
     result = m.migrad()
-    m.hesse()
+    with warnings.catch_warnings():
+         warnings.simplefilter('error')
+         try:
+             m.hesse()
+             raise RuntimeError('Hesse did not raise a warning')
+         except Warning:
+            pass
     try:
         m.matrix()
-        assert False #shouldn't reach here
+        raise RuntimeError('Matrix did not raise an error') #shouldn't reach here
     except RuntimeError as e:
         pass
 
