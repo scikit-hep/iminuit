@@ -313,8 +313,6 @@ cdef class Minuit:
             strat = new MnStrategy(self.strategy)
             self.minimizer = \
                     new MnMigrad(deref(self.pyfcn), deref(ups), deref(strat))
-            for v in self.parameters:
-                print 'xxx', v, ups.value(v)
             del ups; ups=NULL
             del strat; strat=NULL
 
