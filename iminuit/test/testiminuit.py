@@ -184,6 +184,7 @@ def test_minos_single():
     assert_almost_equal(m.merrors[('x', 1.0)], sqrt(5))
 
 
+@raises(RuntimeWarning)
 def test_minos_single_fixed():
     m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
     m.migrad()
