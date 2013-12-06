@@ -186,21 +186,22 @@ def test_minos_single():
 
 
 @raises(RuntimeWarning)
-def test_minos_single_fixed():
+def test_minos_single_fixed_raising():
     m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
     m.migrad()
-    ret = m.minos('x')
-    assert_equal(ret, None)
 
-    #Let's do it again to capture the warning
     with warnings.catch_warnings():
-        try:
-            ret = m.minos('x')
-        except RuntimeWarning, e:
-	    raise e
+        warnings.simplefilter('error')
+        ret = m.minos('x')
 
-    #assert_almost_equal(m.merrors[('x',-1.0)],-sqrt(5))
-    #assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
+
+def test_minos_single_fixed_result():
+    m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
+    m.migrad()
+    with warnings.catch_warnings():
+         warnings.simplefilter('ignore')
+         ret = m.minos('x')
+    assert_equal(ret, None)
 
 
 @raises(RuntimeError)
