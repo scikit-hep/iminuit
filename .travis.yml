@@ -17,5 +17,5 @@ install:
 script:
   - mkdir empty
   - cd empty
-  - nosetests numexpr
+  - nosetests iminuit
 
