@@ -4,6 +4,18 @@ python:
   - 2.6
   - 2.7
 
+before_install:
+  - uname -a
+  - free -m
+  - df -h
+  - ulimit -a
+  - python -V
+
+install:
+  - pip install .
+
 script:
-    - python setup.py build_ext -i
-    - nosetests
+  - mkdir empty
+  - cd empty
+  - nosetests numexpr
+
