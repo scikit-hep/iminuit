@@ -380,7 +380,7 @@ cdef class Minuit:
             self.print_param()
             self.print_matrix()
 
-        return self.get_param_states()
+        return self. param_states()
 
 
     def minos(self, var = None, sigma = 1., unsigned int maxcall=1000):
@@ -1206,8 +1206,9 @@ cdef class Minuit:
                 if lb is not None and ub is not None and lb >= ub:
                     raise ValueError(
                         'limit for parameter %s is invalid. %r'%(v,(lb,ub)))
-                if lb is not None: ret.setLowerLimit(v, lb)
-                if ub is not None: ret.setUpperLimit(v, ub)
+                if lb is not None and ub is None: ret.setLowerLimit(v, lb)
+                if ub is not None and lb is None: ret.setUpperLimit(v, ub)
+                if lb is not None and ub is not None: ret.setLimits(v, lb, ub)
                 #need to set value again
                 #taking care of internal/external transformation
                 ret.setValue(v, self.initialvalue[v])
