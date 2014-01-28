@@ -380,7 +380,7 @@ cdef class Minuit:
             self.print_param()
             self.print_matrix()
 
-        return self. param_states()
+        return self.get_param_states()
 
 
     def minos(self, var = None, sigma = 1., unsigned int maxcall=1000):
