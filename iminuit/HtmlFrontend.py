@@ -179,7 +179,7 @@ class HtmlFrontend:
             minos_p, minos_m = (0., 0.) if merr is None or mp.name not in merr else\
                                (merr[mp.name].upper, merr[mp.name].lower)
             limit_p = '' if not mp.has_upper_limit else mp.upper_limit
-            limit_m = '' if not mp.has_lower_limit else mp.upper_limit
+            limit_m = '' if not mp.has_lower_limit else mp.lower_limit
             fixed = 'FIXED' if mp.is_fixed else ''
             j = i+1
             content = """
