@@ -353,8 +353,8 @@ def test_oneside():
                               list(m_nolimit.values.values()), decimal=4)
 
 def test_oneside_outside():
-   m = Minuit(func3, limit_x=(None, 1), pedantic=False, print_level=0)
-   m.migrad()
-   assert_almost_equal(m.values['x'], 1)
-   assert_almost_equal(m.values['y'], 5)
+    m = Minuit(func3, limit_x=(None, 1), pedantic=False, print_level=0)
+    m.migrad()
+    assert_almost_equal(m.values['x'], 1)
+    assert_almost_equal(m.values['y'], 5)
 
