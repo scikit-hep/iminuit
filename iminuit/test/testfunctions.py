@@ -34,10 +34,8 @@ def test_ackleys():
     m = Minuit(ackleys, x=1.5 * random.random(), y=1.5 * random.random(),
                error_x=1.7, error_y=1.7,
                pedantic=False, print_level=0)
-    print m.values
     m.migrad()
-    print m.fval
-    print m.values
+
     assert m.fval < 1e-5
     assert_array_almost_equal(m.args, [0, 0], decimal=3)
 
@@ -71,7 +69,6 @@ def test_matyas():
                pedantic=False, print_level=0)
     m.migrad()
 
-    print m.fval, m.args
     assert m.fval < 1e-26
     assert_array_almost_equal(m.args, [0, 0], decimal=12)
 
