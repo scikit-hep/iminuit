@@ -1,21 +1,23 @@
+import warnings
 from unittest import TestCase
 from nose.tools import (raises, assert_equal, assert_true, assert_false,
     assert_almost_equal)
 from iminuit import Minuit
 from math import sqrt
 
-
-def assert_array_almost_equal(actual, expected):
-    """
-    Helper function to test if all elements of a list of lists
-    are almost equal.
-    Like numpy.testing.assert_array_almost_equal,
-    which we can't use here because we don't
-    want to depend on numpy.
-    """
-    for row in range(len(actual)):
-        for col in range(len(actual[0])):
-            assert_almost_equal(actual[row][col], expected[row][col])
+try:
+   from numpy.testing import assert_array_almost_equal
+except ImportError:
+    def assert_array_almost_equal(actual, expected):
+        """
+        Helper function to test if all elements of a list of lists
+        are almost equal.
+        A replacement for numpy.testing.assert_array_almost_equal,
+        if it is not installed
+        """
+        for row in range(len(actual)):
+            for col in range(len(actual[0])):
+                assert_almost_equal(actual[row][col], expected[row][col])
 
 
 class Func_Code:
@@ -50,6 +52,18 @@ def func4(x, y, z):
 
 def func5(x, long_variable_name_really_long_why_does_it_has_to_be_this_long, z):
     return (x**2)+(z**2)+long_variable_name_really_long_why_does_it_has_to_be_this_long**2
+
+def func6(x, m, s, A):
+    return A/((x - m) ** 2 + s ** 2)
+
+data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
+          3.372, 2.377, 4.307, 2.784, 3.328, 2.143, 1.402, 1.44,
+          1.313, 1.682, 0.886, 0.0, 0.266, 0.3]
+data_x = list(range(len(data_y)))
+
+def chi2(m, s, A):
+    '''Chi2 fitting routine'''
+    return sum(((func6(x, m, s, A)-y) ** 2 for x, y in zip(data_x, data_y)))
 
 
 def functesthelper(f):
@@ -88,10 +102,16 @@ def test_non_invertible():
         return (x*y)**2
     m = Minuit(f, pedantic=False, print_level=0)
     result = m.migrad()
-    m.hesse()
+    with warnings.catch_warnings():
+         warnings.simplefilter('error')
+         try:
+             m.hesse()
+             raise RuntimeError('Hesse did not raise a warning')
+         except Warning:
+            pass
     try:
         m.matrix()
-        assert False #shouldn't reach here
+        raise RuntimeError('Matrix did not raise an error') #shouldn't reach here
     except RuntimeError as e:
         pass
 
@@ -184,13 +204,23 @@ def test_minos_single():
     assert_almost_equal(m.merrors[('x', 1.0)], sqrt(5))
 
 
-def test_minos_single_fixed():
+@raises(RuntimeWarning)
+def test_minos_single_fixed_raising():
     m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
     m.migrad()
-    ret = m.minos('x')
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        ret = m.minos('x')
+
+
+def test_minos_single_fixed_result():
+    m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
+    m.migrad()
+    with warnings.catch_warnings():
+         warnings.simplefilter('ignore')
+         ret = m.minos('x')
     assert_equal(ret, None)
-    #assert_almost_equal(m.merrors[('x',-1.0)],-sqrt(5))
-    #assert_almost_equal(m.merrors[('x',1.0)],sqrt(5))
 
 
 @raises(RuntimeError)
@@ -274,7 +304,7 @@ def test_mnprofile():
 def test_printfmin_uninitialized():
     #issue 85
     def f(x): return 2 + 3 * x
-    fitter = Minuit(f)
+    fitter = Minuit(f, pedantic=False)
     fitter.print_fmin()
 
 @raises(ValueError)
@@ -282,7 +312,7 @@ def test_reverse_limit():
     #issue 94
     def f(x,y,z):
         return (x-2)**2 + (y-3)**2 + (z-4)**2
-    m = Minuit(f, limit_x=(3., 2.))
+    m = Minuit(f, limit_x=(3., 2.), pedantic=False)
     m.migrad()
 
 class TestErrorMatrix(TestCase):
@@ -300,3 +330,15 @@ class TestErrorMatrix(TestCase):
         actual = self.m.matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]
         assert_array_almost_equal(actual, expected)
+
+def test_chi2_fit():
+    '''Fit a curve to data.
+    '''
+    m = Minuit(chi2, s=2., error_A=0.1, errordef=0.01,
+               print_level=0,pedantic=False)
+    m.migrad()
+    output = [round(10 * m.values['A']), round(100 * m.values['s']),
+              round(100 * m.values['m'])]
+    expected = [round(10 * 64.375993), round(100 * 4.267970), 
+                round(100 * 9.839172)]
+    assert_array_almost_equal(output, expected)
