@@ -12,10 +12,8 @@ before_install:
   - python -V
 
 install:
-  - python setup.py install
+  - python setup.py build_ext -i
 
 script:
-  - mkdir empty
-  - cd empty
-  - nosetests iminuit
+  - nosetests
 
