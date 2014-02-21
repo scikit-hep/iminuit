@@ -335,10 +335,20 @@ def test_chi2_fit():
     '''Fit a curve to data.
     '''
     m = Minuit(chi2, s=2., error_A=0.1, errordef=0.01,
-               print_level=0,pedantic=False)
+               print_level=0, pedantic=False)
     m.migrad()
     output = [round(10 * m.values['A']), round(100 * m.values['s']),
               round(100 * m.values['m'])]
     expected = [round(10 * 64.375993), round(100 * 4.267970), 
                 round(100 * 9.839172)]
     assert_array_almost_equal(output, expected)
+
+def test_oneside()
+    m_limit = Minuit(fun3, pedantic=False, limit_x=(None, 3), print_level=0)
+    m_nolimit = Minuit(fun3, pedantic=False, print_level=0)
+    # Solution: x=2., y=5.
+    m_limit.migrad()
+    m_nolimit.migrad()
+    assert_array_almost_equal(list(m_limit.values.values()),
+                              list(m_nolimit.values.values()))
+
