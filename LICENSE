@@ -22,3 +22,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+Note:
+MIT license is GPL compatible, so it is an acceptable license for a wrapper,
+as can be seen here:
+http://www.gnu.org/licenses/old-licenses/gpl-2.0-faq.html#GPLWrapper
+http://www.gnu.org/licenses/old-licenses/gpl-2.0-faq.html#OrigBSD
+
+(L)GPL can be combined or included in code that does not impose more restrictive
+conditions.
