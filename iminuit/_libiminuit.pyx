@@ -270,7 +270,7 @@ cdef class Minuit:
 
 
     def migrad(self, int ncall=10000, resume=True, int nsplit=1,
-                     double precision=None):
+                     precision=None):
         """Run migrad.
 
         Migrad is an age-tested(over 40 years old, no kidding), super
@@ -297,7 +297,7 @@ cdef class Minuit:
               (ncall/nsplit). Default 1(no split).
 
             * **precision**: override miniut own's internal precision
-        
+
         **Return:**
 
             :ref:`function-minimum-sruct`, list of :ref:`minuit-param-struct`
