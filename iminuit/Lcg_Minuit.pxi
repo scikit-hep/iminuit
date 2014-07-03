@@ -17,6 +17,7 @@ cdef extern from "Minuit/FCNBase.h":
 cdef extern from "Minuit/MnApplication.h":
     cdef cppclass MnApplication:
          FunctionMinimum call "operator()" (int,double) except+
+         void setPrecision(double)
 
 cdef extern from "Minuit/MinuitParameter.h":
     cdef cppclass MinuitParameter:
@@ -90,6 +91,7 @@ cdef extern from "Minuit/MnMigrad.h":
     cdef cppclass MnMigrad(MnApplication):
         MnMigrad(FCNBase fcn, MnUserParameterState par, MnStrategy str ) except+
         FunctionMinimum call "operator()" (int,double) except+
+        void setPrecision(double)
 
 cdef extern from "Minuit/MnHesse.h":
     cdef cppclass MnHesse:

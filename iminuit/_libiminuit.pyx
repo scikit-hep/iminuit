@@ -269,7 +269,8 @@ cdef class Minuit:
         self.merrors_struct = {}
 
 
-    def migrad(self, int ncall=10000, resume=True, int nsplit=1):
+    def migrad(self, int ncall=10000, resume=True, int nsplit=1,
+                     precision=None):
         """Run migrad.
 
         Migrad is an age-tested(over 40 years old, no kidding), super
@@ -294,6 +295,8 @@ cdef class Minuit:
               ncall/nsplit is large enough. Otherwise, migrad will think
               that the minimum is invalid due to exceeding max call
               (ncall/nsplit). Default 1(no split).
+
+            * **precision**: override miniut own's internal precision
 
         **Return:**
 
@@ -325,6 +328,9 @@ cdef class Minuit:
         assert(ncall_round>0)
         totalcalls = 0
         first = True
+
+        if precision is not None: self.minimizer.setPrecision(precision)
+
         while (first) or \
                 (not self.cfmin.isValid() and totalcalls < ncall):
             first=False
