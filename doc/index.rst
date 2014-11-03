@@ -27,7 +27,7 @@ If you are interested in fitting a curve or distribution, take a look at
 
 .. _lcg-minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
 .. _PyMinuit: http://code.google.com/p/pyminuit/
-.. _ipythonnb: http://ipython.org/ipython-doc/dev/interactive/htmlnotebook.html
+.. _ipythonnb: http://ipython.org/ipython-doc/dev/notebook/index.html
 
 
 .. toctree::
@@ -43,7 +43,7 @@ Download and Install
 
     pip install iminuit
 
-You can find our repository at `github <https://github.com/iminuit/iminuit>`_:
+You can find our repository on `Github <https://github.com/iminuit/iminuit>`_:
 
 ::
 
