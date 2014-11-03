@@ -11,8 +11,17 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
-sys.path.insert(0, '../')
+# For local development we use the `iminuit` from the source folder.
+# On readthedocs we use the one from `site-packages`.
+# See https://github.com/iminuit/iminuit/issues/126#issuecomment-61472227
+# and http://read-the-docs.readthedocs.org/en/latest/faq.html#how-do-i-change-behavior-for-read-the-docs
+import os
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if not on_rtd:
+    import sys
+    sys.path.insert(0, '../')
+
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
