@@ -1,7 +1,10 @@
+__all__ = ['ConsoleFrontend']
+
+
 class ConsoleFrontend:
-    """Minuit console front end class
-    This class print stuff directly via print
-    #TODO: add some color
+    """Console frontend for Minuit.
+
+    This class prints stuff directly via print.
     """
     def print_fmin(self, sfmin, tolerance=None, ncalls=0):
         """display function minimum information

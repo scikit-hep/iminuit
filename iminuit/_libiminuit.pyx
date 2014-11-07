@@ -1,22 +1,26 @@
 #cython: embedsignature=True
+"""IPython Minuit class definition.
+"""
+
 __all__ = ['Minuit']
+
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from cpython cimport exc
-#from libcpp import bool
-from util import *
+from .util import *
 from warnings import warn
 from cython.operator cimport dereference as deref
 from libc.math cimport sqrt
 from pprint import pprint
-from ConsoleFrontend import ConsoleFrontend
+from .frontends import ConsoleFrontend
 from iminuit_warnings import *
 from latex import LatexFactory
 import _plotting
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
 import array
-#our wrapper
+
+# Our wrapper
 cdef extern from "PythonFCN.h":
     #int raise_py_err()#this is very important we need custom error handler
     FunctionMinimum* call_mnapplication_wrapper(\

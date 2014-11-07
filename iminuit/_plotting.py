@@ -1,11 +1,17 @@
+__all__ = ['draw_contour',
+           'draw_mncontour',
+           'draw_profile',
+           'mncontour_grid',
+           ]
 import warnings
+
+
 def draw_profile(self, vname, x, y, s=None, band=True, text=True):
     from matplotlib import pyplot as plt
     import numpy as np
 
     x = np.array(x)
     y = np.array(y)
-    #print x
     if s is not None:
         s = np.array(s, dtype=bool)
         x = x[s]
@@ -16,25 +22,20 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
     plt.xlabel(vname)
     plt.ylabel('FCN')
 
-
     try:
         minpos = np.argmin(y)
         ymin = y[minpos]
         tmpy = y - ymin
-        #now scan for minpos to the right until greater than one
+        # now scan for minpos to the right until greater than one
         up = self.errordef
         righty = np.power(tmpy[minpos:] - up, 2)
-        #print righty
         right_min = np.argmin(righty)
         rightpos = right_min + minpos
         lefty = np.power((tmpy[:minpos] - up), 2)
         left_min = np.argmin(lefty)
         leftpos = left_min
-        #print leftpos, rightpos
-        #print x, y
         le = x[minpos] - x[leftpos]
         re = x[rightpos] - x[minpos]
-        #print (le, re)
 
         if band:
             plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
@@ -51,12 +52,8 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
 
 
 def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
-#def draw_contour(self, var1, var2, bins=12, bound1=None, bound2=None, lh=True):
     from matplotlib import pyplot as plt
     vx, vy, vz = self.contour(x, y, bins, bound, args, subtract_min=True)
-    #x1s, x2s, y = val_contour2d(fit, m, var1, var2, bins=bins,
-    #                            bound1=bound1, bound2=bound2)
-    #y -= np.min(y)
 
     v = [self.errordef*(i**2) for i in range(1,4)]
 
@@ -73,6 +70,7 @@ def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
     plt.grid(True)
     return vx, vy, vz
 
+
 def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, edges=False):
     import numpy as np
     from matplotlib import mlab
@@ -86,7 +84,7 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
         if len(pts)==0:
             warnings.warn(RuntimeWarning('Fail mncontour for %s, %s, sigma=%f'%(x,y,this_sig)))
             continue
-        
+
         xp, yp = zip(*pts)
         xps.append(xp)
         yps.append(yp)
@@ -131,6 +129,7 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
         ygrid[-1] = ygrid[-2]+ystep/2.
 
     return xgrid, ygrid, g, (xps, yps, dfcn)
+
 
 def draw_mncontour(self, x, y, bins=100, nsigma=2, numpoints=20, sig_res=4):
 

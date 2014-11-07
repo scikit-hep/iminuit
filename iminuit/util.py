@@ -1,3 +1,5 @@
+"""IMinuit utility functions and classes.
+"""
 __all__ = [
     'describe',
     'Struct',
@@ -17,6 +19,16 @@ import re
 
 
 class Struct:
+    """A Struct is a Python dict with tab completion.
+
+    Example:
+
+    >>> s = Struct(a=42)
+    >>> s['a']
+    42
+    >>> s.a
+    42
+    """
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
 
@@ -31,7 +43,7 @@ class Struct:
 
 
 def arguments_from_docstring(doc):
-    """Parse first line of docstring for argument name
+    """Parse first line of docstring for argument name.
 
     Docstring should be of the form ``min(iterable[, key=func])``.
 
@@ -72,17 +84,19 @@ def arguments_from_docstring(doc):
 
 
 def is_bound(f):
-    """test whether f is bound function"""
+    """Test whether ``f`` is a bound function.
+    """
     return getattr(f, 'im_self', None) is not None
 
 
 def dock_if_bound(f, v):
-    """dock off self if bound function is passed"""
+    """Dock off ``self`` if a bound function is passed.
+    """
     return v[1:] if is_bound(f) else v
 
 
 def better_arg_spec(f, verbose=False):
-    """extract function signature
+    """Extract function signature.
 
     ..seealso::
 
@@ -153,8 +167,9 @@ def better_arg_spec(f, verbose=False):
     raise TypeError("Unable to obtain function signature")
     return None
 
+
 def describe(f, verbose=False):
-    """try to extract function arguements name
+    """Try to extract the function argument names.
 
     .. seealso::
 
@@ -164,8 +179,7 @@ def describe(f, verbose=False):
 
 
 def fitarg_rename(fitarg, ren):
-    """
-    rename variable names in fitarg with rename function
+    """Rename variable names in ``fitarg`` with rename function.
 
     ::
 
@@ -198,19 +212,21 @@ def fitarg_rename(fitarg, ren):
 
 
 def true_param(p):
-    """check if p is parameter name not a limit/error/fix attributes"""
+    """Check if ``p`` is a parameter name, not a limit/error/fix attributes.
+    """
     return not p.startswith('limit_') and\
         not p.startswith('error_') and\
         not p.startswith('fix_')
 
 
 def param_name(p):
-    """
-    extract parameter name from attributes eg
+    """Extract parameter name from attributes.
 
-        fix_x -> x
-        error_x -> x
-        limit_x -> x
+    Examples:
+
+    - ``fix_x`` -> ``x``
+    - ``error_x`` -> ``x``
+    - ``limit_x`` -> ``x``
     """
     prefix = ['limit_', 'error_', 'fix_']
     for prf in prefix:
@@ -220,17 +236,17 @@ def param_name(p):
 
 
 def extract_iv(b):
-    """extract initial value from fitargs dictionary"""
+    """Extract initial value from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if true_param(k))
 
 
 def extract_limit(b):
-    """extract limit from fitargs dictionary"""
+    """Extract limit from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if k.startswith('limit_'))
 
 
 def extract_error(b):
-    """extract error from fitargs dictionary"""
+    """Extract error from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if k.startswith('error_'))
 
 
@@ -240,15 +256,15 @@ def extract_fix(b):
 
 
 def remove_var(b, exclude):
-    """exclude variable in exclude list from b"""
+    """Exclude variable in exclude list from b."""
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
 
 
 def make_func_code(params=None):
-    """make a func_code object to fake function signature
+    """Make a func_code object to fake function signature.
 
-        you can make a funccode from describeable object by::
+    You can make a funccode from describable object by::
 
-            make_func_code(describe(f))
+        make_func_code(describe(f))
     """
     return Struct(co_varnames=params, co_argcount=len(params))
