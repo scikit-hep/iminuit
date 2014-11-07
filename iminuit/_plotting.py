@@ -1,12 +1,11 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+import warnings
 __all__ = ['draw_contour',
            'draw_mncontour',
            'draw_profile',
            'mncontour_grid',
            ]
-
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
-import warnings
 
 
 def draw_profile(self, vname, x, y, s=None, band=True, text=True):
