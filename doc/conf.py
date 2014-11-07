@@ -118,9 +118,17 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 if not on_rtd:
-    #html_theme = 'nature'
-    html_theme = "armstrong"
-    html_theme_path = ["_themes", ]
+    try:
+        # https://github.com/snide/sphinx_rtd_theme
+        import sphinx_rtd_theme
+        html_theme = "sphinx_rtd_theme"
+        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    except ImportError:
+        # Fallback to default theme
+        print('WARNING: To get nice docs locally that look like the online docs, please do:')
+        print('WARNING: $ pip install sphinx_rtd_theme --user')
+        print('WARNING: Using default theme.')
+        html_theme = "nature"
 
 autodoc_member_order = 'bysource'
 # Theme options are theme-specific and customize the look and feel of a theme
