@@ -1,24 +1,22 @@
-import warnings
 import random
-from math import sqrt, exp, sin, cos, pi, e
-
-from nose.tools import (raises, assert_equal, assert_true, assert_false,
-    assert_almost_equal)
+from math import sqrt, exp, cos, pi, e
+from nose.tools import assert_almost_equal
 from iminuit import Minuit
 
-from testiminuit import assert_array_almost_equal
+from .testiminuit import assert_array_almost_equal
 
 random.seed(0.258)
 
-def rosenbrok(x, y):
-    '''Rosenbrok function, minimum at (1,1) with value of 0'''
+
+def rosenbrock(x, y):
+    '''Rosenbrock function, minimum at (1,1) with value of 0'''
     return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
 
 
 def test_rosekbrok():
-    m = Minuit(rosenbrok, x=0, y=0, pedantic=False, print_level=0)
+    m = Minuit(rosenbrock, x=0, y=0, pedantic=False, print_level=0)
     m.migrad()
-    assert m.fval < 1e-7 
+    assert m.fval < 1e-7
     assert_almost_equal(m.values['x'], 1., places=3)
     assert_almost_equal(m.values['y'], 1., places=3)
 
@@ -77,9 +75,8 @@ def test_matyas_oneside():
     '''One-side limit when the minimum is in the forbidden region'''
     random.seed(0.258)
     m = Minuit(matyas, x=2 + random.random(), y=random.random(),
-               limit_x = (1, None),
+               limit_x=(1, None),
                pedantic=False, print_level=0)
 
     m.migrad()
     assert_array_almost_equal(m.args, [1, 0.923], decimal=3)
-

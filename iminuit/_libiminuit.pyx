@@ -4,6 +4,8 @@
 
 __all__ = ['Minuit']
 
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from cpython cimport exc
@@ -13,9 +15,10 @@ from cython.operator cimport dereference as deref
 from libc.math cimport sqrt
 from pprint import pprint
 from .frontends import ConsoleFrontend
-from iminuit_warnings import *
-from latex import LatexFactory
-import _plotting
+from .iminuit_warnings import (InitialParamWarning,
+                               HesseFailedWarning)
+from .latex import LatexFactory
+from . import _plotting
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
 import array

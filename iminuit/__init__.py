@@ -1,3 +1,6 @@
+"""IMinuit is a nice Python interface to MINUIT.
+"""
+
 __all__ = [
     'Minuit',
     'describe',

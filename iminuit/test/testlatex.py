@@ -1,4 +1,4 @@
-from nose.tools import *
+from nose.tools import assert_equal
 from iminuit.latex import LatexTable
 
 def test_table():

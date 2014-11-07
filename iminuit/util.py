@@ -1,5 +1,11 @@
 """IMinuit utility functions and classes.
 """
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+import inspect
+import StringIO
+import re
+
 __all__ = [
     'describe',
     'Struct',
@@ -13,9 +19,6 @@ __all__ = [
     'remove_var',
     'arguments_from_docstring',
 ]
-import inspect
-import StringIO
-import re
 
 
 class Struct:
@@ -67,7 +70,6 @@ def arguments_from_docstring(doc):
     sig = sig.groups()[0].split(',')
     ret = []
     for s in sig:
-        #print s
         #get the last one after all space after =
         #ex: int x= True
         tmp = s.split('=')[0].split()[-1]
@@ -114,8 +116,8 @@ def better_arg_spec(f, verbose=False):
             return list(vnames[:f.func_code.co_argcount])
     except Exception as e:
         if verbose:
-            print e #this might not be such a good dea.
-            print "f.func_code.co_varnames[:f.func_code.co_argcount] fails"
+            print(e) # TODO: this might not be such a good dea.
+            print("f.func_code.co_varnames[:f.func_code.co_argcount] fails")
         #using __call__ funccode
 
     try:
@@ -123,22 +125,22 @@ def better_arg_spec(f, verbose=False):
         return list(f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount])
     except Exception as e:
         if verbose:
-            print e #this too
-            print "f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails"
+            print(e) # TODO: this might not be such a good dea.
+            print("f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails")
 
     try:
         return list(inspect.getargspec(f.__call__)[0][1:])
     except Exception as e:
         if verbose:
-            print e
-            print "inspect.getargspec(f)[0] fails"
+            print(e)
+            print("inspect.getargspec(f)[0] fails")
 
     try:
         return list(inspect.getargspec(f)[0])
     except Exception as e:
         if verbose:
-            print e
-            print "inspect.getargspec(f)[0] fails"
+            print(e)
+            print("inspect.getargspec(f)[0] fails")
 
     #now we are parsing __call__.__doc__
     #we assume that __call__.__doc__ doesn't have self
@@ -150,8 +152,8 @@ def better_arg_spec(f, verbose=False):
         return t
     except Exception as e:
         if verbose:
-            print e
-            print "fail parsing __call__.__doc__"
+            print(e)
+            print("fail parsing __call__.__doc__")
 
     #how about just __doc__
     try:
@@ -161,8 +163,8 @@ def better_arg_spec(f, verbose=False):
         return t
     except Exception as e:
         if verbose:
-            print e
-            print "fail parsing __doc__"
+            print(e)
+            print("fail parsing __doc__")
 
     raise TypeError("Unable to obtain function signature")
     return None
