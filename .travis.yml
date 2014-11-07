@@ -31,4 +31,6 @@ install:
 
 script:
   - if [[ $BUILD == TEST ]]; then nosetests; fi
-  - if [[ $BUILD == DOCS ]]; then cd doc; sphinx-build -W -a -E -b html -d _build/doctrees . _build/html; fi
+  # TODO: add -W option to Sphinx build once this Sphinx bug is fixed:
+  # https://github.com/iminuit/iminuit/pull/132#issuecomment-62139507
+  - if [[ $BUILD == DOCS ]]; then cd doc; sphinx-build -a -E -b html -d _build/doctrees . _build/html; fi
