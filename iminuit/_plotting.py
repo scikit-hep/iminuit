@@ -117,7 +117,10 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
     #xgrid = np.arange(minx, maxx+xstep/2, xstep) # over cover
     #ygrid = np.arange(miny, maxy+ystep/2, ystep)
 
-    g = mlab.griddata(fx,fy,fz,xgrid,ygrid)
+    with warnings.catch_warnings():
+        # suppress FutureWarning from matplotlib/tri/triangulation.py
+        warnings.filterwarnings("ignore",category=FutureWarning)
+        g = mlab.griddata(fx,fy,fz,xgrid,ygrid, interp='linear')
 
     if edges: #return grid edges instead of mid point (for pcolor)
         xgrid -= xstep/2.
