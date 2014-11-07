@@ -1,7 +1,8 @@
-__all__ = ['ConsoleFrontend']
-
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+
+__all__ = ['ConsoleFrontend']
+
 
 class ConsoleFrontend:
     """Console frontend for Minuit.

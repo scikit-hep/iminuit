@@ -1,5 +1,3 @@
-__all__ = ['HtmlFrontend']
-
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import random
@@ -8,6 +6,8 @@ from IPython.core.display import display_html
 from ..util import Struct
 from ..latex import LatexFactory
 from ..color import Gradient
+
+__all__ = ['HtmlFrontend']
 
 good_style = 'background-color:#92CCA6'
 bad_style = 'background-color:#FF7878'

@@ -1,3 +1,5 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import random
 from math import sqrt, exp, cos, pi, e
 from nose.tools import assert_almost_equal

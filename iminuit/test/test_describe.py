@@ -1,4 +1,5 @@
-#describe needs its own separate test
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 from nose.tools import assert_equal
 from iminuit.util import describe
 

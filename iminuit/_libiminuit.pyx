@@ -1,9 +1,6 @@
 #cython: embedsignature=True
 """IPython Minuit class definition.
 """
-
-__all__ = ['Minuit']
-
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from libcpp.vector cimport vector
@@ -14,7 +11,6 @@ from warnings import warn
 from cython.operator cimport dereference as deref
 from libc.math cimport sqrt
 from pprint import pprint
-from .frontends import ConsoleFrontend
 from .iminuit_warnings import (InitialParamWarning,
                                HesseFailedWarning)
 from .latex import LatexFactory
@@ -22,6 +18,9 @@ from . import _plotting
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
 import array
+
+__all__ = ['Minuit']
+
 
 # Our wrapper
 cdef extern from "PythonFCN.h":
@@ -438,7 +437,7 @@ cdef class Minuit:
 
             if vname in fixed_param:
                 if var is not None:#specifying vname but it's fixed
-                    warnings.warn(RuntimeWarning(
+                    warn(RuntimeWarning(
                         'Specified variable name for minos is set to fixed'))
                     return None
                 continue
@@ -1240,9 +1239,10 @@ cdef class Minuit:
         """
         try:
             __IPYTHON__
-            from HtmlFrontend import HtmlFrontend
+            from .frontends.html import HtmlFrontend
             return HtmlFrontend()
         except NameError:
+            from .frontends.console import ConsoleFrontend
             return ConsoleFrontend()
 
 
