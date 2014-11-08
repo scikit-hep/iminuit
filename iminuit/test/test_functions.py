@@ -4,7 +4,7 @@ import random
 from math import sqrt, exp, cos, pi, e
 from nose.tools import assert_almost_equal
 from iminuit import Minuit
-from .test_iminuit import assert_array_almost_equal
+from iminuit.test.test_iminuit import assert_array_almost_equal
 
 random.seed(0.258)
 

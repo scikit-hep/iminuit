@@ -3,21 +3,21 @@
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+import array
+from warnings import warn
+from pprint import pprint
+from libc.math cimport sqrt
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from cpython cimport exc
-from .util import *
-from warnings import warn
 from cython.operator cimport dereference as deref
-from libc.math cimport sqrt
-from pprint import pprint
-from .iminuit_warnings import (InitialParamWarning,
-                               HesseFailedWarning)
-from .latex import LatexFactory
-from . import _plotting
+from iminuit.util import *
+from iminuit.iminuit_warnings import (InitialParamWarning,
+                                      HesseFailedWarning)
+from iminuit.latex import LatexFactory
+from iminuit import _plotting
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
-import array
 
 __all__ = ['Minuit']
 

@@ -3,11 +3,13 @@ from __future__ import (absolute_import, division, print_function,
 from nose.tools import assert_equal
 from iminuit.latex import LatexTable
 
+
 def test_table():
     ltt = LatexTable(data=[['alpha',10.123],['alpha_s',30]])
     assert_equal(str(ltt),
     '\\begin{tabular}{|c|c|}\n\\hline\n$\\alpha$ &     10.123\\\\\n\\hline\n$\\alpha_{s}$ & 30\\\\\n\\hline\n\\end{tabular}'
     )
+
 
 def test_table_color():
     ltt = LatexTable(data=[['alpha',10.123],['alpha_s',30]])
@@ -16,6 +18,7 @@ def test_table_color():
     '%\\usepackage[table]{xcolor} % include this for color\n%\\usepackage{rotating} % include this for rotate header\n%\\documentclass[xcolor=table]{beamer} % for beamer\n\\begin{tabular}{|c|c|}\n\\hline\n\\cellcolor[RGB]{111,123,95} $\\alpha$ &     10.123\\\\\n\\hline\n$\\alpha_{s}$ & 30\\\\\n\\hline\n\\end{tabular}'
     )
 
+
 def test_latexmap():
     ltt = LatexTable(data=[['alpha',10.123,20],['alpha_s',30,40]],
                      latex_map={'alpha':'beta'})
@@ -23,6 +26,7 @@ def test_latexmap():
         ltt._format('alpha'),
         'beta'
         )
+
 
 def test_smartlatex():
     ltt = LatexTable(data=[['alpha',10.123,20],['alpha_s',30,40]])

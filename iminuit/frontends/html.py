@@ -3,9 +3,9 @@ from __future__ import (absolute_import, division, print_function,
 import random
 import string
 from IPython.core.display import display_html
-from ..util import Struct
-from ..latex import LatexFactory
-from ..color import Gradient
+from iminuit.util import Struct
+from iminuit.latex import LatexFactory
+from iminuit.color import Gradient
 
 __all__ = ['HtmlFrontend']
 
