@@ -5,6 +5,7 @@ to avoid the extra dependency.
 """
 
 
+# from future.utils import bytes_to_native_str
 def bytes_to_native_str(b, encoding='utf-8'):
         return b.decode(encoding)
 

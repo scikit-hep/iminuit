@@ -27,7 +27,8 @@ before_install:
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
 
 install:
-  - ./genc # Run Cython
+  # Run Cython ... TODO: this should be done via setup.py instead of ./genc ... that's simpler.
+  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then ./genc; fi
   - python setup.py build_ext -i
 
 script:
