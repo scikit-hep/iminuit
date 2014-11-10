@@ -29,7 +29,7 @@ setup(
     download_url='http://pypi.python.org/packages/source/i/'
             'iminuit/iminuit-%s.tar.gz' % __version__,
     package_dir={'iminuit': 'iminuit'},
-    packages=['iminuit'],
+    packages=['iminuit', 'iminuit.frontends'],
     ext_modules=[libiminuit],
     classifiers=[
         'Programming Language :: Python',

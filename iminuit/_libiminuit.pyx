@@ -11,6 +11,7 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from cpython cimport exc
 from cython.operator cimport dereference as deref
+from iminuit.py23_compat import ARRAY_DOUBLE_TYPECODE
 from iminuit.util import *
 from iminuit.iminuit_warnings import (InitialParamWarning,
                                       HesseFailedWarning)
@@ -776,9 +777,10 @@ cdef class Minuit:
             bound = (start -  bound*sigma, start + bound*sigma)
         blength = bound[1]-bound[0]
         binstep = blength/(bins-1)
-        
-        values = array.array('d',(bound[0]+binstep*i for i in xrange(bins)))
-        results = array.array('d')
+
+        values = array.array(ARRAY_DOUBLE_TYPECODE,
+                             (bound[0]+binstep*i for i in xrange(bins)))
+        results = array.array(ARRAY_DOUBLE_TYPECODE)
         migrad_status = []
         for i, v in enumerate(values):
             fitparam = self.fitarg.copy()
@@ -795,7 +797,8 @@ cdef class Minuit:
 
         if subtract_min:
             themin = min(results)
-            results = array.array('d',(x-themin for x in results))
+            results = array.array(ARRAY_DOUBLE_TYPECODE,
+                                  (x-themin for x in results))
 
         return values, results, migrad_status
 
@@ -875,9 +878,10 @@ cdef class Minuit:
         blength = bound[1]-bound[0]
         binstep = blength/(bins-1.)
         args = list(self.args) if args is None else args
-        #center value
-        bins = array.array('d',(bound[0]+binstep*i for i in xrange(bins)))
-        ret = array.array('d')
+        # center value
+        bins = array.array(ARRAY_DOUBLE_TYPECODE,
+                           (bound[0]+binstep*i for i in xrange(bins)))
+        ret = array.array(ARRAY_DOUBLE_TYPECODE)
         pos = self.var2pos[vname]
         if subtract_min and self.cfmin is NULL:
             raise RunTimeError("Request for minimization "
@@ -976,7 +980,7 @@ cdef class Minuit:
         else:
             x_bound = bound[0]
             y_bound = bound[1]
-        
+
         x_bins = bins
         y_bins = bins
 
@@ -986,8 +990,10 @@ cdef class Minuit:
         y_blength = y_bound[1]-y_bound[0]
         y_binstep = y_blength/(y_bins-1.)
 
-        x_val = array.array('d',(x_bound[0]+x_binstep*i for i in xrange(x_bins)))
-        y_val = array.array('d',(y_bound[0]+y_binstep*i for i in xrange(y_bins)))
+        x_val = array.array(ARRAY_DOUBLE_TYPECODE,
+                            (x_bound[0]+x_binstep*i for i in xrange(x_bins)))
+        y_val = array.array(ARRAY_DOUBLE_TYPECODE,
+                            (y_bound[0]+y_binstep*i for i in xrange(y_bins)))
 
         x_pos = self.var2pos[x]
         y_pos = self.var2pos[y]
@@ -1003,7 +1009,7 @@ cdef class Minuit:
         ret = list()
         for yy in y_val:
             args[y_pos] = yy
-            tmp = array.array('d')
+            tmp = array.array(ARRAY_DOUBLE_TYPECODE)
             for xx in x_val:
                 args[x_pos] = xx
                 tmp.append(self.fcn(*args)-minval)
