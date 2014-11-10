@@ -8,14 +8,23 @@ cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cpp'))
 minuit_header = join(cwd, 'Minuit')
 
+# We follow the recommendation how to distribute Cython modules:
+# http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
+USE_CYTHON = True   # TODO: command line option, try-import, ...
+ext = '.pyx' if USE_CYTHON else '.cpp'
+
 libiminuit = Extension('iminuit._libiminuit',
-                       sources=['iminuit/_libiminuit.cpp'] + minuit_src,
+                       sources=['iminuit/_libiminuit' + ext] + minuit_src,
                        include_dirs=[minuit_header],
                        libraries=[],
-                       #extra_compile_args=['-Wall', '-Wno-sign-compare',
+                       # extra_compile_args=['-Wall', '-Wno-sign-compare',
                        #                      '-Wno-write-strings'],
                        extra_link_args=[])
+extensions = [libiminuit]
 
+if USE_CYTHON:
+    from Cython.Build import cythonize
+    extensions = cythonize(extensions)
 
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
@@ -41,7 +50,7 @@ setup(
                  'iminuit/iminuit-%s.tar.gz' % __version__,
     package_dir={'iminuit': 'iminuit'},
     packages=['iminuit', 'iminuit.frontends'],
-    ext_modules=[libiminuit],
+    ext_modules=extensions,
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
