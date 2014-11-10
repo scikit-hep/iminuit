@@ -23,6 +23,8 @@ matrix:
         #  env: BUILD='COVERAGE'
 
 before_install:
+  # TODO: we should get rid of the `future` dependency ... bundle what is needed.
+  - pip install future
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy Cython; fi
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
 

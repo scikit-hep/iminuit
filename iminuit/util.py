@@ -74,7 +74,8 @@ def arguments_from_docstring(doc):
         #ex: int x= True
         tmp = s.split('=')[0].split()[-1]
         #clean up non _+alphanum character
-        ret.append(''.join(filter(lambda x: str.isalnum(x) or x=='_', tmp)))
+        tmp = ''.join([x for x in tmp if x.isalnum() or x == '_'])
+        ret.append(tmp)
         #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         #ret += self.docstring_kwd_re.findall(s)
     ret = filter(lambda x: x!='', ret)
