@@ -14,7 +14,7 @@ def rosenbrock(x, y):
     return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
 
 
-def test_rosekbrok():
+def test_rosenbrock():
     m = Minuit(rosenbrock, x=0, y=0, pedantic=False, print_level=0)
     m.migrad()
     assert m.fval < 1e-7
