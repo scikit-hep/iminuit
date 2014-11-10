@@ -3,20 +3,31 @@ from distutils.core import setup, Extension
 from os.path import dirname, join
 from glob import glob
 
-#static link
+# Static linking
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cpp'))
 minuit_header = join(cwd, 'Minuit')
 
 libiminuit = Extension('iminuit._libiminuit',
-                    sources=['iminuit/_libiminuit.cpp'] + minuit_src,
-                    include_dirs=[minuit_header],
-                    libraries=[],
-                    #extra_compile_args=['-Wall', '-Wno-sign-compare',
-                    #                      '-Wno-write-strings'],
-                    extra_link_args=[])
+                       sources=['iminuit/_libiminuit.cpp'] + minuit_src,
+                       include_dirs=[minuit_header],
+                       libraries=[],
+                       #extra_compile_args=['-Wall', '-Wno-sign-compare',
+                       #                      '-Wno-write-strings'],
+                       extra_link_args=[])
 
-execfile('iminuit/info.py')
+
+# Getting the version number at this point is a bit tricky in Python:
+# https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
+# This is one of the recommended methods that works in Python 2 and 3:
+def get_version():
+    version = {}
+    with open("iminuit/info.py") as fp:
+        exec(fp.read(), version)
+    return version['__version__']
+
+__version__ = get_version()
+
 
 setup(
     name='iminuit',
@@ -27,7 +38,7 @@ setup(
     author_email='piti118@gmail.com',
     url='https://github.com/iminuit/iminuit',
     download_url='http://pypi.python.org/packages/source/i/'
-            'iminuit/iminuit-%s.tar.gz' % __version__,
+                 'iminuit/iminuit-%s.tar.gz' % __version__,
     package_dir={'iminuit': 'iminuit'},
     packages=['iminuit', 'iminuit.frontends'],
     ext_modules=[libiminuit],
