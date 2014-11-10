@@ -1,6 +1,5 @@
-#cython: embedsignature=True
+# cython: embedsignature=True
 # distutils: language = c++
-# distutils: sources = iminuit/_libiminuit.cpp
 """IPython Minuit class definition.
 """
 from __future__ import (absolute_import, division, print_function,
