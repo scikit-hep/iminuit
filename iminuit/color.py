@@ -1,4 +1,11 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+__all__ = ['Gradient']
+
 class Gradient:
+    """Color gradient.
+    """
     #from http://code.activestate.com/recipes/266466-html-colors-tofrom-rgb-tuples/
     @classmethod
     def color_for(cls, v, min=0., max=1., startcolor=(163, 254, 186),

@@ -1,7 +1,13 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+__all__ = ['ConsoleFrontend']
+
+
 class ConsoleFrontend:
-    """Minuit console front end class
-    This class print stuff directly via print
-    #TODO: add some color
+    """Console frontend for Minuit.
+
+    This class prints stuff directly via print.
     """
     def print_fmin(self, sfmin, tolerance=None, ncalls=0):
         """display function minimum information
@@ -42,10 +48,10 @@ class ConsoleFrontend:
                     '',
                     fmin.has_reached_call_limit)+'\n'
 
-        print hline + info1 + info2 +\
-            hline + header1 + hline + status1 +\
-            hline + header2 + hline+ status2 +\
-            hline
+        print(hline + info1 + info2 +
+              hline + header1 + hline + status1 +
+              hline + header2 + hline + status2 +
+              hline)
 
     def print_merror(self, vname, smerr):
         """print minos error for varname"""
@@ -76,15 +82,15 @@ class ConsoleFrontend:
                     str(smerr.lower_new_min),
                     str(smerr.upper_new_min))
         hline = '-'*len(error)+'\n'
-        print hline +\
-              summary +\
-              hline +\
-              error +\
-              valid +\
-              at_limit +\
-              max_fcn +\
-              new_min +\
-              hline
+        print(hline +
+              summary +
+              hline +
+              error +
+              valid +
+              at_limit +
+              max_fcn +
+              new_min +
+              hline)
 
     def print_param(self, mps, merr=None, float_format=None):
         """Print parameter states
@@ -135,19 +141,19 @@ class ConsoleFrontend:
             line = linefmt.format(*tmp)
             ret+=line
         ret+=hline
-        print ret
+        print(ret)
 
     def print_banner(self, cmd):
         """show banner of command"""
         ret = '*'*50+'\n'
         ret += '*{:^48}*'.format(cmd)+'\n'
         ret += '*'*50+'\n'
-        print ret
+        print(ret)
 
     def print_matrix(self, vnames, matrix):
         """TODO: properly implement this"""
-        print vnames
-        print matrix
+        print(vnames)
+        print(matrix)
         maxlen = max(len(v) for v in vnames)
         narg = len(matrix)
         vfmt = '%%%ds'%maxlen
@@ -164,7 +170,7 @@ class ConsoleFrontend:
             content = (fmt)%tuple(row)+'\n'
             tmp += head + content
         tmp += blank_line
-        print tmp
+        print(tmp)
 
     def print_hline(self):
-        print '*'*70
+        print('*'*70)

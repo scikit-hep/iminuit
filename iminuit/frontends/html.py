@@ -1,10 +1,13 @@
-__all__ = ['HtmlFrontend']
-from IPython.core.display import display_html
-from util import Struct
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import random
-from latex import LatexFactory
 import string
-from color import Gradient
+from IPython.core.display import display_html
+from iminuit.util import Struct
+from iminuit.latex import LatexFactory
+from iminuit.color import Gradient
+
+__all__ = ['HtmlFrontend']
 
 good_style = 'background-color:#92CCA6'
 bad_style = 'background-color:#FF7878'
@@ -54,6 +57,8 @@ def minos_style(smerr):
 
 
 class HtmlFrontend:
+    """HTML frontend for Minuit.
+    """
 
     def print_fmin(self, sfmin, tolerance=None, ncalls=0):
         """Display FunctionMinum in html representation.

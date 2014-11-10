@@ -1,12 +1,18 @@
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import warnings
-from unittest import TestCase
-from nose.tools import (raises, assert_equal, assert_true, assert_false,
-    assert_almost_equal)
-from iminuit import Minuit
 from math import sqrt
+from unittest import TestCase
+from nose.tools import (raises,
+                        assert_equal,
+                        assert_true,
+                        assert_false,
+                        assert_almost_equal,
+                        )
+from iminuit import Minuit
 
 try:
-   from numpy.testing import assert_array_almost_equal
+    from numpy.testing import assert_array_almost_equal
 except ImportError:
     def assert_array_almost_equal(actual, expected, decimal=6):
         """
@@ -70,7 +76,6 @@ def functesthelper(f):
     m = Minuit(f, print_level=0, pedantic=False)
     m.migrad()
     val = m.values
-    print val
     assert_almost_equal(val['x'], 2.)
     assert_almost_equal(val['y'], 5.)
     assert_almost_equal(m.fval, 10.)

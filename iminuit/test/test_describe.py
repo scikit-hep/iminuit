@@ -1,5 +1,6 @@
-#describe needs its own separate test
-from nose.tools import *
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+from nose.tools import assert_equal
 from iminuit.util import describe
 
 #simple function
@@ -54,4 +55,4 @@ def test_fakefunc():
 def test_builtin():
     assert_equal(describe(min),['iterable','key'])
 
-#any good way to test cython builtin call?
+# TODO: any good way to test cython builtin call?

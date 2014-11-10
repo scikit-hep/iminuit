@@ -1,3 +1,11 @@
+"""IMinuit utility functions and classes.
+"""
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+import inspect
+import StringIO
+import re
+
 __all__ = [
     'describe',
     'Struct',
@@ -11,12 +19,19 @@ __all__ = [
     'remove_var',
     'arguments_from_docstring',
 ]
-import inspect
-import StringIO
-import re
 
 
 class Struct:
+    """A Struct is a Python dict with tab completion.
+
+    Example:
+
+    >>> s = Struct(a=42)
+    >>> s['a']
+    42
+    >>> s.a
+    42
+    """
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
 
@@ -31,7 +46,7 @@ class Struct:
 
 
 def arguments_from_docstring(doc):
-    """Parse first line of docstring for argument name
+    """Parse first line of docstring for argument name.
 
     Docstring should be of the form ``min(iterable[, key=func])``.
 
@@ -55,12 +70,12 @@ def arguments_from_docstring(doc):
     sig = sig.groups()[0].split(',')
     ret = []
     for s in sig:
-        #print s
         #get the last one after all space after =
         #ex: int x= True
         tmp = s.split('=')[0].split()[-1]
         #clean up non _+alphanum character
-        ret.append(''.join(filter(lambda x: str.isalnum(x) or x=='_', tmp)))
+        tmp = ''.join([x for x in tmp if x.isalnum() or x == '_'])
+        ret.append(tmp)
         #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         #ret += self.docstring_kwd_re.findall(s)
     ret = filter(lambda x: x!='', ret)
@@ -72,17 +87,19 @@ def arguments_from_docstring(doc):
 
 
 def is_bound(f):
-    """test whether f is bound function"""
+    """Test whether ``f`` is a bound function.
+    """
     return getattr(f, 'im_self', None) is not None
 
 
 def dock_if_bound(f, v):
-    """dock off self if bound function is passed"""
+    """Dock off ``self`` if a bound function is passed.
+    """
     return v[1:] if is_bound(f) else v
 
 
 def better_arg_spec(f, verbose=False):
-    """extract function signature
+    """Extract function signature.
 
     ..seealso::
 
@@ -100,8 +117,8 @@ def better_arg_spec(f, verbose=False):
             return list(vnames[:f.func_code.co_argcount])
     except Exception as e:
         if verbose:
-            print e #this might not be such a good dea.
-            print "f.func_code.co_varnames[:f.func_code.co_argcount] fails"
+            print(e) # TODO: this might not be such a good dea.
+            print("f.func_code.co_varnames[:f.func_code.co_argcount] fails")
         #using __call__ funccode
 
     try:
@@ -109,22 +126,22 @@ def better_arg_spec(f, verbose=False):
         return list(f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount])
     except Exception as e:
         if verbose:
-            print e #this too
-            print "f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails"
+            print(e) # TODO: this might not be such a good dea.
+            print("f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails")
 
     try:
         return list(inspect.getargspec(f.__call__)[0][1:])
     except Exception as e:
         if verbose:
-            print e
-            print "inspect.getargspec(f)[0] fails"
+            print(e)
+            print("inspect.getargspec(f)[0] fails")
 
     try:
         return list(inspect.getargspec(f)[0])
     except Exception as e:
         if verbose:
-            print e
-            print "inspect.getargspec(f)[0] fails"
+            print(e)
+            print("inspect.getargspec(f)[0] fails")
 
     #now we are parsing __call__.__doc__
     #we assume that __call__.__doc__ doesn't have self
@@ -136,8 +153,8 @@ def better_arg_spec(f, verbose=False):
         return t
     except Exception as e:
         if verbose:
-            print e
-            print "fail parsing __call__.__doc__"
+            print(e)
+            print("fail parsing __call__.__doc__")
 
     #how about just __doc__
     try:
@@ -147,14 +164,15 @@ def better_arg_spec(f, verbose=False):
         return t
     except Exception as e:
         if verbose:
-            print e
-            print "fail parsing __doc__"
+            print(e)
+            print("fail parsing __doc__")
 
     raise TypeError("Unable to obtain function signature")
     return None
 
+
 def describe(f, verbose=False):
-    """try to extract function arguements name
+    """Try to extract the function argument names.
 
     .. seealso::
 
@@ -164,8 +182,7 @@ def describe(f, verbose=False):
 
 
 def fitarg_rename(fitarg, ren):
-    """
-    rename variable names in fitarg with rename function
+    """Rename variable names in ``fitarg`` with rename function.
 
     ::
 
@@ -198,19 +215,21 @@ def fitarg_rename(fitarg, ren):
 
 
 def true_param(p):
-    """check if p is parameter name not a limit/error/fix attributes"""
+    """Check if ``p`` is a parameter name, not a limit/error/fix attributes.
+    """
     return not p.startswith('limit_') and\
         not p.startswith('error_') and\
         not p.startswith('fix_')
 
 
 def param_name(p):
-    """
-    extract parameter name from attributes eg
+    """Extract parameter name from attributes.
 
-        fix_x -> x
-        error_x -> x
-        limit_x -> x
+    Examples:
+
+    - ``fix_x`` -> ``x``
+    - ``error_x`` -> ``x``
+    - ``limit_x`` -> ``x``
     """
     prefix = ['limit_', 'error_', 'fix_']
     for prf in prefix:
@@ -220,17 +239,17 @@ def param_name(p):
 
 
 def extract_iv(b):
-    """extract initial value from fitargs dictionary"""
+    """Extract initial value from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if true_param(k))
 
 
 def extract_limit(b):
-    """extract limit from fitargs dictionary"""
+    """Extract limit from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if k.startswith('limit_'))
 
 
 def extract_error(b):
-    """extract error from fitargs dictionary"""
+    """Extract error from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if k.startswith('error_'))
 
 
@@ -240,15 +259,15 @@ def extract_fix(b):
 
 
 def remove_var(b, exclude):
-    """exclude variable in exclude list from b"""
+    """Exclude variable in exclude list from b."""
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
 
 
 def make_func_code(params=None):
-    """make a func_code object to fake function signature
+    """Make a func_code object to fake function signature.
 
-        you can make a funccode from describeable object by::
+    You can make a funccode from describable object by::
 
-            make_func_code(describe(f))
+        make_func_code(describe(f))
     """
     return Struct(co_varnames=params, co_argcount=len(params))

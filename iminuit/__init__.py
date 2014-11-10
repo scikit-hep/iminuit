@@ -1,3 +1,6 @@
+"""IMinuit is a nice Python interface to MINUIT.
+"""
+
 __all__ = [
     'Minuit',
     'describe',
@@ -5,7 +8,7 @@ __all__ = [
     'InitialParamWarning',
     '__version__'
 ]
-from _libiminuit import *
-from util import describe, Struct
-from iminuit_warnings import *
-from info import __version__
+from iminuit._libiminuit import *
+from iminuit.util import describe, Struct
+from iminuit.iminuit_warnings import *
+from iminuit.info import __version__

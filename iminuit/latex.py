@@ -1,7 +1,13 @@
-from color import Gradient
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+from iminuit.color import Gradient
+
+__all__ = ['LatexTable']
 
 
 class LatexTable:
+    """Latex table output.
+    """
     float_format = '%10.5g'
     int_format = '%d'
     latex_kwd = [

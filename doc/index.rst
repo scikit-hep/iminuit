@@ -35,20 +35,9 @@ If you are interested in fitting a curve or distribution, take a look at
     :maxdepth: 4
     :hidden:
 
-    api.rst
+    installation
+    api
 
-Download and Install
---------------------
-
-::
-
-    pip install iminuit
-
-You can find our repository on `Github <https://github.com/iminuit/iminuit>`_:
-
-::
-
-    git clone git://github.com/iminuit/iminuit.git
 
 Tutorial
 --------

@@ -1,16 +1,16 @@
-#include <Python.h>
 #include <vector>
 #include <string>
-#include "Minuit/FCNBase.h"
-#include "Minuit/MnApplication.h"
 #include <stdexcept>
 using namespace std;
-
 #include <string>
 #include <cstdarg>
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
+#include <Python.h>
+#include "Minuit/FCNBase.h"
+#include "Minuit/MnApplication.h"
+
 //missing string printf
 //this is safe and convenient but not exactly efficient
 inline std::string format(const char* fmt, ...){

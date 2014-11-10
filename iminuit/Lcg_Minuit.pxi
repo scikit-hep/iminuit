@@ -1,3 +1,6 @@
+"""Minuit C++ class interface.
+"""
+
 from libcpp.vector cimport vector
 from libcpp.utility cimport pair
 from libcpp cimport bool

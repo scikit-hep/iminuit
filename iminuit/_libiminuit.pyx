@@ -1,22 +1,29 @@
 #cython: embedsignature=True
-__all__ = ['Minuit']
+"""IPython Minuit class definition.
+"""
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+import array
+from warnings import warn
+from pprint import pprint
+from libc.math cimport sqrt
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from cpython cimport exc
-#from libcpp import bool
-from util import *
-from warnings import warn
 from cython.operator cimport dereference as deref
-from libc.math cimport sqrt
-from pprint import pprint
-from ConsoleFrontend import ConsoleFrontend
-from iminuit_warnings import *
-from latex import LatexFactory
-import _plotting
+from iminuit.py23_compat import ARRAY_DOUBLE_TYPECODE
+from iminuit.util import *
+from iminuit.iminuit_warnings import (InitialParamWarning,
+                                      HesseFailedWarning)
+from iminuit.latex import LatexFactory
+from iminuit import _plotting
 include "Lcg_Minuit.pxi"
 include "Minuit2Struct.pxi"
-import array
-#our wrapper
+
+__all__ = ['Minuit']
+
+
+# Our wrapper
 cdef extern from "PythonFCN.h":
     #int raise_py_err()#this is very important we need custom error handler
     FunctionMinimum* call_mnapplication_wrapper(\
@@ -431,7 +438,7 @@ cdef class Minuit:
 
             if vname in fixed_param:
                 if var is not None:#specifying vname but it's fixed
-                    warnings.warn(RuntimeWarning(
+                    warn(RuntimeWarning(
                         'Specified variable name for minos is set to fixed'))
                     return None
                 continue
@@ -770,9 +777,10 @@ cdef class Minuit:
             bound = (start -  bound*sigma, start + bound*sigma)
         blength = bound[1]-bound[0]
         binstep = blength/(bins-1)
-        
-        values = array.array('d',(bound[0]+binstep*i for i in xrange(bins)))
-        results = array.array('d')
+
+        values = array.array(ARRAY_DOUBLE_TYPECODE,
+                             (bound[0]+binstep*i for i in xrange(bins)))
+        results = array.array(ARRAY_DOUBLE_TYPECODE)
         migrad_status = []
         for i, v in enumerate(values):
             fitparam = self.fitarg.copy()
@@ -789,7 +797,8 @@ cdef class Minuit:
 
         if subtract_min:
             themin = min(results)
-            results = array.array('d',(x-themin for x in results))
+            results = array.array(ARRAY_DOUBLE_TYPECODE,
+                                  (x-themin for x in results))
 
         return values, results, migrad_status
 
@@ -869,9 +878,10 @@ cdef class Minuit:
         blength = bound[1]-bound[0]
         binstep = blength/(bins-1.)
         args = list(self.args) if args is None else args
-        #center value
-        bins = array.array('d',(bound[0]+binstep*i for i in xrange(bins)))
-        ret = array.array('d')
+        # center value
+        bins = array.array(ARRAY_DOUBLE_TYPECODE,
+                           (bound[0]+binstep*i for i in xrange(bins)))
+        ret = array.array(ARRAY_DOUBLE_TYPECODE)
         pos = self.var2pos[vname]
         if subtract_min and self.cfmin is NULL:
             raise RunTimeError("Request for minimization "
@@ -970,7 +980,7 @@ cdef class Minuit:
         else:
             x_bound = bound[0]
             y_bound = bound[1]
-        
+
         x_bins = bins
         y_bins = bins
 
@@ -980,8 +990,10 @@ cdef class Minuit:
         y_blength = y_bound[1]-y_bound[0]
         y_binstep = y_blength/(y_bins-1.)
 
-        x_val = array.array('d',(x_bound[0]+x_binstep*i for i in xrange(x_bins)))
-        y_val = array.array('d',(y_bound[0]+y_binstep*i for i in xrange(y_bins)))
+        x_val = array.array(ARRAY_DOUBLE_TYPECODE,
+                            (x_bound[0]+x_binstep*i for i in xrange(x_bins)))
+        y_val = array.array(ARRAY_DOUBLE_TYPECODE,
+                            (y_bound[0]+y_binstep*i for i in xrange(y_bins)))
 
         x_pos = self.var2pos[x]
         y_pos = self.var2pos[y]
@@ -997,7 +1009,7 @@ cdef class Minuit:
         ret = list()
         for yy in y_val:
             args[y_pos] = yy
-            tmp = array.array('d')
+            tmp = array.array(ARRAY_DOUBLE_TYPECODE)
             for xx in x_val:
                 args[x_pos] = xx
                 tmp.append(self.fcn(*args)-minval)
@@ -1233,9 +1245,10 @@ cdef class Minuit:
         """
         try:
             __IPYTHON__
-            from HtmlFrontend import HtmlFrontend
+            from .frontends.html import HtmlFrontend
             return HtmlFrontend()
         except NameError:
+            from .frontends.console import ConsoleFrontend
             return ConsoleFrontend()
 
 

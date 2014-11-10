@@ -1,5 +1,17 @@
-from nose.tools import *
-from iminuit.util import *
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+from nose.tools import assert_false, assert_true, assert_equal
+from iminuit.util import (fitarg_rename,
+                          true_param,
+                          param_name,
+                          extract_iv,
+                          extract_limit,
+                          extract_error,
+                          extract_fix,
+                          remove_var,
+                          arguments_from_docstring,
+                          )
+
 
 def test_fitarg_rename():
     fitarg = {'x':1,'limit_x':(2,3),'fix_x':True,'error_x':10}
@@ -11,6 +23,7 @@ def test_fitarg_rename():
     assert_true('fix_z_x' in newfa)
     assert_equal(len(newfa),4)
 
+
 def test_fitarg_rename_strprefix():
     fitarg = {'x':1,'limit_x':(2,3),'fix_x':True,'error_x':10}
     newfa = fitarg_rename(fitarg,'z')
@@ -19,6 +32,7 @@ def test_fitarg_rename_strprefix():
     assert_true('error_z_x' in newfa)
     assert_true('fix_z_x' in newfa)
     assert_equal(len(newfa),4)
+
 
 def test_true_param():
     assert_true(true_param('N'))
@@ -32,6 +46,7 @@ def test_param_name():
     assert_equal(param_name('error_N'),'N')
     assert_equal(param_name('fix_N'),'N')
 
+
 def test_extract_iv():
     d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
     ret = extract_iv(d)
@@ -39,6 +54,7 @@ def test_extract_iv():
     assert_false('limit_k' in ret)
     assert_false('error_k' in ret)
     assert_false('fix_k' in ret)
+
 
 def test_extract_limit():
     d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
@@ -48,6 +64,7 @@ def test_extract_limit():
     assert_false('error_k' in ret)
     assert_false('fix_k' in ret)
 
+
 def test_extract_error():
     d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
     ret = extract_error(d)
@@ -56,6 +73,7 @@ def test_extract_error():
     assert_true('error_k' in ret)
     assert_false('fix_k' in ret)
 
+
 def test_extract_fix():
     d = dict(k=1.,limit_k=1.,error_k=1.,fix_k=1.)
     ret = extract_fix(d)
@@ -63,6 +81,7 @@ def test_extract_fix():
     assert_false('limit_k' in ret)
     assert_false('error_k' in ret)
     assert_true('fix_k' in ret)
+
 
 def test_remove_var():
     dk = dict(k=1,limit_k=1,error_k=1,fix_k=1)
@@ -80,6 +99,7 @@ def test_remove_var():
     for k in dl: assert_true(k in ret)
     for k in dm: assert_false(k in ret)
     for k in dn: assert_true(k in ret)
+
 
 def test_arguments_from_docstring():
     s = 'f(x, y, z)'
