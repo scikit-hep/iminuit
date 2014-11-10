@@ -10,7 +10,13 @@ minuit_header = join(cwd, 'Minuit')
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
-USE_CYTHON = True   # TODO: command line option, try-import, ...
+try:
+    from Cython.Build import cythonize
+    USE_CYTHON = True   # TODO: add command line option?
+except:
+    print('Cython is not available ... using pre-generated C file.')
+    USE_CYTHON = False
+
 ext = '.pyx' if USE_CYTHON else '.cpp'
 
 libiminuit = Extension('iminuit._libiminuit',
@@ -23,7 +29,6 @@ libiminuit = Extension('iminuit._libiminuit',
 extensions = [libiminuit]
 
 if USE_CYTHON:
-    from Cython.Build import cythonize
     extensions = cythonize(extensions)
 
 # Getting the version number at this point is a bit tricky in Python:
@@ -51,6 +56,7 @@ setup(
     package_dir={'iminuit': 'iminuit'},
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
+    test_suite = 'nose.collector',
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
