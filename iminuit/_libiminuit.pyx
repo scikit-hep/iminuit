@@ -149,7 +149,7 @@ cdef class Minuit:
 
             - **errordef**: Optionals. Amount of increase in fcn to be defined
               as 1 :math:`\sigma`. If None is given, it will look at
-              `fcn.default_errordef()`. If `fcn.default_errordef()` is not 
+              `fcn.default_errordef()`. If `fcn.default_errordef()` is not
               defined or
               not callable iminuit will give a warning and set errordef to 1.
               Default None(which means errordef=1 with a warning).
@@ -461,7 +461,7 @@ cdef class Minuit:
         if self.last_upst is NULL:
             raise RuntimeError("Run migrad/hesse first")
         if not skip_fixed:
-            raise RunTimeError('skip_fixed=False is not supported')
+            raise RuntimeError('skip_fixed=False is not supported')
         if not self.last_upst.hasCovariance():
             raise RuntimeError(
                 "Covariance is not valid. May be the last Hesse call failed?")
@@ -491,7 +491,7 @@ cdef class Minuit:
 
 
     def latex_matrix(self):
-        """Build :class:`LatexFactory` object that contains correlation 
+        """Build :class:`LatexFactory` object that contains correlation
         matrix
         """
         matrix = self.matrix(correlation=True)
@@ -840,7 +840,7 @@ cdef class Minuit:
 
         """
         x, y, s= self.mnprofile(vname, bins, bound, subtract_min)
-        return _plotting.draw_profile(self, vname, x, y, s, 
+        return _plotting.draw_profile(self, vname, x, y, s,
                                       band=band, text=text)
 
 
@@ -885,7 +885,7 @@ cdef class Minuit:
         ret = array.array(ARRAY_DOUBLE_TYPECODE)
         pos = self.var2pos[vname]
         if subtract_min and self.cfmin is NULL:
-            raise RunTimeError("Request for minimization "
+            raise RuntimeError("Request for minimization "
                 "subtraction but no minimization has been done. "
                 "Run migrad first.")
         minval = self.cfmin.fval() if subtract_min else 0.
@@ -1002,7 +1002,7 @@ cdef class Minuit:
         args = list(self.args) if args is None else args
 
         if subtract_min and self.cfmin is NULL:
-            raise RunTimeError("Request for minimization "
+            raise RuntimeError("Request for minimization "
                 "subtraction but no minimization has been done. "
                 "Run migrad first.")
         minval = self.cfmin.fval() if subtract_min else 0.
@@ -1145,7 +1145,7 @@ cdef class Minuit:
                                         numpoints, sigma_res)
 
 
-    def draw_contour(self, x, y, bins=20, bound=2, args=None, 
+    def draw_contour(self, x, y, bins=20, bound=2, args=None,
                      show_sigma=False):
         """
         Convenient wrapper for drawing contour. The argument is the same as
@@ -1164,7 +1164,7 @@ cdef class Minuit:
             :meth:`mncontour`
 
         """
-        return _plotting.draw_contour(self, x, y, bins, 
+        return _plotting.draw_contour(self, x, y, bins,
                                       bound, args, show_sigma)
 
 
