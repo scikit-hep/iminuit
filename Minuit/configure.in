@@ -3,10 +3,10 @@ dnl
 dnl Author: Paul F. Kunz <Paul_Kunz@slac.stanford.edu>
 dnl
 
-AC_INIT(src/MnApplication.cpp)
+AC_INIT(src/VariableMetricBuilder.cxx)
 AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR(config)
-AM_INIT_AUTOMAKE(Minuit, 1_7_9)
+AM_INIT_AUTOMAKE(Minuit2, 5.34.14)
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -40,12 +40,15 @@ AC_SUBST(GMAKE)
 
 AC_PROG_RANLIB
 
+AC_OPENMP
+CFLAGS="$CFLAGS $OPENMP_CFLAGS"
+CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"
+
 dnl files to be generated 
-AC_OUTPUT(Makefile Minuit/Makefile src/Makefile 
-  msvc7.1/Makefile msvc7.1/Minuit/Makefile
-  doc/Doxyfile doc/Makefile tests/Makefile tests/MnSim/Makefile 
-  tests/MnTutorial/Makefile )
+AC_OUTPUT(Makefile inc/Makefile inc/Minuit2/Makefile inc/Math/Makefile src/Makefile 
+  doc/Doxyfile doc/Makefile test/Makefile test/MnSim/Makefile 
+  test/MnTutorial/Makefile )
 
 AC_MSG_RESULT([
-    Minuit project now configured.
+    Minuit2 project now configured.
 ])

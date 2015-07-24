@@ -18,7 +18,7 @@ from iminuit.iminuit_warnings import (InitialParamWarning,
                                       HesseFailedWarning)
 from iminuit.latex import LatexFactory
 from iminuit import _plotting
-include "Lcg_Minuit.pxi"
+include "Minuit2.pxi"
 include "Minuit2Struct.pxi"
 
 __all__ = ['Minuit']
@@ -33,7 +33,7 @@ cdef extern from "PythonFCN.h":
         PythonFCN(\
             object fcn, double up_parm, vector[string] pname,bint thrownan)
         double call "operator()" (vector[double] x) except +#raise_py_err
-        double up()
+        double Up()
         int getNumCall()
         void set_up(double up)
         void resetNumCall()
@@ -337,20 +337,20 @@ cdef class Minuit:
         totalcalls = 0
         first = True
 
-        if precision is not None: self.minimizer.setPrecision(precision)
+        if precision is not None: self.minimizer.SetPrecision(precision)
 
         while (first) or \
-                (not self.cfmin.isValid() and totalcalls < ncall):
+                (not self.cfmin.IsValid() and totalcalls < ncall):
             first=False
             self.cfmin = call_mnapplication_wrapper(
                     deref(self.minimizer), ncall_round, self.tol)
             del self.last_upst
-            self.last_upst = new MnUserParameterState(self.cfmin.userState())
-            totalcalls+=ncall_round#self.cfmin.nfcn()
+            self.last_upst = new MnUserParameterState(self.cfmin.UserState())
+            totalcalls+=ncall_round#self.cfmin.NFcn()
             if self.print_level>1 and nsplit!=1: self.print_fmin()
 
         del self.last_upst
-        self.last_upst = new MnUserParameterState(self.cfmin.userState())
+        self.last_upst = new MnUserParameterState(self.cfmin.UserState())
         self.refreshInternalState()
 
         if self.print_level>0: self.print_fmin()
@@ -381,8 +381,8 @@ cdef class Minuit:
         if self.cfmin is NULL:
             raise RuntimeError('Run migrad first')
         hesse = new MnHesse(self.strategy)
-        upst = hesse.call(deref(self.pyfcn),self.cfmin.userState())
-        if not upst.hasCovariance():
+        upst = hesse.call(deref(self.pyfcn),self.cfmin.UserState())
+        if not upst.HasCovariance():
             warn("HESSE Failed. Covariance and GlobalCC will not be available",
                 HesseFailedWarning)
         del self.last_upst
@@ -421,10 +421,10 @@ cdef class Minuit:
         cdef MnMinos* minos = NULL
         cdef MinosError mnerror
         cdef char* name = NULL
-        cdef double oldup = self.pyfcn.up()
+        cdef double oldup = self.pyfcn.Up()
         self.pyfcn.set_up(oldup*sigma*sigma)
         if self.print_level>0: self.frontend.print_banner('MINOS')
-        if not self.cfmin.isValid():
+        if not self.cfmin.IsValid():
             raise RuntimeError(('Function mimimum is not valid. Make sure'
                 ' migrad converge first'))
         if var is not None and var not in self.parameters:
@@ -435,7 +435,7 @@ cdef class Minuit:
 
         fixed_param = self.list_of_fixed_param()
         for vname in varlist:
-            index = self.cfmin.userState().index(vname)
+            index = self.cfmin.UserState().Index(vname)
 
             if vname in fixed_param:
                 if var is not None:#specifying vname but it's fixed
@@ -445,7 +445,7 @@ cdef class Minuit:
                 continue
             minos = new MnMinos(deref(
                 self.pyfcn), deref(self.cfmin), self.strategy)
-            mnerror = minos.minos(index,maxcall)
+            mnerror = minos.Minos(index,maxcall)
             self.merrors_struct[vname]=minoserror2struct(mnerror)
             if self.print_level>0:
                 self.frontend.print_merror(
@@ -462,11 +462,11 @@ cdef class Minuit:
             raise RuntimeError("Run migrad/hesse first")
         if not skip_fixed:
             raise RuntimeError('skip_fixed=False is not supported')
-        if not self.last_upst.hasCovariance():
+        if not self.last_upst.HasCovariance():
             raise RuntimeError(
                 "Covariance is not valid. May be the last Hesse call failed?")
 
-        cdef MnUserCovariance cov = self.last_upst.covariance()
+        cdef MnUserCovariance cov = self.last_upst.Covariance()
         params = self.list_of_vary_param()
         if correlation:
             ret = tuple(
@@ -514,10 +514,10 @@ cdef class Minuit:
         if self.last_upst is NULL:
             return self.initialfix[vname]
         else:
-            return self.last_upst.minuitParameters()[index].isFixed()
+            return self.last_upst.MinuitParameters()[index].IsFixed()
 
     def _prepare_param(self):
-        cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
+        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
         cdef int i
         tmp = []
         for i in range(vmps.size()):
@@ -582,7 +582,7 @@ cdef class Minuit:
     def print_fmin(self):
         """print current function minimum state"""
         #cdef MnUserParameterState ust = MnUserParameterState(
-        #                               self.cfmin.userState())
+        #                               self.cfmin.UserState())
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
         sfmin = cfmin2struct(self.cfmin)
@@ -645,7 +645,7 @@ cdef class Minuit:
         """
         if self.last_upst is NULL:
             return self.get_initial_param_state()
-        cdef vector[MinuitParameter] vmps = self.last_upst.minuitParameters()
+        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
         cdef int i
         ret = []
         for i in range(vmps.size()):
@@ -670,14 +670,14 @@ cdef class Minuit:
 
     def migrad_ok(self):
         """check if minimum is valid"""
-        return self.cfmin is not NULL and self.cfmin.isValid()
+        return self.cfmin is not NULL and self.cfmin.IsValid()
 
 
     def matrix_accurate(self):
         """check if covariance(of the last migrad) is accurate."""
         return self.last_upst is not NULL and\
                self.cfmin is not NULL and\
-               self.cfmin.hasAccurateCovar()
+               self.cfmin.HasAccurateCovar()
 
 
     def list_of_fixed_param(self):
@@ -888,7 +888,7 @@ cdef class Minuit:
             raise RuntimeError("Request for minimization "
                 "subtraction but no minimization has been done. "
                 "Run migrad first.")
-        minval = self.cfmin.fval() if subtract_min else 0.
+        minval = self.cfmin.Fval() if subtract_min else 0.
         for val in bins:
             args[pos] = val
             ret.append(self.fcn(*args)-minval)
@@ -1005,7 +1005,7 @@ cdef class Minuit:
             raise RuntimeError("Request for minimization "
                 "subtraction but no minimization has been done. "
                 "Run migrad first.")
-        minval = self.cfmin.fval() if subtract_min else 0.
+        minval = self.cfmin.Fval() if subtract_min else 0.
 
         ret = list()
         for yy in y_val:
@@ -1059,7 +1059,7 @@ cdef class Minuit:
         if x not in vary_param or y not in vary_param:
             raise ValueError('mncontour has to be run on vary parameters.')
 
-        cdef double oldup = self.pyfcn.up()
+        cdef double oldup = self.pyfcn.Up()
         self.pyfcn.set_up(oldup*sigma*sigma)
 
         cdef auto_ptr[MnContours] mnc = auto_ptr[MnContours](
@@ -1067,14 +1067,14 @@ cdef class Minuit:
                                                     deref(self.cfmin),
                                                     self.strategy))
 
-        cdef ContoursError cerr = mnc.get().contour(ix, iy, numpoints)
+        cdef ContoursError cerr = mnc.get().Contour(ix, iy, numpoints)
 
-        xminos = minoserror2struct(cerr.xMinosError())
-        yminos = minoserror2struct(cerr.yMinosError())
+        xminos = minoserror2struct(cerr.XMinosError())
+        yminos = minoserror2struct(cerr.YMinosError())
 
         self.pyfcn.set_up(oldup)
 
-        return xminos, yminos, cerr.points() #using type coersion here
+        return xminos, yminos, cerr.Points() #using type coersion here
 
 
     def mncontour_grid(self, x, y, bins=100, nsigma=2, numpoints=20,
@@ -1175,34 +1175,36 @@ cdef class Minuit:
         """
         cdef vector[MinuitParameter] mpv
         cdef MnUserCovariance cov
+        cdef double tmp = 0
         if self.last_upst is not NULL:
-            mpv = self.last_upst.minuitParameters()
+            mpv = self.last_upst.MinuitParameters()
             self.values = {}
             self.errors = {}
             self.args = []
             for i in range(mpv.size()):
-                self.args.append(mpv[i].value())
-                self.values[mpv[i].name()] = mpv[i].value()
-                self.errors[mpv[i].name()] = mpv[i].error()
+                self.args.append(mpv[i].Value())
+                self.values[mpv[i].Name()] = mpv[i].Value()
+                self.errors[mpv[i].Name()] = mpv[i].Error()
             self.args = tuple(self.args)
             self.fitarg.update(self.values)
             self.fitarg.update({'error_'+k:v for k,v in self.errors.items()})
             vary_param = self.list_of_vary_param()
-            if self.last_upst.hasCovariance():
-                cov = self.last_upst.covariance()
+            if self.last_upst.HasCovariance():
+                cov = self.last_upst.Covariance()
                 self.covariance =\
                      {(v1,v2):cov.get(i,j)\
                          for i,v1 in enumerate(vary_param)\
                          for j,v2 in enumerate(vary_param)}
             else:
                 self.covariance = None
-            self.fval = self.last_upst.fval()
-            self.ncalls = self.last_upst.nfcn()
-            self.edm = self.last_upst.edm()
+            self.fval = self.last_upst.Fval()
+            self.ncalls = self.last_upst.NFcn()
+            self.edm = self.last_upst.Edm()
             self.gcc = None
-            if self.last_upst.hasGlobalCC() and self.last_upst.globalCC().isValid():
-                self.gcc = {v:self.last_upst.globalCC().globalCC().at(i)\
-                    for i,v in enumerate(self.list_of_vary_param())}
+            if self.last_upst.HasGlobalCC() and self.last_upst.GlobalCC().IsValid():
+                self.gcc = {v:self.last_upst.GlobalCC().GlobalCC()[i] for \
+                i,v in enumerate(self.list_of_vary_param()) }
+
         self.merrors = {(k,1.0):v.upper
                        for k,v in self.merrors_struct.items()}
         self.merrors.update({(k,-1.0):v.lower
@@ -1217,7 +1219,7 @@ cdef class Minuit:
         cdef object lb
         cdef object ub
         for v in self.parameters:
-            ret.add(v, self.initialvalue[v], self.initialerror[v])
+            ret.Add(v, self.initialvalue[v], self.initialerror[v])
 
         for v in self.parameters:
             if self.initiallimit[v] is not None:
@@ -1225,17 +1227,17 @@ cdef class Minuit:
                 if lb is not None and ub is not None and lb >= ub:
                     raise ValueError(
                         'limit for parameter %s is invalid. %r'%(v,(lb,ub)))
-                if lb is not None and ub is None: ret.setLowerLimit(v, lb)
-                if ub is not None and lb is None: ret.setUpperLimit(v, ub)
-                if lb is not None and ub is not None: ret.setLimits(v, lb, ub)
+                if lb is not None and ub is None: ret.SetLowerLimit(v, lb)
+                if ub is not None and lb is None: ret.SetUpperLimit(v, ub)
+                if lb is not None and ub is not None: ret.SetLimits(v, lb, ub)
                 #need to set value again
                 #taking care of internal/external transformation
-                ret.setValue(v, self.initialvalue[v])
-                ret.setError(v, self.initialerror[v])
+                ret.SetValue(v, self.initialvalue[v])
+                ret.SetError(v, self.initialerror[v])
 
         for v in self.parameters:
             if self.initialfix[v]:
-                ret.fix(v)
+                ret.Fix(v)
         return ret
 
 

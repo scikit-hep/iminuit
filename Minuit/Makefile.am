@@ -11,14 +11,13 @@ ACLOCAL = aclocal -I config/m4
 
 ## The subdirectories.  
 SUBDIRS =					\
-	Minuit					\
+	inc					\
 	src					\
-	tests					\
-	doc					\
-	msvc7.1
+	test					\
+	doc					
 
 
-EXTRA_DIST = BuildFile makefile.msc
+#EXTRA_DIST = BuildFile makefile.msc
 
 # The following is for platforms where automake dependencies don't work.
 depend:

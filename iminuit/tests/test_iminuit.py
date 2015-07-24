@@ -352,6 +352,8 @@ def test_oneside():
     m_limit = Minuit(func3, limit_x=(None, 9), pedantic=False, print_level=0)
     m_nolimit = Minuit(func3, pedantic=False, print_level=0)
     # Solution: x=2., y=5.
+    m_limit.tol=1e-4
+    m_nolimit.tol=1e-4
     m_limit.migrad()
     m_nolimit.migrad()
     assert_array_almost_equal(list(m_limit.values.values()),

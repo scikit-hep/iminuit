@@ -1,5 +1,5 @@
 # 
-# $Id: Makefile.am,v 1.4 2004/11/12 16:29:26 pfkeb Exp $
+# $Id: doc_Makefile.am,v 1.1 2005/11/29 17:52:18 moneta Exp $
 #
 # Author: Paul_Kunz@slac.stanford.edu
 #
@@ -9,11 +9,11 @@
 AUTOMAKE_OPTIONS = foreign
 
 EXTRA_DIST =					\
-	Doxyfile.in
+	Minuit2.html Doxyfile.in
 
 docs:
 	if test -d html; then \
-	(cd html; rm -rf *.html ) \
+	(rm -rf html ) \
 	fi
 	doxygen Doxyfile
 	mv Minuit.tag html/.

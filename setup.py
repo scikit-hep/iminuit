@@ -1,12 +1,15 @@
 # -*- coding: utf8 -*-
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
 from os.path import dirname, join
 from glob import glob
 
 # Static linking
 cwd = dirname(__file__)
-minuit_src = glob(join(cwd, 'Minuit/src/*.cpp'))
-minuit_header = join(cwd, 'Minuit')
+minuit_src = glob(join(cwd, 'Minuit/src/*.cxx'))
+minuit_header = join(cwd, 'Minuit/inc')
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
@@ -57,13 +60,16 @@ setup(
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
     test_suite = 'nose.collector',
+    install_requires=[
+        'future>=3.0.3'
+    ],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         #'Programming Language :: Python :: 3',
         #'Programming Language :: Python :: 3.3',
-        #'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: C++',
         'Programming Language :: Cython',
         'Programming Language :: Python :: Implementation :: CPython',
