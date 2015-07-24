@@ -2,11 +2,11 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import random
 from math import sqrt, exp, cos, pi, e
-from nose.tools import assert_almost_equal
+from nose.tools import assert_almost_equal, assert_less
 from iminuit import Minuit
 from iminuit.tests.test_iminuit import assert_array_almost_equal
 
-random.seed(0.258)
+
 
 
 def rosenbrock(x, y):
@@ -15,9 +15,11 @@ def rosenbrock(x, y):
 
 
 def test_rosenbrock():
-    m = Minuit(rosenbrock, x=0, y=0, pedantic=False, print_level=0)
+    random.seed(0.258)
+    m = Minuit(rosenbrock, x=0, y=0, pedantic=False, print_level=1)
+    m.tol=1e-4
     m.migrad()
-    assert m.fval < 1e-7
+    assert_less(m.fval, 1e-6)
     assert_almost_equal(m.values['x'], 1., places=3)
     assert_almost_equal(m.values['y'], 1., places=3)
 
@@ -30,12 +32,14 @@ def ackleys(x, y):
 
 def test_ackleys():
     random.seed(0.258)
+
     m = Minuit(ackleys, x=1.5 * random.random(), y=1.5 * random.random(),
                error_x=1.7, error_y=1.7,
                pedantic=False, print_level=0)
+    m.tol=1e-4
     m.migrad()
 
-    assert m.fval < 1e-5
+    assert_less(m.fval, 1e-6)
     assert_array_almost_equal(m.args, [0, 0], decimal=3)
 
 
@@ -51,9 +55,9 @@ def test_beale():
     random.seed(0.258)
     m = Minuit(beale, x=random.random(), y=0.5 * random.random(),
                pedantic=False, print_level=0)
-
+    m.tol=1e-4
     m.migrad()
-
+    assert_less(m.fval, 1e-6)
     assert_array_almost_equal(m.args, [3, 0.5], decimal=3)
     assert m.fval < 1e-6
 
@@ -66,6 +70,7 @@ def test_matyas():
     random.seed(0.258)
     m = Minuit(matyas, x=random.random(), y=random.random(),
                pedantic=False, print_level=0)
+    m.tol=1e-4
     m.migrad()
 
     assert m.fval < 1e-26
@@ -78,6 +83,6 @@ def test_matyas_oneside():
     m = Minuit(matyas, x=2 + random.random(), y=random.random(),
                limit_x=(1, None),
                pedantic=False, print_level=0)
-
+    m.tol=1e-4
     m.migrad()
     assert_array_almost_equal(m.args, [1, 0.923], decimal=3)

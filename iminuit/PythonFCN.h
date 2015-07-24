@@ -8,8 +8,10 @@ using namespace std;
 #include <cstdio>
 #include <cmath>
 #include <Python.h>
-#include "Minuit/FCNBase.h"
-#include "Minuit/MnApplication.h"
+#include "Minuit2/FCNBase.h"
+#include "Minuit2/MnApplication.h"
+
+using namespace ROOT::Minuit2;
 
 //missing string printf
 //this is safe and convenient but not exactly efficient
@@ -60,9 +62,9 @@ public:
     double up_parm;
     vector<string> pname;
     bool thrownan;
-    mutable unsigned int ncall; 
-    
-    PythonFCN():fcn(), up_parm(), pname(), 
+    mutable unsigned int ncall;
+
+    PythonFCN():fcn(), up_parm(), pname(),
     thrownan(), ncall(0)
     {}//for cython stack allocate but don't call this
 
@@ -158,5 +160,5 @@ public:
     int getNumCall() const{return ncall;}
     void resetNumCall(){ncall = 0;}
     void set_up(double up){up_parm = up;}
-    virtual double up() const{return up_parm;}
+    virtual double Up() const{return up_parm;}
 };
