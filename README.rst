@@ -11,8 +11,8 @@ iminuit
 -------
 
 Interactive IPython Friendly Mimizer based on
-`SEAL Minuit <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/release/download.html>`_.
-(It's included in the package no need to install it separately)
+`SEAL Minuit2 <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/release/download.html>`_.
+(A slightly modified version is included in the package no need to install it separately)
 
 It is designed from ground up to be fast, interactive and cython friendly. iminuit
 extract function signature very permissively starting from checking *func_code*
