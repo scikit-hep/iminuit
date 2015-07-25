@@ -50,9 +50,9 @@ cdef class Minuit:
     cdef readonly object fcn #:fcn
     #cdef readonly object varname #:variable names
     """this should work"""
-    cdef readonly object pos2var#:map variable position to varname
+    cdef readonly object pos2var #:map variable position to varname
     """or this should work"""
-    cdef readonly object var2pos#:map varname to position
+    cdef readonly object var2pos #:map varname to position
 
     #Initial settings
     cdef object initialvalue #:hold initial values
@@ -116,14 +116,14 @@ cdef class Minuit:
 
         **Arguments:**
 
-            - **fcn**: function to optimized. Minuit automagically find how to
-              call the function and each parameters. More information about how
+            - **fcn**: the function to be optimized. Minuit automagically finds
+              parameters names. More information about how
               Minuit detects function signature can be found in
               :ref:`function-sig-label`
 
         **Builtin Keyword Arguments:**
 
-            - **throw_nan**: fcn can be set to raise RuntimeError when it
+            - **throw_nan**: set fcn to raise RuntimeError when it
               encounters *nan*. (Default False)
 
             - **pedantic**: warns about parameters that do not have initial
@@ -141,11 +141,10 @@ cdef class Minuit:
 
             - **forced_parameters**: tell Minuit not to do function signature
               detection and use this argument instead. (Default None
-              (automagically detect signature)
+              (automagically detect signature))
 
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
-              1 print out at the end of migrad/hesse/minos. The reason it
-              has this cAmEl case is to keep it compatible with PyMinuit.
+              1 print out at the end of migrad/hesse/minos.
 
             - **errordef**: Optionals. Amount of increase in fcn to be defined
               as 1 :math:`\sigma`. If None is given, it will look at
@@ -186,18 +185,18 @@ cdef class Minuit:
 
             .. note::
 
-                Tips: you can use python dictionary expansion to
-                programatically change fitting argument.
+                Tips: You can use python dictionary expansion to
+                programatically change the fitting arguments.
 
                 ::
 
                     kwdarg = dict(x=1., error_x=0.5)
                     m = Minuit(f, **kwdarg)
 
-                You can obtain also obtain fit arguments from Minuit object
-                to reuse it later too. Note that fitarg will be automatically
-                updated to minimum value and corresponding error when you ran
-                migrad/hesse::
+                You can also obtain fit arguments from Minuit object
+                to reuse it later too. *fitarg* will be automatically
+                updated to the minimum value and the corresponding error when 
+                you ran migrad/hesse::
 
                     m = Minuit(f, x=1, error_x=0.5)
                     my_fitarg = m.fitarg
@@ -290,10 +289,10 @@ cdef class Minuit:
         **Arguments:**
 
             * **ncall**: integer (approximate) maximum number of call before
-              migrad stop trying. Default 10000
+              migrad stop trying. Default 10000.
 
             * **resume**: boolean indicating whether migrad should resume from
-              previous minimizer attempt(True) or should start from the
+              the previous minimizer attempt(True) or should start from the
               beginning(False). Default True.
 
             * **split**: split migrad in to *split* runs. Max fcn call
@@ -304,7 +303,7 @@ cdef class Minuit:
               that the minimum is invalid due to exceeding max call
               (ncall/nsplit). Default 1(no split).
 
-            * **precision**: override miniut own's internal precision
+            * **precision**: override miniut own's internal precision.
 
         **Return:**
 
@@ -364,11 +363,11 @@ cdef class Minuit:
         HESSE estimates error matrix by the `second derivative at the minimim
         <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This error matrix
         is good if your :math:`\chi^2` or likelihood profile is parabolic at
-        the minimum. From my experience, most of simple fits are.
+        the minimum. From my experience, most of the simple fits are.
 
         :meth:`minos` makes no parabolic assumption and scan the likelihood
         and give the correct error asymmetric error in all cases(Unless your
-        likelihood profile is utterly discontinuous near the minimum). But
+        likelihood profile is utterly discontinuous near the minimum). But,
         it is much more computationally expensive.
 
         **Returns**
@@ -744,18 +743,18 @@ cdef class Minuit:
 
     def mnprofile(self, vname, bins=30, bound=2,
             subtract_min=False):
-        """calculate minos profile around specify range ie. Migrad results
-        with **vname** fixed at various places within **bound**
+        """calculate minos profile around the specified range. That is Migrad 
+        minimum results with **vname** fixed at various places within **bound**
 
         **Arguments**
 
-            * **vname** variable name to scan
+            * **vname** name of variable to scan
 
-            * **bins** number of scanning bin. Default 30.
+            * **bins** number of scanning bins. Default 30.
 
             * **bound**
                 If bound is tuple, (left, right) scanning bound.
-                If bound is a number, it specifies how many :math:`\sigma`
+                If bound is\\ a number, it specifies how many :math:`\sigma`
                 symmetrically from minimum (minimum+- bound* :math:`\sigma`).
                 Default 2
 
@@ -806,8 +805,9 @@ cdef class Minuit:
 
     def draw_mnprofile(self, vname, bins=30, bound=2, subtract_min=False,
         band=True, text=True):
-        """Draw minos profile around specify range ie. Migrad results
-        with **vname** fixed at various places within **bound**
+        """Draw minos profile around the specified range. It is obtained
+        by finding Migrad results with **vname** fixed at various places 
+        within **bound**.
 
         **Arguments**
 
@@ -932,8 +932,8 @@ cdef class Minuit:
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
         """2D countour scan.
 
-        The contour returns is obtained by fixing all others parameters and
-        varying **x** and **y**.
+        return contour of migrad result obtained by fixing all 
+        others parameters except **x** and **y** which are let to varied.
 
         **Arguments**
 
@@ -1242,7 +1242,7 @@ cdef class Minuit:
 
 
     def _auto_frontend(self):
-        """determine front end automatically.
+        """determine frontend automatically.
         If this session is an IPYTHON session then use Html frontend,
         Console Frontend otherwise.
         """
