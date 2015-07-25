@@ -15,7 +15,7 @@ Interactive IPython Friendly Mimizer based on
 (A slightly modified version is included in the package no need to install it separately)
 
 It is designed from ground up to be fast, interactive and cython friendly. iminuit
-extract function signature very permissively starting from checking *func_code*
+extracts function signature very permissively starting from checking *func_code*
 down to last resort of parsing docstring(or you could tell iminuit to stop looking
 and take your answer). The interface is inspired heavily
 by PyMinuit and the status printout is inspired by ROOT Minuit. iminuit is
