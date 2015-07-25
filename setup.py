@@ -5,6 +5,20 @@ except ImportError:
     from distutils.core import setup, Extension
 from os.path import dirname, join
 from glob import glob
+from distutils.core import setup, Command
+import os, sys
+
+#Coverage command
+class CoverageCommand(Command):
+    description = "Produce coeverage report"
+    user_options = []
+    def initialize_options(self):
+        self.cwd = None
+    def finalize_options(self):
+        self.cwd = os.getcwd()
+    def run(self):
+        assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd
+        os.system('nosetests --with-coverage --cover-erase --cover-package=iminuit --cover-html iminuit')
 
 # Static linking
 cwd = dirname(__file__)
@@ -79,5 +93,8 @@ setup(
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'License :: OSI Approved :: MIT License'
-    ]
+    ],
+    cmdclass={
+        'coverage': CoverageCommand
+    }
 )

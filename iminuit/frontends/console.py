@@ -103,9 +103,6 @@ class ConsoleFrontend:
 
             *float_format*: ignored
         """
-        def lud(m, k, d):
-            #lookup map with default
-            return m[k] if k in m else d
         merr = {} if merr is None else merr
         vnames = [mp.name for mp in mps]
         maxlength = max([len(x) for x in vnames])

@@ -4,6 +4,12 @@ python:
   - 2.7
   - 3.4
 
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+sudo: false
+
 env:
     global:
         - BUILD=TEST
@@ -25,20 +31,19 @@ matrix:
           env: BUILD=DOCS
 
         # Extra build to compute coverage
-        #- python: 2.7
-        #  env: BUILD='COVERAGE'
+        - python: 2.7
+          env: BUILD='COVERAGE'
 
 before_install:
-  # TODO: we should get rid of the `future` dependency ... bundle what is needed.
-  - pip install future
-  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy Cython; fi
+  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy Cython matplotlib coverage; fi
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
 
 install:
   - python setup.py build_ext -i
 
 script:
-  - if [[ $BUILD == TEST ]]; then nosetests; fi
+  - if [[ $BUILD == TEST ]]; then nosetests -v; fi
+  - if [[ $BUILD == COVERAGE ]]; then python setup.py coverage; fi
   # TODO: add -W option to Sphinx build once this Sphinx bug is fixed:
   # https://github.com/iminuit/iminuit/pull/132#issuecomment-62139507
   - if [[ $BUILD == DOCS ]]; then cd doc; sphinx-build -a -E -b html -d _build/doctrees . _build/html; fi

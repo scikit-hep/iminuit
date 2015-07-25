@@ -3,6 +3,9 @@ from __future__ import (absolute_import, division, print_function,
 from nose.tools import assert_equal
 from iminuit.util import describe
 from math import ldexp
+import pyximport; pyximport.install()
+from . import cyfunc
+
 #simple function
 def f(x,y):
     pass
@@ -55,4 +58,10 @@ def test_fakefunc():
 def test_builtin():
     assert_equal(describe(ldexp, True),['x','i'])
 
-# TODO: any good way to test cython builtin call?
+def test_cython_embedsig():
+    assert_equal(describe(cyfunc.f, True),['a','b'])
+
+def test_cython_class_method():
+    cc = cyfunc.CyCallable()
+    assert_equal(describe(cc.test, True), ['c','d'])
+
