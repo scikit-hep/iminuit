@@ -43,7 +43,8 @@ or from pip::
 
     pip install iminuit
 
-for windows Christoph Gohlke made a nice windows library to save you all from windows compilation nightmare
+For Windows, Christoph Gohlke made a nice windows binary to save you all from Windows compilation nightmare:
+
    `http://www.lfd.uci.edu/~gohlke/pythonlibs/#iminuit <http://www.lfd.uci.edu/~gohlke/pythonlibs/#iminuit>`_
 
 Tutorial
