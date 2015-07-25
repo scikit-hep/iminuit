@@ -3,13 +3,16 @@
 The functions are copied from http://python-future.org/
 to avoid the extra dependency.
 """
+import sys
 
-# TODO: for some reason defining the `bytes_to_native_str` function
-# ourselves doesn't work ... maybe they do some monkey buiseness on import?
+py_ver = sys.version_info
+PY2 = False
+PY3 = False
+if py_ver[0] == 2:
+    PY2 = True
+else:#just in case PY4
+    PY3 = True
 
-from future.utils import bytes_to_native_str
-#def bytes_to_native_str(b, encoding='utf-8'):
-#        return b.decode(encoding)
+ARRAY_DOUBLE_TYPECODE = 'd' if PY2 else u'd'
 
-# See http://python-future.org/stdlib_incompatibilities.html#array-array
-ARRAY_DOUBLE_TYPECODE = bytes_to_native_str(b'd')
+

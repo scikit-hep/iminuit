@@ -60,9 +60,9 @@ setup(
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
     test_suite = 'nose.collector',
-    install_requires=[
-        'future>=3.0.3'
-    ],
+    #install_requires=[
+    #    'future>=3.0.3'
+    #],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',

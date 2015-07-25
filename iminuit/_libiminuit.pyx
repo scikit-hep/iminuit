@@ -1,4 +1,4 @@
-# cython: embedsignature=True
+# cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii
 # distutils: language = c++
 """IPython Minuit class definition.
 """

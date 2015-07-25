@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import inspect
 import re
+from . import py23_compat as compat
 
 __all__ = [
     'describe',
@@ -80,18 +81,44 @@ def arguments_from_docstring(doc):
         ret.append(tmp)
         #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         #ret += self.docstring_kwd_re.findall(s)
-    ret = filter(lambda x: x!='', ret)
+    ret = list(filter(lambda x: x!='', ret))
 
     if len(ret)==0:
         raise RuntimeError('Your doc is unparsable\n'+doc)
 
     return ret
 
+def fc_or_c(f):
+    if hasattr(f,'func_code'):
+        return f.func_code
+    else:
+        return f.__code__
+
+def arguments_from_funccode(f):
+    """Check f.funccode for arguments
+    """
+    fc = fc_or_c(f)
+    vnames = fc.co_varnames
+    #bound method and fake function will be None
+    if is_bound(f):
+        #bound method dock off self
+        return list(vnames[1:fc.co_argcount])
+    else:
+        #unbound and fakefunc
+        return list(vnames[:fc.co_argcount])
+
+
+def arguments_from_call_funccode(f):
+    """Check f.__call__.func_code for arguments
+    """
+    fc = fc_or_c(f.__call__)
+    argcount = fc.co_argcount
+    return list(fc.co_varnames[1:argcount])
 
 def is_bound(f):
     """Test whether ``f`` is a bound function.
     """
-    return getattr(f, 'im_self', None) is not None
+    return getattr(f, '__self__', None) is not None
 
 
 def dock_if_bound(f, v):
@@ -107,43 +134,36 @@ def better_arg_spec(f, verbose=False):
 
         :ref:`function-sig-label`
     """
-
+    #using funccode
     try:
-        vnames = f.func_code.co_varnames
-        #bound method and fake function will be None
-        if is_bound(f):
-            #bound method dock off self
-            return list(vnames[1:f.func_code.co_argcount])
-        else:
-            #unbound and fakefunc
-            return list(vnames[:f.func_code.co_argcount])
+        return arguments_from_funccode(f)
     except Exception as e:
         if verbose:
             print(e) # TODO: this might not be such a good dea.
-            print("f.func_code.co_varnames[:f.func_code.co_argcount] fails")
-        #using __call__ funccode
+            print("Extracting arguments from f.func_code/__code__ fails")
+        
 
+    #using __call__ funccode
     try:
-        #vnames = f.__call__.func_code.co_varnames
-        return list(f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount])
+        return arguments_from_call_funccode(f)
     except Exception as e:
         if verbose:
             print(e) # TODO: this might not be such a good dea.
-            print("f.__call__.func_code.co_varnames[1:f.__call__.func_code.co_argcount] fails")
+            print("Extracting arguments from f.__call__.func_code/__code__ fails")
 
-    try:
-        return list(inspect.getargspec(f.__call__)[0][1:])
-    except Exception as e:
-        if verbose:
-            print(e)
-            print("inspect.getargspec(f)[0] fails")
+    # try:
+    #     return list(inspect.getargspec(f.__call__)[0][1:])
+    # except Exception as e:
+    #     if verbose:
+    #         print(e)
+    #         print("inspect.getargspec(f)[0] fails")
 
-    try:
-        return list(inspect.getargspec(f)[0])
-    except Exception as e:
-        if verbose:
-            print(e)
-            print("inspect.getargspec(f)[0] fails")
+    # try: 
+    #     return list(inspect.getargspec(f)[0])
+    # except Exception as e:
+    #     if verbose:
+    #         print(e)
+    #         print("inspect.getargspec(f)[0] fails")
 
     #now we are parsing __call__.__doc__
     #we assume that __call__.__doc__ doesn't have self
@@ -182,6 +202,11 @@ def describe(f, verbose=False):
     """
     return better_arg_spec(f, verbose)
 
+def is_string(s):
+    try:#Python 2
+        return isinstance(s, basestring)
+    except NameError:#Python 3
+        return isinstance(s, str)
 
 def fitarg_rename(fitarg, ren):
     """Rename variable names in ``fitarg`` with rename function.
@@ -200,7 +225,7 @@ def fitarg_rename(fitarg, ren):
 
     """
     tmp = ren
-    if isinstance(ren, basestring):
+    if is_string(ren):
         ren = lambda x: tmp + '_' + x
     ret = {}
     prefix = ['limit_', 'fix_', 'error_', ]
