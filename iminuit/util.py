@@ -3,7 +3,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import inspect
-from io import StringIO
 import re
 
 __all__ = [
@@ -53,14 +52,17 @@ def arguments_from_docstring(doc):
     It can also parse cython docstring of the form
     ``Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])``
     """
+
     if doc is None:
         raise RuntimeError('__doc__ is None')
-    sio = StringIO.StringIO(doc.lstrip())
+
+    doc = doc.lstrip()
+
     #care only the firstline
     #docstring can be long
-    line = sio.readline()
+    line = doc.split('\n', 1)[0] #get the firstline
     if line.startswith("('...',)"):
-        line=sio.readline()#stupid cython
+        line = doc.split('\n', 2)[1] #get the second line
     p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
     #'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)

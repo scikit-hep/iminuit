@@ -8,7 +8,7 @@ def f(x,y):
     pass
 
 def test_simple():
-    assert_equal(describe(f,True), ['x','y'])
+    assert_equal(describe(f, True), ['x','y'])
 
 #test bound method
 class A:
@@ -17,11 +17,11 @@ class A:
 
 def test_bound():
     a=A()
-    assert_equal(describe(a.f,True),['x','y'])
+    assert_equal(describe(a.f, True),['x','y'])
 
 #unbound method
 def test_unbound():
-    assert_equal(describe(A.f,True),['self','x','y'])
+    assert_equal(describe(A.f, True),['self','x','y'])
 
 #faking func code
 class Func_Code:
@@ -38,7 +38,7 @@ class Func1:
 
 def test_call():
     f1 = Func1()
-    assert_equal(describe(f1,True),['x','y'])
+    assert_equal(describe(f1, True),['x','y'])
 
 #fake func
 class Func2:
@@ -49,10 +49,10 @@ class Func2:
 
 def test_fakefunc():
     f2 = Func2()
-    assert_equal(describe(f2,True),['x','y'])
+    assert_equal(describe(f2, True),['x','y'])
 
 #builtin (parsing doc)
 def test_builtin():
-    assert_equal(describe(min),['iterable','key'])
+    assert_equal(describe(min, True),['iterable','key'])
 
 # TODO: any good way to test cython builtin call?
