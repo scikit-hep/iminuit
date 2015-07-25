@@ -35,7 +35,7 @@ matrix:
           env: BUILD='COVERAGE'
 
 before_install:
-  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy Cython matplotlib; fi
+  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy Cython matplotlib coverage; fi
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
 
 install:
