@@ -1,7 +1,13 @@
 .. -*- mode: rst -*-
 
-.. image:: https://travis-ci.org/iminuit/iminuit.png?branch=master
+.. image:: https://img.shields.io/travis/iminuit/iminuit.svg
    :target: https://travis-ci.org/iminuit/iminuit
+.. image:: https://img.shields.io/pypi/v/iminuit.svg
+   :target: https://pypi.python.org/pypi/iminuit
+.. image:: https://img.shields.io/pypi/dm/iminuit.svg
+   :target: https://pypi.python.org/pypi/iminuit
+.. image:: https://img.shields.io/pypi/pyversions/iminuit.svg
+   :target: https://pypi.python.org/pypi/iminuit
 
 iminuit
 -------
