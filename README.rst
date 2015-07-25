@@ -6,8 +6,6 @@
    :target: https://pypi.python.org/pypi/iminuit
 .. image:: https://img.shields.io/pypi/dm/iminuit.svg
    :target: https://pypi.python.org/pypi/iminuit
-.. image:: https://img.shields.io/pypi/pyversions/iminuit.svg
-   :target: https://pypi.python.org/pypi/iminuit
 
 iminuit
 -------
