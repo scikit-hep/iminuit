@@ -4,26 +4,26 @@
 {
     "distutils": {
         "depends": [
-            "Minuit/inc/Minuit2/MinosError.h", 
-            "Minuit/inc/Minuit2/MnHesse.h", 
-            "Minuit/inc/Minuit2/MnUserParameterState.h", 
-            "Minuit/inc/Minuit2/MinuitParameter.h", 
-            "Minuit/inc/Minuit2/FunctionMinimum.h", 
-            "Minuit/inc/Minuit2/MnApplication.h", 
-            "Minuit/inc/Minuit2/VariableMetricBuilder.h", 
-            "Minuit/inc/Minuit2/MnMinos.h", 
-            "Minuit/inc/Minuit2/MnUserCovariance.h", 
-            "Minuit/inc/Minuit2/MnContours.h", 
-            "Minuit/inc/Minuit2/FCNBase.h", 
-            "Minuit/inc/Minuit2/MnGlobalCorrelationCoeff.h", 
-            "Minuit/inc/Minuit2/ContoursError.h", 
-            "Minuit/inc/Minuit2/MnStrategy.h", 
-            "iminuit/PythonFCN.h", 
-            "Minuit/inc/Minuit2/MnMigrad.h"
-        ], 
+            "Minuit/inc/Minuit2/MinuitParameter.h",
+            "Minuit/inc/Minuit2/MinosError.h",
+            "Minuit/inc/Minuit2/MnApplication.h",
+            "Minuit/inc/Minuit2/MnUserParameterState.h",
+            "iminuit/PythonFCN.h",
+            "Minuit/inc/Minuit2/MnStrategy.h",
+            "Minuit/inc/Minuit2/MnUserCovariance.h",
+            "Minuit/inc/Minuit2/ContoursError.h",
+            "Minuit/inc/Minuit2/FunctionMinimum.h",
+            "Minuit/inc/Minuit2/VariableMetricBuilder.h",
+            "Minuit/inc/Minuit2/MnHesse.h",
+            "Minuit/inc/Minuit2/MnMigrad.h",
+            "Minuit/inc/Minuit2/MnMinos.h",
+            "Minuit/inc/Minuit2/MnGlobalCorrelationCoeff.h",
+            "Minuit/inc/Minuit2/FCNBase.h",
+            "Minuit/inc/Minuit2/MnContours.h"
+        ],
         "include_dirs": [
             "Minuit/inc"
-        ], 
+        ],
         "language": "c++"
     }
 }
@@ -339,11 +339,11 @@ class __Pyx_FakeReference {
 typedef struct {PyObject **p; char *s; const Py_ssize_t n; const char* encoding;
                 const char is_unicode; const char is_str; const char intern; } __Pyx_StringTabEntry;
 
-#define __PYX_DEFAULT_STRING_ENCODING_IS_ASCII 0
+#define __PYX_DEFAULT_STRING_ENCODING_IS_ASCII 1
 #define __PYX_DEFAULT_STRING_ENCODING_IS_DEFAULT 0
-#define __PYX_DEFAULT_STRING_ENCODING ""
-#define __Pyx_PyObject_FromString __Pyx_PyBytes_FromString
-#define __Pyx_PyObject_FromStringAndSize __Pyx_PyBytes_FromStringAndSize
+#define __PYX_DEFAULT_STRING_ENCODING "ascii"
+#define __Pyx_PyObject_FromString __Pyx_PyStr_FromString
+#define __Pyx_PyObject_FromStringAndSize __Pyx_PyStr_FromStringAndSize
 #define __Pyx_fits_Py_ssize_t(v, type, is_signed)  (    \
     (sizeof(type) < sizeof(Py_ssize_t))  ||             \
     (sizeof(type) > sizeof(Py_ssize_t) &&               \
@@ -2184,7 +2184,7 @@ static PyObject *__pyx_f_7iminuit_11_libiminuit_minuitparam2struct(MinuitParamet
  *             value = mp.Value(),
  *             error = mp.Error(),
  */
-  __pyx_t_3 = __Pyx_PyBytes_FromString(__pyx_v_mp.Name()); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 27; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyStr_FromString(__pyx_v_mp.Name()); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 27; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_name, __pyx_t_3) < 0) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 25; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -17614,7 +17614,7 @@ static PyObject *__pyx_f_7iminuit_11_libiminuit_6Minuit_refreshInternalState(str
  */
       __pyx_t_2 = PyFloat_FromDouble((__pyx_v_mpv[__pyx_v_i]).Value()); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1186; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_6 = __Pyx_PyBytes_FromString((__pyx_v_mpv[__pyx_v_i]).Name()); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1186; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = __Pyx_PyStr_FromString((__pyx_v_mpv[__pyx_v_i]).Name()); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1186; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       if (unlikely(PyObject_SetItem(__pyx_v_self->values, __pyx_t_6, __pyx_t_2) < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1186; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -17629,7 +17629,7 @@ static PyObject *__pyx_f_7iminuit_11_libiminuit_6Minuit_refreshInternalState(str
  */
       __pyx_t_2 = PyFloat_FromDouble((__pyx_v_mpv[__pyx_v_i]).Error()); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_6 = __Pyx_PyBytes_FromString((__pyx_v_mpv[__pyx_v_i]).Name()); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      __pyx_t_6 = __Pyx_PyStr_FromString((__pyx_v_mpv[__pyx_v_i]).Name()); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_6);
       if (unlikely(PyObject_SetItem(__pyx_v_self->errors, __pyx_t_6, __pyx_t_2) < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -25632,7 +25632,7 @@ PyMODINIT_FUNC PyInit__libiminuit(void)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "iminuit/_libiminuit.pyx":1
- * # cython: embedsignature=True             # <<<<<<<<<<<<<<
+ * # cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii             # <<<<<<<<<<<<<<
  * # distutils: language = c++
  * """IPython Minuit class definition.
  */

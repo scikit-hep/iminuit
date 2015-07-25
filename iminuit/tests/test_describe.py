@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from nose.tools import assert_equal
 from iminuit.util import describe
-
+from math import ldexp
 #simple function
 def f(x,y):
     pass
@@ -53,6 +53,6 @@ def test_fakefunc():
 
 #builtin (parsing doc)
 def test_builtin():
-    assert_equal(describe(min, True),['iterable','key'])
+    assert_equal(describe(ldexp, True),['x','i'])
 
 # TODO: any good way to test cython builtin call?

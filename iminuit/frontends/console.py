@@ -18,7 +18,7 @@ class ConsoleFrontend:
         goaledm = 0.0001*tolerance*fmin.up if tolerance is not None else ''
         #despite what the doc said the code is actually 1e-4
         #http://wwwasdoc.web.cern.ch/wwwasdoc/hbook_html3/node125.html
-        flatlocal = dict(locals().items()+fmin.__dict__.items())
+        flatlocal = dict(list(locals().items())+list(fmin.__dict__.items()))
         info1 = 'fval = %(fval)r | total call = %(ncalls)r | ncalls = %(nfcn)r\n' %\
                 flatlocal
         info2 = 'edm = %(edm)r (Goal: %(goaledm)r) | up = %(up)r\n' % flatlocal

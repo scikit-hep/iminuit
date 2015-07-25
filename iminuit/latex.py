@@ -102,13 +102,13 @@ class LatexTable:
     def _prepare(self): #return list of list
         ret = []
         if self.headers:
-            tmp = map(self._format, self.headers)
+            tmp = list(map(self._format, self.headers))
             if self.rotate_header:
-                tmp = map(lambda x: '\\rotatebox{90}{%s}'%x, tmp)
+                tmp = list(map(lambda x: '\\rotatebox{90}{%s}'%x, tmp))
 
             ret.append(tmp)
         for x in self.data:
-            ret.append(map(self._format, x))
+            ret.append(list(map(self._format, x)))
         return ret
 
     def __str__(self):
@@ -122,6 +122,7 @@ class LatexTable:
         ret += hline
         tdata = self._prepare()
         #decorate it
+
         for (i, j), c in self.cell_color.items():
             tdata[i][j] = '\\cellcolor' + self._xcolor_from_tuple(c) +\
                           ' ' + tdata[i][j]
