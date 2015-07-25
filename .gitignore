@@ -17,6 +17,8 @@ MANIFEST
 .settings
 Untitled*.ipynb
 Untitled*.py
+.coverage
+cover
 
 !tutorial.html
 !tutorial.ipynb

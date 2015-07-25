@@ -272,11 +272,3 @@ class HtmlFrontend:
 
     def print_hline(self):
         display_html('<hr>', raw=True)
-
-
-class HTMLWrapper:
-    def __init__(self, txt):
-        self.data = txt
-
-    def _repr_html_(self):
-        return self.txt

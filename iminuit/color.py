@@ -17,7 +17,7 @@ class Gradient:
         return tuple(c)
 
     @classmethod
-    def xcolor_for(cls, v):
+    def xcolor_for(cls, v):#pragma: no cover
         c = cls.color_for(abs(v))
         return '[rgb]{%3.2f,%3.2f,%3.2f}' % (c[0]/255., c[1]/255., c[2]/255.)
 

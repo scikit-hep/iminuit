@@ -83,7 +83,7 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
     for i, this_sig in enumerate(sigmas):
         xminos, yminos, pts = self.mncontour(x, y, numpoints=numpoints,
                                                 sigma=this_sig)
-        if len(pts)==0:
+        if len(pts)==0:#pragma: no cover
             warnings.warn(RuntimeWarning('Fail mncontour for %s, %s, sigma=%f'%(x,y,this_sig)))
             continue
 
@@ -121,8 +121,9 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
         # suppress FutureWarning from matplotlib/tri/triangulation.py
         warnings.filterwarnings("ignore",category=FutureWarning)
         g = mlab.griddata(fx,fy,fz,xgrid,ygrid, interp='linear')
-
-    if edges: #return grid edges instead of mid point (for pcolor)
+    
+    #return grid edges instead of mid point (for pcolor)    
+    if edges:  # pragma: no cover 
         xgrid -= xstep/2.
         ygrid -= ystep/2.
         np.resize(xgrid,len(xgrid)+1)

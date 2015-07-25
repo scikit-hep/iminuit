@@ -54,3 +54,11 @@ def test_smartlatex():
         ltt._convert_smart_latex('a_alpha_beta'),
         r'a $\alpha_{\beta}$'
         )
+
+def test_format():
+    ltt = LatexTable(data=[['alpha',10.123,20],['alpha_s',30,40]], 
+        smart_latex=False)
+    assert_equal(ltt._format('a_b'), r'a\_b')
+    ltt2 = LatexTable(data=[['alpha',10.123,20],['alpha_s',30,40]], 
+        smart_latex=False, escape_under_score=False)
+    assert_equal(ltt2._format('a_b'), r'a_b')

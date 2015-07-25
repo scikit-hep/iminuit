@@ -4,22 +4,22 @@
 {
     "distutils": {
         "depends": [
-            "Minuit/inc/Minuit2/MinuitParameter.h",
-            "Minuit/inc/Minuit2/MinosError.h",
-            "Minuit/inc/Minuit2/MnApplication.h",
-            "Minuit/inc/Minuit2/MnUserParameterState.h",
-            "iminuit/PythonFCN.h",
-            "Minuit/inc/Minuit2/MnStrategy.h",
-            "Minuit/inc/Minuit2/MnUserCovariance.h",
-            "Minuit/inc/Minuit2/ContoursError.h",
-            "Minuit/inc/Minuit2/FunctionMinimum.h",
-            "Minuit/inc/Minuit2/VariableMetricBuilder.h",
-            "Minuit/inc/Minuit2/MnHesse.h",
             "Minuit/inc/Minuit2/MnMigrad.h",
-            "Minuit/inc/Minuit2/MnMinos.h",
+            "Minuit/inc/Minuit2/MnApplication.h",
             "Minuit/inc/Minuit2/MnGlobalCorrelationCoeff.h",
+            "Minuit/inc/Minuit2/MnHesse.h",
+            "Minuit/inc/Minuit2/MinuitParameter.h",
+            "Minuit/inc/Minuit2/MnStrategy.h",
             "Minuit/inc/Minuit2/FCNBase.h",
-            "Minuit/inc/Minuit2/MnContours.h"
+            "Minuit/inc/Minuit2/VariableMetricBuilder.h",
+            "iminuit/PythonFCN.h",
+            "Minuit/inc/Minuit2/ContoursError.h",
+            "Minuit/inc/Minuit2/MnContours.h",
+            "Minuit/inc/Minuit2/MnMinos.h",
+            "Minuit/inc/Minuit2/FunctionMinimum.h",
+            "Minuit/inc/Minuit2/MnUserParameterState.h",
+            "Minuit/inc/Minuit2/MnUserCovariance.h",
+            "Minuit/inc/Minuit2/MinosError.h"
         ],
         "include_dirs": [
             "Minuit/inc"
