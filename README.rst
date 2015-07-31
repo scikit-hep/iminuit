@@ -25,12 +25,12 @@ code can be ported to iminuit by just changing the import statement.
 In a nutshell::
 
     from iminuit import Minuit
-    def f(x,y,z):
-        return (x-2)**2 + (y-3)**2 + (z-4)**2
+    def f(x, y, z):
+        return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
     m = Minuit(f)
     m.migrad()
-    print m.values #{'x':2,'y':3,'z':4}
-    print m.errors
+    print(m.values)  # {'x': 2,'y': 3,'z': 4}
+    print(m.errors)  # {'x': 1,'y': 1,'z': 1}
 
 Install
 -------
