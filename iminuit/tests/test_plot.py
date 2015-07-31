@@ -1,16 +1,13 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from iminuit import Minuit
-from nose.tools import (raises,
-                        assert_equal,
-                        assert_true,
-                        assert_false,
-                        assert_almost_equal,
+from nose.tools import (assert_almost_equal,
                         assert_less
                         )
 
 import matplotlib as mpl
 mpl.use('Agg')
+
 
 def f1(x, y):
     return (1 - x) ** 2 + 100 * (y - 1) ** 2

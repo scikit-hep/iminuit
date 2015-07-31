@@ -3,7 +3,6 @@
 
 from libcpp.vector cimport vector
 from libcpp.utility cimport pair
-from libcpp cimport bool
 
 cdef extern from "<memory>" namespace "std":
     cdef cppclass auto_ptr[T]:

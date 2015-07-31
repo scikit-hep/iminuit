@@ -1,14 +1,10 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from iminuit import Minuit
-from nose.tools import (raises,
-                        assert_equal,
-                        assert_true,
-                        assert_false,
-                        assert_almost_equal,
-                        assert_less)
 from iminuit.frontends.html import HtmlFrontend
 from iminuit.frontends.console import ConsoleFrontend
+
+
 def f1(x, y):
     return (1 - x) ** 2 + 100 * (y - 1) ** 2
 

@@ -6,11 +6,8 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import array
 from warnings import warn
-from pprint import pprint
 from libc.math cimport sqrt
-from libcpp.vector cimport vector
 from libcpp.string cimport string
-from cpython cimport exc
 from cython.operator cimport dereference as deref
 from iminuit.py23_compat import ARRAY_DOUBLE_TYPECODE
 from iminuit.util import *
