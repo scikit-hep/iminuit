@@ -21,3 +21,6 @@ cover
 
 !tutorial.html
 !tutorial.ipynb
+
+.ipynb_checkpoints
+iminuit.egg-info
