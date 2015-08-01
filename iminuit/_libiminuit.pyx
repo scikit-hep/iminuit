@@ -686,9 +686,11 @@ cdef class Minuit:
     def set_errordef(self, double errordef):
         """Set error parameter 1 for :math:`\chi^2` and 0.5 for log likelihood.
 
-        .. seealso::
-            http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node31.html
+        See page 37 of http://hep.fi.infn.it/minuit.pdf
         """
+        # TODO: try to get a HTML link for this again.
+        # It was this before, but that is currently broken.
+        # http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node31.html
         self.errordef = errordef
         if self.pyfcn is not NULL:
             self.pyfcn.set_up(errordef)
