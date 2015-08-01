@@ -6,16 +6,19 @@ except ImportError:
 from os.path import dirname, join
 from glob import glob
 from distutils.core import setup, Command
-import os, sys
+import os
 
-#Coverage command
+
 class CoverageCommand(Command):
-    description = "Produce coeverage report"
+    description = "Produce coverage report"
     user_options = []
+
     def initialize_options(self):
         self.cwd = None
+
     def finalize_options(self):
         self.cwd = os.getcwd()
+
     def run(self):
         assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd
         os.system('nosetests --with-coverage --cover-erase --cover-package=iminuit --cover-html iminuit')
@@ -30,7 +33,7 @@ minuit_header = join(cwd, 'Minuit/inc')
 try:
     from Cython.Build import cythonize
     USE_CYTHON = True   # TODO: add command line option?
-except:
+except ImportError:
     print('Cython is not available ... using pre-generated C file.')
     USE_CYTHON = False
 
@@ -47,6 +50,7 @@ extensions = [libiminuit]
 
 if USE_CYTHON:
     extensions = cythonize(extensions)
+
 
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
@@ -73,16 +77,13 @@ setup(
     package_dir={'iminuit': 'iminuit'},
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
-    test_suite = 'nose.collector',
-    #install_requires=[
-    #    'future>=3.0.3'
-    #],
+    test_suite='nose.collector',
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        #'Programming Language :: Python :: 3',
-        #'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: C++',
         'Programming Language :: Cython',

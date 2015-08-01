@@ -55,6 +55,7 @@ def test_smartlatex():
         r'a $\alpha_{\beta}$'
         )
 
+
 def test_format():
     ltt = LatexTable(data=[['alpha',10.123,20],['alpha_s',30,40]], 
         smart_latex=False)

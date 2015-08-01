@@ -44,72 +44,25 @@ Minuit
 
     .. autoattribute:: args
 
-        current values of parameters in form of tuple(var1,var2, ...)
-
     .. autoattribute:: values
-
-        curret values of parameters in form of dictionary(name -> value)
 
     .. autoattribute:: errors
 
-        curret values of parameters in form of dictionary(name -> error)
-
     .. autoattribute:: fitarg
-
-        current value state in form of
-        dictionary(name->value, error_name->error, fix_name->fix
-        , limit_name->(lower, upper)).
-        This is very useful when you wan to save the fit parameters and
-        use it later. For example,::
-
-            m = Minuit(f,x=1)
-            m.migrad()
-            fitarg = m.fitarg
-
-            m2 = Minuit(f,**fitarg)
 
     .. autoattribute:: merrors
 
-        last minos error in form of dictionary((name,1.0)->upper, (name,-1.0)
-        ->lower). It is here for PyMinuit compatibility.
-
-        This is not recommend
-        use :meth:`get_merrors` which return dictionary of
-        name-> :ref:`minos-error-struct` instead.
-
     .. autoattribute:: fval
-
-        current function value
-
-        .. seealso:: :meth:`get_fmin`
 
     .. autoattribute:: edm
 
-        estimated distance to minimum
-
-        .. seealso:: :meth:`get_fmin`
-
     .. autoattribute:: covariance
-
-        covariance matrix in form of dictionary(v1,v2)->covariance
-
-        .. seealso:: :meth:`matrix`
 
     .. autoattribute:: gcc
 
-        global correlation coefficiencts in form of
-        dict(varname->gcc)
-
     .. autoattribute:: errordef
 
-        Amount of change in fcn that defines 1 :math:`sigma` error.
-        Default value is 1.0. `errordef` should be 1.0 for :math:`\chi^2` cost
-        funciton and 0.5 for negative log likelihood function.
-
     .. autoattribute:: tol
-
-        Tolerance. One fo migrad convergence criteria is edm < maxedm.
-        Maxedm is calculated by 0.0001*tol*UP.
 
 
 Utility Functions

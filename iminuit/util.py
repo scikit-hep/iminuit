@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import inspect
 import re
-from . import py23_compat as compat
+from .py23_compat import is_string
 
 __all__ = [
     'describe',
@@ -202,11 +202,6 @@ def describe(f, verbose=False):
     """
     return better_arg_spec(f, verbose)
 
-def is_string(s):
-    try:#Python 2
-        return isinstance(s, basestring)
-    except NameError:#Python 3
-        return isinstance(s, str)
 
 def fitarg_rename(fitarg, ren):
     """Rename variable names in ``fitarg`` with rename function.
