@@ -82,8 +82,8 @@ def functesthelper(f):
     assert_almost_equal(val['x'], 2.)
     assert_almost_equal(val['y'], 5.)
     assert_almost_equal(m.fval, 10.)
-    assert (m.matrix_accurate())
-    assert (m.migrad_ok())
+    assert m.matrix_accurate()
+    assert m.migrad_ok()
     return m
 
 
@@ -248,14 +248,14 @@ def test_minos_single_nonsense_variable():
     m.minos('nonsense')
 
 
-def test_fixing_long_variablename():
+def test_fixing_long_variable_name():
     m = Minuit(func5, pedantic=False, print_level=0,
                fix_long_variable_name_really_long_why_does_it_has_to_be_this_long=True,
                long_variable_name_really_long_why_does_it_has_to_be_this_long=0)
     m.migrad()
 
 
-def test_initalvalue():
+def test_initial_value():
     m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
     assert_almost_equal(m.args[0], 1.)
     assert_almost_equal(m.args[1], 2.)
@@ -332,20 +332,34 @@ def test_reverse_limit():
     m.migrad()
 
 
-class TestErrorMatrix(TestCase):
+class TestMatrix(TestCase):
     def setUp(self):
         self.m = Minuit(func3, print_level=0, pedantic=False)
         self.m.migrad()
 
-    def test_error_matrix(self):
-        actual = self.m.matrix()
+    def test_matrix(self):
+        actual = self.m.np_matrix()
         expected = [[5., 0.], [0., 1.]]
         assert_array_almost_equal(actual, expected)
 
-    def test_error_matrix_correlation(self):
+    def test_np_matrix(self):
+        import numpy as np
+        actual = self.m.np_matrix()
+        expected = [[5., 0.], [0., 1.]]
+        assert_array_almost_equal(actual, expected)
+        assert isinstance(actual, np.ndarray)
+
+    def test_matrix_correlation(self):
         actual = self.m.matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]
         assert_array_almost_equal(actual, expected)
+
+    def test_np_matrix_correlation(self):
+        import numpy as np
+        actual = self.m.np_matrix(correlation=True)
+        expected = [[1., 0.], [0., 1.]]
+        assert_array_almost_equal(actual, expected)
+        assert isinstance(actual, np.ndarray)
 
 
 def test_chi2_fit():
