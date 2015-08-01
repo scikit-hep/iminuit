@@ -7,7 +7,7 @@ PY2 = False
 PY3 = False
 if py_ver[0] == 2:
     PY2 = True
-else: # just in case PY4
+else:  # just in case PY4
     PY3 = True
 
 ARRAY_DOUBLE_TYPECODE = 'd' if PY2 else u'd'
@@ -16,5 +16,5 @@ ARRAY_DOUBLE_TYPECODE = 'd' if PY2 else u'd'
 def is_string(s):
     try:  # Python 2
         return isinstance(s, basestring)
-    except NameError:#Python 3
+    except NameError:  # Python 3
         return isinstance(s, str)

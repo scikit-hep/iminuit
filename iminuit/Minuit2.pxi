@@ -6,25 +6,24 @@ from libcpp.utility cimport pair
 cdef extern from "<memory>" namespace "std":
     cdef cppclass auto_ptr[T]:
         auto_ptr()
-        auto_ptr(T* ptr)
-        T* get()
+        auto_ptr(T*ptr)
+        T*get()
 
-#LCG Minuit
 cdef extern from "Minuit2/FCNBase.h":
     cdef cppclass FCNBase:
-        double call "operator()" (vector[double] x) except+
+        double call "operator()"(vector[double] x) except+
         double ErrorDef()
 
 cdef extern from "Minuit2/MnApplication.h":
     cdef cppclass MnApplication:
-         FunctionMinimum call "operator()" (int,double) except+
-         void SetPrecision(double)
+        FunctionMinimum call "operator()"(int, double) except+
+        void SetPrecision(double)
 
 cdef extern from "Minuit2/MinuitParameter.h":
     cdef cppclass MinuitParameter:
         MinuitParameter(unsigned int, char*, double)
         unsigned int Number()
-        char* Name()
+        char*Name()
         double Value()
         double Error()
         bint IsConst()
@@ -39,7 +38,7 @@ cdef extern from "Minuit2/MinuitParameter.h":
 cdef extern from "Minuit2/MnUserCovariance.h":
     cdef cppclass MnUserCovariance:
         unsigned int Nrow()
-        double get "operator()" (unsigned int row, unsigned int col)
+        double get "operator()"(unsigned int row, unsigned int col)
 
 cdef extern from "Minuit2/MnGlobalCorrelationCoeff.h":
     cdef cppclass MnGlobalCorrelationCoeff:
@@ -51,8 +50,8 @@ cdef extern from "Minuit2/MnUserParameterState.h":
         MnUserParameterState()
         MnUserParameterState(MnUserParameterState mpst)
         vector[double] Params()
-        void Add(char* name, double val, double err)
-        void Add(char* name, double val, double err, double , double)
+        void Add(char*name, double val, double err)
+        void Add(char*name, double val, double err, double, double)
         void Add(char*, double)
 
         vector[MinuitParameter] MinuitParameters()
@@ -81,7 +80,7 @@ cdef extern from "Minuit2/MnUserParameterState.h":
         double Error(char*)
 
         unsigned int Index(char*)
-        char* Name(unsigned int)
+        char*Name(unsigned int)
 
 cdef extern from "Minuit2/MnStrategy.h":
     cdef cppclass MnStrategy:
@@ -89,14 +88,14 @@ cdef extern from "Minuit2/MnStrategy.h":
 
 cdef extern from "Minuit2/MnMigrad.h":
     cdef cppclass MnMigrad(MnApplication):
-        MnMigrad(FCNBase fcn, MnUserParameterState par, MnStrategy str ) except+
-        FunctionMinimum call "operator()" (int,double) except+
+        MnMigrad(FCNBase fcn, MnUserParameterState par, MnStrategy str) except+
+        FunctionMinimum call "operator()"(int, double) except+
         void SetPrecision(double)
 
 cdef extern from "Minuit2/MnHesse.h":
     cdef cppclass MnHesse:
         MnHesse(unsigned int stra)
-        MnUserParameterState call "operator()" (FCNBase , MnUserParameterState, unsigned int maxcalls=0) except+
+        MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls=0) except+
 
 cdef extern from "Minuit2/MnMinos.h":
     cdef cppclass MnMinos:
@@ -144,7 +143,7 @@ cdef extern from "Minuit2/FunctionMinimum.h":
         bint IsAboveMaxEdm()
 
 cdef extern from "Minuit2/VariableMetricBuilder.h":
-    void set_migrad_print_level "VariableMetricBuilder::setPrintLevel" (int p)
+    void set_migrad_print_level "VariableMetricBuilder::setPrintLevel"(int p)
 
 cdef extern from "Minuit2/MnContours.h":
     cdef cppclass MnContours:

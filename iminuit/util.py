@@ -2,7 +2,6 @@
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import inspect
 import re
 from .py23_compat import is_string
 
@@ -59,13 +58,13 @@ def arguments_from_docstring(doc):
 
     doc = doc.lstrip()
 
-    #care only the firstline
-    #docstring can be long
-    line = doc.split('\n', 1)[0] #get the firstline
+    # care only the firstline
+    # docstring can be long
+    line = doc.split('\n', 1)[0]  # get the firstline
     if line.startswith("('...',)"):
-        line = doc.split('\n', 2)[1] #get the second line
+        line = doc.split('\n', 2)[1]  # get the second line
     p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
-    #'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
+    # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
     if sig is None:
         return []
@@ -73,38 +72,40 @@ def arguments_from_docstring(doc):
     sig = sig.groups()[0].split(',')
     ret = []
     for s in sig:
-        #get the last one after all space after =
-        #ex: int x= True
+        # get the last one after all space after =
+        # ex: int x= True
         tmp = s.split('=')[0].split()[-1]
-        #clean up non _+alphanum character
+        # clean up non _+alphanum character
         tmp = ''.join([x for x in tmp if x.isalnum() or x == '_'])
         ret.append(tmp)
-        #re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
-        #ret += self.docstring_kwd_re.findall(s)
-    ret = list(filter(lambda x: x!='', ret))
+        # re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
+        # ret += self.docstring_kwd_re.findall(s)
+    ret = list(filter(lambda x: x != '', ret))
 
-    if len(ret)==0:
-        raise RuntimeError('Your doc is unparsable\n'+doc)
+    if len(ret) == 0:
+        raise RuntimeError('Your doc is unparsable\n' + doc)
 
     return ret
 
+
 def fc_or_c(f):
-    if hasattr(f,'func_code'):
+    if hasattr(f, 'func_code'):
         return f.func_code
     else:
         return f.__code__
+
 
 def arguments_from_funccode(f):
     """Check f.funccode for arguments
     """
     fc = fc_or_c(f)
     vnames = fc.co_varnames
-    #bound method and fake function will be None
+    # bound method and fake function will be None
     if is_bound(f):
-        #bound method dock off self
+        # bound method dock off self
         return list(vnames[1:fc.co_argcount])
     else:
-        #unbound and fakefunc
+        # unbound and fakefunc
         return list(vnames[:fc.co_argcount])
 
 
@@ -114,6 +115,7 @@ def arguments_from_call_funccode(f):
     fc = fc_or_c(f.__call__)
     argcount = fc.co_argcount
     return list(fc.co_varnames[1:argcount])
+
 
 def is_bound(f):
     """Test whether ``f`` is a bound function.
@@ -134,21 +136,20 @@ def better_arg_spec(f, verbose=False):
 
         :ref:`function-sig-label`
     """
-    #using funccode
+    # using funccode
     try:
         return arguments_from_funccode(f)
     except Exception as e:
         if verbose:
-            print(e) # TODO: this might not be such a good dea.
+            print(e)  # TODO: this might not be such a good idea.
             print("Extracting arguments from f.func_code/__code__ fails")
-        
 
-    #using __call__ funccode
+    # using __call__ funccode
     try:
         return arguments_from_call_funccode(f)
     except Exception as e:
         if verbose:
-            print(e) # TODO: this might not be such a good dea.
+            print(e)  # TODO: this might not be such a good idea.
             print("Extracting arguments from f.__call__.func_code/__code__ fails")
 
     # try:
@@ -165,12 +166,12 @@ def better_arg_spec(f, verbose=False):
     #         print(e)
     #         print("inspect.getargspec(f)[0] fails")
 
-    #now we are parsing __call__.__doc__
-    #we assume that __call__.__doc__ doesn't have self
-    #this is what cython gives
+    # now we are parsing __call__.__doc__
+    # we assume that __call__.__doc__ doesn't have self
+    # this is what cython gives
     try:
         t = arguments_from_docstring(f.__call__.__doc__)
-        if t[0]=='self':
+        if t[0] == 'self':
             t = t[1:]
         return t
     except Exception as e:
@@ -178,10 +179,10 @@ def better_arg_spec(f, verbose=False):
             print(e)
             print("fail parsing __call__.__doc__")
 
-    #how about just __doc__
+    # how about just __doc__
     try:
         t = arguments_from_docstring(f.__doc__)
-        if t[0]=='self':
+        if t[0] == 'self':
             t = t[1:]
         return t
     except Exception as e:
@@ -190,7 +191,6 @@ def better_arg_spec(f, verbose=False):
             print("fail parsing __doc__")
 
     raise TypeError("Unable to obtain function signature")
-    return None
 
 
 def describe(f, verbose=False):
@@ -239,9 +239,9 @@ def fitarg_rename(fitarg, ren):
 def true_param(p):
     """Check if ``p`` is a parameter name, not a limit/error/fix attributes.
     """
-    return not p.startswith('limit_') and\
-        not p.startswith('error_') and\
-        not p.startswith('fix_')
+    return (not p.startswith('limit_') and
+            not p.startswith('error_') and
+            not p.startswith('fix_'))
 
 
 def param_name(p):

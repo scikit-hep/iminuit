@@ -11,7 +11,7 @@ def f1(x, y):
 
 def test_html():
     m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=HtmlFrontend())
-    m.tol=1e-4
+    m.tol = 1e-4
     m.migrad()
     m.minos()
     m.print_matrix()
@@ -23,7 +23,7 @@ def test_html():
 
 def test_console():
     m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=ConsoleFrontend())
-    m.tol=1e-4
+    m.tol = 1e-4
     m.migrad()
     m.minos()
     m.print_matrix()

@@ -34,11 +34,11 @@ def fmin_style(sfmin):
         has_covariance=good(sfmin.has_covariance, True),
         is_above_max_edm=good(sfmin.is_above_max_edm, False),
         has_reached_call_limit=caution(sfmin.has_reached_call_limit, False),
-        )
+    )
 
 
 def randid():
-    return ''.join(random.choice(string.ascii_letters) for x in range(10))
+    return ''.join(random.choice(string.ascii_letters) for _ in range(10))
 
 
 def minos_style(smerr):
@@ -53,19 +53,20 @@ def minos_style(smerr):
         at_upper_max_fcn=good(smerr.at_upper_max_fcn, False),
         lower_new_min=good(smerr.lower_new_min, False),
         upper_new_min=good(smerr.upper_new_min, False),
-        )
+    )
 
 
 class HtmlFrontend:
     """HTML frontend for Minuit.
     """
 
-    def print_fmin(self, sfmin, tolerance=None, ncalls=0):
+    @staticmethod
+    def print_fmin(sfmin, tolerance=None, ncalls=0):
         """Display FunctionMinum in html representation.
 
         .. note: Would appreciate if someone would make jquery hover
         description for each item."""
-        goaledm = 0.0001*tolerance*sfmin.up
+        goaledm = 0.0001 * tolerance * sfmin.up
         style = fmin_style(sfmin)
         header = u"""
         <table>
@@ -114,9 +115,10 @@ class HtmlFrontend:
             </tr>
         </table>
         """.format(**locals())
-        display_html(header+status, raw=True)
+        display_html(header + status, raw=True)
 
-    def print_merror(self, vname, smerr):
+    @staticmethod
+    def print_merror(vname, smerr):
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
         style = minos_style(smerr)
         to_print = """
@@ -181,12 +183,12 @@ class HtmlFrontend:
         """.format(**locals())
         to_print += header
         for i, mp in enumerate(mps):
-            minos_p, minos_m = (0., 0.) if merr is None or mp.name not in merr else\
-                               (merr[mp.name].upper, merr[mp.name].lower)
+            minos_p, minos_m = (0., 0.) if merr is None or mp.name not in merr else \
+                (merr[mp.name].upper, merr[mp.name].lower)
             limit_p = '' if not mp.has_upper_limit else mp.upper_limit
             limit_m = '' if not mp.has_lower_limit else mp.lower_limit
             fixed = 'FIXED' if mp.is_fixed else ''
-            j = i+1
+            j = i + 1
             content = """
             <tr>
                 <td>{j}</td>
@@ -205,27 +207,29 @@ class HtmlFrontend:
             </table>
         """
         ltable = LatexFactory.build_param_table(mps, merr,
-                float_format=float_format, smart_latex=smart_latex,
-                latex_map=latex_map)
+                                                float_format=float_format, smart_latex=smart_latex,
+                                                latex_map=latex_map)
 
-        #rows = str(ltable).count('\n')+1
+        # rows = str(ltable).count('\n')+1
         to_print += self.hidden_table(str(ltable), uid)
         display_html(to_print, raw=True)
 
     def print_banner(self, cmd):
-        #display_html('<h2>%s</h2>'%cmd, raw=True)
+        # display_html('<h2>%s</h2>'%cmd, raw=True)
         pass
 
-    def toggle_sign(self, uid):
-        return """<a onclick="$('#%s').toggle()" href="#">+</a>"""%uid
+    @staticmethod
+    def toggle_sign(uid):
+        return """<a onclick="$('#%s').toggle()" href="#">+</a>""" % uid
 
-    def hidden_table(self, s, uid):
-        rows = s.count('\n')+2
+    @staticmethod
+    def hidden_table(s, uid):
+        rows = s.count('\n') + 2
         ret = r"""
             <pre id="%s" style="display:none;">
             <textarea rows="%d" cols="50" onclick="this.select()" readonly>%s</textarea>
             </pre>
-            """%(uid, rows, s)
+            """ % (uid, rows, s)
         return ret
 
     def print_matrix(self, vnames, matrix, latex_map=None):
@@ -236,7 +240,7 @@ class HtmlFrontend:
             <table>
                 <tr>
                     <td>%s</td>
-        """%self.toggle_sign(latexuid)
+        """ % self.toggle_sign(latexuid)
         for v in vnames:
             to_print += """
             <td>
@@ -270,5 +274,6 @@ class HtmlFrontend:
         to_print += self.hidden_table(str(latextable), latexuid)
         display_html(to_print, raw=True)
 
-    def print_hline(self):
+    @staticmethod
+    def print_hline():
         display_html('<hr>', raw=True)
