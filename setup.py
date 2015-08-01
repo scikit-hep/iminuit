@@ -23,6 +23,7 @@ class CoverageCommand(Command):
         assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd
         os.system('nosetests --with-coverage --cover-erase --cover-package=iminuit --cover-html iminuit')
 
+
 # Static linking
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cxx'))
@@ -32,7 +33,8 @@ minuit_header = join(cwd, 'Minuit/inc')
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
 try:
     from Cython.Build import cythonize
-    USE_CYTHON = True   # TODO: add command line option?
+
+    USE_CYTHON = True  # TODO: add command line option?
 except ImportError:
     print('Cython is not available ... using pre-generated C file.')
     USE_CYTHON = False
@@ -61,8 +63,8 @@ def get_version():
         exec(fp.read(), version)
     return version['__version__']
 
-__version__ = get_version()
 
+__version__ = get_version()
 
 setup(
     name='iminuit',

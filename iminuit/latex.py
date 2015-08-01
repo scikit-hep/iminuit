@@ -29,11 +29,11 @@ class LatexTable:
         'Chi', 'Psi', 'Omega',
     ]
 
-    def __init__(self, data, headers=None, smart_latex=True, 
-                escape_under_score=True, alignment=None, rotate_header=False,
-                latex_map=None):
+    def __init__(self, data, headers=None, smart_latex=True,
+                 escape_under_score=True, alignment=None, rotate_header=False,
+                 latex_map=None):
         if headers is not None:
-            assert(len(headers) == len(data[0]))
+            assert (len(headers) == len(data[0]))
 
         self.headers = headers
         self.data = data
@@ -43,25 +43,25 @@ class LatexTable:
         self.alignment = self._auto_align() if alignment is None else alignment
         self.rotate_header = rotate_header
         self.latex_map = {} if latex_map is None else latex_map
-        self.cell_color = {}#map of tuple (i,j)=>(r, g, b) #i,j include header
+        self.cell_color = {}  # map of tuple (i,j)=>(r, g, b) #i,j include header
 
     def _auto_align(self):
-        return '|'+'c|'*self.num_col
+        return '|' + 'c|' * self.num_col
 
     def _xcolor_from_tuple(self, c):
-        return '[RGB]{%d,%d,%d}'%(c[0], c[1], c[2])
+        return '[RGB]{%d,%d,%d}' % (c[0], c[1], c[2])
 
     def _format(self, s):
         if s in self.latex_map:
             return self.latex_map[s]
         elif isinstance(s, float):
-            return self.float_format%s
+            return self.float_format % s
         elif isinstance(s, int):
-            return self.int_format%s
+            return self.int_format % s
         elif self.smart_latex:
             return self._convert_smart_latex(s)
         elif self.escape_under_score:
-            return s.replace('_',r'\_')
+            return s.replace('_', r'\_')
         else:
             return s
 
@@ -72,23 +72,23 @@ class LatexTable:
         a_xxx to $a_{xxx}$ and
         a_xxx_yyy_zzz to a xxx $yyy_{zzz}$
         """
-        #FIXME: implement this
+        # FIXME: implement this
 
         parts = s.split('_')
-        if len(parts) == 1:#a to $a$ if a is greek letter else just a
+        if len(parts) == 1:  # a to $a$ if a is greek letter else just a
             if parts[0] in self.latex_kwd:
-                return r'$\%s$'%str(parts[0])
+                return r'$\%s$' % str(parts[0])
             else:
                 return str(parts[0])
-        elif len(parts) == 2:#a_xxx to $a_{xxx}$ and
-            first = '\\%s'%parts[0] if parts[0] in self.latex_kwd else parts[0]
-            second = '\\%s'%parts[1] if parts[1] in self.latex_kwd else parts[1]
-            return r'$%s_{%s}$'%(first, second)
-        else: #a_xxx_yyy_zzz to a xxx $yyy_{zzz}$
+        elif len(parts) == 2:  # a_xxx to $a_{xxx}$ and
+            first = '\\%s' % parts[0] if parts[0] in self.latex_kwd else parts[0]
+            second = '\\%s' % parts[1] if parts[1] in self.latex_kwd else parts[1]
+            return r'$%s_{%s}$' % (first, second)
+        else:  # a_xxx_yyy_zzz to a xxx $yyy_{zzz}$
             textpart = map(self._convert_smart_latex, parts[:-2])
             textpart = ' '.join(textpart)
             latexpart = self._convert_smart_latex('_'.join(parts[-2:]))
-            return textpart+' '+latexpart
+            return textpart + ' ' + latexpart
 
     def set_cell_color(self, i, j, c):
         """colorize i,j cell with rgb color tuple c
@@ -99,12 +99,12 @@ class LatexTable:
         """
         self.cell_color[(i, j)] = c
 
-    def _prepare(self): #return list of list
+    def _prepare(self):  # return list of list
         ret = []
         if self.headers:
             tmp = list(map(self._format, self.headers))
             if self.rotate_header:
-                tmp = list(map(lambda x: '\\rotatebox{90}{%s}'%x, tmp))
+                tmp = list(map(lambda x: '\\rotatebox{90}{%s}' % x, tmp))
 
             ret.append(tmp)
         for x in self.data:
@@ -118,17 +118,17 @@ class LatexTable:
             ret += '%\\usepackage[table]{xcolor} % include this for color\n'
             ret += '%\\usepackage{rotating} % include this for rotate header\n'
             ret += '%\\documentclass[xcolor=table]{beamer} % for beamer\n'
-        ret += '\\begin{tabular}{%s}\n'%(self.alignment)
+        ret += '\\begin{tabular}{%s}\n' % self.alignment
         ret += hline
         tdata = self._prepare()
-        #decorate it
+        # decorate it
 
         for (i, j), c in self.cell_color.items():
-            tdata[i][j] = '\\cellcolor' + self._xcolor_from_tuple(c) +\
+            tdata[i][j] = '\\cellcolor' + self._xcolor_from_tuple(c) + \
                           ' ' + tdata[i][j]
 
         for line in tdata:
-            ret+=' & '.join(line)+'\\\\\n'
+            ret += ' & '.join(line) + '\\\\\n'
             ret += hline
         ret += '\\end{tabular}\n'
 
@@ -136,12 +136,11 @@ class LatexTable:
 
 
 class LatexFactory:
-
     @classmethod
-    def build_matrix(self, vnames, matrix, latex_map=None):
+    def build_matrix(cls, vnames, matrix, latex_map=None):
         """build latex correlation matrix"""
-        #ret_link  = '<a onclick="$(\'#%s\').toggle()" href="#">Show Latex</a>'%uid
-        headers = ['']+list(vnames)
+        # ret_link  = '<a onclick="$(\'#%s\').toggle()" href="#">Show Latex</a>'%uid
+        headers = [''] + list(vnames)
         data = []
         color = {}
         for i, v1 in enumerate(vnames):
@@ -149,7 +148,7 @@ class LatexFactory:
             for j, v2 in enumerate(vnames):
                 m = matrix[i][j]
                 tmp.append(m)
-                color[(i+1, j+1)] = Gradient.color_for(abs(m))
+                color[(i + 1, j + 1)] = Gradient.color_for(abs(m))
                 # +1 for header on the side and top
             data.append(tmp)
 
@@ -161,20 +160,20 @@ class LatexFactory:
         return table
 
     @classmethod
-    def build_param_table(self, mps, merr=None, float_format='%5.3e',
-                        smart_latex=True, latex_map=None):
+    def build_param_table(cls, mps, merr=None, float_format='%5.3e',
+                          smart_latex=True, latex_map=None):
         """build latex parameter table"""
         headers = ['', 'Name', 'Value', 'Para Error', 'Error+',
                    'Error-', 'Limit+', 'Limit-', 'FIXED', ]
 
-        data =[]
+        data = []
         for i, mp in enumerate(mps):
-            minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else\
-                               (merr[mp.name].upper, merr[mp.name].lower)
-            limit_p, limit_m = ('', '') if not mp.has_limits else\
-                               (mp.upper_limit, mp.lower_limit)
+            minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else \
+                (merr[mp.name].upper, merr[mp.name].lower)
+            limit_p, limit_m = ('', '') if not mp.has_limits else \
+                (mp.upper_limit, mp.lower_limit)
             fixed = 'FIXED' if mp.is_fixed else ''
-            j = i+1
+            j = i + 1
             tmp = [
                 j,
                 mp.name,
@@ -189,6 +188,6 @@ class LatexFactory:
             data.append(tmp)
         alignment = '|c|r|r|r|r|r|r|r|c|'
         ret = LatexTable(data, headers=headers, alignment=alignment,
-                        smart_latex=smart_latex, latex_map=latex_map)
+                         smart_latex=smart_latex, latex_map=latex_map)
         ret.float_format = float_format
         return ret
