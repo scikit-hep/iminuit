@@ -571,11 +571,17 @@ cdef class Minuit:
         vnames = self.list_of_vary_param()
         return LatexFactory.build_matrix(vnames, matrix)
 
-    def np_matrix(self, correlation=False):
-        """Error or correlation matrix in numpy array format."""
+    def np_matrix(self, correlation=False, skip_fixed=True):
+        """Error or correlation matrix in numpy array format.
+
+        The name of this function was chosen to be analogous to :meth:`matrix`,
+        it returns the same information in a different format.
+
+        Note that a ``numpy.ndarray`` is returned, not a ``numpy.matrix``
+        """
         import numpy as np
-        #TODO make a not so lazy one
-        return np.array(matrix)
+        matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
+        return np.array(matrix, dtype=np.float64)
 
     def is_fixed(self, vname):
         """Check if variable *vname* is (initially) fixed"""

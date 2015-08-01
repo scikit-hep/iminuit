@@ -76,7 +76,7 @@ def test_matyas():
 
 
 def test_matyas_oneside():
-    """One-side limit when the minimum is in the forbidden region"""
+    """One-sided limit when the minimum is in the forbidden region"""
     random.seed(0.258)
     m = Minuit(matyas, x=2 + random.random(), y=random.random(),
                limit_x=(1, None),
