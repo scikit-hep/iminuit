@@ -278,7 +278,7 @@ cdef class Minuit:
 
                 You can also obtain fit arguments from Minuit object
                 to reuse it later too. *fitarg* will be automatically
-                updated to the minimum value and the corresponding error when 
+                updated to the minimum value and the corresponding error when
                 you ran migrad/hesse::
 
                     m = Minuit(f, x=1, error_x=0.5)
@@ -449,7 +449,8 @@ cdef class Minuit:
         likelihood profile is utterly discontinuous near the minimum). But,
         it is much more computationally expensive.
 
-        **Returns**
+        **Returns:**
+
             list of :ref:`minuit-param-struct`
         """
 
@@ -485,7 +486,7 @@ cdef class Minuit:
               every variable)
             - **sigma**: number of :math:`\sigma` error. Default 1.0.
 
-        **Returns**
+        **Returns:**
 
             Dictionary of varname to :ref:`minos-error-struct`
             if minos is requested for all parameters.
@@ -812,22 +813,22 @@ cdef class Minuit:
 
         That is Migrad minimum results with **vname** fixed at various places within **bound**.
 
-        **Arguments**
+        **Arguments:**
 
             * **vname** name of variable to scan
 
             * **bins** number of scanning bins. Default 30.
 
             * **bound**
-                If bound is tuple, (left, right) scanning bound.
-                If bound is\\ a number, it specifies how many :math:`\sigma`
-                symmetrically from minimum (minimum+- bound* :math:`\sigma`).
-                Default 2
+              If bound is tuple, (left, right) scanning bound.
+              If bound is\\ a number, it specifies how many :math:`\sigma`
+              symmetrically from minimum (minimum+- bound* :math:`\sigma`).
+              Default 2
 
             * **subtract_min** subtract_minimum off from return value. This
-                makes it easy to label confidence interval. Default False.
+              makes it easy to label confidence interval. Default False.
 
-        **Returns**
+        **Returns:**
 
             bins(center point), value, migrad results
         """
@@ -875,20 +876,20 @@ cdef class Minuit:
         It is obtained by finding Migrad results with **vname** fixed
         at various places within **bound**.
 
-        **Arguments**
+        **Arguments:**
 
             * **vname** variable name to scan
 
             * **bins** number of scanning bin. Default 30.
 
             * **bound**
-                If bound is tuple, (left, right) scanning bound.
-                If bound is a number, it specifies how many :math:`\sigma`
-                symmetrically from minimum (minimum+- bound* :math:`\sigma`).
-                Default 2
+              If bound is tuple, (left, right) scanning bound.
+              If bound is a number, it specifies how many :math:`\sigma`
+              symmetrically from minimum (minimum+- bound* :math:`\sigma`).
+              Default 2.
 
             * **subtract_min** subtract_minimum off from return value. This
-                makes it easy to label confidence interval. Default False.
+              makes it easy to label confidence interval. Default False.
 
             * **band** show green band to indicate the increase of fcn by
               *errordef*. Default True.
@@ -897,7 +898,7 @@ cdef class Minuit:
               by *errordef*. This is less accurate than :meth:`minos`.
               Default True.
 
-        **Returns**
+        **Returns:**
 
             bins(center point), value, migrad results
 
@@ -911,7 +912,7 @@ cdef class Minuit:
     def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
         """Calculate cost function profile around specify range.
 
-        **Arguments**
+        **Arguments:**
 
             * **vname** variable name to scan
 
@@ -924,9 +925,9 @@ cdef class Minuit:
               Default 2
 
             * **subtract_min** subtract_minimum off from return value. This
-                makes it easy to label confidence interval. Default False.
+              makes it easy to label confidence interval. Default False.
 
-        **Returns**
+        **Returns:**
 
             bins(center point), value
 
@@ -967,7 +968,7 @@ cdef class Minuit:
             They are not minos error. To get a real minos profile call
             :meth:`mnprofile` or :meth:`draw_mnprofile`
 
-        **Arguments**
+        **Arguments:**
 
             In addition to argument listed on :meth:`profile`. draw_profile
             take these addition argument:
@@ -993,25 +994,25 @@ cdef class Minuit:
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
         """2D contour scan.
 
-        return contour of migrad result obtained by fixing all 
+        return contour of migrad result obtained by fixing all
         others parameters except **x** and **y** which are let to varied.
 
-        **Arguments**
+        **Arguments:**
 
             - **x** variable name for X axis of scan
 
             - **y** variable name for Y axis of scan
 
             - **bound**
-                If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
-                If bound is a number, it specifies how many :math:`\sigma`
-                symmetrically from minimum (minimum+- bound*:math:`\sigma`).
-                Default 2
+              If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
+              If bound is a number, it specifies how many :math:`\sigma`
+              symmetrically from minimum (minimum+- bound*:math:`\sigma`).
+              Default 2
 
             - **subtract_min** subtract_minimum off from return value. This
-                makes it easy to label confidence interval. Default False.
+              makes it easy to label confidence interval. Default False.
 
-        **Returns**
+        **Returns:**
 
             x_bins, y_bins, values
 
@@ -1091,7 +1092,7 @@ cdef class Minuit:
         .. note::
             See http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node7.html
 
-        **Arguments**
+        **Arguments:**
 
             - **x** string variable name of the first parameter
 
@@ -1101,7 +1102,7 @@ cdef class Minuit:
 
             - **sigma** number of sigma for the contour line. Default 1.0.
 
-        **Returns**
+        **Returns:**
 
             x minos error struct, y minos error struct, contour line
 
@@ -1141,9 +1142,9 @@ cdef class Minuit:
                        int sigma_res=4, edges=False):
         """Compute gridded minos contour.
 
-        **Arguments**
+        **Arguments:**
 
-            - **x**,**y** parameter name
+            - **x**, **y** parameter name
 
             - **bins** number of bins in the grid. The boundary of the grid is
               selected automatically by the minos error computed. Default 100.
@@ -1158,7 +1159,7 @@ cdef class Minuit:
             - **edges** Return bin edges instead of mid value(pass True if you
               want to draw it using pcolormesh)
 
-        **Returns**
+        **Returns:**
 
             xgrid, ygrid, sigma, rawdata
 
@@ -1179,7 +1180,7 @@ cdef class Minuit:
                        numpoints=20, sigma_res=4):
         """Draw minos contour.
 
-        **Arguments**
+        **Arguments:**
 
             - **x**, **y** parameter name
 
@@ -1192,7 +1193,7 @@ cdef class Minuit:
             - **sigma_res** number of sigma level to calculate MnContours.
               Default 4.
 
-        **returns**
+        **Returns:**
 
             x, y, gridvalue, contour
 
