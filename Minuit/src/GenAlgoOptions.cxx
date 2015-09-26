@@ -9,6 +9,7 @@
 
 // implementation file for static methods of GenAlgoOptions
 // this file contains also the pointer to the static map<algorithm name, options> 
+#include <string>
 
 #include "Math/GenAlgoOptions.h"
 #include <cassert>
