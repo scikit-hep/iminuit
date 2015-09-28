@@ -162,7 +162,7 @@ class HtmlFrontend:
             *merr* : minos error
             *float_format* : control the format of latex floating point output
                 default '%5.3e'
-            *smart_latex* : convert greek symbols and underscores to latex 
+            *smart_latex* : convert greek symbols and underscores to latex
                 symbol. default True
         """
         to_print = ""
@@ -193,10 +193,10 @@ class HtmlFrontend:
             <tr>
                 <td>{j}</td>
                 <td>{mp.name}</td>
-                <td>{mp.value:e}</td>
-                <td>{mp.error:e}</td>
-                <td>{minos_m:e}</td>
-                <td>{minos_p:e}</td>
+                <td>{mp.value:g}</td>
+                <td>{mp.error:g}</td>
+                <td>{minos_m:g}</td>
+                <td>{minos_p:g}</td>
                 <td>{limit_m!s}</td>
                 <td>{limit_p!s}</td>
                 <td>{fixed}</td>
