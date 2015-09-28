@@ -1,4 +1,4 @@
 """iminuit frontends.
 """
 from .console import *
-from .html import *
+#from .html import *

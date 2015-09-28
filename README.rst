@@ -10,7 +10,7 @@
 iminuit
 -------
 
-Interactive IPython Friendly Mimizer based on
+Interactive IPython-Friendly Minimizer based on
 `SEAL Minuit2 <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/release/download.html>`_.
 (A slightly modified version is included in the package no need to install it separately)
 
@@ -35,6 +35,8 @@ In a nutshell::
 Install
 -------
 
+First install cython (`pip install cython`), then
+
 ::
 
     python setup.py install
@@ -54,7 +56,7 @@ All the tutorials are in tutorial directory. You can view it online too.
 
 - `Quick start <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb>`_
 - `Hard Core Cython tutorial <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb>`_.
-  If you need to do a huge likelihood fit that need speed or learn how to
+  If you need to do a huge likelihood fit that needs speed, or you want to learn how to
   parallelize your stuff, this is for you.
 
 
@@ -66,7 +68,7 @@ http://iminuit.readthedocs.org/
 Technical Stuff
 ---------------
 
-Using it as a black box is a bad idea. Here are some fun read the order is given
+Using it as a black box is a bad idea. Here are some fun reads; the order is given
 by the order I think you should read.
 
 * Wikipedia for `Quasi Newton Method <http://en.wikipedia.org/wiki/Quasi-Newton_method>`_ and
@@ -89,4 +91,4 @@ More generally any contribution to the docs, tests and package itself is welcome
 
 * Documentation. Tell us what's missing, what's incorrect or misleading.
 * Tests. If you have an example that shows a bug or problem, please file an issue!
-* Performance. I you are a C/cython/python hacker go ahead and make it faster.
+* Performance. If you are a C/cython/python hacker go ahead and make it faster.
