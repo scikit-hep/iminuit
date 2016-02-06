@@ -3,6 +3,8 @@
 Installation
 ============
 
+iminuit works with Python 2.7 as well as 3.4 or later.
+
 Stable version
 --------------
 
@@ -11,6 +13,14 @@ To install the latest stable version:
 .. code-block:: bash
 
     $ pip install iminuit
+
+Windows
+-------
+
+For Windows, Christoph Gohlke made a nice windows binary to save you all from Windows compilation nightmare:
+
+   `http://www.lfd.uci.edu/~gohlke/pythonlibs/#iminuit <http://www.lfd.uci.edu/~gohlke/pythonlibs/#iminuit>`_
+
 
 Development version
 -------------------

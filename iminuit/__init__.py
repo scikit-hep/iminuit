@@ -1,4 +1,4 @@
-"""IMinuit is a nice Python interface to MINUIT.
+"""MINUIT from Python - Fitting like a boss
 
 Basic usage example::
 
