@@ -69,7 +69,7 @@ __version__ = get_version()
 setup(
     name='iminuit',
     version=__version__,
-    description='Interactive Minimization Tools based on MINUIT',
+    description='MINUIT from Python - Fitting like a boss',
     long_description=''.join(open('README.rst').readlines()[4:]),
     author='Piti Ongmongkolkul',
     author_email='piti118@gmail.com',
@@ -85,8 +85,8 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: C++',
         'Programming Language :: Cython',
         'Programming Language :: Python :: Implementation :: CPython',
