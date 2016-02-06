@@ -68,16 +68,11 @@ They can be installed via
 Testing
 -------
 
-To run the tests:
+To run the tests you need to install `pytest <http://pytest.org>`_.
+
+To run the tests, use this command:
 
 .. code-block:: bash
 
    $ python setup.py build_ext --inplace
-   $ nosetests -V
-
-You will need ``nose``.
-It can be installed via
-
-.. code-block:: bash
-
-   $ pip install nose
+   $ py.test -v iminuit

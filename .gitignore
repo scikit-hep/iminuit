@@ -5,6 +5,7 @@
 build
 *.pyc
 .idea
+.cache
 _build
 archive
 html

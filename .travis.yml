@@ -42,7 +42,7 @@ install:
   - python setup.py build_ext -i
 
 script:
-  - if [[ $BUILD == TEST ]]; then nosetests -v; fi
+  - if [[ $BUILD == TEST ]]; then py.test -v iminuit; fi
   - if [[ $BUILD == COVERAGE ]]; then python setup.py coverage; fi
   # TODO: add -W option to Sphinx build once this Sphinx bug is fixed:
   # https://github.com/iminuit/iminuit/pull/132#issuecomment-62139507
