@@ -14,6 +14,17 @@ To install the latest stable version:
 
     $ pip install iminuit
 
+
+Conda
+-----
+
+Conda packages for iminuit are available via the astropy channel at https://anaconda.org/astropy/iminuit
+
+.. code-block:: bash
+
+    $ conda install -c astropy iminuit
+
+
 Windows
 -------
 
