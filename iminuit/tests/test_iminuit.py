@@ -3,12 +3,14 @@ from __future__ import (absolute_import, division, print_function,
 import warnings
 from math import sqrt
 from unittest import TestCase
-from nose.tools import (raises,
-                        assert_equal,
-                        assert_true,
-                        assert_false,
-                        assert_almost_equal,
-                        )
+import pytest
+# from nose.tools import (raises,
+#                         assert_equal,
+#                         assert_true,
+#                         assert_false,
+#                         assert_almost_equal,
+#                         )
+from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
 
 
@@ -65,9 +67,9 @@ def functesthelper(f):
     m = Minuit(f, print_level=0, pedantic=False)
     m.migrad()
     val = m.values
-    assert_almost_equal(val['x'], 2.)
-    assert_almost_equal(val['y'], 5.)
-    assert_almost_equal(m.fval, 10.)
+    assert_allclose(val['x'], 2.)
+    assert_allclose(val['y'], 5.)
+    assert_allclose(m.fval, 10.)
     assert m.matrix_accurate()
     assert m.migrad_ok()
     return m
@@ -85,9 +87,9 @@ def test_f3():
     functesthelper(func3)
 
 
-@raises(RuntimeError)
 def test_typo():
-    Minuit(func4, printlevel=0)
+    with pytest.raises(RuntimeError):
+        Minuit(func4, printlevel=0)
     # self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
 
 
@@ -117,99 +119,99 @@ def test_fix_param():
     m.migrad()
     m.minos()
     val = m.values
-    assert_almost_equal(val['x'], 2.)
-    assert_almost_equal(val['y'], 5.)
-    assert_almost_equal(val['z'], 7.)
+    assert_allclose(val['x'], 2.)
+    assert_allclose(val['y'], 5.)
+    assert_allclose(val['z'], 7.)
     err = m.errors  # second derivative
     m.print_all_minos()
     # now fix z = 10
     m = Minuit(func4, print_level=-1, y=10., fix_y=True, pedantic=False)
     m.migrad()
     val = m.values
-    assert_almost_equal(val['x'], 2.)
-    assert_almost_equal(val['y'], 10.)
-    assert_almost_equal(val['z'], 7.)
-    assert_almost_equal(m.fval, 10. + 2.5)
+    assert_allclose(val['x'], 2.)
+    assert_allclose(val['y'], 10.)
+    assert_allclose(val['z'], 7.)
+    assert_allclose(m.fval, 10. + 2.5)
     free_param = m.list_of_vary_param()
     fix_param = m.list_of_fixed_param()
-    assert_true('x' in free_param)
-    assert_false('x' in fix_param)
-    assert_true('y' in fix_param)
-    assert_false('y' in free_param)
-    assert_false('z' in fix_param)
+    assert 'x' in free_param
+    assert 'x' not in fix_param
+    assert 'y' in fix_param
+    assert 'y' not in free_param
+    assert 'z' not in fix_param
 
 
 def test_fitarg_oneside():
     m = Minuit(func4, print_level=-1, y=10., fix_y=True, limit_x=(None, 20.),
                pedantic=False)
     fitarg = m.fitarg
-    assert_almost_equal(fitarg['y'], 10.)
-    assert_true(fitarg['fix_y'])
-    assert_equal(fitarg['limit_x'], (None, 20))
+    assert_allclose(fitarg['y'], 10.)
+    assert fitarg['fix_y']
+    assert fitarg['limit_x'] == (None, 20)
     m.migrad()
 
     fitarg = m.fitarg
 
-    assert_almost_equal(fitarg['y'], 10.)
-    assert_almost_equal(fitarg['x'], 2., places=2)
-    assert_almost_equal(fitarg['z'], 7., places=2)
+    assert_allclose(fitarg['y'], 10.)
+    assert_allclose(fitarg['x'], 2., atol=1e-2)
+    assert_allclose(fitarg['z'], 7., atol=1e-2)
 
-    assert_true('error_y' in fitarg)
-    assert_true('error_x' in fitarg)
-    assert_true('error_z' in fitarg)
+    assert 'error_y' in fitarg
+    assert 'error_x' in fitarg
+    assert 'error_z' in fitarg
 
-    assert_true(fitarg['fix_y'])
-    assert_equal(fitarg['limit_x'], (None, 20))
+    assert fitarg['fix_y']
+    assert fitarg['limit_x'] == (None, 20)
 
 
 def test_fitarg():
     m = Minuit(func4, print_level=-1, y=10., fix_y=True, limit_x=(0, 20.),
                pedantic=False)
     fitarg = m.fitarg
-    assert_almost_equal(fitarg['y'], 10.)
-    assert_true(fitarg['fix_y'])
-    assert_equal(fitarg['limit_x'], (0, 20))
+    assert_allclose(fitarg['y'], 10.)
+    assert fitarg['fix_y'] == True
+    assert fitarg['limit_x'] == (0, 20)
     m.migrad()
 
     fitarg = m.fitarg
 
-    assert_almost_equal(fitarg['y'], 10.)
-    assert_almost_equal(fitarg['x'], 2., places=2)
-    assert_almost_equal(fitarg['z'], 7., places=2)
+    assert_allclose(fitarg['y'], 10.)
+    assert_allclose(fitarg['x'], 2., atol=1e-2)
+    assert_allclose(fitarg['z'], 7., atol=1e-2)
 
-    assert_true('error_y' in fitarg)
-    assert_true('error_x' in fitarg)
-    assert_true('error_z' in fitarg)
+    assert 'error_y' in fitarg
+    assert 'error_x' in fitarg
+    assert 'error_z' in fitarg
 
-    assert_true(fitarg['fix_y'])
-    assert_equal(fitarg['limit_x'], (0, 20))
+    assert fitarg['fix_y'] == True
+    assert fitarg['limit_x'] == (0, 20)
 
 
 def test_minos_all():
     m = Minuit(func3, pedantic=False, print_level=0)
     m.migrad()
     m.minos()
-    assert_almost_equal(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_almost_equal(m.merrors[('x', 1.0)], sqrt(5))
-    assert_almost_equal(m.merrors[('y', 1.0)], 1.)
+    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
+    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
+    assert_allclose(m.merrors[('y', 1.0)], 1.)
 
 
 def test_minos_single():
     m = Minuit(func3, pedantic=False, print_level=0)
     m.migrad()
     m.minos('x')
-    assert_almost_equal(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_almost_equal(m.merrors[('x', 1.0)], sqrt(5))
+    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
+    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
 
 
-@raises(RuntimeWarning)
 def test_minos_single_fixed_raising():
     m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
     m.migrad()
 
     with warnings.catch_warnings():
         warnings.simplefilter('error')
-        ret = m.minos('x')
+        with pytest.raises(RuntimeWarning):
+            m.minos('x')
 
 
 def test_minos_single_fixed_result():
@@ -218,20 +220,20 @@ def test_minos_single_fixed_result():
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         ret = m.minos('x')
-    assert_equal(ret, None)
+    assert ret is None
 
 
-@raises(RuntimeError)
 def test_minos_single_no_migrad():
     m = Minuit(func3, pedantic=False, print_level=0)
-    m.minos('x')
+    with pytest.raises(RuntimeError):
+        m.minos('x')
 
 
-@raises(RuntimeError)
 def test_minos_single_nonsense_variable():
     m = Minuit(func3, pedantic=False, print_level=0)
     m.migrad()
-    m.minos('nonsense')
+    with pytest.raises(RuntimeError):
+        m.minos('nonsense')
 
 
 def test_fixing_long_variable_name():
@@ -243,11 +245,11 @@ def test_fixing_long_variable_name():
 
 def test_initial_value():
     m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
-    assert_almost_equal(m.args[0], 1.)
-    assert_almost_equal(m.args[1], 2.)
-    assert_almost_equal(m.values['x'], 1.)
-    assert_almost_equal(m.values['y'], 2.)
-    assert_almost_equal(m.errors['x'], 3.)
+    assert_allclose(m.args[0], 1.)
+    assert_allclose(m.args[1], 2.)
+    assert_allclose(m.values['x'], 1.)
+    assert_allclose(m.values['y'], 2.)
+    assert_allclose(m.errors['x'], 3.)
 
 
 def test_mncontour():
@@ -256,12 +258,12 @@ def test_mncontour():
     xminos, yminos, ctr = m.mncontour('x', 'y', numpoints=30)
     xminos_t = m.minos('x')['x']
     yminos_t = m.minos('y')['y']
-    assert_almost_equal(xminos.upper, xminos_t.upper)
-    assert_almost_equal(xminos.lower, xminos_t.lower)
-    assert_almost_equal(yminos.upper, yminos_t.upper)
-    assert_almost_equal(yminos.lower, yminos_t.lower)
-    assert_equal(len(ctr), 30)
-    assert_equal(len(ctr[0]), 2)
+    assert_allclose(xminos.upper, xminos_t.upper)
+    assert_allclose(xminos.lower, xminos_t.lower)
+    assert_allclose(yminos.upper, yminos_t.upper)
+    assert_allclose(yminos.lower, yminos_t.lower)
+    assert len(ctr) == 30
+    assert len(ctr[0]) == 2
 
 
 def test_mncontour_sigma():
@@ -270,12 +272,12 @@ def test_mncontour_sigma():
     xminos, yminos, ctr = m.mncontour('x', 'y', numpoints=30, sigma=2.0)
     xminos_t = m.minos('x', sigma=2.0)['x']
     yminos_t = m.minos('y', sigma=2.0)['y']
-    assert_almost_equal(xminos.upper, xminos_t.upper)
-    assert_almost_equal(xminos.lower, xminos_t.lower)
-    assert_almost_equal(yminos.upper, yminos_t.upper)
-    assert_almost_equal(yminos.lower, yminos_t.lower)
-    assert_equal(len(ctr), 30)
-    assert_equal(len(ctr[0]), 2)
+    assert_allclose(xminos.upper, xminos_t.upper)
+    assert_allclose(xminos.lower, xminos_t.lower)
+    assert_allclose(yminos.upper, yminos_t.upper)
+    assert_allclose(yminos.lower, yminos_t.lower)
+    assert len(ctr) == 30
+    assert len(ctr[0]) == 2
 
 
 def test_contour():
@@ -299,23 +301,23 @@ def test_mnprofile():
     m.mnprofile('y')
 
 
-@raises(RuntimeError)
 def test_printfmin_uninitialized():
     # issue 85
     def f(x): return 2 + 3 * x
 
     fitter = Minuit(f, pedantic=False)
-    fitter.print_fmin()
+    with pytest.raises(RuntimeError):
+        fitter.print_fmin()
 
 
-@raises(ValueError)
 def test_reverse_limit():
     # issue 94
     def f(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
     m = Minuit(f, limit_x=(3., 2.), pedantic=False)
-    m.migrad()
+    with pytest.raises(ValueError):
+        m.migrad()
 
 
 class TestMatrix(TestCase):
@@ -326,25 +328,25 @@ class TestMatrix(TestCase):
     def test_matrix(self):
         actual = self.m.np_matrix()
         expected = [[5., 0.], [0., 1.]]
-        assert_array_almost_equal(actual, expected)
+        assert_allclose(actual, expected)
 
     def test_np_matrix(self):
         import numpy as np
         actual = self.m.np_matrix()
         expected = [[5., 0.], [0., 1.]]
-        assert_array_almost_equal(actual, expected)
+        assert_allclose(actual, expected)
         assert isinstance(actual, np.ndarray)
 
     def test_matrix_correlation(self):
         actual = self.m.matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]
-        assert_array_almost_equal(actual, expected)
+        assert_allclose(actual, expected)
 
     def test_np_matrix_correlation(self):
         import numpy as np
         actual = self.m.np_matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]
-        assert_array_almost_equal(actual, expected)
+        assert_allclose(actual, expected)
         assert isinstance(actual, np.ndarray)
 
 
@@ -357,7 +359,7 @@ def test_chi2_fit():
               round(100 * m.values['m'])]
     expected = [round(10 * 64.375993), round(100 * 4.267970),
                 round(100 * 9.839172)]
-    assert_array_almost_equal(output, expected)
+    assert_allclose(output, expected)
 
 
 def test_oneside():
@@ -368,11 +370,11 @@ def test_oneside():
     m_nolimit.tol = 1e-4
     m_limit.migrad()
     m_nolimit.migrad()
-    assert_array_almost_equal(list(m_limit.values.values()),
-                              list(m_nolimit.values.values()), decimal=4)
+    assert_allclose(list(m_limit.values.values()),
+                    list(m_nolimit.values.values()), atol=1e-4)
 
 
 def test_oneside_outside():
     m = Minuit(func3, limit_x=(None, 1), pedantic=False, print_level=0)
     m.migrad()
-    assert_almost_equal(m.values['x'], 1)
+    assert_allclose(m.values['x'], 1)
