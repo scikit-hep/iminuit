@@ -1,5 +1,5 @@
 def make_ext(modname, pyxfilename):
-    from distutils.extension import Extension
+    from setuptools import Extension
     return Extension(modname,
             sources=[pyxfilename],
             extra_compile_args=['-w']

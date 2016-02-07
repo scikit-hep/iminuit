@@ -26,3 +26,8 @@ _libiminuit.cpp
 
 .ipynb_checkpoints
 iminuit.egg-info
+
+htmlcov
+
+.eggs
+env

@@ -4,3 +4,5 @@ recursive-include Minuit *
 include *.py
 include README.rst
 include LICENSE
+include iminuit/tests/cyfunc.pyx
+include iminuit/tests/cyfunc.pyxbld

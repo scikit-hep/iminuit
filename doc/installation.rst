@@ -70,9 +70,16 @@ Testing
 
 To run the tests you need to install `pytest <http://pytest.org>`_.
 
-To run the tests, use this command:
+To run the iminuit tests for an installed version of the package:
+
+.. code-block:: bash
+
+    python -m pytest --pyargs iminuit
+
+To run the tests from the source folder (e.g. during pytest development), use these commands:
 
 .. code-block:: bash
 
    $ python setup.py build_ext --inplace
-   $ py.test -v iminuit
+   $ python -m pytest -v iminuit
+   $ python -m pytest -v iminuit --cov iminuit --cov-report html
