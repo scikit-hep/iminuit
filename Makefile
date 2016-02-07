@@ -58,7 +58,8 @@ cython:
 	find $(PROJECT) -name "*.pyx" -exec $(CYTHON) {} \;
 
 trailing-spaces:
-	find $(PROJECT) examples docs -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
+    # TODO: the perl command doesn't work on my Mac (Christoph).
+	find $(PROJECT) doc -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 code-analysis: flake8 pylint
 

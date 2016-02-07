@@ -2,14 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import warnings
 from math import sqrt
-from unittest import TestCase
 import pytest
-# from nose.tools import (raises,
-#                         assert_equal,
-#                         assert_true,
-#                         assert_false,
-#                         assert_almost_equal,
-#                         )
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
 
@@ -90,7 +83,7 @@ def test_f3():
 def test_typo():
     with pytest.raises(RuntimeError):
         Minuit(func4, printlevel=0)
-    # self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
+        # self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
 
 
 def test_non_invertible():
@@ -110,7 +103,7 @@ def test_non_invertible():
     try:
         m.matrix()
         raise RuntimeError('Matrix did not raise an error')  # shouldn't reach here
-    except RuntimeError as e:
+    except RuntimeError:
         pass
 
 
@@ -119,18 +112,21 @@ def test_fix_param():
     m.migrad()
     m.minos()
     val = m.values
-    assert_allclose(val['x'], 2.)
-    assert_allclose(val['y'], 5.)
-    assert_allclose(val['z'], 7.)
+    assert_allclose(val['x'], 2)
+    assert_allclose(val['y'], 5)
+    assert_allclose(val['z'], 7)
     err = m.errors  # second derivative
+    assert_allclose(err['x'], 2.236067977354171)
+    assert_allclose(err['y'], 3.1622776602288)
+    assert_allclose(err['z'], 2)
     m.print_all_minos()
     # now fix z = 10
     m = Minuit(func4, print_level=-1, y=10., fix_y=True, pedantic=False)
     m.migrad()
     val = m.values
-    assert_allclose(val['x'], 2.)
-    assert_allclose(val['y'], 10.)
-    assert_allclose(val['z'], 7.)
+    assert_allclose(val['x'], 2)
+    assert_allclose(val['y'], 10)
+    assert_allclose(val['z'], 7)
     assert_allclose(m.fval, 10. + 2.5)
     free_param = m.list_of_vary_param()
     fix_param = m.list_of_fixed_param()
@@ -169,7 +165,7 @@ def test_fitarg():
                pedantic=False)
     fitarg = m.fitarg
     assert_allclose(fitarg['y'], 10.)
-    assert fitarg['fix_y'] == True
+    assert fitarg['fix_y'] is True
     assert fitarg['limit_x'] == (0, 20)
     m.migrad()
 
@@ -183,7 +179,7 @@ def test_fitarg():
     assert 'error_x' in fitarg
     assert 'error_z' in fitarg
 
-    assert fitarg['fix_y'] == True
+    assert fitarg['fix_y'] is True
     assert fitarg['limit_x'] == (0, 20)
 
 
@@ -320,8 +316,10 @@ def test_reverse_limit():
         m.migrad()
 
 
-class TestMatrix(TestCase):
-    def setUp(self):
+
+# TODO: rewrite using pytest fixture
+class TestMatrix:
+    def setup(self):
         self.m = Minuit(func3, print_level=0, pedantic=False)
         self.m.migrad()
 

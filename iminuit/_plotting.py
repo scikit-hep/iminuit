@@ -124,7 +124,7 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
         g = mlab.griddata(fx, fy, fz, xgrid, ygrid, interp='linear')
 
     # return grid edges instead of mid point (for pcolor)
-    if edges:  # pragma: no cover 
+    if edges:  # pragma: no cover
         xgrid -= xstep / 2.
         ygrid -= ystep / 2.
         np.resize(xgrid, len(xgrid) + 1)

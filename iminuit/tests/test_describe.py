@@ -2,8 +2,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from iminuit.util import describe
 from math import ldexp
-import pyximport;
-
+import pyximport
 pyximport.install()
 from . import cyfunc
 
