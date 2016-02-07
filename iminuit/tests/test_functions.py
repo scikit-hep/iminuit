@@ -2,9 +2,8 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import random
 from math import sqrt, exp, cos, pi, e
-from nose.tools import assert_almost_equal, assert_less
 from iminuit import Minuit
-from iminuit.tests.utils import assert_array_almost_equal
+from iminuit.tests.utils import assert_allclose
 
 
 def rosenbrock(x, y):
@@ -17,9 +16,9 @@ def test_rosenbrock():
     m = Minuit(rosenbrock, x=0, y=0, pedantic=False, print_level=1)
     m.tol = 1e-4
     m.migrad()
-    assert_less(m.fval, 1e-6)
-    assert_almost_equal(m.values['x'], 1., places=3)
-    assert_almost_equal(m.values['y'], 1., places=3)
+    assert_allclose(m.fval, 0, atol=1e-6)
+    assert_allclose(m.values['x'], 1., atol=1e-3)
+    assert_allclose(m.values['y'], 1., atol=1e-3)
 
 
 def ackleys(x, y):
@@ -37,8 +36,8 @@ def test_ackleys():
     m.tol = 1e-4
     m.migrad()
 
-    assert_less(m.fval, 1e-6)
-    assert_array_almost_equal(m.args, [0, 0], decimal=3)
+    assert_allclose(m.fval, 0, atol=1e-6)
+    assert_allclose(m.args, [0, 0], atol=1e-6)
 
 
 def beale(x, y):
@@ -55,8 +54,8 @@ def test_beale():
                pedantic=False, print_level=0)
     m.tol = 1e-4
     m.migrad()
-    assert_less(m.fval, 1e-6)
-    assert_array_almost_equal(m.args, [3, 0.5], decimal=3)
+    assert_allclose(m.fval, 0, atol=1e-6)
+    assert_allclose(m.args, [3, 0.5], atol=1e-3)
     assert m.fval < 1e-6
 
 
@@ -72,7 +71,7 @@ def test_matyas():
     m.migrad()
 
     assert m.fval < 1e-26
-    assert_array_almost_equal(m.args, [0, 0], decimal=12)
+    assert_allclose(m.args, [0, 0], atol=1e-12)
 
 
 def test_matyas_oneside():
@@ -83,4 +82,4 @@ def test_matyas_oneside():
                pedantic=False, print_level=0)
     m.tol = 1e-4
     m.migrad()
-    assert_array_almost_equal(m.args, [1, 0.923], decimal=3)
+    assert_allclose(m.args, [1, 0.923], atol=1e-3)
