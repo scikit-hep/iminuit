@@ -7,12 +7,12 @@ MINUIT from Python - Fitting like a boss
 * Documentation: http://iminuit.readthedocs.org/
 * Mailing list: https://groups.google.com/forum/#!forum/iminuit
 * PyPI: https://pypi.python.org/pypi/iminuit
-
+* License: LGPL
 
 What is iminuit?
 ----------------
 
-Interactive IPython-friendly Mimizer based on `SEAL Minuit <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/>`_.
+Interactive IPython-friendly mimizer based on `SEAL Minuit <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/>`_.
 
 (It's included in the package, no need to install it separately.)
 

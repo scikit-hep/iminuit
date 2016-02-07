@@ -17,6 +17,7 @@ The following dependencies are optional:
 * matplotlib
 * pytest, pytest-cov
 * Cython
+* Sphinx, sphinx-rtd
 
 
 TODO: describe better where which dependency is used.
