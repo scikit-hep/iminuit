@@ -3,12 +3,14 @@ from __future__ import (absolute_import, division, print_function,
 from iminuit import Minuit
 from iminuit.frontends.html import HtmlFrontend
 from iminuit.frontends.console import ConsoleFrontend
+from iminuit.tests.utils import requires_dependency
 
 
 def f1(x, y):
     return (1 - x) ** 2 + 100 * (y - 1) ** 2
 
 
+@requires_dependency('IPython')
 def test_html():
     m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=HtmlFrontend())
     m.tol = 1e-4

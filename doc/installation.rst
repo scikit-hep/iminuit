@@ -5,6 +5,23 @@ Installation
 
 iminuit works with Python 2.7 as well as 3.4 or later.
 
+Dependencies
+------------
+
+Like most Python packages, iminuit installation requires `setuptools <https://pypi.python.org/pypi/setuptools>`__
+
+The following dependencies are optional:
+
+* numpy
+* ipython
+* matplotlib
+* pytest, pytest-cov
+* Cython
+
+
+TODO: describe better where which dependency is used.
+
+
 Stable version
 --------------
 

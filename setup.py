@@ -83,7 +83,7 @@ setup(
     ext_modules=extensions,
     install_requires=['setuptools'],
     extras_require={
-        'all': ['numpy', 'ipython'],
+        'all': ['numpy', 'ipython', 'matplotlib'],
     },
     tests_require=['pytest', 'pytest-cov'],
     classifiers=[
