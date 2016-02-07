@@ -38,8 +38,8 @@ install:
   - python setup.py build_ext -i
 
 script:
-  - if [[ $BUILD == TEST ]]; then python -m pytest -v iminuit; fi
-  - if [[ $BUILD == COVERAGE ]]; then python -m pytest -v iminuit --cov iminuit --cov-report html; fi
+  - if [[ $BUILD == TEST ]]; then make test; fi
+  - if [[ $BUILD == COVERAGE ]]; then make coverage; fi
   # TODO: add -W option to Sphinx build once this Sphinx bug is fixed:
   # https://github.com/iminuit/iminuit/pull/132#issuecomment-62139507
   - if [[ $BUILD == DOCS ]]; then cd doc; sphinx-build -a -E -b html -d _build/doctrees . _build/html; fi
