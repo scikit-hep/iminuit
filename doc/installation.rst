@@ -98,6 +98,6 @@ To run the tests from the source folder (e.g. during pytest development), use th
 
 .. code-block:: bash
 
-   $ python setup.py build_ext --inplace
-   $ python -m pytest -v iminuit
-   $ python -m pytest -v iminuit --cov iminuit --cov-report html
+       $ python setup.py build_ext --inplace
+       $ python -m pytest -v iminuit
+       $ python -m pytest -v iminuit --cov iminuit --cov-report html

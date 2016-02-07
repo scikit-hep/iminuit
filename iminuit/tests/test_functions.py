@@ -4,7 +4,7 @@ import random
 from math import sqrt, exp, cos, pi, e
 from nose.tools import assert_almost_equal, assert_less
 from iminuit import Minuit
-from iminuit.tests.test_iminuit import assert_array_almost_equal
+from iminuit.tests.utils import assert_array_almost_equal
 
 
 def rosenbrock(x, y):

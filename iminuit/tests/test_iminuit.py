@@ -11,20 +11,6 @@ from nose.tools import (raises,
                         )
 from iminuit import Minuit
 
-try:
-    from numpy.testing import assert_array_almost_equal
-except ImportError:
-    def assert_array_almost_equal(actual, expected, decimal=6):
-        """
-        Helper function to test if all elements of a list of lists
-        are almost equal.
-        A replacement for numpy.testing.assert_array_almost_equal,
-        if it is not installed
-        """
-        for row in range(len(actual)):
-            for col in range(len(actual[0])):
-                assert_almost_equal(actual[row][col], expected[row][col], places=decimal)
-
 
 class Func_Code:
     def __init__(self, varname):

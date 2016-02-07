@@ -15,6 +15,10 @@ matrix:
 
         # TODO: add tests for installed version!!
 
+        # TODO: add tests on Mac
+
+        # TODO: add tests for Python from conda
+
         - python: 2.7
           env: BUILD=DOCS
 
@@ -32,7 +36,7 @@ before_install:
   - pip install setuptools Cython
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
-  - if [[ $BUILD == TEST ]]; then pip install pytest pytest-cov; fi
+  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov numpy; fi
 
 install:
   - python setup.py build_ext -i
