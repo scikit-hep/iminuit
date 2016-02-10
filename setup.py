@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
-try:
-    from setuptools import setup, Extension
-except ImportError:
-    from distutils.core import setup, Extension
+import sys
 from os.path import dirname, join
 from glob import glob
-from distutils.core import setup, Command
-import os
+from setuptools import setup, Extension
+from setuptools.command.test import test as TestCommand
 
 
-class CoverageCommand(Command):
-    description = "Produce coverage report"
-    user_options = []
+# http://pytest.org/latest/goodpractices.html#manual-integration
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
 
     def initialize_options(self):
-        self.cwd = None
+        TestCommand.initialize_options(self)
+        # self.pytest_args = '--pyargs iminuit'
+        # self.pytest_args = ['--strict', '--verbose', '--tb=long', 'tests']
+        self.pytest_args = []
+        self.test_suite = True
 
-    def finalize_options(self):
-        self.cwd = os.getcwd()
-
-    def run(self):
-        assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd
-        os.system('nosetests --with-coverage --cover-erase --cover-package=iminuit --cover-html iminuit')
+    def run_tests(self):
+        # import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.pytest_args)
+        sys.exit(errno)
 
 
 # Static linking
@@ -66,11 +66,13 @@ def get_version():
 
 __version__ = get_version()
 
+long_description = ''.join(open('README.rst').readlines()[4:])
+
 setup(
     name='iminuit',
     version=__version__,
     description='MINUIT from Python - Fitting like a boss',
-    long_description=''.join(open('README.rst').readlines()[4:]),
+    long_description=long_description,
     author='Piti Ongmongkolkul',
     author_email='piti118@gmail.com',
     url='https://github.com/iminuit/iminuit',
@@ -79,7 +81,11 @@ setup(
     package_dir={'iminuit': 'iminuit'},
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
-    test_suite='nose.collector',
+    install_requires=['setuptools'],
+    extras_require={
+        'all': ['numpy', 'ipython', 'matplotlib'],
+    },
+    tests_require=['pytest', 'pytest-cov', 'numpy'],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
@@ -98,6 +104,7 @@ setup(
         'License :: OSI Approved :: MIT License'
     ],
     cmdclass={
-        'coverage': CoverageCommand
+        'test': PyTest,
+        # 'coverage': CoverageCommand,
     }
 )

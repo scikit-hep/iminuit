@@ -74,7 +74,8 @@ def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
     return vx, vy, vz
 
 
-def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, edges=False):
+def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4,
+                   bins=100, edges=False):
     import numpy as np
     from matplotlib import mlab
     dfcn = []
@@ -85,7 +86,9 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
         xminos, yminos, pts = self.mncontour(x, y, numpoints=numpoints,
                                              sigma=this_sig)
         if len(pts) == 0:  # pragma: no cover
-            warnings.warn(RuntimeWarning('Fail mncontour for %s, %s, sigma=%f' % (x, y, this_sig)))
+            warnings.warn(RuntimeWarning(
+                'Fail mncontour for %s, %s, sigma=%f' % (x, y, this_sig))
+            )
             continue
 
         xp, yp = zip(*pts)
@@ -124,7 +127,7 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4, bins=100, ed
         g = mlab.griddata(fx, fy, fz, xgrid, ygrid, interp='linear')
 
     # return grid edges instead of mid point (for pcolor)
-    if edges:  # pragma: no cover 
+    if edges:  # pragma: no cover
         xgrid -= xstep / 2.
         ygrid -= ystep / 2.
         np.resize(xgrid, len(xgrid) + 1)

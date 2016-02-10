@@ -5,6 +5,7 @@
 build
 *.pyc
 .idea
+.cache
 _build
 archive
 html
@@ -25,3 +26,9 @@ _libiminuit.cpp
 
 .ipynb_checkpoints
 iminuit.egg-info
+
+htmlcov
+
+.eggs
+env
+coverage.xml

@@ -1,9 +1,29 @@
+.. include:: references.txt
+
 .. _installation:
 
 Installation
 ============
 
 iminuit works with Python 2.7 as well as 3.4 or later.
+
+Dependencies
+------------
+
+Like most Python packages, iminuit installation requires `setuptools`_.
+
+The following dependencies are optional:
+
+* numpy
+* ipython
+* matplotlib
+* pytest, pytest-cov
+* Cython
+* Sphinx, sphinx-rtd
+
+
+TODO: describe better where which dependency is used.
+
 
 Stable version
 --------------
@@ -18,7 +38,7 @@ To install the latest stable version:
 Conda
 -----
 
-Conda packages for iminuit are available via the astropy channel at https://anaconda.org/astropy/iminuit
+Conda packages for iminuit are available via the ``astropy`` channel at https://anaconda.org/astropy/iminuit
 
 .. code-block:: bash
 
@@ -68,16 +88,22 @@ They can be installed via
 Testing
 -------
 
-To run the tests:
+To run the tests you need to install `pytest`_.
+
+To run the iminuit tests for an installed version of the package:
 
 .. code-block:: bash
 
-   $ python setup.py build_ext --inplace
-   $ nosetests -V
+    python -m pytest --pyargs iminuit
 
-You will need ``nose``.
-It can be installed via
+To run the tests from the source folder (e.g. during pytest development), use this command:
 
 .. code-block:: bash
 
-   $ pip install nose
+    $ make test
+
+To get a coverage report from the tests:
+
+.. code-block:: bash
+
+    $ make coverage

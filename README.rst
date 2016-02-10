@@ -16,3 +16,4 @@ MINUIT from Python - Fitting like a boss
 * Documentation: http://iminuit.readthedocs.org/
 * Mailing list: https://groups.google.com/forum/#!forum/iminuit
 * PyPI: https://pypi.python.org/pypi/iminuit
+* License: LGPL (the iminuit source is MIT, but the bundled MINUIT and thus the whole package is LGPL)

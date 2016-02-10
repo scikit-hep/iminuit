@@ -159,7 +159,7 @@ def better_arg_spec(f, verbose=False):
     #         print(e)
     #         print("inspect.getargspec(f)[0] fails")
 
-    # try: 
+    # try:
     #     return list(inspect.getargspec(f)[0])
     # except Exception as e:
     #     if verbose:

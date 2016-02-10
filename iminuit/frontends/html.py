@@ -2,7 +2,6 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import random
 import string
-from IPython.core.display import display_html
 from iminuit.util import Struct
 from iminuit.latex import LatexFactory
 from iminuit.color import Gradient
@@ -66,6 +65,7 @@ class HtmlFrontend:
 
         .. note: Would appreciate if someone would make jquery hover
         description for each item."""
+        from IPython.core.display import display_html
         goaledm = 0.0001 * tolerance * sfmin.up
         style = fmin_style(sfmin)
         header = u"""
@@ -119,6 +119,7 @@ class HtmlFrontend:
 
     @staticmethod
     def print_merror(vname, smerr):
+        from IPython.core.display import display_html
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
         style = minos_style(smerr)
         to_print = """
@@ -155,6 +156,7 @@ class HtmlFrontend:
 
     def print_param(self, mps, merr=None, float_format='%5.3e',
                     smart_latex=True, latex_map=None):
+        from IPython.core.display import display_html
         """print list of parameters
         Arguments:
 
@@ -233,6 +235,7 @@ class HtmlFrontend:
         return ret
 
     def print_matrix(self, vnames, matrix, latex_map=None):
+        from IPython.core.display import display_html
         latexuid = randid()
         latextable = LatexFactory.build_matrix(vnames, matrix,
                                                latex_map=latex_map)
@@ -276,4 +279,5 @@ class HtmlFrontend:
 
     @staticmethod
     def print_hline():
+        from IPython.core.display import display_html
         display_html('<hr>', raw=True)

@@ -1,3 +1,5 @@
+.. include:: references.txt
+
 .. _api-doc:
 
 Full API Documentation
@@ -92,8 +94,7 @@ Function Mimum Struct has the following attributes:
 
     * *fval*: FCN minimum value
 
-    * *edm*: `Estimated Distance to Minimum
-      <http://en.wikipedia.org/wiki/Minimum_distance_estimation>`_.
+    * *edm*: `Estimated Distance to Minimum`_
 
     * *nfcn*: Number of function call in last mimizier call
 
@@ -238,7 +239,7 @@ Function Signature Extraction Ordering
     The difference is that it allows you to fake function
     signature by having func_code attribute in the object. This allows you
     to make a generic functor of your custom cost function. This is how
-    `probfit <http://github.com/iminuit/probfit>`_ was written::
+    `probfit`_ was written::
 
         f = lambda x,m,c: m*x+c
         #the beauty here is that all you need to build

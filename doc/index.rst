@@ -1,3 +1,5 @@
+.. include:: references.txt
+
 iminuit
 =======
 
@@ -7,12 +9,12 @@ MINUIT from Python - Fitting like a boss
 * Documentation: http://iminuit.readthedocs.org/
 * Mailing list: https://groups.google.com/forum/#!forum/iminuit
 * PyPI: https://pypi.python.org/pypi/iminuit
-
+* License: LGPL (the iminuit source is MIT, but the bundled MINUIT and thus the whole package is LGPL)
 
 What is iminuit?
 ----------------
 
-Interactive IPython-friendly Mimizer based on `SEAL Minuit <http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/>`_.
+Interactive IPython-friendly mimizer based on `SEAL Minuit`_.
 
 (It's included in the package, no need to install it separately.)
 
@@ -37,12 +39,7 @@ In a nutshell
     print(m.values)  # {'x': 2,'y': 3,'z': 4}
     print(m.errors)  # {'x': 1,'y': 1,'z': 1}
 
-If you are interested in fitting a curve or distribution, take a look at
-`probfit <https://github.com/iminuit/probfit>`_. 
-
-.. _lcg-minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
-.. _PyMinuit: http://code.google.com/p/pyminuit/
-.. _ipythonnb: http://ipython.org/ipython-doc/dev/notebook/index.html
+If you are interested in fitting a curve or distribution, take a look at `probfit`_.
 
 
 .. toctree::
@@ -61,9 +58,8 @@ All the tutorials are in tutorial directory. You can view them online too:
 - `Quick start <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/tutorial.ipynb>`_
 - `Hard Core Cython tutorial <http://nbviewer.ipython.org/urls/raw.github.com/iminuit/iminuit/master/tutorial/hard-core-tutorial.ipynb>`_.
   If you need to do a huge likelihood fit that needs speed, this is for you.
-  If you don't care, just use `probfit <https://github.com/iminuit/probfit>`_.
+  If you don't care, just use `probfit`_.
   It's a fun read though I think.
-
 
 API
 ---
@@ -77,12 +73,10 @@ Technical Stuff
 Using it as a black box is a bad idea. Here are some fun reads; the order is given
 by the order I think you should read.
 
-* Wikipedia for `Quasi Newton Method <http://en.wikipedia.org/wiki/Quasi-Newton_method>`_ and
-  `DFP formula <http://en.wikipedia.org/wiki/Davidon-Fletcher-Powell_formula>`_.
-  The magic behind migrad.
-* `Variable Metric Method for Minimization <http://www.ii.uib.no/~lennart/drgrad/Davidon1991.pdf>`_ William Davidon 1991
-* `A New Approach to Variable Metric Algorithm. <http://comjnl.oxfordjournals.org/content/13/3/317.full.pdf+html>`_ (R.Fletcher 1970)
-* Original Paper: `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf>`_ by Fred James and Matts Roos.
+* Wikipedia for `Quasi Newton Method`_ and `DFP formula`_. The magic behind MIGRAD.
+* `Variable Metric Method for Minimization`_ William Davidon 1991
+* `A New Approach to Variable Metric Algorithm`_ (R.Fletcher 1970)
+* Original Paper: `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_ by Fred James and Matts Roos.
 
 You can help
 ------------

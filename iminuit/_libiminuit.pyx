@@ -1303,10 +1303,10 @@ cdef class Minuit:
         """
         try:
             __IPYTHON__
-            from .frontends.html import HtmlFrontend
+            from iminuit.frontends.html import HtmlFrontend
             return HtmlFrontend()
         except NameError:
-            from .frontends.console import ConsoleFrontend
+            from iminuit.frontends.console import ConsoleFrontend
             return ConsoleFrontend()
 
     def _check_extra_args(self, parameters, kwd):

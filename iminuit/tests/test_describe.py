@@ -1,10 +1,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-from nose.tools import assert_equal
 from iminuit.util import describe
 from math import ldexp
-import pyximport;
-
+import pyximport
 pyximport.install()
 from . import cyfunc
 
@@ -15,7 +13,7 @@ def f(x, y):
 
 
 def test_simple():
-    assert_equal(describe(f, True), ['x', 'y'])
+    assert describe(f, True) == ['x', 'y']
 
 
 # test bound method
@@ -26,12 +24,12 @@ class A:
 
 def test_bound():
     a = A()
-    assert_equal(describe(a.f, True), ['x', 'y'])
+    assert describe(a.f, True) == ['x', 'y']
 
 
 # unbound method
 def test_unbound():
-    assert_equal(describe(A.f, True), ['self', 'x', 'y'])
+    assert describe(A.f, True) == ['self', 'x', 'y']
 
 
 # faking func code
@@ -52,7 +50,7 @@ class Func1:
 
 def test_call():
     f1 = Func1()
-    assert_equal(describe(f1, True), ['x', 'y'])
+    assert describe(f1, True) == ['x', 'y']
 
 
 # fake func
@@ -66,18 +64,18 @@ class Func2:
 
 def test_fakefunc():
     f2 = Func2()
-    assert_equal(describe(f2, True), ['x', 'y'])
+    assert describe(f2, True) == ['x', 'y']
 
 
 # builtin (parsing doc)
 def test_builtin():
-    assert_equal(describe(ldexp, True), ['x', 'i'])
+    assert describe(ldexp, True) == ['x', 'i']
 
 
 def test_cython_embedsig():
-    assert_equal(describe(cyfunc.f, True), ['a', 'b'])
+    assert describe(cyfunc.f, True) == ['a', 'b']
 
 
 def test_cython_class_method():
     cc = cyfunc.CyCallable()
-    assert_equal(describe(cc.test, True), ['c', 'd'])
+    assert describe(cc.test, True) == ['c', 'd']
