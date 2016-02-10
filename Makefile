@@ -9,9 +9,13 @@ help:
 	@echo ''
 	@echo '     help             Print this help message (the default)'
 	@echo ''
-	@echo '     doc-show         Open local HTML docs in browser'
 	@echo '     clean            Remove generated files'
+	@echo '     build            Build inplace'
+	@echo '     test             Run tests'
+	@echo '     coverage         Run tests and write coverage report'
 	@echo '     cython           Compile cython files'
+	@echo '     doc              Run Sphinx to generate HTML docs'
+	@echo '     doc-show         Open local HTML docs in browser'
 	@echo ''
 	@echo '     code-analysis    Run code analysis (flake8 and pylint)'
 	@echo '     flake8           Run code analysis (flake8)'
@@ -36,7 +40,7 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build htmlcov
+	rm -rf build htmlcov doc/_build
 	find . -name "*.pyc" -exec rm {} \;
 	find . -name "*.so" -exec rm {} \;
 	find . -name __pycache__ | xargs rm -fr
@@ -50,8 +54,22 @@ test: build
 coverage: build
 	python -m pytest -v iminuit --cov iminuit --cov-report html --cov-report term-missing --cov-report xml
 
+# TODO: this runs Cython differently than via setup.py ... make it consistent!
 cython:
 	find $(PROJECT) -name "*.pyx" -exec $(CYTHON) --cplus  {} \;
+
+
+# TODO: either of these give warnings or errors ... to be figured out!
+doc: FORCE
+	cd doc && make html
+	# python setup.py build_sphinx
+
+FORCE:
+
+doc-show:
+	open build/sphinx/html/index.html
+	# open doc/_build/html/index.html
+
 
 code-analysis: flake8 pylint
 
@@ -61,8 +79,5 @@ flake8:
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
 pylint:
 	pylint -E $(PROJECT)/ -d E1103,E0611,E1101 \
-	       --ignore=_astropy_init.py -f colorized \
+	       --ignore="" -f colorized \
 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
-
-doc-show:
-	open build/sphinx/html/index.html

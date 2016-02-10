@@ -94,10 +94,14 @@ To run the iminuit tests for an installed version of the package:
 
     python -m pytest --pyargs iminuit
 
-To run the tests from the source folder (e.g. during pytest development), use these commands:
+To run the tests from the source folder (e.g. during pytest development), use this command:
 
 .. code-block:: bash
 
-       $ python setup.py build_ext --inplace
-       $ python -m pytest -v iminuit
-       $ python -m pytest -v iminuit --cov iminuit --cov-report html
+    $ make test
+
+To get a coverage report from the tests:
+
+.. code-block:: bash
+
+    $ make coverage
