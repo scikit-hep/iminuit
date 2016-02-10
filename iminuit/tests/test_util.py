@@ -34,10 +34,10 @@ def test_fitarg_rename_strprefix():
 
 
 def test_true_param():
-    assert true_param('N') == True
-    assert true_param('limit_N') == False
-    assert true_param('error_N') == False
-    assert true_param('fix_N') == False
+    assert true_param('N') is True
+    assert true_param('limit_N') is False
+    assert true_param('error_N') is False
+    assert true_param('fix_N') is False
 
 
 def test_param_name():
@@ -95,10 +95,14 @@ def test_remove_var():
     d.update(dn)
 
     ret = remove_var(d, ['k', 'm'])
-    for k in dk: assert k not in ret
-    for k in dl: assert k in ret
-    for k in dm: assert k not in ret
-    for k in dn: assert k in ret
+    for k in dk:
+        assert k not in ret
+    for k in dl:
+        assert k in ret
+    for k in dm:
+        assert k not in ret
+    for k in dn:
+        assert k in ret
 
 
 def test_arguments_from_docstring():

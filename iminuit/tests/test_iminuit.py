@@ -299,7 +299,8 @@ def test_mnprofile():
 
 def test_printfmin_uninitialized():
     # issue 85
-    def f(x): return 2 + 3 * x
+    def f(x):
+        return 2 + 3 * x
 
     fitter = Minuit(f, pedantic=False)
     with pytest.raises(RuntimeError):
@@ -316,8 +317,6 @@ def test_reverse_limit():
         m.migrad()
 
 
-
-# TODO: rewrite using pytest fixture
 class TestMatrix:
     def setup(self):
         self.m = Minuit(func3, print_level=0, pedantic=False)
