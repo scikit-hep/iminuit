@@ -124,26 +124,8 @@ public:
             throw runtime_error(msg);
         }
 
-
-/*        double ret = PyFloat_AsDouble(result);
-        if((exc = PyErr_Occurred())){
-            string msg = "Cannot convert gradfcn(*arg) to double \n"+graderrormsg(x);
-            warn_preserve_error(msg.c_str());
-            throw runtime_error(msg);
-        }
-
-        if(ret!=ret){//check if nan
-            string msg = "gradfcn returns Nan\n"+graderrormsg(x);
-            warn_preserve_error(msg.c_str());
-            if(thrownan){
-                PyErr_SetString(PyExc_RuntimeError,msg.c_str());
-                throw runtime_error(msg.c_str());
-            }
-        }*/
-
         Py_DECREF(tuple);
         Py_DECREF(result);
-        ncall++;
         return result_vector;
     }
 
