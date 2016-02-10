@@ -1,0 +1,13 @@
+.. _probfit: https://github.com/iminuit/probfit
+.. _SEAL Minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
+.. _lcg-minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
+.. _PyMinuit: http://code.google.com/p/pyminuit/
+.. _ipythonnb: http://ipython.org/ipython-doc/dev/notebook/index.html
+.. _Quasi Newton Method: http://en.wikipedia.org/wiki/Quasi-Newton_method
+.. _DFP formula: http://en.wikipedia.org/wiki/Davidon-Fletcher-Powell_formula
+.. _Variable Metric Method for Minimization: http://www.ii.uib.no/~lennart/drgrad/Davidon1991.pdf
+.. _A New Approach to Variable Metric Algorithm: http://comjnl.oxfordjournals.org/content/13/3/317.full.pdf+html
+.. _MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.158.9157&rep=rep1&type=pdf
+.. _setuptools: https://pypi.python.org/pypi/setuptools
+.. _pytest: http://pytest.org
+.. _Estimated Distance to Minimum: http://en.wikipedia.org/wiki/Minimum_distance_estimation

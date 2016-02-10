@@ -1,3 +1,5 @@
+.. include:: references.txt
+
 .. _installation:
 
 Installation
@@ -8,7 +10,7 @@ iminuit works with Python 2.7 as well as 3.4 or later.
 Dependencies
 ------------
 
-Like most Python packages, iminuit installation requires `setuptools <https://pypi.python.org/pypi/setuptools>`__
+Like most Python packages, iminuit installation requires `setuptools`_.
 
 The following dependencies are optional:
 
@@ -36,7 +38,7 @@ To install the latest stable version:
 Conda
 -----
 
-Conda packages for iminuit are available via the astropy channel at https://anaconda.org/astropy/iminuit
+Conda packages for iminuit are available via the ``astropy`` channel at https://anaconda.org/astropy/iminuit
 
 .. code-block:: bash
 
@@ -86,7 +88,7 @@ They can be installed via
 Testing
 -------
 
-To run the tests you need to install `pytest <http://pytest.org>`_.
+To run the tests you need to install `pytest`_.
 
 To run the iminuit tests for an installed version of the package:
 
