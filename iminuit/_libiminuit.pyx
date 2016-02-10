@@ -277,6 +277,11 @@ cdef class Minuit:
               not callable iminuit will give a warning and set errordef to 1.
               Default None(which means errordef=1 with a warning).
 
+            - **grad_fcn**: Optional. Provide a function that calculates the
+              gradient analytically and returns an iterable object with one
+              element for each dimension. If None is given minuit will
+              calculate the gradient numerically. (Default None)
+
         **Parameter Keyword Arguments:**
 
             Similar to PyMinuit. iminuit allows user to set initial value,
