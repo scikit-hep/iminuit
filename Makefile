@@ -11,10 +11,8 @@ help:
 	@echo ''
 	@echo '     doc-show         Open local HTML docs in browser'
 	@echo '     clean            Remove generated files'
-	@echo '     clean-repo       Remove all untracked files and directories (use with care!)'
 	@echo '     cython           Compile cython files'
 	@echo ''
-	@echo '     trailing-spaces  Remove trailing spaces at the end of lines in *.py files'
 	@echo '     code-analysis    Run code analysis (flake8 and pylint)'
 	@echo '     flake8           Run code analysis (flake8)'
 	@echo '     pylint           Run code analysis (pylint)'
@@ -38,33 +36,27 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build
+	rm -rf build htmlcov
 	find . -name "*.pyc" -exec rm {} \;
 	find . -name "*.so" -exec rm {} \;
 	find . -name __pycache__ | xargs rm -fr
 
-clean-repo:
-	@git clean -f -x -d
-
-test:
+build:
 	python setup.py build_ext --inplace
+
+test: build
 	python -m pytest -v iminuit
 
-coverage:
-	python setup.py build_ext --inplace
-	python -m pytest -v iminuit --cov iminuit --cov-report html
+coverage: build
+	python -m pytest -v iminuit --cov iminuit --cov-report html --cov-report term-missing --cov-report xml
 
 cython:
-	find $(PROJECT) -name "*.pyx" -exec $(CYTHON) {} \;
-
-trailing-spaces:
-    # TODO: the perl command doesn't work on my Mac (Christoph).
-	find $(PROJECT) doc -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
+	find $(PROJECT) -name "*.pyx" -exec $(CYTHON) --cplus  {} \;
 
 code-analysis: flake8 pylint
 
 flake8:
-	flake8 $(PROJECT) | grep -v __init__ | grep -v external
+	flake8 --max-line-length=90 $(PROJECT) | grep -v __init__ | grep -v external
 
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
 pylint:

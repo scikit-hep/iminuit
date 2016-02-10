@@ -31,3 +31,4 @@ htmlcov
 
 .eggs
 env
+coverage.xml
