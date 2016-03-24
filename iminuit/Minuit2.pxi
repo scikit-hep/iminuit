@@ -14,6 +14,14 @@ cdef extern from "Minuit2/FCNBase.h":
         double call "operator()"(vector[double] x) except+
         double ErrorDef()
 
+cdef extern from "Minuit2/FCNGradientBase.h":
+    cdef cppclass FCNGradientBase:
+        FCNGradientBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
+        double call "operator()"(vector[double] x) except +  #raise_py_err
+        double Up()
+        vector[double] Gradient(vector[double] x) except +  #raise_py_err
+        bint CheckGradient()
+
 cdef extern from "Minuit2/MnApplication.h":
     cdef cppclass MnApplication:
         FunctionMinimum call "operator()"(int, double) except+
@@ -89,6 +97,7 @@ cdef extern from "Minuit2/MnStrategy.h":
 cdef extern from "Minuit2/MnMigrad.h":
     cdef cppclass MnMigrad(MnApplication):
         MnMigrad(FCNBase fcn, MnUserParameterState par, MnStrategy str) except+
+        MnMigrad(FCNGradientBase fcn, MnUserParameterState par, MnStrategy str) except+
         FunctionMinimum call "operator()"(int, double) except+
         void SetPrecision(double)
 
@@ -96,10 +105,12 @@ cdef extern from "Minuit2/MnHesse.h":
     cdef cppclass MnHesse:
         MnHesse(unsigned int stra)
         MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls=0) except+
+        MnUserParameterState call "operator()"(FCNGradientBase, MnUserParameterState, unsigned int maxcalls=0) except+
 
 cdef extern from "Minuit2/MnMinos.h":
     cdef cppclass MnMinos:
         MnMinos(FCNBase fcn, FunctionMinimum min, unsigned int stra)
+        MnMinos(FCNGradientBase fcn, FunctionMinimum min, unsigned int stra)
         MinosError Minos(unsigned int par, unsigned int maxcalls) except +
 
 cdef extern from "Minuit2/MinosError.h":
@@ -148,6 +159,7 @@ cdef extern from "Minuit2/VariableMetricBuilder.h":
 cdef extern from "Minuit2/MnContours.h":
     cdef cppclass MnContours:
         MnContours(FCNBase fcn, FunctionMinimum fm, unsigned int stra)
+        MnContours(FCNGradientBase fcn, FunctionMinimum fm, unsigned int stra)
         ContoursError Contour(unsigned int, unsigned int, unsigned int npoints)
 
 cdef extern from "Minuit2/ContoursError.h":
