@@ -58,18 +58,8 @@ coverage: build
 cython:
 	find $(PROJECT) -name "*.pyx" -exec $(CYTHON) --cplus  {} \;
 
-
-# TODO: either of these give warnings or errors ... to be figured out!
-doc: build FORCE
-	cd doc && make html
-	# python setup.py build_sphinx
-
-FORCE:
-
 doc-show:
-	# open build/sphinx/html/index.html
 	open doc/_build/html/index.html
-
 
 code-analysis: flake8 pylint
 
