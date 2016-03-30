@@ -61,21 +61,12 @@ repository from `Github <https://github.com/iminuit/iminuit>`_:
 
 .. code-block:: bash
 
-    $ git clone git://github.com/iminuit/iminuit.git
+    $ git clone https://github.com/iminuit/iminuit.git
     $ cd iminuit
     $ python setup.py install
 
 Docs
 ----
-
-To generate html docs locally:
-
-.. code-block:: bash
-
-   $ python setup.py build_ext --inplace
-   $ cd doc
-   $ make html
-   $ open _build/html/index.html
 
 You will need ``sphinx`` and ``sphinx_rtd_theme``.
 They can be installed via
@@ -84,6 +75,40 @@ They can be installed via
 
    $ pip install sphinx
    $ pip install sphinx_rtd_theme
+
+To generate html docs locally, ``iminuit`` has to be available.
+To check if that is the case, and which version you're using, you can use this command:
+
+.. code-block:: bash
+
+    $ python -c 'import iminuit; print(iminuit)'
+
+One way to achieve this is to do this:
+
+.. code-block:: bash
+
+   $ python setup.py build_ext --inplace
+   $ python setup.py develop
+
+Another is to just install ``iminuit`` into ``site-packages``:
+
+.. code-block:: bash
+
+   $ python setup.py install
+
+Once you have ``iminuit`` available, use these commands to build the docs:
+
+.. code-block:: bash
+
+   $ cd doc
+   $ make html
+
+The HTML output is here:
+
+.. code-block:: bash
+
+   $ open _build/html/index.html
+
 
 Testing
 -------

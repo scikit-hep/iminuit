@@ -11,18 +11,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-# For local development we use the `iminuit` from the source folder.
-# On readthedocs we use the one from `site-packages`.
-# See https://github.com/iminuit/iminuit/issues/126#issuecomment-61472227
-# and http://read-the-docs.readthedocs.org/en/latest/faq.html#how-do-i-change-behavior-for-read-the-docs
-import os
-
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-if not on_rtd:
-    import sys
-
-    sys.path.insert(0, '../')
-
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -36,12 +24,13 @@ if not on_rtd:
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.mathjax',
-              'sphinx.ext.autosummary',
-              'matplotlib.sphinxext.only_directives',
-              'matplotlib.sphinxext.plot_directive',
-              ]
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.autosummary',
+    # 'matplotlib.sphinxext.only_directives',
+    'matplotlib.sphinxext.plot_directive',
+]
 
 autoclass_content = 'both'
 autosummary_generate = True
@@ -116,22 +105,6 @@ pygments_style = 'sphinx'
 
 
 # -- Options for HTML output ---------------------------------------------------
-
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-if not on_rtd:
-    try:
-        # https://github.com/snide/sphinx_rtd_theme
-        import sphinx_rtd_theme
-
-        html_theme = "sphinx_rtd_theme"
-        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-    except ImportError:
-        # Fallback to default theme
-        print('WARNING: To get nice docs locally that look like the online docs, please do:')
-        print('WARNING: $ pip install sphinx_rtd_theme --user')
-        print('WARNING: Using default theme.')
-        html_theme = "nature"
 
 autodoc_member_order = 'bysource'
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -281,3 +254,14 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
+
+
+# http://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
+# on_rtd is whether we are on readthedocs.org
+import os
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+if not on_rtd:  # only import and set the theme if we're building docs locally
+    import sphinx_rtd_theme
+    html_theme = 'sphinx_rtd_theme'
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
