@@ -398,6 +398,16 @@ cdef class Minuit:
 
         self.merrors_struct = {}
 
+    @classmethod
+    def from_parameter_list(cls, fcn, params_list, **kwargs):
+        """
+        Alternative constructor. Gives default names to parameters.
+        """
+
+        p_names = ['p{}'.format(_) for _ in range(len(params_list))]
+        obj = cls(fcn=fcn, forced_parameters=p_names, **dict(zip(p_names, params_list)), **kwargs)
+        return obj
+
     def migrad(self, int ncall=10000, resume=True, int nsplit=1, precision=None):
         """Run migrad.
 
