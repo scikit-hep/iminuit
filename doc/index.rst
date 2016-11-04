@@ -38,6 +38,20 @@ In a nutshell
     m.migrad()
     print(m.values)  # {'x': 2,'y': 3,'z': 4}
     print(m.errors)  # {'x': 1,'y': 1,'z': 1}
+    print(m.parameters) # ['x', 'y', 'z']
+
+Or alternatively using a list of estimates:
+
+.. code-block:: python
+
+    from iminuit import Minuit
+    def f(*p):
+        return (p[0] - 2) ** 2 + (p[1] - 3) ** 2 + (p[2] - 4) ** 2
+    m = Minuit.from_parameter_list(f, [20,30,40])
+    m.migrad()
+    print(m.values)  # {'x': 2,'y': 3,'z': 4}
+    print(m.errors)  # {'x': 1,'y': 1,'z': 1}
+    print(m.parameters) # ['p0', 'p1', 'p2']
 
 If you are interested in fitting a curve or distribution, take a look at `probfit`_.
 
