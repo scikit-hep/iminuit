@@ -400,8 +400,25 @@ cdef class Minuit:
 
     @classmethod
     def from_parameter_list(cls, fcn, params_list, **kwargs):
-        """
-        Alternative constructor. Gives default names to parameters.
+        """Alternative constructor.
+        Gives default names to parameters, in case these are not specifically given. Internal
+        forced_parameters argument is set. This style of instantiation is useful, whenever
+        explicit naming is either not possible or not desired.
+
+        **Arguments:**
+
+            - **fcn**: the function to be optimized. Minuit automagically finds
+              parameters names. More information about how
+              Minuit detects function signature can be found in
+              :ref:`function-sig-label`
+
+            - **param_list**: A list of values for the parameters. A name will be automatically
+            assigned to them in the same order i.e. p0, p1, p2, ...
+
+        **Parameter Keyword Arguments:**
+
+            - These will be passed to the default constructor **Minuit.__init__()**
+
         """
 
         p_names = ['p{}'.format(_) for _ in range(len(params_list))]
