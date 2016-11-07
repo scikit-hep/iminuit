@@ -42,6 +42,8 @@ def func3_grad(x, y):
 def func4(x, y, z):
     return 0.2 * (x - 2.) ** 2 + 0.1 * (y - 5.) ** 2 + 0.25 * (z - 7.) ** 2 + 10
 
+def func4_paramlist(*p):
+    return 0.2 * (p[0] - 2.) ** 2 + 0.1 * (p[1] - 5.) ** 2 + 0.25 * (p[2] - 7.) ** 2 + 10
 
 def func4_grad(x, y, z):
     dfdx = 0.4 * (x - 2.)
@@ -87,6 +89,16 @@ def functesthelper(f):
     assert m.migrad_ok()
     return m
 
+def functesthelper_paramlist(f, *params):
+    m = Minuit.from_parameter_list(f, *params, print_level=0, pedantic=False)
+    m.migrad()
+    val = m.values
+    assert_allclose(val['p0'], 2.)
+    assert_allclose(val['p1'], 5.)
+    assert_allclose(m.fval, 10.)
+    assert m.matrix_accurate()
+    assert m.migrad_ok()
+    return m
 
 def test_f1():
     functesthelper(Func1())
@@ -99,6 +111,8 @@ def test_f2():
 def test_f3():
     functesthelper(func3)
 
+def test_f4_paramlist():
+    functesthelper_paramlist(func4_paramlist, [3, 4, 5])
 
 def test_typo():
     with pytest.raises(RuntimeError):
