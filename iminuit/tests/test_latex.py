@@ -39,3 +39,25 @@ def test_format():
     ltt2 = LatexTable(data=[['alpha', 10.123, 20], ['alpha_s', 30, 40]],
                       smart_latex=False, escape_under_score=False)
     assert ltt2._format('a_b') == r'a_b'
+
+
+def test_empty_table():
+    ltt = LatexTable(data=[])
+    expected = '\n'.join([
+        r'\begin{tabular}{|c|}',
+        r'\hline',
+        r'\end{tabular}',
+    ])
+    assert str(ltt) == expected
+
+
+def test_empty_table_with_headers():
+    ltt = LatexTable(data=[], headers=['Foo', 'Bar'])
+    expected = '\n'.join([
+        r'\begin{tabular}{|c|c|}',
+        r'\hline',
+        r'Foo & Bar\\',
+        r'\hline',
+        r'\end{tabular}',
+    ])
+    assert str(ltt) == expected
