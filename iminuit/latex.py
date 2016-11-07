@@ -32,12 +32,22 @@ class LatexTable:
     def __init__(self, data, headers=None, smart_latex=True,
                  escape_under_score=True, alignment=None, rotate_header=False,
                  latex_map=None):
-        if headers is not None:
-            assert (len(headers) == len(data[0]))
+        # Make sure #data columns matches #header columns, using any non-zero
+        # length if data or headers are missing
+        if len(data) > 0:
+            num_col = len(data[0])
+            if headers:
+                assert num_col == len(headers)
+        else:
+            if headers is not None:
+                num_col = len(headers)
+            else:
+                # LaTeX requires at least one column
+                num_col = 1
 
         self.headers = headers
         self.data = data
-        self.num_col = len(data[0])
+        self.num_col = num_col
         self.smart_latex = smart_latex
         self.escape_under_score = escape_under_score
         self.alignment = self._auto_align() if alignment is None else alignment
