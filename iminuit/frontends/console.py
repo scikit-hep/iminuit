@@ -109,7 +109,10 @@ class ConsoleFrontend:
         """
         merr = {} if merr is None else merr
         vnames = [mp.name for mp in mps]
-        maxlength = max([len(x) for x in vnames])
+        if vnames:
+            maxlength = max([len(x) for x in vnames])
+        else:
+            maxlength = 0
         maxlength = max(5, maxlength)
 
         header = (('| {0:^4s} | {1:^%ds} | {2:^8s} | {3:^8s} | {4:^8s} |'
