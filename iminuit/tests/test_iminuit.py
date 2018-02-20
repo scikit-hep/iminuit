@@ -450,6 +450,27 @@ class TestMatrix:
         assert_allclose(actual, expected)
         assert isinstance(actual, np.ndarray)
 
+    def test_np_values(self):
+        import numpy as np
+        actual = self.m.np_values()
+        expected = [2., 5.]
+        assert_allclose(actual, expected)
+        assert isinstance(actual, np.ndarray)
+
+    def test_np_errors(self):
+        import numpy as np
+        actual = self.m.np_errors()
+        expected = [5.**0.5, 1.]
+        assert_allclose(actual, expected)
+        assert isinstance(actual, np.ndarray)
+
+    def test_np_covariance(self):
+        import numpy as np
+        actual = self.m.np_covariance()
+        expected = [[5., 0.], [0., 1.]]
+        assert_allclose(actual, expected)
+        assert isinstance(actual, np.ndarray)
+
     def test_matrix_correlation(self):
         actual = self.m.matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]

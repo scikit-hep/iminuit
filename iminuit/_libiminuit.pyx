@@ -611,6 +611,35 @@ cdef class Minuit:
         matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
         return np.array(matrix, dtype=np.float64)
 
+    def np_values(self):
+        """Parameter values in numpy array format."""
+        import numpy as np
+        a = np.empty(len(self.parameters))
+        for i, k in enumerate(self.parameters):
+            a[i] = self.values[k]
+        return a
+
+    def np_errors(self):
+        """Parameter errors in numpy array format."""
+        import numpy as np
+        a = np.empty(len(self.parameters))
+        for i, k in enumerate(self.parameters):
+            a[i] = self.errors[k]
+        return a
+
+    def np_covariance(self):
+        """Covariance matrix in numpy array format.
+
+        Note that a ``numpy.ndarray`` is returned, not a ``numpy.matrix``
+        """
+        import numpy as np
+        n = len(self.parameters)
+        a = np.empty((n, n))
+        for i1, k1 in enumerate(self.parameters):
+            for i2, k2 in enumerate(self.parameters):
+                a[i1, i2] = self.covariance[(k1, k2)]
+        return a
+
     def is_fixed(self, vname):
         """Check if variable *vname* is (initially) fixed"""
         if vname not in self.parameters:
