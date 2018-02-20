@@ -36,7 +36,7 @@ MnCross MnFunctionCross::operator()(const std::vector<unsigned int>& par, const 
 //   double edmmax = 0.5*0.001*toler*fFCN.Up();
 
 
-   unsigned int npar = par.size();
+   std::size_t npar = par.size();
    unsigned int nfcn = 0;
    const MnMachinePrecision& prec = fState.Precision();
    // tolerance used when calling Migrad
@@ -97,7 +97,7 @@ MnCross MnFunctionCross::operator()(const std::vector<unsigned int>& par, const 
 
    MnMigrad migrad(fFCN, fState, MnStrategy(std::max(0, int(fStrategy.Strategy()-1))));
 
-   for(unsigned int i = 0; i < npar; i++) {
+   for(std::size_t i = 0; i < npar; i++) {
 #ifdef DEBUG
       std::cout << "MnFunctionCross: Set value for " << par[i] <<  " to " << pmid[i] << std::endl;
 #endif
@@ -140,7 +140,7 @@ MnCross MnFunctionCross::operator()(const std::vector<unsigned int>& par, const 
    std::cout << "MnFunctionCross: flsb[0] = " << flsb[0] << " aopt =  " << aopt  << std::endl;
 #endif
 
-   for(unsigned int i = 0; i < npar; i++) {
+   for(std::size_t i = 0; i < npar; i++) {
 #ifdef DEBUG
       std::cout << "MnFunctionCross: Set new value for " << par[i] <<  " from " << pmid[i] << " to " << pmid[i] + (aopt)*pdir[i] << " aopt = " << aopt << std::endl;
 #endif
@@ -194,7 +194,7 @@ L300:
                aopt = aulim;
                limset = true;
             }
-            for(unsigned int i = 0; i < npar; i++) {
+            for(std::size_t i = 0; i < npar; i++) {
 #ifdef DEBUG
       std::cout << "MnFunctionCross: Set new value for " << par[i] <<  " to " << pmid[i] + (aopt)*pdir[i] << " aopt = " << aopt << std::endl;
 #endif
@@ -259,7 +259,7 @@ L460:
       limset = true;
    }
 
-   for(unsigned int i = 0; i < npar; i++) {
+   for(std::size_t i = 0; i < npar; i++) {
 #ifdef DEBUG
       std::cout << "MnFunctionCross: Set new value for " << par[i] <<  " from " << pmid[i] << " to " << pmid[i] + (aopt)*pdir[i] << " aopt = " << aopt << std::endl;
 #endif

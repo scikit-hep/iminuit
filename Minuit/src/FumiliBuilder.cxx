@@ -376,7 +376,7 @@ FunctionMinimum FumiliBuilder::Minimum(const MnFcn& fcn, const GradientCalculato
       result.push_back(MinimumState(p, e, g, edm, fcn.NumOfCalls()));
 
       if (printLevel > 1) {
-         MnPrint::PrintState(std::cout, result.back(), "Fumili: Iteration # ",result.size());
+         MnPrint::PrintState(std::cout, result.back(), "Fumili: Iteration # ", static_cast<unsigned>(result.size()));
       }
 
 

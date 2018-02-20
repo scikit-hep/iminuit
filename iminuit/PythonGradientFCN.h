@@ -111,7 +111,7 @@ public:
         }
 
         std::vector<double> result_vector;
-        while (item = PyIter_Next(iterator)) {
+        while ((item = PyIter_Next(iterator))) {
             result_vector.push_back(PyFloat_AsDouble(item));
             Py_DECREF(item);
         }

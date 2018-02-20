@@ -217,14 +217,14 @@ unsigned int MnUserTransformation::IntOfExt(unsigned int ext) const {
    std::vector<unsigned int>::const_iterator iind = std::find(fExtOfInt.begin(), fExtOfInt.end(), ext);
    assert(iind != fExtOfInt.end());
 
-   return (iind - fExtOfInt.begin());
+   return static_cast<unsigned>(iind - fExtOfInt.begin());
 }
 
 std::vector<double> MnUserTransformation::Params() const {
    // return std::vector of double with parameter values
-   unsigned int n = fParameters.size();
+   std::size_t n = fParameters.size();
    std::vector<double> result(n);
-   for(unsigned int i = 0; i < n; ++i)
+   for(std::size_t i = 0; i < n; ++i)
       result[i] = fParameters[i].Value();
 
    return result;
@@ -265,9 +265,9 @@ bool MnUserTransformation::Add(const std::string & name, double val, double err)
    // return false if parameter already exists
    if (std::find_if(fParameters.begin(), fParameters.end(), MnParStr(name)) != fParameters.end() )
       return false;
-   fExtOfInt.push_back(fParameters.size());
+   fExtOfInt.push_back(static_cast<unsigned>(fParameters.size()));
    fCache.push_back(val);
-   fParameters.push_back(MinuitParameter(fParameters.size(), name, val, err));
+   fParameters.push_back(MinuitParameter(static_cast<unsigned>(fParameters.size()), name, val, err));
    return true;
 }
 
@@ -276,9 +276,9 @@ bool MnUserTransformation::Add(const std::string & name, double val, double err,
    // return false if parameter already exists
    if (std::find_if(fParameters.begin(), fParameters.end(), MnParStr(name)) != fParameters.end() )
       return false;
-   fExtOfInt.push_back(fParameters.size());
+   fExtOfInt.push_back(static_cast<unsigned>(fParameters.size()));
    fCache.push_back(val);
-   fParameters.push_back(MinuitParameter(fParameters.size(), name, val, err, low, up));
+   fParameters.push_back(MinuitParameter(static_cast<unsigned>(fParameters.size()), name, val, err, low, up));
    return true;
 }
 
@@ -289,7 +289,7 @@ bool MnUserTransformation::Add(const std::string & name, double val) {
       return false;
    fCache.push_back(val);
    // costant parameter - do not add in list of internals (fExtOfInt)
-   fParameters.push_back(MinuitParameter(fParameters.size(), name, val));
+   fParameters.push_back(MinuitParameter(static_cast<unsigned>(fParameters.size()), name, val));
    return true;
 }
 

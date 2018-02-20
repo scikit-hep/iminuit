@@ -147,11 +147,10 @@ public:
   }
 
   int ToInt( void* p) {
-      unsigned char* pc = static_cast<unsigned char*>(p);
+      const unsigned char* pc = static_cast<unsigned char*>(p);
 
       // cout << "toInt: p = " << p << " fStack = " << (void*) fStack << endl;
-	  // VC 7.1 warning:conversin from __w64 int to int
-      int userBlock = pc - fStack;
+      const int userBlock = static_cast<int>(pc - fStack);
       return userBlock - sizeof(int); // correct for starting int
   }
 

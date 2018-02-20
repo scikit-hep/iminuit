@@ -30,7 +30,7 @@ void SimplexParameters::Update(double y, const MnAlgebraicVector& p) {
 
 MnAlgebraicVector SimplexParameters::Dirin() const {
    // find simplex direction (vector from big to smaller parameter points)
-   MnAlgebraicVector dirin(fSimplexParameters.size() - 1);
+   MnAlgebraicVector dirin(static_cast<unsigned>(fSimplexParameters.size() - 1));
    for(unsigned int i = 0; i < fSimplexParameters.size() - 1; i++) {
       double pbig = fSimplexParameters[0].second(i), plit = pbig;
       for(unsigned int j = 0; j < fSimplexParameters.size(); j++){

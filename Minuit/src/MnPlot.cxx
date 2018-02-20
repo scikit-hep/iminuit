@@ -28,7 +28,7 @@ void MnPlot::operator()(const std::vector<std::pair<double,double> >& points) co
       chpt.push_back('*');
    }
 
-   mnplot(&(x.front()), &(y.front()), &(chpt.front()), points.size(), Width(), Length());
+   mnplot(&(x.front()), &(y.front()), &(chpt.front()), static_cast<int>(points.size()), Width(), Length());
 
 }
 
@@ -50,7 +50,7 @@ void MnPlot::operator()(double xmin, double ymin, const std::vector<std::pair<do
       chpt.push_back('*');
    }
 
-   mnplot(&(x.front()), &(y.front()), &(chpt.front()), points.size()+2, Width(), Length());
+   mnplot(&(x.front()), &(y.front()), &(chpt.front()), static_cast<int>(points.size()+2), Width(), Length());
 }
 
    }  // namespace Minuit2

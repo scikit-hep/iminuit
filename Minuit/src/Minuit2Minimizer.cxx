@@ -257,10 +257,10 @@ bool Minuit2Minimizer::SetVariableValue(unsigned int ivar, double val) {
 
 bool Minuit2Minimizer::SetVariableValues(const double * x)  {
    // set value for variable ivar (only for existing parameters)
-   unsigned int n =  fState.MinuitParameters().size();
+   std::size_t n =  fState.MinuitParameters().size();
    if (n== 0) return false;
-   for (unsigned int ivar = 0; ivar < n; ++ivar)
-      fState.SetValue(ivar, x[ivar]);
+   for (std::size_t ivar = 0; ivar < n; ++ivar)
+      fState.SetValue(static_cast<unsigned>(ivar), x[ivar]);
    return true;
 }
 
@@ -422,7 +422,7 @@ bool  Minuit2Minimizer::ExamineMinimum(const ROOT::Minuit2::FunctionMinimum & mi
          //std::cout << iterationStates[i] << std::endl;
          const ROOT::Minuit2::MinimumState & st =  iterationStates[i];
          std::cout << "----------> Iteration " << i << std::endl;
-         int pr = std::cout.precision(12);
+         std::streamsize pr = std::cout.precision(12);
          std::cout << "            FVAL = " << st.Fval() << " Edm = " << st.Edm() << " Nfcn = " << st.NFcn() << std::endl;
          std::cout.precision(pr);
          std::cout << "            Error matrix change = " << st.Error().Dcovar() << std::endl;
@@ -480,7 +480,7 @@ void Minuit2Minimizer::PrintResults() {
    if (fMinimum->IsValid() ) {
       // valid minimum
       std::cout << "Minuit2Minimizer : Valid minimum - status = " << fStatus  << std::endl;
-      int pr = std::cout.precision(18);
+      std::streamsize pr = std::cout.precision(18);
       std::cout << "FVAL  = " << fState.Fval() << std::endl;
       std::cout << "Edm   = " << fState.Edm() << std::endl;
       std::cout.precision(pr);

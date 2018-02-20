@@ -25,10 +25,10 @@ std::vector<double> FumiliStandardChi2FCN::Elements(const std::vector<double>& p
 
    std::vector<double> result;
    double tmp1 = 0.0;
-   unsigned int fPositionsSize = fPositions.size();
+   std::size_t fPositionsSize = fPositions.size();
 
 
-   for(unsigned int i=0; i < fPositionsSize; i++) {
+   for(std::size_t i=0; i < fPositionsSize; i++) {
 
       const std::vector<double> & currentPosition = fPositions[i];
 
@@ -59,7 +59,7 @@ const std::vector<double> & FumiliStandardChi2FCN::GetMeasurement(int index) con
 
 int FumiliStandardChi2FCN::GetNumberOfMeasurements() const {
    // Return size
-   return fPositions.size();
+   return static_cast<int>(fPositions.size());
 
 }
 
@@ -72,10 +72,10 @@ void  FumiliStandardChi2FCN::EvaluateAll( const std::vector<double> & par) {
    int nmeas = GetNumberOfMeasurements();
    std::vector<double> & grad = Gradient();
    std::vector<double> & h = Hessian();
-   int npar = par.size();
+   std::size_t npar = par.size();
    double chi2 = 0;
    grad.resize(npar);
-   h.resize( static_cast<unsigned int>(0.5 * npar* (npar + 1) ) );
+   h.resize(static_cast<unsigned int>(0.5 * npar* (npar + 1) ) );
    // reset Elements
    grad.assign(npar, 0.0);
    h.assign(static_cast<unsigned int>(0.5 * npar* (npar + 1) ) , 0.0);

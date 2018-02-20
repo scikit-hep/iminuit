@@ -363,7 +363,7 @@ FunctionMinimum VariableMetricBuilder::Minimum(const MnFcn& fcn, const GradientC
       result.push_back(MinimumState(p, e, g, edm, fcn.NumOfCalls()));
 
       if (printLevel > 1) {
-         MnPrint::PrintState(std::cout, result.back(), "VariableMetric: Iteration # ",result.size()-1);
+         MnPrint::PrintState(std::cout, result.back(), "VariableMetric: Iteration # ", static_cast<int>(result.size()-1));
       }
 
       // correct edm

@@ -26,10 +26,10 @@ std::vector<double> FumiliStandardMaximumLikelihoodFCN::Elements(const std::vect
    //   calculate likelihood element f(i) = pdf(x(i))
    std::vector<double> result;
    double tmp1 = 0.0;
-   unsigned int fPositionsSize = fPositions.size();
+   std::size_t fPositionsSize = fPositions.size();
 
 
-   for(unsigned int i=0; i < fPositionsSize; i++) {
+   for(std::size_t i=0; i < fPositionsSize; i++) {
 
       const std::vector<double> & currentPosition = fPositions[i];
 
@@ -60,7 +60,7 @@ const std::vector<double> & FumiliStandardMaximumLikelihoodFCN::GetMeasurement(i
 
 int FumiliStandardMaximumLikelihoodFCN::GetNumberOfMeasurements() const {
    // return size of positions (coordinates).
-   return fPositions.size();
+   return static_cast<int>(fPositions.size());
 
 }
 
@@ -76,7 +76,7 @@ void  FumiliStandardMaximumLikelihoodFCN::EvaluateAll( const std::vector<double>
    int nmeas = GetNumberOfMeasurements();
    std::vector<double> & grad = Gradient();
    std::vector<double> & h = Hessian();
-   int npar = par.size();
+   std::size_t npar = par.size();
    double logLikelihood = 0;
    grad.resize(npar);
    h.resize( static_cast<unsigned int>(0.5 * npar* (npar + 1) ) );
@@ -99,7 +99,7 @@ void  FumiliStandardMaximumLikelihoodFCN::EvaluateAll( const std::vector<double>
 
       // calc derivatives
 
-      for (int j = 0; j < npar; ++j) {
+      for (std::size_t j = 0; j < npar; ++j) {
          if ( std::fabs(mfg[j]) < minDouble ) {
             // 	std::cout << "SMALL values: grad =  " << mfg[j] << "  "  << minDouble << " f(x) = " << fval
             // 		  << " params " << j << " p0 = " << par[0] << " p1 = " << par[1] <<  std::endl;
@@ -127,8 +127,8 @@ void  FumiliStandardMaximumLikelihoodFCN::EvaluateAll( const std::vector<double>
 
          // in second derivative use Fumili approximation neglecting the term containing the
          // second derivatives of the model function
-         for (int k = j; k < npar; ++ k) {
-            int idx =  j + k*(k+1)/2;
+         for (std::size_t k = j; k < npar; ++ k) {
+            std::size_t idx =  j + k*(k+1)/2;
             if (std::fabs( mfg[k]) < minDouble ) {
                if (mfg[k] < 0)
                   mfg[k] =  -minDouble;

@@ -52,8 +52,8 @@ void MnPrint::PrintState(std::ostream & os, const MinimumState & state, const ch
    // helper function to print state and message in one single line
    os << msg;
    if (iter>=0) os << std::setw(3) << iter;
-   int pr = os.precision(PRECISION);
-   const int width = PRECISION+3;
+   std::streamsize pr = os.precision(PRECISION);
+   const std::streamsize width = PRECISION+3;
    os << " - FCN = " <<  std::setw(width) << state.Fval();
    os.precision(pr);
    os << " Edm = " <<  std::setw(12) << state.Edm() << " NCalls = " << std::setw(6) << state.NFcn();
@@ -64,10 +64,10 @@ void MnPrint::PrintState(std::ostream & os, const MinimumState & state, const ch
 std::ostream& operator<<(std::ostream& os, const LAVector& vec) {
    // print a vector
    os << "LAVector parameters:" << std::endl;
-   int pr = os.precision(PRECISION);
+   std::streamsize pr = os.precision(PRECISION);
    {
-      int nrow = vec.size();
-      for (int i = 0; i < nrow; i++) {
+      unsigned nrow = static_cast<unsigned>(vec.size());
+      for (unsigned i = 0; i < nrow; i++) {
          os.width(WIDTH);
          os << vec(i) << std::endl;
       }
@@ -79,7 +79,7 @@ std::ostream& operator<<(std::ostream& os, const LAVector& vec) {
 std::ostream& operator<<(std::ostream& os, const LASymMatrix& matrix) {
    // print a matrix
    os << "LASymMatrix parameters:" << std::endl;
-   int pr = os.precision(8);
+   std::streamsize pr = os.precision(8);
    {
       //os << std::endl;
       int n = matrix.Nrow();
@@ -101,7 +101,7 @@ std::ostream& operator<<(std::ostream& os, const MnUserParameters& par) {
    os << "# ext. |" << "|   Name    |" << "|   type  |" << "|     Value     |" << "|  Error +/- " << std::endl;
 
    os << std::endl;
-   int pr = os.precision();
+   std::streamsize pr = os.precision();
 
    bool atLoLim = false;
    bool atHiLim = false;
@@ -148,7 +148,7 @@ std::ostream& operator<<(std::ostream& os, const MnUserCovariance& matrix) {
    os << std::endl;
 
    os << "MnUserCovariance: " << std::endl;
-   int pr = os.precision(6);
+   std::streamsize pr = os.precision(6);
    {
       os << std::endl;
       unsigned int n = matrix.Nrow();
@@ -185,7 +185,7 @@ std::ostream& operator<<(std::ostream& os, const MnGlobalCorrelationCoeff& coeff
    os << std::endl;
 
    os << "MnGlobalCorrelationCoeff: " << std::endl;
-   int pr =  os.precision(6);
+   std::streamsize pr =  os.precision(6);
    {
       os << std::endl;
       for (unsigned int i = 0; i < coeff.GlobalCC().size(); i++) {
@@ -207,7 +207,7 @@ std::ostream& operator<<(std::ostream& os, const MnUserParameterState& state) {
       os <<"WARNING: MnUserParameterState is not valid."<<std::endl;
       os << std::endl;
    }
-   int pr = os.precision(PRECISION);
+   std::streamsize pr = os.precision(PRECISION);
 
    os <<"# of function calls: "<<state.NFcn()<<std::endl;
    os <<"function Value: " << state.Fval()<<std::endl;
@@ -236,7 +236,7 @@ std::ostream& operator<<(std::ostream& os, const FunctionMinimum& min) {
    } else {
       os <<"Minuit did successfully converge."<<std::endl;
    }
-   int pr = os.precision(PRECISION);
+   std::streamsize pr = os.precision(PRECISION);
 
    os <<"# of function calls: "<<min.NFcn()<<std::endl;
    os <<"minimum function Value: "  << min.Fval()<<std::endl;
@@ -269,7 +269,7 @@ std::ostream& operator<<(std::ostream& os, const FunctionMinimum& min) {
 std::ostream& operator<<(std::ostream& os, const MinimumState& min) {
 
    os << std::endl;
-   int pr = os.precision(PRECISION);
+   std::streamsize pr = os.precision(PRECISION);
 
    os <<"minimum function Value: "  << min.Fval()<<std::endl;
    os <<"minimum edm: " << min.Edm()<<std::endl;
@@ -288,7 +288,7 @@ std::ostream& operator<<(std::ostream& os, const MnMachinePrecision& prec) {
    // print the Precision
    os << std::endl;
 
-   int pr = os.precision(PRECISION);
+   std::streamsize pr = os.precision(PRECISION);
    os <<"current machine precision is set to "<<prec.Eps()<<std::endl;
 
    os << std::endl;
@@ -326,7 +326,7 @@ std::ostream& operator<<(std::ostream& os, const MinosError& me) {
       os << me.UpperState() <<std::endl;
    }
 
-   int pr = os.precision();
+   std::streamsize pr = os.precision();
 
    os << "# ext. |" << "|   Name    |" << "|   Value@min   |" << "|    negative   |" << "|   positive  " << std::endl;
    os << std::setw(4) << me.Parameter() << std::setw(5) << "||";

@@ -52,10 +52,10 @@ FunctionGradient Numerical2PGradientCalculator::operator()(const MinimumParamete
 FunctionGradient Numerical2PGradientCalculator::operator()(const std::vector<double>& params) const {
    // calculate gradient from an std;:vector of paramteters
 
-   int npar = params.size();
+   unsigned npar = static_cast<unsigned>(params.size());
 
    MnAlgebraicVector par(npar);
-   for (int i = 0; i < npar; ++i) {
+   for (unsigned i = 0; i < npar; ++i) {
       par(i) = params[i];
    }
 
