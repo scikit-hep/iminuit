@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -10,7 +10,7 @@
 #ifndef ROOT_Minuit2_MnConfig
 #define ROOT_Minuit2_MnConfig
 
-// for alpha streams 
+// for alpha streams
 #if defined(__alpha) && !defined(linux)
 #   include <standards.h>
 #   ifndef __USE_STD_IOSTREAM
@@ -23,7 +23,7 @@
 # pragma warning(disable:4244)  // conversion from __w64 to int
 #endif
 
-#if defined(__sun) && !defined(linux) 
+#if defined(__sun) && !defined(linux)
 #include <stdlib.h>
 #endif
 

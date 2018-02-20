@@ -37,15 +37,15 @@ inline std::string format(const char* fmt, ...){
 int raise_py_err(){
     try{
         if(PyErr_Occurred()){
-            return NULL;
+            return 0;
         }else{
             throw;
         }
     }catch(const std::exception& exn){
         PyErr_SetString(PyExc_RuntimeError, exn.what());
-        return NULL;
+        return 0;
     }
-    return NULL;
+    return 0;
 }
 
 //mnapplication() returns stack allocated functionminimum but

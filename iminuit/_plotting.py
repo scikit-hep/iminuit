@@ -58,7 +58,7 @@ def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
     from matplotlib import pyplot as plt
     vx, vy, vz = self.contour(x, y, bins, bound, args, subtract_min=True)
 
-    v = [self.errordef * (i ** 2) for i in range(1, 4)]
+    v = [self.errordef * ((i + 1) ** 2) for i in range(bound)]
 
     CS = plt.contour(vx, vy, vz, v, colors=['b', 'k', 'r'])
     if not show_sigma:

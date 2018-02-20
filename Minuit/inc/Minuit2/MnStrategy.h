@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -15,12 +15,12 @@ namespace ROOT {
    namespace Minuit2 {
 
 //_________________________________________________________________________
-/** 
-    API class for defining three levels of strategies: low (0), medium (1), 
+/**
+    API class for defining three levels of strategies: low (0), medium (1),
     high (>=2);
-    acts on: Migrad (behavioural), 
-             Minos (lowers strategy by 1 for Minos-own minimization), 
-	     Hesse (iterations), 
+    acts on: Migrad (behavioural),
+             Minos (lowers strategy by 1 for Minos-own minimization),
+	     Hesse (iterations),
 	     Numerical2PDerivative (iterations)
  */
 
@@ -46,7 +46,7 @@ public:
    double HessianStepTolerance() const {return fHessTlrStp;}
    double HessianG2Tolerance() const {return fHessTlrG2;}
    unsigned int HessianGradientNCycles() const {return fHessGradNCyc;}
-  
+
    bool IsLow() const {return fStrategy == 0;}
    bool IsMedium() const {return fStrategy == 1;}
    bool IsHigh() const {return fStrategy >= 2;}
@@ -54,7 +54,7 @@ public:
    void SetLowStrategy();
    void SetMediumStrategy();
    void SetHighStrategy();
-  
+
    void SetGradientNCycles(unsigned int n) {fGradNCyc = n;}
    void SetGradientStepTolerance(double stp) {fGradTlrStp = stp;}
    void SetGradientTolerance(double toler) {fGradTlr = toler;}
@@ -63,7 +63,7 @@ public:
    void SetHessianStepTolerance(double stp) {fHessTlrStp = stp;}
    void SetHessianG2Tolerance(double toler) {fHessTlrG2 = toler;}
    void SetHessianGradientNCycles(unsigned int n) {fHessGradNCyc = n;}
-  
+
 private:
 
    unsigned int fStrategy;

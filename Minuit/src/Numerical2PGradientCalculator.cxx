@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -19,7 +19,7 @@
 
 //#define DEBUG
 #if defined(DEBUG) || defined(WARNINGMSG)
-#include "Minuit2/MnPrint.h" 
+#include "Minuit2/MnPrint.h"
 #ifdef _OPENMP
 #include <omp.h>
 #include <iomanip>
@@ -43,28 +43,28 @@ FunctionGradient Numerical2PGradientCalculator::operator()(const MinimumParamete
 
    InitialGradientCalculator gc(fFcn, fTransformation, fStrategy);
    FunctionGradient gra = gc(par);
-   
-   return (*this)(par, gra);  
+
+   return (*this)(par, gra);
 }
 
 
 // comment it, because it was added
 FunctionGradient Numerical2PGradientCalculator::operator()(const std::vector<double>& params) const {
    // calculate gradient from an std;:vector of paramteters
-   
-   int npar = params.size();
-   
+
+   unsigned npar = static_cast<unsigned>(params.size());
+
    MnAlgebraicVector par(npar);
-   for (int i = 0; i < npar; ++i) {
+   for (unsigned i = 0; i < npar; ++i) {
       par(i) = params[i];
    }
-   
+
    double fval = Fcn()(par);
-   
+
    MinimumParameters minpars = MinimumParameters(par, fval);
-   
+
    return (*this)(minpars);
-   
+
 }
 
 
@@ -72,27 +72,27 @@ FunctionGradient Numerical2PGradientCalculator::operator()(const std::vector<dou
 FunctionGradient Numerical2PGradientCalculator::operator()(const MinimumParameters& par, const FunctionGradient& Gradient) const {
    // calculate numerical gradient from MinimumParameters object
    // the algorithm takes correctly care when the gradient is approximatly zero
-   
+
    //    std::cout<<"########### Numerical2PDerivative"<<std::endl;
    //    std::cout<<"initial grd: "<<Gradient.Grad()<<std::endl;
    //    std::cout<<"position: "<<par.Vec()<<std::endl;
-   
+
    assert(par.IsValid());
-   
-   
+
+
    double fcnmin = par.Fval();
    //   std::cout<<"fval: "<<fcnmin<<std::endl;
-   
-   double eps2 = Precision().Eps2(); 
+
+   double eps2 = Precision().Eps2();
    double eps = Precision().Eps();
-   
+
    double dfmin = 8.*eps2*(fabs(fcnmin)+Fcn().Up());
    double vrysml = 8.*eps*eps;
    //   double vrysml = std::max(1.e-4, eps2);
    //    std::cout<<"dfmin= "<<dfmin<<std::endl;
    //    std::cout<<"vrysml= "<<vrysml<<std::endl;
    //    std::cout << " ncycle " << Ncycle() << std::endl;
-   
+
    unsigned int n = (par.Vec()).size();
    unsigned int ncycle = Ncycle();
    //   MnAlgebraicVector vgrd(n), vgrd2(n), vgstp(n);
@@ -122,7 +122,7 @@ FunctionGradient Numerical2PGradientCalculator::operator()(const MinimumParamete
  // parallelize this loop using OpenMP
 //#define N_PARALLEL_PAR 5
 #pragma omp parallel
-#pragma omp for 
+#pragma omp for
 //#pragma omp for schedule (static, N_PARALLEL_PAR)
 
    for(int i = 0; i < int(n); i++) {
@@ -168,17 +168,17 @@ FunctionGradient Numerical2PGradientCalculator::operator()(const MinimumParamete
          //       pstep(i) = step;
          //       double fs1 = Fcn()(pstate + pstep);
          //       double fs2 = Fcn()(pstate - pstep);
-         
+
          x(i) = xtf + step;
          double fs1 = Fcn()(x);
          x(i) = xtf - step;
          double fs2 = Fcn()(x);
          x(i) = xtf;
-         
+
          double grdb4 = grd(i);
          grd(i) = 0.5*(fs1 - fs2)/step;
          g2(i) = (fs1 + fs2 - 2.*fcnmin)/step/step;
-         
+
          if(fabs(grdb4-grd(i))/(fabs(grd(i))+dfmin/step) < GradTolerance())  {
             //  	std::cout<<"j= "<<j<<std::endl;
             //  	std::cout<<"step= "<<step<<std::endl;
@@ -187,7 +187,7 @@ FunctionGradient Numerical2PGradientCalculator::operator()(const MinimumParamete
             break;
          }
       }
-      
+
 
 #ifdef DEBUG_MP
 #pragma omp critical
@@ -199,7 +199,7 @@ FunctionGradient Numerical2PGradientCalculator::operator()(const MinimumParamete
       //     vgrd(i) = grd;
       //     vgrd2(i) = g2;
       //     vgstp(i) = gstep;
-   }  
+   }
 
 #ifdef DEBUG
    std::cout << "Gradient =   " << grd << std::endl;
