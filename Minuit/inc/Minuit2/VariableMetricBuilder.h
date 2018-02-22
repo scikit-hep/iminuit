@@ -23,31 +23,31 @@ namespace ROOT {
 
 /**
    Build (find) function minimum using the Variable Metric method (MIGRAD)
+
  */
 class VariableMetricBuilder : public MinimumBuilder {
 
 public:
 
-  VariableMetricBuilder() : fEstimator(VariableMetricEDMEstimator()),
-			    fErrorUpdator(DavidonErrorUpdator()) {}
 
-  ~VariableMetricBuilder() {}
+   VariableMetricBuilder() : fEstimator(VariableMetricEDMEstimator()),
+                             fErrorUpdator(DavidonErrorUpdator()) {}
 
-  virtual FunctionMinimum Minimum(const MnFcn&, const GradientCalculator&, const MinimumSeed&, const MnStrategy&, unsigned int, double) const;
+   ~VariableMetricBuilder() {}
 
-  FunctionMinimum Minimum(const MnFcn&, const GradientCalculator&, const MinimumSeed&, std::vector<MinimumState> &, unsigned int, double) const;
+   virtual FunctionMinimum Minimum(const MnFcn&, const GradientCalculator&, const MinimumSeed&, const MnStrategy&, unsigned int, double) const;
 
-  const VariableMetricEDMEstimator& Estimator() const {return fEstimator;}
-  const DavidonErrorUpdator& ErrorUpdator() const {return fErrorUpdator;}
+   FunctionMinimum Minimum(const MnFcn&, const GradientCalculator&, const MinimumSeed&, std::vector<MinimumState> &, unsigned int, double) const;
 
-  static int print_level;
-  static void setPrintLevel(int p);
+   const VariableMetricEDMEstimator& Estimator() const {return fEstimator;}
+   const DavidonErrorUpdator& ErrorUpdator() const {return fErrorUpdator;}
 
+   void AddResult(std::vector<MinimumState>& result, const MinimumState & state) const;
 
 private:
 
-  VariableMetricEDMEstimator fEstimator;
-  DavidonErrorUpdator fErrorUpdator;
+   VariableMetricEDMEstimator fEstimator;
+   DavidonErrorUpdator fErrorUpdator;
 };
 
   }  // namespace Minuit2

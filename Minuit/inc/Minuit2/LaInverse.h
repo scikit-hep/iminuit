@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -10,9 +10,8 @@
 #ifndef ROOT_Minuit2_LaInverse
 #define ROOT_Minuit2_LaInverse
 
-/** LAPACK Algebra
-    specialize the Invert function for LASymMatrix 
- */
+
+
 
 #include "Minuit2/MatrixInverse.h"
 #include "Minuit2/LASymMatrix.h"
@@ -21,6 +20,9 @@ namespace ROOT {
 
    namespace Minuit2 {
 
+
+///    LAPACK Algebra functions
+///    specialize the Invert function for LASymMatrix
 
 inline ABObj<sym, MatrixInverse<sym, ABObj<sym, LASymMatrix, double>, double>, double> Inverse(const ABObj<sym, LASymMatrix, double>& obj) {
   return ABObj<sym, MatrixInverse<sym, ABObj<sym, LASymMatrix, double>, double>, double>(MatrixInverse<sym, ABObj<sym, LASymMatrix, double>, double>(obj));

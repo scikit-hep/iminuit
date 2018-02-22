@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -10,6 +10,8 @@
 #ifndef ROOT_Minuit2_MinimumBuilder
 #define ROOT_Minuit2_MinimumBuilder
 
+#include "Minuit2/MnTraceObject.h"
+
 namespace ROOT {
 
    namespace Minuit2 {
@@ -19,15 +21,43 @@ class FunctionMinimum;
 class MnFcn;
 class GradientCalculator;
 class MinimumSeed;
+class MinimumState;
 class MnStrategy;
 
 class MinimumBuilder {
 
 public:
-  
-  virtual ~MinimumBuilder() {}
 
-  virtual FunctionMinimum Minimum(const MnFcn&, const GradientCalculator&, const MinimumSeed&, const MnStrategy&, unsigned int, double) const = 0;
+   MinimumBuilder();
+
+   virtual ~MinimumBuilder() {}
+
+   virtual FunctionMinimum Minimum(const MnFcn&, const GradientCalculator&, const MinimumSeed&, const MnStrategy&, unsigned int, double) const = 0;
+
+   int StorageLevel() const {  return fStorageLevel; }
+   int PrintLevel() const { return fPrintLevel; }
+
+   bool TraceIter() const { return (fTracer); }
+   MnTraceObject * TraceObject() const { return (fTracer); }
+
+   virtual void SetPrintLevel(int level) const { fPrintLevel = level;}
+   virtual void SetStorageLevel(int level) { fStorageLevel = level;}
+
+   // set trace object (user manages it)
+   virtual void SetTraceObject(MnTraceObject & obj) {
+      fTracer = &obj;
+   }
+
+   void TraceIteration(int iter, const MinimumState & state) const {
+      if (fTracer) (*fTracer)(iter, state);
+   }
+
+private:
+
+   mutable int fPrintLevel;
+   int fStorageLevel;
+
+   MnTraceObject * fTracer; //! tracer object (it is managed by user)
 
 };
 

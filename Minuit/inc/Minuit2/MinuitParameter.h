@@ -80,16 +80,18 @@ public:
    {}
 
    MinuitParameter& operator=(const MinuitParameter& par) {
-      fNum = par.fNum;
-      fName = par.fName;
-      fValue = par.fValue;
-      fError = par.fError;
-      fConst = par.fConst;
-      fFix = par.fFix;
-      fLoLimit = par.fLoLimit;
-      fUpLimit = par.fUpLimit;
-      fLoLimValid = par.fLoLimValid;
-      fUpLimValid = par.fUpLimValid;
+      if(this != &par) {
+         fNum = par.fNum;
+         fName = par.fName;
+         fValue = par.fValue;
+         fError = par.fError;
+         fConst = par.fConst;
+         fFix = par.fFix;
+         fLoLimit = par.fLoLimit;
+         fUpLimit = par.fUpLimit;
+         fLoLimValid = par.fLoLimValid;
+         fUpLimValid = par.fUpLimValid;
+      }
       return *this;
    }
 
@@ -104,6 +106,8 @@ public:
    double Error() const {return fError;}
 
    //interaction
+   void SetName(const std::string &name) { fName = name;  }
+
    void SetValue(double val) {fValue = val;}
    void SetError(double err) {fError = err;}
    void SetLimits(double low, double up) {

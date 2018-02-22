@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -10,9 +10,7 @@
 #ifndef ROOT_Minuit2_DavidonErrorUpdator
 #define ROOT_Minuit2_DavidonErrorUpdator
 
-#ifndef ROOT_Minuit2_MinimumErrorUpdator
 #include "Minuit2/MinimumErrorUpdator.h"
-#endif
 
 namespace ROOT {
 
@@ -27,11 +25,11 @@ class DavidonErrorUpdator : public MinimumErrorUpdator {
 public:
 
   DavidonErrorUpdator() {}
-  
+
   virtual ~DavidonErrorUpdator() {}
 
   virtual MinimumError Update(const MinimumState&, const MinimumParameters&,
-			      const FunctionGradient&) const;
+                              const FunctionGradient&) const;
 
 private:
 

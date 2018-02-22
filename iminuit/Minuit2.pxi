@@ -4,17 +4,17 @@ from libcpp.vector cimport vector
 from libcpp.utility cimport pair
 
 cdef extern from "<memory>" namespace "std":
-    cdef cppclass auto_ptr[T]:
-        auto_ptr()
-        auto_ptr(T*ptr)
+    cdef cppclass unique_ptr[T]:
+        unique_ptr()
+        unique_ptr(T*ptr)
         T*get()
 
-cdef extern from "Minuit2/FCNBase.h":
+cdef extern from "Minuit2/FCNBase.h" namespace "ROOT::Minuit2":
     cdef cppclass FCNBase:
         double call "operator()"(vector[double] x) except+
         double ErrorDef()
 
-cdef extern from "Minuit2/FCNGradientBase.h":
+cdef extern from "Minuit2/FCNGradientBase.h" namespace "ROOT::Minuit2":
     cdef cppclass FCNGradientBase:
         FCNGradientBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
         double call "operator()"(vector[double] x) except +  #raise_py_err
@@ -22,12 +22,24 @@ cdef extern from "Minuit2/FCNGradientBase.h":
         vector[double] Gradient(vector[double] x) except +  #raise_py_err
         bint CheckGradient()
 
-cdef extern from "Minuit2/MnApplication.h":
+cdef extern from "Minuit2/MinimumBuilder.h" namespace "ROOT::MinimumBuilder":
+    cdef cppclass MinimumBuilder:
+        int StorageLevel()
+        int PrintLevel()
+        void SetPrintLevel(int)
+        void SetStorageLevel(int)
+
+cdef extern from "Minuit2/ModularFunctionMinimizer.h" namespace "ROOT::Minuit2":
+    cdef cppclass ModularFunctionMinimizer:
+        MinimumBuilder Builder()
+
+cdef extern from "Minuit2/MnApplication.h" namespace "ROOT::Minuit2":
     cdef cppclass MnApplication:
         FunctionMinimum call "operator()"(int, double) except+
         void SetPrecision(double)
+        ModularFunctionMinimizer Minimizer()
 
-cdef extern from "Minuit2/MinuitParameter.h":
+cdef extern from "Minuit2/MinuitParameter.h" namespace "ROOT::Minuit2":
     cdef cppclass MinuitParameter:
         MinuitParameter(unsigned int, char*, double)
         unsigned int Number()
@@ -43,17 +55,17 @@ cdef extern from "Minuit2/MinuitParameter.h":
         double LowerLimit()
         double UpperLimit()
 
-cdef extern from "Minuit2/MnUserCovariance.h":
+cdef extern from "Minuit2/MnUserCovariance.h" namespace "ROOT::Minuit2":
     cdef cppclass MnUserCovariance:
         unsigned int Nrow()
         double get "operator()"(unsigned int row, unsigned int col)
 
-cdef extern from "Minuit2/MnGlobalCorrelationCoeff.h":
+cdef extern from "Minuit2/MnGlobalCorrelationCoeff.h" namespace "ROOT::Minuit2":
     cdef cppclass MnGlobalCorrelationCoeff:
         vector[double] GlobalCC()
         bint IsValid()
 
-cdef extern from "Minuit2/MnUserParameterState.h":
+cdef extern from "Minuit2/MnUserParameterState.h" namespace "ROOT::Minuit2":
     cdef cppclass MnUserParameterState:
         MnUserParameterState()
         MnUserParameterState(MnUserParameterState mpst)
@@ -90,30 +102,29 @@ cdef extern from "Minuit2/MnUserParameterState.h":
         unsigned int Index(char*)
         char*Name(unsigned int)
 
-cdef extern from "Minuit2/MnStrategy.h":
+cdef extern from "Minuit2/MnStrategy.h" namespace "ROOT::Minuit2":
     cdef cppclass MnStrategy:
         MnStrategy(unsigned int)
 
-cdef extern from "Minuit2/MnMigrad.h":
+cdef extern from "Minuit2/MnMigrad.h" namespace "ROOT::Minuit2":
     cdef cppclass MnMigrad(MnApplication):
         MnMigrad(FCNBase fcn, MnUserParameterState par, MnStrategy str) except+
         MnMigrad(FCNGradientBase fcn, MnUserParameterState par, MnStrategy str) except+
         FunctionMinimum call "operator()"(int, double) except+
-        void SetPrecision(double)
 
-cdef extern from "Minuit2/MnHesse.h":
+cdef extern from "Minuit2/MnHesse.h" namespace "ROOT::Minuit2":
     cdef cppclass MnHesse:
         MnHesse(unsigned int stra)
         MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls=0) except+
         MnUserParameterState call "operator()"(FCNGradientBase, MnUserParameterState, unsigned int maxcalls=0) except+
 
-cdef extern from "Minuit2/MnMinos.h":
+cdef extern from "Minuit2/MnMinos.h" namespace "ROOT::Minuit2":
     cdef cppclass MnMinos:
         MnMinos(FCNBase fcn, FunctionMinimum min, unsigned int stra)
         MnMinos(FCNGradientBase fcn, FunctionMinimum min, unsigned int stra)
         MinosError Minos(unsigned int par, unsigned int maxcalls) except +
 
-cdef extern from "Minuit2/MinosError.h":
+cdef extern from "Minuit2/MinosError.h" namespace "ROOT::Minuit2":
     cdef cppclass MinosError:
         double Lower()
         double Upper()
@@ -129,7 +140,7 @@ cdef extern from "Minuit2/MinosError.h":
         unsigned int NFcn()
         double Min()
 
-cdef extern from "Minuit2/FunctionMinimum.h":
+cdef extern from "Minuit2/FunctionMinimum.h" namespace "ROOT::Minuit2":
     cdef cppclass FunctionMinimum:
         FunctionMinimum(FunctionMinimum)
         MnUserParameterState UserState()
@@ -153,16 +164,13 @@ cdef extern from "Minuit2/FunctionMinimum.h":
         bint HasReachedCallLimit()
         bint IsAboveMaxEdm()
 
-cdef extern from "Minuit2/VariableMetricBuilder.h":
-    void set_migrad_print_level "VariableMetricBuilder::setPrintLevel"(int p)
-
-cdef extern from "Minuit2/MnContours.h":
+cdef extern from "Minuit2/MnContours.h" namespace "ROOT::Minuit2":
     cdef cppclass MnContours:
         MnContours(FCNBase fcn, FunctionMinimum fm, unsigned int stra)
         MnContours(FCNGradientBase fcn, FunctionMinimum fm, unsigned int stra)
         ContoursError Contour(unsigned int, unsigned int, unsigned int npoints)
 
-cdef extern from "Minuit2/ContoursError.h":
+cdef extern from "Minuit2/ContoursError.h" namespace "ROOT::Minuit2":
     cdef cppclass ContoursError:
         ContoursError()
         vector[pair[double, double]] Points "operator()"()
