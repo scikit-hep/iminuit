@@ -2,8 +2,37 @@
 import sys
 from os.path import dirname, join
 from glob import glob
+
 from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 from setuptools.command.test import test as TestCommand
+
+from distutils.ccompiler import CCompiler
+from distutils.unixccompiler import UnixCCompiler
+from distutils.msvccompiler import MSVCCompiler
+
+# turn off warnings raised by Minuit and generated Cython code that need
+# to be fixed in the original code bases of Minuit and Cython
+compiler_opts = {
+    CCompiler: dict(),
+    UnixCCompiler: dict(extra_compile_args=[
+            '-Wno-shorten-64-to-32', '-Wno-null-conversion',
+            '-Wno-parentheses', '-Wno-unused-variable'
+        ]),
+    MSVCCompiler: dict(),
+}
+
+
+class SmartBuildExt(build_ext):
+    def build_extensions(self):
+        c = self.compiler
+        opts = [v for k, v in compiler_opts.items() if isinstance(c, k)]
+        for e in self.extensions:
+            for o in opts:
+                for attrib, value in o.items():
+                    getattr(e, attrib).extend(value)
+
+        build_ext.build_extensions(self)
 
 
 # http://pytest.org/latest/goodpractices.html#manual-integration
@@ -106,5 +135,6 @@ setup(
     cmdclass={
         'test': PyTest,
         # 'coverage': CoverageCommand,
+        'build_ext': SmartBuildExt,
     }
 )

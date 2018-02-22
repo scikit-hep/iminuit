@@ -1,3 +1,4 @@
+*.pyxbldc
 *.root
 .DS_Store
 *.so
