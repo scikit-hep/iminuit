@@ -3,14 +3,16 @@
 PROJECT = iminuit
 CYTHON ?= cython
 
+default_target: build
+
 help:
 	@echo ''
 	@echo ' iminuit available make targets:'
 	@echo ''
-	@echo '     help             Print this help message (the default)'
+	@echo '     help             Print this help message'
 	@echo ''
+	@echo '     build            Build inplace (the default)'
 	@echo '     clean            Remove generated files'
-	@echo '     build            Build inplace'
 	@echo '     test             Run tests'
 	@echo '     coverage         Run tests and write coverage report'
 	@echo '     cython           Compile cython files'
@@ -45,7 +47,9 @@ clean:
 	find . -name "*.so" -exec rm {} \;
 	find . -name __pycache__ | xargs rm -fr
 
-build:
+build: _libiminuit.so
+
+_libiminuit.so: $(wildcard Minuit/src/*.cxx Minuit/inc/*/*.h iminuit/*.pyx iminuit/*.pxi)
 	python setup.py build_ext --inplace
 
 test: build
