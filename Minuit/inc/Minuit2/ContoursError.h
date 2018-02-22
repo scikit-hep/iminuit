@@ -24,7 +24,7 @@ namespace ROOT {
 class ContoursError {
 
 public:
-  ContoursError() : fParX(0), fParY(0), fPoints(), fXMinos(), fYMinos(), fNFcn(0) {}
+  ContoursError() {}
 
   ContoursError(unsigned int parx, unsigned int pary, const std::vector<std::pair<double,double> >& points, const MinosError& xmnos, const MinosError& ymnos, unsigned int nfcn) : fParX(parx), fParY(pary), fPoints(points), fXMinos(xmnos), fYMinos(ymnos), fNFcn(nfcn) {}
 

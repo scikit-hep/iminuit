@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -10,9 +10,7 @@
 #ifndef ROOT_Minuit2_SimplexBuilder
 #define ROOT_Minuit2_SimplexBuilder
 
-#ifndef ROOT_Minuit2_MinimumBuilder
 #include "Minuit2/MinimumBuilder.h"
-#endif
 
 namespace ROOT {
 

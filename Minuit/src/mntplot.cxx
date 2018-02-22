@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -9,7 +9,7 @@
 
 /* mnplot.F -- translated by f2c (version 20010320).
    You must link the resulting object file with the libraries:
-	-lf2c -lm   (in that order)
+   -lf2c -lm   (in that order)
 */
 
 #include <math.h>
@@ -47,7 +47,7 @@ void mnplot(double* xpt, double* ypt, char* chpt, int nxypt, int npagwd, int npa
    bool overpr;
    char cline[120];
    char chsav, chbest;
-   
+
    /* Function Body */
    //*-*  Computing MIN
    maxnx = npagwd-20 < 100 ? npagwd-20 : 100;
@@ -125,7 +125,8 @@ L50:
       cline[nx] = '\0';
       cline[nx+1] = '\0';
       cline[0]        = '.';
-      cline[nx-1]     = '.';
+      // not needed - but to avoid a wrongly reported compiler warning (see ROOT-6496)
+      if (nx>0) cline[nx-1]     = '.';
       cline[nxbest-1] = '.';
       if (i != 1 && i != nybest && i != ny) goto L320;
       for (j = 1; j <= nx; ++j) { cline[j-1] = '.'; }
@@ -159,7 +160,7 @@ L350:
       printf("                  %s",(const char*)ctemp);
       goto L400;
 L380:
-         //  	ctemp = cline;
+         //   ctemp = cline;
          memcpy(ctemp, cline, 120);
       printf(" %14.7g ..%s",yprt,(const char*)ctemp);
       linodd = 0;
@@ -173,7 +174,7 @@ L400:
    }
    printf("                  %s",cline);
    printf("\n");
-   
+
    for (ibk = 1; ibk <= 12; ++ibk) {
       xvalus[ibk-1] = xmin + double(ibk-1)*10*bwidx;
    }
@@ -183,7 +184,7 @@ L400:
       printf(" %9.4g", xvalus[ibk-1]);
    }
    printf("\n");
-   
+
    if (overpr) {
       char chmess[] = "   Overprint character is &";
       printf("                         ONE COLUMN=%13.7g%s",bwidx,(const char*)chmess);
@@ -192,7 +193,7 @@ L400:
       printf("                         ONE COLUMN=%13.7g%s",bwidx,(const char*)chmess);
    }
    printf("\n");
-   
+
 } /* mnplot_ */
 
    }  // namespace Minuit2
