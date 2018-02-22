@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -11,13 +11,9 @@
 #define ROOT_Minuit2_ModularFunctionMinimizer
 
 
-#ifndef ROOT_Minuit2_MnConfig
 #include "Minuit2/MnConfig.h"
-#endif
 
-#ifndef ROOT_Minuit2_FunctionMinimizer
 #include "Minuit2/FunctionMinimizer.h"
-#endif
 
 #include <vector>
 
@@ -41,7 +37,7 @@ class FumiliFCNBase;
 //_____________________________________________________________
 /**
    Base common class providing the API for all the minimizer
-   Various Minimize methods are provided varying on the type of 
+   Various Minimize methods are provided varying on the type of
    FCN function passesd and on the objects used for the parameters
  */
 class ModularFunctionMinimizer : public FunctionMinimizer {
@@ -51,13 +47,13 @@ public:
    virtual ~ModularFunctionMinimizer() {}
 
 // inherited interface
-   virtual FunctionMinimum Minimize(const FCNBase&, const std::vector<double>&, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const; 
+   virtual FunctionMinimum Minimize(const FCNBase&, const std::vector<double>&, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const;
 
-   virtual FunctionMinimum Minimize(const FCNGradientBase&, const std::vector<double>&, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const; 
+   virtual FunctionMinimum Minimize(const FCNGradientBase&, const std::vector<double>&, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const;
 
-   virtual FunctionMinimum Minimize(const FCNBase&, const std::vector<double>&, unsigned int, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const; 
+   virtual FunctionMinimum Minimize(const FCNBase&, const std::vector<double>&, unsigned int, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const;
 
-   virtual FunctionMinimum Minimize(const FCNGradientBase&, const std::vector<double>&, unsigned int, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const; 
+   virtual FunctionMinimum Minimize(const FCNGradientBase&, const std::vector<double>&, unsigned int, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const;
 
 // extension
    virtual FunctionMinimum Minimize(const FCNBase&, const MnUserParameters&, const MnStrategy&, unsigned int maxfcn = 0, double toler = 0.1) const;
@@ -74,7 +70,7 @@ public:
 
    // for Fumili
 
-//   virtual FunctionMinimum Minimize(const FumiliFCNBase&, const std::vector<double>&, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const; 
+//   virtual FunctionMinimum Minimize(const FumiliFCNBase&, const std::vector<double>&, const std::vector<double>&, unsigned int stra=1, unsigned int maxfcn = 0, double toler = 0.1) const;
 
 //   virtual FunctionMinimum Minimize(const FumiliFCNBase&, const MnUserParameters&, const MnStrategy&, unsigned int maxfcn = 0, double toler = 0.1) const;
 
@@ -85,10 +81,11 @@ public:
 
    virtual const MinimumSeedGenerator& SeedGenerator() const = 0;
    virtual const MinimumBuilder& Builder() const = 0;
+   virtual MinimumBuilder& Builder()  = 0;
 
 public:
 
-   virtual FunctionMinimum Minimize(const MnFcn&, const GradientCalculator&, const MinimumSeed&, const MnStrategy&, unsigned int, double) const; 
+   virtual FunctionMinimum Minimize(const MnFcn&, const GradientCalculator&, const MinimumSeed&, const MnStrategy&, unsigned int, double) const;
 
 };
 

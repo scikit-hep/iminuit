@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -31,13 +31,14 @@ class SimplexMinimizer : public ModularFunctionMinimizer {
 
 public:
 
-   SimplexMinimizer() : fSeedGenerator(SimplexSeedGenerator()), 
+   SimplexMinimizer() : fSeedGenerator(SimplexSeedGenerator()),
                         fBuilder(SimplexBuilder()) {}
 
    ~SimplexMinimizer() {}
 
    const MinimumSeedGenerator& SeedGenerator() const {return fSeedGenerator;}
    const MinimumBuilder& Builder() const {return fBuilder;}
+   MinimumBuilder& Builder()  {return fBuilder;}
 
 private:
 

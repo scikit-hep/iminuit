@@ -34,13 +34,13 @@ cdef extern from "PythonFCNBase.h":
         void set_up(double up)
         void resetNumCall()
 
-cdef extern from "Minuit2/FCNBase.h":
+cdef extern from "Minuit2/FCNBase.h" namespace "ROOT::Minuit2":
     cdef cppclass FCNBase:
         FCNBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
         double call "operator()"(vector[double] x) except +  #raise_py_err
         double Up()
 
-cdef extern from "Minuit2/FCNGradientBase.h":
+cdef extern from "Minuit2/FCNGradientBase.h" namespace "ROOT::Minuit2":
     cdef cppclass FCNGradientBase:
         FCNGradientBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
         double call "operator()"(vector[double] x) except +  #raise_py_err
@@ -373,7 +373,6 @@ cdef class Minuit:
         self.tol = 0.1
         self.strategy = 1
         self.print_level = print_level
-        set_migrad_print_level(print_level)
         self.throw_nan = throw_nan
 
         self.parameters = args
@@ -459,6 +458,8 @@ cdef class Minuit:
             ups = NULL
             del strat;
             strat = NULL
+
+        self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
 
         if not resume:
             self.pyfcn.resetNumCall()
@@ -1206,14 +1207,14 @@ cdef class Minuit:
         cdef double oldup = self.pyfcn.Up()
         self.pyfcn.set_up(oldup * sigma * sigma)
 
-        cdef auto_ptr[MnContours] mnc = auto_ptr[MnContours](NULL)
+        cdef unique_ptr[MnContours] mnc = unique_ptr[MnContours]()
         if self.grad_fcn is None:
-            mnc = auto_ptr[MnContours](
+            mnc = unique_ptr[MnContours](
                 new MnContours(deref(<FCNBase*> self.pyfcn),
                                deref(self.cfmin),
                                self.strategy))
         else:
-            mnc = auto_ptr[MnContours](
+            mnc = unique_ptr[MnContours](
                 new MnContours(deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
                                deref(self.cfmin),
                                self.strategy))

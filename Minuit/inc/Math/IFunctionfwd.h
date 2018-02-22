@@ -8,28 +8,38 @@
  *                                                                    *
  **********************************************************************/
 
-// Defines Forward declaration for template IFunction class and useful typedefs 
+// Defines Forward declaration for template IFunction class and useful typedefs
 
 #ifndef ROOT_Math_IFunctionfwd
 #define ROOT_Math_IFunctionfwd
 
+namespace ROOT {
 
-namespace ROOT { 
+   namespace Math {
 
-   namespace Math { 
+      class IBaseFunctionOneDim;
+      class IGradientFunctionOneDim;
+      template<class T>
+      class IBaseFunctionMultiDimTempl;
+      template <class T>
+      class IGradientFunctionMultiDimTempl;
+      template <class T>
+      class IGradientMultiDimTempl;
 
-      class IBaseFunctionOneDim; 
-      class IGradientFunctionOneDim; 
-      class IBaseFunctionMultiDim; 
-      class IGradientFunctionMultiDim; 
+      template<class T>
+      using IMultiGenFunctionTempl = IBaseFunctionMultiDimTempl<T>;
+      using IBaseFunctionMultiDim = IBaseFunctionMultiDimTempl<double>;
+      using IMultiGenFunction = IMultiGenFunctionTempl<double>;
 
+      using IGradientFunctionMultiDim = IGradientFunctionMultiDimTempl<double>;
+      using IGradientMultiDim = IGradientMultiDimTempl<double>;
 
-      typedef IBaseFunctionOneDim        IGenFunction;   
-      typedef IBaseFunctionMultiDim      IMultiGenFunction; 
+      typedef IBaseFunctionOneDim        IGenFunction;
+      typedef IBaseFunctionMultiDim      IMultiGenFunction;
 
-      typedef IGradientFunctionOneDim        IGradFunction; 
-      typedef IGradientFunctionMultiDim      IMultiGradFunction; 
-      
+      typedef IGradientFunctionOneDim        IGradFunction;
+      typedef IGradientFunctionMultiDim      IMultiGradFunction;
+
 
    } // end namespace Math
 
