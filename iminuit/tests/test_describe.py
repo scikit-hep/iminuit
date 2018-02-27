@@ -1,10 +1,8 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from iminuit.util import describe
+from iminuit.tests.utils import requires_dependency
 from math import ldexp
-import pyximport
-pyximport.install()
-from . import cyfunc
 
 
 # simple function
@@ -72,10 +70,18 @@ def test_builtin():
     assert describe(ldexp, True) == ['x', 'i']
 
 
+@requires_dependency('Cython')
 def test_cython_embedsig():
+    import pyximport
+    pyximport.install()
+    from . import cyfunc
     assert describe(cyfunc.f, True) == ['a', 'b']
 
 
+@requires_dependency('Cython')
 def test_cython_class_method():
+    import pyximport
+    pyximport.install()
+    from . import cyfunc
     cc = cyfunc.CyCallable()
     assert describe(cc.test, True) == ['c', 'd']
