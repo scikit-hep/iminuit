@@ -1,3 +1,31 @@
+"""
+For developers only. This script helps to pull in cxx and h files from ROOT
+that are used in iminuit. Don't just copy everything, because then you get a
+lot of files which require the rest of ROOT to compile.
+
+Run script from the top-level directory, like so:
+
+python Minuit/import_minuit2.py <path-to-root>/math/{minuit2,mathcore}
+
+The script scans the Cython files to figure out which headers are needed, and
+then it copies those and the corresponding implementation files, assuming that
+these have the same filename except for the extension. The same is done
+recursively for headers included by other headers.
+
+Status for ROOT-6.12.06:
+In this ROOT version, Minuit2 is shipped with some implementation files that
+have no corresponding headers. These files cannot be found by the script and
+you need to copy them by hand. You can copy these the files with the command
+
+cp <path-to-root>/math/minuit2/src/{La,mn}*.cxx Minuit/src
+
+Furthermore, three patches need to be applied for things to work, see the
+following commits (use git show <commit>):
+
+b740ed5c722ad29287c94e809498c0d332f83648
+dad13d1e27c4df904925a6b6675ab489f69e4a09
+d2969e9dbd4584dfce83d401d389e89fb165618c
+"""
 import os
 import re
 import argparse
