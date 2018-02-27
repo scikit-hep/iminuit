@@ -20,7 +20,7 @@ compiler_opts = {
             '-Wno-parentheses', '-Wno-unused-variable', '-Wno-sign-compare',
         ]),
     MSVCCompiler: dict(extra_compile_args=[
-            '/EHsc',
+            '/EHsc','/nowarn:4800,4267,4996',
         ]),
 }
 
