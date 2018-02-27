@@ -19,7 +19,9 @@ compiler_opts = {
             '-Wno-shorten-64-to-32', '-Wno-null-conversion',
             '-Wno-parentheses', '-Wno-unused-variable', '-Wno-sign-compare',
         ]),
-    MSVCCompiler: dict(),
+    MSVCCompiler: dict(extra_compile_args=[
+            '/EHsc',
+        ]),
 }
 
 
