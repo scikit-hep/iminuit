@@ -53,7 +53,7 @@ install:
   - 'python -m pip install -U pip setuptools wheel'
 
   # Install the test dependencies.
-  - 'pip install -U --timeout 5 --retries 2 numpy pytest'
+  - 'pip install -U --timeout 5 --retries 2 numpy matplotlib pytest'
 
 build_script:
   # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
