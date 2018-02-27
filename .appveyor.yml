@@ -58,10 +58,10 @@ install:
 build_script:
   # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
   # We then use the import library from the DLL to compile with MSVC
-  - make build
+  - python setup.py build_ext --inplace
 
 test_script:
-  - make test
+  - python -m pytest -v iminuit
 
 after_build:
   # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.
