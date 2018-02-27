@@ -325,7 +325,6 @@ cdef class Minuit:
         self.tol = 0.1
         self.strategy = 1
         self.print_level = print_level
-        set_migrad_print_level(print_level)
         self.throw_nan = throw_nan
 
         self.parameters = args
@@ -411,6 +410,8 @@ cdef class Minuit:
             ups = NULL
             del strat;
             strat = NULL
+
+        self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
 
         if not resume:
             dynamic_cast[CallCounterMixinPtr](self.pyfcn).resetNumCall()
@@ -732,7 +733,8 @@ cdef class Minuit:
         - 3 really paranoid
         """
         self.print_level = lvl
-        set_migrad_print_level(lvl)
+        if self.minimizer:
+            self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
 
     def get_fmin(self):
         """Current FunctionMinimum Struct"""

@@ -56,10 +56,22 @@ cdef extern from "Minuit2/FunctionMinimum.h":
         bint HasReachedCallLimit()
         bint IsAboveMaxEdm()
 
+cdef extern from "Minuit2/MinimumBuilder.h":
+    cdef cppclass MinimumBuilder:
+        int StorageLevel()
+        int PrintLevel()
+        void SetPrintLevel(int)
+        void SetStorageLevel(int)
+
+cdef extern from "Minuit2/ModularFunctionMinimizer.h":
+    cdef cppclass ModularFunctionMinimizer:
+        MinimumBuilder Builder()
+
 cdef extern from "Minuit2/MnApplication.h":
     cdef cppclass MnApplication:
         FunctionMinimum call "operator()"(int, double) except+
         void SetPrecision(double)
+        ModularFunctionMinimizer Minimizer()
 
 cdef extern from "Minuit2/MinuitParameter.h":
     cdef cppclass MinuitParameter:
@@ -186,9 +198,6 @@ cdef extern from "Minuit2/FunctionMinimum.h":
         bint HasCovariance()
         bint HasReachedCallLimit()
         bint IsAboveMaxEdm()
-
-cdef extern from "Minuit2/VariableMetricBuilder.h":
-    void set_migrad_print_level "VariableMetricBuilder::setPrintLevel"(int p)
 
 cdef extern from "Minuit2/MnContours.h":
     cdef cppclass MnContours:
