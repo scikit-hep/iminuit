@@ -26,6 +26,7 @@ b740ed5c722ad29287c94e809498c0d332f83648
 dad13d1e27c4df904925a6b6675ab489f69e4a09
 d2969e9dbd4584dfce83d401d389e89fb165618c
 """
+from __future__ import print_function
 import os
 import re
 import argparse
@@ -102,7 +103,7 @@ def main():
 
     for k,v in imported.items():
         if v == "NOT-FOUND":
-            print "Missing:",k
+            print("Missing source/header for",k)
             continue
         mirror(args.source_dirs, v.inc, "Minuit/inc")
         if v.src is not None:
