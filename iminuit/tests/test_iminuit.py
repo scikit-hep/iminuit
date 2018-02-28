@@ -100,6 +100,10 @@ def test_f3():
     functesthelper(func3)
 
 
+def test_lambda():
+    functesthelper(lambda x, y: (x - 2.) ** 2 + (y - 5.) ** 2 + 10)
+
+
 def test_typo():
     with pytest.raises(RuntimeError):
         Minuit(func4, printlevel=0)
@@ -506,3 +510,13 @@ def test_num_call():
     func.ncall = 0
     m.migrad(resume=False)
     assert func.ncall ==  m.get_num_call_fcn()
+
+
+def test_set_error_def():
+    m = Minuit(lambda x: x**2, pedantic=False, print_level=0, errordef=1)
+    m.migrad()
+    m.hesse()
+    assert_allclose(m.errors["x"], 1)
+    m.set_errordef(4)
+    m.hesse()
+    assert_allclose(m.errors["x"], 2)
