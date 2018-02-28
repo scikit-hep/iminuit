@@ -236,20 +236,22 @@ def test_fitarg():
 def test_minos_all():
     m = Minuit(func3, pedantic=False, print_level=0)
     m.migrad()
-    m.minos()
-    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
-    assert_allclose(m.merrors[('y', 1.0)], 1.)
+    for sigma in range(1, 4):
+        m.minos(sigma=sigma)
+        assert_allclose(m.merrors[('x', -1.0)], -sigma*sqrt(5))
+        assert_allclose(m.merrors[('x', 1.0)], sigma*sqrt(5))
+        assert_allclose(m.merrors[('y', 1.0)], sigma*1.)
 
 
 def test_minos_all_with_gradient():
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
     m.set_strategy(2)
     m.migrad()
-    m.minos()
-    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
-    assert_allclose(m.merrors[('y', 1.0)], 1.)
+    for sigma in range(1, 4):
+        m.minos(sigma=sigma)
+        assert_allclose(m.merrors[('x', -1.0)], -sigma*sqrt(5))
+        assert_allclose(m.merrors[('x', 1.0)], sigma*sqrt(5))
+        assert_allclose(m.merrors[('y', 1.0)], sigma*1.)
 
 
 def test_minos_single():
@@ -258,7 +260,6 @@ def test_minos_single():
     m.minos('x')
     assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
     assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
-
 
 def test_minos_single_with_gradient():
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)

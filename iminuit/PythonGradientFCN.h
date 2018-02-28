@@ -1,3 +1,5 @@
+#
+
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -9,22 +11,20 @@ using namespace std;
 #include <cmath>
 #include <Python.h>
 #include "Minuit2/FCNGradientBase.h"
-#include "Minuit2/MnApplication.h"
-#include "PythonFCNBase.h"
+#include "CallCounterMixin.h"
 
 using namespace ROOT::Minuit2;
 
-class PythonGradientFCN:public FCNGradientBase, public PythonFCNBase{
+class PythonGradientFCN: public FCNGradientBase, public CallCounterMixin {
 public:
     PyObject* fcn;
     PyObject* gradfcn;
     double up_parm;
     vector<string> pname;
     bool thrownan;
-    mutable unsigned int ncall;
 
-    PythonGradientFCN():fcn(), gradfcn(), up_parm(), pname(),
-    thrownan(), ncall(0)
+    PythonGradientFCN()
+        : fcn(), gradfcn(), up_parm(), pname(), thrownan()
     {}//for cython stack allocate but don't call this
 
     PythonGradientFCN(PyObject* fcn,
@@ -32,16 +32,17 @@ public:
         double up_parm,
         const vector<string>& pname,
         bool thrownan = false)
-        :fcn(fcn),gradfcn(gradfcn),up_parm(up_parm),pname(pname),
-        thrownan(thrownan), ncall(0)
+        : fcn(fcn), gradfcn(gradfcn), up_parm(up_parm), pname(pname),
+          thrownan(thrownan)
     {
         Py_INCREF(fcn);
         Py_INCREF(gradfcn);
     }
 
     PythonGradientFCN(const PythonGradientFCN& pfcn)
-        :fcn(pfcn.fcn),gradfcn(pfcn.gradfcn),up_parm(pfcn.up_parm),pname(pfcn.pname),
-        thrownan(pfcn.thrownan), ncall(pfcn.ncall)
+        : CallCounterMixin(pfcn.getNumCall()),
+          fcn(pfcn.fcn), gradfcn(pfcn.gradfcn), up_parm(pfcn.up_parm),
+          pname(pfcn.pname), thrownan(pfcn.thrownan)
     {
         Py_INCREF(fcn);
         Py_INCREF(gradfcn);
@@ -61,20 +62,20 @@ public:
         //check result exception etc
         PyObject* exc = NULL;
         if((exc = PyErr_Occurred())){
-            string msg = "Exception Occured \n"+errormsg(x);
+            string msg = "Exception Occured \n"+errormsg("fcn", x);
             warn_preserve_error(msg.c_str());
             throw runtime_error(msg);
         }
 
         double ret = PyFloat_AsDouble(result);
         if((exc = PyErr_Occurred())){
-            string msg = "Cannot convert fcn(*arg) to double \n"+errormsg(x);
+            string msg = "Cannot convert fcn(*arg) to double \n"+errormsg("fcn", x);
             warn_preserve_error(msg.c_str());
             throw runtime_error(msg);
         }
 
         if(ret!=ret){//check if nan
-            string msg = "fcn returns Nan\n"+errormsg(x);
+            string msg = "fcn returns Nan\n"+errormsg("fcn", x);
             warn_preserve_error(msg.c_str());
             if(thrownan){
                 PyErr_SetString(PyExc_RuntimeError,msg.c_str());
@@ -84,7 +85,7 @@ public:
 
         Py_DECREF(tuple);
         Py_DECREF(result);
-        ncall++;
+        increaseNumCall();
         return ret;
     }
 
@@ -96,7 +97,7 @@ public:
         //check result exception etc
         PyObject* exc = NULL;
         if((exc = PyErr_Occurred())){
-            string msg = "Exception Occured \n"+graderrormsg(x);
+            string msg = "Exception Occured \n"+errormsg("gradfcn", x);
             warn_preserve_error(msg.c_str());
             throw runtime_error(msg);
         }
@@ -105,7 +106,7 @@ public:
         PyObject *item;
 
         if (iterator == NULL) {
-            string msg = "The result of gradfcn(*arg) must be iterable \n"+graderrormsg(x);
+            string msg = "The result of gradfcn(*arg) must be iterable \n"+errormsg("gradfcn", x);
             warn_preserve_error(msg.c_str());
             throw runtime_error(msg);
         }
@@ -119,7 +120,7 @@ public:
         Py_DECREF(iterator);
 
         if((exc = PyErr_Occurred())){
-            string msg = "Cannot convert gradfcn(*arg) to a vector of doubles \n"+graderrormsg(x);
+            string msg = "Cannot convert gradfcn(*arg) to a vector of doubles \n"+errormsg("gradfcn", x);
             warn_preserve_error(msg.c_str());
             throw runtime_error(msg);
         }
@@ -137,23 +138,9 @@ public:
         PyErr_Restore(ptype,pvalue,ptraceback);
     }
 
-    inline string errormsg(const std::vector<double>& x) const{
-        string ret = "fcn is called with following arguments:\n";
-        assert(pname.size()==x.size());
-        //determine longest variable length
-        size_t maxlength = 0;
-        for(int i=0;i<x.size();i++){
-            maxlength = max(pname[i].size(),maxlength);
-        }
-        for(int i=0;i<x.size();i++){
-            string line = format("%*s = %+f\n",maxlength+4,pname[i].c_str(),x[i]);
-            ret += line;
-        }
-        return ret;
-    }
-
-    inline string graderrormsg(const std::vector<double>& x) const{
-        string ret = "gradfcn is called with following arguments:\n";
+    inline string errormsg(const char* which, const std::vector<double>& x) const{
+        string ret = which;
+        ret += " is called with following arguments:\n";
         assert(pname.size()==x.size());
         //determine longest variable length
         size_t maxlength = 0;
@@ -176,8 +163,7 @@ public:
         }
         return tuple;
     }
-    int getNumCall() const{return ncall;}
-    void resetNumCall(){ncall = 0;}
-    void set_up(double up){up_parm = up;}
-    virtual double Up() const{return up_parm;}
+
+    virtual double Up() const { return up_parm; }
+    virtual void SetErrorDef(double up) { up_parm = up; }
 };

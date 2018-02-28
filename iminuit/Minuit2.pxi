@@ -11,16 +11,50 @@ cdef extern from "<memory>" namespace "std":
 
 cdef extern from "Minuit2/FCNBase.h":
     cdef cppclass FCNBase:
-        double call "operator()"(vector[double] x) except+
-        double ErrorDef()
-
-cdef extern from "Minuit2/FCNGradientBase.h":
-    cdef cppclass FCNGradientBase:
-        FCNGradientBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
+        FCNBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
         double call "operator()"(vector[double] x) except +  #raise_py_err
         double Up()
+        void SetErrorDef(double)
+
+cdef extern from "Minuit2/FCNGradientBase.h":
+    cdef cppclass FCNGradientBase(FCNBase):
+        FCNGradientBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
         vector[double] Gradient(vector[double] x) except +  #raise_py_err
         bint CheckGradient()
+
+cdef extern from "CallCounterMixin.h":
+    cdef cppclass CallCounterMixin:
+        int getNumCall()
+        void resetNumCall()
+
+cdef extern from "PythonFCN.h":
+    #int raise_py_err()#this is very important we need custom error handler
+    FunctionMinimum*call_mnapplication_wrapper( \
+            MnApplication app, unsigned int i, double tol) except +
+    cdef cppclass PythonFCN(FCNBase, CallCounterMixin):
+        PythonFCN(object fcn, double up_parm, vector[string] pname, bint thrownan)
+
+cdef extern from "PythonGradientFCN.h":
+    #int raise_py_err()#this is very important we need custom error handler
+    cdef cppclass PythonGradientFCN(FCNGradientBase, CallCounterMixin):
+        PythonGradientFCN(object fcn, object grad_fcn, double up_parm, vector[string] pname, bint thrownan)
+
+cdef extern from "Minuit2/FunctionMinimum.h":
+    cdef cppclass FunctionMinimum:
+        bint IsValid()
+        MnUserParameterState UserState()
+        bint HasAccurateCovar()
+        double Fval()
+        double Edm()
+        int NFcn()
+        double Up()
+        bint HasValidParameters()
+        bint HasPosDefCovar()
+        bint HasMadePosDefCovar()
+        bint HesseFailed()
+        bint HasCovariance()
+        bint HasReachedCallLimit()
+        bint IsAboveMaxEdm()
 
 cdef extern from "Minuit2/MnApplication.h":
     cdef cppclass MnApplication:

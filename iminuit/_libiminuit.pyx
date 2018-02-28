@@ -24,55 +24,7 @@ __all__ = ['Minuit']
 
 # Our wrappers
 ctypedef FCNGradientBase* FCNGradientBasePtr
-
-cdef extern from "PythonFCNBase.h":
-    cdef cppclass PythonFCNBase:
-        PythonFCNBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
-        double call "operator()"(vector[double] x) except +  #raise_py_err
-        double Up()
-        int getNumCall()
-        void set_up(double up)
-        void resetNumCall()
-
-cdef extern from "Minuit2/FCNBase.h":
-    cdef cppclass FCNBase:
-        FCNBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
-        double call "operator()"(vector[double] x) except +  #raise_py_err
-        double Up()
-
-cdef extern from "Minuit2/FCNGradientBase.h":
-    cdef cppclass FCNGradientBase:
-        FCNGradientBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
-        double call "operator()"(vector[double] x) except +  #raise_py_err
-        double Up()
-        vector[double] Gradient(vector[double] x) except +  #raise_py_err
-        bint CheckGradient()
-
-cdef extern from "PythonFCN.h":
-    #int raise_py_err()#this is very important we need custom error handler
-    FunctionMinimum*call_mnapplication_wrapper( \
-            MnApplication app, unsigned int i, double tol) except +
-    cdef cppclass PythonFCN(FCNBase, PythonFCNBase):
-        PythonFCN( \
-                object fcn, double up_parm, vector[string] pname, bint thrownan)
-        double call "operator()"(vector[double] x) except +  #raise_py_err
-        double Up()
-        int getNumCall()
-        void set_up(double up)
-        void resetNumCall()
-
-cdef extern from "PythonGradientFCN.h":
-    #int raise_py_err()#this is very important we need custom error handler
-    cdef cppclass PythonGradientFCN(FCNBase, PythonFCNBase):
-        PythonGradientFCN( \
-                object fcn, object grad_fcn, double up_parm, vector[string] pname, bint thrownan)
-        double call "operator()"(vector[double] x) except +  #raise_py_err
-        vector[double] call "gradient()"(vector[double] x) except +  #raise_py_err
-        double Up()
-        int getNumCall()
-        void set_up(double up)
-        void resetNumCall()
-
+ctypedef CallCounterMixin* CallCounterMixinPtr
 
 #look up map with default
 cdef maplookup(m, k, d):
@@ -104,7 +56,7 @@ cdef class Minuit:
 
     # C++ object state
     # TODO find a nicer fix: cdef PythonFCN*pyfcn  #:FCN
-    cdef PythonFCNBase*pyfcn  #:FCN
+    cdef FCNBase*pyfcn  #:FCN
     cdef MnApplication*minimizer  #:migrad
     cdef FunctionMinimum*cfmin  #:last migrad result
     #:last parameter state(from hesse/migrad)
@@ -446,7 +398,7 @@ cdef class Minuit:
 
             if self.grad_fcn is None:
                 self.minimizer = new MnMigrad(
-                    deref(<FCNBase*> self.pyfcn),
+                    deref(self.pyfcn),
                     deref(ups), deref(strat)
                 )
             else:
@@ -461,7 +413,7 @@ cdef class Minuit:
             strat = NULL
 
         if not resume:
-            self.pyfcn.resetNumCall()
+            dynamic_cast[CallCounterMixinPtr](self.pyfcn).resetNumCall()
 
         del self.cfmin  #remove the old one
 
@@ -566,7 +518,7 @@ cdef class Minuit:
         cdef MinosError mnerror
         cdef char*name = NULL
         cdef double oldup = self.pyfcn.Up()
-        self.pyfcn.set_up(oldup * sigma * sigma)
+        self.pyfcn.SetErrorDef(oldup * sigma * sigma)
         if self.print_level > 0: self.frontend.print_banner('MINOS')
         if not self.cfmin.IsValid():
             raise RuntimeError(('Function mimimum is not valid. Make sure'
@@ -604,7 +556,7 @@ cdef class Minuit:
                     vname, self.merrors_struct[vname])
         self.refreshInternalState()
         del minos
-        self.pyfcn.set_up(oldup)
+        self.pyfcn.SetErrorDef(oldup)
         return self.merrors_struct
 
     def matrix(self, correlation=False, skip_fixed=True):
@@ -733,7 +685,7 @@ cdef class Minuit:
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
         sfmin = cfmin2struct(self.cfmin)
-        ncalls = 0 if self.pyfcn is NULL else self.pyfcn.getNumCall()
+        ncalls = 0 if self.pyfcn is NULL else dynamic_cast[CallCounterMixinPtr](self.pyfcn).getNumCall()
 
         self.frontend.print_hline()
         self.frontend.print_fmin(sfmin, self.tol, ncalls)
@@ -760,7 +712,7 @@ cdef class Minuit:
         # http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node31.html
         self.errordef = errordef
         if self.pyfcn is not NULL:
-            self.pyfcn.set_up(errordef)
+            self.pyfcn.SetErrorDef(errordef)
 
     def set_strategy(self, value):
         """Set strategy.
@@ -809,7 +761,7 @@ cdef class Minuit:
 
     def get_num_call_fcn(self):
         """Total number of calls to FCN (not just the last operation)"""
-        return 0 if self.pyfcn is NULL else self.pyfcn.getNumCall()
+        return 0 if self.pyfcn is NULL else dynamic_cast[CallCounterMixinPtr](self.pyfcn).getNumCall()
 
     def migrad_ok(self):
         """Check if minimum is valid"""
@@ -1204,7 +1156,7 @@ cdef class Minuit:
             raise ValueError('mncontour has to be run on vary parameters.')
 
         cdef double oldup = self.pyfcn.Up()
-        self.pyfcn.set_up(oldup * sigma * sigma)
+        self.pyfcn.SetErrorDef(oldup * sigma * sigma)
 
         cdef auto_ptr[MnContours] mnc = auto_ptr[MnContours](NULL)
         if self.grad_fcn is None:
@@ -1222,7 +1174,7 @@ cdef class Minuit:
         xminos = minoserror2struct(cerr.XMinosError())
         yminos = minoserror2struct(cerr.YMinosError())
 
-        self.pyfcn.set_up(oldup)
+        self.pyfcn.SetErrorDef(oldup)
 
         return xminos, yminos, cerr.Points()  #using type coersion here
 
