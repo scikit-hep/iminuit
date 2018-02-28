@@ -487,3 +487,22 @@ def test_oneside_outside():
     m = Minuit(func3, limit_x=(None, 1), pedantic=False, print_level=0)
     m.migrad()
     assert_allclose(m.values['x'], 1)
+
+
+def test_num_call():
+    class Func:
+        ncall = 0
+        def __call__(self, x):
+            self.ncall += 1
+            return x ** 2
+    func = Func()
+    m = Minuit(func, pedantic=False, print_level=0)
+    m.migrad()
+    assert m.get_num_call_fcn() == func.ncall
+    print(func.ncall)
+    m.migrad()
+    assert m.get_num_call_fcn() == func.ncall
+    print(func.ncall)
+    func.ncall = 0
+    m.migrad(resume=False)
+    assert func.ncall ==  m.get_num_call_fcn()
