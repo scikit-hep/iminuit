@@ -20,6 +20,7 @@ Untitled*.ipynb
 Untitled*.py
 .coverage
 cover
+_libiminuit.cpp
 
 !tutorial.html
 !tutorial.ipynb
