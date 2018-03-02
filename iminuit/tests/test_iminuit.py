@@ -503,10 +503,8 @@ def test_num_call():
     m = Minuit(func, pedantic=False, print_level=0)
     m.migrad()
     assert m.get_num_call_fcn() == func.ncall
-    print(func.ncall)
     m.migrad()
     assert m.get_num_call_fcn() == func.ncall
-    print(func.ncall)
     func.ncall = 0
     m.migrad(resume=False)
     assert func.ncall ==  m.get_num_call_fcn()
