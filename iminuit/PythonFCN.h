@@ -10,7 +10,8 @@ using namespace std;
 #include <Python.h>
 #include "Minuit2/FCNBase.h"
 #include "Minuit2/MnApplication.h"
-#include "PythonFCNBase.h"
+#include "Minuit2/FunctionMinimum.h"
+#include "CallCounterMixin.h"
 
 using namespace ROOT::Minuit2;
 
@@ -57,31 +58,29 @@ FunctionMinimum* call_mnapplication_wrapper(MnApplication& app,unsigned int i, d
     return ret;
 }
 
-class PythonFCN:public FCNBase, public PythonFCNBase{
+class PythonFCN: public FCNBase, public CallCounterMixin {
 public:
     PyObject* fcn;
     double up_parm;
     vector<string> pname;
     bool thrownan;
-    mutable unsigned int ncall;
 
-    PythonFCN():fcn(), up_parm(), pname(),
-    thrownan(), ncall(0)
-    {}//for cython stack allocate but don't call this
+    PythonFCN() {} //for cython stack allocate but don't call this
 
     PythonFCN(PyObject* fcn,
         double up_parm,
         const vector<string>& pname,
         bool thrownan = false)
-        :fcn(fcn),up_parm(up_parm),pname(pname),
-        thrownan(thrownan), ncall(0)
+        : fcn(fcn), up_parm(up_parm), pname(pname),
+          thrownan(thrownan)
     {
         Py_INCREF(fcn);
     }
 
     PythonFCN(const PythonFCN& pfcn)
-        :fcn(pfcn.fcn),up_parm(pfcn.up_parm),pname(pfcn.pname),
-        thrownan(pfcn.thrownan), ncall(pfcn.ncall)
+        : CallCounterMixin(pfcn.getNumCall()),
+          fcn(pfcn.fcn), up_parm(pfcn.up_parm), pname(pfcn.pname),
+          thrownan(pfcn.thrownan)
     {
         Py_INCREF(fcn);
     }
@@ -122,7 +121,7 @@ public:
 
         Py_DECREF(tuple);
         Py_DECREF(result);
-        ncall++;
+        increaseNumCall();
         return ret;
     }
 
@@ -158,8 +157,7 @@ public:
         }
         return tuple;
     }
-    int getNumCall() const{return ncall;}
-    void resetNumCall(){ncall = 0;}
-    void set_up(double up){up_parm = up;}
-    virtual double Up() const{return up_parm;}
+
+    virtual double Up() const { return up_parm; }
+    virtual void SetErrorDef(double up) { up_parm = up; }
 };

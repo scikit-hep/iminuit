@@ -100,6 +100,10 @@ def test_f3():
     functesthelper(func3)
 
 
+def test_lambda():
+    functesthelper(lambda x, y: (x - 2.) ** 2 + (y - 5.) ** 2 + 10)
+
+
 def test_typo():
     with pytest.raises(RuntimeError):
         Minuit(func4, printlevel=0)
@@ -236,20 +240,22 @@ def test_fitarg():
 def test_minos_all():
     m = Minuit(func3, pedantic=False, print_level=0)
     m.migrad()
-    m.minos()
-    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
-    assert_allclose(m.merrors[('y', 1.0)], 1.)
+    for sigma in range(1, 4):
+        m.minos(sigma=sigma)
+        assert_allclose(m.merrors[('x', -1.0)], -sigma*sqrt(5))
+        assert_allclose(m.merrors[('x', 1.0)], sigma*sqrt(5))
+        assert_allclose(m.merrors[('y', 1.0)], sigma*1.)
 
 
 def test_minos_all_with_gradient():
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
     m.set_strategy(2)
     m.migrad()
-    m.minos()
-    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
-    assert_allclose(m.merrors[('y', 1.0)], 1.)
+    for sigma in range(1, 4):
+        m.minos(sigma=sigma)
+        assert_allclose(m.merrors[('x', -1.0)], -sigma*sqrt(5))
+        assert_allclose(m.merrors[('x', 1.0)], sigma*sqrt(5))
+        assert_allclose(m.merrors[('y', 1.0)], sigma*1.)
 
 
 def test_minos_single():
@@ -258,7 +264,6 @@ def test_minos_single():
     m.minos('x')
     assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
     assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
-
 
 def test_minos_single_with_gradient():
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
@@ -486,3 +491,30 @@ def test_oneside_outside():
     m = Minuit(func3, limit_x=(None, 1), pedantic=False, print_level=0)
     m.migrad()
     assert_allclose(m.values['x'], 1)
+
+
+def test_num_call():
+    class Func:
+        ncall = 0
+        def __call__(self, x):
+            self.ncall += 1
+            return x ** 2
+    func = Func()
+    m = Minuit(func, pedantic=False, print_level=0)
+    m.migrad()
+    assert m.get_num_call_fcn() == func.ncall
+    m.migrad()
+    assert m.get_num_call_fcn() == func.ncall
+    func.ncall = 0
+    m.migrad(resume=False)
+    assert func.ncall ==  m.get_num_call_fcn()
+
+
+def test_set_error_def():
+    m = Minuit(lambda x: x**2, pedantic=False, print_level=0, errordef=1)
+    m.migrad()
+    m.hesse()
+    assert_allclose(m.errors["x"], 1)
+    m.set_errordef(4)
+    m.hesse()
+    assert_allclose(m.errors["x"], 2)
