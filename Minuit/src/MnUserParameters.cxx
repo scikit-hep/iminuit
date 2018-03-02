@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -24,7 +24,7 @@ const std::vector<MinuitParameter>& MnUserParameters::Parameters() const {
 }
 
 std::vector<double> MnUserParameters::Params() const {
-   // return std::vector of double with parameter values 
+   // return std::vector of double with parameter values
    return fTransformation.Params();
 }
 
@@ -66,6 +66,11 @@ void MnUserParameters::Release(unsigned int n) {
    fTransformation.Release(n);
 }
 
+void MnUserParameters::RemoveLimits(unsigned int n) {
+   // remove limits for parameter n
+   fTransformation.RemoveLimits(n);
+}
+
 void MnUserParameters::SetValue(unsigned int n, double val) {
    // set value for parameter n
    fTransformation.SetValue(n, val);
@@ -91,10 +96,11 @@ void MnUserParameters::SetLowerLimit(unsigned int n, double low) {
    fTransformation.SetLowerLimit(n, low);
 }
 
-void MnUserParameters::RemoveLimits(unsigned int n) {
-   // remove limits for parameter n
-   fTransformation.RemoveLimits(n);
+void MnUserParameters::SetName(unsigned int n, const std::string & name) {
+   // set name for parameter n
+   fTransformation.SetName(n, name);
 }
+
 
 double MnUserParameters::Value(unsigned int n) const {
    // get value for parameter n
@@ -109,17 +115,17 @@ double MnUserParameters::Error(unsigned int n) const {
 // interface using  parameter name
 
 void MnUserParameters::Fix(const std::string & name) {
-   // fix parameter 
+   // fix parameter
    Fix(Index(name));
 }
 
 void MnUserParameters::Release(const std::string & name) {
-   // release parameter 
+   // release parameter
    Release(Index(name));
 }
 
 void MnUserParameters::SetValue(const std::string & name, double val) {
-   // set value for parameter 
+   // set value for parameter
    SetValue(Index(name), val);
 }
 

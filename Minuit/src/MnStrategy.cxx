@@ -1,5 +1,5 @@
 // @(#)root/minuit2:$Id$
-// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005  
+// Authors: M. Winkler, F. James, L. Moneta, A. Zsenei   2003-2005
 
 /**********************************************************************
  *                                                                    *
@@ -15,13 +15,13 @@ namespace ROOT {
 
 
 
-MnStrategy::MnStrategy() {
+      MnStrategy::MnStrategy() : fStoreLevel(1) {
    //default strategy
    SetMediumStrategy();
 }
 
 
-MnStrategy::MnStrategy(unsigned int stra) {
+      MnStrategy::MnStrategy(unsigned int stra) : fStoreLevel(1) {
    //user defined strategy (0, 1, >=2)
    if(stra == 0) SetLowStrategy();
    else if(stra == 1) SetMediumStrategy();
