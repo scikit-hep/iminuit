@@ -19,3 +19,6 @@ MINUIT from Python - Fitting like a boss
 * Mailing list: https://groups.google.com/forum/#!forum/iminuit
 * PyPI: https://pypi.python.org/pypi/iminuit
 * License: LGPL (the iminuit source is MIT, but the bundled MINUIT is LGPL and thus the whole package is LGPL)
+
+
+This is a test, to see if Appveyor triggers. DO NOT MERGE
