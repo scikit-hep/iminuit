@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. image:: https://img.shields.io/travis/iminuit/iminuit.svg
+.. image:: https://travis-ci.org/iminuit/iminuit.svg?branch=master
    :target: https://travis-ci.org/iminuit/iminuit
 .. image:: https://ci.appveyor.com/api/projects/status/bp9qt5xfvwd642n3?svg=true
    :target: https://ci.appveyor.com/project/iminuit/iminuit
