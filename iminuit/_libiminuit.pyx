@@ -459,6 +459,10 @@ cdef class Minuit:
         likelihood profile is utterly discontinuous near the minimum). But,
         it is much more computationally expensive.
 
+        **Arguments:**
+
+            - **sigma**: number of :math:`\sigma` error. Default 1.0.
+
         **Returns:**
 
             list of :ref:`minuit-param-struct`
