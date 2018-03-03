@@ -158,8 +158,6 @@ class ConsoleFrontend:
     @staticmethod
     def print_matrix(vnames, matrix):
         """TODO: properly implement this"""
-        print(vnames)
-        print(matrix)
         maxlen = max(len(v) for v in vnames)
         narg = len(matrix)
         vfmt = '%%%ds' % maxlen
@@ -168,6 +166,9 @@ class ConsoleFrontend:
         dfmt = '%4d '
         tmp = ''
         header = vblank + ' ' * 4 + '  | ' + (dfmt * narg) % tuple(range(narg)) + '\n'
+        tmp += '-' * len(header) + '\n'
+        tmp += 'Correlation\n'
+        tmp += '-' * len(header) + '\n'
         blank_line = '-' * len(header) + '\n'
         tmp += header + blank_line
         for i, (v, row) in enumerate(zip(vnames, matrix)):
