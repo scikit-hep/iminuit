@@ -1,0 +1,29 @@
+If you use iminuit for work/research presented in a publication, we recommend and encourage to add the following two references:
+
+Piti Ongmongkolkul and Christoph Deil and Hans Dembinski and David Men\'endez Hurtado and Chris Burr and Andrew ZP Smith and Fabian Rost and Alex Pearce and Lukas Geiger and Omar Zapata, iminuit - A Python interface to MINUIT, 2012 --, https://github.com/iminuit/iminuit; accessed online <your current date>.
+
+The original Minuit paper.
+http://adsabs.harvard.edu/abs/1975CoPhC..10..343J
+
+Recommended BibTeX entries for the above citations are:
+
+@ONLINE{iminuit,
+  author = {Piti Ongmongkolkul (@piti118) and Christoph Deil (@cdeil) and Hans Dembinski (@HDembinski) and David Men\'endez Hurtado (@Dapid) and Chris Burr (@chrisburr) and Andrew ZP Smith (@energynumbers) and Fabian Rost (@fabianrost84) and Alex Pearce (@alexpearce) and Lukas Geiger (@lgeiger) and Omar Zapata (@omazapa)},
+  title = {iminuit - A Python interface to MINUIT \cite{1975CoPhC..10..343J}},
+  year = {2012--},
+  url = {https://github.com/iminuit/iminuit},
+  note = {[Online; accessed 2018.03.05]}
+}
+
+@ARTICLE{1975CoPhC..10..343J,
+   author = {{James}, F. and {Roos}, M.},
+    title = "{Minuit - a system for function minimization and analysis of the parameter errors and correlations}",
+  journal = {Computer Physics Communications},
+     year = 1975,
+    month = dec,
+   volume = 10,
+    pages = {343-367},
+      doi = {10.1016/0010-4655(75)90039-9},
+   adsurl = {http://adsabs.harvard.edu/abs/1975CoPhC..10..343J},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
