@@ -614,15 +614,12 @@ cdef class Minuit:
     def np_values(self):
         """Parameter values in numpy array format."""
         import numpy as np
-        a = np.empty(len(self.parameters))
-        for i, k in enumerate(self.parameters):
-            a[i] = self.values[k]
-        return a
+        return np.asarray(self.args, dtype=np.double)
 
     def np_errors(self):
         """Parameter errors in numpy array format."""
         import numpy as np
-        a = np.empty(len(self.parameters))
+        a = np.empty(len(self.parameters), dtype=np.double)
         for i, k in enumerate(self.parameters):
             a[i] = self.errors[k]
         return a
@@ -634,7 +631,7 @@ cdef class Minuit:
         """
         import numpy as np
         n = len(self.parameters)
-        a = np.empty((n, n))
+        a = np.empty((n, n), dtype=np.double)
         for i1, k1 in enumerate(self.parameters):
             for i2, k2 in enumerate(self.parameters):
                 a[i1, i2] = self.covariance[(k1, k2)]
