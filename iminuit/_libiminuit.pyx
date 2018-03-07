@@ -624,6 +624,16 @@ cdef class Minuit:
             a[i] = self.errors[k]
         return a
 
+    def np_merrors(self):
+        """Parameter errors in numpy array format."""
+        import numpy as np
+        # array format follows matplotlib conventions, see pyplot.errorbar
+        a = np.empty((2, len(self.parameters)), dtype=np.double)
+        for i, k in enumerate(self.parameters):
+            a[0, i] = -self.merrors[(k, -1.0)]
+            a[1, i] = self.merrors[(k, 1.0)]
+        return a
+
     def np_covariance(self):
         """Covariance matrix in numpy array format.
 
