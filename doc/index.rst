@@ -10,6 +10,7 @@ MINUIT from Python - Fitting like a boss
 * Mailing list: https://groups.google.com/forum/#!forum/iminuit
 * PyPI: https://pypi.python.org/pypi/iminuit
 * License: LGPL (the iminuit source is MIT, but the bundled MINUIT is LGPL and thus the whole package is LGPL)
+* Citation: https://github.com/iminuit/iminuit/blob/master/CITATION
 
 What is iminuit?
 ----------------
