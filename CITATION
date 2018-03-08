@@ -1,0 +1,25 @@
+If you use iminuit for work/research presented in a publication, we would be happy if you mention us in the acknowledgments, like so:
+
+This research made use of the MINUIT algorithm\cite{1975CoPhC..10..343J} via the iminuit\cite{iminuit} Python interface.
+
+Recommended BibTeX entries for the above citations are (you need to include the url package in your document, \usepackage{url}):
+
+@MISC{iminuit,
+  author = {iminuit team},
+  title = {iminuit -- A Python interface to Minuit},
+  howpublished = {\url{https://github.com/iminuit/iminuit}},
+  note = {Accessed: 2018-03-05}
+}
+
+@ARTICLE{1975CoPhC..10..343J,
+   author = {{James}, F. and {Roos}, M.},
+    title = "{Minuit -- a system for function minimization and analysis of the parameter errors and correlations}",
+  journal = {Computer Physics Communications},
+     year = 1975,
+    month = dec,
+   volume = 10,
+    pages = {343-367},
+      doi = {10.1016/0010-4655(75)90039-9},
+   adsurl = {http://adsabs.harvard.edu/abs/1975CoPhC..10..343J},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
