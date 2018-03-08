@@ -6,7 +6,7 @@ Recommended BibTeX entries for the above citations are:
 
 @ONLINE{iminuit,
   author = {iminuit team},
-  title = {iminuit - A Python interface to MINUIT \cite{1975CoPhC..10..343J}},
+  title = {iminuit -- A Python interface to Minuit},
   year = {2012--},
   url = {https://github.com/iminuit/iminuit},
   note = {[Online; accessed 2018.03.05]}
