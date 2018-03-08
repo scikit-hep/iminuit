@@ -2,19 +2,18 @@ If you use iminuit for work/research presented in a publication, we would be hap
 
 This research made use of the MINUIT algorithm\cite{1975CoPhC..10..343J} via the iminuit\cite{iminuit} Python interface.
 
-Recommended BibTeX entries for the above citations are:
+Recommended BibTeX entries for the above citations are (you need to include the url package in your document, \usepackage{url}):
 
-@ONLINE{iminuit,
+@MISC{iminuit,
   author = {iminuit team},
   title = {iminuit -- A Python interface to Minuit},
-  year = {2012--},
-  url = {https://github.com/iminuit/iminuit},
-  note = {[Online; accessed 2018.03.05]}
+  howpublished = {\url{https://github.com/iminuit/iminuit}},
+  note = {Accessed: 2018-03-05}
 }
 
 @ARTICLE{1975CoPhC..10..343J,
    author = {{James}, F. and {Roos}, M.},
-    title = "{Minuit - a system for function minimization and analysis of the parameter errors and correlations}",
+    title = "{Minuit -- a system for function minimization and analysis of the parameter errors and correlations}",
   journal = {Computer Physics Communications},
      year = 1975,
     month = dec,
