@@ -461,6 +461,7 @@ class TestOutputInterface:
         expected = [[5., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
 
     def test_np_values(self):
         import numpy as np
@@ -468,6 +469,7 @@ class TestOutputInterface:
         expected = [2., 5.]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2,)
 
     def test_np_errors(self):
         import numpy as np
@@ -475,6 +477,7 @@ class TestOutputInterface:
         expected = [5.**0.5, 1.]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2,)
 
     def test_np_merrors(self):
         import numpy as np
@@ -482,6 +485,7 @@ class TestOutputInterface:
         expected = [[5.**0.5, 1.], [5.**0.5, 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
 
     def test_np_covariance(self):
         import numpy as np
@@ -489,6 +493,7 @@ class TestOutputInterface:
         expected = [[5., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
 
     def test_np_matrix_correlation(self):
         import numpy as np
@@ -496,6 +501,7 @@ class TestOutputInterface:
         expected = [[1., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
 
 
 def test_chi2_fit():

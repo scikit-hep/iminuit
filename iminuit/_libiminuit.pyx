@@ -564,14 +564,12 @@ cdef class Minuit:
         """Error or correlation matrix in tuple or tuples format."""
         if self.last_upst is NULL:
             raise RuntimeError("Run migrad/hesse first")
-        if not skip_fixed:
-            raise RuntimeError('skip_fixed=False is not supported')
         if not self.last_upst.HasCovariance():
             raise RuntimeError(
                 "Covariance is not valid. May be the last Hesse call failed?")
 
         cdef MnUserCovariance cov = self.last_upst.Covariance()
-        params = self.list_of_vary_param()
+        params = self.list_of_vary_param() if skip_fixed else self.parameters
         if correlation:
             ret = tuple(
                 tuple(cov.get(iv1, iv2) / sqrt(cov.get(iv1, iv1) * cov.get(iv2, iv2))
@@ -609,15 +607,15 @@ cdef class Minuit:
         """
         import numpy as np
         matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
-        return np.array(matrix, dtype=np.float64)
+        return np.array(matrix, dtype=np.double)
 
     def np_values(self):
         """Parameter values in numpy array format."""
         import numpy as np
-        return np.asarray(self.args, dtype=np.double)
+        return np.array(self.args, dtype=np.double)
 
     def np_errors(self):
-        """Parameter errors in numpy array format."""
+        """Hesse parameter errors in numpy array format."""
         import numpy as np
         a = np.empty(len(self.parameters), dtype=np.double)
         for i, k in enumerate(self.parameters):
@@ -625,7 +623,7 @@ cdef class Minuit:
         return a
 
     def np_merrors(self):
-        """Parameter errors in numpy array format."""
+        """Minos parameter errors in numpy array format."""
         import numpy as np
         # array format follows matplotlib conventions, see pyplot.errorbar
         a = np.empty((2, len(self.parameters)), dtype=np.double)
@@ -639,13 +637,7 @@ cdef class Minuit:
 
         Note that a ``numpy.ndarray`` is returned, not a ``numpy.matrix``
         """
-        import numpy as np
-        n = len(self.parameters)
-        a = np.empty((n, n), dtype=np.double)
-        for i1, k1 in enumerate(self.parameters):
-            for i2, k2 in enumerate(self.parameters):
-                a[i1, i2] = self.covariance[(k1, k2)]
-        return a
+        return self.np_matrix(correlation=False, skip_fixed=False)
 
     def is_fixed(self, vname):
         """Check if variable *vname* is (initially) fixed"""
