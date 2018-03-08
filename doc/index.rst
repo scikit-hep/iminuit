@@ -93,3 +93,28 @@ More generally any contribution to the docs, tests and package itself is welcome
 * Documentation. Tell us what's missing, what's incorrect or misleading.
 * Tests. If you have an example that shows a bug or problem, please file an issue!
 * Performance. If you are a C/cython/python hacker go ahead and make it faster.
+
+Team
+----
+
+iminuit was created by **Piti Ongmongkolkul** (@piti118). It is a logical successor of pyminuit/pyminuit2, created by **Jim Pivarski** (@jpivarski).
+
+Maintainers
+~~~~~~~~~~~
+
+* Piti Ongmongkolkul (@piti118)
+* Chih-hsiang Cheng (@gitcheng)
+* Christoph Deil (@cdeil)
+* Hans Dembinski (@HDembinski)
+
+Contributors
+~~~~~~~~~~~~
+
+* Jim Pivarski (@jpivarski)
+* David Men\'endez Hurtado (@Dapid)
+* Chris Burr (@chrisburr)
+* Andrew ZP Smith (@energynumbers)
+* Fabian Rost (@fabianrost84)
+* Alex Pearce (@alexpearce)
+* Lukas Geiger (@lgeiger)
+* Omar Zapata (@omazapa)

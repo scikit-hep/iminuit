@@ -1,14 +1,11 @@
-If you use iminuit for work/research presented in a publication, we recommend and encourage to add the following two references:
+If you use iminuit for work/research presented in a publication, we would be happy if you mention us in the acknowledgments, like so:
 
-Piti Ongmongkolkul and Christoph Deil and Hans Dembinski and David Men\'endez Hurtado and Chris Burr and Andrew ZP Smith and Fabian Rost and Alex Pearce and Lukas Geiger and Omar Zapata, iminuit - A Python interface to MINUIT, 2012 --, https://github.com/iminuit/iminuit; accessed online <your current date>.
-
-The original Minuit paper.
-http://adsabs.harvard.edu/abs/1975CoPhC..10..343J
+This research made use of the MINUIT algorithm\cite{1975CoPhC..10..343J} via the iminuit\cite{iminuit} Python interface.
 
 Recommended BibTeX entries for the above citations are:
 
 @ONLINE{iminuit,
-  author = {Piti Ongmongkolkul (@piti118) and Christoph Deil (@cdeil) and Hans Dembinski (@HDembinski) and David Men\'endez Hurtado (@Dapid) and Chris Burr (@chrisburr) and Andrew ZP Smith (@energynumbers) and Fabian Rost (@fabianrost84) and Alex Pearce (@alexpearce) and Lukas Geiger (@lgeiger) and Omar Zapata (@omazapa)},
+  author = {iminuit team},
   title = {iminuit - A Python interface to MINUIT \cite{1975CoPhC..10..343J}},
   year = {2012--},
   url = {https://github.com/iminuit/iminuit},
