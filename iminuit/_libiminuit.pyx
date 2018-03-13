@@ -601,21 +601,38 @@ cdef class Minuit:
         """Error or correlation matrix in numpy array format.
 
         The name of this function was chosen to be analogous to :meth:`matrix`,
-        it returns the same information in a different format.
+        it returns the same information in a different format. For
+        documentation on the arguments, please see :meth:`matrix`.
 
-        Note that a ``numpy.ndarray`` is returned, not a ``numpy.matrix``
+        **Returns:**
+
+            2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
         """
         import numpy as np
         matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
         return np.array(matrix, dtype=np.double)
 
     def np_values(self):
-        """Parameter values in numpy array format."""
+        """Parameter values in numpy array format.
+
+        Fixed parameters are included, the order follows :attr:`parameters`.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (N,).
+         """
         import numpy as np
         return np.array(self.args, dtype=np.double)
 
     def np_errors(self):
-        """Hesse parameter errors in numpy array format."""
+        """Hesse parameter errors in numpy array format.
+
+        Fixed parameters are included, the order follows :attr:`parameters`.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (N,).
+        """
         import numpy as np
         a = np.empty(len(self.parameters), dtype=np.double)
         for i, k in enumerate(self.parameters):
@@ -623,7 +640,20 @@ cdef class Minuit:
         return a
 
     def np_merrors(self):
-        """Minos parameter errors in numpy array format."""
+        """Minos parameter errors in numpy array format.
+
+        Fixed parameters are included, the order follows :attr:`parameters`.
+
+        The format of the produced array follows matplotlib conventions, as
+        in ``matplotlib.pyplot.errorbar``. The shape is (2, N) for N
+        parameters. The first row represents the downward error as a positive
+        offset from the center. Likewise, the second row represents the
+        upward error as a positive offset from the center.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (2, N).
+        """
         import numpy as np
         # array format follows matplotlib conventions, see pyplot.errorbar
         a = np.empty((2, len(self.parameters)), dtype=np.double)
@@ -635,7 +665,11 @@ cdef class Minuit:
     def np_covariance(self):
         """Covariance matrix in numpy array format.
 
-        Note that a ``numpy.ndarray`` is returned, not a ``numpy.matrix``
+        Fixed parameters are included, the order follows :attr:`parameters`.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
         """
         return self.np_matrix(correlation=False, skip_fixed=False)
 
