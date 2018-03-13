@@ -17,7 +17,6 @@ help:
 	@echo '     coverage         Run tests and write coverage report'
 	@echo '     cython           Compile cython files'
 	@echo '     doc              Run Sphinx to generate HTML docs'
-	@echo '     doc-show         Open local HTML docs in browser'
 	@echo ''
 	@echo '     code-analysis    Run code analysis (flake8 and pylint)'
 	@echo '     flake8           Run code analysis (flake8)'
@@ -62,8 +61,10 @@ coverage: build
 cython:
 	find $(PROJECT) -name "*.pyx" -exec $(CYTHON) --cplus  {} \;
 
-doc-show:
-	open doc/_build/html/index.html
+doc/_build/html/index.html: iminuit/_libiminuit.so $(wildcard doc/*.rst)
+	{ cd doc; make html; }
+
+doc: doc/_build/html/index.html
 
 code-analysis: flake8 pylint
 
