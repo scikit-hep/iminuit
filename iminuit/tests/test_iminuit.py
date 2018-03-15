@@ -433,34 +433,75 @@ def test_reverse_limit():
         m.migrad()
 
 
-class TestMatrix:
+class TestOutputInterface:
     def setup(self):
         self.m = Minuit(func3, print_level=0, pedantic=False)
         self.m.migrad()
+        self.m.hesse()
+        self.m.minos()
+
+    def test_args(self):
+        actual = self.m.args
+        expected = [2., 5.]
+        assert_allclose(actual, expected, atol=1e-8)
 
     def test_matrix(self):
         actual = self.m.np_matrix()
         expected = [[5., 0.], [0., 1.]]
-        assert_allclose(actual, expected)
+        assert_allclose(actual, expected, atol=1e-8)
+
+    def test_matrix_correlation(self):
+        actual = self.m.matrix(correlation=True)
+        expected = [[1., 0.], [0., 1.]]
+        assert_allclose(actual, expected, atol=1e-8)
 
     def test_np_matrix(self):
         import numpy as np
         actual = self.m.np_matrix()
         expected = [[5., 0.], [0., 1.]]
-        assert_allclose(actual, expected)
+        assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
 
-    def test_matrix_correlation(self):
-        actual = self.m.matrix(correlation=True)
-        expected = [[1., 0.], [0., 1.]]
-        assert_allclose(actual, expected)
+    def test_np_values(self):
+        import numpy as np
+        actual = self.m.np_values()
+        expected = [2., 5.]
+        assert_allclose(actual, expected, atol=1e-8)
+        assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2,)
+
+    def test_np_errors(self):
+        import numpy as np
+        actual = self.m.np_errors()
+        expected = [5.**0.5, 1.]
+        assert_allclose(actual, expected, atol=1e-8)
+        assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2,)
+
+    def test_np_merrors(self):
+        import numpy as np
+        actual = self.m.np_merrors()
+        expected = [[5.**0.5, 1.], [5.**0.5, 1.]]
+        assert_allclose(actual, expected, atol=1e-8)
+        assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
+
+    def test_np_covariance(self):
+        import numpy as np
+        actual = self.m.np_covariance()
+        expected = [[5., 0.], [0., 1.]]
+        assert_allclose(actual, expected, atol=1e-8)
+        assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
 
     def test_np_matrix_correlation(self):
         import numpy as np
         actual = self.m.np_matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]
-        assert_allclose(actual, expected)
+        assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
 
 
 def test_chi2_fit():
