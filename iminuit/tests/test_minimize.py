@@ -3,6 +3,7 @@ from iminuit import minimize
 from iminuit.tests.utils import assert_allclose
 import numpy as np
 
+
 def func(x, *args):
     c = args[0] if args else 1
     return c + x[0] ** 2 + (x[1] - 1) ** 2 + (x[2] - 2) ** 2
@@ -12,7 +13,7 @@ def grad(x, *args):
 
 
 def test_simple():
-    result = minimize(func, np.ones(3))
+    result = minimize(func, (1, 1, 1))
     assert_allclose(result.x, (0, 1, 2), atol=1e-8)
     assert_allclose(result.fun, 1)
     assert(result.nfev > 0)
