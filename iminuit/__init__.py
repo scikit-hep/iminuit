@@ -18,6 +18,7 @@ Further information:
 
 __all__ = [
     'Minuit',
+    'minimize',
     'describe',
     'Struct',
     'InitialParamWarning',
@@ -26,6 +27,7 @@ __all__ = [
 ]
 
 from iminuit._libiminuit import *
+from iminuit.minimize import minimize
 from iminuit.util import describe, Struct
 from iminuit.iminuit_warnings import *
 from iminuit.info import __version__
