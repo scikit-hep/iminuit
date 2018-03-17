@@ -100,13 +100,12 @@ def arguments_from_funccode(f):
     """
     fc = fc_or_c(f)
     vnames = fc.co_varnames
+    nargs = fc.co_argcount
     # bound method and fake function will be None
-    if is_bound(f):
-        # bound method dock off self
-        return list(vnames[1:fc.co_argcount])
-    else:
-        # unbound and fakefunc
-        return list(vnames[:fc.co_argcount])
+    args = vnames[1:nargs] if is_bound(f) else vnames[:nargs]
+    if not args:
+        raise RuntimeError('Function has variable number of arguments')
+    return list(args)
 
 
 def arguments_from_call_funccode(f):

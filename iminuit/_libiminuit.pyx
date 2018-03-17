@@ -287,8 +287,8 @@ cdef class Minuit:
 
         args = describe(fcn) if forced_parameters is None \
             else forced_parameters
+        self.narg = len(args)
         self._check_extra_args(args, kwds)
-        narg = len(args)
         self.fcn = fcn
         self.grad_fcn = grad_fcn
 
@@ -344,8 +344,6 @@ cdef class Minuit:
         self.fitarg.update({'error_' + k: v for k, v in self.initialerror.items()})
         self.fitarg.update({'limit_' + k: v for k, v in self.initiallimit.items()})
         self.fitarg.update({'fix_' + k: v for k, v in self.initialfix.items()})
-
-        self.narg = len(self.parameters)
 
         self.merrors_struct = {}
 

@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 from iminuit.util import describe
 from iminuit.tests.utils import requires_dependency
 from math import ldexp
+import pytest
 
 
 # simple function
@@ -68,6 +69,15 @@ def test_fakefunc():
 # builtin (parsing doc)
 def test_builtin():
     assert describe(ldexp, True) == ['x', 'i']
+
+
+def test_lambda():
+    assert describe(lambda a,b: 0, True) == ['a', 'b']
+
+
+def test_variadic():
+    with pytest.raises(TypeError):
+        describe(lambda *args: 0, True)
 
 
 @requires_dependency('Cython')
