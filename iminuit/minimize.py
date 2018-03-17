@@ -79,9 +79,20 @@ def minimize(fun, x0, args=(), method=None,
                **kwargs)
     m.migrad(ncall=maxiter)
 
+    message = "Optimization terminated successfully."
+    success = m.migrad_ok()
+    if not success:
+        message = "Optimization failed."
+        fmin = m.get_fmin()
+        if fmin.has_reached_call_limit:
+            message +=" Call limit was reached."
+        if fmin.is_above_max_edm:
+            message += " Estimated distance to minimum too large."
+
     return OptimizeResult(x=m.np_values(),
-                          success=m.migrad_ok(),
+                          success=success,
                           fun=m.fval,
                           hess_inv=m.np_covariance(),
+                          message=message,
                           nfev=wrapped.nfev,
                           njev=wrapped.njev)
