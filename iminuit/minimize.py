@@ -68,27 +68,26 @@ def minimize(fun, x0, args=(), method=None,
     if tol:
         warnings.warn("tol argument has no effect on Minuit")
 
-    print_level = 0
+    kwargs = dict(errordef=1, print_level=0)
+    if jac:
+        kwargs['grad_fcn'] = wrapped.grad
+
     maxiter = 10000
     if options:
         if "disp" in options:
-            print_level = 1
+            kwargs['print_level'] = 1
         if "maxiter" in options:
             maxiter = options["maxiter"]
 
     names = ['%i'%i for i in range(len(x0))]
-    kwargs = {}
     for i, x in enumerate(names):
         kwargs[x] = x0[i]
         kwargs['error_'+x] = 0.1 if x0[i] == 0 else abs(0.1 * x0[i])
         if bounds:
             kwargs['limit_'+x] = bounds[i]
+    kwargs['forced_parameters'] = names
 
-    m = Minuit(wrapped.func,
-               grad_fcn=wrapped.grad if jac else None,
-               forced_parameters=names,
-               print_level=0, errordef=1,
-               **kwargs)
+    m = Minuit(wrapped.func, **kwargs)
     m.migrad(ncall=maxiter)
 
     message = "Optimization terminated successfully."
