@@ -102,7 +102,7 @@ def arguments_from_funccode(f):
     vnames = fc.co_varnames
     nargs = fc.co_argcount
     # bound method and fake function will be None
-    args = vnames[1:nargs] if is_bound(f) else vnames[:nargs]
+    args = vnames[1 if is_bound(f) else 0:nargs]
     if not args:
         raise RuntimeError('Function has variable number of arguments')
     return list(args)
