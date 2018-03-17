@@ -1,7 +1,17 @@
 from iminuit import Minuit
-from scipy.optimize import OptimizeResult
-from numpy import array
 import warnings
+
+
+class OptimizeResult(dict):
+    """Imitation of scipy.optimize.OptimizeResult"""
+    def __init__(self, **kwargs):
+        dict.__init__(self, **kwargs)
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
 
 def minimize(fun, x0, args=(), method=None,
              jac=None, hess=None, hessp=None,
@@ -14,6 +24,8 @@ def minimize(fun, x0, args=(), method=None,
 
     The only supported method is 'Migrad'.
     """
+    from numpy import array
+
     if method:
         m = method.lower()
         if m != "migrad":
