@@ -24,7 +24,7 @@ def minimize(fun, x0, args=(), method=None,
 
     The only supported method is 'Migrad'.
     """
-    from numpy import array
+    from numpy import array as np_array
 
     if method:
         m = method.lower()
@@ -48,13 +48,13 @@ def minimize(fun, x0, args=(), method=None,
             self.callback = callback
         def func(self, *args):
             self.nfev += 1
-            x = array(args)
+            x = np_array(args)
             if self.callback:
                 self.callback(x)
             return self.fun(x, *self.args)
         def grad(self, *args):
             self.njev += 1
-            x = array(args)
+            x = np_array(args)
             return self.jac(x, *self.args)
 
     wrapped = Wrapped(fun, jac, args, callback)
