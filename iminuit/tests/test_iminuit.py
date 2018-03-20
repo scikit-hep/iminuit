@@ -65,6 +65,10 @@ def func6(x, m, s, A):
     return A / ((x - m) ** 2 + s ** 2)
 
 
+def func7(*args): # no signature
+    return (args[0] - 1) ** 2 + (args[1] - 2) ** 2
+
+
 data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
           3.372, 2.377, 4.307, 2.784, 3.328, 2.143, 1.402, 1.44,
           1.313, 1.682, 0.886, 0.0, 0.266, 0.3]
@@ -102,6 +106,17 @@ def test_f3():
 
 def test_lambda():
     functesthelper(lambda x, y: (x - 2.) ** 2 + (y - 5.) ** 2 + 10)
+
+
+def test_nosignature():
+    with pytest.raises(TypeError):
+        Minuit(func7)
+    m = Minuit(func7, forced_parameters=('x', 'y'),
+               pedantic=False, print_level=0)
+    m.migrad()
+    val = m.values
+    assert_allclose((val['x'], val['y'], m.fval), (1, 2, 0), atol=1e-8)
+    assert m.migrad_ok()
 
 
 def test_typo():
