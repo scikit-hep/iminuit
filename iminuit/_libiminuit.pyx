@@ -20,15 +20,17 @@ from iminuit import _plotting
 include "Minuit2.pxi"
 include "Minuit2Struct.pxi"
 
+# if USE_NUMPY:
+cimport numpy as np
+import numpy as np
+np.import_array()
+from collections import Sequence
+
 __all__ = ['Minuit']
 
 # Our wrappers
 ctypedef FCNGradientBase* FCNGradientBasePtr
-ctypedef CallCounterMixin* CallCounterMixinPtr
-
-#look up map with default
-cdef maplookup(m, k, d):
-    return m[k] if k in m else d
+ctypedef IMinuitMixin* IMinuitMixinPtr
 
 cdef class Minuit:
     # Standard stuff
@@ -38,6 +40,8 @@ cdef class Minuit:
 
     cdef readonly object grad_fcn
     """Gradient function of the cost function"""
+
+    cdef bint _use_ufunc
 
     # TODO: remove or expose?
     # cdef readonly object varname #:variable names
@@ -49,13 +53,12 @@ cdef class Minuit:
     """Map variable name to position"""
 
     # Initial settings
-    cdef object initialvalue  #:hold initial values
-    cdef object initialerror  #:hold initial errors
-    cdef object initiallimit  #:hold initial limits
-    cdef object initialfix  #:hold initial fix state
+    cdef object initial_value  #:hold initial values
+    cdef object initial_error  #:hold initial errors
+    cdef object initial_limit  #:hold initial limits
+    cdef object initial_fix  #:hold initial fix state
 
     # C++ object state
-    # TODO find a nicer fix: cdef PythonFCN*pyfcn  #:FCN
     cdef FCNBase*pyfcn  #:FCN
     cdef MnApplication*minimizer  #:migrad
     cdef FunctionMinimum*cfmin  #:last migrad result
@@ -289,6 +292,19 @@ cdef class Minuit:
             else forced_parameters
         self.narg = len(args)
         self._check_extra_args(args, kwds)
+        self._use_ufunc = False
+        if len(args) == 1 and args[0] in kwds:
+            v = kwds[args[0]]
+            self._use_ufunc = (isinstance(v, Sequence) or
+                               isinstance(v, np.ndarray))
+
+        if self._use_ufunc:
+            arg = args[0]
+            narg = len(kwds[arg])
+            args = ["%s[%i]" % (arg, i) for i in range(narg)]
+        else:
+            narg = len(args)
+
         self.fcn = fcn
         self.grad_fcn = grad_fcn
 
@@ -301,10 +317,38 @@ cdef class Minuit:
 
         self.args, self.values, self.errors = None, None, None
 
-        self.initialvalue = {x: maplookup(kwds, x, 0.) for x in args}
-        self.initialerror = {x: maplookup(kwds, 'error_' + x, 1.) for x in args}
-        self.initiallimit = {x: maplookup(kwds, 'limit_' + x, None) for x in args}
-        self.initialfix = {x: maplookup(kwds, 'fix_' + x, False) for x in args}
+        if self._use_ufunc:
+            # Cython forces me to use repeatative code here, because
+            # setattr and getattr don't work
+            key = arg
+            if key in kwds:
+                v = kwds[key]
+                self.initial_value = {x: float(v[i]) for i,x in enumerate(args)}
+            else:
+                self.initial_value = {x: 0. for x in args}
+            key = "error_" + arg
+            if key in kwds:
+                v = kwds[key]
+                self.initial_error = {x: float(v[i]) for i,x in enumerate(args)}
+            else:
+                self.initial_error = {x: 1. for x in args}
+            key = "limit_" + arg
+            if key in kwds:
+                v = kwds[key]
+                self.initial_limit = {x: v[i] for i,x in enumerate(args)}
+            else:
+                self.initial_limit = {x: None for x in args}
+            key = "fix_" + arg
+            if key in kwds:
+                v = kwds[key]
+                self.initial_fix = {x: bool(v[i]) for i,x in enumerate(args)}
+            else:
+                self.initial_fix = {x: False for x in args}
+        else:
+            self.initial_value = {x: kwds.get(x, 0.) for x in args}
+            self.initial_error = {x: kwds.get("error_" + x, 1.) for x in args}
+            self.initial_limit = {x: kwds.get("limit_" + x, None) for x in args}
+            self.initial_fix = {x: kwds.get("fix_" + x, False) for x in args}
 
         self.pyfcn = NULL
         self.minimizer = NULL
@@ -328,9 +372,9 @@ cdef class Minuit:
         self.throw_nan = throw_nan
 
         self.parameters = args
-        self.args = tuple(self.initialvalue[k] for k in args)
-        self.values = {k: self.initialvalue[k] for k in args}
-        self.errors = {k: self.initialerror[k] for k in args}
+        self.args = tuple(self.initial_value[k] for k in args)
+        self.values = {k: self.initial_value[k] for k in args}
+        self.errors = {k: self.initial_error[k] for k in args}
         self.covariance = None
         self.fval = 0.
         self.ncalls = 0
@@ -340,12 +384,22 @@ cdef class Minuit:
         if pedantic: self.pedantic(kwds)
 
         self.fitarg = {}
-        self.fitarg.update(self.initialvalue)
-        self.fitarg.update({'error_' + k: v for k, v in self.initialerror.items()})
-        self.fitarg.update({'limit_' + k: v for k, v in self.initiallimit.items()})
-        self.fitarg.update({'fix_' + k: v for k, v in self.initialfix.items()})
+        self.fitarg.update(self.initial_value)
+        self.fitarg.update({'error_' + k: v for k, v in self.initial_error.items()})
+        self.fitarg.update({'limit_' + k: v for k, v in self.initial_limit.items()})
+        self.fitarg.update({'fix_' + k: v for k, v in self.initial_fix.items()})
 
         self.merrors_struct = {}
+
+
+    @staticmethod
+    def from_ufunc(fcn, start, **kwds):
+        for key in ("error", "limit", "fix"):
+            if key in kwds:
+                kwds[key+"_x"] = kwds[key]
+                del kwds[key]
+        return Minuit(fcn, x=start, forced_parameters=('x',), **kwds)
+
 
     def migrad(self, int ncall=10000, resume=True, int nsplit=1, precision=None):
         """Run migrad.
@@ -412,7 +466,7 @@ cdef class Minuit:
         self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
 
         if not resume:
-            dynamic_cast[CallCounterMixinPtr](self.pyfcn).resetNumCall()
+            dynamic_cast[IMinuitMixinPtr](self.pyfcn).resetNumCall()
 
         del self.cfmin  #remove the old one
 
@@ -606,7 +660,6 @@ cdef class Minuit:
 
             2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
         """
-        import numpy as np
         matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
         return np.array(matrix, dtype=np.double)
 
@@ -619,7 +672,6 @@ cdef class Minuit:
 
             ``numpy.ndarray`` of shape (N,).
          """
-        import numpy as np
         return np.array(self.args, dtype=np.double)
 
     def np_errors(self):
@@ -631,7 +683,6 @@ cdef class Minuit:
 
             ``numpy.ndarray`` of shape (N,).
         """
-        import numpy as np
         a = np.empty(len(self.parameters), dtype=np.double)
         for i, k in enumerate(self.parameters):
             a[i] = self.errors[k]
@@ -652,7 +703,6 @@ cdef class Minuit:
 
             ``numpy.ndarray`` of shape (2, N).
         """
-        import numpy as np
         # array format follows matplotlib conventions, see pyplot.errorbar
         a = np.empty((2, len(self.parameters)), dtype=np.double)
         for i, k in enumerate(self.parameters):
@@ -677,7 +727,7 @@ cdef class Minuit:
             raise RuntimeError('Cannot find %s in list of variables.')
         cdef unsigned int index = self.var2pos[vname]
         if self.last_upst is NULL:
-            return self.initialfix[vname]
+            return self.initial_fix[vname]
         else:
             return self.last_upst.MinuitParameters()[index].IsFixed()
 
@@ -712,19 +762,19 @@ cdef class Minuit:
             mps = Struct(
                 number=i + 1,
                 name=vname,
-                value=self.initialvalue[vname],
-                error=self.initialerror[vname],
+                value=self.initial_value[vname],
+                error=self.initial_error[vname],
                 is_const=False,
-                is_fixed=self.initialfix[vname],
-                has_limits=self.initiallimit[vname] is not None,
-                lower_limit=self.initiallimit[vname][0]
-                if self.initiallimit[vname] is not None else None,
-                upper_limit=self.initiallimit[vname][1]
-                if self.initiallimit[vname] is not None else None,
-                has_lower_limit=self.initiallimit[vname] is not None
-                                and self.initiallimit[vname][0] is not None,
-                has_upper_limit=self.initiallimit[vname] is not None
-                                and self.initiallimit[vname][1] is not None
+                is_fixed=self.initial_fix[vname],
+                has_limits=self.initial_limit[vname] is not None,
+                lower_limit=self.initial_limit[vname][0]
+                if self.initial_limit[vname] is not None else None,
+                upper_limit=self.initial_limit[vname][1]
+                if self.initial_limit[vname] is not None else None,
+                has_lower_limit=self.initial_limit[vname] is not None
+                                and self.initial_limit[vname][0] is not None,
+                has_upper_limit=self.initial_limit[vname] is not None
+                                and self.initial_limit[vname][1] is not None
             )
             tmp.append(mps)
         return tmp
@@ -746,7 +796,7 @@ cdef class Minuit:
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
         sfmin = cfmin2struct(self.cfmin)
-        ncalls = 0 if self.pyfcn is NULL else dynamic_cast[CallCounterMixinPtr](self.pyfcn).getNumCall()
+        ncalls = 0 if self.pyfcn is NULL else dynamic_cast[IMinuitMixinPtr](self.pyfcn).getNumCall()
 
         self.frontend.print_hline()
         self.frontend.print_fmin(sfmin, self.tol, ncalls)
@@ -823,7 +873,7 @@ cdef class Minuit:
 
     def get_num_call_fcn(self):
         """Total number of calls to FCN (not just the last operation)"""
-        return 0 if self.pyfcn is NULL else dynamic_cast[CallCounterMixinPtr](self.pyfcn).getNumCall()
+        return 0 if self.pyfcn is NULL else dynamic_cast[IMinuitMixinPtr](self.pyfcn).getNumCall()
 
     def migrad_ok(self):
         """Check if minimum is valid"""
@@ -837,11 +887,11 @@ cdef class Minuit:
 
     def list_of_fixed_param(self):
         """List of (initially) fixed parameters"""
-        return [v for v in self.parameters if self.initialfix[v]]
+        return [v for v in self.parameters if self.initial_fix[v]]
 
     def list_of_vary_param(self):
         """List of (initially) float varying parameters"""
-        return [v for v in self.parameters if not self.initialfix[v]]
+        return [v for v in self.parameters if not self.initial_fix[v]]
 
 
     # Various utility functions
@@ -850,18 +900,33 @@ cdef class Minuit:
         """Construct or re-construct FCN"""
         del self.pyfcn
         if self.grad_fcn is None:
-            self.pyfcn = new PythonFCN(
-                self.fcn,
-                self.errordef,
-                self.parameters,
-                self.throw_nan)
+            if self._use_ufunc:
+                self.pyfcn = new NumpyFCN(
+                    self.fcn,
+                    self.errordef,
+                    self.parameters,
+                    self.throw_nan)
+            else:
+                self.pyfcn = new PythonFCN(
+                    self.fcn,
+                    self.errordef,
+                    self.parameters,
+                    self.throw_nan)
         else:
-            self.pyfcn = new PythonGradientFCN(
-                self.fcn,
-                self.grad_fcn,
-                self.errordef,
-                self.parameters,
-                self.throw_nan)
+            if self._use_ufunc:
+                self.pyfcn = new NumpyGradientFCN(
+                    self.fcn,
+                    self.grad_fcn,
+                    self.errordef,
+                    self.parameters,
+                    self.throw_nan)
+            else:
+                self.pyfcn = new PythonGradientFCN(
+                    self.fcn,
+                    self.grad_fcn,
+                    self.errordef,
+                    self.parameters,
+                    self.throw_nan)
 
     def is_clean_state(self):
         """Check if minuit is in a clean state, ie. no migrad call"""
@@ -891,16 +956,20 @@ cdef class Minuit:
                 warn(('Parameter %s is floating but does not '
                       'have initial step size. Assume 1.') % (vn),
                      InitialParamWarning)
+        parameters = self.parameters
+        if self._use_ufunc:
+            p = self.parameters[0]
+            parameters = (p[:p.index("[")],)
         for vlim in extract_limit(kwds):
-            if param_name(vlim) not in self.parameters:
+            if param_name(vlim) not in parameters:
                 warn(('%s is given. But there is no parameter %s. '
                       'Ignore.' % (vlim, param_name(vlim)), InitialParamWarning))
         for vfix in extract_fix(kwds):
-            if param_name(vfix) not in self.parameters:
+            if param_name(vfix) not in parameters:
                 warn(('%s is given. But there is no parameter %s. \
                     Ignore.' % (vfix, param_name(vfix)), InitialParamWarning))
         for verr in extract_error(kwds):
-            if param_name(verr) not in self.parameters:
+            if param_name(verr) not in parameters:
                 warn(('%s float. But there is no parameter %s. \
                     Ignore.') % (verr, param_name(verr)), InitialParamWarning)
 
@@ -1377,24 +1446,34 @@ cdef class Minuit:
         cdef object lb
         cdef object ub
         for v in self.parameters:
-            ret.Add(v, self.initialvalue[v], self.initialerror[v])
+            ret.Add(v, self.initial_value[v], self.initial_error[v])
 
         for v in self.parameters:
-            if self.initiallimit[v] is not None:
-                lb, ub = self.initiallimit[v]
-                if lb is not None and ub is not None and lb >= ub:
+            if self.initial_limit[v] is not None:
+                inf = float("infinity")
+                lb, ub = self.initial_limit[v]
+                if lb is None:
+                    lb = -inf
+                if ub is None:
+                    ub = inf
+                if lb >= ub:
                     raise ValueError(
                         'limit for parameter %s is invalid. %r' % (v, (lb, ub)))
-                if lb is not None and ub is None: ret.SetLowerLimit(v, lb)
-                if ub is not None and lb is None: ret.SetUpperLimit(v, ub)
-                if lb is not None and ub is not None: ret.SetLimits(v, lb, ub)
+                if lb == -inf and ub == inf:
+                    pass
+                elif ub == inf:
+                    ret.SetLowerLimit(v, lb)
+                elif lb == -inf:
+                    ret.SetUpperLimit(v, ub)
+                else:
+                    ret.SetLimits(v, lb, ub)
                 #need to set value again
                 #taking care of internal/external transformation
-                ret.SetValue(v, self.initialvalue[v])
-                ret.SetError(v, self.initialerror[v])
+                ret.SetValue(v, self.initial_value[v])
+                ret.SetError(v, self.initial_error[v])
 
         for v in self.parameters:
-            if self.initialfix[v]:
+            if self.initial_fix[v]:
                 ret.Fix(v)
         return ret
 

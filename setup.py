@@ -59,7 +59,15 @@ class PyTest(TestCommand):
 # Static linking
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cxx'))
-minuit_header = join(cwd, 'Minuit/inc')
+minuit_header = [join(cwd, 'Minuit/inc')]
+
+try:
+    import numpy as np
+    minuit_header.append(np.get_include())
+    USE_NUMPY = True
+except ImportError:
+    print('Numpy not available ... Numpy support is disabled')
+    USE_NUMPY = False
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
@@ -75,7 +83,7 @@ ext = '.pyx' if USE_CYTHON else '.cpp'
 
 libiminuit = Extension('iminuit._libiminuit',
                        sources=['iminuit/_libiminuit' + ext] + minuit_src,
-                       include_dirs=[minuit_header],
+                       include_dirs=minuit_header,
                        libraries=[],
                        # extra_compile_args=['-Wall', '-Wno-sign-compare',
                        #                      '-Wno-write-strings'],

@@ -5,6 +5,7 @@ from math import sqrt
 import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
+import numpy as np
 
 
 class Func_Code:
@@ -279,6 +280,7 @@ def test_minos_single():
     m.minos('x')
     assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
     assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
+
 
 def test_minos_single_with_gradient():
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
