@@ -452,7 +452,7 @@ cdef class Minuit:
 
 
     @staticmethod
-    def from_array_func(fcn, start, **kwds):
+    def from_array_func(fcn, start, error=None, limit=None, fix=None, **kwds):
         """
         Construct minuit object from given *fcn* and start sequence.
 
@@ -477,20 +477,25 @@ cdef class Minuit:
             **limit**: Sequence of limits that restrict the range in which a
             parameter is varied by minuit. Limits can be set in several ways.
             With inf = float("infinity") we get:
+
             - No limit: None, (-inf, inf), (None, None)
+
             - Lower limit: (x, None), (x, inf) [replace x with a number]
+
             - Upper limit: (None, x), (-inf, x) [replace x with a number]
 
             **fix**: Sequence of boolean values. Whether to fix a parameter
             to the starting value.
 
-            All other keywords are passed forward to :meth:`__init__`, see
+            All other keywords are forwarded to :class:`Minuit`, see
             its documentation.
         """
-        for key in ("error", "limit", "fix"):
-            if key in kwds:
-                kwds[key+"_x"] = kwds[key]
-                del kwds[key]
+        if error:
+            kwds["error_x"] = error
+        if limit:
+            kwds["limit_x"] = limit
+        if fix:
+            kwds["fix_x"] = fix
         return Minuit(fcn, x=start, forced_parameters=('x',), **kwds)
 
 
