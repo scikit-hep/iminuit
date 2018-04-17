@@ -1,3 +1,4 @@
+iminuit/config.pxi
 *.pyxbldc
 *.root
 .DS_Store

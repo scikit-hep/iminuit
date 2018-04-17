@@ -11,6 +11,7 @@ from distutils.ccompiler import CCompiler
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import MSVCCompiler
 
+
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
 compiler_opts = {
@@ -64,10 +65,13 @@ minuit_header = [join(cwd, 'Minuit/inc')]
 try:
     import numpy as np
     minuit_header.append(np.get_include())
-    USE_NUMPY = True
+    HAVE_NUMPY = 1
 except ImportError:
     print('Numpy not available ... Numpy support is disabled')
-    USE_NUMPY = False
+    HAVE_NUMPY = 0
+
+with open('iminuit/config.pxi', "w") as f:
+    f.write("DEF HAVE_NUMPY=%i\n" % HAVE_NUMPY)
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
@@ -84,10 +88,8 @@ ext = '.pyx' if USE_CYTHON else '.cpp'
 libiminuit = Extension('iminuit._libiminuit',
                        sources=['iminuit/_libiminuit' + ext] + minuit_src,
                        include_dirs=minuit_header,
-                       libraries=[],
-                       # extra_compile_args=['-Wall', '-Wno-sign-compare',
-                       #                      '-Wno-write-strings'],
-                       extra_link_args=[])
+                       define_macros=[('HAVE_NUMPY', str(HAVE_NUMPY))]
+                       )
 extensions = [libiminuit]
 
 if USE_CYTHON:

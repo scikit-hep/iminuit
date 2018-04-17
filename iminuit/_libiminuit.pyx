@@ -17,14 +17,14 @@ from iminuit.iminuit_warnings import (InitialParamWarning,
 from iminuit.latex import LatexFactory
 from iminuit import _plotting
 
+include "config.pxi"
 include "Minuit2.pxi"
 include "Minuit2Struct.pxi"
 
-# if USE_NUMPY:
-cimport numpy as np
-import numpy as np
-np.import_array()
-from collections import Sequence
+IF HAVE_NUMPY:
+    cimport numpy as np
+    import numpy as np
+    np.import_array()
 
 __all__ = ['Minuit']
 
@@ -41,7 +41,7 @@ cdef class Minuit:
     cdef readonly object grad_fcn
     """Gradient function of the cost function"""
 
-    cdef bint _use_ufunc
+    cdef bint _use_array_fcn
 
     # TODO: remove or expose?
     # cdef readonly object varname #:variable names
@@ -292,13 +292,12 @@ cdef class Minuit:
             else forced_parameters
         self.narg = len(args)
         self._check_extra_args(args, kwds)
-        self._use_ufunc = False
+        self._use_array_fcn = False
         if len(args) == 1 and args[0] in kwds:
             v = kwds[args[0]]
-            self._use_ufunc = (isinstance(v, Sequence) or
-                               isinstance(v, np.ndarray))
+            self._use_array_fcn = hasattr(v, "__len__") and hasattr(v, "__getitem__")
 
-        if self._use_ufunc:
+        if self._use_array_fcn:
             arg = args[0]
             narg = len(kwds[arg])
             args = ["%s[%i]" % (arg, i) for i in range(narg)]
@@ -317,7 +316,7 @@ cdef class Minuit:
 
         self.args, self.values, self.errors = None, None, None
 
-        if self._use_ufunc:
+        if self._use_array_fcn:
             # Cython forces me to use repeatative code here, because
             # setattr and getattr don't work
             key = arg
@@ -393,7 +392,7 @@ cdef class Minuit:
 
 
     @staticmethod
-    def from_ufunc(fcn, start, **kwds):
+    def from_array_func(fcn, start, **kwds):
         for key in ("error", "limit", "fix"):
             if key in kwds:
                 kwds[key+"_x"] = kwds[key]
@@ -402,7 +401,8 @@ cdef class Minuit:
 
 
     def migrad(self, int ncall=10000, resume=True, int nsplit=1, precision=None):
-        """Run migrad.
+        """
+        Run migrad.
 
         Migrad is an age-tested(over 40 years old, no kidding), super
         robust and stable minimization algorithm. It even has
@@ -499,7 +499,8 @@ cdef class Minuit:
         return self.get_fmin(), self.get_param_states()
 
     def hesse(self):
-        """Run HESSE.
+        """
+        Run HESSE.
 
         HESSE estimates error matrix by the `second derivative at the minimim
         <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This error matrix
@@ -547,7 +548,8 @@ cdef class Minuit:
         return self.get_param_states()
 
     def minos(self, var = None, sigma = 1., unsigned int maxcall=1000):
-        """Run minos for parameter *var*.
+        """
+        Run minos for parameter *var*.
 
         If *var* is None it runs minos for all parameters
 
@@ -613,7 +615,9 @@ cdef class Minuit:
         return self.merrors_struct
 
     def matrix(self, correlation=False, skip_fixed=True):
-        """Error or correlation matrix in tuple or tuples format."""
+        """
+        Error or correlation matrix in tuple or tuples format.
+        """
         if self.last_upst is NULL:
             raise RuntimeError("Run migrad/hesse first")
         if not self.last_upst.HasCovariance():
@@ -637,92 +641,25 @@ cdef class Minuit:
         return ret
 
     def print_matrix(self, **kwds):
-        """Show error_matrix"""
+        """
+        Show error_matrix.
+        """
         matrix = self.matrix(correlation=True)
         vnames = self.list_of_vary_param()
         self.frontend.print_matrix(vnames, matrix, **kwds)
 
     def latex_matrix(self):
-        """Build :class:`LatexFactory` object with the correlation matrix
+        """
+        Build :class:`LatexFactory` object with the correlation matrix.
         """
         matrix = self.matrix(correlation=True)
         vnames = self.list_of_vary_param()
         return LatexFactory.build_matrix(vnames, matrix)
 
-    def np_matrix(self, correlation=False, skip_fixed=True):
-        """Error or correlation matrix in numpy array format.
-
-        The name of this function was chosen to be analogous to :meth:`matrix`,
-        it returns the same information in a different format. For
-        documentation on the arguments, please see :meth:`matrix`.
-
-        **Returns:**
-
-            2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
-        """
-        matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
-        return np.array(matrix, dtype=np.double)
-
-    def np_values(self):
-        """Parameter values in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,).
-         """
-        return np.array(self.args, dtype=np.double)
-
-    def np_errors(self):
-        """Hesse parameter errors in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,).
-        """
-        a = np.empty(len(self.parameters), dtype=np.double)
-        for i, k in enumerate(self.parameters):
-            a[i] = self.errors[k]
-        return a
-
-    def np_merrors(self):
-        """Minos parameter errors in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        The format of the produced array follows matplotlib conventions, as
-        in ``matplotlib.pyplot.errorbar``. The shape is (2, N) for N
-        parameters. The first row represents the downward error as a positive
-        offset from the center. Likewise, the second row represents the
-        upward error as a positive offset from the center.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (2, N).
-        """
-        # array format follows matplotlib conventions, see pyplot.errorbar
-        a = np.empty((2, len(self.parameters)), dtype=np.double)
-        for i, k in enumerate(self.parameters):
-            a[0, i] = -self.merrors[(k, -1.0)]
-            a[1, i] = self.merrors[(k, 1.0)]
-        return a
-
-    def np_covariance(self):
-        """Covariance matrix in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
-        """
-        return self.np_matrix(correlation=False, skip_fixed=False)
-
     def is_fixed(self, vname):
-        """Check if variable *vname* is (initially) fixed"""
+        """
+        Check if variable *vname* is (initially) fixed.
+        """
         if vname not in self.parameters:
             raise RuntimeError('Cannot find %s in list of variables.')
         cdef unsigned int index = self.var2pos[vname]
@@ -780,17 +717,23 @@ cdef class Minuit:
         return tmp
 
     def print_initial_param(self, **kwds):
-        """Print initial parameters"""
+        """
+        Print initial parameters.
+        """
         p = self._prepare_initial_param()
         self.frontend.print_param(p, {}, **kwds)
 
     def latex_initial_param(self):
-        """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
+        """
+        Build :class:`iminuit.latex.LatexTable` for initial parameter.
+        """
         p = self._prepare_initial_param()
         return LatexFactory.build_param_table(p, {})
 
     def print_fmin(self):
-        """Print current function minimum state"""
+        """
+        Print current function minimum state.
+        """
         #cdef MnUserParameterState ust = MnUserParameterState(
         #                               self.cfmin.UserState())
         if self.cfmin is NULL:
@@ -804,17 +747,22 @@ cdef class Minuit:
         self.frontend.print_hline()
 
     def print_all_minos(self):
-        """Print all minos errors (and its states)"""
+        """
+        Print all minos errors (and its states).
+        """
         for vname in self.list_of_vary_param():
             if vname in self.merrors_struct:
                 self.frontend.print_merror(vname, self.merrors_struct[vname])
 
     def set_up(self, double errordef):
-        """Alias for :meth:`set_errordef`"""
+        """
+        Alias for :meth:`set_errordef`.
+        """
         self.set_errordef(errordef)
 
     def set_errordef(self, double errordef):
-        """Set error parameter 1 for :math:`\chi^2` and 0.5 for log likelihood.
+        """
+        Set error parameter 1 for :math:`\chi^2` and 0.5 for log likelihood.
 
         See page 37 of http://hep.fi.infn.it/minuit.pdf
         """
@@ -826,7 +774,8 @@ cdef class Minuit:
             self.pyfcn.SetErrorDef(errordef)
 
     def set_strategy(self, value):
-        """Set strategy.
+        """
+        Set strategy.
 
         - 0 = fast
         - 1 = default
@@ -835,7 +784,8 @@ cdef class Minuit:
         self.strategy = value
 
     def set_print_level(self, lvl):
-        """Set print level.
+        """
+        Set print level.
 
         - 0 quiet
         - 1 normal
@@ -847,13 +797,17 @@ cdef class Minuit:
             self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
 
     def get_fmin(self):
-        """Current FunctionMinimum Struct"""
+        """
+        Current FunctionMinimum Struct.
+        """
         return cfmin2struct(self.cfmin) if self.cfmin is not NULL else None
 
     # Expose internal state using various structs
 
     def get_param_states(self):
-        """List of current MinuitParameter Struct for all parameters"""
+        """
+        List of current MinuitParameter Struct for all parameters.
+        """
         if self.last_upst is NULL:
             return self.get_initial_param_state()
         cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
@@ -864,44 +818,60 @@ cdef class Minuit:
         return ret
 
     def get_merrors(self):
-        """Dictionary of varname-> MinosError Struct"""
+        """
+        Dictionary of varname-> MinosError Struct.
+        """
         return self.merrors_struct
 
     def get_initial_param_state(self):
-        """Initial setting in form of MinuitParameter Struct"""
+        """
+        Initial setting in form of MinuitParameter Struct.
+        """
         raise NotImplementedError
 
     def get_num_call_fcn(self):
-        """Total number of calls to FCN (not just the last operation)"""
+        """
+        Total number of calls to FCN (not just the last operation).
+        """
         return 0 if self.pyfcn is NULL else dynamic_cast[IMinuitMixinPtr](self.pyfcn).getNumCall()
 
     def migrad_ok(self):
-        """Check if minimum is valid"""
+        """
+        Check if minimum is valid.
+        """
         return self.cfmin is not NULL and self.cfmin.IsValid()
 
     def matrix_accurate(self):
-        """Check if covariance (of the last migrad) is accurate"""
+        """
+        Check if covariance (of the last migrad) is accurate.
+        """
         return self.last_upst is not NULL and \
                self.cfmin is not NULL and \
                self.cfmin.HasAccurateCovar()
 
     def list_of_fixed_param(self):
-        """List of (initially) fixed parameters"""
+        """
+        List of (initially) fixed parameters.
+        """
         return [v for v in self.parameters if self.initial_fix[v]]
 
     def list_of_vary_param(self):
-        """List of (initially) float varying parameters"""
+        """
+        List of (initially) float varying parameters.
+        """
         return [v for v in self.parameters if not self.initial_fix[v]]
 
 
     # Various utility functions
 
     cdef construct_FCN(self):
-        """Construct or re-construct FCN"""
+        """
+        Construct or re-construct FCN.
+        """
         del self.pyfcn
         if self.grad_fcn is None:
-            if self._use_ufunc:
-                self.pyfcn = new NumpyFCN(
+            if self._use_array_fcn:
+                self.pyfcn = new PythonArrayFCN(
                     self.fcn,
                     self.errordef,
                     self.parameters,
@@ -913,8 +883,8 @@ cdef class Minuit:
                     self.parameters,
                     self.throw_nan)
         else:
-            if self._use_ufunc:
-                self.pyfcn = new NumpyGradientFCN(
+            if self._use_array_fcn:
+                self.pyfcn = new PythonArrayGradientFCN(
                     self.fcn,
                     self.grad_fcn,
                     self.errordef,
@@ -929,7 +899,9 @@ cdef class Minuit:
                     self.throw_nan)
 
     def is_clean_state(self):
-        """Check if minuit is in a clean state, ie. no migrad call"""
+        """
+        Check if minuit is in a clean state, ie. no migrad call.
+        """
         return self.pyfcn is NULL and \
                self.minimizer is NULL and self.cfmin is NULL
 
@@ -957,7 +929,7 @@ cdef class Minuit:
                       'have initial step size. Assume 1.') % (vn),
                      InitialParamWarning)
         parameters = self.parameters
-        if self._use_ufunc:
+        if self._use_array_fcn:
             p = self.parameters[0]
             parameters = (p[:p.index("[")],)
         for vlim in extract_limit(kwds):
@@ -974,7 +946,8 @@ cdef class Minuit:
                     Ignore.') % (verr, param_name(verr)), InitialParamWarning)
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
-        """Calculate minos profile around the specified range.
+        """
+        Calculate minos profile around the specified range.
 
         That is Migrad minimum results with **vname** fixed at various places within **bound**.
 
@@ -1036,7 +1009,8 @@ cdef class Minuit:
 
     def draw_mnprofile(self, vname, bins=30, bound=2, subtract_min=False,
                        band=True, text=True):
-        """Draw minos profile around the specified range.
+        """
+        Draw minos profile around the specified range.
 
         It is obtained by finding Migrad results with **vname** fixed
         at various places within **bound**.
@@ -1075,7 +1049,8 @@ cdef class Minuit:
                                       band=band, text=text)
 
     def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
-        """Calculate cost function profile around specify range.
+        """
+        Calculate cost function profile around specify range.
 
         **Arguments:**
 
@@ -1125,7 +1100,8 @@ cdef class Minuit:
 
     def draw_profile(self, vname, bins=100, bound=2, args=None,
                      subtract_min=False, band=True, text=True):
-        """A convenient wrapper for drawing profile using matplotlib.
+        """
+        A convenient wrapper for drawing profile using matplotlib.
 
         .. note::
             This is not a real minos profile. It's just a simple 1D scan.
@@ -1157,7 +1133,8 @@ cdef class Minuit:
         return x, y
 
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
-        """2D contour scan.
+        """
+        2D contour scan.
 
         return contour of migrad result obtained by fixing all
         others parameters except **x** and **y** which are let to varied.
@@ -1246,7 +1223,8 @@ cdef class Minuit:
         return x_val, y_val, ret
 
     def mncontour(self, x, y, int numpoints=20, sigma=1.0):
-        """Minos contour scan.
+        """
+        Minos contour scan.
 
         A proper n **sigma** contour scan. This is the line
         where the minimum of fcn  with x,y is fixed at points on the line and
@@ -1311,7 +1289,8 @@ cdef class Minuit:
 
     def mncontour_grid(self, x, y, bins=100, nsigma=2, numpoints=20,
                        int sigma_res=4, edges=False):
-        """Compute gridded minos contour.
+        """
+        Compute gridded minos contour.
 
         **Arguments:**
 
@@ -1349,7 +1328,8 @@ cdef class Minuit:
 
     def draw_mncontour(self, x, y, bins=100, nsigma=2,
                        numpoints=20, sigma_res=4):
-        """Draw minos contour.
+        """
+        Draw minos contour.
 
         **Arguments:**
 
@@ -1375,7 +1355,8 @@ cdef class Minuit:
 
     def draw_contour(self, x, y, bins=20, bound=2, args=None,
                      show_sigma=False):
-        """Convenience wrapper for drawing contours.
+        """
+        Convenience wrapper for drawing contours.
 
         The argument is the same as :meth:`contour`.
         If `show_sigma=True`(Default), the label on the contour lines will show
@@ -1395,7 +1376,8 @@ cdef class Minuit:
                                       bound, args, show_sigma)
 
     cdef refreshInternalState(self):
-        """Refresh internal state attributes.
+        """
+        Refresh internal state attributes.
 
         These attributes should be in a function instead
         but kept here for PyMinuit compatibility
@@ -1438,7 +1420,8 @@ cdef class Minuit:
                              for k, v in self.merrors_struct.items()})
 
     cdef MnUserParameterState*initialParameterState(self) except *:
-        """Construct parameter state from initial array.
+        """
+        Construct parameter state from initial array.
 
         Caller is responsible for cleaning up the pointer.
         """
@@ -1478,7 +1461,8 @@ cdef class Minuit:
         return ret
 
     def _auto_frontend(self):
-        """Determine frontend automatically.
+        """
+        Determine frontend automatically.
 
         Use HTML frontend in IPython sessions and console frontend otherwise.
         """
@@ -1491,7 +1475,9 @@ cdef class Minuit:
             return ConsoleFrontend()
 
     def _check_extra_args(self, parameters, kwd):
-        """Check keyword arguments to find unwanted/typo keyword arguments"""
+        """
+        Check keyword arguments to find unwanted/typo keyword arguments.
+        """
         fixed_param = set('fix_' + p for p in parameters)
         limit_param = set('limit_' + p for p in parameters)
         error_param = set('error_' + p for p in parameters)
@@ -1503,3 +1489,81 @@ cdef class Minuit:
                 raise RuntimeError(
                     ('Cannot understand keyword %s. May be a typo?\n'
                      'The parameters are %r') % (k, parameters))
+
+    IF HAVE_NUMPY:
+        def np_matrix(self, correlation=False, skip_fixed=True):
+            """
+            Error or correlation matrix in numpy array format.
+
+            The name of this function was chosen to be analogous to :meth:`matrix`,
+            it returns the same information in a different format. For
+            documentation on the arguments, please see :meth:`matrix`.
+
+            **Returns:**
+
+                2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
+            """
+            matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
+            return np.array(matrix, dtype=np.double)
+
+        def np_values(self):
+            """
+            Parameter values in numpy array format.
+
+            Fixed parameters are included, the order follows :attr:`parameters`.
+
+            **Returns:**
+
+                ``numpy.ndarray`` of shape (N,).
+            """
+            return np.array(self.args, dtype=np.double)
+
+        def np_errors(self):
+            """
+            Hesse parameter errors in numpy array format.
+
+            Fixed parameters are included, the order follows :attr:`parameters`.
+
+            **Returns:**
+
+                ``numpy.ndarray`` of shape (N,).
+            """
+            a = np.empty(len(self.parameters), dtype=np.double)
+            for i, k in enumerate(self.parameters):
+                a[i] = self.errors[k]
+            return a
+
+        def np_merrors(self):
+            """
+            Minos parameter errors in numpy array format.
+
+            Fixed parameters are included, the order follows :attr:`parameters`.
+
+            The format of the produced array follows matplotlib conventions, as
+            in ``matplotlib.pyplot.errorbar``. The shape is (2, N) for N
+            parameters. The first row represents the downward error as a positive
+            offset from the center. Likewise, the second row represents the
+            upward error as a positive offset from the center.
+
+            **Returns:**
+
+                ``numpy.ndarray`` of shape (2, N).
+            """
+            # array format follows matplotlib conventions, see pyplot.errorbar
+            a = np.empty((2, len(self.parameters)), dtype=np.double)
+            for i, k in enumerate(self.parameters):
+                a[0, i] = -self.merrors[(k, -1.0)]
+                a[1, i] = self.merrors[(k, 1.0)]
+            return a
+
+        def np_covariance(self):
+            """
+            Covariance matrix in numpy array format.
+
+            Fixed parameters are included, the order follows :attr:`parameters`.
+
+            **Returns:**
+
+                ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
+            """
+            return self.np_matrix(correlation=False, skip_fixed=False)
