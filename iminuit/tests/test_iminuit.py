@@ -540,6 +540,8 @@ def test_num_call():
         def __call__(self, x):
             self.ncall += 1
             return x ** 2
+
+    # check that counting is accurate
     func = Func()
     m = Minuit(func, pedantic=False, print_level=0)
     m.migrad()
@@ -549,6 +551,15 @@ def test_num_call():
     func.ncall = 0
     m.migrad(resume=False)
     assert func.ncall ==  m.get_num_call_fcn()
+
+    ncall_without_limit = m.get_num_call_fcn()
+    # check that ncall argument limits function calls in migrad
+    # note1: Minuit only checks the ncall counter in units of one iteration
+    # step, therefore the call counter is in general not equal to ncall.
+    # note2: If you pass ncall=0, Minuit uses a heuristic value that depends
+    # on the number of parameters.
+    m.migrad(ncall=1, resume=False)
+    assert m.get_num_call_fcn() < ncall_without_limit
 
 
 def test_set_error_def():
