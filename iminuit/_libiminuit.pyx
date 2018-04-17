@@ -490,11 +490,11 @@ cdef class Minuit:
             All other keywords are forwarded to :class:`Minuit`, see
             its documentation.
         """
-        if error:
+        if error is not None:
             kwds["error_x"] = error
-        if limit:
+        if limit is not None:
             kwds["limit_x"] = limit
-        if fix:
+        if fix is not None:
             kwds["fix_x"] = fix
         return Minuit(fcn, x=start, forced_parameters=('x',), **kwds)
 
