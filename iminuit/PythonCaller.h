@@ -91,11 +91,11 @@ public:
         Py_DECREF(fcn);
     }
 
-    template <PyObject* (*Convert)(const std::vector<double>&)>
-    double scalar(const std::vector<double>& x,
+    double scalar(PyObject* (*convert)(const std::vector<double>&),
+                  const std::vector<double>& x,
                   const std::vector<std::string>& names,
                   const bool throw_nan) const {
-        PyObject* args = Convert(x); // no error can occur here
+        PyObject* args = convert(x); // no error can occur here
         PyObject* result = PyObject_Call(fcn, args, NULL);
         Py_DECREF(args);
 
@@ -131,11 +131,11 @@ public:
         return ret;
     }
 
-    template <PyObject* (*Convert)(const std::vector<double>&)>
-    std::vector<double> vector(const std::vector<double>& x,
+    std::vector<double> vector(PyObject* (*convert)(const std::vector<double>&),
+                               const std::vector<double>& x,
                                const std::vector<std::string>& names,
                                const bool throw_nan) const {
-        PyObject* args = Convert(x); // no error can occur here
+        PyObject* args = convert(x); // no error can occur here
         PyObject* result = PyObject_Call(fcn, args, NULL);
         Py_DECREF(args);
 
