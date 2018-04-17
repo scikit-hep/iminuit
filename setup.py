@@ -19,6 +19,7 @@ compiler_opts = {
     UnixCCompiler: dict(extra_compile_args=[
             '-Wno-shorten-64-to-32', '-Wno-null-conversion',
             '-Wno-parentheses', '-Wno-unused-variable', '-Wno-sign-compare',
+            '-W#warnings'
         ]),
     MSVCCompiler: dict(extra_compile_args=[
             '/EHsc',
