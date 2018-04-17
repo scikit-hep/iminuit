@@ -5,8 +5,10 @@
 #include <string>
 #include <vector>
 #include <Python.h>
-// #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION cython enforces old api
-#include "numpy/arrayobject.h"
+#if HAVE_NUMPY
+    // #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION cython enforces old api
+    #include "numpy/arrayobject.h"
+#endif
 
 #include <cmath>
 #include "Utils.h"
@@ -56,11 +58,15 @@ inline PyObject* vector2tuple(const std::vector<double>& x) {
 }
 
 inline PyObject* vector2array(const std::vector<double>& x) {
+#if HAVE_NUMPY
     npy_intp dims = x.size();
-    PyObject* array = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,
+    PyObject* seq = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,
                                                 const_cast<double*>(&x[0]));
+#else
+    PyObject* seq = vector2tuple(x);
+#endif
     PyObject* tuple = PyTuple_New(1);
-    PyTuple_SET_ITEM(tuple, 0, array); // steals ref
+    PyTuple_SET_ITEM(tuple, 0, seq); // steals ref
     return tuple; //new reference
 }
 

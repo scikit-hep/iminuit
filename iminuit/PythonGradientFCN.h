@@ -46,13 +46,13 @@ private:
     PythonCaller call_fcn, call_grad;
 };
 
-class NumpyGradientFCN :
+class PythonArrayGradientFCN :
     public FCNGradientBase,
     public IMinuitMixin {
 public:
-    NumpyGradientFCN() {} //for cython stack allocate
+    PythonArrayGradientFCN() {} //for cython stack allocate
 
-    NumpyGradientFCN(PyObject* fcn,
+    PythonArrayGradientFCN(PyObject* fcn,
         PyObject* gradfcn,
         double up,
         const std::vector<std::string>& names,
@@ -62,7 +62,7 @@ public:
         call_grad(gradfcn)
     {}
 
-    virtual ~NumpyGradientFCN() {}
+    virtual ~PythonArrayGradientFCN() {}
 
     virtual double operator()(const std::vector<double>& x) const{
         return call_fcn.scalar<vector2array>(x, names, throw_nan);

@@ -42,13 +42,13 @@ private:
     PythonCaller call_fcn;
 };
 
-class NumpyFCN :
+class PythonArrayFCN :
     public FCNBase,
     public IMinuitMixin {
 public:
-    NumpyFCN() {} //for cython stack allocate
+    PythonArrayFCN() {} //for cython stack allocate
 
-    NumpyFCN(PyObject* fcn,
+    PythonArrayFCN(PyObject* fcn,
               double up,
               const std::vector<std::string>& pname,
               bool thrownan = false) :
@@ -56,7 +56,7 @@ public:
         call_fcn(fcn)
     {}
 
-    virtual ~NumpyFCN() {}
+    virtual ~PythonArrayFCN() {}
 
     virtual double operator()(const std::vector<double>& x) const{
         return call_fcn.scalar<vector2array>(x, names, throw_nan);
