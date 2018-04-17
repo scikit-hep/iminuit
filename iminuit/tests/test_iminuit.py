@@ -77,7 +77,7 @@ def func8(x): # test array func interface
     return result
 
 
-def func8(x): # test ufunc support
+def func9(x): # test ufunc support
     return np.sum((x - 1) ** 2)
 
 
@@ -145,7 +145,7 @@ def test_array_function():
                  errordef=1,
                  print_level=0),
         ):
-        m = Minuit(func7, **kwargs)
+        m = Minuit(func8, **kwargs)
         m.migrad()
         v = m.values
         assert_allclose((v["x[0]"], v["x[1]"], v["x[2]"]),
@@ -162,7 +162,7 @@ def test_from_array_func():
     # test wtih minimal and maximal settings
     limit = np.zeros((3, 2))
     limit[:,1] = np.inf
-    m = Minuit.from_array_func(func7, np.ones(3),
+    m = Minuit.from_array_func(func8, np.ones(3),
                                error=np.ones(3),
                                limit=limit,
                                fix=np.zeros(3),
@@ -182,7 +182,7 @@ def test_from_array_func():
 
 @requires_method(Minuit, "np_values")
 def test_numpy_ufunc_support():
-    m = Minuit.from_array_func(func8, np.ones(3),
+    m = Minuit.from_array_func(func9, np.ones(3),
                                pedantic=False,
                                print_level=0)
     m.migrad()
