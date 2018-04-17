@@ -77,6 +77,10 @@ def func8(x): # test array func interface
     return result
 
 
+def func8(x): # test ufunc support
+    return np.sum((x - 1) ** 2)
+
+
 data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
           3.372, 2.377, 4.307, 2.784, 3.328, 2.143, 1.402, 1.44,
           1.313, 1.682, 0.886, 0.0, 0.266, 0.3]
@@ -133,6 +137,9 @@ def test_array_function():
     limits[:,1] = np.inf
     for kwargs in (
             dict(x=(1, 1, 1), pedantic=False, print_level=0),
+            dict(error_x=(1, 1, 1), pedantic=False, print_level=0),
+            dict(limit_x=((0, 2), (0, 2), (0, 2)), pedantic=False, print_level=0),
+            dict(fix_x=(False, False, False), pedantic=False, print_level=0),
             dict(x=np.ones(3), error_x=np.ones(3),
                  limit_x=limits, fix_x=np.zeros(3),
                  errordef=1,
@@ -142,7 +149,7 @@ def test_array_function():
         m.migrad()
         v = m.values
         assert_allclose((v["x[0]"], v["x[1]"], v["x[2]"]),
-                        (1, 1, 1))
+                        (1, 1, 1), atol=1e-2)
         m.hesse()
         c = m.covariance
         assert_allclose((c[("x[0]", "x[0]")],
@@ -164,13 +171,26 @@ def test_from_array_func():
     m.migrad()
     v = m.values
     assert_allclose((v["x[0]"], v["x[1]"], v["x[2]"]),
-                    (1, 1, 1), atol=1e-2)
+                    (1, 1, 1))
     m.hesse()
     c = m.covariance
     assert_allclose((c[("x[0]", "x[0]")],
                      c[("x[1]", "x[1]")],
                      c[("x[2]", "x[2]")]),
-                    (1, 1, 1), atol=1e-2)
+                    (1, 1, 1))
+
+
+@requires_method(Minuit, "np_values")
+def test_numpy_ufunc_support():
+    m = Minuit.from_array_func(func8, np.ones(3),
+                               pedantic=False,
+                               print_level=0)
+    m.migrad()
+    v = m.np_values()
+    assert_allclose(v, (1, 1, 1))
+    c = m.np_covariance()
+    assert_allclose(np.diag(c), (1, 1, 1))
+
 
 
 def test_typo():
