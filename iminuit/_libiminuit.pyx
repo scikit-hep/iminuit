@@ -202,31 +202,32 @@ cdef class Minuit:
             a) Named parameters
 
             The function has several positional arguments, one for each fit
-            parameter. Example:
+            parameter. Example::
 
                 def func(a, b, c): ...
 
             The parameters a, b, c must accept a real number.
 
-            iminuit automagically finds detects parameters names. More
-            information about how the function signature is detected
-            can be found in :ref:`function-sig-label`
+            iminuit automagically detects parameters names. More information
+            about how the function signature is detected can be found in
+            :ref:`function-sig-label`
 
-            b) Array parameter
+            b) Sequence parameter
 
-            The function has a single argument which is a sequence. Example:
+            The function has a single argument which is a sequence. Example::
 
                 def func(x): ...
 
-            The argument x is a sequence. If iminuit is compiled with numpy
-            support, x will be a numpy array. Otherwise, x is a tuple. You
-            must pass at least one of "x", "error_x", "limit_x", or "fix_x"
-            with a sequence type, if you want to use this signature. iminuit
-            checks these arguments to detect the length of the sequence.
-            See "Parameter Keyword Arguments" below.
+            If iminuit is compiled with numpy support, x will be a numpy
+            array. Otherwise, x is a tuple. You must pass at least one of "x",
+            "error_x", "limit_x", or "fix_x" with a sequence type, if you want
+            to use this signature. iminuit checks whether the lengths of these
+            keyword arguments are the same. For more information, see
+            "Parameter Keyword Arguments" further down.
 
-            If you work with array parameters a lot, have a look at the static initializer method :meth:`from_array_func`, which adds some
-            convenience and safety for this use case.
+            If you work with array parameters a lot, have a look at the static
+            initializer method :meth:`from_array_func`, which adds some
+            convenience and safety to this use case.
 
         **Builtin Keyword Arguments:**
 
@@ -238,12 +239,12 @@ cdef class Minuit:
 
             - **frontend**: Minuit frontend. There are two builtin frontends.
 
-                1. ConsoleFrontend which is design to print out to terminal.
+                1. ConsoleFrontend is designed to print out to terminal.
 
-                2. HtmlFrontend which is designed to give a nice output in
+                2. HtmlFrontend is designed to give a nice output in an
                    IPython notebook session.
 
-              By Default, Minuit switch to HtmlFrontend automatically if it
+              By Default, Minuit switches to HtmlFrontend automatically if it
               is called in IPython session. It uses ConsoleFrontend otherwise.
 
             - **forced_parameters**: tell Minuit not to do function signature
