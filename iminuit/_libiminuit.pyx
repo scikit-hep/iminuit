@@ -195,10 +195,38 @@ cdef class Minuit:
 
         **Arguments:**
 
-            - **fcn**: the function to be optimized. Minuit automagically finds
-              parameters names. More information about how
-              Minuit detects function signature can be found in
-              :ref:`function-sig-label`
+            **fcn**, the function to be optimized, is the only required argument.
+
+            Two kinds of function signatures are understood.
+
+            a) Named parameters
+
+            The function has several positional arguments, one for each fit
+            parameter. Example:
+
+                def func(a, b, c): ...
+
+            The parameters a, b, c must accept a real number.
+
+            iminuit automagically finds detects parameters names. More
+            information about how the function signature is detected
+            can be found in :ref:`function-sig-label`
+
+            b) Array parameter
+
+            The function has a single argument which is a sequence. Example:
+
+                def func(x): ...
+
+            The argument x is a sequence. If iminuit is compiled with numpy
+            support, x will be a numpy array. Otherwise, x is a tuple. You
+            must pass at least one of "x", "error_x", "limit_x", or "fix_x"
+            with a sequence type, if you want to use this signature. iminuit
+            checks these arguments to detect the length of the sequence.
+            See "Parameter Keyword Arguments" below.
+
+            If you work with array parameters a lot, have a look at the static initializer method :meth:`from_array_func`, which adds some
+            convenience and safety for this use case.
 
         **Builtin Keyword Arguments:**
 
@@ -242,35 +270,58 @@ cdef class Minuit:
             Similar to PyMinuit. iminuit allows user to set initial value,
             initial stepsize/error, limits of parameters and whether
             parameter should be fixed or not by passing keyword arguments to
-            Minuit. This is best explained through an example::
+            Minuit. In addition, it support a single argument that is a
+            sequence (a numpy array is passed if iminuit is compiled with
+            numpy support).
+
+            This is best explained through examples::
 
                 def f(x,y):
                     return (x-2)**2 + (y-3)**2
+
+                def g(x):
+                    result = 0.0
+                    for xi in x:
+                        result += (xi - 1)  ** 2
+                    return result
 
             * Initial value(varname)::
 
                 #initial value for x and y
                 m = Minuit(f, x=1, y=2)
 
+                #initial values for x sequence
+                m = Minuit(g, x=(1, 2))
+
             * Initial step size/error(fix_varname)::
 
                 #initial step size for x and y
                 m = Minuit(f, error_x=0.5, error_y=0.5)
+
+                #initial step sizes for x sequence
+                m = Minuit(g, error_x=(0.5, 0.5))
 
             * Limits (limit_varname=tuple)::
 
                 #limits x and y
                 m = Minuit(f, limit_x=(-10,10), limit_y=(-20,20))
 
+                #limits for x sequence
+
+                m = Minuit(g, limit_x=((-10, 10), (-20, 20)))
+
             * Fixing parameters::
 
                 #fix x but vary y
                 m = Minuit(f, fix_x=True)
 
+                #fix x[0] but vary x[1]
+                m = Minuit(g, fix_x=(True, False))
+
             .. note::
 
                 Tips: You can use python dictionary expansion to
-                programatically change the fitting arguments.
+                programmatically change the fitting arguments.
 
                 ::
 
@@ -293,16 +344,24 @@ cdef class Minuit:
         self.narg = len(args)
         self._check_extra_args(args, kwds)
         self._use_array_fcn = False
-        if len(args) == 1 and args[0] in kwds:
-            v = kwds[args[0]]
-            self._use_array_fcn = hasattr(v, "__len__") and hasattr(v, "__getitem__")
-
-        if self._use_array_fcn:
+        narg = len(args)
+        if narg == 1: # search for sequences
             arg = args[0]
-            narg = len(kwds[arg])
-            args = ["%s[%i]" % (arg, i) for i in range(narg)]
-        else:
-            narg = len(args)
+            narg = -2
+            for prefix in ("", "error_", "limit_", "fix_"):
+                key = prefix + arg
+                if key in kwds:
+                    v = kwds[key]
+                    n = len(v) if (hasattr(v, "__len__") and
+                                   hasattr(v, "__getitem__")) else -1
+                    if narg == -2:
+                        narg = n
+                    elif narg != n:
+                        raise ValueError("error_x, limit_x, and fix_x must either be all scalars or all sequences with same length")
+                    narg = n
+            if narg >= 0: # sequences found
+                self._use_array_fcn = True
+                args = ["%s[%i]" % (arg, i) for i in range(narg)]
 
         self.fcn = fcn
         self.grad_fcn = grad_fcn
@@ -393,6 +452,40 @@ cdef class Minuit:
 
     @staticmethod
     def from_array_func(fcn, start, **kwds):
+        """
+        Construct minuit object from given *fcn* and start sequence.
+
+        This static method is a named constructor for the minuit object. It is
+        safer and more convenient to use than the standard __init__ method for
+        functions that accept sequences as arguments.
+
+        **Arguments:**
+
+            **fcn**: The function to be optimized. Must accept a single
+            parameter that is a sequence.
+
+                def func(x): ...
+
+            **start**: Sequence of numbers. Starting point for the
+            minimization.
+
+        **Keyword arguments:**
+
+            **error**: Sequence of numbers. Initial step sizes for iminuit.
+
+            **limit**: Sequence of limits that restrict the range in which a
+            parameter is varied by minuit. Limits can be set in several ways.
+            With inf = float("infinity") we get:
+            - No limit: None, (-inf, inf), (None, None)
+            - Lower limit: (x, None), (x, inf) [replace x with a number]
+            - Upper limit: (None, x), (-inf, x) [replace x with a number]
+
+            **fix**: Sequence of boolean values. Whether to fix a parameter
+            to the starting value.
+
+            All other keywords are passed forward to :meth:`__init__`, see
+            its documentation.
+        """
         for key in ("error", "limit", "fix"):
             if key in kwds:
                 kwds[key+"_x"] = kwds[key]
