@@ -29,7 +29,7 @@ public:
     virtual ~PythonFCN() {}
 
     virtual double operator()(const std::vector<double>& x) const{
-        return call_fcn.scalar<vector2tuple>(x, names, throw_nan);
+        return call_fcn.scalar(vector2tuple, x, names, throw_nan);
     }
 
     virtual double Up() const { return up; }
@@ -59,7 +59,7 @@ public:
     virtual ~PythonArrayFCN() {}
 
     virtual double operator()(const std::vector<double>& x) const{
-        return call_fcn.scalar<vector2array>(x, names, throw_nan);
+        return call_fcn.scalar(vector2array, x, names, throw_nan);
     }
 
     virtual double Up() const { return up; }
