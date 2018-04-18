@@ -2,7 +2,9 @@
 #define IMINUIT_UTILS_H
 
 #include <string>
-#include <cstdlib>
+#include <stdio.h>
+#include <stdarg.h>
+#include <algorithm>
 #include "Minuit2/MnApplication.h"
 #include "Minuit2/FunctionMinimum.h"
 
@@ -10,17 +12,20 @@ using namespace ROOT::Minuit2;
 
 //missing string printf
 inline std::string format(const char* fmt, ...){
-    std::string ret(512, '\0');
+    const int size = strlen(fmt) * 2;
+    char* buf = new char[strlen(fmt) * 2]; // reserve twice the length of fmt
     va_list vl;
     va_start(vl, fmt);
-    const int size = ret.size();
-    const int nsize = std::vsnprintf(&ret[0], ret.size(), fmt, vl);
-    ret.resize(nsize); // shrink the string to right size
+    const int nsize = vsnprintf(buf, size, fmt, vl);
     if (size <= nsize) { // resize string and try again
-        std::vsnprintf(&ret[0], nsize, fmt, vl);
+        delete [] buf;
+        buf = new char[nsize];
+        vsprintf(buf, fmt, vl);
     }
     va_end(vl);
-    return ret;
+    std::string s(buf, buf+nsize);
+    delete [] buf;
+    return s;
 }
 
 //mnapplication() returns stack allocated functionminimum but
