@@ -1,163 +1,74 @@
+#ifndef IMINUIT_PYTHONFCN_H
+#define IMINUIT_PYTHONFCN_H
+
 #include <vector>
 #include <string>
-#include <stdexcept>
-using namespace std;
-#include <string>
-#include <cstdarg>
-#include <algorithm>
-#include <cstdio>
-#include <cmath>
 #include <Python.h>
 #include "Minuit2/FCNBase.h"
-#include "Minuit2/MnApplication.h"
-#include "Minuit2/FunctionMinimum.h"
-#include "CallCounterMixin.h"
+#include "IMinuitMixin.h"
+#include "PythonCaller.h"
 
 using namespace ROOT::Minuit2;
 
-//missing string printf
-//this is safe and convenient but not exactly efficient
-inline std::string format(const char* fmt, ...){
-    int size = 512;
-    char* buffer = 0;
-    buffer = new char[size];
-    va_list vl;
-    va_start(vl,fmt);
-    int nsize = vsnprintf(buffer,size,fmt,vl);
-    if(size<=nsize){//fail delete buffer and try again
-        delete buffer; buffer = 0;
-        buffer = new char[nsize+1];//+1 for /0
-        nsize = vsnprintf(buffer,size,fmt,vl);
-    }
-    std::string ret(buffer);
-    va_end(vl);
-    delete buffer;
-    return ret;
-}
-
-int raise_py_err(){
-    try{
-        if(PyErr_Occurred()){
-            return NULL;
-        }else{
-            throw;
-        }
-    }catch(const std::exception& exn){
-        PyErr_SetString(PyExc_RuntimeError, exn.what());
-        return NULL;
-    }
-    return NULL;
-}
-
-//mnapplication() returns stack allocated functionminimum but
-//cython doesn't like it since it has no default constructor
-//wrap this in a throw since it calls python function it will throw
-//caller is responsible to clean up the object
-FunctionMinimum* call_mnapplication_wrapper(MnApplication& app,unsigned int i, double tol){
-    FunctionMinimum* ret = new FunctionMinimum(app(i,tol));
-    return ret;
-}
-
-class PythonFCN: public FCNBase, public CallCounterMixin {
+class PythonFCN :
+    public FCNBase,
+    public IMinuitMixin {
 public:
-    PyObject* fcn;
-    double up_parm;
-    vector<string> pname;
-    bool thrownan;
-
-    PythonFCN() {} //for cython stack allocate but don't call this
+    PythonFCN() {} //for cython stack allocate
 
     PythonFCN(PyObject* fcn,
-        double up_parm,
-        const vector<string>& pname,
-        bool thrownan = false)
-        : fcn(fcn), up_parm(up_parm), pname(pname),
-          thrownan(thrownan)
-    {
-        Py_INCREF(fcn);
-    }
+              double up,
+              const std::vector<std::string>& pname,
+              bool thrownan = false) :
+        IMinuitMixin(up, pname, thrownan),
+        call_fcn(fcn)
+    {}
 
-    PythonFCN(const PythonFCN& pfcn)
-        : CallCounterMixin(pfcn.getNumCall()),
-          fcn(pfcn.fcn), up_parm(pfcn.up_parm), pname(pfcn.pname),
-          thrownan(pfcn.thrownan)
-    {
-        Py_INCREF(fcn);
-    }
+    PythonFCN(const PythonFCN& x) {}
 
-    virtual ~PythonFCN()
-    {
-        Py_DECREF(fcn);
-    }
+    virtual ~PythonFCN() {}
 
     virtual double operator()(const std::vector<double>& x) const{
-        //pack in tuple
-        PyObject* tuple = vector2tuple(x);
-        //call
-        PyObject* result = PyObject_Call(fcn,tuple,NULL);
-        //check result exception etc
-        PyObject* exc = NULL;
-        if((exc = PyErr_Occurred())){
-            string msg = "Exception Occured \n"+errormsg(x);
-            warn_preserve_error(msg.c_str());
-            throw runtime_error(msg);
-        }
-
-        double ret = PyFloat_AsDouble(result);
-        if((exc = PyErr_Occurred())){
-            string msg = "Cannot convert fcn(*arg) to double \n"+errormsg(x);
-            warn_preserve_error(msg.c_str());
-            throw runtime_error(msg);
-        }
-
-        if(ret!=ret){//check if nan
-            string msg = "fcn returns Nan\n"+errormsg(x);
-            warn_preserve_error(msg.c_str());
-            if(thrownan){
-                PyErr_SetString(PyExc_RuntimeError,msg.c_str());
-                throw runtime_error(msg.c_str());
-            }
-        }
-
-        Py_DECREF(tuple);
-        Py_DECREF(result);
-        increaseNumCall();
-        return ret;
+        return call_fcn.scalar(vector2tuple, x, names, throw_nan);
     }
 
-    //warn but do not reset the error flag
-    inline void warn_preserve_error(const string& msg)const{
-        PyObject *ptype,*pvalue,*ptraceback;
-        PyErr_Fetch(&ptype,&pvalue,&ptraceback);
-        PyErr_Warn(NULL,msg.c_str());
-        PyErr_Restore(ptype,pvalue,ptraceback);
-    }
+    virtual double Up() const { return up; }
+    virtual void SetErrorDef(double x) { up = x; }
 
-    inline string errormsg(const std::vector<double>& x) const{
-        string ret = "fcn is called with following arguments:\n";
-        assert(pname.size()==x.size());
-        //determine longest variable length
-        size_t maxlength = 0;
-        for(int i=0;i<x.size();i++){
-            maxlength = max(pname[i].size(),maxlength);
-        }
-        for(int i=0;i<x.size();i++){
-            string line = format("%*s = %+f\n",maxlength+4,pname[i].c_str(),x[i]);
-            ret += line;
-        }
-        return ret;
-    }
+    virtual int getNumCall() const { return call_fcn.ncall; }
+    virtual void resetNumCall() { call_fcn.ncall = 0; }
 
-    inline PyObject* vector2tuple(const std::vector<double>& x) const{
-        //new reference
-        PyObject* tuple = PyTuple_New(x.size());
-        for(int i=0;i<x.size();++i){
-            PyObject* data = PyFloat_FromDouble(x[i]);
-            PyTuple_SET_ITEM(tuple,i,data); //steal ref
-        }
-        return tuple;
-    }
-
-    virtual double Up() const { return up_parm; }
-    virtual void SetErrorDef(double up) { up_parm = up; }
+private:
+    PythonCaller call_fcn;
 };
+
+class PythonArrayFCN :
+    public FCNBase,
+    public IMinuitMixin {
+public:
+    PythonArrayFCN() {} //for cython stack allocate
+
+    PythonArrayFCN(PyObject* fcn,
+              double up,
+              const std::vector<std::string>& pname,
+              bool thrownan = false) :
+        IMinuitMixin(up, pname, thrownan),
+        call_fcn(fcn)
+    {}
+
+    virtual ~PythonArrayFCN() {}
+
+    virtual double operator()(const std::vector<double>& x) const{
+        return call_fcn.scalar(vector2array, x, names, throw_nan);
+    }
+
+    virtual double Up() const { return up; }
+    virtual void SetErrorDef(double x) { up = x; }
+
+    virtual int getNumCall() const { return call_fcn.ncall; }
+    virtual void resetNumCall() { call_fcn.ncall = 0; }
+
+private:
+    PythonCaller call_fcn;
+};
+#endif

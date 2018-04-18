@@ -5,13 +5,8 @@ sudo: false
 matrix:
     include:
         - python: 2.7
-          env: BUILD=TEST
-
-        - python: 3.4
-          env: BUILD=TEST
 
         - python: 3.5
-          env: BUILD=TEST
 
         # TODO: add tests for installed version!!
 
@@ -20,29 +15,32 @@ matrix:
         # TODO: add tests for Python from conda
 
         - python: 2.7
-          env: BUILD=DOCS
-
-        - python: 3.4
-          env: BUILD=DOCS
+          env: DOCS=1
 
         - python: 3.5
-          env: BUILD='COVERAGE'
+          env: COVERAGE=1
 
         - python: 3.5
-          env: BUILD=NO_EXTRA_DEPS
+          env: NO_EXTRA_DEPS=1
 
 
-before_install:
+before_script:
   - pip install setuptools Cython
-  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
-  - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
-  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov numpy; fi
+  - if [[ ! $NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
+  - if [[ $COVERAGE ]]; then pip install pytest-cov; fi
+  - if [[ $DOCS ]]; then
+      pip install matplotlib sphinx sphinx_rtd_theme
+    else # always test except for docs build
+      pip install pytest
+    fi
 
 install:
-  - python setup.py build_ext -i
-  - python setup.py install
+  - make install
 
 script:
-  - if [[ $BUILD == TEST ]]; then make test; fi
-  - if [[ $BUILD == COVERAGE ]]; then make coverage; fi
-  - if [[ $BUILD == DOCS ]]; then cd doc; sphinx-build -W -a -E -b html -d _build/doctrees . _build/html; fi
+  - if [[ ! $DOCS ]]; then # always test except when building docs
+      if [[ $NO_EXTRA_DEPS ]]; then pip install numpy; fi # numpy required for testing
+      make test
+    fi
+  - if [[ $COVERAGE ]]; then make coverage; fi
+  - if [[ $DOCS ]]; then make doc; fi
