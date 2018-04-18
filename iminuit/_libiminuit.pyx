@@ -597,7 +597,7 @@ cdef class Minuit:
 
         return self.get_fmin(), self.get_param_states()
 
-    def hesse(self):
+    def hesse(self, unsigned int maxcall=1000):
         """
         Run HESSE.
 
@@ -625,12 +625,14 @@ cdef class Minuit:
         if self.grad_fcn is None:
             upst = hesse.call(
                 deref(<FCNBase*> self.pyfcn),
-                self.cfmin.UserState()
+                self.cfmin.UserState(),
+                maxcall
             )
         else:
             upst = hesse.call(
-                deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
-                self.cfmin.UserState()
+                deref(<FCNGradientBase*> self.pyfcn),
+                self.cfmin.UserState(),
+                maxcall
             )
         if not upst.HasCovariance():
             warn("HESSE Failed. Covariance and GlobalCC will not be available",
