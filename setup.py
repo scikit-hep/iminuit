@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-from os.path import dirname, join
+from os.path import dirname, join, exists
 from glob import glob
 
 from setuptools import setup, Extension
@@ -58,6 +58,11 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+def update_config_pxi(config_file, content):
+    # only update config if content changes to avoid superfluous recompiles
+    if not exists(config_file) or open(config_file).read() != content:
+        open(config_file, 'w').write(content)
+
 # Static linking
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cxx'))
@@ -71,8 +76,8 @@ except ImportError:
     print('Numpy not available ... Numpy support is disabled')
     HAVE_NUMPY = 0
 
-with open('iminuit/config.pxi', "w") as f:
-    f.write("DEF HAVE_NUMPY=%i\n" % HAVE_NUMPY)
+update_config_pxi(join(cwd, 'iminuit/config.pxi'),
+                  "DEF HAVE_NUMPY=%i" % HAVE_NUMPY)
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
@@ -87,7 +92,8 @@ except ImportError:
 ext = '.pyx' if USE_CYTHON else '.cpp'
 
 libiminuit = Extension('iminuit._libiminuit',
-                       sources=['iminuit/_libiminuit' + ext] + minuit_src,
+                       sources=(glob(join(cwd, 'iminuit/*.pyx')) +
+                                minuit_src),
                        include_dirs=minuit_header,
                        define_macros=[('HAVE_NUMPY', str(HAVE_NUMPY))]
                        )
