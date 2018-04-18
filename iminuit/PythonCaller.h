@@ -4,13 +4,11 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <cmath>
 #include <Python.h>
 #if HAVE_NUMPY
     // #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION cython enforces old api
     #include "numpy/arrayobject.h"
 #endif
-
 #include <cmath>
 #include "Utils.h"
 
@@ -44,6 +42,16 @@ inline std::string errormsg(const char* prefix,
         ret += line;
     }
     return ret;
+}
+
+inline bool isnan(double x) {
+    #if defined(_WIN64)
+        return _isnanf(x);
+    #elif defined(_WIN32)
+        return _isnan(x);
+    #else
+        return std::isnan(x);
+    #endif
 }
 
 } // namespace detail
@@ -118,7 +126,7 @@ public:
             throw std::runtime_error(msg);
         }
 
-        if (std::isnan(ret)) {
+        if (detail::isnan(ret)) {
             std::string msg = detail::errormsg("result is Nan\n",
                                        names, x);
             detail::warn_preserve_error(msg.c_str());
@@ -172,7 +180,7 @@ public:
                 throw std::runtime_error(msg);
             }
 
-            if (std::isnan(xi)) {
+            if (detail::isnan(xi)) {
                 std::string msg = detail::errormsg("result is NaN\n",
                                                    names, x);
                 detail::warn_preserve_error(msg.c_str());
