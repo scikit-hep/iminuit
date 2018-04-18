@@ -136,16 +136,15 @@ def test_array_function():
     limits = np.zeros((3, 2))
     limits[:,1] = np.inf
     for kwargs in (
-            dict(x=(1, 1, 1), pedantic=False, print_level=0),
-            dict(error_x=(1, 1, 1), pedantic=False, print_level=0),
-            dict(limit_x=((0, 2), (0, 2), (0, 2)), pedantic=False, print_level=0),
-            dict(fix_x=(False, False, False), pedantic=False, print_level=0),
+            dict(x=(1, 1, 1), pedantic=False),
+            dict(error_x=(1, 1, 1), pedantic=False),
+            dict(limit_x=((0, 2), (0, 2), (0, 2)), pedantic=False),
+            dict(fix_x=(False, False, False), pedantic=False),
             dict(x=np.ones(3), error_x=np.ones(3),
                  limit_x=limits, fix_x=np.zeros(3),
-                 errordef=1,
-                 print_level=0),
+                 errordef=1),
         ):
-        m = Minuit(func8, **kwargs)
+        m = Minuit(func8, print_level=0, **kwargs)
         m.migrad()
         v = m.values
         assert_allclose((v["x[0]"], v["x[1]"], v["x[2]"]),
@@ -518,7 +517,7 @@ def test_reverse_limit():
     def f(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
-    m = Minuit(f, limit_x=(3., 2.), pedantic=False)
+    m = Minuit(f, limit_x=(3., 2.), pedantic=False, print_level=0)
     with pytest.raises(ValueError):
         m.migrad()
 
