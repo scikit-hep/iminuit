@@ -151,8 +151,8 @@ cdef extern from "Minuit2/MnMigrad.h":
 cdef extern from "Minuit2/MnHesse.h":
     cdef cppclass MnHesse:
         MnHesse(unsigned int stra)
-        MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls=0) except+
-        MnUserParameterState call "operator()"(FCNGradientBase, MnUserParameterState, unsigned int maxcalls=0) except+
+        MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls) except+
+        MnUserParameterState call "operator()"(FCNGradientBase, MnUserParameterState, unsigned int maxcalls) except+
 
 cdef extern from "Minuit2/MnMinos.h":
     cdef cppclass MnMinos:

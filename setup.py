@@ -17,8 +17,8 @@ from distutils.msvccompiler import MSVCCompiler
 compiler_opts = {
     CCompiler: dict(),
     UnixCCompiler: dict(extra_compile_args=[
-            '-Wno-shorten-64-to-32', '-Wno-null-conversion',
-            '-Wno-parentheses', '-Wno-unused-variable', '-Wno-sign-compare',
+            '-Wno-shorten-64-to-32', '-Wno-parentheses',
+            '-Wno-unused-variable', '-Wno-sign-compare',
             '-Wno-cpp' # suppresses #warnings from numpy
         ]),
     MSVCCompiler: dict(extra_compile_args=[
