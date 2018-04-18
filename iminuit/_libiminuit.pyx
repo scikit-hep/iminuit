@@ -1021,7 +1021,11 @@ cdef class Minuit:
         self.clear_cobj()
 
     def pedantic(self, kwds):
-        for vn in self.parameters:
+        parameters = self.parameters
+        if self._use_array_fcn:
+            p = self.parameters[0]
+            parameters = (p[:p.index("[")],)
+        for vn in parameters:
             if vn not in kwds:
                 warn(('Parameter %s does not have initial value. '
                       'Assume 0.') % (vn), InitialParamWarning)
@@ -1029,10 +1033,6 @@ cdef class Minuit:
                 warn(('Parameter %s is floating but does not '
                       'have initial step size. Assume 1.') % (vn),
                      InitialParamWarning)
-        parameters = self.parameters
-        if self._use_array_fcn:
-            p = self.parameters[0]
-            parameters = (p[:p.index("[")],)
         for vlim in extract_limit(kwds):
             if param_name(vlim) not in parameters:
                 warn(('%s is given. But there is no parameter %s. '
