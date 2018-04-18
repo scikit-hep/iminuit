@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <cmath>
 #include <Python.h>
 #if HAVE_NUMPY
     // #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION cython enforces old api
