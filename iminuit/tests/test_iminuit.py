@@ -70,14 +70,7 @@ def func7(*args): # no signature
     return (args[0] - 1) ** 2 + (args[1] - 2) ** 2
 
 
-def func8(x): # test array func interface
-    result = 0.0
-    for xi in x:
-        result += (xi - 1) ** 2
-    return result
-
-
-def func9(x): # test ufunc support
+def func8(x): # test numpy support
     return np.sum((x - 1) ** 2)
 
 
@@ -131,56 +124,31 @@ def test_nosignature():
     assert m.migrad_ok()
 
 
-def test_array_function():
-    # test wtih minimal and maximal settings
-    limits = np.zeros((3, 2))
-    limits[:,1] = np.inf
-    for kwargs in (
-            dict(x=(1, 1, 1), pedantic=False),
-            dict(error_x=(1, 1, 1), pedantic=False),
-            dict(limit_x=((0, 2), (0, 2), (0, 2)), pedantic=False),
-            dict(fix_x=(False, False, False), pedantic=False),
-            dict(x=np.ones(3), error_x=np.ones(3),
-                 limit_x=limits, fix_x=np.zeros(3),
-                 errordef=1),
-        ):
-        m = Minuit(func8, print_level=0, **kwargs)
-        m.migrad()
-        v = m.values
-        assert_allclose((v["x[0]"], v["x[1]"], v["x[2]"]),
-                        (1, 1, 1), atol=1e-2)
-        m.hesse()
-        c = m.covariance
-        assert_allclose((c[("x[0]", "x[0]")],
-                         c[("x[1]", "x[1]")],
-                         c[("x[2]", "x[2]")]),
-                        (1, 1, 1), atol=1e-2)
+def test_array_call():
+    inf = float("infinity")
+    m = Minuit(func8, a=1, b=1,
+               error_a=1, error_b=1,
+               limit_a=(0, inf),
+               limit_b=(0, inf),
+               fix_a=False,
+               fix_b=False,
+               print_level=0,
+               errordef=1,
+               use_array_call=True,
+               forced_parameters=("a", "b"))
+    m.migrad()
+    v = m.values
+    assert_allclose((v["a"], v["b"]),
+                    (1, 1))
+    m.hesse()
+    c = m.covariance
+    assert_allclose((c[("a", "a")],
+                     c[("b", "b")]),
+                    (1, 1))
 
 
 def test_from_array_func():
-    # test wtih minimal and maximal settings
-    limit = np.zeros((3, 2))
-    limit[:,1] = np.inf
     m = Minuit.from_array_func(func8, np.ones(3),
-                               error=np.ones(3),
-                               limit=limit,
-                               fix=np.zeros(3),
-                               print_level=0,
-                               errordef=1)
-    m.migrad()
-    v = m.values
-    assert_allclose((v["x[0]"], v["x[1]"], v["x[2]"]),
-                    (1, 1, 1))
-    m.hesse()
-    c = m.covariance
-    assert_allclose((c[("x[0]", "x[0]")],
-                     c[("x[1]", "x[1]")],
-                     c[("x[2]", "x[2]")]),
-                    (1, 1, 1))
-
-
-def test_numpy_ufunc_support():
-    m = Minuit.from_array_func(func9, np.ones(3),
                                pedantic=False,
                                print_level=0)
     m.migrad()

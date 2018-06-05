@@ -322,11 +322,15 @@ cdef class Minuit:
                     another_fit = Minuit(f, **my_fitarg)
 
         """
+        if use_array_call and forced_parameters is None:
+            raise KeyError("use_array_call=True requires that forced_parameters is set")
 
         args = describe(fcn) if forced_parameters is None \
             else forced_parameters
         self.narg = len(args)
         self._check_extra_args(args, kwds)
+
+        if pedantic: self.pedantic(args, kwds)
 
         self.fcn = fcn
         self.grad_fcn = grad_fcn
@@ -377,7 +381,6 @@ cdef class Minuit:
         self.edm = 1.
         self.merrors = {}
         self.gcc = None
-        if pedantic: self.pedantic(kwds)
 
         self.fitarg = {}
         self.fitarg.update(self.initial_value)
@@ -394,14 +397,13 @@ cdef class Minuit:
         """
         Construct minuit object from given *fcn* and start sequence.
 
-        This static method is a named constructor for the minuit object. It is
-        safer and more convenient to use than the standard __init__ method for
-        functions that accept sequences as arguments.
+        This is an alternative named constructor for the minuit object. It is
+        more convenient to use for functions that accept a numpy array.
 
         **Arguments:**
 
             **fcn**: The function to be optimized. Must accept a single
-            parameter that is a sequence.
+            parameter that is a numpy array.
 
                 def func(x): ...
 
@@ -433,7 +435,7 @@ cdef class Minuit:
         """
         npar = len(start)
         pnames = name if name is not None else ["x%i"%i for i in range(npar)]
-        kwds = dict(forced_parameters=pnames)
+        kwds = {"forced_parameters":pnames, "use_array_call":True}
         for i, name in enumerate(pnames):
             kwds[name] = start[i]
             if error is not None:
@@ -980,8 +982,8 @@ cdef class Minuit:
     def __dealloc__(self):
         self.clear_cobj()
 
-    def pedantic(self, kwds):
-        for vn in self.parameters:
+    def pedantic(self, parameters, kwds):
+        for vn in parameters:
             if vn not in kwds:
                 warn(('Parameter %s does not have initial value. '
                       'Assume 0.') % (vn), InitialParamWarning)
@@ -990,15 +992,15 @@ cdef class Minuit:
                       'have initial step size. Assume 1.') % (vn),
                      InitialParamWarning)
         for vlim in extract_limit(kwds):
-            if param_name(vlim) not in self.parameters:
+            if param_name(vlim) not in parameters:
                 warn(('%s is given. But there is no parameter %s. '
                       'Ignore.' % (vlim, param_name(vlim)), InitialParamWarning))
         for vfix in extract_fix(kwds):
-            if param_name(vfix) not in self.parameters:
+            if param_name(vfix) not in parameters:
                 warn(('%s is given. But there is no parameter %s. \
                     Ignore.' % (vfix, param_name(vfix)), InitialParamWarning))
         for verr in extract_error(kwds):
-            if param_name(verr) not in self.parameters:
+            if param_name(verr) not in parameters:
                 warn(('%s float. But there is no parameter %s. \
                     Ignore.') % (verr, param_name(verr)), InitialParamWarning)
 
