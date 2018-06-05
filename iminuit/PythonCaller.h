@@ -5,10 +5,9 @@
 #include <string>
 #include <vector>
 #include <Python.h>
-#if HAVE_NUMPY
-    // #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION cython enforces old api
-    #include "numpy/arrayobject.h"
-#endif
+// cannot use this, because cython enforces old api:
+// #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include "numpy/arrayobject.h"
 #include <cmath>
 #include "Utils.h"
 
@@ -56,8 +55,10 @@ inline bool isnan(double x) {
 
 } // namespace detail
 
+// typedef for function ptr
+typedef PyObject* (*ConvertFunction)(const std::vector<double>&);
 
-inline PyObject* vector2tuple(const std::vector<double>& x) {
+PyObject* vector2tuple(const std::vector<double>& x) {
     PyObject* tuple = PyTuple_New(x.size());
     for (int i = 0; i < x.size(); ++i) {
         PyObject* data = PyFloat_FromDouble(x[i]);
@@ -66,32 +67,42 @@ inline PyObject* vector2tuple(const std::vector<double>& x) {
     return tuple; //new reference
 }
 
-inline PyObject* vector2array(const std::vector<double>& x) {
-#if HAVE_NUMPY
+PyObject* vector2array(const std::vector<double>& x) {
     npy_intp dims = x.size();
     PyObject* seq = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE,
-                                                const_cast<double*>(&x[0]));
-#else
-    PyObject* seq = vector2tuple(x);
-#endif
+                                              const_cast<double*>(&x[0]));
     PyObject* tuple = PyTuple_New(1);
     PyTuple_SET_ITEM(tuple, 0, seq); // steals ref
     return tuple; //new reference
 }
 
 
+/**
+    This class encapsulates the callback to a Python function from C++.
+    It is responsible for:
+    - Handling the Refcount of the Python function
+    - Converting from native C++ types to Python types and back
+    - Keeping a function call counter
+    - Handling exceptions on the Python side and converting those to C++ exceptions
+
+    Two kinds of a Python function signatures are supported by the functions
+    vector2tuple and vector2array. The first converts a C++ vector of doubles
+    to a Python tuple of doubles. The second converts the C++ vector to a
+    Numpy array view of the C++ vector and puts that array into a Python tuple.
+*/
 class PythonCaller {
 public:
-    PythonCaller() : fcn(NULL), ncall(0) {}
+    PythonCaller() : fcn(NULL), convert(NULL), ncall(0) {}
 
     PythonCaller(const PythonCaller& x) :
-        fcn(x.fcn), ncall(x.ncall)
+        fcn(x.fcn), convert(x.convert), ncall(x.ncall)
     {
         Py_INCREF(fcn);
     }
 
-    PythonCaller(PyObject* pfcn) :
-        fcn(pfcn), ncall(0)
+    PythonCaller(PyObject* pfcn, bool use_array_call) :
+        fcn(pfcn), convert(use_array_call ? vector2array : vector2tuple),
+        ncall(0)
     {
         Py_INCREF(fcn);
     }
@@ -100,8 +111,7 @@ public:
         Py_DECREF(fcn);
     }
 
-    double scalar(PyObject* (*convert)(const std::vector<double>&),
-                  const std::vector<double>& x,
+    double scalar(const std::vector<double>& x,
                   const std::vector<std::string>& names,
                   const bool throw_nan) const {
         PyObject* args = convert(x); // no error can occur here
@@ -140,8 +150,7 @@ public:
         return ret;
     }
 
-    std::vector<double> vector(PyObject* (*convert)(const std::vector<double>&),
-                               const std::vector<double>& x,
+    std::vector<double> vector(const std::vector<double>& x,
                                const std::vector<std::string>& names,
                                const bool throw_nan) const {
         PyObject* args = convert(x); // no error can occur here
@@ -202,6 +211,7 @@ public:
 
 private:
     PyObject* fcn;
+    ConvertFunction convert;
 
 public:
     mutable int ncall;

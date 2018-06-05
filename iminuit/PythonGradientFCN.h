@@ -10,6 +10,14 @@
 
 using namespace ROOT::Minuit2;
 
+/**
+    Called by Minuit2 to call the underlying Python function which computes
+    the objective function and its gradient. The interface of this class is
+    defined by the abstract base class FCNGradientBase.
+
+    This version calls the function with a tuple of numbers or a single Numpy
+    array, depending on the ConvertFunction argument.
+*/
 class PythonGradientFCN :
     public FCNGradientBase,
     public IMinuitMixin {
@@ -18,58 +26,23 @@ public:
 
     PythonGradientFCN(PyObject* fcn,
         PyObject* gradfcn,
+        bool use_array_call,
         double up,
         const std::vector<std::string>& names,
         bool thrownan) :
         IMinuitMixin(up, names, thrownan),
-        call_fcn(fcn),
-        call_grad(gradfcn)
+        call_fcn(fcn, use_array_call),
+        call_grad(gradfcn, use_array_call)
     {}
 
     virtual ~PythonGradientFCN() {}
 
     virtual double operator()(const std::vector<double>& x) const{
-        return call_fcn.scalar(vector2tuple, x, names, throw_nan);
+        return call_fcn.scalar(x, names, throw_nan);
     }
 
     virtual std::vector<double> Gradient(const std::vector<double>& x) const{
-        return call_grad.vector(vector2tuple, x, names, throw_nan);
-    }
-
-    virtual double Up() const { return up; }
-    virtual void SetErrorDef(double x) { up = x; }
-
-    virtual int getNumCall() const { return call_fcn.ncall; }
-    virtual void resetNumCall() { call_fcn.ncall = 0; }
-
-private:
-    PythonCaller call_fcn, call_grad;
-};
-
-class PythonArrayGradientFCN :
-    public FCNGradientBase,
-    public IMinuitMixin {
-public:
-    PythonArrayGradientFCN() {} //for cython stack allocate
-
-    PythonArrayGradientFCN(PyObject* fcn,
-        PyObject* gradfcn,
-        double up,
-        const std::vector<std::string>& names,
-        bool thrownan) :
-        IMinuitMixin(up, names, thrownan),
-        call_fcn(fcn),
-        call_grad(gradfcn)
-    {}
-
-    virtual ~PythonArrayGradientFCN() {}
-
-    virtual double operator()(const std::vector<double>& x) const{
-        return call_fcn.scalar(vector2array, x, names, throw_nan);
-    }
-
-    virtual std::vector<double> Gradient(const std::vector<double>& x) const{
-        return call_grad.vector(vector2array, x, names, throw_nan);
+        return call_grad.vector(x, names, throw_nan);
     }
 
     virtual double Up() const { return up; }

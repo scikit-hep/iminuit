@@ -1,5 +1,3 @@
-doc/iminuit
-iminuit/config.pxi
 *.pyxbldc
 *.root
 .DS_Store

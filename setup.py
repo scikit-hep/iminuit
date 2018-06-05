@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 from os.path import dirname, join, exists
 from glob import glob
 
@@ -58,26 +59,40 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-def update_config_pxi(config_file, content):
-    # only update config if content changes to avoid superfluous recompiles
-    if not exists(config_file) or open(config_file).read() != content:
-        open(config_file, 'w').write(content)
+# delay import of numpy until it is installed
+def lazy_numpy_get_include():
+    try:
+        import numpy
+        return [numpy.get_include()]
+    except:
+        return []
+
+def lazy_compile(self, sources, output_dir=None, macros=None,
+                 include_dirs=None, debug=0, extra_preargs=None,
+                 extra_postargs=None, depends=None):
+    macros, objects, extra_postargs, pp_opts, build = \
+            self._setup_compile(output_dir, macros, include_dirs, sources,
+                                depends, extra_postargs)
+    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+
+    for obj in objects:
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        if not exists(obj) or os.stat(obj).st_mtime < os.stat(src).st_mtime:
+            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+    return objects
+
+
+import distutils.ccompiler
+distutils.ccompiler.CCompiler.compile = lazy_compile
+
 
 # Static linking
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cxx'))
 minuit_header = [join(cwd, 'Minuit/inc')]
-
-try:
-    import numpy as np
-    minuit_header.append(np.get_include())
-    HAVE_NUMPY = 1
-except ImportError:
-    print('Numpy not available ... Numpy support is disabled')
-    HAVE_NUMPY = 0
-
-update_config_pxi(join(cwd, 'iminuit/config.pxi'),
-                  "DEF HAVE_NUMPY=%i" % HAVE_NUMPY)
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
@@ -94,9 +109,7 @@ ext = '.pyx' if USE_CYTHON else '.cpp'
 libiminuit = Extension('iminuit._libiminuit',
                        sources=(glob(join(cwd, 'iminuit/*.pyx')) +
                                 minuit_src),
-                       include_dirs=minuit_header,
-                       define_macros=[('HAVE_NUMPY', str(HAVE_NUMPY))]
-                       )
+                       include_dirs=minuit_header + lazy_numpy_get_include())
 extensions = [libiminuit]
 
 if USE_CYTHON:
@@ -130,9 +143,9 @@ setup(
     package_dir={'iminuit': 'iminuit'},
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'numpy'],
     extras_require={
-        'all': ['numpy', 'ipython', 'matplotlib'],
+        'all': ['ipython', 'matplotlib'],
     },
     tests_require=['pytest', 'pytest-cov', 'numpy'],
     classifiers=[

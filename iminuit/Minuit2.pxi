@@ -30,15 +30,11 @@ cdef extern from "Utils.h":
 
 cdef extern from "PythonFCN.h":
     cdef cppclass PythonFCN(FCNBase, IMinuitMixin):
-        PythonFCN(object fcn, double up_parm, vector[string] pname, bint thrownan)
-    cdef cppclass PythonArrayFCN(FCNBase, IMinuitMixin):
-        PythonArrayFCN(object fcn, double up_parm, vector[string] pname, bint thrownan)
+        PythonFCN(object fcn, bint use_array_call, double up_parm, vector[string] pname, bint thrownan)
 
 cdef extern from "PythonGradientFCN.h":
     cdef cppclass PythonGradientFCN(FCNGradientBase, IMinuitMixin):
-        PythonGradientFCN(object fcn, object grad_fcn, double up_parm, vector[string] pname, bint thrownan)
-    cdef cppclass PythonArrayGradientFCN(FCNGradientBase, IMinuitMixin):
-        PythonArrayGradientFCN(object fcn, object grad_fcn, double up_parm, vector[string] pname, bint thrownan)
+        PythonGradientFCN(object fcn, object grad_fcn, bint use_array_call, double up_parm, vector[string] pname, bint thrownan)
 
 cdef extern from "Minuit2/FunctionMinimum.h":
     cdef cppclass FunctionMinimum:
