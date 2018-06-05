@@ -1,6 +1,5 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import pytest
 
 __all__ = [
     'requires_dependency',
@@ -35,8 +34,8 @@ def requires_dependency(name):
         skip_it = True
 
     reason = 'Missing dependency: {}'.format(name)
+    import pytest
     return pytest.mark.skipif(skip_it, reason=reason)
-
 
 try:
     from numpy.testing import assert_allclose
