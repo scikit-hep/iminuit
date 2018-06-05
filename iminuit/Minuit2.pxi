@@ -11,33 +11,34 @@ cdef extern from "<memory>" namespace "std":
 
 cdef extern from "Minuit2/FCNBase.h":
     cdef cppclass FCNBase:
-        FCNBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
-        double call "operator()"(vector[double] x) except +  #raise_py_err
+        double call "operator()"(vector[double] x) except +
         double Up()
         void SetErrorDef(double)
 
 cdef extern from "Minuit2/FCNGradientBase.h":
     cdef cppclass FCNGradientBase(FCNBase):
-        FCNGradientBase(object fcn, double up_parm, vector[string] pname, bint thrownan)
-        vector[double] Gradient(vector[double] x) except +  #raise_py_err
-        bint CheckGradient()
+        vector[double] call "Gradient"(vector[double] x) except +
 
-cdef extern from "CallCounterMixin.h":
-    cdef cppclass CallCounterMixin:
+cdef extern from "IMinuitMixin.h":
+    cdef cppclass IMinuitMixin:
         int getNumCall()
         void resetNumCall()
 
+cdef extern from "Utils.h":
+    FunctionMinimum* call_mnapplication_wrapper(
+        MnApplication app, unsigned int i, double tol) except +
+
 cdef extern from "PythonFCN.h":
-    #int raise_py_err()#this is very important we need custom error handler
-    FunctionMinimum*call_mnapplication_wrapper( \
-            MnApplication app, unsigned int i, double tol) except +
-    cdef cppclass PythonFCN(FCNBase, CallCounterMixin):
+    cdef cppclass PythonFCN(FCNBase, IMinuitMixin):
         PythonFCN(object fcn, double up_parm, vector[string] pname, bint thrownan)
+    cdef cppclass PythonArrayFCN(FCNBase, IMinuitMixin):
+        PythonArrayFCN(object fcn, double up_parm, vector[string] pname, bint thrownan)
 
 cdef extern from "PythonGradientFCN.h":
-    #int raise_py_err()#this is very important we need custom error handler
-    cdef cppclass PythonGradientFCN(FCNGradientBase, CallCounterMixin):
+    cdef cppclass PythonGradientFCN(FCNGradientBase, IMinuitMixin):
         PythonGradientFCN(object fcn, object grad_fcn, double up_parm, vector[string] pname, bint thrownan)
+    cdef cppclass PythonArrayGradientFCN(FCNGradientBase, IMinuitMixin):
+        PythonArrayGradientFCN(object fcn, object grad_fcn, double up_parm, vector[string] pname, bint thrownan)
 
 cdef extern from "Minuit2/FunctionMinimum.h":
     cdef cppclass FunctionMinimum:
@@ -150,8 +151,8 @@ cdef extern from "Minuit2/MnMigrad.h":
 cdef extern from "Minuit2/MnHesse.h":
     cdef cppclass MnHesse:
         MnHesse(unsigned int stra)
-        MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls=0) except+
-        MnUserParameterState call "operator()"(FCNGradientBase, MnUserParameterState, unsigned int maxcalls=0) except+
+        MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls) except+
+        MnUserParameterState call "operator()"(FCNGradientBase, MnUserParameterState, unsigned int maxcalls) except+
 
 cdef extern from "Minuit2/MnMinos.h":
     cdef cppclass MnMinos:

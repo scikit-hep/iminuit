@@ -264,8 +264,9 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 if not on_rtd:
     # Make sure local build of iminuit is found
-    import sys
-    sys.path.insert(0, os.path.dirname(__file__) + "/..")
+    import os
+    if not os.path.exists('iminuit'):
+        os.symlink(os.path.dirname(__file__) + '/../iminuit', 'iminuit')
 
     # Import and set the theme if we're building docs locally
     import sphinx_rtd_theme
