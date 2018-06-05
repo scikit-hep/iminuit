@@ -38,18 +38,6 @@ def requires_dependency(name):
     return pytest.mark.skipif(skip_it, reason=reason)
 
 
-def requires_method(cls, name):
-    """Decorator to declar required method for tests.
-
-    Parameters
-    ----------
-    cls : class object
-    name : str
-        Method name.
-    """
-    return pytest.mark.skipif(not hasattr(cls, name),
-                              reason="class %s needs method %s for this test" % (str(cls), name))
-
 try:
     from numpy.testing import assert_allclose
 except ImportError:

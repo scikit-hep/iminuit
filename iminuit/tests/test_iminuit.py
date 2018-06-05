@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 import warnings
 from math import sqrt
 import pytest
-from iminuit.tests.utils import assert_allclose, requires_method
+from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
 import numpy as np
 
@@ -179,7 +179,6 @@ def test_from_array_func():
                     (1, 1, 1))
 
 
-@requires_method(Minuit, "np_values")
 def test_numpy_ufunc_support():
     m = Minuit.from_array_func(func9, np.ones(3),
                                pedantic=False,
@@ -544,7 +543,6 @@ class TestOutputInterface:
         expected = [[1., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
 
-    @requires_method(Minuit, "np_matrix")
     def test_np_matrix(self):
         actual = self.m.np_matrix()
         expected = [[5., 0.], [0., 1.]]
@@ -552,7 +550,6 @@ class TestOutputInterface:
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)
 
-    @requires_method(Minuit, "np_matrix")
     def test_np_matrix_correlation(self):
         actual = self.m.np_matrix(correlation=True)
         expected = [[1., 0.], [0., 1.]]
@@ -560,7 +557,6 @@ class TestOutputInterface:
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)
 
-    @requires_method(Minuit, "np_values")
     def test_np_values(self):
         actual = self.m.np_values()
         expected = [2., 5.]
@@ -568,7 +564,6 @@ class TestOutputInterface:
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2,)
 
-    @requires_method(Minuit, "np_errors")
     def test_np_errors(self):
         actual = self.m.np_errors()
         expected = [5.**0.5, 1.]
@@ -576,7 +571,6 @@ class TestOutputInterface:
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2,)
 
-    @requires_method(Minuit, "np_merrors")
     def test_np_merrors(self):
         actual = self.m.np_merrors()
         expected = [[5.**0.5, 1.], [5.**0.5, 1.]]
@@ -584,7 +578,6 @@ class TestOutputInterface:
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)
 
-    @requires_method(Minuit, "np_covariance")
     def test_np_covariance(self):
         actual = self.m.np_covariance()
         expected = [[5., 0.], [0., 1.]]
