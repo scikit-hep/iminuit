@@ -444,7 +444,7 @@ cdef class Minuit:
 
         return self.get_fmin(), self.get_param_states()
 
-    def hesse(self):
+    def hesse(self, sigma=1):
         """Run HESSE.
 
         HESSE estimates error matrix by the `second derivative at the minimim
@@ -457,6 +457,10 @@ cdef class Minuit:
         likelihood profile is utterly discontinuous near the minimum). But,
         it is much more computationally expensive.
 
+        **Arguments:**
+
+            - **sigma**: number of :math:`\sigma` error. Default 1.0.
+
         **Returns:**
 
             list of :ref:`minuit-param-struct`
@@ -467,6 +471,8 @@ cdef class Minuit:
         if self.print_level > 0: self.frontend.print_banner('HESSE')
         if self.cfmin is NULL:
             raise RuntimeError('Run migrad first')
+        cdef double oldup = self.pyfcn.Up()
+        self.pyfcn.SetErrorDef(oldup * sigma * sigma)
         hesse = new MnHesse(self.strategy)
         if self.grad_fcn is None:
             upst = hesse.call(
@@ -490,6 +496,7 @@ cdef class Minuit:
             self.print_param()
             self.print_matrix()
 
+        self.pyfcn.SetErrorDef(oldup)
         return self.get_param_states()
 
     def minos(self, var = None, sigma = 1., unsigned int maxcall=1000):

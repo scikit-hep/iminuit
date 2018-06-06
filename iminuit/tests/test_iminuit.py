@@ -252,6 +252,17 @@ def test_fitarg():
     assert fitarg['limit_x'] == (0, 20)
 
 
+def test_hesse_all():
+    m = Minuit(func3, pedantic=False, print_level=0)
+    m.migrad()
+    for sigma in range(1, 4):
+        m.hesse(sigma=sigma)
+        assert_allclose(m.errors['x'], sigma*sqrt(5))
+        assert_allclose(m.errors['y'], sigma*1.)
+        assert_allclose(m.covariance[("x", "x")], sigma**2 * 5)
+        assert_allclose(m.covariance[("y", "y")], sigma**2 * 1)
+        assert_allclose(m.covariance[("x", "y")], 0, atol=1e-8)
+
 def test_minos_all():
     m = Minuit(func3, pedantic=False, print_level=0)
     m.migrad()
@@ -577,11 +588,13 @@ def test_num_call():
     assert m.get_num_call_fcn() < ncall_without_limit
 
 
-def test_set_error_def():
+def test_set_errordef():
     m = Minuit(lambda x: x**2, pedantic=False, print_level=0, errordef=1)
     m.migrad()
     m.hesse()
     assert_allclose(m.errors["x"], 1)
+    assert_allclose(m.covariance[("x", "x")], 1)
     m.set_errordef(4)
     m.hesse()
     assert_allclose(m.errors["x"], 2)
+    assert_allclose(m.covariance[("x", "x")], 4)
