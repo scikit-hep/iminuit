@@ -64,7 +64,7 @@ def lazy_numpy_get_include():
     try:
         import numpy
         return [numpy.get_include()]
-    except:
+    except ImportError:
         return []
 
 def lazy_compile(self, sources, output_dir=None, macros=None,
