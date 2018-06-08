@@ -59,14 +59,6 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-# delay import of numpy until it is installed
-def lazy_numpy_get_include():
-    try:
-        import numpy
-        return [numpy.get_include()]
-    except ImportError:
-        return []
-
 def lazy_compile(self, sources, output_dir=None, macros=None,
                  include_dirs=None, debug=0, extra_preargs=None,
                  extra_postargs=None, depends=None):
@@ -106,10 +98,13 @@ except ImportError:
 
 ext = '.pyx' if USE_CYTHON else '.cpp'
 
+import numpy
+numpy_header = [numpy.get_include()]
+
 libiminuit = Extension('iminuit._libiminuit',
                        sources=(glob(join(cwd, 'iminuit/*.pyx')) +
                                 minuit_src),
-                       include_dirs=minuit_header + lazy_numpy_get_include())
+                       include_dirs=minuit_header + numpy_header)
 extensions = [libiminuit]
 
 if USE_CYTHON:
