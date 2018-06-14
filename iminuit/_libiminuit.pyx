@@ -5,7 +5,13 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import array
+import warnings
 from warnings import warn
+# customize warning format
+warnings.formatwarning = \
+    lambda message, category, filename, lineno, file=None, line=None: \
+    '%s:%s: %s: %s\n' % (filename, lineno, category.__name__, message)
+
 from libc.math cimport sqrt
 from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
