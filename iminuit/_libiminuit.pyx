@@ -273,9 +273,7 @@ cdef class Minuit:
             Similar to PyMinuit. iminuit allows user to set initial value,
             initial stepsize/error, limits of parameters and whether
             parameter should be fixed or not by passing keyword arguments to
-            Minuit. In addition, it support a single argument that is a
-            sequence (a numpy array is passed if iminuit is compiled with
-            numpy support).
+            Minuit.
 
             This is best explained through examples::
 
@@ -413,6 +411,8 @@ cdef class Minuit:
         **Keyword arguments:**
 
             **error**: Optional sequence of numbers. Initial step sizes.
+            Scalars are automatically broadcasted to the length of the
+            start sequence.
 
             **limit**: Optional sequence of limits that restrict the range in
             which a parameter is varied by minuit. Limits can be set in
@@ -424,6 +424,9 @@ cdef class Minuit:
 
             - Upper limit: (None, x), (-inf, x) [replace x with a number]
 
+            A single limit is automatically broadcasted to the length of the
+            start sequence.
+
             **fix**: Optional sequence of boolean values. Whether to fix a
             parameter to the starting value.
 
@@ -432,10 +435,44 @@ cdef class Minuit:
 
             All other keywords are forwarded to :class:`Minuit`, see
             its documentation.
+
+        **Example:**
+
+            A simple example function is passed to Minuit. It accept a numpy
+            array of the parameters. Initial starting values and error
+            estimates are given::
+
+                import numpy as np
+
+                def f(x):
+                    mu = (2, 3)
+                    return np.sum((x-mu)**2)
+
+                # error is automatically broadcasted to (0.5, 0.5)
+                m = Minuit.from_array_func(f, (2, 3),
+                                           error=0.5)
+
         """
         npar = len(start)
         pnames = name if name is not None else ["x%i"%i for i in range(npar)]
-        kwds = {"forced_parameters":pnames, "use_array_call":True}
+        kwds["forced_parameters"] = pnames
+        kwds["use_array_call"] = True
+        if error is not None:
+            if np.isscalar(error):
+                error = np.ones(npar) * error
+            else:
+                if len(error) != npar:
+                    raise RuntimeError("length of error sequence does "
+                                       "not match start sequence")
+        if limit is not None:
+            if (len(limit) == 2 and
+                np.isscalar(limit[0]) and
+                np.isscalar(limit[1])):
+                limit = [limit for i in range(npar)]
+            else:
+                if len(limit) != npar:
+                    raise RuntimeError("length of limit sequence does "
+                                       "not match start sequence")
         for i, name in enumerate(pnames):
             kwds[name] = start[i]
             if error is not None:

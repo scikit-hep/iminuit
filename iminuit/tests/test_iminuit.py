@@ -148,15 +148,46 @@ def test_array_call():
 
 
 def test_from_array_func():
-    m = Minuit.from_array_func(func8, np.ones(3),
-                               pedantic=False,
+    m = Minuit.from_array_func(func8, (1, 1),
+                               error=(0.5, 0.5),
+                               limit=((0, 2), (0, 2)),
+                               name=("a", "b"),
+                               errordef=1,
                                print_level=0)
+    assert m.fitarg == {"a": 1,
+                        "b": 1,
+                        "error_a": 0.5,
+                        "error_b": 0.5,
+                        "fix_a": False,
+                        "fix_b": False,
+                        "limit_a": (0, 2),
+                        "limit_b": (0, 2)}
     m.migrad()
     v = m.np_values()
-    assert_allclose(v, (1, 1, 1))
+    assert_allclose(v, (1, 1))
     c = m.np_covariance()
-    assert_allclose(np.diag(c), (1, 1, 1))
+    assert_allclose(np.diag(c), (1, 1))
 
+
+def test_from_array_func_with_broadcasting():
+    m = Minuit.from_array_func(func8, (1, 1),
+                               error=0.5,
+                               limit=(0, 2),
+                               errordef=1,
+                               print_level=0)
+    assert m.fitarg == {"x0": 1,
+                        "x1": 1,
+                        "error_x0": 0.5,
+                        "error_x1": 0.5,
+                        "fix_x0": False,
+                        "fix_x1": False,
+                        "limit_x0": (0, 2),
+                        "limit_x1": (0, 2)}
+    m.migrad()
+    v = m.np_values()
+    assert_allclose(v, (1, 1))
+    c = m.np_covariance()
+    assert_allclose(np.diag(c), (1, 1))
 
 
 def test_typo():
