@@ -264,9 +264,9 @@ cdef class Minuit:
               calculate the gradient numerically. (Default None)
 
             - **use_array_call**: Optional. Set this to true if your function
-              signature accepts a single numpy array of the parameters. If you
-              don't use the `forced_parameters` keyword to explicitly name the
-              parameters, they are called x0, ..., xN.
+              signature accepts a single numpy array of the parameters. You
+              need to also pass the `forced_parameters` keyword then to
+              explicitly name the parameters.
 
         **Parameter Keyword Arguments:**
 
