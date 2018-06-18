@@ -5,6 +5,7 @@ from math import sqrt
 import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
+import numpy as np
 
 
 class Func_Code:
@@ -69,6 +70,10 @@ def func7(*args): # no signature
     return (args[0] - 1) ** 2 + (args[1] - 2) ** 2
 
 
+def func8(x): # test numpy support
+    return np.sum((x - 1) ** 2)
+
+
 data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
           3.372, 2.377, 4.307, 2.784, 3.328, 2.143, 1.402, 1.44,
           1.313, 1.682, 0.886, 0.0, 0.266, 0.3]
@@ -117,6 +122,72 @@ def test_nosignature():
     val = m.values
     assert_allclose((val['x'], val['y'], m.fval), (1, 2, 0), atol=1e-8)
     assert m.migrad_ok()
+
+
+def test_array_call():
+    inf = float("infinity")
+    m = Minuit(func8, a=1, b=1,
+               error_a=1, error_b=1,
+               limit_a=(0, inf),
+               limit_b=(0, inf),
+               fix_a=False,
+               fix_b=False,
+               print_level=0,
+               errordef=1,
+               use_array_call=True,
+               forced_parameters=("a", "b"))
+    m.migrad()
+    v = m.values
+    assert_allclose((v["a"], v["b"]),
+                    (1, 1))
+    m.hesse()
+    c = m.covariance
+    assert_allclose((c[("a", "a")],
+                     c[("b", "b")]),
+                    (1, 1))
+
+
+def test_from_array_func():
+    m = Minuit.from_array_func(func8, (1, 1),
+                               error=(0.5, 0.5),
+                               limit=((0, 2), (0, 2)),
+                               name=("a", "b"),
+                               errordef=1,
+                               print_level=0)
+    assert m.fitarg == {"a": 1,
+                        "b": 1,
+                        "error_a": 0.5,
+                        "error_b": 0.5,
+                        "fix_a": False,
+                        "fix_b": False,
+                        "limit_a": (0, 2),
+                        "limit_b": (0, 2)}
+    m.migrad()
+    v = m.np_values()
+    assert_allclose(v, (1, 1))
+    c = m.np_covariance()
+    assert_allclose(np.diag(c), (1, 1))
+
+
+def test_from_array_func_with_broadcasting():
+    m = Minuit.from_array_func(func8, (1, 1),
+                               error=0.5,
+                               limit=(0, 2),
+                               errordef=1,
+                               print_level=0)
+    assert m.fitarg == {"x0": 1,
+                        "x1": 1,
+                        "error_x0": 0.5,
+                        "error_x1": 0.5,
+                        "fix_x0": False,
+                        "fix_x1": False,
+                        "limit_x0": (0, 2),
+                        "limit_x1": (0, 2)}
+    m.migrad()
+    v = m.np_values()
+    assert_allclose(v, (1, 1))
+    c = m.np_covariance()
+    assert_allclose(np.diag(c), (1, 1))
 
 
 def test_typo():
@@ -279,6 +350,7 @@ def test_minos_single():
     m.minos('x')
     assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
     assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
+
 
 def test_minos_single_with_gradient():
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
@@ -443,7 +515,7 @@ def test_reverse_limit():
     def f(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
-    m = Minuit(f, limit_x=(3., 2.), pedantic=False)
+    m = Minuit(f, limit_x=(3., 2.), pedantic=False, print_level=0)
     with pytest.raises(ValueError):
         m.migrad()
 
@@ -461,7 +533,7 @@ class TestOutputInterface:
         assert_allclose(actual, expected, atol=1e-8)
 
     def test_matrix(self):
-        actual = self.m.np_matrix()
+        actual = self.m.matrix()
         expected = [[5., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
 
@@ -471,15 +543,20 @@ class TestOutputInterface:
         assert_allclose(actual, expected, atol=1e-8)
 
     def test_np_matrix(self):
-        import numpy as np
         actual = self.m.np_matrix()
         expected = [[5., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)
 
+    def test_np_matrix_correlation(self):
+        actual = self.m.np_matrix(correlation=True)
+        expected = [[1., 0.], [0., 1.]]
+        assert_allclose(actual, expected, atol=1e-8)
+        assert isinstance(actual, np.ndarray)
+        assert actual.shape == (2, 2)
+
     def test_np_values(self):
-        import numpy as np
         actual = self.m.np_values()
         expected = [2., 5.]
         assert_allclose(actual, expected, atol=1e-8)
@@ -487,7 +564,6 @@ class TestOutputInterface:
         assert actual.shape == (2,)
 
     def test_np_errors(self):
-        import numpy as np
         actual = self.m.np_errors()
         expected = [5.**0.5, 1.]
         assert_allclose(actual, expected, atol=1e-8)
@@ -495,7 +571,6 @@ class TestOutputInterface:
         assert actual.shape == (2,)
 
     def test_np_merrors(self):
-        import numpy as np
         actual = self.m.np_merrors()
         expected = [[5.**0.5, 1.], [5.**0.5, 1.]]
         assert_allclose(actual, expected, atol=1e-8)
@@ -503,17 +578,8 @@ class TestOutputInterface:
         assert actual.shape == (2, 2)
 
     def test_np_covariance(self):
-        import numpy as np
         actual = self.m.np_covariance()
         expected = [[5., 0.], [0., 1.]]
-        assert_allclose(actual, expected, atol=1e-8)
-        assert isinstance(actual, np.ndarray)
-        assert actual.shape == (2, 2)
-
-    def test_np_matrix_correlation(self):
-        import numpy as np
-        actual = self.m.np_matrix(correlation=True)
-        expected = [[1., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)

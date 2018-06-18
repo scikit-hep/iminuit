@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
-from os.path import dirname, join
+import os
+from os.path import dirname, join, exists
 from glob import glob
 
 from setuptools import setup, Extension
@@ -11,13 +12,15 @@ from distutils.ccompiler import CCompiler
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import MSVCCompiler
 
+
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
 compiler_opts = {
     CCompiler: dict(),
     UnixCCompiler: dict(extra_compile_args=[
-            '-Wno-shorten-64-to-32', '-Wno-null-conversion',
-            '-Wno-parentheses', '-Wno-unused-variable', '-Wno-sign-compare',
+            '-Wno-shorten-64-to-32', '-Wno-parentheses',
+            '-Wno-unused-variable', '-Wno-sign-compare',
+            '-Wno-cpp' # suppresses #warnings from numpy
         ]),
     MSVCCompiler: dict(extra_compile_args=[
             '/EHsc',
@@ -56,10 +59,32 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+def lazy_compile(self, sources, output_dir=None, macros=None,
+                 include_dirs=None, debug=0, extra_preargs=None,
+                 extra_postargs=None, depends=None):
+    macros, objects, extra_postargs, pp_opts, build = \
+            self._setup_compile(output_dir, macros, include_dirs, sources,
+                                depends, extra_postargs)
+    cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
+
+    for obj in objects:
+        try:
+            src, ext = build[obj]
+        except KeyError:
+            continue
+        if not exists(obj) or os.stat(obj).st_mtime < os.stat(src).st_mtime:
+            self._compile(obj, src, ext, cc_args, extra_postargs, pp_opts)
+    return objects
+
+
+import distutils.ccompiler
+distutils.ccompiler.CCompiler.compile = lazy_compile
+
+
 # Static linking
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cxx'))
-minuit_header = join(cwd, 'Minuit/inc')
+minuit_header = [join(cwd, 'Minuit/inc')]
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
@@ -73,13 +98,13 @@ except ImportError:
 
 ext = '.pyx' if USE_CYTHON else '.cpp'
 
+import numpy
+numpy_header = [numpy.get_include()]
+
 libiminuit = Extension('iminuit._libiminuit',
-                       sources=['iminuit/_libiminuit' + ext] + minuit_src,
-                       include_dirs=[minuit_header],
-                       libraries=[],
-                       # extra_compile_args=['-Wall', '-Wno-sign-compare',
-                       #                      '-Wno-write-strings'],
-                       extra_link_args=[])
+                       sources=(glob(join(cwd, 'iminuit/*.pyx')) +
+                                minuit_src),
+                       include_dirs=minuit_header + numpy_header)
 extensions = [libiminuit]
 
 if USE_CYTHON:
@@ -113,9 +138,9 @@ setup(
     package_dir={'iminuit': 'iminuit'},
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'numpy'],
     extras_require={
-        'all': ['numpy', 'ipython', 'matplotlib'],
+        'all': ['ipython', 'matplotlib'],
     },
     tests_require=['pytest', 'pytest-cov', 'numpy'],
     classifiers=[
