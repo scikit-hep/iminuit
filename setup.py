@@ -106,8 +106,11 @@ except ImportError:
 
 ext = '.pyx' if USE_CYTHON else '.cpp'
 
-import numpy
-numpy_header = [numpy.get_include()]
+try:
+    import numpy
+    numpy_header = [numpy.get_include()]
+except ImportError:
+    numpy_header = []
 
 libiminuit = Extension('iminuit._libiminuit',
                        sources=(glob(join(cwd, 'iminuit/*'+ext)) + minuit_src),

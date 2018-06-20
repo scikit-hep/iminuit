@@ -5,17 +5,25 @@ sudo: false
 matrix:
     include:
         - python: 2.7
-          env:
-            - BUILD=TEST
-            - BUILD=DOCS
+          env: BUILD=TEST
+
+        - python: 2.7
+          env: BUILD=DOCS
 
         - python: 3.5
-          env:
-            - BUILD=TEST
-            - BUILD=DOCS
-            - BUILD=COVERAGE
-            - BUILD=NO_EXTRA_DEPS
-            - BUILD=NO_CYTHON
+          env: BUILD=TEST
+
+        - python: 3.5
+          env: BUILD=DOCS
+
+        - python: 3.5
+          env: BUILD=COVERAGE
+
+        - python: 3.5
+          env: BUILD=NO_EXTRA_DEPS
+
+        - python: 3.5
+          env: BUILD=NO_CYTHON
 
         # TODO: add tests on Mac
 
