@@ -31,7 +31,7 @@ matrix:
 
 before_install:
   - pip install setuptools Cython
-  - if [[ $BUILD != NO_CYTHON ]]; then
+  - if [[ $BUILD == NO_CYTHON ]]; then
       python setup.py sdist;
       pip uninstall cython;
     fi
