@@ -13,8 +13,6 @@ matrix:
         - python: 3.5
           env: BUILD=TEST
 
-        # TODO: add tests for installed version!!
-
         # TODO: add tests on Mac
 
         # TODO: add tests for Python from conda
