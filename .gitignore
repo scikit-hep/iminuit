@@ -34,3 +34,4 @@ htmlcov
 .eggs
 env
 coverage.xml
+.pytest_cache
