@@ -957,10 +957,6 @@ cdef class Minuit:
         """Dictionary of varname-> MinosError Struct"""
         return self.merrors_struct
 
-    def get_initial_param_state(self):
-        """Initial setting in form of MinuitParameter Struct"""
-        raise NotImplementedError
-
     def get_num_call_fcn(self):
         """Total number of calls to FCN (not just the last operation)"""
         cdef IMinuitMixinPtr ptr = dynamic_cast[IMinuitMixinPtr](self.pyfcn)
