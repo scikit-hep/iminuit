@@ -17,6 +17,16 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
 
+# http://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
+# on_rtd is whether we are on readthedocs.org
+import os
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+if not on_rtd:
+    # Make sure local build of iminuit is found
+    import sys
+    sys.path.insert(0, os.path.dirname(__file__) + "/..")
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -24,6 +34,7 @@
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -58,6 +69,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'iminuit'
 copyright = u'2012, Piti Ongmongkolkul'
+
 
 import iminuit.info
 
@@ -256,17 +268,7 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 # texinfo_show_urls = 'footnote'
 
-
-# http://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
-# on_rtd is whether we are on readthedocs.org
-import os
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
 if not on_rtd:
-    # Make sure local build of iminuit is found
-    import sys
-    sys.path.insert(0, os.path.dirname(__file__) + "/..")
-
     # Import and set the theme if we're building docs locally
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'
