@@ -1,5 +1,4 @@
 from iminuit import Minuit
-from scipy.optimize import OptimizeResult
 import warnings
 import numpy as np
 
@@ -35,6 +34,8 @@ def minimize(fun, x0, args=(), method=None,
     - minuit (object): Minuit object internally used to do the minimization.
       Use this to extract more information about the parameter errors.
     """
+
+    from scipy.optimize import OptimizeResult
 
     if method:
         m = method.lower()

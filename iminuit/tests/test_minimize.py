@@ -1,6 +1,6 @@
 from __future__ import (absolute_import, division, print_function)
 from iminuit import minimize
-from iminuit.tests.utils import assert_allclose
+from iminuit.tests.utils import assert_allclose, requires_dependency
 import numpy as np
 
 
@@ -12,6 +12,7 @@ def grad(x, *args):
     return 2 * (x - (0, 1, 2))
 
 
+@requires_dependency('scipy')
 def test_simple():
     result = minimize(func, (1, 1, 1))
     assert_allclose(result.x, (0, 1, 2), atol=1e-8)
@@ -20,6 +21,7 @@ def test_simple():
     assert result.njev == 0
 
 
+@requires_dependency('scipy')
 def test_gradient():
     result = minimize(func, (1, 1, 1), jac=grad)
     assert_allclose(result.x, (0, 1, 2), atol=1e-8)
@@ -28,6 +30,7 @@ def test_gradient():
     assert result.njev > 0
 
 
+@requires_dependency('scipy')
 def test_args():
     result = minimize(func, np.ones(3), args=(5,))
     assert_allclose(result.x, (0, 1, 2), atol=1e-8)
@@ -36,6 +39,7 @@ def test_args():
     assert result.njev == 0
 
 
+@requires_dependency('scipy')
 def test_callback():
     trace = []
     result = minimize(func, np.ones(3),
