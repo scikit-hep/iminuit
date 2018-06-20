@@ -31,6 +31,10 @@ matrix:
 
 before_install:
   - pip install setuptools Cython
+  - if [[ $BUILD != NO_CYTHON ]]; then
+      pip install sdist;
+      pip uninstall cython;
+    fi
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
   - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov numpy; fi
