@@ -41,7 +41,7 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build htmlcov doc/_build
+	rm -rf build htmlcov doc/_build iminuit/_libiminuit.cpp
 	find . -name "*.pyc" -exec rm {} \;
 	find . -name "*.so" -exec rm {} \;
 	find . -name __pycache__ | xargs rm -fr

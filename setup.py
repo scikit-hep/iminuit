@@ -102,8 +102,7 @@ import numpy
 numpy_header = [numpy.get_include()]
 
 libiminuit = Extension('iminuit._libiminuit',
-                       sources=(glob(join(cwd, 'iminuit/*.pyx')) +
-                                minuit_src),
+                       sources=(glob(join(cwd, 'iminuit/*'+ext)) + minuit_src),
                        include_dirs=minuit_header + numpy_header)
 extensions = [libiminuit]
 
