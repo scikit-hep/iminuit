@@ -85,13 +85,13 @@ def chi2(m, s, A):
     return sum(((func6(x, m, s, A) - y) ** 2 for x, y in zip(data_x, data_y)))
 
 
-def functesthelper(f):
-    m = Minuit(f, print_level=0, pedantic=False)
+def functesthelper(f, **kwds):
+    m = Minuit(f, print_level=0, pedantic=False, **kwds)
     m.migrad()
     val = m.values
-    assert_allclose(val['x'], 2.)
-    assert_allclose(val['y'], 5.)
-    assert_allclose(m.fval, 10.)
+    assert_allclose(val['x'], 2., rtol=1e-3)
+    assert_allclose(val['y'], 5., rtol=1e-3)
+    assert_allclose(m.fval, 10., rtol=1e-3)
     assert m.matrix_accurate()
     assert m.migrad_ok()
     return m
@@ -107,6 +107,8 @@ def test_f2():
 
 def test_f3():
     functesthelper(func3)
+    m = functesthelper(func3, grad_fcn=func3_grad)
+    assert m.get_num_call_grad() > 0
 
 
 def test_lambda():
@@ -188,6 +190,27 @@ def test_from_array_func_with_broadcasting():
     assert_allclose(v, (1, 1))
     c = m.np_covariance()
     assert_allclose(np.diag(c), (1, 1))
+
+
+def test_no_resume():
+    m = Minuit(func3, pedantic=False)
+    m.migrad()
+    n = m.get_num_call_fcn()
+    m.migrad()
+    assert m.get_num_call_fcn() > n
+    m.migrad(resume=False)
+    assert m.get_num_call_fcn() == n
+
+    m = Minuit(func3, grad_fcn=func3_grad, pedantic=False)
+    m.migrad()
+    n = m.get_num_call_fcn()
+    k = m.get_num_call_grad()
+    m.migrad()
+    assert m.get_num_call_fcn() > n
+    assert m.get_num_call_grad() > k
+    m.migrad(resume=False)
+    assert m.get_num_call_fcn() == n
+    assert m.get_num_call_grad() == k
 
 
 def test_typo():
