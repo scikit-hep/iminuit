@@ -22,7 +22,7 @@ matrix:
         - python: 2.7
           env: BUILD=DOCS
 
-        - python: 3.4
+        - python: 3.5
           env: BUILD=DOCS
 
         - python: 3.5
@@ -31,12 +31,18 @@ matrix:
         - python: 3.5
           env: BUILD=NO_EXTRA_DEPS
 
+        - python: 3.5
+          env: BUILD=NO_CYTHON
 
 before_install:
-  - pip install setuptools Cython
-  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
+  - pip install setuptools numpy cython
+  - if [[ $BUILD == NO_CYTHON ]]; then
+      python setup.py sdist # use this to generate cpp files from pyx files
+      pip uninstall cython
+    fi
+  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython matplotlib; fi
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
-  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov numpy; fi
+  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov; fi
 
 install:
   - python setup.py build_ext -i
