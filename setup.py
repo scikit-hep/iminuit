@@ -93,8 +93,16 @@ try:
 
     USE_CYTHON = True  # TODO: add command line option?
 except ImportError:
-    print('Cython is not available ... using pre-generated C file.')
     USE_CYTHON = False
+    if exists('iminuit/_libiminuit.cpp'):
+        print('Cython is not available ... using pre-generated cpp file.')
+    else:
+        raise SystemExit('Looks like you are trying to install iminuit '
+                         'from github. This requires Cython. Run\n'
+                         '   pip install cython\n'
+                         'for a system-wide installation, or\n'
+                         '   pip install --user cython\n'
+                         'for a user-wide installation.')
 
 ext = '.pyx' if USE_CYTHON else '.cpp'
 
