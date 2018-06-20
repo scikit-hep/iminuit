@@ -1,0 +1,26 @@
+# Conda environment for iminuit development
+#
+# Install:    conda env create -f environment-dev.yml
+# Update:     conda env update -f environment-dev.yml
+# Activate:   conda activate iminuit-dev
+# Deactivate: conda deactivate
+
+name: iminuit-dev
+
+dependencies:
+  - python==3.6
+  - cython
+  - numpy
+  - ipython
+  - jupyter
+  - jupyterlab
+  - jupyterlab_launcher
+  - matplotlib
+  - sphinx
+  - sphinx_rtd_theme
+  - pytest
+  - pytest-cov
+  - pylint
+  - flake8
+  - pip:
+    - pydocstyle
