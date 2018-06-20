@@ -32,7 +32,7 @@ matrix:
 before_install:
   - pip install setuptools Cython
   - if [[ $BUILD != NO_CYTHON ]]; then
-      pip install sdist;
+      python setup.py sdist;
       pip uninstall cython;
     fi
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
