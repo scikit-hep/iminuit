@@ -1,9 +1,9 @@
 .. include:: references.txt
 
-.. _api-doc:
+.. _api:
 
-Full API Documentation
-======================
+API
+===
 
 .. currentmodule:: iminuit
 

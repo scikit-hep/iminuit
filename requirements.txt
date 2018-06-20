@@ -1,0 +1,13 @@
+numpy
+ipython
+matplotlib
+jupyter
+
+cython
+sphinx
+sphinx_rtd_theme
+pytest
+pytest-cov
+pylint
+flake8
+pydocstyle

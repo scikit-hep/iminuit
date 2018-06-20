@@ -6,6 +6,7 @@
 build
 *.pyc
 .idea
+.vscode
 .cache
 _build
 archive
@@ -33,3 +34,4 @@ htmlcov
 .eggs
 env
 coverage.xml
+.pytest_cache
