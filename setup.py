@@ -40,25 +40,6 @@ class SmartBuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
-# http://pytest.org/latest/goodpractices.html#manual-integration
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        # self.pytest_args = '--pyargs iminuit'
-        # self.pytest_args = ['--strict', '--verbose', '--tb=long', 'tests']
-        self.pytest_args = ''
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-        import shlex
-        errno = pytest.main(shlex.split(self.pytest_args))
-        del sys.exitfunc # needed to avoid a bug caused by IPython's exitfunc
-        sys.exit(errno)
-
-
 def lazy_compile(self, sources, output_dir=None, macros=None,
                  include_dirs=None, debug=0, extra_preargs=None,
                  extra_postargs=None, depends=None):
@@ -149,10 +130,6 @@ setup(
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
     install_requires=['setuptools', 'numpy'],
-    extras_require={
-        'all': ['ipython', 'matplotlib'],
-    },
-    tests_require=['pytest', 'pytest-cov', 'numpy', 'scipy', 'matplotlib', 'IPython<6'],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
@@ -171,7 +148,6 @@ setup(
         'License :: OSI Approved :: MIT License'
     ],
     cmdclass={
-        'test': PyTest,
         # 'coverage': CoverageCommand,
         'build_ext': SmartBuildExt,
     }
