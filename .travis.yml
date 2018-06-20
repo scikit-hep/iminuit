@@ -37,8 +37,8 @@ matrix:
 before_install:
   - pip install setuptools numpy cython
   - if [[ $BUILD == NO_CYTHON ]]; then
-      python setup.py sdist # use this to generate cpp files from pyx files
-      pip uninstall cython
+      python setup.py sdist; # use this to generate cpp files from pyx files
+      pip uninstall cython;
     fi
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython matplotlib; fi
   - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme; fi
