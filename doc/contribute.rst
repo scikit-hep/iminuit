@@ -11,8 +11,7 @@ You can help
 Github allows you to contribute to this project very easily just fork the
 repository, make changes and submit a pull request.
 
-Here's the list of concrete open issues and feature requests:
-https://github.com/iminuit/iminuit
+Concrete open issues and feature requests or on `Github`_.
 
 More generally any contribution to the docs, tests and package itself is welcome!
 
@@ -20,101 +19,113 @@ More generally any contribution to the docs, tests and package itself is welcome
 * Tests. If you have an example that shows a bug or problem, please file an issue!
 * Performance. If you are a C/cython/python hacker go ahead and make it faster.
 
-Dependencies
-------------
+Development setup
+-----------------
 
-Like most Python packages, iminuit installation requires `setuptools`_.
+git
++++
 
-The following dependencies are optional:
-
-* numpy
-* ipython
-* matplotlib
-* pytest, pytest-cov
-* Cython
-* Sphinx, sphinx-rtd
-
-
-TODO: describe better where which dependency is used.
-
-
-
-Development version
--------------------
-
-To install the latest development version clone the
-repository from `Github <https://github.com/iminuit/iminuit>`_:
+To hack on `iminuit`, start by cloning the repository from `Github`_:
 
 .. code-block:: bash
 
     $ git clone https://github.com/iminuit/iminuit.git
     $ cd iminuit
-    $ python setup.py install
 
-Docs
-----
+conda
++++++
 
-You will need ``sphinx`` and ``sphinx_rtd_theme``.
-They can be installed via
+We recommend you make a dedicated environment for `iminuit`
+development, separate from the Python installation you use
+for other projects.
 
-.. code-block:: bash
-
-   $ pip install sphinx
-   $ pip install sphinx_rtd_theme
-
-To generate html docs locally, ``iminuit`` has to be available.
-To check if that is the case, and which version you're using, you can use this command:
+One way is to use `conda`_ environments and to use `environment-dev.yml`_
+to make the environment and install everything:
 
 .. code-block:: bash
 
-    $ python -c 'import iminuit; print(iminuit)'
+    $ conda env create -f environment-dev.yml
+    $ conda activate iminuit-dev
 
-One way to achieve this is to do this:
-
-.. code-block:: bash
-
-   $ python setup.py build_ext --inplace
-   $ python setup.py develop
-
-Another is to just install ``iminuit`` into ``site-packages``:
+If you ever need to update the environment, you can use:
 
 .. code-block:: bash
 
-   $ python setup.py install
+    $ conda env update -f environment-dev.yml
 
-Once you have ``iminuit`` available, use these commands to build the docs:
-
-.. code-block:: bash
-
-   $ cd doc
-   $ make html
-
-The HTML output is here:
+It's also easy to deactivate or delete it:
 
 .. code-block:: bash
 
-   $ open _build/html/index.html
+    $ conda deactivate
+    $ conda env remove -n iminuit-dev
 
+virualenv and pip
++++++++++++++++++
 
-Testing
--------
-
-To run the tests you need to install `pytest`_.
-
-To run the iminuit tests for an installed version of the package:
+Another way is to use `Python virtual environments`_ and to `pip` install via `requirements.txt`_
 
 .. code-block:: bash
 
-    python -m pytest --pyargs iminuit
+   $ python -m venv iminuit-dev
+   $ source activate iminuit-dev
+   $ pip install -f requirements.txt
 
-To run the tests from the source folder (e.g. during pytest development), use this command:
+Development workflow
+--------------------
+
+Hacking on `iminuit` usually means that you edit the Python or Cython files,
+and then run a `python setup.py` or `make` command to build the software
+or HTML documentation, or to run tests.
+
+The most thing to remember is that we have a `Makefile`_ and the you can run
+this command to get help printed concerning the most common available
+`make` and `python setup.py` commands:
+
+.. code-block:: bash
+
+   $ make help
+
+Build Minuit and `iminuit` in-place:
+
+.. code-block:: bash
+
+   $ make build
+
+Run the tests:
 
 .. code-block:: bash
 
     $ make test
 
-To get a coverage report from the tests:
+Run the tests with coverage report:
 
 .. code-block:: bash
 
     $ make coverage
+    $ open htmlcov/index.htm
+
+Build the docs:
+
+.. code-block:: bash
+
+   $ make doc
+   $ open doc/_build/html/index.html
+
+To check your `iminuit` version number and install location:
+
+.. code-block:: bash
+
+    $ python
+    >>> import iminuit
+    >>> iminuit
+    # install location is printed
+    >>> iminuit.__version__
+    # version number is printed
+
+.. _requirements.txt: https://github.com/iminuit/iminuit/blob/master/requirements.txt
+.. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+.. _Github: https://github.com/iminuit/iminuit
+.. _conda: https://conda.io/
+.. _environment-dev.yml: https://github.com/iminuit/iminuit/blob/master/environment-dev.yml
+.. _Makefile: https://github.com/iminuit/iminuit/blob/master/Makefile
