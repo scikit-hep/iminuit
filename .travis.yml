@@ -46,4 +46,4 @@ install:
 script:
   - if [[ $BUILD == TEST ]]; then make test; fi
   - if [[ $BUILD == COVERAGE ]]; then make coverage; fi
-  - if [[ $BUILD == DOCS ]]; then cd doc; sphinx-build -W -a -E -b html -d _build/doctrees . _build/html; fi
+  - if [[ $BUILD == DOCS ]]; then make doc; fi
