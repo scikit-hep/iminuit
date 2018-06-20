@@ -1,3 +1,5 @@
+# cython: linetrace=True, binding=True
+# distutils: define_macros=CYTHON_TRACE=1
 # cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii
 # distutils: language = c++
 """IPython Minuit class definition.

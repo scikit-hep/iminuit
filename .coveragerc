@@ -1,5 +1,6 @@
 [run]
 omit = */py23_compat.py
+plugins = Cython.Coverage
 [report]
 exclude_lines =
     pragma: no cover
@@ -9,4 +10,3 @@ exclude_lines =
     __repr__
     __getitem__
     raise RuntimeError
-
