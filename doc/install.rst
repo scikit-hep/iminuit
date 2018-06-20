@@ -1,6 +1,6 @@
 .. include:: references.txt
 
-.. _installation:
+.. _install:
 
 Installation
 ============

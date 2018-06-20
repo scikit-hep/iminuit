@@ -47,7 +47,7 @@ If you are interested in fitting a curve or distribution, take a look at `probfi
     :maxdepth: 4
     :hidden:
 
-    installation
+    install
     api
 
 
