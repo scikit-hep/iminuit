@@ -1,4 +1,3 @@
-.. -*- mode: rst -*-
 
 .. image:: https://travis-ci.org/iminuit/iminuit.svg?branch=master
    :target: https://travis-ci.org/iminuit/iminuit
