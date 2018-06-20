@@ -29,6 +29,7 @@ __all__ = ['Minuit']
 # Our wrappers
 ctypedef FCNGradientBase* FCNGradientBasePtr
 ctypedef IMinuitMixin* IMinuitMixinPtr
+ctypedef PythonGradientFCN* PythonGradientFCNPtr
 
 cdef class Minuit:
     # Standard stuff
@@ -532,12 +533,12 @@ cdef class Minuit:
 
             if self.grad_fcn is None:
                 self.minimizer = new MnMigrad(
-                    deref(self.pyfcn),
+                    deref(<FCNBase*> self.pyfcn),
                     deref(ups), deref(strat)
                 )
             else:
                 self.minimizer = new MnMigrad(
-                    deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
+                    deref(<FCNGradientBase*> self.pyfcn),
                     deref(ups), deref(strat)
                 )
 
@@ -548,8 +549,12 @@ cdef class Minuit:
 
         self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
 
+        cdef PythonGradientFCNPtr grad_fcn_ptr = NULL
         if not resume:
             dynamic_cast[IMinuitMixinPtr](self.pyfcn).resetNumCall()
+            grad_fcn_ptr = dynamic_cast[PythonGradientFCNPtr](self.pyfcn)
+            if grad_fcn_ptr:
+                grad_fcn_ptr.resetNumGrad()
 
         del self.cfmin  #remove the old one
 
@@ -958,7 +963,13 @@ cdef class Minuit:
 
     def get_num_call_fcn(self):
         """Total number of calls to FCN (not just the last operation)"""
-        return 0 if self.pyfcn is NULL else dynamic_cast[IMinuitMixinPtr](self.pyfcn).getNumCall()
+        cdef IMinuitMixinPtr ptr = dynamic_cast[IMinuitMixinPtr](self.pyfcn)
+        return ptr.getNumCall() if ptr else 0
+
+    def get_num_call_grad(self):
+        """Total number of calls to Gradient (not just the last operation)"""
+        cdef PythonGradientFCNPtr ptr = dynamic_cast[PythonGradientFCNPtr](self.pyfcn)
+        return ptr.getNumGrad() if ptr else 0
 
     def migrad_ok(self):
         """Check if minimum is valid."""

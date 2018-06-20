@@ -51,6 +51,9 @@ public:
     virtual int getNumCall() const { return call_fcn.ncall; }
     virtual void resetNumCall() { call_fcn.ncall = 0; }
 
+    virtual int getNumGrad() const { return call_grad.ncall; }
+    virtual void resetNumGrad() { call_grad.ncall = 0; }
+
 private:
     PythonCaller call_fcn, call_grad;
 };
