@@ -9,13 +9,14 @@ name: iminuit-dev
 
 dependencies:
   - python==3.6
-  - cython
   - numpy
   - ipython
+  - matplotlib
   - jupyter
   - jupyterlab
   - jupyterlab_launcher
-  - matplotlib
+
+  - cython
   - sphinx
   - sphinx_rtd_theme
   - pytest
