@@ -152,7 +152,7 @@ setup(
     extras_require={
         'all': ['ipython', 'matplotlib'],
     },
-    tests_require=['pytest', 'pytest-cov', 'numpy', 'scipy'],
+    tests_require=['pytest', 'pytest-cov', 'numpy', 'scipy', 'matplotlib'],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
