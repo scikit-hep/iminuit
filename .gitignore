@@ -6,6 +6,7 @@
 build
 *.pyc
 .idea
+.vscode
 .cache
 _build
 archive
