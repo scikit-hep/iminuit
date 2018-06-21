@@ -824,7 +824,7 @@ cdef class Minuit:
     def is_fixed(self, vname):
         """Check if variable *vname* is (initially) fixed"""
         if vname not in self.parameters:
-            raise RuntimeError('Cannot find %s in list of variables.')
+            raise RuntimeError('Cannot find %s in list of variables.' % vname)
         cdef unsigned int index = self.var2pos[vname]
         if self.last_upst is NULL:
             return self.initial_fix[vname]

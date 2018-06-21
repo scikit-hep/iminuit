@@ -292,6 +292,11 @@ def test_fix_param():
         assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
         assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
+        assert m.is_fixed('x') == False
+        assert m.is_fixed('y') == True
+        with pytest.raises(RuntimeError):
+            m.is_fixed('a')
+
 
 def test_fitarg_oneside():
     m = Minuit(func4, print_level=-1, y=10., fix_y=True, limit_x=(None, 20.),
