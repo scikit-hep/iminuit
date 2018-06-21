@@ -271,63 +271,26 @@ def test_non_invertible():
 
 
 def test_fix_param():
-    m = Minuit(func4, print_level=0, pedantic=False)
-    m.migrad()
-    m.minos()
-    val = m.values
-    assert_allclose(val['x'], 2)
-    assert_allclose(val['y'], 5)
-    assert_allclose(val['z'], 7)
-    err = m.errors  # second derivative
-    assert_allclose(err['x'], 2.236067977354171)
-    assert_allclose(err['y'], 3.1622776602288)
-    assert_allclose(err['z'], 2)
-    m.print_all_minos()
-    # now fix z = 10
-    m = Minuit(func4, print_level=-1, y=10., fix_y=True, pedantic=False)
-    m.migrad()
-    val = m.values
-    assert_allclose(val['x'], 2)
-    assert_allclose(val['y'], 10)
-    assert_allclose(val['z'], 7)
-    assert_allclose(m.fval, 10. + 2.5)
-    free_param = m.list_of_vary_param()
-    fix_param = m.list_of_fixed_param()
-    assert 'x' in free_param
-    assert 'x' not in fix_param
-    assert 'y' in fix_param
-    assert 'y' not in free_param
-    assert 'z' not in fix_param
-
-
-def test_fix_param_with_gradient():
-    m = Minuit(func4, grad_fcn=func4_grad, print_level=0, pedantic=False)
-    m.migrad()
-    m.minos()
-    val = m.values
-    assert_allclose(val['x'], 2)
-    assert_allclose(val['y'], 5)
-    assert_allclose(val['z'], 7)
-    err = m.errors  # second derivative
-    assert_allclose(err['x'], 2.236067977354171)
-    assert_allclose(err['y'], 3.1622776602288)
-    assert_allclose(err['z'], 2)
-    m.print_all_minos()
-    # now fix z = 10
-    m = Minuit(func4, grad_fcn=func4_grad, print_level=-1, y=10., fix_y=True, pedantic=False)
-    m.migrad()
-    val = m.values
-    assert_allclose(val['x'], 2)
-    assert_allclose(val['y'], 10)
-    assert_allclose(val['z'], 7)
-    assert_allclose(m.fval, 10. + 2.5)
-    free_param = m.list_of_vary_param()
-    fix_param = m.list_of_fixed_param()
-    assert 'x' in free_param
-    assert 'x' not in fix_param
-    assert 'y' in fix_param
-    assert 'y' not in free_param
-    assert 'z' not in fix_param
+    for grad in (None, func3_grad):
+        kwds = {'print_level': 0, 'pedantic': False, 'grad_fcn': grad}
+        m = Minuit(func3, **kwds)
+        m.migrad()
+        m.minos()
+        assert_allclose(m.np_values(), (2, 5), rtol=1e-2)
+        assert_allclose(m.np_errors(), (2, 1))
+        assert_allclose(m.matrix(), ((4, 0), (0, 1)), atol=1e-4)
+        for b in (True, False):
+            assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
+        m.print_all_minos()
+        # now fix z = 10
+        m = Minuit(func3, y=10., fix_y=True, **kwds)
+        m.migrad()
+        assert_allclose(m.np_values(), (2, 10), rtol=1e-2)
+        assert_allclose(m.fval, 35)
+        assert m.list_of_vary_param() == ['x']
+        assert m.list_of_fixed_param() == ['y']
+        assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
+        assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
 
 def test_fitarg_oneside():
