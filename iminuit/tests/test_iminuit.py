@@ -74,6 +74,10 @@ def func8(x): # test numpy support
     return np.sum((x - 1) ** 2)
 
 
+def func8_grad(x): # test numpy support
+    return 2 * (x - 1)
+
+
 data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
           3.372, 2.377, 4.307, 2.784, 3.328, 2.143, 1.402, 1.44,
           1.313, 1.682, 0.886, 0.0, 0.266, 0.3]
@@ -151,6 +155,7 @@ def test_array_call():
 
 def test_from_array_func():
     m = Minuit.from_array_func(func8, (1, 1),
+                               grad_fcn=func8_grad,
                                error=(0.5, 0.5),
                                limit=((0, 2), (0, 2)),
                                name=("a", "b"),
@@ -166,9 +171,9 @@ def test_from_array_func():
                         "limit_b": (0, 2)}
     m.migrad()
     v = m.np_values()
-    assert_allclose(v, (1, 1))
+    assert_allclose(v, (1, 1), rtol=1e-3)
     c = m.np_covariance()
-    assert_allclose(np.diag(c), (1, 1))
+    assert_allclose(np.diag(c), (1, 1), rtol=1e-3)
 
 
 def test_from_array_func_with_broadcasting():
