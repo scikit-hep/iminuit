@@ -198,7 +198,7 @@ def test_from_array_func_2():
     v = m.np_values()
     assert_allclose(v, (1, 1), rtol=1e-2)
     c = m.np_covariance()
-    assert_allclose(c, (1, 0), rtol=1e-2)
+    assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)
 
 
 def test_from_array_func_with_broadcasting():
