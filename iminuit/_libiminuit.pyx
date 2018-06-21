@@ -4,13 +4,11 @@
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import array
 from warnings import warn
 from libc.math cimport sqrt
 from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
-from iminuit.py23_compat import ARRAY_DOUBLE_TYPECODE
 from iminuit.util import *
 from iminuit.iminuit_warnings import (InitialParamWarning,
                                       HesseFailedWarning)
@@ -710,20 +708,32 @@ cdef class Minuit:
             raise RuntimeError(
                 "Covariance is not valid. May be the last Hesse call failed?")
 
-        cdef MnUserCovariance cov = self.last_upst.Covariance()
-        params = self.list_of_vary_param() if skip_fixed else self.parameters
-        if correlation:
-            ret = tuple(
-                tuple(cov.get(iv1, iv2) / sqrt(cov.get(iv1, iv1) * cov.get(iv2, iv2))
-                      for iv1, v1 in enumerate(params)) \
-                for iv2, v2 in enumerate(params)
-            )
+        cdef MnUserCovariance mncov = self.last_upst.Covariance()
+        cdef vector[MinuitParameter] mp = self.last_upst.MinuitParameters()
+
+        if skip_fixed:
+            ind = [i for i in range(mp.size()) if not mp[i].IsFixed()]
+            def cov(i, j): return mncov.get(i, j)
         else:
-            ret = tuple(
-                tuple(cov.get(iv1, iv2)
-                      for iv1, v1 in enumerate(params)) \
-                for iv2, v2 in enumerate(params)
-            )
+            ind = range(mp.size())
+            def cov(i, j):
+                if mp[i].IsFixed() or mp[j].IsFixed():
+                    return 0.0
+                return mncov.get(i, j)
+
+        if correlation:
+            if skip_fixed:
+                def cor(i, j): return cov(i, j) / sqrt(cov(i, i) * cov(j, j))
+            else:
+                def cor(i, j):
+                    if i == j:
+                        return 1.0
+                    if mp[i].IsFixed() or mp[j].IsFixed(): return 0.0
+                    return mncov.get(i, j) / sqrt(mncov.get(i, i) * mncov.get(j, j))
+            ret = tuple(tuple(cor(i, j) for i in ind) for j in ind)
+        else:
+            ret = tuple(tuple(cov(i, j) for i in ind) for j in ind)
+
         return ret
 
     def print_matrix(self, **kwds):
@@ -1086,13 +1096,11 @@ cdef class Minuit:
             start = self.values[vname]
             sigma = self.errors[vname]
             bound = (start - bound * sigma, start + bound * sigma)
-        blength = bound[1] - bound[0]
-        binstep = blength / (bins - 1)
 
-        values = array.array(ARRAY_DOUBLE_TYPECODE,
-                             (bound[0] + binstep * i for i in xrange(bins)))
-        results = array.array(ARRAY_DOUBLE_TYPECODE)
-        migrad_status = []
+        values = np.linspace(*bound, bins, dtype=np.double)
+        results = np.empty(bins, dtype=np.double)
+        migrad_status = np.empty(bins, dtype=np.bool)
+        cdef double vmin = float("infinity")
         for i, v in enumerate(values):
             fitparam = self.fitarg.copy()
             fitparam[vname] = v
@@ -1101,15 +1109,14 @@ cdef class Minuit:
                        pedantic=False, forced_parameters=self.parameters,
                        **fitparam)
             m.migrad()
-            migrad_status.append(m.migrad_ok())
+            migrad_status[i] = m.migrad_ok()
             if not m.migrad_ok():
                 warn(('Migrad fails to converge for %s=%f') % (vname, v))
-            results.append(m.fval)
+            results[i] = m.fval
+            if m.fval < vmin: vmin = m.fval
 
         if subtract_min:
-            themin = min(results)
-            results = array.array(ARRAY_DOUBLE_TYPECODE,
-                                  (x - themin for x in results))
+            results -= vmin
 
         return values, results, migrad_status
 
@@ -1179,28 +1186,29 @@ cdef class Minuit:
 
             :meth:`mnprofile`
         """
+        if subtract_min and self.cfmin is NULL:
+            raise RuntimeError("Request for minimization "
+                               "subtraction but no minimization has been done. "
+                               "Run migrad first.")
+
         if isinstance(bound, (int, long, float)):
             start = self.values[vname]
             sigma = self.errors[vname]
             bound = (start - bound * sigma,
                      start + bound * sigma)
-        blength = bound[1] - bound[0]
-        binstep = blength / (bins - 1.)
-        args = list(self.args) if args is None else args
+
         # center value
-        bins = array.array(ARRAY_DOUBLE_TYPECODE,
-                           (bound[0] + binstep * i for i in xrange(bins)))
-        ret = array.array(ARRAY_DOUBLE_TYPECODE)
-        pos = self.var2pos[vname]
-        if subtract_min and self.cfmin is NULL:
-            raise RuntimeError("Request for minimization "
-                               "subtraction but no minimization has been done. "
-                               "Run migrad first.")
-        minval = self.cfmin.Fval() if subtract_min else 0.
-        for val in bins:
-            args[pos] = val
-            ret.append(self.fcn(*args) - minval)
-        return bins, ret
+        val = np.linspace(*bound, bins, dtype=np.double)
+        result = np.empty(bins, dtype=np.double)
+        cdef int pos = self.var2pos[vname]
+        cdef list arg = list(self.args if args is None else args)
+        cdef int n = val.shape[0]
+        for i in range(n):
+            arg[pos] = val[i]
+            result[i] = self.fcn(*arg)
+        if subtract_min:
+            result -= self.cfmin.Fval()
+        return val, result
 
     def draw_profile(self, vname, bins=100, bound=2, args=None,
                      subtract_min=False, band=True, text=True):
@@ -1276,7 +1284,12 @@ cdef class Minuit:
             correlation with other parameters that's fixed.
 
         """
-        #don't want to use numpy as requirement for this
+
+        if subtract_min and self.cfmin is NULL:
+            raise RuntimeError("Request for minimization "
+                               "subtraction but no minimization has been done. "
+                               "Run migrad first.")
+
         if isinstance(bound, (int, long, float)):
             x_start = self.values[x]
             x_sigma = self.errors[x]
@@ -1288,41 +1301,25 @@ cdef class Minuit:
             x_bound = bound[0]
             y_bound = bound[1]
 
-        x_bins = bins
-        y_bins = bins
+        x_val = np.linspace(*x_bound, bins)
+        y_val = np.linspace(*y_bound, bins)
 
-        x_blength = x_bound[1] - x_bound[0]
-        x_binstep = x_blength / (x_bins - 1.)
+        cdef int x_pos = self.var2pos[x]
+        cdef int y_pos = self.var2pos[y]
 
-        y_blength = y_bound[1] - y_bound[0]
-        y_binstep = y_blength / (y_bins - 1.)
+        cdef list arg = list(self.args if args is None else args)
 
-        x_val = array.array(ARRAY_DOUBLE_TYPECODE,
-                            (x_bound[0] + x_binstep * i for i in xrange(x_bins)))
-        y_val = array.array(ARRAY_DOUBLE_TYPECODE,
-                            (y_bound[0] + y_binstep * i for i in xrange(y_bins)))
+        result = np.empty((bins, bins), dtype=np.double)
+        for i, x in enumerate(x_val):
+            arg[x_pos] = x
+            for j, y in enumerate(y_val):
+                arg[y_pos] = y
+                result[i, j] = self.fcn(*arg)
 
-        x_pos = self.var2pos[x]
-        y_pos = self.var2pos[y]
+        if subtract_min:
+            result -= self.cfmin.Fval()
 
-        args = list(self.args) if args is None else args
-
-        if subtract_min and self.cfmin is NULL:
-            raise RuntimeError("Request for minimization "
-                               "subtraction but no minimization has been done. "
-                               "Run migrad first.")
-        minval = self.cfmin.Fval() if subtract_min else 0.
-
-        ret = list()
-        for yy in y_val:
-            args[y_pos] = yy
-            tmp = array.array(ARRAY_DOUBLE_TYPECODE)
-            for xx in x_val:
-                args[x_pos] = xx
-                tmp.append(self.fcn(*args) - minval)
-            ret.append(tmp)
-
-        return x_val, y_val, ret
+        return x_val, y_val, result
 
     def mncontour(self, x, y, int numpoints=20, sigma=1.0):
         """Minos contour scan.

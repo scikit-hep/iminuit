@@ -157,27 +157,48 @@ def test_array_call():
                     (1, 1))
 
 
-def test_from_array_func():
-    m = Minuit.from_array_func(func8, (1, 1),
+def test_from_array_func_1():
+    m = Minuit.from_array_func(func8, (2, 1),
+                               grad_fcn=func8_grad,
+                               errordef=1,
+                               print_level=0)
+    assert m.fitarg == {"x0": 2,
+                        "x1": 1,
+                        "error_x0": 1.0,
+                        "error_x1": 1.0,
+                        "fix_x0": False,
+                        "fix_x1": False,
+                        "limit_x0": None,
+                        "limit_x1": None}
+    m.migrad()
+    v = m.np_values()
+    assert_allclose(v, (1, 1), rtol=1e-2)
+    c = m.np_covariance()
+    assert_allclose(np.diag(c), (1, 1), rtol=1e-2)
+
+
+def test_from_array_func_2():
+    m = Minuit.from_array_func(func8, (2, 1),
                                grad_fcn=func8_grad,
                                error=(0.5, 0.5),
                                limit=((0, 2), (0, 2)),
+                               fix=(False, True),
                                name=("a", "b"),
                                errordef=1,
                                print_level=0)
-    assert m.fitarg == {"a": 1,
+    assert m.fitarg == {"a": 2,
                         "b": 1,
                         "error_a": 0.5,
                         "error_b": 0.5,
                         "fix_a": False,
-                        "fix_b": False,
+                        "fix_b": True,
                         "limit_a": (0, 2),
                         "limit_b": (0, 2)}
     m.migrad()
     v = m.np_values()
-    assert_allclose(v, (1, 1), rtol=1e-3)
+    assert_allclose(v, (1, 1), rtol=1e-2)
     c = m.np_covariance()
-    assert_allclose(np.diag(c), (1, 1), rtol=1e-3)
+    assert_allclose(c, (1, 0), rtol=1e-2)
 
 
 def test_from_array_func_with_broadcasting():
