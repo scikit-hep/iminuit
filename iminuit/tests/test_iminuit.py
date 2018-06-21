@@ -19,7 +19,7 @@ class Func1:
         pass
 
     def __call__(self, x, y):
-        return (x - 2.) ** 2 + (y - 5.) ** 2 + 10
+        return (x - 2.) ** 2 / 4.0 + (y - 5.) ** 2 + 10
 
 
 class Func2:
@@ -27,16 +27,16 @@ class Func2:
         self.func_code = Func_Code(['x', 'y'])
 
     def __call__(self, *arg):
-        return (arg[0] - 2.) ** 2 + (arg[1] - 5.) ** 2 + 10
+        return (arg[0] - 2.) ** 2 / 4.0 + (arg[1] - 5.) ** 2 + 10
 
 
 def func3(x, y):
-    return 0.2 * (x - 2.) ** 2 + (y - 5.) ** 2 + 10
+    return (x - 2.) ** 2 / 4.0 + (y - 5.) ** 2 + 10
 
 
 def func3_grad(x, y):
-    dfdx = 0.4 * (x - 2.)
-    dfdy = 2 * (y - 5.)
+    dfdx = (x - 2.) / 2.0
+    dfdy = 2.0 * (y - 5.)
     return [dfdx, dfdy]
 
 
@@ -98,6 +98,10 @@ def functesthelper(f, **kwds):
     assert_allclose(m.fval, 10., rtol=1e-3)
     assert m.matrix_accurate()
     assert m.migrad_ok()
+    m.hesse()
+    err = m.errors
+    assert_allclose(err['x'], 2., rtol=1e-3)
+    assert_allclose(err['y'], 1., rtol=1e-3)
     return m
 
 
@@ -116,7 +120,7 @@ def test_f3():
 
 
 def test_lambda():
-    functesthelper(lambda x, y: (x - 2.) ** 2 + (y - 5.) ** 2 + 10)
+    functesthelper(lambda x, y: (x - 2.) ** 2 / 4.0 + (y - 5.) ** 2 + 10)
 
 
 def test_nosignature():
@@ -356,9 +360,9 @@ def test_minos_all():
     m.migrad()
     for sigma in range(1, 4):
         m.minos(sigma=sigma)
-        assert_allclose(m.merrors[('x', -1.0)], -sigma*sqrt(5))
-        assert_allclose(m.merrors[('x', 1.0)], sigma*sqrt(5))
-        assert_allclose(m.merrors[('y', 1.0)], sigma*1.)
+        assert_allclose(m.merrors[('x', -1.0)], -sigma*2)
+        assert_allclose(m.merrors[('x', 1.0)], sigma*2)
+        assert_allclose(m.merrors[('y', 1.0)], sigma*1)
 
 
 def test_minos_all_with_gradient():
@@ -367,17 +371,17 @@ def test_minos_all_with_gradient():
     m.migrad()
     for sigma in range(1, 4):
         m.minos(sigma=sigma)
-        assert_allclose(m.merrors[('x', -1.0)], -sigma*sqrt(5))
-        assert_allclose(m.merrors[('x', 1.0)], sigma*sqrt(5))
-        assert_allclose(m.merrors[('y', 1.0)], sigma*1.)
+        assert_allclose(m.merrors[('x', -1.0)], -sigma*2)
+        assert_allclose(m.merrors[('x', 1.0)], sigma*2)
+        assert_allclose(m.merrors[('y', 1.0)], sigma*1)
 
 
 def test_minos_single():
     m = Minuit(func3, pedantic=False, print_level=0)
     m.migrad()
     m.minos('x')
-    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
+    assert_allclose(m.merrors[('x', -1.0)], -2)
+    assert_allclose(m.merrors[('x', 1.0)], 2)
 
 
 def test_minos_single_with_gradient():
@@ -385,8 +389,8 @@ def test_minos_single_with_gradient():
     m.set_strategy(2)
     m.migrad()
     m.minos('x')
-    assert_allclose(m.merrors[('x', -1.0)], -sqrt(5))
-    assert_allclose(m.merrors[('x', 1.0)], sqrt(5))
+    assert_allclose(m.merrors[('x', -1.0)], -2)
+    assert_allclose(m.merrors[('x', 1.0)], 2)
 
 
 def test_minos_single_fixed_raising():
@@ -562,7 +566,7 @@ class TestOutputInterface:
 
     def test_matrix(self):
         actual = self.m.matrix()
-        expected = [[5., 0.], [0., 1.]]
+        expected = [[4., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
 
     def test_matrix_correlation(self):
@@ -572,7 +576,7 @@ class TestOutputInterface:
 
     def test_np_matrix(self):
         actual = self.m.np_matrix()
-        expected = [[5., 0.], [0., 1.]]
+        expected = [[4., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)
@@ -593,21 +597,24 @@ class TestOutputInterface:
 
     def test_np_errors(self):
         actual = self.m.np_errors()
-        expected = [5.**0.5, 1.]
+        expected = [2., 1.]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2,)
 
     def test_np_merrors(self):
         actual = self.m.np_merrors()
-        expected = [[5.**0.5, 1.], [5.**0.5, 1.]]
-        assert_allclose(actual, expected, atol=1e-8)
+        # output format is [abs(down_delta), up_delta] following
+        # the matplotlib convention in matplotlib.pyplot.errorbar
+        down_delta = (-2, -1)
+        up_delta = (2, 1)
+        assert_allclose(actual, (np.abs(down_delta), up_delta), atol=1e-8)
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)
 
     def test_np_covariance(self):
         actual = self.m.np_covariance()
-        expected = [[5., 0.], [0., 1.]]
+        expected = [[4., 0.], [0., 1.]]
         assert_allclose(actual, expected, atol=1e-8)
         assert isinstance(actual, np.ndarray)
         assert actual.shape == (2, 2)
