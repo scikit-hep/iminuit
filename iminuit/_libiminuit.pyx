@@ -865,10 +865,10 @@ cdef class Minuit:
         sfmin = cfmin2struct(self.cfmin)
         ncalls = 0 if self.pyfcn is NULL else dynamic_cast[IMinuitMixinPtr](self.pyfcn).getNumCall()
 
-        self.frontend.print_hline(86)
+        self.frontend.print_hline()
         self.frontend.print_fmin(sfmin, self.tol, ncalls)
         self.print_param()
-        self.frontend.print_hline(86)
+        self.frontend.print_hline()
 
     def print_all_minos(self):
         """Print all minos errors (and its states)"""

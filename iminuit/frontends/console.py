@@ -169,5 +169,5 @@ class ConsoleFrontend(Frontend):
         tab.append(hline)
         self.display(*tab)
 
-    def print_hline(self, width=70):
+    def print_hline(self, width=86):
         self.display('*' * width)
