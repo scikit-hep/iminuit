@@ -1,4 +1,11 @@
 from __future__ import (absolute_import, division, print_function)
+# Here we don't import unicode_literals, because otherwise we cannot write
+# in "\usepackage" and similar in the string literals below.
+# The problem is an inconsistency regarding the effect of
+# from __future__ import unicode_literals in Python 2 and 3, which is
+# explained here:
+# https://stackoverflow.com/questions/7602171/unicode-error-unicodeescape-codec-cant-decode-bytes-string-with-u
+# We want the same code to work in Python 2 and 3 and chose this solution.
 import sys
 from iminuit import Minuit
 import iminuit.frontends.html as html

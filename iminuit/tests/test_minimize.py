@@ -1,4 +1,5 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 from iminuit import minimize
 from iminuit.tests.utils import assert_allclose, requires_dependency
 import numpy as np
