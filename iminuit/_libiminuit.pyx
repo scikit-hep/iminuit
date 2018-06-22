@@ -389,8 +389,8 @@ cdef class Minuit:
 
 
     @classmethod
-    def from_array_func(cls, fcn, start, error=None,
-                        limit=None, fix=None, name=None, **kwds):
+    def from_array_func(cls, fcn, start, error=None, limit=None, fix=None,
+                        name=None, **kwds):
         """
         Construct minuit object from given *fcn* and start sequence.
 
