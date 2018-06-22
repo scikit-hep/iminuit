@@ -15,7 +15,10 @@ import pytest
 
 def test_fitarg_rename():
     fitarg = {'x': 1, 'limit_x': (2, 3), 'fix_x': True, 'error_x': 10}
-    ren = lambda x: 'z_' + x
+
+    def ren(x):
+        return 'z_' + x
+
     newfa = fitarg_rename(fitarg, ren)
     assert 'z_x' in newfa
     assert 'limit_z_x' in newfa

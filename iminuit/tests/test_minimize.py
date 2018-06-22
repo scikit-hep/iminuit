@@ -9,6 +9,7 @@ def func(x, *args):
     c = args[0] if args else 1
     return c + x[0] ** 2 + (x[1] - 1) ** 2 + (x[2] - 2) ** 2
 
+
 def grad(x, *args):
     return 2 * (x - (0, 1, 2))
 

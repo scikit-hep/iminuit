@@ -10,11 +10,13 @@ if py_ver[0] == 2:
 else:  # just in case PY4
     PY3 = True
 
+
 def is_string(s):
     try:  # Python 2
         return isinstance(s, basestring)
     except NameError:  # Python 3
         return isinstance(s, str)
+
 
 try:
     from abc import ABC

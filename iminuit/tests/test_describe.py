@@ -72,7 +72,7 @@ def test_builtin():
 
 
 def test_lambda():
-    assert describe(lambda a,b: 0, True) == ['a', 'b']
+    assert describe(lambda a, b: 0, True) == ['a', 'b']
 
 
 def test_variadic():

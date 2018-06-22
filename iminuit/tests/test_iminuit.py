@@ -1,6 +1,5 @@
 from __future__ import (absolute_import, division, print_function)
 import warnings
-from math import sqrt
 import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
@@ -67,15 +66,15 @@ def func6(x, m, s, A):
     return A / ((x - m) ** 2 + s ** 2)
 
 
-def func7(*args): # no signature
+def func7(*args):  # no signature
     return (args[0] - 1) ** 2 + (args[1] - 2) ** 2
 
 
-def func8(x): # test numpy support
+def func8(x):  # test numpy support
     return np.sum((x - 1) ** 2)
 
 
-def func8_grad(x): # test numpy support
+def func8_grad(x):  # test numpy support
     return 2 * (x - 1)
 
 
@@ -86,6 +85,7 @@ class Func9:
         corr = 0.5
         cov = (sx**2, corr * sx * sy), (corr * sx * sy, sy**2)
         self.cinv = np.linalg.inv(cov)
+
     def __call__(self, x):
         return np.dot(x.T, np.dot(self.cinv, x))
 
@@ -172,7 +172,7 @@ def test_array_call():
 def test_from_array_func_1():
     m = Minuit.from_array_func(func8, (2, 1),
                                error=(1, 1),
-			       errordef=1,
+                               errordef=1,
                                print_level=0)
     assert m.fitarg == {"x0": 2,
                         "x1": 1,
@@ -304,8 +304,8 @@ def test_fix_param(grad):
     assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
-    assert m.is_fixed('x') == False
-    assert m.is_fixed('y') == True
+    assert m.is_fixed('x') is False
+    assert m.is_fixed('y') is True
     with pytest.raises(RuntimeError):
         m.is_fixed('a')
 
@@ -362,9 +362,9 @@ def test_minos_all(grad, sigma):
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
     m.migrad()
     m.minos(sigma=sigma)
-    assert_allclose(m.merrors[('x', -1.0)], -sigma*2, rtol=1e-2)
-    assert_allclose(m.merrors[('x', 1.0)], sigma*2, rtol=1e-2)
-    assert_allclose(m.merrors[('y', 1.0)], sigma*1, rtol=1e-2)
+    assert_allclose(m.merrors[('x', -1.0)], -sigma * 2, rtol=1e-2)
+    assert_allclose(m.merrors[('x', 1.0)], sigma * 2, rtol=1e-2)
+    assert_allclose(m.merrors[('y', 1.0)], sigma * 1, rtol=1e-2)
 
 
 @parametrize('grad', (None, func3_grad))
@@ -585,6 +585,7 @@ def test_oneside_outside():
 def test_num_call():
     class Func:
         ncall = 0
+
         def __call__(self, x):
             self.ncall += 1
             return x ** 2
@@ -598,7 +599,7 @@ def test_num_call():
     assert m.get_num_call_fcn() == func.ncall
     func.ncall = 0
     m.migrad(resume=False)
-    assert func.ncall ==  m.get_num_call_fcn()
+    assert func.ncall == m.get_num_call_fcn()
 
     ncall_without_limit = m.get_num_call_fcn()
     # check that ncall argument limits function calls in migrad

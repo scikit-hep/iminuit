@@ -77,7 +77,7 @@ def minimize(fun, x0, args=(), method=None,
             maxfev = options["maxfev"]
         if "eps" in options:
             error = options["eps"]
-    if error is None: # prevent warnings from Minuit about missing initial step
+    if error is None:  # prevent warnings from Minuit about missing initial step
         error = np.ones_like(x0)
 
     if bool(jac):

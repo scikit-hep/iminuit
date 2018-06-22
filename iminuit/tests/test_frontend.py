@@ -19,16 +19,19 @@ def f1(x, y):
 
 @requires_dependency('IPython')
 def test_html(capsys):
-    def out(): return capsys.readouterr()[0]
+
+    def out():
+        return capsys.readouterr()[0]
 
     class FakeRandom(object):
         def choice(self, s):
             return s[0]
 
     class Frontend(html.HtmlFrontend):
-        rng = FakeRandom() # for reproducability
-        def display(self, *args): # text to stdout
-            sys.stdout.write('\n'.join(args)+'\n')
+        rng = FakeRandom()  # for reproducability
+
+        def display(self, *args):  # text to stdout
+            sys.stdout.write('\n'.join(args) + '\n')
 
     m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=Frontend())
     m.tol = 1e-4
@@ -444,7 +447,9 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 
 
 def test_console(capsys):
-    def out(): return capsys.readouterr()[0]
+
+    def out():
+        return capsys.readouterr()[0]
 
     m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=console.ConsoleFrontend())
     m.tol = 1e-4
