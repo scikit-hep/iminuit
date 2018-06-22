@@ -184,10 +184,10 @@ cdef class Minuit:
     TODO: link to description.
     """
 
-    def __init__(self, fcn, grad_fcn=None,
+    def __init__(self, fcn,
                  throw_nan=False, pedantic=True,
                  frontend=None, forced_parameters=None, print_level=1,
-                 errordef=None, use_array_call=False,
+                 errordef=None, grad_fcn=None, use_array_call=False,
                  **kwds):
         """
         Construct minuit object from given *fcn*
@@ -389,7 +389,7 @@ cdef class Minuit:
 
 
     @classmethod
-    def from_array_func(cls, fcn, start, grad_fcn=None, error=None,
+    def from_array_func(cls, fcn, start, error=None,
                         limit=None, fix=None, name=None, **kwds):
         """
         Construct minuit object from given *fcn* and start sequence.
@@ -454,9 +454,8 @@ cdef class Minuit:
         """
         npar = len(start)
         pnames = name if name is not None else ["x%i"%i for i in range(npar)]
-        kwds['forced_parameters'] = pnames
-        kwds['use_array_call'] = True
-        kwds['grad_fcn'] = grad_fcn
+        kwds["forced_parameters"] = pnames
+        kwds["use_array_call"] = True
         if error is not None:
             if np.isscalar(error):
                 error = np.ones(npar) * error
