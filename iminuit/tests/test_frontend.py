@@ -11,7 +11,6 @@ from iminuit import Minuit
 import iminuit.frontends.html as html
 import iminuit.frontends.console as console
 from iminuit.tests.utils import requires_dependency
-import random
 
 
 def f1(x, y):

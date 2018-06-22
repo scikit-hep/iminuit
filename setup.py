@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
 from os.path import dirname, join, exists
 from glob import glob
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-from setuptools.command.test import test as TestCommand
 
 from distutils.ccompiler import CCompiler
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import MSVCCompiler
+import distutils.ccompiler
 
 
 # turn off warnings raised by Minuit and generated Cython code that need
@@ -18,13 +17,13 @@ from distutils.msvccompiler import MSVCCompiler
 compiler_opts = {
     CCompiler: dict(),
     UnixCCompiler: dict(extra_compile_args=[
-            '-Wno-shorten-64-to-32', '-Wno-parentheses',
-            '-Wno-unused-variable', '-Wno-sign-compare',
-            '-Wno-cpp' # suppresses #warnings from numpy
-        ]),
+        '-Wno-shorten-64-to-32', '-Wno-parentheses',
+        '-Wno-unused-variable', '-Wno-sign-compare',
+        '-Wno-cpp'  # suppresses #warnings from numpy
+    ]),
     MSVCCompiler: dict(extra_compile_args=[
-            '/EHsc',
-        ]),
+        '/EHsc',
+    ]),
 }
 
 
@@ -40,12 +39,13 @@ class SmartBuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
+# prevent setup from recompiling static Minuit2 code again and again
 def lazy_compile(self, sources, output_dir=None, macros=None,
                  include_dirs=None, debug=0, extra_preargs=None,
                  extra_postargs=None, depends=None):
     macros, objects, extra_postargs, pp_opts, build = \
-            self._setup_compile(output_dir, macros, include_dirs, sources,
-                                depends, extra_postargs)
+        self._setup_compile(output_dir, macros, include_dirs, sources,
+                            depends, extra_postargs)
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
 
     for obj in objects:
@@ -58,7 +58,7 @@ def lazy_compile(self, sources, output_dir=None, macros=None,
     return objects
 
 
-import distutils.ccompiler
+# monkey-patching lazy_compile into CCompiler
 distutils.ccompiler.CCompiler.compile = lazy_compile
 
 
@@ -94,7 +94,8 @@ except ImportError:
     numpy_header = []
 
 libiminuit = Extension('iminuit._libiminuit',
-                       sources=(glob(join(cwd, 'iminuit/*'+ext)) + minuit_src),
+                       sources=(glob(join(cwd, 'iminuit/*' + ext)) +
+                                minuit_src),
                        include_dirs=minuit_header + numpy_header)
 extensions = [libiminuit]
 
