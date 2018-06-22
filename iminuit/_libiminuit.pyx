@@ -848,12 +848,12 @@ cdef class Minuit:
 
     def print_initial_param(self, **kwds):
         """Print initial parameters"""
-        p = self.get_param_states(initial=True)
+        p = self.get_initial_param_states()
         self.frontend.print_param(p, {}, **kwds)
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
-        p = self.get_param_states(initial=True)
+        p = self.get_initial_param_states()
         return LatexFactory.build_param_table(p, {})
 
     def print_fmin(self):
@@ -919,12 +919,17 @@ cdef class Minuit:
 
     # Expose internal state using various structs
 
-    def get_param_states(self, initial=False):
+    def get_param_states(self):
         """List of current MinuitParameter Struct for all parameters"""
-        if self.last_upst is NULL or initial == True:
-            up = self.initialParameterState()
-        else:
-            up = self.last_upst
+        if self.last_upst is NULL:
+            return self.get_initial_param_states()
+        up = self.last_upst
+        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        return [minuitparam2struct(vmps[i]) for i in range(vmps.size())]
+
+    def get_initial_param_states(self):
+        """List of current MinuitParameter Struct for all parameters"""
+        up = self.initialParameterState()
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
         return [minuitparam2struct(vmps[i]) for i in range(vmps.size())]
 

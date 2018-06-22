@@ -651,7 +651,7 @@ def test_get_param_states():
     assert m.get_param_states() == expected
 
     m.migrad()
-    assert m.get_param_states(initial=True) == expected
+    assert m.get_initial_param_states() == expected
 
     expected = [Struct(name='x',
                        number=0,
