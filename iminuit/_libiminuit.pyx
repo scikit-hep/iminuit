@@ -184,10 +184,10 @@ cdef class Minuit:
     TODO: link to description.
     """
 
-    def __init__(self, fcn,
+    def __init__(self, fcn, grad_fcn=None,
                  throw_nan=False, pedantic=True,
                  frontend=None, forced_parameters=None, print_level=1,
-                 errordef=None, grad_fcn=None, use_array_call=False,
+                 errordef=None, use_array_call=False,
                  **kwds):
         """
         Construct minuit object from given *fcn*
@@ -389,8 +389,8 @@ cdef class Minuit:
 
 
     @classmethod
-    def from_array_func(cls, fcn, start, error=None, limit=None, fix=None,
-                        name=None, **kwds):
+    def from_array_func(cls, fcn, start, grad_fcn=None, error=None,
+                        limit=None, fix=None, name=None, **kwds):
         """
         Construct minuit object from given *fcn* and start sequence.
 
@@ -454,8 +454,9 @@ cdef class Minuit:
         """
         npar = len(start)
         pnames = name if name is not None else ["x%i"%i for i in range(npar)]
-        kwds["forced_parameters"] = pnames
-        kwds["use_array_call"] = True
+        kwds['forced_parameters'] = pnames
+        kwds['use_array_call'] = True
+        kwds['grad_fcn'] = grad_fcn
         if error is not None:
             if np.isscalar(error):
                 error = np.ones(npar) * error
@@ -831,14 +832,6 @@ cdef class Minuit:
         else:
             return self.last_upst.MinuitParameters()[index].IsFixed()
 
-    def _prepare_param(self):
-        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
-        cdef int i
-        tmp = []
-        for i in range(vmps.size()):
-            tmp.append(minuitparam2struct(vmps[i]))
-        return tmp
-
     #dealing with frontend conversion
     def print_param(self, **kwds):
         """Print current parameter state.
@@ -848,45 +841,22 @@ cdef class Minuit:
         if self.last_upst is NULL:
             self.print_initial_param(**kwds)
             return
-        p = self._prepare_param()
+        p = self.get_param_states()
         self.frontend.print_param(p, self.merrors_struct, **kwds)
 
     def latex_param(self):
         """build :class:`iminuit.latex.LatexTable` for current parameter"""
-        p = self._prepare_param()
+        p = self.get_param_states()
         return LatexFactory.build_param_table(p, self.merrors_struct)
-
-    def _prepare_initial_param(self):
-        tmp = []
-        for i, vname in enumerate(self.parameters):
-            mps = Struct(
-                number=i + 1,
-                name=vname,
-                value=self.initial_value[vname],
-                error=self.initial_error[vname],
-                is_const=False,
-                is_fixed=self.initial_fix[vname],
-                has_limits=self.initial_limit[vname] is not None,
-                lower_limit=self.initial_limit[vname][0]
-                if self.initial_limit[vname] is not None else None,
-                upper_limit=self.initial_limit[vname][1]
-                if self.initial_limit[vname] is not None else None,
-                has_lower_limit=self.initial_limit[vname] is not None
-                                and self.initial_limit[vname][0] is not None,
-                has_upper_limit=self.initial_limit[vname] is not None
-                                and self.initial_limit[vname][1] is not None
-            )
-            tmp.append(mps)
-        return tmp
 
     def print_initial_param(self, **kwds):
         """Print initial parameters"""
-        p = self._prepare_initial_param()
+        p = self.get_param_states(initial=True)
         self.frontend.print_param(p, {}, **kwds)
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
-        p = self._prepare_initial_param()
+        p = self.get_param_states(initial=True)
         return LatexFactory.build_param_table(p, {})
 
     def print_fmin(self):
@@ -898,10 +868,10 @@ cdef class Minuit:
         sfmin = cfmin2struct(self.cfmin)
         ncalls = 0 if self.pyfcn is NULL else dynamic_cast[IMinuitMixinPtr](self.pyfcn).getNumCall()
 
-        self.frontend.print_hline()
+        self.frontend.print_hline(86)
         self.frontend.print_fmin(sfmin, self.tol, ncalls)
         self.print_param()
-        self.frontend.print_hline()
+        self.frontend.print_hline(86)
 
     def print_all_minos(self):
         """Print all minos errors (and its states)"""
@@ -952,24 +922,18 @@ cdef class Minuit:
 
     # Expose internal state using various structs
 
-    def get_param_states(self):
+    def get_param_states(self, initial=False):
         """List of current MinuitParameter Struct for all parameters"""
-        if self.last_upst is NULL:
-            return self.get_initial_param_state()
-        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
-        cdef int i
-        ret = []
-        for i in range(vmps.size()):
-            ret.append(minuitparam2struct(vmps[i]))
-        return ret
+        if self.last_upst is NULL or initial == True:
+            up = self.initialParameterState()
+        else:
+            up = self.last_upst
+        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        return [minuitparam2struct(vmps[i]) for i in range(vmps.size())]
 
     def get_merrors(self):
         """Dictionary of varname-> MinosError Struct"""
         return self.merrors_struct
-
-    def get_initial_param_state(self):
-        """Initial setting in form of MinuitParameter Struct"""
-        raise NotImplementedError
 
     def get_num_call_fcn(self):
         """Total number of calls to FCN (not just the last operation)"""

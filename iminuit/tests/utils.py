@@ -1,5 +1,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+from numpy.testing import assert_allclose
 
 __all__ = [
     'requires_dependency',
@@ -36,9 +37,3 @@ def requires_dependency(name):
     reason = 'Missing dependency: {}'.format(name)
     import pytest
     return pytest.mark.skipif(skip_it, reason=reason)
-
-try:
-    from numpy.testing import assert_allclose
-except ImportError:
-    print('ERROR: Running the iminuit tests requires Numpy (for float comparisons)!')
-    raise

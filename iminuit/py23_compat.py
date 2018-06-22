@@ -15,3 +15,12 @@ def is_string(s):
         return isinstance(s, basestring)
     except NameError:  # Python 3
         return isinstance(s, str)
+
+try:
+    from abc import ABC
+except ImportError:
+    from abc import ABCMeta
+
+    class ABC(object):
+        __metaclass__ = ABCMeta
+        pass

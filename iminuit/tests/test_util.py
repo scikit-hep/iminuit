@@ -9,7 +9,8 @@ from iminuit.util import (fitarg_rename,
                           extract_fix,
                           remove_var,
                           arguments_from_docstring,
-                          )
+                          Struct)
+import pytest
 
 
 def test_fitarg_rename():
@@ -113,3 +114,17 @@ def test_arguments_from_docstring():
     s = 'Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])'
     a = arguments_from_docstring(s)
     assert a == ['ncall_me', 'resume', 'nsplit']
+
+
+def test_Struct():
+    s = Struct(a=1, b=2)
+    assert set(s.keys()) == {'a', 'b'}
+    assert s.a == 1
+    assert s.b == 2
+    s.a = 3
+    assert s.a == 3
+    with pytest.raises(AttributeError):
+        s.c
+    with pytest.raises(KeyError):
+        s['c']
+    assert s == Struct(a=3, b=2)

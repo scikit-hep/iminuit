@@ -5,6 +5,7 @@ from math import sqrt
 import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
+from iminuit.util import Struct
 import numpy as np
 parametrize = pytest.mark.parametrize
 
@@ -160,8 +161,8 @@ def test_array_call():
 
 def test_from_array_func_1():
     m = Minuit.from_array_func(func8, (2, 1),
-                               grad_fcn=func8_grad,
-                               errordef=1,
+                               error=(1, 1),
+			       errordef=1,
                                print_level=0)
     assert m.fitarg == {"x0": 2,
                         "x1": 1,
@@ -224,7 +225,7 @@ def test_from_array_func_with_broadcasting():
 
 
 def test_no_resume():
-    m = Minuit(func3, pedantic=False)
+    m = Minuit(func3, print_level=0, pedantic=False)
     m.migrad()
     n = m.get_num_call_fcn()
     m.migrad()
@@ -232,7 +233,7 @@ def test_no_resume():
     m.migrad(resume=False)
     assert m.get_num_call_fcn() == n
 
-    m = Minuit(func3, grad_fcn=func3_grad, pedantic=False)
+    m = Minuit(func3, grad_fcn=func3_grad, print_level=0, pedantic=False)
     m.migrad()
     n = m.get_num_call_fcn()
     k = m.get_num_call_grad()
@@ -374,14 +375,10 @@ def test_minos_single_fixed_raising():
         with pytest.raises(RuntimeWarning):
             m.minos('x')
 
-
-def test_minos_single_fixed_result():
-    m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
-    m.migrad()
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         ret = m.minos('x')
-    assert ret is None
+        assert ret is None
 
 
 def test_minos_single_no_migrad():
@@ -611,3 +608,71 @@ def test_set_error_def():
     m.set_errordef(4)
     m.hesse()
     assert_allclose(m.errors["x"], 2)
+
+
+def test_get_param_states():
+    m = Minuit(func3, x=1, y=2, error_x=3, error_y=4,
+               fix_x=True, limit_y=(None, 10),
+               pedantic=False, errordef=1, print_level=0)
+    # these are the initial param states
+    expected = [Struct(name='x',
+                       number=0,
+                       value=1,
+                       error=3,
+                       is_fixed=True,
+                       is_const=False,
+                       has_limits=False,
+                       has_lower_limit=False,
+                       has_upper_limit=False,
+                       lower_limit=None,
+                       upper_limit=None),
+                Struct(name='y',
+                       number=1,
+                       value=2,
+                       error=4,
+                       is_fixed=False,
+                       is_const=False,
+                       has_limits=True,
+                       has_lower_limit=False,
+                       has_upper_limit=True,
+                       lower_limit=None,
+                       upper_limit=10)
+                ]
+    assert m.get_param_states() == expected
+
+    m.migrad()
+    assert m.get_param_states(initial=True) == expected
+
+    expected = [Struct(name='x',
+                       number=0,
+                       value=1.0,
+                       error=3.0,
+                       is_fixed=True,
+                       is_const=False,
+                       has_limits=False,
+                       has_lower_limit=False,
+                       has_upper_limit=False,
+                       lower_limit=None,
+                       upper_limit=None),
+                Struct(name='y',
+                       number=1,
+                       value=5.0,
+                       error=1.0,
+                       is_fixed=False,
+                       is_const=False,
+                       has_limits=True,
+                       has_lower_limit=False,
+                       has_upper_limit=True,
+                       lower_limit=None,
+                       upper_limit=10)]
+
+    param = m.get_param_states()
+    for i, exp in enumerate(expected):
+        p = param[i]
+        assert set(p.keys()) == set(exp.keys())
+        for key in exp:
+            if key in ('value', 'error'):
+                assert_allclose(p[key], exp[key], rtol=1e-2)
+            else:
+                assert p[key] == exp[key]
+
