@@ -6,6 +6,7 @@ import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
 import numpy as np
+parametrize = pytest.mark.parametrize
 
 
 class Func_Code:
@@ -270,32 +271,32 @@ def test_non_invertible():
         pass
 
 
-def test_fix_param():
-    for grad in (None, func3_grad):
-        kwds = {'print_level': 0, 'pedantic': False, 'grad_fcn': grad}
-        m = Minuit(func3, **kwds)
-        m.migrad()
-        m.minos()
-        assert_allclose(m.np_values(), (2, 5), rtol=1e-2)
-        assert_allclose(m.np_errors(), (2, 1))
-        assert_allclose(m.matrix(), ((4, 0), (0, 1)), atol=1e-4)
-        for b in (True, False):
-            assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
-        m.print_all_minos()
-        # now fix z = 10
-        m = Minuit(func3, y=10., fix_y=True, **kwds)
-        m.migrad()
-        assert_allclose(m.np_values(), (2, 10), rtol=1e-2)
-        assert_allclose(m.fval, 35)
-        assert m.list_of_vary_param() == ['x']
-        assert m.list_of_fixed_param() == ['y']
-        assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
-        assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
+@parametrize('grad', (None, func3_grad))
+def test_fix_param(grad):
+    kwds = {'print_level': 0, 'pedantic': False, 'grad_fcn': grad}
+    m = Minuit(func3, **kwds)
+    m.migrad()
+    m.minos()
+    assert_allclose(m.np_values(), (2, 5), rtol=1e-2)
+    assert_allclose(m.np_errors(), (2, 1))
+    assert_allclose(m.matrix(), ((4, 0), (0, 1)), atol=1e-4)
+    for b in (True, False):
+        assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
+    m.print_all_minos()
+    # now fix z = 10
+    m = Minuit(func3, y=10., fix_y=True, **kwds)
+    m.migrad()
+    assert_allclose(m.np_values(), (2, 10), rtol=1e-2)
+    assert_allclose(m.fval, 35)
+    assert m.list_of_vary_param() == ['x']
+    assert m.list_of_fixed_param() == ['y']
+    assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
+    assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
-        assert m.is_fixed('x') == False
-        assert m.is_fixed('y') == True
-        with pytest.raises(RuntimeError):
-            m.is_fixed('a')
+    assert m.is_fixed('x') == False
+    assert m.is_fixed('y') == True
+    with pytest.raises(RuntimeError):
+        m.is_fixed('a')
 
 
 def test_fitarg_oneside():
@@ -344,36 +345,19 @@ def test_fitarg():
     assert fitarg['limit_x'] == (0, 20)
 
 
-def test_minos_all():
-    m = Minuit(func3, pedantic=False, print_level=0)
-    m.migrad()
-    for sigma in range(1, 4):
-        m.minos(sigma=sigma)
-        assert_allclose(m.merrors[('x', -1.0)], -sigma*2)
-        assert_allclose(m.merrors[('x', 1.0)], sigma*2)
-        assert_allclose(m.merrors[('y', 1.0)], sigma*1)
-
-
-def test_minos_all_with_gradient():
+@parametrize('grad', (None, func3_grad))
+@parametrize('sigma', (1, 4))
+def test_minos_all(grad, sigma):
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
-    m.set_strategy(2)
     m.migrad()
-    for sigma in range(1, 4):
-        m.minos(sigma=sigma)
-        assert_allclose(m.merrors[('x', -1.0)], -sigma*2)
-        assert_allclose(m.merrors[('x', 1.0)], sigma*2)
-        assert_allclose(m.merrors[('y', 1.0)], sigma*1)
+    m.minos(sigma=sigma)
+    assert_allclose(m.merrors[('x', -1.0)], -sigma*2, rtol=1e-2)
+    assert_allclose(m.merrors[('x', 1.0)], sigma*2, rtol=1e-2)
+    assert_allclose(m.merrors[('y', 1.0)], sigma*1, rtol=1e-2)
 
 
-def test_minos_single():
-    m = Minuit(func3, pedantic=False, print_level=0)
-    m.migrad()
-    m.minos('x')
-    assert_allclose(m.merrors[('x', -1.0)], -2)
-    assert_allclose(m.merrors[('x', 1.0)], 2)
-
-
-def test_minos_single_with_gradient():
+@parametrize('grad', (None, func3_grad))
+def test_minos_single(grad):
     m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, print_level=0)
     m.set_strategy(2)
     m.migrad()
@@ -385,7 +369,6 @@ def test_minos_single_with_gradient():
 def test_minos_single_fixed_raising():
     m = Minuit(func3, pedantic=False, print_level=0, fix_x=True)
     m.migrad()
-
     with warnings.catch_warnings():
         warnings.simplefilter('error')
         with pytest.raises(RuntimeWarning):
@@ -414,15 +397,9 @@ def test_minos_single_nonsense_variable():
         m.minos('nonsense')
 
 
-def test_fixing_long_variable_name():
-    m = Minuit(func5, pedantic=False, print_level=0,
-               fix_long_variable_name_really_long_why_does_it_has_to_be_this_long=True,
-               long_variable_name_really_long_why_does_it_has_to_be_this_long=0)
-    m.migrad()
-
-
-def test_fixing_long_variable_name_with_gradient():
-    m = Minuit(func5, grad_fcn=func5_grad, pedantic=False, print_level=0,
+@parametrize('grad', (None, func5_grad))
+def test_fixing_long_variable_name(grad):
+    m = Minuit(func5, grad_fcn=grad, pedantic=False, print_level=0,
                fix_long_variable_name_really_long_why_does_it_has_to_be_this_long=True,
                long_variable_name_really_long_why_does_it_has_to_be_this_long=0)
     m.migrad()
@@ -437,12 +414,15 @@ def test_initial_value():
     assert_allclose(m.errors['x'], 3.)
 
 
-def test_mncontour():
-    m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
+@parametrize('grad', (None, func3_grad))
+@parametrize('sigma', (1, 2))
+def test_mncontour(grad, sigma):
+    m = Minuit(func3, grad_fcn=grad, pedantic=False,
+               x=1., y=2., error_x=3., print_level=0)
     m.migrad()
-    xminos, yminos, ctr = m.mncontour('x', 'y', numpoints=30)
-    xminos_t = m.minos('x')['x']
-    yminos_t = m.minos('y')['y']
+    xminos, yminos, ctr = m.mncontour('x', 'y', numpoints=30, sigma=sigma)
+    xminos_t = m.minos('x', sigma=sigma)['x']
+    yminos_t = m.minos('y', sigma=sigma)['y']
     assert_allclose(xminos.upper, xminos_t.upper)
     assert_allclose(xminos.lower, xminos_t.lower)
     assert_allclose(yminos.upper, yminos_t.upper)
@@ -451,72 +431,28 @@ def test_mncontour():
     assert len(ctr[0]) == 2
 
 
-def test_mncontour_with_gradient():
-    m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, x=1., y=2., error_x=3., print_level=0)
-    m.migrad()
-    xminos, yminos, ctr = m.mncontour('x', 'y', numpoints=30)
-    xminos_t = m.minos('x')['x']
-    yminos_t = m.minos('y')['y']
-    assert_allclose(xminos.upper, xminos_t.upper)
-    assert_allclose(xminos.lower, xminos_t.lower)
-    assert_allclose(yminos.upper, yminos_t.upper)
-    assert_allclose(yminos.lower, yminos_t.lower)
-    assert len(ctr) == 30
-    assert len(ctr[0]) == 2
-
-
-def test_mncontour_sigma():
-    m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
-    m.migrad()
-    xminos, yminos, ctr = m.mncontour('x', 'y', numpoints=30, sigma=2.0)
-    xminos_t = m.minos('x', sigma=2.0)['x']
-    yminos_t = m.minos('y', sigma=2.0)['y']
-    assert_allclose(xminos.upper, xminos_t.upper)
-    assert_allclose(xminos.lower, xminos_t.lower)
-    assert_allclose(yminos.upper, yminos_t.upper)
-    assert_allclose(yminos.lower, yminos_t.lower)
-    assert len(ctr) == 30
-    assert len(ctr[0]) == 2
-
-
-def test_contour():
+@parametrize('grad', (None, func3_grad))
+def test_contour(grad):
     # FIXME: check the result
-    m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
+    m = Minuit(func3, grad_fcn=grad, pedantic=False,
+               x=1., y=2., error_x=3., print_level=0)
     m.migrad()
     m.contour('x', 'y')
 
 
-def test_contour_with_gradient():
+@parametrize('grad', (None, func3_grad))
+def test_profile(grad):
     # FIXME: check the result
-    m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, x=1., y=2., error_x=3., print_level=0)
-    m.migrad()
-    m.contour('x', 'y')
-
-
-def test_profile():
-    # FIXME: check the result
-    m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
+    m = Minuit(func3, grad_fcn=grad, pedantic=False,
+               x=1., y=2., error_x=3., print_level=0)
     m.migrad()
     m.profile('y')
 
 
-def test_profile_with_gradient():
+@parametrize('grad', (None, func3_grad))
+def test_mnprofile(grad):
     # FIXME: check the result
-    m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, x=1., y=2., error_x=3., print_level=0)
-    m.migrad()
-    m.profile('y')
-
-
-def test_mnprofile():
-    # FIXME: check the result
-    m = Minuit(func3, pedantic=False, x=1., y=2., error_x=3., print_level=0)
-    m.migrad()
-    m.mnprofile('y')
-
-
-def test_mnprofile_with_gradient():
-    # FIXME: check the result
-    m = Minuit(func3, grad_fcn=func3_grad, pedantic=False, x=1., y=2., error_x=3., print_level=0)
+    m = Minuit(func3, grad_fcn=grad, pedantic=False, x=1., y=2., error_x=3., print_level=0)
     m.migrad()
     m.mnprofile('y')
 
