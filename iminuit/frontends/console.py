@@ -1,4 +1,4 @@
-from __future__ import (absolute_import, division, unicode_literals)
+from __future__ import (absolute_import, division)
 import sys
 from .frontend import Frontend
 from math import log10
@@ -46,7 +46,7 @@ class ConsoleFrontend(Frontend):
             'Above EDM',
             '',
             'Reach calllim')
-        status2 = '|' + (' %14r |' * 5) % (
+        status2 = '|' + (' %14s |' * 5) % (
             fmin.hesse_failed,
             fmin.has_covariance,
             fmin.is_above_max_edm,

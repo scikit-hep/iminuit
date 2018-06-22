@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (absolute_import, division, print_function)
 import sys
 from iminuit import Minuit
 import iminuit.frontends.html as html
@@ -16,18 +15,22 @@ def f1(x, y):
 def test_html(capsys):
     def out(): return capsys.readouterr()[0]
 
+    class FakeRandom(object):
+        def choice(self, s):
+            return s[0]
+
     class Frontend(html.HtmlFrontend):
-        rng = random.Random(x=1) # fix random seed for reproducability
-        def display(self, *args):
+        rng = FakeRandom() # for reproducability
+        def display(self, *args): # text to stdout
             sys.stdout.write('\n'.join(args)+'\n')
 
     m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=Frontend())
     m.tol = 1e-4
 
     m.print_initial_param()
-    assert """<table>
+    assert r"""<table>
     <tr>
-        <td><a href="#" onclick="$('#gSNnzxHPeb').toggle()">+</a></td>
+        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Parabolic error">Parab Error</td>
@@ -60,17 +63,17 @@ def test_html(capsys):
         <td></td>
     </tr>
 </table>
-<pre id="gSNnzxHPeb" style="display:none;">
+<pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
-\\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
-\\hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\\\
-\\hline
-1 & x & 0.000e+00 & 1.000e+00 &  &  &  &  & \\\\
-\\hline
-2 & y & 0.000e+00 & 1.000e+00 &  &  &  &  & \\\\
-\\hline
-\\end{tabular}
+\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
+\hline
+ & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+\hline
+1 & x & 0.000e+00 & 1.000e+00 &  &  &  &  & \\
+\hline
+2 & y & 0.000e+00 & 1.000e+00 &  &  &  &  & \\
+\hline
+\end{tabular}
 </textarea>
 </pre>
 """ == out()
@@ -78,7 +81,7 @@ def test_html(capsys):
     m.migrad()
     fmin = m.get_fmin()
 
-    assert """<hr>
+    assert r"""<hr>
 <table>
     <tr>
         <td title="Minimum value of function">FCN = 1.0</td>
@@ -124,7 +127,7 @@ def test_html(capsys):
 </table>
 <table>
     <tr>
-        <td><a href="#" onclick="$('#RwNaxLlXUb').toggle()">+</a></td>
+        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Parabolic error">Parab Error</td>
@@ -157,24 +160,24 @@ def test_html(capsys):
         <td></td>
     </tr>
 </table>
-<pre id="RwNaxLlXUb" style="display:none;">
+<pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
-\\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
-\\hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\\\
-\\hline
-1 & x & 2.000e+00 & 1.000e+00 &  &  &  &  & \\\\
-\\hline
-2 & y & 1.000e+00 & 5.000e-01 &  &  &  &  & \\\\
-\\hline
-\\end{tabular}
+\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
+\hline
+ & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+\hline
+1 & x & 2.000e+00 & 1.000e+00 &  &  &  &  & \\
+\hline
+2 & y & 1.000e+00 & 5.000e-01 &  &  &  &  & \\
+\hline
+\end{tabular}
 </textarea>
 </pre>
 <hr>
 """ % fmin.edm == out()
 
     m.minos()
-    assert """<span>Minos status for x: <span style="background-color:#92CCA6">VALID</span></span>
+    assert r"""<span>Minos status for x: <span style="background-color:#92CCA6">VALID</span></span>
 <table>
     <tr>
         <td title="lower and upper minos error of the parameter">Error</td>
@@ -234,9 +237,9 @@ def test_html(capsys):
        m.merrors[('y', -1.0)], m.merrors[('y', 1.0)]) == out()
 
     m.print_matrix()
-    assert """<table>
+    assert r"""<table>
     <tr>
-        <td><a onclick="$('#bCWtlvblwz').toggle()" href="#">+</a></td>        <td>
+        <td><a onclick="$('#aaaaaaaaaa').toggle()" href="#">+</a></td>        <td>
             <div style="width:20px;position:relative; width: -moz-fit-content;">
             <div style="display:inline-block;-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
             x
@@ -259,26 +262,26 @@ def test_html(capsys):
         </td>        <td style="background-color:rgb(255,117,117)">
             1.00
         </td>    </tr></table>
-<pre id="bCWtlvblwz" style="display:none;">
+<pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="13" cols="50" onclick="this.select()" readonly>
-%\\usepackage[table]{xcolor} % include this for color
-%\\usepackage{rotating} % include this for rotate header
-%\\documentclass[xcolor=table]{beamer} % for beamer
-\\begin{tabular}{|c|c|c|}
-\\hline
-\\rotatebox{90}{} & \\rotatebox{90}{x} & \\rotatebox{90}{y}\\\\
-\\hline
-x & \\cellcolor[RGB]{255,117,117} 1.00 & \\cellcolor[RGB]{163,254,186} 0.00\\\\
-\\hline
-y & \\cellcolor[RGB]{163,254,186} 0.00 & \\cellcolor[RGB]{255,117,117} 1.00\\\\
-\\hline
-\\end{tabular}
+%\usepackage[table]{xcolor} % include this for color
+%\usepackage{rotating} % include this for rotate header
+%\documentclass[xcolor=table]{beamer} % for beamer
+\begin{tabular}{|c|c|c|}
+\hline
+\rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
+\hline
+x & \cellcolor[RGB]{255,117,117} 1.00 & \cellcolor[RGB]{163,254,186} 0.00\\
+\hline
+y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
+\hline
+\end{tabular}
 </textarea>
 </pre>
 """ == out()
 
     m.print_fmin()
-    assert """<hr>
+    assert r"""<hr>
 <table>
     <tr>
         <td title="Minimum value of function">FCN = 1.0</td>
@@ -324,7 +327,7 @@ y & \\cellcolor[RGB]{163,254,186} 0.00 & \\cellcolor[RGB]{255,117,117} 1.00\\\\
 </table>
 <table>
     <tr>
-        <td><a href="#" onclick="$('#mmlxpbRCHj').toggle()">+</a></td>
+        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Parabolic error">Parab Error</td>
@@ -357,24 +360,24 @@ y & \\cellcolor[RGB]{163,254,186} 0.00 & \\cellcolor[RGB]{255,117,117} 1.00\\\\
         <td></td>
     </tr>
 </table>
-<pre id="mmlxpbRCHj" style="display:none;">
+<pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
-\\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
-\\hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\\\
-\\hline
-1 & x & 2.000e+00 & 1.000e+00 & -1.000e+00 & 1.000e+00 &  &  & \\\\
-\\hline
-2 & y & 1.000e+00 & 5.000e-01 & -5.000e-01 & 5.000e-01 &  &  & \\\\
-\\hline
-\\end{tabular}
+\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
+\hline
+ & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+\hline
+1 & x & 2.000e+00 & 1.000e+00 & -1.000e+00 & 1.000e+00 &  &  & \\
+\hline
+2 & y & 1.000e+00 & 5.000e-01 & -5.000e-01 & 5.000e-01 &  &  & \\
+\hline
+\end{tabular}
 </textarea>
 </pre>
 <hr>
 """ % (m.get_fmin().edm) == out()
 
     m.print_all_minos()
-    assert """<span>Minos status for x: <span style="background-color:#92CCA6">VALID</span></span>
+    assert r"""<span>Minos status for x: <span style="background-color:#92CCA6">VALID</span></span>
 <table>
     <tr>
         <td title="lower and upper minos error of the parameter">Error</td>
@@ -441,7 +444,7 @@ def test_console(capsys):
     m.tol = 1e-4
 
     m.print_initial_param()
-    assert """----------------------------------------------------------------------------------------
+    assert r"""----------------------------------------------------------------------------------------
 | No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
 ----------------------------------------------------------------------------------------
 |  0 |    x | 0        | 1        |          |          |          |          |   No   |
@@ -450,7 +453,7 @@ def test_console(capsys):
 """ == out()
 
     m.migrad()
-    assert """**************************************************
+    assert r"""**************************************************
 *                     MIGRAD                     *
 **************************************************
 
@@ -465,7 +468,7 @@ edm = %s (Goal: 1e-08) | up = 1.0
 --------------------------------------------------------------------------------------
 |     Hesse Fail |        Has Cov |      Above EDM |                |  Reach calllim |
 --------------------------------------------------------------------------------------
-|          False |           True |          False |            u'' |          False |
+|          False |           True |          False |                |          False |
 --------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
 | No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
@@ -477,7 +480,7 @@ edm = %s (Goal: 1e-08) | up = 1.0
 """ % m.get_fmin().edm == out()
 
     m.minos()
-    assert """**************************************************
+    assert r"""**************************************************
 *                     MINOS                      *
 **************************************************
 
@@ -502,7 +505,7 @@ Minos Status for y: VALID
 """ == out()
 
     m.print_matrix()
-    assert """-------------------
+    assert r"""-------------------
 Correlation
 -------------------
        |    0    1 
@@ -513,7 +516,7 @@ y    1 | 0.00 1.00
 """ == out()
 
     m.print_fmin()
-    assert """**************************************************************************************
+    assert r"""**************************************************************************************
 --------------------------------------------------------------------------------------
 fval = 1.0 | total call = 48 | ncalls = 24
 edm = %s (Goal: 1e-08) | up = 1.0
@@ -524,7 +527,7 @@ edm = %s (Goal: 1e-08) | up = 1.0
 --------------------------------------------------------------------------------------
 |     Hesse Fail |        Has Cov |      Above EDM |                |  Reach calllim |
 --------------------------------------------------------------------------------------
-|          False |           True |          False |            u'' |          False |
+|          False |           True |          False |                |          False |
 --------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
 | No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
@@ -536,7 +539,7 @@ edm = %s (Goal: 1e-08) | up = 1.0
 """ % (m.get_fmin().edm) == out()
 
     m.print_all_minos()
-    assert """-------------------------------------------------
+    assert r"""-------------------------------------------------
 Minos Status for x: VALID
 -------------------------------------------------
 |      Error      |      -1      |      1       |

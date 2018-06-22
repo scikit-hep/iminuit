@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import (absolute_import, division, print_function)
 import warnings
 from math import sqrt
 import pytest
@@ -78,6 +77,17 @@ def func8(x): # test numpy support
 
 def func8_grad(x): # test numpy support
     return 2 * (x - 1)
+
+
+class Func9:
+    def __init__(self):
+        sx = 2
+        sy = 1
+        corr = 0.5
+        cov = (sx**2, corr * sx * sy), (corr * sx * sy, sy**2)
+        self.cinv = np.linalg.inv(cov)
+    def __call__(self, x):
+        return np.dot(x.T, np.dot(self.cinv, x))
 
 
 data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
@@ -676,3 +686,21 @@ def test_get_param_states():
             else:
                 assert p[key] == exp[key]
 
+
+def test_latex_matrix():
+    m = Minuit.from_array_func(Func9(), (0, 0), name=('x', 'y'),
+                               pedantic=False, print_level=0)
+    m.migrad()
+    print(m.latex_matrix())
+    assert r"""%\usepackage[table]{xcolor} % include this for color
+%\usepackage{rotating} % include this for rotate header
+%\documentclass[xcolor=table]{beamer} % for beamer
+\begin{tabular}{|c|c|c|}
+\hline
+\rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
+\hline
+x & \cellcolor[RGB]{255,117,117} 1.00 & \cellcolor[RGB]{209,185,152} 0.50\\
+\hline
+y & \cellcolor[RGB]{209,185,152} 0.50 & \cellcolor[RGB]{255,117,117} 1.00\\
+\hline
+\end{tabular}""" == str(m.latex_matrix())
