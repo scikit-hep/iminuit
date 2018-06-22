@@ -32,8 +32,8 @@ cdef minuitparam2struct(MinuitParameter mp):
         has_limits=mp.HasLimits(),
         has_lower_limit=mp.HasLowerLimit(),
         has_upper_limit=mp.HasUpperLimit(),
-        lower_limit=mp.LowerLimit(),
-        upper_limit=mp.UpperLimit(),
+        lower_limit=mp.LowerLimit() if mp.HasLowerLimit() else None,
+        upper_limit=mp.UpperLimit() if mp.HasUpperLimit() else None,
     )
     return ret
 

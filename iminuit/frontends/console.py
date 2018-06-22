@@ -1,102 +1,97 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
+import sys
+from .frontend import Frontend
+from math import log10
 
 __all__ = ['ConsoleFrontend']
 
 
-class ConsoleFrontend:
+class ConsoleFrontend(Frontend):
     """Console frontend for Minuit.
 
     This class prints stuff directly via print.
     """
 
-    @staticmethod
-    def print_fmin(sfmin, tolerance=None, ncalls=0):
+    def display(self, *args):
+        sys.stdout.write('\n'.join(args)+'\n')
+
+    def print_fmin(self, fmin, tolerance=None, ncalls=0):
         """display function minimum information
         for FunctionMinimumStruct *sfmin*.
         It contains various migrad status.
         """
-        fmin = sfmin
         goaledm = 0.0001 * tolerance * fmin.up if tolerance is not None else ''
         # despite what the doc said the code is actually 1e-4
         # http://wwwasdoc.web.cern.ch/wwwasdoc/hbook_html3/node125.html
-        flatlocal = dict(list(locals().items()) + list(fmin.__dict__.items()))
-        info1 = 'fval = %(fval)r | total call = %(ncalls)r | ncalls = %(nfcn)r\n' % \
+        flatlocal = dict(list(locals().items()) + list(fmin.items()))
+        info1 = 'fval = %(fval)r | total call = %(ncalls)r | ncalls = %(nfcn)r' % \
                 flatlocal
-        info2 = 'edm = %(edm)r (Goal: %(goaledm)r) | up = %(up)r\n' % flatlocal
+        info2 = 'edm = %(edm)s (Goal: %(goaledm)s) | up = %(up)r' % flatlocal
         header1 = '|' + (' %14s |' * 5) % (
             'Valid',
             'Valid Param',
             'Accurate Covar',
             'Posdef',
-            'Made Posdef') + '\n'
-        hline = '-' * len(header1) + '\n'
+            'Made Posdef')
+        hline = '-' * len(header1)
         status1 = '|' + (' %14r |' * 5) % (
             fmin.is_valid,
             fmin.has_valid_parameters,
             fmin.has_accurate_covar,
             fmin.has_posdef_covar,
-            fmin.has_made_posdef_covar) + '\n'
+            fmin.has_made_posdef_covar)
         header2 = '|' + (' %14s |' * 5) % (
             'Hesse Fail',
             'Has Cov',
             'Above EDM',
             '',
-            'Reach calllim') + '\n'
-        status2 = '|' + (' %14r |' * 5) % (
+            'Reach calllim')
+        status2 = '|' + (' %14s |' * 5) % (
             fmin.hesse_failed,
             fmin.has_covariance,
             fmin.is_above_max_edm,
             '',
-            fmin.has_reached_call_limit) + '\n'
+            fmin.has_reached_call_limit)
 
-        print(hline + info1 + info2 +
-              hline + header1 + hline + status1 +
-              hline + header2 + hline + status2 +
-              hline)
+        self.display(hline, info1, info2,
+                hline, header1, hline, status1,
+                hline, header2, hline, status2,
+                hline)
 
-    @staticmethod
-    def print_merror(vname, smerr):
+    def print_merror(self, vname, smerr):
         """print minos error for varname"""
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
 
-        summary = 'Minos Status for %s: %s\n' % \
+        summary = 'Minos Status for %s: %s' % \
                   (vname, stat)
 
-        error = '| {0:^15s} | {1: >12g} | {2: >12g} |\n'.format(
+        error = '| {0:^15s} | {1:^12g} | {2:^12g} |'.format(
             'Error',
             smerr.
                 lower,
             smerr.upper)
-        valid = '| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
+        valid = '| {0:^15s} | {1:^12s} | {2:^12s} |'.format(
             'Valid',
             str(smerr.lower_valid),
             str(smerr.upper_valid))
-        at_limit = '| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
+        at_limit = '| {0:^15s} | {1:^12s} | {2:^12s} |'.format(
             'At Limit',
             str(smerr.at_lower_limit),
             str(smerr.at_upper_limit))
-        max_fcn = '| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
+        max_fcn = '| {0:^15s} | {1:^12s} | {2:^12s} |'.format(
             'Max FCN',
             str(smerr.at_lower_max_fcn),
             str(smerr.at_upper_max_fcn))
-        new_min = '| {0:^15s} | {1:^12s} | {2:^12s} |\n'.format(
+        new_min = '| {0:^15s} | {1:^12s} | {2:^12s} |'.format(
             'New Min',
             str(smerr.lower_new_min),
             str(smerr.upper_new_min))
-        hline = '-' * len(error) + '\n'
-        print(hline +
-              summary +
-              hline +
-              error +
-              valid +
-              at_limit +
-              max_fcn +
-              new_min +
-              hline)
+        hline = '-' * len(error)
+        self.display(hline, summary, hline, error, valid,
+                at_limit, max_fcn, new_min, hline)
 
-    @staticmethod
-    def print_param(mps, merr=None, float_format=None):
+    def print_param(self, mps, merr=None, float_format=None):
         """Print parameter states
 
         Arguments:
@@ -109,24 +104,25 @@ class ConsoleFrontend:
         """
         merr = {} if merr is None else merr
         vnames = [mp.name for mp in mps]
-        if vnames:
-            maxlength = max([len(x) for x in vnames])
-        else:
-            maxlength = 0
-        maxlength = max(5, maxlength)
+        name_width = max([len(x) for x in vnames]) if vnames else 0
+        name_width = max(4, name_width)
+        num_max = len(vnames)-1
+        num_width = max(2, int(log10(num_max)) + 1)
 
-        header = (('| {0:^4s} | {1:^%ds} | {2:^8s} | {3:^8s} | {4:^8s} |'
-                   ' {5:^8s} | {6:^8s} | {7:^8s} | {8:^8s} |\n') % maxlength).format(
-            '', 'Name', 'Value', 'Para Err',
-            "Err-", "Err+", "Limit-", "Limit+", " ")
-        hline = '-' * len(header) + '\n'
-        linefmt = ('| {0:>4d} | {1:>%ds} = {2:<8s} | {3:<8s} | {4:<8s} |'
-                   ' {5:<8s} | {6:<8s} | {7:<8s} | {8:^8s} |\n') % maxlength
-        nfmt = '{0:< 8.4G}'
+        header = (('| {0:^%is} | {1:^%is} | {2:^8s} | {3:^8s} | {4:^8s} |'
+                   ' {5:^8s} | {6:8s} | {7:8s} | {8:^6s} |') %
+                  (num_width, name_width)).format(
+            'No', 'Name', 'Value', 'Para Err',
+            "Err-", "Err+", "Limit-", "Limit+", "Fixed?")
+        hline = '-' * len(header)
+        linefmt = (('| {0:>%id} | {1:>%is} | {2:<8s} | {3:<8s} | {4:<8s} |'
+                    ' {5:<8s} | {6:8s} | {7:8s} | {8:^6s} |') %
+                   (num_width, name_width))
+        nfmt = '{0:<8.4G}'
         nformat = nfmt.format
         blank = ' ' * 8
 
-        ret = hline + header + hline
+        tab = [hline, header, hline]
         for i, (v, mp) in enumerate(zip(vnames, mps)):
             tmp = [i, v]
 
@@ -140,23 +136,20 @@ class ConsoleFrontend:
             tmp.append(nformat(mp.upper_limit) if mp.has_lower_limit else blank)
 
             tmp.append(
-                'FIXED' if mp.is_fixed else 'CONST' if mp.is_const else '')
+                'Yes' if mp.is_fixed else 'CONST' if mp.is_const else 'No')
 
             line = linefmt.format(*tmp)
-            ret += line
-        ret += hline
-        print(ret)
+            tab.append(line)
+        tab.append(hline)
+        self.display(*tab)
 
-    @staticmethod
-    def print_banner(cmd):
+    def print_banner(self, cmd):
         """show banner of command"""
-        ret = '*' * 50 + '\n'
-        ret += '*{:^48}*'.format(cmd) + '\n'
-        ret += '*' * 50 + '\n'
-        print(ret)
+        hline = '*' * 50
+        migrad = '*{:^48}*'.format(cmd)
+        self.display(hline, migrad, hline+'\n')
 
-    @staticmethod
-    def print_matrix(vnames, matrix):
+    def print_matrix(self, vnames, matrix):
         """TODO: properly implement this"""
         maxlen = max(len(v) for v in vnames)
         narg = len(matrix)
@@ -164,20 +157,17 @@ class ConsoleFrontend:
         vblank = ' ' * maxlen
         fmt = '%3.2f '  # 4char
         dfmt = '%4d '
-        tmp = ''
-        header = vblank + ' ' * 4 + '  | ' + (dfmt * narg) % tuple(range(narg)) + '\n'
-        tmp += '-' * len(header) + '\n'
-        tmp += 'Correlation\n'
-        tmp += '-' * len(header) + '\n'
-        blank_line = '-' * len(header) + '\n'
-        tmp += header + blank_line
+        header = vblank + ' ' * 4 + '  | ' + (dfmt * narg) % tuple(range(narg))
+        hline = '-' * len(header)
+        title = 'Correlation'
+        tab = [hline, title, hline, header, hline]
         for i, (v, row) in enumerate(zip(vnames, matrix)):
             fmt = '%3.2f ' * narg
             head = (vfmt + ' %4d | ') % (v, i)
-            content = (fmt) % tuple(row) + '\n'
-            tmp += head + content
-        tmp += blank_line
-        print(tmp)
+            content = (fmt) % tuple(row)
+            tab.append(head + content)
+        tab.append(hline)
+        self.display(*tab)
 
-    def print_hline(self):
-        print('*' * 70)
+    def print_hline(self, width=86):
+        self.display('*' * width)

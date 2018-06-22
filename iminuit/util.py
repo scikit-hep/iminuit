@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-class Struct:
+class Struct(dict):
     """A Struct is a Python dict with tab completion.
 
     Example:
@@ -31,18 +31,16 @@ class Struct:
     >>> s.a
     42
     """
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
-
-    def __str__(self):
-        return self.__dict__.__str__()
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __getitem__(self, s):
-        return self.__dict__[s]
-
+    def __setattr__(self, key, value):
+        try:
+            self[key] = value
+        except KeyError:
+            raise AttributeError
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError
 
 def arguments_from_docstring(doc):
     """Parse first line of docstring for argument name.

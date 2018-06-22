@@ -831,62 +831,29 @@ cdef class Minuit:
         else:
             return self.last_upst.MinuitParameters()[index].IsFixed()
 
-    def _prepare_param(self):
-        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
-        cdef int i
-        tmp = []
-        for i in range(vmps.size()):
-            tmp.append(minuitparam2struct(vmps[i]))
-        return tmp
-
     #dealing with frontend conversion
     def print_param(self, **kwds):
         """Print current parameter state.
 
         Extra keyword arguments will be passed to frontend.print_param.
         """
-        if self.last_upst is NULL:
-            self.print_initial_param(**kwds)
-            return
-        p = self._prepare_param()
+        # fetches the initial state if migrad was not run
+        p = self.get_param_states()
         self.frontend.print_param(p, self.merrors_struct, **kwds)
 
     def latex_param(self):
         """build :class:`iminuit.latex.LatexTable` for current parameter"""
-        p = self._prepare_param()
+        p = self.get_param_states()
         return LatexFactory.build_param_table(p, self.merrors_struct)
-
-    def _prepare_initial_param(self):
-        tmp = []
-        for i, vname in enumerate(self.parameters):
-            mps = Struct(
-                number=i + 1,
-                name=vname,
-                value=self.initial_value[vname],
-                error=self.initial_error[vname],
-                is_const=False,
-                is_fixed=self.initial_fix[vname],
-                has_limits=self.initial_limit[vname] is not None,
-                lower_limit=self.initial_limit[vname][0]
-                if self.initial_limit[vname] is not None else None,
-                upper_limit=self.initial_limit[vname][1]
-                if self.initial_limit[vname] is not None else None,
-                has_lower_limit=self.initial_limit[vname] is not None
-                                and self.initial_limit[vname][0] is not None,
-                has_upper_limit=self.initial_limit[vname] is not None
-                                and self.initial_limit[vname][1] is not None
-            )
-            tmp.append(mps)
-        return tmp
 
     def print_initial_param(self, **kwds):
         """Print initial parameters"""
-        p = self._prepare_initial_param()
+        p = self.get_initial_param_states()
         self.frontend.print_param(p, {}, **kwds)
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
-        p = self._prepare_initial_param()
+        p = self.get_initial_param_states()
         return LatexFactory.build_param_table(p, {})
 
     def print_fmin(self):
@@ -955,21 +922,20 @@ cdef class Minuit:
     def get_param_states(self):
         """List of current MinuitParameter Struct for all parameters"""
         if self.last_upst is NULL:
-            return self.get_initial_param_state()
-        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
-        cdef int i
-        ret = []
-        for i in range(vmps.size()):
-            ret.append(minuitparam2struct(vmps[i]))
-        return ret
+            return self.get_initial_param_states()
+        up = self.last_upst
+        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        return [minuitparam2struct(vmps[i]) for i in range(vmps.size())]
+
+    def get_initial_param_states(self):
+        """List of current MinuitParameter Struct for all parameters"""
+        up = self.initialParameterState()
+        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        return [minuitparam2struct(vmps[i]) for i in range(vmps.size())]
 
     def get_merrors(self):
         """Dictionary of varname-> MinosError Struct"""
         return self.merrors_struct
-
-    def get_initial_param_state(self):
-        """Initial setting in form of MinuitParameter Struct"""
-        raise NotImplementedError
 
     def get_num_call_fcn(self):
         """Total number of calls to FCN (not just the last operation)"""
