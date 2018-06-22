@@ -837,9 +837,7 @@ cdef class Minuit:
 
         Extra keyword arguments will be passed to frontend.print_param.
         """
-        if self.last_upst is NULL:
-            self.print_initial_param(**kwds)
-            return
+        # fetches the initial state if migrad was not run
         p = self.get_param_states()
         self.frontend.print_param(p, self.merrors_struct, **kwds)
 
