@@ -26,11 +26,10 @@ __all__ = [
     'test',
 ]
 
-from iminuit._libiminuit import *
-from iminuit.minimize import minimize
-from iminuit.util import describe, Struct
-from iminuit.iminuit_warnings import *
-from iminuit.info import __version__
+from ._libiminuit import Minuit
+from .minimize import minimize
+from .util import describe, Struct
+from .info import __version__
 
 
 def test(args=None):

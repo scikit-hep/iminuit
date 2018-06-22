@@ -62,11 +62,9 @@ class HtmlFrontend(Frontend):
 
     rng = random.Random()
 
-
     def display(self, *args):
         from IPython.core.display import display_html
         display_html(*args, raw=True)
-
 
     def print_fmin(self, sfmin, tolerance=None, ncalls=0):
         """Display FunctionMinum in html representation.

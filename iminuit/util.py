@@ -36,11 +36,13 @@ class Struct(dict):
             self[key] = value
         except KeyError:
             raise AttributeError
+
     def __getattr__(self, key):
         try:
             return self[key]
         except KeyError:
             raise AttributeError
+
 
 def arguments_from_docstring(doc):
     """Parse first line of docstring for argument name.
@@ -218,7 +220,8 @@ def fitarg_rename(fitarg, ren):
     """
     tmp = ren
     if is_string(ren):
-        ren = lambda x: tmp + '_' + x
+        def ren(x):
+            return tmp + '_' + x
     ret = {}
     prefix = ['limit_', 'fix_', 'error_', ]
     for k, v in fitarg.items():

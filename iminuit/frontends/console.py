@@ -14,7 +14,7 @@ class ConsoleFrontend(Frontend):
     """
 
     def display(self, *args):
-        sys.stdout.write('\n'.join(args)+'\n')
+        sys.stdout.write('\n'.join(args) + '\n')
 
     def print_fmin(self, fmin, tolerance=None, ncalls=0):
         """display function minimum information
@@ -55,9 +55,9 @@ class ConsoleFrontend(Frontend):
             fmin.has_reached_call_limit)
 
         self.display(hline, info1, info2,
-                hline, header1, hline, status1,
-                hline, header2, hline, status2,
-                hline)
+                     hline, header1, hline, status1,
+                     hline, header2, hline, status2,
+                     hline)
 
     def print_merror(self, vname, smerr):
         """print minos error for varname"""
@@ -89,7 +89,7 @@ class ConsoleFrontend(Frontend):
             str(smerr.upper_new_min))
         hline = '-' * len(error)
         self.display(hline, summary, hline, error, valid,
-                at_limit, max_fcn, new_min, hline)
+                     at_limit, max_fcn, new_min, hline)
 
     def print_param(self, mps, merr=None, float_format=None):
         """Print parameter states
@@ -106,7 +106,7 @@ class ConsoleFrontend(Frontend):
         vnames = [mp.name for mp in mps]
         name_width = max([len(x) for x in vnames]) if vnames else 0
         name_width = max(4, name_width)
-        num_max = len(vnames)-1
+        num_max = len(vnames) - 1
         num_width = max(2, int(log10(num_max)) + 1)
 
         header = (('| {0:^%is} | {1:^%is} | {2:^8s} | {3:^8s} | {4:^8s} |'
@@ -147,7 +147,7 @@ class ConsoleFrontend(Frontend):
         """show banner of command"""
         hline = '*' * 50
         migrad = '*{:^48}*'.format(cmd)
-        self.display(hline, migrad, hline+'\n')
+        self.display(hline, migrad, hline + '\n')
 
     def print_matrix(self, vnames, matrix):
         """TODO: properly implement this"""
