@@ -691,7 +691,6 @@ def test_latex_matrix():
     m = Minuit.from_array_func(Func9(), (0, 0), name=('x', 'y'),
                                pedantic=False, print_level=0)
     m.migrad()
-    print(m.latex_matrix())
     assert r"""%\usepackage[table]{xcolor} % include this for color
 %\usepackage{rotating} % include this for rotate header
 %\documentclass[xcolor=table]{beamer} % for beamer
