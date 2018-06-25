@@ -47,40 +47,40 @@ def test_html(capsys):
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
         <td>1</td>
         <td>x</td>
         <td>0</td>
         <td>1</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
     <tr>
         <td>2</td>
         <td>y</td>
         <td>0</td>
         <td>1</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
 </table>
 <pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+ & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 0.000e+00 & 1.000e+00 &  &  &  &  & \\
+1 & x & 0.000e+00 & 1.000e+00 &  &  &  &  & No\\
 \hline
-2 & y & 0.000e+00 & 1.000e+00 &  &  &  &  & \\
+2 & y & 0.000e+00 & 1.000e+00 &  &  &  &  & No\\
 \hline
 \end{tabular}
 </textarea>
@@ -144,40 +144,40 @@ def test_html(capsys):
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
         <td>1</td>
         <td>x</td>
         <td>2</td>
         <td>1</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
     <tr>
         <td>2</td>
         <td>y</td>
         <td>1</td>
         <td>0.5</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
 </table>
 <pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+ & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 2.000e+00 & 1.000e+00 &  &  &  &  & \\
+1 & x & 2.000e+00 & 1.000e+00 &  &  &  &  & No\\
 \hline
-2 & y & 1.000e+00 & 5.000e-01 &  &  &  &  & \\
+2 & y & 1.000e+00 & 5.000e-01 &  &  &  &  & No\\
 \hline
 \end{tabular}
 </textarea>
@@ -344,7 +344,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
         <td>1</td>
@@ -355,7 +355,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td>1</td>
         <td></td>
         <td></td>
-        <td></td>
+        <td>No</td>
     </tr>
     <tr>
         <td>2</td>
@@ -366,18 +366,18 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td>0.5</td>
         <td></td>
         <td></td>
-        <td></td>
+        <td>No</td>
     </tr>
 </table>
 <pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+ & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 2.000e+00 & 1.000e+00 & -1.000e+00 & 1.000e+00 &  &  & \\
+1 & x & 2.000e+00 & 1.000e+00 & -1.000e+00 & 1.000e+00 &  &  & No\\
 \hline
-2 & y & 1.000e+00 & 5.000e-01 & -5.000e-01 & 5.000e-01 &  &  & \\
+2 & y & 1.000e+00 & 5.000e-01 & -5.000e-01 & 5.000e-01 &  &  & No\\
 \hline
 \end{tabular}
 </textarea>

@@ -173,8 +173,8 @@ class LatexFactory:
     def build_param_table(cls, mps, merr=None, float_format='%5.3e',
                           smart_latex=True, latex_map=None):
         """build latex parameter table"""
-        headers = ['', 'Name', 'Value', 'Para Error', 'Error+',
-                   'Error-', 'Limit+', 'Limit-', 'FIXED', ]
+        headers = ['', 'Name', 'Value', 'Para Error', 'Error-',
+                   'Error+', 'Limit-', 'Limit+', 'Fixed?', ]
 
         data = []
         for i, mp in enumerate(mps):
@@ -182,7 +182,7 @@ class LatexFactory:
                 (merr[mp.name].upper, merr[mp.name].lower)
             limit_p, limit_m = ('', '') if not mp.has_limits else \
                 (mp.upper_limit, mp.lower_limit)
-            fixed = 'FIXED' if mp.is_fixed else ''
+            fixed = 'Yes' if mp.is_fixed else 'No'
             j = i + 1
             tmp = [
                 j,

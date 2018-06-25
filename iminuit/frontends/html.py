@@ -175,25 +175,25 @@ class HtmlFrontend(Frontend):
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>\n""".format(**locals())
         to_print += header
         for i, mp in enumerate(mps):
-            minos_p, minos_m = (0., 0.) if merr is None or mp.name not in merr else \
-                (merr[mp.name].upper, merr[mp.name].lower)
-            limit_p = '' if not mp.has_upper_limit else mp.upper_limit
-            limit_m = '' if not mp.has_lower_limit else mp.lower_limit
-            fixed = 'FIXED' if mp.is_fixed else ''
+            minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else \
+                ('%g' % merr[mp.name].upper, '%g' % merr[mp.name].lower)
+            limit_p = '' if not mp.has_upper_limit else '%g' % mp.upper_limit
+            limit_m = '' if not mp.has_lower_limit else '%g' % mp.lower_limit
+            fixed = 'Yes' if mp.is_fixed else 'No'
             j = i + 1
             content = """    <tr>
         <td>{j}</td>
         <td>{mp.name}</td>
         <td>{mp.value:g}</td>
         <td>{mp.error:g}</td>
-        <td>{minos_m:g}</td>
-        <td>{minos_p:g}</td>
-        <td>{limit_m!s}</td>
-        <td>{limit_p!s}</td>
+        <td>{minos_m}</td>
+        <td>{minos_p}</td>
+        <td>{limit_m}</td>
+        <td>{limit_p}</td>
         <td>{fixed}</td>
     </tr>\n""".format(**locals())
             to_print += content
