@@ -50,7 +50,7 @@ def test_html(capsys):
         <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
-        <td>1</td>
+        <td>0</td>
         <td>x</td>
         <td>0</td>
         <td>1</td>
@@ -61,7 +61,7 @@ def test_html(capsys):
         <td>No</td>
     </tr>
     <tr>
-        <td>2</td>
+        <td>1</td>
         <td>y</td>
         <td>0</td>
         <td>1</td>
@@ -78,9 +78,9 @@ def test_html(capsys):
 \hline
  & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 0.000e+00 & 1.000e+00 &  &  &  &  & No\\
+0 & x & 0 & 1 &  &  &  &  & No\\
 \hline
-2 & y & 0.000e+00 & 1.000e+00 &  &  &  &  & No\\
+1 & y & 0 & 1 &  &  &  &  & No\\
 \hline
 \end{tabular}
 </textarea>
@@ -147,7 +147,7 @@ def test_html(capsys):
         <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
-        <td>1</td>
+        <td>0</td>
         <td>x</td>
         <td>2</td>
         <td>1</td>
@@ -158,7 +158,7 @@ def test_html(capsys):
         <td>No</td>
     </tr>
     <tr>
-        <td>2</td>
+        <td>1</td>
         <td>y</td>
         <td>1</td>
         <td>0.5</td>
@@ -175,9 +175,9 @@ def test_html(capsys):
 \hline
  & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 2.000e+00 & 1.000e+00 &  &  &  &  & No\\
+0 & x & 2 & 1 &  &  &  &  & No\\
 \hline
-2 & y & 1.000e+00 & 5.000e-01 &  &  &  &  & No\\
+1 & y & 1 & 0.5 &  &  &  &  & No\\
 \hline
 \end{tabular}
 </textarea>
@@ -347,7 +347,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
-        <td>1</td>
+        <td>0</td>
         <td>x</td>
         <td>2</td>
         <td>1</td>
@@ -358,7 +358,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td>No</td>
     </tr>
     <tr>
-        <td>2</td>
+        <td>1</td>
         <td>y</td>
         <td>1</td>
         <td>0.5</td>
@@ -375,9 +375,9 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 \hline
  & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 2.000e+00 & 1.000e+00 & -1.000e+00 & 1.000e+00 &  &  & No\\
+0 & x & 2 & 1 & -1 & 1 &  &  & No\\
 \hline
-2 & y & 1.000e+00 & 5.000e-01 & -5.000e-01 & 5.000e-01 &  &  & No\\
+1 & y & 1 & 0.5 & -0.5 & 0.5 &  &  & No\\
 \hline
 \end{tabular}
 </textarea>
@@ -445,13 +445,69 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 """ % (m.merrors[('x', -1.0)], m.merrors[('x', 1.0)],
        m.merrors[('y', -1.0)], m.merrors[('y', 1.0)]) == out()
 
+    m = Minuit(f1, x=5, y=5,
+               error_x=0.1, error_y=0.1,
+               limit_x=(0, None), limit_y=(0, 10),
+               errordef=1, frontend=Frontend())
+    m.print_param()
+    assert r"""<table>
+    <tr>
+        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
+        <td title="Variable name">Name</td>
+        <td title="Value of parameter">Value</td>
+        <td title="Parabolic error">Parab Error</td>
+        <td title="Minos lower error">Minos Error-</td>
+        <td title="Minos upper error">Minos Error+</td>
+        <td title="Lower limit of the parameter">Limit-</td>
+        <td title="Upper limit of the parameter">Limit+</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>x</td>
+        <td>5</td>
+        <td>0.1</td>
+        <td></td>
+        <td></td>
+        <td>0</td>
+        <td></td>
+        <td>No</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>y</td>
+        <td>5</td>
+        <td>0.1</td>
+        <td></td>
+        <td></td>
+        <td>0</td>
+        <td>10</td>
+        <td>No</td>
+    </tr>
+</table>
+<pre id="aaaaaaaaaa" style="display:none;">
+<textarea rows="10" cols="50" onclick="this.select()" readonly>
+\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
+\hline
+ & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+\hline
+0 & x & 5 & 0.1 &  &  & 0.0 &  & No\\
+\hline
+1 & y & 5 & 0.1 &  &  & 0.0 & 10 & No\\
+\hline
+\end{tabular}
+</textarea>
+</pre>
+""" == out()
+
 
 def test_console(capsys):
 
     def out():
         return capsys.readouterr()[0]
 
-    m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=console.ConsoleFrontend())
+    m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1,
+               frontend=console.ConsoleFrontend())
     m.tol = 1e-4
 
     m.print_initial_param()
@@ -568,4 +624,17 @@ Minos Status for y: VALID
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
 -------------------------------------------------
+""" == out()
+
+    m = Minuit(f1, x=5, y=5,
+               error_x=0.1, error_y=0.1,
+               limit_x=(0, None), limit_y=(0, 10),
+               errordef=1)
+    m.print_param()
+    assert r"""----------------------------------------------------------------------------------------
+| No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
+----------------------------------------------------------------------------------------
+|  0 |    x | 5        | 0.1      |          |          | 0        |          |   No   |
+|  1 |    y | 5        | 0.1      |          |          | 0        | 10       |   No   |
+----------------------------------------------------------------------------------------
 """ == out()

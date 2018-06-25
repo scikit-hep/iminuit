@@ -181,12 +181,11 @@ class HtmlFrontend(Frontend):
         for i, mp in enumerate(mps):
             minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else \
                 ('%g' % merr[mp.name].upper, '%g' % merr[mp.name].lower)
-            limit_p = '' if not mp.has_upper_limit else '%g' % mp.upper_limit
-            limit_m = '' if not mp.has_lower_limit else '%g' % mp.lower_limit
+            limit_p = '' if mp.upper_limit is None else '%g' % mp.upper_limit
+            limit_m = '' if mp.lower_limit is None else '%g' % mp.lower_limit
             fixed = 'Yes' if mp.is_fixed else 'No'
-            j = i + 1
             content = """    <tr>
-        <td>{j}</td>
+        <td>{i}</td>
         <td>{mp.name}</td>
         <td>{mp.value:g}</td>
         <td>{mp.error:g}</td>
