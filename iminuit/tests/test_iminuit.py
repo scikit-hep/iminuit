@@ -738,3 +738,15 @@ def test_function_with_maximum():
     m = Minuit(func, pedantic=False, print_level=0)
     fmin, param = m.migrad()
     assert fmin.is_valid is False
+
+
+def test_perfect_correlation():
+    def func(a, b):
+        return (a - b) ** 2
+
+    m = Minuit(func, pedantic=False, print_level=0)
+    fmin, param = m.migrad()
+    assert fmin.is_valid is True
+    assert fmin.has_accurate_covar is False
+    assert fmin.has_posdef_covar is False
+    assert fmin.has_made_posdef_covar is True
