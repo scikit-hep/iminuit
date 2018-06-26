@@ -704,3 +704,37 @@ x & \cellcolor[RGB]{255,117,117} 1.00 & \cellcolor[RGB]{209,185,152} 0.50\\
 y & \cellcolor[RGB]{209,185,152} 0.50 & \cellcolor[RGB]{255,117,117} 1.00\\
 \hline
 \end{tabular}""" == str(m.latex_matrix())
+
+
+def test_non_analytical_function():
+
+    class Func:
+        i = 0
+
+        def __call__(self, a):
+            self.i += 1
+            return self.i % 3
+
+    m = Minuit(Func(), pedantic=False, print_level=0)
+    fmin, param = m.migrad()
+    assert fmin.is_valid is False
+    assert fmin.is_above_max_edm is True
+
+
+def test_function_without_local_minimum():
+    m = Minuit(lambda a: -a, pedantic=False, print_level=0)
+    fmin, param = m.migrad()
+    assert fmin.is_valid is False
+    assert fmin.is_above_max_edm is True
+
+
+# Bug in Minuit2, this needs to be fixed in upstream ROOT
+@pytest.mark.xfail(strict=True)
+def test_function_with_maximum():
+
+    def func(a):
+        return -a ** 2
+
+    m = Minuit(func, pedantic=False, print_level=0)
+    fmin, param = m.migrad()
+    assert fmin.is_valid is False
