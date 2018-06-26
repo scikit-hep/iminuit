@@ -990,17 +990,17 @@ cdef class Minuit:
     def is_clean_state(self):
         """Check if minuit is in a clean state, ie. no migrad call"""
         return self.pyfcn is NULL and \
-               self.minimizer is NULL and self.cfmin is NULL
+            self.minimizer is NULL and self.cfmin is NULL
 
     cdef void clear_cobj(self):
-        #clear C++ internal state
-        del self.pyfcn;
+        # clear C++ internal state
+        del self.pyfcn
         self.pyfcn = NULL
-        del self.minimizer;
+        del self.minimizer
         self.minimizer = NULL
-        del self.cfmin;
+        del self.cfmin
         self.cfmin = NULL
-        del self.last_upst;
+        del self.last_upst
         self.last_upst = NULL
 
     def __dealloc__(self):
@@ -1079,7 +1079,8 @@ cdef class Minuit:
             if not m.migrad_ok():
                 warn(('Migrad fails to converge for %s=%f') % (vname, v))
             results[i] = m.fval
-            if m.fval < vmin: vmin = m.fval
+            if m.fval < vmin:
+                vmin = m.fval
 
         if subtract_min:
             results -= vmin
