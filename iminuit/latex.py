@@ -173,7 +173,7 @@ class LatexFactory:
     def build_param_table(cls, mps, merr=None, float_format='%5.3e',
                           smart_latex=True, latex_map=None):
         """build latex parameter table"""
-        headers = ['', 'Name', 'Value', 'Para Error', 'Error-',
+        headers = ['', 'Name', 'Value', 'Sym. Error', 'Error-',
                    'Error+', 'Limit-', 'Limit+', 'Fixed?', ]
 
         data = []

@@ -42,7 +42,7 @@ def test_html(capsys):
         <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
-        <td title="Parabolic error">Parab Error</td>
+        <td title="Hesse error">Hesse Error</td>
         <td title="Minos lower error">Minos Error-</td>
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
@@ -76,7 +76,7 @@ def test_html(capsys):
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+ & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
 0 & x & 0 & 1 &  &  &  &  & No\\
 \hline
@@ -139,7 +139,7 @@ def test_html(capsys):
         <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
-        <td title="Parabolic error">Parab Error</td>
+        <td title="Hesse error">Hesse Error</td>
         <td title="Minos lower error">Minos Error-</td>
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
@@ -173,7 +173,7 @@ def test_html(capsys):
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+ & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
 0 & x & 2 & 1 &  &  &  &  & No\\
 \hline
@@ -248,29 +248,15 @@ def test_html(capsys):
     m.print_matrix()
     assert r"""<table>
     <tr>
-        <td><a onclick="$('#aaaaaaaaaa').toggle()" href="#">+</a></td>        <td>
-            <div style="width:20px;position:relative; width: -moz-fit-content;">
-            <div style="display:inline-block;-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
-            x
-            </div>
-            </div>
-        </td>        <td>
-            <div style="width:20px;position:relative; width: -moz-fit-content;">
-            <div style="display:inline-block;-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
-            y
-            </div>
-            </div>
-        </td>    </tr>    <tr>
-        <td>x</td>        <td style="background-color:rgb(255,117,117)">
-            1.00
-        </td>        <td style="background-color:rgb(163,254,186)">
-            0.00
-        </td>    </tr>    <tr>
-        <td>y</td>        <td style="background-color:rgb(163,254,186)">
-            0.00
-        </td>        <td style="background-color:rgb(255,117,117)">
-            1.00
-        </td>    </tr></table>
+        <td><a onclick="$('#aaaaaaaaaa').toggle()" href="#">+</a></td> <td>x</td> <td>y</td>
+    </tr>
+    <tr>
+        <td>x</td> <td style="background-color:rgb(255,117,117)">1.00</td> <td style="background-color:rgb(163,254,186)">0.00</td>
+    </tr>
+    <tr>
+        <td>y</td> <td style="background-color:rgb(163,254,186)">0.00</td> <td style="background-color:rgb(255,117,117)">1.00</td>
+    </tr>
+</table>
 <pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="13" cols="50" onclick="this.select()" readonly>
 %\usepackage[table]{xcolor} % include this for color
@@ -359,7 +345,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
-        <td title="Parabolic error">Parab Error</td>
+        <td title="Hesse error">Hesse Error</td>
         <td title="Minos lower error">Minos Error-</td>
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
@@ -393,7 +379,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+ & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
 0 & x & 5 & 0.1 &  &  & 0.0 &  & No\\
 \hline
@@ -416,7 +402,7 @@ def test_console(capsys):
 
     m.print_initial_param()
     assert r"""----------------------------------------------------------------------------------------
-| No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
+| No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
 ----------------------------------------------------------------------------------------
 |  0 |    x | 0        | 1        |          |          |          |          |   No   |
 |  1 |    y | 0        | 1        |          |          |          |          |   No   |
@@ -442,7 +428,7 @@ edm = %s (Goal: 1e-08) | up = 1.0
 |          False |           True |          False |                |          False |
 --------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
-| No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
+| No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
 ----------------------------------------------------------------------------------------
 |  0 |    x | 2        | 1        |          |          |          |          |   No   |
 |  1 |    y | 1        | 0.5      |          |          |          |          |   No   |
@@ -513,7 +499,7 @@ Minos Status for y: VALID
                errordef=1)
     m.print_param()
     assert r"""----------------------------------------------------------------------------------------
-| No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
+| No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
 ----------------------------------------------------------------------------------------
 |  0 |    x | 5        | 0.1      |          |          | 0        |          |   No   |
 |  1 |    y | 5        | 0.1      |          |          | 0        | 10       |   No   |

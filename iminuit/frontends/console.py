@@ -112,7 +112,7 @@ class ConsoleFrontend(Frontend):
         header = (('| {0:^%is} | {1:^%is} | {2:^8s} | {3:^8s} | {4:^8s} |'
                    ' {5:^8s} | {6:8s} | {7:8s} | {8:^6s} |') %
                   (num_width, name_width)).format(
-            'No', 'Name', 'Value', 'Para Err',
+            'No', 'Name', 'Value', 'Sym. Err',
             "Err-", "Err+", "Limit-", "Limit+", "Fixed?")
         hline = '-' * len(header)
         linefmt = (('| {0:>%id} | {1:>%is} | {2:<8s} | {3:<8s} | {4:<8s} |'
