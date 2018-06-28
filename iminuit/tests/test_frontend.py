@@ -42,45 +42,45 @@ def test_html(capsys):
         <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
-        <td title="Parabolic error">Parab Error</td>
+        <td title="Hesse error">Hesse Error</td>
         <td title="Minos lower error">Minos Error-</td>
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
-        <td>1</td>
+        <td>0</td>
         <td>x</td>
         <td>0</td>
         <td>1</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
     <tr>
-        <td>2</td>
+        <td>1</td>
         <td>y</td>
         <td>0</td>
         <td>1</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
 </table>
 <pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+ & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 0.000e+00 & 1.000e+00 &  &  &  &  & \\
+0 & x & 0 & 1 &  &  &  &  & No\\
 \hline
-2 & y & 0.000e+00 & 1.000e+00 &  &  &  &  & \\
+1 & y & 0 & 1 &  &  &  &  & No\\
 \hline
 \end{tabular}
 </textarea>
@@ -139,45 +139,45 @@ def test_html(capsys):
         <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
-        <td title="Parabolic error">Parab Error</td>
+        <td title="Hesse error">Hesse Error</td>
         <td title="Minos lower error">Minos Error-</td>
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>
     <tr>
-        <td>1</td>
+        <td>0</td>
         <td>x</td>
         <td>2</td>
         <td>1</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
     <tr>
-        <td>2</td>
+        <td>1</td>
         <td>y</td>
         <td>1</td>
         <td>0.5</td>
-        <td>0</td>
-        <td>0</td>
         <td></td>
         <td></td>
         <td></td>
+        <td></td>
+        <td>No</td>
     </tr>
 </table>
 <pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
+ & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
 \hline
-1 & x & 2.000e+00 & 1.000e+00 &  &  &  &  & \\
+0 & x & 2 & 1 &  &  &  &  & No\\
 \hline
-2 & y & 1.000e+00 & 5.000e-01 &  &  &  &  & \\
+1 & y & 1 & 0.5 &  &  &  &  & No\\
 \hline
 \end{tabular}
 </textarea>
@@ -248,29 +248,15 @@ def test_html(capsys):
     m.print_matrix()
     assert r"""<table>
     <tr>
-        <td><a onclick="$('#aaaaaaaaaa').toggle()" href="#">+</a></td>        <td>
-            <div style="width:20px;position:relative; width: -moz-fit-content;">
-            <div style="display:inline-block;-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
-            x
-            </div>
-            </div>
-        </td>        <td>
-            <div style="width:20px;position:relative; width: -moz-fit-content;">
-            <div style="display:inline-block;-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
-            y
-            </div>
-            </div>
-        </td>    </tr>    <tr>
-        <td>x</td>        <td style="background-color:rgb(255,117,117)">
-            1.00
-        </td>        <td style="background-color:rgb(163,254,186)">
-            0.00
-        </td>    </tr>    <tr>
-        <td>y</td>        <td style="background-color:rgb(163,254,186)">
-            0.00
-        </td>        <td style="background-color:rgb(255,117,117)">
-            1.00
-        </td>    </tr></table>
+        <td><a onclick="$('#aaaaaaaaaa').toggle()" href="#">+</a></td> <td>x</td> <td>y</td>
+    </tr>
+    <tr>
+        <td>x</td> <td style="background-color:rgb(255,117,117)">1.00</td> <td style="background-color:rgb(163,254,186)">0.00</td>
+    </tr>
+    <tr>
+        <td>y</td> <td style="background-color:rgb(163,254,186)">0.00</td> <td style="background-color:rgb(255,117,117)">1.00</td>
+    </tr>
+</table>
 <pre id="aaaaaaaaaa" style="display:none;">
 <textarea rows="13" cols="50" onclick="this.select()" readonly>
 %\usepackage[table]{xcolor} % include this for color
@@ -288,102 +274,6 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 </textarea>
 </pre>
 """ == out()
-
-    m.print_fmin()
-    assert r"""<hr>
-<table>
-    <tr>
-        <td title="Minimum value of function">FCN = 1.0</td>
-        <td title="Total number of call to FCN so far">TOTAL NCALL = 48</td>
-        <td title="Number of call in last migrad">NCALLS = 24</td>
-    </tr>
-    <tr>
-        <td title="Estimated distance to minimum">EDM = %s</td>
-        <td title="Maximum EDM definition of convergence">GOAL EDM = 1e-08</td>
-        <td title="Error def. Amount of increase in FCN to be defined as 1 standard deviation">
-        UP = 1.0</td>
-    </tr>
-</table>
-<table>
-    <tr>
-        <td align="center" title="Validity of the migrad call">Valid</td>
-        <td align="center" title="Validity of parameters">Valid Param</td>
-        <td align="center" title="Is Covariance matrix accurate?">Accurate Covar</td>
-        <td align="center" title="Positive definiteness of covariance matrix">PosDef</td>
-        <td align="center" title="Was covariance matrix made posdef by adding diagonal element">Made PosDef</td>
-    </tr>
-    <tr>
-        <td align="center" style="background-color:#92CCA6">True</td>
-        <td align="center" style="background-color:#92CCA6">True</td>
-        <td align="center" style="background-color:#92CCA6">True</td>
-        <td align="center" style="background-color:#92CCA6">True</td>
-        <td align="center" style="background-color:#92CCA6">False</td>
-    </tr>
-    <tr>
-        <td align="center" title="Was last hesse call fail?">Hesse Fail</td>
-        <td align="center" title="Validity of covariance">HasCov</td>
-        <td align="center" title="Is EDM above goal EDM?">Above EDM</td>
-        <td align="center"></td>
-        <td align="center" title="Did last migrad call reach max call limit?">Reach calllim</td>
-    </tr>
-    <tr>
-        <td align="center" style="background-color:#92CCA6">False</td>
-        <td align="center" style="background-color:#92CCA6">True</td>
-        <td align="center" style="background-color:#92CCA6">False</td>
-        <td align="center"></td>
-        <td align="center" style="background-color:#92CCA6">False</td>
-    </tr>
-</table>
-<table>
-    <tr>
-        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
-        <td title="Variable name">Name</td>
-        <td title="Value of parameter">Value</td>
-        <td title="Parabolic error">Parab Error</td>
-        <td title="Minos lower error">Minos Error-</td>
-        <td title="Minos upper error">Minos Error+</td>
-        <td title="Lower limit of the parameter">Limit-</td>
-        <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
-    </tr>
-    <tr>
-        <td>1</td>
-        <td>x</td>
-        <td>2</td>
-        <td>1</td>
-        <td>-1</td>
-        <td>1</td>
-        <td></td>
-        <td></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td>2</td>
-        <td>y</td>
-        <td>1</td>
-        <td>0.5</td>
-        <td>-0.5</td>
-        <td>0.5</td>
-        <td></td>
-        <td></td>
-        <td></td>
-    </tr>
-</table>
-<pre id="aaaaaaaaaa" style="display:none;">
-<textarea rows="10" cols="50" onclick="this.select()" readonly>
-\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
-\hline
- & Name & Value & Para Error & Error+ & Error- & Limit+ & Limit- & FIXED\\
-\hline
-1 & x & 2.000e+00 & 1.000e+00 & -1.000e+00 & 1.000e+00 &  &  & \\
-\hline
-2 & y & 1.000e+00 & 5.000e-01 & -5.000e-01 & 5.000e-01 &  &  & \\
-\hline
-\end{tabular}
-</textarea>
-</pre>
-<hr>
-""" % (m.get_fmin().edm) == out()
 
     m.print_all_minos()
     assert r"""<span>Minos status for x: <span style="background-color:#92CCA6">VALID</span></span>
@@ -445,18 +335,74 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 """ % (m.merrors[('x', -1.0)], m.merrors[('x', 1.0)],
        m.merrors[('y', -1.0)], m.merrors[('y', 1.0)]) == out()
 
+    m = Minuit(f1, x=5, y=5,
+               error_x=0.1, error_y=0.1,
+               limit_x=(0, None), limit_y=(0, 10),
+               errordef=1, frontend=Frontend())
+    m.print_param()
+    assert r"""<table>
+    <tr>
+        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
+        <td title="Variable name">Name</td>
+        <td title="Value of parameter">Value</td>
+        <td title="Hesse error">Hesse Error</td>
+        <td title="Minos lower error">Minos Error-</td>
+        <td title="Minos upper error">Minos Error+</td>
+        <td title="Lower limit of the parameter">Limit-</td>
+        <td title="Upper limit of the parameter">Limit+</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>x</td>
+        <td>5</td>
+        <td>0.1</td>
+        <td></td>
+        <td></td>
+        <td>0</td>
+        <td></td>
+        <td>No</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>y</td>
+        <td>5</td>
+        <td>0.1</td>
+        <td></td>
+        <td></td>
+        <td>0</td>
+        <td>10</td>
+        <td>No</td>
+    </tr>
+</table>
+<pre id="aaaaaaaaaa" style="display:none;">
+<textarea rows="10" cols="50" onclick="this.select()" readonly>
+\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
+\hline
+ & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+\hline
+0 & x & 5 & 0.1 &  &  & 0.0 &  & No\\
+\hline
+1 & y & 5 & 0.1 &  &  & 0.0 & 10 & No\\
+\hline
+\end{tabular}
+</textarea>
+</pre>
+""" == out()
+
 
 def test_console(capsys):
 
     def out():
         return capsys.readouterr()[0]
 
-    m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1, frontend=console.ConsoleFrontend())
+    m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1,
+               frontend=console.ConsoleFrontend())
     m.tol = 1e-4
 
     m.print_initial_param()
     assert r"""----------------------------------------------------------------------------------------
-| No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
+| No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
 ----------------------------------------------------------------------------------------
 |  0 |    x | 0        | 1        |          |          |          |          |   No   |
 |  1 |    y | 0        | 1        |          |          |          |          |   No   |
@@ -482,7 +428,7 @@ edm = %s (Goal: 1e-08) | up = 1.0
 |          False |           True |          False |                |          False |
 --------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------
-| No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
+| No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
 ----------------------------------------------------------------------------------------
 |  0 |    x | 2        | 1        |          |          |          |          |   No   |
 |  1 |    y | 1        | 0.5      |          |          |          |          |   No   |
@@ -526,29 +472,6 @@ y    1 | 0.00 1.00
 -------------------
 """ == out()
 
-    m.print_fmin()
-    assert r"""**************************************************************************************
---------------------------------------------------------------------------------------
-fval = 1.0 | total call = 48 | ncalls = 24
-edm = %s (Goal: 1e-08) | up = 1.0
---------------------------------------------------------------------------------------
-|          Valid |    Valid Param | Accurate Covar |         Posdef |    Made Posdef |
---------------------------------------------------------------------------------------
-|           True |           True |           True |           True |          False |
---------------------------------------------------------------------------------------
-|     Hesse Fail |        Has Cov |      Above EDM |                |  Reach calllim |
---------------------------------------------------------------------------------------
-|          False |           True |          False |                |          False |
---------------------------------------------------------------------------------------
-----------------------------------------------------------------------------------------
-| No | Name |  Value   | Para Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
-----------------------------------------------------------------------------------------
-|  0 |    x | 2        | 1        | -1       | 1        |          |          |   No   |
-|  1 |    y | 1        | 0.5      | -0.5     | 0.5      |          |          |   No   |
-----------------------------------------------------------------------------------------
-**************************************************************************************
-""" % (m.get_fmin().edm) == out()
-
     m.print_all_minos()
     assert r"""-------------------------------------------------
 Minos Status for x: VALID
@@ -568,4 +491,17 @@ Minos Status for y: VALID
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
 -------------------------------------------------
+""" == out()
+
+    m = Minuit(f1, x=5, y=5,
+               error_x=0.1, error_y=0.1,
+               limit_x=(0, None), limit_y=(0, 10),
+               errordef=1)
+    m.print_param()
+    assert r"""----------------------------------------------------------------------------------------
+| No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
+----------------------------------------------------------------------------------------
+|  0 |    x | 5        | 0.1      |          |          | 0        |          |   No   |
+|  1 |    y | 5        | 0.1      |          |          | 0        | 10       |   No   |
+----------------------------------------------------------------------------------------
 """ == out()

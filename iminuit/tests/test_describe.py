@@ -1,73 +1,40 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-from iminuit.util import describe
+from iminuit.util import describe, make_func_code
 from iminuit.tests.utils import requires_dependency
 from math import ldexp
 import pytest
 
 
-# simple function
-def f(x, y):
-    pass
-
-
-def test_simple():
+def test_function():
+    def f(x, y):
+        pass
     assert describe(f, True) == ['x', 'y']
 
 
-# test bound method
-class A:
-    def f(self, x, y):
-        pass
-
-
-def test_bound():
-    a = A()
-    assert describe(a.f, True) == ['x', 'y']
+def test_class_method():
+    class A:
+        def f(self, x, y):
+            pass
+    assert describe(A().f, True) == ['x', 'y']
 
 
 # unbound method
-def test_unbound():
+def test_class_unbound_method():
+    class A:
+        def f(self, x, y):
+            pass
     assert describe(A.f, True) == ['self', 'x', 'y']
 
 
-# faking func code
-class Func_Code:
-    def __init__(self, varname):
-        self.co_varnames = varname
-        self.co_argcount = len(varname)
+def test_functor():
+    class A:
+        def __call__(self, x, y):
+            pass
+    assert describe(A(), True) == ['x', 'y']
 
 
-# test __call__
-class Func1:
-    def __init__(self):
-        pass
-
-    def __call__(self, x, y):
-        return (x - 2.) ** 2 + (y - 5.) ** 2 + 10
-
-
-def test_call():
-    f1 = Func1()
-    assert describe(f1, True) == ['x', 'y']
-
-
-# fake func
-class Func2:
-    def __init__(self):
-        self.func_code = Func_Code(['x', 'y'])
-
-    def __call__(self, *arg):
-        return (arg[0] - 2.) ** 2 + (arg[1] - 5.) ** 2 + 10
-
-
-def test_fakefunc():
-    f2 = Func2()
-    assert describe(f2, True) == ['x', 'y']
-
-
-# builtin (parsing doc)
-def test_builtin():
+def test_builtin_by_parsing_doc():
     assert describe(ldexp, True) == ['x', 'i']
 
 
@@ -75,9 +42,42 @@ def test_lambda():
     assert describe(lambda a, b: 0, True) == ['a', 'b']
 
 
-def test_variadic():
+def test_generic_function():
+    def f(*args):
+        pass
+    with pytest.raises(TypeError):
+        describe(f, True)
+
+
+def test_generic_lambda():
     with pytest.raises(TypeError):
         describe(lambda *args: 0, True)
+
+
+def test_generic_class_method():
+    class A:
+        def f(self, *args):
+            pass
+    with pytest.raises(TypeError):
+        describe(A().f, True)
+
+
+def test_generic_functor():
+    class A:
+        def __call__(self, *args):
+            pass
+    with pytest.raises(TypeError):
+        describe(A(), True)
+
+
+def test_generic_functor_with_fake_func():
+    class A:
+        def __init__(self):
+            self.func_code = make_func_code('x', 'y')
+
+        def __call__(self, *arg):
+            pass
+    assert describe(A(), True) == ['x', 'y']
 
 
 @requires_dependency('Cython')
