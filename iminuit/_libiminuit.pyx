@@ -495,7 +495,10 @@ cdef class Minuit:
         **Arguments:**
 
             * **ncall**: integer (approximate) maximum number of call before
-              migrad stop trying. Default 10000.
+              migrad will stop trying. Default 10000. Note: Migrad may
+              slightly violate this limit, because it checks the condition
+              only after a full iteration of the algorithm, which usually
+              performs several function calls.
 
             * **resume**: boolean indicating whether migrad should resume from
               the previous minimizer attempt(True) or should start from the
