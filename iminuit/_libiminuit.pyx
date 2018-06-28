@@ -1351,60 +1351,16 @@ cdef class Minuit:
 
         return xminos, yminos, cerr.Points()  #using type coersion here
 
-    def mncontour_grid(self, x, y, bins=100, nsigma=2, numpoints=20,
-                       int sigma_res=4, edges=False):
-        """Compute gridded minos contour.
-
-        **Arguments:**
-
-            - **x**, **y** parameter name
-
-            - **bins** number of bins in the grid. The boundary of the grid is
-              selected automatically by the minos error computed. Default 100.
-
-            - **nsigma** number of sigma to draw. Default 2
-
-            - **numpoints** number of points to calculate mncontour for each
-              sigma points(there are sigma_res*nsigma total)
-
-            - **sigma_res** number of sigma level to calculate MnContours
-
-            - **edges** Return bin edges instead of mid value(pass True if you
-              want to draw it using pcolormesh)
-
-        **Returns:**
-
-            xgrid, ygrid, sigma, rawdata
-
-            rawdata is tuple of (x,y,sigma_level)
-
-        .. seealso::
-
-            :meth:`draw_mncontour`
-
-        .. plot:: pyplots/draw_mncontour.py
-            :include-source:
-
-        """
-        return _plotting.mncontour_grid(self, x, y, numpoints,
-                                        nsigma, sigma_res, bins, edges)
-
-    def draw_mncontour(self, x, y, bins=None, nsigma=2,
-                       numpoints=20, sigma_res=None):
+    def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
         """Draw minos contour.
 
         **Arguments:**
 
             - **x**, **y** parameter name
 
-            - **bins** number of bin in contour grid. DEPRECATED: Value is ignored.
-
             - **nsigma** number of sigma contours to draw
 
             - **numpoints** number of points to calculate for each contour
-
-            - **sigma_res** number of sigma level to calculate MnContours.
-              Default 4. DEPRECATED: Value is ignored.
 
         **Returns:**
 
