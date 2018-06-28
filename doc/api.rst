@@ -25,7 +25,6 @@ These are the things you will use a lot:
     Minuit.mnprofile
     Minuit.draw_mnprofile
     Minuit.mncontour
-    Minuit.mncontour_grid
     Minuit.draw_mncontour
 
 Minuit
