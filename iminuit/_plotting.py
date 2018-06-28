@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import warnings
+import numpy as np
 
 __all__ = ['draw_contour',
            'draw_mncontour',
@@ -138,14 +139,21 @@ def mncontour_grid(self, x, y, numpoints=20, nsigma=2, sigma_res=4,
     return xgrid, ygrid, g, (xps, yps, dfcn)
 
 
-def draw_mncontour(self, x, y, bins=100, nsigma=2, numpoints=20, sig_res=4):
+def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
     from matplotlib import pyplot as plt
+    # from matplotlib.collections import LineCollection
+    from matplotlib.contour import ContourSet
 
-    xgrid, ygrid, g, r = mncontour_grid(self, x, y, numpoints, nsigma, sig_res, bins)
-    # g[g.mask] = nsigma+1 #remove the mask
-
-    CS = plt.contour(xgrid, ygrid, g, range(1, nsigma + 1))
-    plt.clabel(CS, inline=1, fontsize=10)
+    c_val = []
+    c_pts = []
+    for sigma in range(1, nsigma + 1):
+        pts = self.mncontour(x, y, numpoints, sigma)[2]
+        # close curve
+        pts.append(pts[0])
+        c_val.append(sigma)
+        c_pts.append([pts])  # level can have more than one contour in mpl
+    cs = ContourSet(plt.gca(), c_val, c_pts)
+    plt.clabel(cs, inline=1, fontsize=10)
     plt.xlabel(x)
     plt.ylabel(y)
-    return xgrid, ygrid, g, CS
+    return cs
