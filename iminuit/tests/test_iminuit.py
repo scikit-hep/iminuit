@@ -306,12 +306,12 @@ def test_fix_param(grad):
 
     assert m.is_fixed('x') is False
     assert m.is_fixed('y') is True
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         m.is_fixed('a')
 
 
 def test_fitarg_oneside():
-    m = Minuit(func4, print_level=-1, y=10., fix_y=True, limit_x=(None, 20.),
+    m = Minuit(func4, print_level=0, y=10., fix_y=True, limit_x=(None, 20.),
                pedantic=False)
     fitarg = m.fitarg
     assert_allclose(fitarg['y'], 10.)
@@ -321,8 +321,8 @@ def test_fitarg_oneside():
 
     fitarg = m.fitarg
 
-    assert_allclose(fitarg['y'], 10.)
     assert_allclose(fitarg['x'], 2., atol=1e-2)
+    assert_allclose(fitarg['y'], 10., atol=1e-2)
     assert_allclose(fitarg['z'], 7., atol=1e-2)
 
     assert 'error_y' in fitarg
@@ -479,9 +479,8 @@ def test_reverse_limit():
     def f(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
-    m = Minuit(f, limit_x=(3., 2.), pedantic=False, print_level=0)
     with pytest.raises(ValueError):
-        m.migrad()
+        m = Minuit(f, limit_x=(3., 2.), pedantic=False, print_level=0)
 
 
 class TestOutputInterface:
