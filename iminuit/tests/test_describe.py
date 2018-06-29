@@ -73,7 +73,7 @@ def test_generic_functor():
 def test_generic_functor_with_fake_func():
     class A:
         def __init__(self):
-            self.func_code = make_func_code('x', 'y')
+            self.func_code = make_func_code(['x', 'y'])
 
         def __call__(self, *arg):
             pass

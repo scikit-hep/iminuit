@@ -288,7 +288,7 @@ def remove_var(b, exclude):
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
 
 
-def make_func_code(*params):
+def make_func_code(params):
     """Make a func_code object to fake function signature.
 
     You can make a funccode from describable object by::
