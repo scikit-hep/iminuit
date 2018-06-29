@@ -76,7 +76,7 @@ def test_html(capsys):
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+ & Name & Value & Hesse Error & Minos Error- & Minos Error+ & Limit- & Limit+ & Fixed?\\
 \hline
 0 & x & 0 & 1 &  &  &  &  & No\\
 \hline
@@ -173,7 +173,7 @@ def test_html(capsys):
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+ & Name & Value & Hesse Error & Minos Error- & Minos Error+ & Limit- & Limit+ & Fixed?\\
 \hline
 0 & x & 2 & 1 &  &  &  &  & No\\
 \hline
@@ -379,7 +379,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 <textarea rows="10" cols="50" onclick="this.select()" readonly>
 \begin{tabular}{|c|r|r|r|r|r|r|r|c|}
 \hline
- & Name & Value & Sym. Error & Error- & Error+ & Limit- & Limit+ & Fixed?\\
+ & Name & Value & Hesse Error & Minos Error- & Minos Error+ & Limit- & Limit+ & Fixed?\\
 \hline
 0 & x & 5 & 0.1 &  &  & 0.0 &  & No\\
 \hline
