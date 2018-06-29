@@ -107,7 +107,7 @@ class ConsoleFrontend(Frontend):
         name_width = max([len(x) for x in vnames]) if vnames else 0
         name_width = max(4, name_width)
         num_max = len(vnames) - 1
-        num_width = max(2, int(log10(num_max)) + 1)
+        num_width = max(2, int(log10(max(num_max, 1)) + 1))
 
         header = (('| {0:^%is} | {1:^%is} | {2:^8s} | {3:^8s} | {4:^8s} |'
                    ' {5:^8s} | {6:8s} | {7:8s} | {8:^6s} |') %
