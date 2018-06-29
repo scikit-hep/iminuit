@@ -106,6 +106,7 @@ cdef int check_extra_args(parameters, kwd) except -1:
 
 # Helper classes
 cdef class NameIter:
+    """Iterator over parameter names in correct order"""
     cdef MnUserParameterStatePtr _state
     cdef unsigned int i
     cdef unsigned int n
@@ -126,6 +127,10 @@ cdef class NameIter:
 
 
 cdef class BasicView:
+    """Dict-like view of parameter state.
+
+    Derived classes need to implement methods _set and _get to access
+    specific properties of the parameter state."""
     cdef MnUserParameterStatePtr _state
     cdef dict _name2idx
 
@@ -169,6 +174,7 @@ cdef class BasicView:
 
 
 cdef class ArgsView:
+    """List-like view of parameter values."""
     cdef MnUserParameterStatePtr _state
     cdef unsigned int _npar
 
@@ -196,7 +202,7 @@ cdef class ArgsView:
 
 
 cdef class ValueView(BasicView):
-
+    """Dict-like view of parameter values."""
     def _get(self, unsigned int i):
         return self._state.Parameter(i).Value()
 
@@ -205,7 +211,7 @@ cdef class ValueView(BasicView):
 
 
 cdef class ErrorView(BasicView):
-
+    """Dict-like view of parameter errors."""
     def _get(self, unsigned int i):
         return self._state.Parameter(i).Error()
 
@@ -214,7 +220,7 @@ cdef class ErrorView(BasicView):
 
 
 cdef class FixedView(BasicView):
-
+    """Dict-like view of whether parameters are fixed."""
     def _get(self, unsigned int i):
         return self._state.Parameter(i).IsFixed()
 
