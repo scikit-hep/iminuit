@@ -188,6 +188,9 @@ cdef class ArgsView:
             raise IndexError
         self._state.SetValue(i, value)
 
+    def copy(self):
+        return tuple(self)
+
     def __str__(self):
         return 'ArgsView[' + ', '.join(str(x) for x in self) + ']'
 
