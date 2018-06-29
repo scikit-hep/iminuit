@@ -31,7 +31,7 @@ ctypedef PythonGradientFCN* PythonGradientFCNPtr
 ctypedef MnUserParameterState* MnUserParameterStatePtr
 
 # Helper functions
-cdef int setParameterState(MnUserParameterStatePtr state, object parameters, dict fitarg) except -1:
+cdef setParameterState(MnUserParameterStatePtr state, object parameters, dict fitarg):
     """Construct parameter state from user input.
 
     Caller is responsible for cleaning up the pointer.
@@ -53,7 +53,6 @@ cdef int setParameterState(MnUserParameterStatePtr state, object parameters, dic
             if lb >= ub:
                 raise ValueError(
                     'limit for parameter %s is invalid. %r' % (pname, (lb, ub)))
-                return -1
             if lb == -inf and ub == inf:
                 pass
             elif ub == inf:
@@ -70,10 +69,8 @@ cdef int setParameterState(MnUserParameterStatePtr state, object parameters, dic
         if fitarg['fix_' + pname]:
             state.Fix(i)
 
-    return 0
 
-
-cdef object auto_frontend():
+cdef auto_frontend():
     """Determine frontend automatically.
 
     Use HTML frontend in IPython sessions and console frontend otherwise.
@@ -87,7 +84,7 @@ cdef object auto_frontend():
         return ConsoleFrontend()
 
 
-cdef int check_extra_args(parameters, kwd) except -1:
+cdef check_extra_args(parameters, kwd):
     """Check keyword arguments to find unwanted/typo keyword arguments"""
     fixed_param = set('fix_' + p for p in parameters)
     limit_param = set('limit_' + p for p in parameters)
@@ -100,8 +97,6 @@ cdef int check_extra_args(parameters, kwd) except -1:
             raise RuntimeError(
                 ('Cannot understand keyword %s. May be a typo?\n'
                  'The parameters are %r') % (k, parameters))
-            return -1
-    return 0
 
 
 # Helper classes
@@ -733,24 +728,27 @@ cdef class Minuit:
         if self.print_level > 0:
             self.frontend.print_banner('MIGRAD')
 
-        if not resume or self.minimizer is NULL:
-            if self.minimizer is not NULL:
-                del self.minimizer
-            strat = new MnStrategy(self.strategy)
+        if not resume:
+            self.last_upst = self.initial_upst
 
-            if self.grad_fcn is None:
-                self.minimizer = new MnMigrad(
-                    deref(<FCNBase*> self.pyfcn),
-                    self.initial_upst, deref(strat)
-                )
-            else:
-                self.minimizer = new MnMigrad(
-                    deref(<FCNGradientBase*> self.pyfcn),
-                    self.initial_upst, deref(strat)
-                )
+        if self.minimizer is not NULL:
+            del self.minimizer
+            self.minimizer = NULL
+        strat = new MnStrategy(self.strategy)
 
-            del strat;
-            strat = NULL
+        if self.grad_fcn is None:
+            self.minimizer = new MnMigrad(
+                deref(<FCNBase*> self.pyfcn),
+                self.last_upst, deref(strat)
+            )
+        else:
+            self.minimizer = new MnMigrad(
+                deref(<FCNGradientBase*> self.pyfcn),
+                self.last_upst, deref(strat)
+            )
+
+        del strat;
+        strat = NULL
 
         self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
         if precision is not None:

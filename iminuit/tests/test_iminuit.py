@@ -294,7 +294,7 @@ def test_fix_param(grad):
     for b in (True, False):
         assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
     m.print_all_minos()
-    # now fix z = 10
+    # now fix y = 10
     m = Minuit(func3, y=10., fix_y=True, **kwds)
     m.migrad()
     assert_allclose(m.np_values(), (2, 10), rtol=1e-2)
@@ -749,3 +749,18 @@ def test_perfect_correlation():
     assert fmin.has_accurate_covar is False
     assert fmin.has_posdef_covar is False
     assert fmin.has_made_posdef_covar is True
+
+
+def test_modify_param_state():
+    m = Minuit(func3, x=1, y=2, fix_y=True, pedantic=False)
+    m.migrad()
+    assert_allclose(m.np_values(), [2, 2], atol=1e-2)
+    assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
+    m.fixed['y'] = False
+    m.values['x'] = 1
+    m.errors['x'] = 1
+    assert_allclose(m.np_values(), [1, 2], atol=1e-2)
+    assert_allclose(m.np_errors(), [1, 1], atol=1e-2)
+    m.migrad()
+    assert_allclose(m.np_values(), [2, 5], atol=1e-2)
+    assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
