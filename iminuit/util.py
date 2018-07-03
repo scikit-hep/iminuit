@@ -1,4 +1,4 @@
-"""IMinuit utility functions and classes.
+"""iminuit utility functions and classes.
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -113,7 +113,10 @@ def arguments_from_call_funccode(f):
     """
     fc = fc_or_c(f.__call__)
     argcount = fc.co_argcount
-    return list(fc.co_varnames[1:argcount])
+    args = list(fc.co_varnames[1:argcount])
+    if not args:
+        raise RuntimeError('Function has variable number of arguments')
+    return args
 
 
 def is_bound(f):
@@ -285,11 +288,16 @@ def remove_var(b, exclude):
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
 
 
-def make_func_code(params=None):
+def make_func_code(params):
     """Make a func_code object to fake function signature.
 
     You can make a funccode from describable object by::
 
         make_func_code(describe(f))
     """
-    return Struct(co_varnames=params, co_argcount=len(params))
+    class FuncCode(object):
+        __slots__ = ('co_varnames', 'co_argcount')
+    fc = FuncCode()
+    fc.co_varnames = params
+    fc.co_argcount = len(params)
+    return fc

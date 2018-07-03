@@ -16,23 +16,23 @@ def minimize(fun, x0, args=(), method=None,
     The `options` argument can be used to pass special settings to Minuit.
     All are optional.
 
-    **Options**
+    **Options:**
 
-    - *disp* (bool): Set to true to print convergence messages. Default: False.
-    - *maxfev* (int): Maximum allowed number of iterations. Default: 10000.
-    - *eps* (sequence): Initial step size to numerical compute derivative.
-      Minuit automatically refines this in subsequent iterations and is very
-      insensitive to the initial choice. Default: 1.
+      - *disp* (bool): Set to true to print convergence messages. Default: False.
+      - *maxfev* (int): Maximum allowed number of iterations. Default: 10000.
+      - *eps* (sequence): Initial step size to numerical compute derivative.
+        Minuit automatically refines this in subsequent iterations and is very
+        insensitive to the initial choice. Default: 1.
 
     **Returns: OptimizeResult** (dict with attribute access)
-    - *x* (ndarray): Solution of optimization.
-    - *fun* (float): Value of objective function at minimum.
-    - *message* (str): Description of cause of termination.
-    - *hess_inv* (ndarray): Inverse of Hesse matrix at minimum (may not be exact).
-    - nfev (int): Number of function evaluations.
-    - njev (int): Number of jacobian evaluations.
-    - minuit (object): Minuit object internally used to do the minimization.
-      Use this to extract more information about the parameter errors.
+      - *x* (ndarray): Solution of optimization.
+      - *fun* (float): Value of objective function at minimum.
+      - *message* (str): Description of cause of termination.
+      - *hess_inv* (ndarray): Inverse of Hesse matrix at minimum (may not be exact).
+      - nfev (int): Number of function evaluations.
+      - njev (int): Number of jacobian evaluations.
+      - minuit (object): Minuit object internally used to do the minimization.
+        Use this to extract more information about the parameter errors.
     """
 
     from scipy.optimize import OptimizeResult

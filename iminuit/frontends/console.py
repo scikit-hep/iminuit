@@ -107,12 +107,12 @@ class ConsoleFrontend(Frontend):
         name_width = max([len(x) for x in vnames]) if vnames else 0
         name_width = max(4, name_width)
         num_max = len(vnames) - 1
-        num_width = max(2, int(log10(num_max)) + 1)
+        num_width = max(2, int(log10(max(num_max, 1)) + 1))
 
         header = (('| {0:^%is} | {1:^%is} | {2:^8s} | {3:^8s} | {4:^8s} |'
                    ' {5:^8s} | {6:8s} | {7:8s} | {8:^6s} |') %
                   (num_width, name_width)).format(
-            'No', 'Name', 'Value', 'Para Err',
+            'No', 'Name', 'Value', 'Sym. Err',
             "Err-", "Err+", "Limit-", "Limit+", "Fixed?")
         hline = '-' * len(header)
         linefmt = (('| {0:>%id} | {1:>%is} | {2:<8s} | {3:<8s} | {4:<8s} |'
@@ -132,8 +132,8 @@ class ConsoleFrontend(Frontend):
             tmp.append(nformat(merr[v].lower) if v in merr else blank)
             tmp.append(nformat(merr[v].upper) if v in merr else blank)
 
-            tmp.append(nformat(mp.lower_limit) if mp.has_upper_limit else blank)
-            tmp.append(nformat(mp.upper_limit) if mp.has_lower_limit else blank)
+            tmp.append(nformat(mp.lower_limit) if mp.lower_limit is not None else blank)
+            tmp.append(nformat(mp.upper_limit) if mp.upper_limit is not None else blank)
 
             tmp.append(
                 'Yes' if mp.is_fixed else 'CONST' if mp.is_const else 'No')

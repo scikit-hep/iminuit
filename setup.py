@@ -96,7 +96,8 @@ except ImportError:
 libiminuit = Extension('iminuit._libiminuit',
                        sources=(glob(join(cwd, 'iminuit/*' + ext)) +
                                 minuit_src),
-                       include_dirs=minuit_header + numpy_header)
+                       include_dirs=minuit_header + numpy_header,
+                       define_macros=[('WARNINGMSG', '1')])
 extensions = [libiminuit]
 
 if USE_CYTHON:

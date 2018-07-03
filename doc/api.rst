@@ -67,34 +67,58 @@ Minuit
     .. autoattribute:: tol
 
 
+minimize
+--------
+
+.. currentmodule:: iminuit.minimize
+
+The module :mod:`iminuit.minimize` provides a :func:`minimize` function with the same interface as
+:func:`scipy.optimize.minimize`. If you are familiar with the latter, this allows
+you to use Minuit with a quick start. Eventually, you still may want to learn
+the interface of the :class:`iminuit.Minuit` class, as it provides more functionality
+if you are interested in parameter uncertainties.
+
+.. automodule:: iminuit.minimize
+    :members:
+    :undoc-members:
+
+
 Utility Functions
 -----------------
 
-:mod:util module provides describe function and various function to manipulate
-fitarguments.
+.. currentmodule:: iminuit.util
+
+The module :mod:`iminuit.util` provides the :func:`describe` function and various function to manipulate
+fit arguments. Most of these functions (apart from describe) are for internal use. You should not rely
+on them in your code. We list the ones that are for the public.
 
 .. automodule:: iminuit.util
     :members:
     :undoc-members:
+    :exclude-members: arguments_from_docstring, true_param, param_name,
+        extract_iv, extract_error, extract_fix, extract_limit
 
-Return Value Struct
--------------------
 
-iminuit uses various structs as return value. This section lists the struct
-and all it's field
+Structs
+-------
+
+.. currentmodule:: iminuit
+
+iminuit uses various structs as return values. This section lists these
+structs and their fields.
 
 .. _function-minimum-sruct:
 
 Function Minimum Struct
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
-They are usually return value from :meth:`Minuit.get_fmin`
-and :meth:`Minuit.migrad`
+Stores information about the fit result and returned by
+:meth:`Minuit.get_fmin` and :meth:`Minuit.migrad`
 Function Mimum Struct has the following attributes:
 
     * *fval*: FCN minimum value
 
-    * *edm*: `Estimated Distance to Minimum`_
+    * *edm*: Estimated Distance to Minimum
 
     * *nfcn*: Number of function call in last mimizier call
 
@@ -102,11 +126,13 @@ Function Mimum Struct has the following attributes:
       error
 
     * *is_valid*: Validity of function minimum. This is defined as
+
         * has_valid_parameters
         * and not has_reached_call_limit
         * and not is_above_max_edm
 
     * *has_valid_parameters*: Validity of parameters. This means:
+
         1. The parameters must have valid error(if it's not fixed).
            Valid error is not necessarily accurate.
         2. The parameters value must be valid
@@ -132,7 +158,7 @@ Function Mimum Struct has the following attributes:
 .. _minos-error-struct:
 
 Minos Error Struct
-------------------
+~~~~~~~~~~~~~~~~~~
 
 Minos Error Struct is used in return value from :meth:`Minuit.minos`.
 You can also call :meth:`Minuit.get_merrors` to get accumulated dictionary
@@ -166,7 +192,8 @@ all minos errors that has been calculated. It contains various minos status:
 .. _minuit-param-struct:
 
 Minuit Parameter Struct
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
+
 Minuit Parameter Struct is return value from :meth:`Minuit.hesse`
 You can, however, access the latest parameter by calling
 :meth:`Minuit.get_param_states`. Minuit Parameter Struct has the following
@@ -203,7 +230,7 @@ Function Signature Extraction Ordering
 --------------------------------------
 
     1. Using ``f.func_code.co_varnames``, ``f.func_code.co_argcount``
-       All functions that is defined like::
+       All functions that are defined like::
 
         def f(x,y):
             return (x-2)**2+(y-3)**2
@@ -212,11 +239,11 @@ Function Signature Extraction Ordering
 
         f = lambda x,y: (x-2)**2+(y-3)**2
 
-       Has these two attributes.
+       Have these two attributes.
 
     2. Using ``f.__call__.func_code.co_varnames``, ``f.__call__.co_argcount``.
-       Minuit knows how to dock off self parameter. This allow you to do
-       things like encapsulate your data with in fitting algorithm::
+       Minuit knows how to skip the `self` parameter. This allow you to do
+       things like encapsulate your data with in a fitting algorithm::
 
         class MyChi2:
             def __init__(self, x, y):
@@ -227,35 +254,16 @@ Function Signature Extraction Ordering
                 return sum([(self.f(x,m,c)-y)**2
                            for x,y in zip(self.x ,self.y)])
 
-    3. If all fail, Minuit will call ``inspect.getargspec`` for
-       function signature.
-       Builtin C functions will fall into this category since
-       they have no signature information. ``inspect.getargspec`` will parse
+    3. If all fails, Minuit will try to read the function signature from the
        docstring to get function signature.
 
 
     This order is very similar to PyMinuit signature detection. Actually,
     it is a superset of PyMinuit signature detection.
     The difference is that it allows you to fake function
-    signature by having func_code attribute in the object. This allows you
-    to make a generic functor of your custom cost function. This is how
-    `probfit`_ was written::
-
-        f = lambda x,m,c: m*x+c
-        #the beauty here is that all you need to build
-        #a Chi^2 is just your function and data
-        class GenericChi2:
-            def __init__(self, f, x, y):
-                self.f = f
-                args = describe(f)#extract function signature
-                self.func_code = Struct(
-                        co_varnames = args[1:],#dock off independent param
-                        co_argcount = len(args)-1
-                    )
-            def __call__(self, *arg):
-                return sum((self.f(x,*arg)-y)**2 for x,y in zip(self.x, self.y))
-
-        m = Minuit(GenericChi2(f,x,y))
+    signature by having a func_code attribute in the object. This allows you
+    to make a generic functor of your custom cost function. This is explained
+    in the **Advanced Tutorial** in the docs.
 
 
     .. note::

@@ -170,30 +170,29 @@ class HtmlFrontend(Frontend):
         <td><a href="#" onclick="$('#{uid}').toggle()">+</a></td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
-        <td title="Parabolic error">Parab Error</td>
+        <td title="Hesse error">Hesse Error</td>
         <td title="Minos lower error">Minos Error-</td>
         <td title="Minos upper error">Minos Error+</td>
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
-        <td title="Is the parameter fixed in the fit">FIXED</td>
+        <td title="Is the parameter fixed in the fit">Fixed?</td>
     </tr>\n""".format(**locals())
         to_print += header
         for i, mp in enumerate(mps):
-            minos_p, minos_m = (0., 0.) if merr is None or mp.name not in merr else \
-                (merr[mp.name].upper, merr[mp.name].lower)
-            limit_p = '' if not mp.has_upper_limit else mp.upper_limit
-            limit_m = '' if not mp.has_lower_limit else mp.lower_limit
-            fixed = 'FIXED' if mp.is_fixed else ''
-            j = i + 1
+            minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else \
+                ('%g' % merr[mp.name].upper, '%g' % merr[mp.name].lower)
+            limit_p = '' if mp.upper_limit is None else '%g' % mp.upper_limit
+            limit_m = '' if mp.lower_limit is None else '%g' % mp.lower_limit
+            fixed = 'Yes' if mp.is_fixed else 'No'
             content = """    <tr>
-        <td>{j}</td>
+        <td>{i}</td>
         <td>{mp.name}</td>
         <td>{mp.value:g}</td>
         <td>{mp.error:g}</td>
-        <td>{minos_m:g}</td>
-        <td>{minos_p:g}</td>
-        <td>{limit_m!s}</td>
-        <td>{limit_p!s}</td>
+        <td>{minos_m}</td>
+        <td>{minos_p}</td>
+        <td>{limit_m}</td>
+        <td>{limit_p}</td>
         <td>{fixed}</td>
     </tr>\n""".format(**locals())
             to_print += content
@@ -230,24 +229,16 @@ class HtmlFrontend(Frontend):
     <tr>
         <td>%s</td>""" % self.toggle_sign(latexuid)
         for v in vnames:
-            to_print += """        <td>
-            <div style="width:20px;position:relative; width: -moz-fit-content;">
-            <div style="display:inline-block;-webkit-writing-mode:vertical-rl;-moz-writing-mode: vertical-rl;writing-mode: vertical-rl;">
-            {v}
-            </div>
-            </div>
-        </td>""".format(**locals())
-        to_print += "    </tr>"
+            to_print += " <td>{v}</td>".format(**locals())
+        to_print += "\n    </tr>\n"
         for i, v1 in enumerate(vnames):
             to_print += """    <tr>
         <td>{v1}</td>""".format(**locals())
             for j, v2 in enumerate(vnames):
                 val = matrix[i][j]
                 color = Gradient.rgb_color_for(val)
-                to_print += """        <td style="background-color:{color}">
-            {val:3.2f}
-        </td>""".format(**locals())
-            to_print += """    </tr>"""
+                to_print += r""" <td style="background-color:{color}">{val:3.2f}</td>""".format(**locals())
+            to_print += "\n    </tr>\n"
         to_print += '</table>\n'
         to_print += self.hidden_table(str(latextable), latexuid)
         self.display(to_print)
