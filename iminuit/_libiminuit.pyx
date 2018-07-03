@@ -1143,16 +1143,15 @@ cdef class Minuit:
     def matrix_accurate(self):
         """Check if covariance (of the last migrad) is accurate"""
         return self.cfmin is not NULL and \
-               self.cfmin.HasAccurateCovar()
+            self.cfmin.HasAccurateCovar()
 
     def list_of_fixed_param(self):
         """List of (initially) fixed parameters"""
-        return [k for k in self.fixed if self.fixed[k]]
+        return [name for (name, is_fixed) in self.fixed.items() if is_fixed]
 
     def list_of_vary_param(self):
         """List of (initially) float varying parameters"""
-        return [k for k in self.fixed if not self.fixed[k]]
-
+        return [name for (name, is_fixed) in self.fixed.items() if not is_fixed]
 
     # Various utility functions
 
