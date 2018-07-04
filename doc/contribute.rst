@@ -98,6 +98,12 @@ Run the tests:
 
     $ make test
 
+Run the notebook tests:
+
+.. code-block:: bash
+
+    $ make test-notebooks
+
 Run the tests with coverage report:
 
 .. code-block:: bash
