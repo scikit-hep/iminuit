@@ -5,6 +5,8 @@ from time import time
 import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
 
+STATUS_FAIL, STATUS_SUCCEED = 1, 0
+
 def test_notebook(filename):
     t_start = time()
     with open(filename) as f:
@@ -13,20 +15,27 @@ def test_notebook(filename):
         ep = ExecutePreprocessor(timeout=1000, kernel_name='python3')
         try:
             ep.preprocess(nb, {'metadata': {'path': 'tutorial/'}})
-        except CellExecutionError as e:
+        except Exception as e:
             print("{0} [FAILED]\n{1}".format(filename, e))
-            exit(1)
+            return STATUS_FAIL
         print("{0} [PASSED]".format(filename))
     t_run = time() - t_start
-    print('Execution time for {}: {} sec'.format(filename, t_run))
+    print('Execution time for {}: {:.2f} sec'.format(filename, t_run))
+    return STATUS_SUCCEED
 
 def test_all_notebooks():
     filenames = sorted(glob("tutorial/*.ipynb"))
+    status_total = STATUS_SUCCEED
     for filename in filenames:
-        test_notebook(filename)
+        status = test_notebook(filename)
+        if status == STATUS_FAIL:
+            status_total = STATUS_FAIL
+    
+    print('Total notebook execution status: {}'.format(status_total))
+    return status_total
 
 if __name__ == '__main__':
     print('Starting notebook tests')
     print('Python executable: {}'.format(sys.executable))
     print('Python version: {}'.format(sys.version))
-    test_all_notebooks()
+    exit(test_all_notebooks())
