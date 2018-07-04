@@ -36,7 +36,7 @@ before_install:
       pip uninstall -y cython;
     fi
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
-  - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme, jupyter; fi
+  - if [[ $BUILD == DOCS ]]; then pip install matplotlib sphinx sphinx_rtd_theme jupyter; fi
   - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov numpy; fi
 
 install:

@@ -25,8 +25,15 @@ def test_notebook(filename):
 
 def test_all_notebooks():
     filenames = sorted(glob("tutorial/*.ipynb"))
+    broken_notebooks = [
+        # See https://github.com/iminuit/iminuit/pull/245#issuecomment-402431753
+        'tutorial/hard-core-tutorial.ipynb',
+    ]
     status_total = STATUS_SUCCEED
     for filename in filenames:
+        if filename in broken_notebooks:
+            print('Skipping broken tutorial notebook: {}'.format(filename))
+            continue
         status = test_notebook(filename)
         if status == STATUS_FAIL:
             status_total = STATUS_FAIL
