@@ -54,6 +54,9 @@ iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx Minuit/inc/*/*.h iminuit/*.p
 test: build
 	python -m pytest -v iminuit
 
+test-notebooks: build
+	python test_notebooks.py
+
 coverage: build
 	python -m pytest -v iminuit --cov iminuit --cov-report html --cov-report term-missing --cov-report xml
 
