@@ -12,7 +12,7 @@ def test_notebook(filename):
     with open(filename) as f:
         print("Executing notebook : {0}".format(filename))
         nb = nbformat.read(f, as_version=4)
-        ep = ExecutePreprocessor(timeout=1000, kernel_name='python3')
+        ep = ExecutePreprocessor(timeout=1000, kernel_name='python')
         try:
             ep.preprocess(nb, {'metadata': {'path': 'tutorial/'}})
         except Exception as e:
