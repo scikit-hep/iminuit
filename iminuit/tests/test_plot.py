@@ -25,6 +25,11 @@ def m():
     assert_allclose(m.values['y'], 1, atol=1e-3)
     return m
 
+@requires_dependency('matplotlib')
+def test_profile(m):
+    m.minos('x')
+    m.draw_profile('x')
+
 
 @requires_dependency('matplotlib')
 def test_mnprofile(m):
