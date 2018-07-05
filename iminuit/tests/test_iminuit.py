@@ -764,6 +764,10 @@ def test_modify_param_state():
     m.migrad()
     assert_allclose(m.np_values(), [2, 5], atol=1e-2)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
+    m.values['y'] = 6
+    m.hesse()  # does not change minimum
+    assert_allclose(m.np_values(), [2, 6], atol=1e-2)
+    assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
 
 
 def test_view_lifetime():
