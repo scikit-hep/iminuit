@@ -3,7 +3,7 @@ import sys
 from glob import glob
 from time import time
 import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
+from nbconvert.preprocessors import ExecutePreprocessor
 
 STATUS_FAIL, STATUS_SUCCEED = 1, 0
 
