@@ -5,15 +5,36 @@
 Changelog
 =========
 
-1.3 (unreleased)
-----------------
+1.3 (July 5, 2018)
+------------------
 
-- tbd
+- iminuit 1.3 is a big release, there are many improvements. All users are encouraged to update.
+- Python 2.7 as well as Python 3.5 or later are supported, on Linux, MacOS and Windows.
+- Source packages are available for PyPI/pip and we maintain binary package for conda (see :ref:`install`).
+- The bundled Minuit C++ library has been updated to the latest version (takend from ROOT 6.12.06).
+- The documentation has been mostly re-written. To learn about `iminuit` and all the new features,
+  read the :ref:`tutorials`.
+- Numpy is now a core dependency, required to compile iminuit.
+- For Numpy users, a second callback function interface and a ``Minuit.from_array_func`` constructor
+  was added, where the parameters are passed as an array.
+- Results are now also available as Numpy arrays, e.g. ``np_values``, ``np_errors`` and ``np_covariance``.
+- A wrapper function ``iminuit.minimize.minimize`` was added,
+  that has the same arguments and return value format as ``scipy.optimize.minimize``,
+  but calls the Minuit MIGRAD optimiser.
+- Support for analytical gradients has been added, users can pass a ``grad`` callback function.
+  This works, but for unknown reasons doesn't lead to performance improvements yet.
+  If you can help debug or fix this issue, please comment `here <https://github.com/iminuit/iminuit/issues/252>`__.
+- Several issues have been fixed.
+  A complete list of issues and pull requests that went into the 1.3 release is
+  `here <https://github.com/iminuit/iminuit/milestone/4?closed=1>`__.
 
 Previously
 ----------
 
-- For iminuit releases before version 1.3, we did not fill a change log.
-- iminuit 1.2 was released Nov 10, 2015
+- For iminuit releases before v1.3, we did not fill a change log.
+- To summarise: the first iminuit release was v1.0 in Dec 2012.
+  In 2013 there were several releases, and in Jan 2014 the v1.1.1 release
+  was made. After that development was mostly inactive, except for the
+  v1.2 release in Nov 2015.
 - The release history is available here: https://pypi.org/project/iminuit/#history
 - The git history and pull requests are here: https://github.com/iminuit/iminuit

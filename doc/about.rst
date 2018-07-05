@@ -20,6 +20,9 @@ by PyMinuit and the status printout is inspired by ROOT Minuit. iminuit is
 mostly compatible with PyMinuit (with few exceptions). Existing PyMinuit
 code can be ported to iminuit by just changing the import statement.
 
+If you are interested in fitting a curve or distribution, take a look at `probfit`_.
+
+
 Technical Stuff
 ---------------
 

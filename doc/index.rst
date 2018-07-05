@@ -28,11 +28,12 @@ In a nutshell
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
     m = Minuit(f)
-    m.migrad()
-    print(m.values)  # {'x': 2,'y': 3,'z': 4}
-    print(m.errors)  # {'x': 1,'y': 1,'z': 1}
 
-If you are interested in fitting a curve or distribution, take a look at `probfit`_.
+    m.migrad()  # run optimiser
+    print(m.values)  # {'x': 2,'y': 3,'z': 4}
+
+    m.hesse()   # run covariance estimator
+    print(m.errors)  # {'x': 1,'y': 1,'z': 1}
 
 
 .. toctree::
