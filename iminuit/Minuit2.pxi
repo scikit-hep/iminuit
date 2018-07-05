@@ -102,13 +102,13 @@ cdef extern from "Minuit2/MnUserParameterState.h":
     cdef cppclass MnUserParameterState:
         MnUserParameterState()
         MnUserParameterState(MnUserParameterState mpst)
-        vector[double] Params()
+        operator=(MnUserParameterState)
+
         void Add(char*name, double val, double err)
         void Add(char*name, double val, double err, double, double)
         void Add(char*, double)
 
         vector[MinuitParameter] MinuitParameters()
-        #MnUserParameters parameters()
         MnUserCovariance Covariance()
         MnGlobalCorrelationCoeff GlobalCC()
 
@@ -116,21 +116,20 @@ cdef extern from "Minuit2/MnUserParameterState.h":
         double Edm()
         unsigned int NFcn()
 
-        void Fix(char*)
-        void Release(char*)
-        void SetValue(char*, double)
-        void SetError(char*, double)
-        void SetLimits(char*, double, double)
-        void SetUpperLimit(char*, double)
-        void SetLowerLimit(char*, double)
-        void RemoveLimits(char*)
+        const MinuitParameter& Parameter(unsigned int)
+
+        void Fix(unsigned int)
+        void Release(unsigned int)
+        void SetValue(unsigned int, double)
+        void SetError(unsigned int, double)
+        void SetLimits(unsigned int, double, double)
+        void SetUpperLimit(unsigned int, double)
+        void SetLowerLimit(unsigned int, double)
+        void RemoveLimits(unsigned int)
 
         bint IsValid()
         bint HasCovariance()
         bint HasGlobalCC()
-
-        double Value(char*)
-        double Error(char*)
 
         unsigned int Index(char*)
         char*Name(unsigned int)
