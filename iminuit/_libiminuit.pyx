@@ -100,61 +100,38 @@ cdef check_extra_args(parameters, kwd):
 
 
 # Helper classes
-cdef class NameIter:
-    """Iterator over parameter names in correct order"""
-    cdef MnUserParameterStatePtr _state
-    cdef unsigned int i
-    cdef unsigned int n
-
-    def __init__(self, npar):
-        self.i = 0
-        self.n = npar
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.i == self.n:
-            raise StopIteration
-        cdef const char* s = self._state.Name(self.i)
-        self.i += 1
-        return s
-
-
 cdef class BasicView:
     """Dict-like view of parameter state.
 
     Derived classes need to implement methods _set and _get to access
     specific properties of the parameter state."""
+    cdef object _minuit
     cdef MnUserParameterStatePtr _state
-    cdef dict _name2idx
 
-    def __init__(self, name2idx):
-        self._name2idx = name2idx
+    def __init__(self, minuit):
+        self._minuit = minuit
 
     def __iter__(self):
-        it = NameIter(len(self))
-        it._state = self._state
-        return it
+        return self._minuit.pos2var.__iter__()
 
     def __len__(self):
-        return len(self._name2idx)
+        return len(self._minuit.pos2var)
 
     def keys(self):
         return [k for k in self]
 
     def items(self):
-        return [(self._state.Name(k), self._get(k)) for k in xrange(len(self))]
+        return [(name, self._get(k)) for (k, name) in enumerate(self)]
 
     def values(self):
-        return [self._get(k) for k in xrange(len(self))]
+        return [self._get(k) for k in range(len(self))]
 
     def __getitem__(self, key):
-        cdef int i = key if isinstance(key, (int, long)) else self._name2idx[key]
+        cdef int i = key if isinstance(key, (int, long)) else self._minuit.var2pos[key]
         return self._get(i)
 
     def __setitem__(self, key, value):
-        cdef int i = key if isinstance(key, (int, long)) else self._name2idx[key]
+        cdef int i = key if isinstance(key, (int, long)) else self._minuit.var2pos[key]
         self._set(i, value)
 
     def copy(self):
@@ -170,22 +147,22 @@ cdef class BasicView:
 
 cdef class ArgsView:
     """List-like view of parameter values."""
+    cdef object _minuit
     cdef MnUserParameterStatePtr _state
-    cdef unsigned int _npar
 
-    def __init__(self, unsigned int npar):
-        self._npar = npar
+    def __init__(self, minuit):
+        self._minuit = minuit
 
     def __len__(self):
-        return self._npar
+        return len(self._minuit.pos2var)
 
-    def __getitem__(self, unsigned int i):
-        if i >= self._npar:
+    def __getitem__(self, int i):
+        if i < 0 or i >= len(self):
             raise IndexError
         return self._state.Parameter(i).Value()
 
-    def __setitem__(self, unsigned int i, double value):
-        if i >= self._npar:
+    def __setitem__(self, int i, double value):
+        if i < 0 or i >= len(self):
             raise IndexError
         self._state.SetValue(i, value)
 
@@ -241,7 +218,7 @@ cdef class Minuit:
     # TODO: remove or expose?
     # cdef readonly object varname #:variable names
 
-    cdef readonly object pos2var
+    cdef readonly tuple pos2var
     """Map variable position to name"""
 
     cdef readonly object var2pos
@@ -527,7 +504,7 @@ cdef class Minuit:
 
         # Maintain 2 dictionaries to easily convert between
         # parameter names and position
-        self.pos2var = {i: k for i, k in enumerate(args)}
+        self.pos2var = tuple(args)
         self.var2pos = {k: i for i, k in enumerate(args)}
 
         if pedantic: self.pedantic(args, kwds)
@@ -573,13 +550,13 @@ cdef class Minuit:
         setParameterState(&self.initial_upst, self.parameters, self.fitarg)
         self.last_upst = self.initial_upst
 
-        self.args = ArgsView(self.narg)
+        self.args = ArgsView(self)
         self.args._state = &self.last_upst
-        self.values = ValueView(self.var2pos)
+        self.values = ValueView(self)
         self.values._state = &self.last_upst
-        self.errors = ErrorView(self.var2pos)
+        self.errors = ErrorView(self)
         self.errors._state = &self.last_upst
-        self.fixed = FixedView(self.var2pos)
+        self.fixed = FixedView(self)
         self.fixed._state = &self.last_upst
         self.covariance = None
         self.fval = 0.

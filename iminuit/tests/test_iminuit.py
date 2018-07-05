@@ -764,3 +764,14 @@ def test_modify_param_state():
     m.migrad()
     assert_allclose(m.np_values(), [2, 5], atol=1e-2)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
+
+
+def test_view_lifetime():
+    m = Minuit(func3, x=1, y=2, pedantic=False)
+    val = m.values
+    arg = m.args
+    del m
+    val['x'] = 3  # should not segfault
+    assert val['x'] == 3
+    arg[0] = 5  # should not segfault
+    assert arg[0] == 5
