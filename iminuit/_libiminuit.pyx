@@ -782,7 +782,6 @@ cdef class Minuit:
         """
 
         cdef MnHesse*hesse = NULL
-        cdef MnUserParameterState upst
         if self.print_level > 0: self.frontend.print_banner('HESSE')
         if self.cfmin is NULL:
             raise RuntimeError('Run migrad first')
@@ -799,7 +798,7 @@ cdef class Minuit:
                 self.last_upst,
                 maxcall
             )
-        if not upst.HasCovariance():
+        if not self.last_upst.HasCovariance():
             warn("HESSE Failed. Covariance and GlobalCC will not be available",
                  HesseFailedWarning)
         self.refreshInternalState()
@@ -997,7 +996,10 @@ cdef class Minuit:
         return self.np_matrix(correlation=False, skip_fixed=False)
 
     def is_fixed(self, vname):
-        """Check if variable *vname* is (initially) fixed"""
+        """Check if variable *vname* is fixed.
+
+        Note that `Minuit.fixed` was added to fix and release parameters.
+        """
         return self.fixed[vname]
 
     #dealing with frontend conversion
