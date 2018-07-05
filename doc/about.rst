@@ -8,28 +8,43 @@ About
 What is iminuit?
 ----------------
 
-Interactive IPython-friendly mimizer based on `SEAL Minuit`_.
+iminuit is the fast interactive IPython-friendly minimizer based on `Minuit2`_ in ROOT.
 
-(It's included in the package, no need to install it separately.)
+For a hands-on introduction, see the :ref:`tutorials`.
 
-iminuit is designed from ground up to be fast, interactive and cython friendly. iminuit
-extract function signature very permissively starting from checking *func_code*
-down to last resort of parsing docstring (or you could tell iminuit to stop looking
-and take your answer). The interface is inspired heavily
-by PyMinuit and the status printout is inspired by ROOT Minuit. iminuit is
-mostly compatible with PyMinuit (with few exceptions). Existing PyMinuit
-code can be ported to iminuit by just changing the import statement.
+**Easy to install**
+
+You can install iminuit with pip. It only needs a moderately recent C++ compiler on your machine. The Minuit2 code is bundled, so you don't need to install it separately.
+
+**Support for Python 2.7 to 3.5 and Numpy**
+
+Whether you use the latest Python 3 or stick to classic Python 2, iminuit works for you. Numpy is supported: you can minimize functions that accept numpy arrays and get the fit results as numpy arrays. If you prefer to access parameters by name, that works as well!
+
+**Robust optimizer and error estimator**
+
+iminuit uses Minuit2 to minimize your functions, a battle-hardened code developed and maintained by scientists at CERN, the world's leading particle accelerator laboratory. Minuit2 has good performance compared to other minimizers, and it is one of the few codes out there which compute error estimates for your parameters. When you do statistics seriously, this is a must-have.
+
+**Interactive convenience**
+
+iminuit extracts the parameter names from your function signature (or the docstring) and allows you access them by their name. For example, if your function is defined as ``func(alpha, beta)``, iminuit understands that your first parameter is `alpha` and the second `beta` and will use these names in status printouts (you can override this inspection if you like). It also produces pretty messages on the console and in Jupyter notebooks.
+
+**Support for Cython**
+
+iminuit was designed to work with Cython functions, in order to speed up the minimization of complex functions.
+
+**Successor of PyMinuit**
+
+iminuit is mostly compatible with PyMinuit. Existing PyMinuit code can be ported to iminuit by just changing the import statement.
 
 If you are interested in fitting a curve or distribution, take a look at `probfit`_.
 
 
-Technical Stuff
----------------
+Technical docs
+--------------
 
-Using it as a black box is a bad idea. Here are some fun reads; the order is given
-by the order I think you should read.
+When you use iminuit/Minuit2 seriously, it is a good idea to understand a bit how it works and what possible limitations are in your case. The following links help you to understand the numerical approach behind Minuit2. The links are ordered by recommended reading order.
 
-* Wikipedia for `Quasi Newton Method`_ and `DFP formula`_. The magic behind MIGRAD.
+* Wikipedia for `Quasi Newton Method`_ and `DFP formula`_. The numerical algorithm behind MIGRAD.
 * `Variable Metric Method for Minimization`_ William Davidon 1991
 * `A New Approach to Variable Metric Algorithm`_ (R.Fletcher 1970)
 * Original Paper: `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_ by Fred James and Matts Roos.

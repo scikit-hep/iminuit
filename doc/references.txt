@@ -1,6 +1,5 @@
 .. _probfit: https://github.com/iminuit/probfit
-.. _SEAL Minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
-.. _lcg-minuit: http://seal.web.cern.ch/seal/work-packages/mathlibs/minuit/
+.. _Minuit2: https://root.cern.ch/guides/minuit2-manual
 .. _PyMinuit: http://code.google.com/p/pyminuit/
 .. _ipythonnb: http://ipython.org/ipython-doc/dev/notebook/index.html
 .. _Quasi Newton Method: http://en.wikipedia.org/wiki/Quasi-Newton_method
