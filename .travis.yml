@@ -5,16 +5,10 @@ sudo: false
 matrix:
     include:
         - python: 2.7
-          env: BUILD=TEST
-
-        - python: 2.7
-          env: BUILD=DOCS
+          env: BUILD=ALL
 
         - python: 3.5
-          env: BUILD=TEST
-
-        - python: 3.5
-          env: BUILD=DOCS
+          env: BUILD=ALL
 
         - python: 3.5
           env: BUILD=COVERAGE
@@ -25,7 +19,13 @@ matrix:
         - python: 3.5
           env: BUILD=NO_CYTHON
 
-        # TODO: add tests on Mac
+        - os: osx
+          python: 2.7
+          env: BUILD=ALL
+
+        - os: osx
+          python: 3.5
+          env: BUILD=ALL
 
         # TODO: add tests for Python from conda
 
@@ -36,15 +36,15 @@ before_install:
       pip uninstall -y cython;
     fi
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
-  - if [[ $BUILD == DOCS ]]; then pip install numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
-  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov numpy scipy matplotlib; fi
+  - if [[ $BUILD == DOCS ]] || [[ $BUILD == ALL ]]; then pip install numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
+  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]] || [[ $BUILD == ALL ]]; then pip install pytest pytest-cov numpy scipy matplotlib; fi
 
 install:
   - python setup.py build_ext -i
   - python setup.py install
 
 script:
-  - if [[ $BUILD == TEST ]]; then make test; fi
+  - if [[ $BUILD == TEST ]] || [[ $BUILD == ALL ]]; then make test; fi
   - if [[ $BUILD == COVERAGE ]]; then make coverage; fi
-  - if [[ $BUILD == DOCS ]]; then make doc; fi
-  - if [[ $BUILD == DOCS ]]; then make test-notebooks; fi
+  - if [[ $BUILD == DOCS ]] || [[ $BUILD == ALL ]]; then make doc; fi
+  - if [[ $BUILD == DOCS ]] || [[ $BUILD == ALL ]]; then make test-notebooks; fi
