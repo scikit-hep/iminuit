@@ -18,9 +18,8 @@ Changelog
 - For Numpy users, a second callback function interface and a ``Minuit.from_array_func`` constructor
   was added, where the parameters are passed as an array.
 - Results are now also available as Numpy arrays, e.g. ``np_values``, ``np_errors`` and ``np_covariance``.
-- A wrapper function ``iminuit.minimize.minimize`` was added,
-  that has the same arguments and return value format as ``scipy.optimize.minimize``,
-  but calls the Minuit MIGRAD optimiser.
+- A wrapper function ``iminuit.minimize`` for the MIGRAD optimiser was added,
+  that has the same arguments and return value format as ``scipy.optimize.minimize``.
 - Support for analytical gradients has been added, users can pass a ``grad`` callback function.
   This works, but for unknown reasons doesn't lead to performance improvements yet.
   If you can help debug or fix this issue, please comment `here <https://github.com/iminuit/iminuit/issues/252>`__.

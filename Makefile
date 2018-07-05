@@ -14,6 +14,7 @@ help:
 	@echo '     build            Build inplace (the default)'
 	@echo '     clean            Remove generated files'
 	@echo '     test             Run tests'
+	@echo '     test-notebooks   Run notebook tests'
 	@echo '     coverage         Run tests and write coverage report'
 	@echo '     cython           Compile cython files'
 	@echo '     doc              Run Sphinx to generate HTML docs'
@@ -41,7 +42,7 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build htmlcov doc/_build iminuit/_libiminuit.cpp
+	rm -rf build htmlcov doc/_build iminuit/_libiminuit.cpp tutorial/.ipynb_checkpoints
 	find . -name "*.pyc" -exec rm {} \;
 	find . -name "*.so" -exec rm {} \;
 	find . -name __pycache__ | xargs rm -fr

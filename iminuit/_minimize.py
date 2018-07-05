@@ -7,11 +7,11 @@ def minimize(fun, x0, args=(), method=None,
              jac=None, hess=None, hessp=None,
              bounds=None, constraints=None,
              tol=None, callback=None, options=None):
-    """Imitates the interface of the SciPy method of the same name in scipy.optimize.
+    """An interface to MIGRAD using the ``scipy.optimize.minimize`` API.
 
-    For a general description of the arguments, see scipy.optimize.minimize.
+    For a general description of the arguments, see ``scipy.optimize.minimize``.
 
-    The only supported method is 'Migrad'.
+    The ``method`` argument is ignored. The optimisation is always done using MIGRAD.
 
     The `options` argument can be used to pass special settings to Minuit.
     All are optional.
@@ -34,13 +34,10 @@ def minimize(fun, x0, args=(), method=None,
       - minuit (object): Minuit object internally used to do the minimization.
         Use this to extract more information about the parameter errors.
     """
-
     from scipy.optimize import OptimizeResult
 
-    if method:
-        m = method.lower()
-        if m != "migrad":
-            raise ValueError("Only method=migrad is allowed")
+    if method not in {None, 'migrad'}:
+        warnings.warn("method argument is ignored")
 
     if constraints is not None:
         raise ValueError("Constraints are not supported by Migrad, only bounds")
@@ -77,7 +74,9 @@ def minimize(fun, x0, args=(), method=None,
             maxfev = options["maxfev"]
         if "eps" in options:
             error = options["eps"]
-    if error is None:  # prevent warnings from Minuit about missing initial step
+
+    # prevent warnings from Minuit about missing initial step
+    if error is None:
         error = np.ones_like(x0)
 
     if bool(jac):
@@ -106,12 +105,13 @@ def minimize(fun, x0, args=(), method=None,
         if fmin.is_above_max_edm:
             message += " Estimated distance to minimum too large."
 
-    return OptimizeResult(x=m.np_values(),
-                          success=success,
-                          fun=m.fval,
-                          hess_inv=m.np_covariance(),
-                          message=message,
-                          nfev=m.get_num_call_fcn(),
-                          njev=m.get_num_call_grad(),
-                          minuit=m,
-                          )
+    return OptimizeResult(
+        x=m.np_values(),
+        success=success,
+        fun=m.fval,
+        hess_inv=m.np_covariance(),
+        message=message,
+        nfev=m.get_num_call_fcn(),
+        njev=m.get_num_call_grad(),
+        minuit=m,
+    )

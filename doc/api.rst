@@ -12,8 +12,8 @@ Quick Summary
 These are the things you will use a lot:
 
 .. autosummary::
-    util.describe
     Minuit
+    Minuit.from_array_func
     Minuit.migrad
     Minuit.minos
     Minuit.values
@@ -26,6 +26,8 @@ These are the things you will use a lot:
     Minuit.draw_mnprofile
     Minuit.mncontour
     Minuit.draw_mncontour
+    minimize
+    util.describe
 
 Minuit
 ------
@@ -69,18 +71,12 @@ Minuit
 minimize
 --------
 
-.. currentmodule:: iminuit.minimize
+The :func:`iminuit.minimize` function provides the same interface as :func:`scipy.optimize.minimize`.
+If you are familiar with the latter, this allows you to use Minuit with a quick start.
+Eventually, you still may want to learn the interface of the :class:`iminuit.Minuit` class,
+as it provides more functionality if you are interested in parameter uncertainties.
 
-The module :mod:`iminuit.minimize` provides a :func:`minimize` function with the same interface as
-:func:`scipy.optimize.minimize`. If you are familiar with the latter, this allows
-you to use Minuit with a quick start. Eventually, you still may want to learn
-the interface of the :class:`iminuit.Minuit` class, as it provides more functionality
-if you are interested in parameter uncertainties.
-
-.. automodule:: iminuit.minimize
-    :members:
-    :undoc-members:
-
+.. autofunction:: iminuit.minimize
 
 Utility Functions
 -----------------
