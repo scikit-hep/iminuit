@@ -92,7 +92,7 @@ def minimize(fun, x0, args=(), method=None,
                                x0,
                                error=error,
                                limit=bounds,
-                               grad_fcn=wrapped_grad,
+                               grad=wrapped_grad,
                                **kwargs)
     m.migrad(ncall=maxfev)
 

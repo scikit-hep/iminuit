@@ -34,7 +34,7 @@ cdef extern from "PythonFCN.h":
 
 cdef extern from "PythonGradientFCN.h":
     cdef cppclass PythonGradientFCN(FCNGradientBase, IMinuitMixin):
-        PythonGradientFCN(object fcn, object grad_fcn, bint use_array_call, double up_parm, vector[string] pname, bint thrownan)
+        PythonGradientFCN(object fcn, object grad, bint use_array_call, double up_parm, vector[string] pname, bint thrownan)
         int getNumGrad()
         void resetNumGrad()
 
