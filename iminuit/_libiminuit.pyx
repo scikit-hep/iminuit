@@ -1066,7 +1066,7 @@ cdef class Minuit:
             sigma = self.errors[vname]
             bound = (start - bound * sigma, start + bound * sigma)
 
-        values = np.linspace(*bound, bins, dtype=np.double)
+        values = np.linspace(bound[0], bound[1], bins, dtype=np.double)
         results = np.empty(bins, dtype=np.double)
         migrad_status = np.empty(bins, dtype=np.bool)
         cdef double vmin = float("infinity")
@@ -1168,7 +1168,7 @@ cdef class Minuit:
                      start + bound * sigma)
 
         # center value
-        val = np.linspace(*bound, bins, dtype=np.double)
+        val = np.linspace(bound[0], bound[1], bins, dtype=np.double)
         result = np.empty(bins, dtype=np.double)
         cdef int pos = self.var2pos[vname]
         cdef list arg = list(self.args if args is None else args)
@@ -1271,8 +1271,8 @@ cdef class Minuit:
             x_bound = bound[0]
             y_bound = bound[1]
 
-        x_val = np.linspace(*x_bound, bins)
-        y_val = np.linspace(*y_bound, bins)
+        x_val = np.linspace(x_bound[0], x_bound[1], bins)
+        y_val = np.linspace(y_bound[0], y_bound[1], bins)
 
         cdef int x_pos = self.var2pos[x]
         cdef int y_pos = self.var2pos[y]
