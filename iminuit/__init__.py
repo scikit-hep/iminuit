@@ -13,7 +13,7 @@ Basic usage example::
 Further information:
 
 * Code: https://github.com/iminuit/iminuit
-* Docs: http://iminuit.readthedocs.org/
+* Docs: https://iminuit.readthedocs.io
 """
 
 __all__ = [
@@ -21,13 +21,12 @@ __all__ = [
     'minimize',
     'describe',
     'Struct',
-    'InitialParamWarning',
     '__version__',
     'test',
 ]
 
 from ._libiminuit import Minuit
-from .minimize import minimize
+from ._minimize import minimize
 from .util import describe, Struct
 from .info import __version__
 
