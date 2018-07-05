@@ -209,7 +209,7 @@ cdef class Minuit:
     cdef readonly object fcn
     """Cost function (usually a chi^2 or likelihood function)"""
 
-    cdef readonly object grad_fcn
+    cdef readonly object grad
     """Gradient function of the cost function"""
 
     cdef readonly bint use_array_call
@@ -360,7 +360,7 @@ cdef class Minuit:
     def __init__(self, fcn,
                  throw_nan=False, pedantic=True,
                  frontend=None, forced_parameters=None, print_level=1,
-                 errordef=None, grad_fcn=None, use_array_call=False,
+                 errordef=None, grad=None, use_array_call=False,
                  **kwds):
         """
         Construct minuit object from given *fcn*
@@ -430,7 +430,7 @@ cdef class Minuit:
               not callable iminuit will give a warning and set errordef to 1.
               Default None(which means errordef=1 with a warning).
 
-            - **grad_fcn**: Optional. Provide a function that calculates the
+            - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
               element for each dimension. If None is given minuit will
               calculate the gradient numerically. (Default None)
@@ -510,7 +510,7 @@ cdef class Minuit:
         if pedantic: self.pedantic(args, kwds)
 
         self.fcn = fcn
-        self.grad_fcn = grad_fcn
+        self.grad = grad
         self.use_array_call = use_array_call
 
         self.frontend = auto_frontend() if frontend is None else frontend
@@ -713,7 +713,7 @@ cdef class Minuit:
             self.minimizer = NULL
         strat = new MnStrategy(self.strategy)
 
-        if self.grad_fcn is None:
+        if self.grad is None:
             self.minimizer = new MnMigrad(
                 deref(<FCNBase*> self.pyfcn),
                 self.last_upst, deref(strat)
@@ -731,12 +731,12 @@ cdef class Minuit:
         if precision is not None:
             self.minimizer.SetPrecision(precision)
 
-        cdef PythonGradientFCNPtr grad_fcn_ptr = NULL
+        cdef PythonGradientFCNPtr grad_ptr = NULL
         if not resume:
             dynamic_cast[IMinuitMixinPtr](self.pyfcn).resetNumCall()
-            grad_fcn_ptr = dynamic_cast[PythonGradientFCNPtr](self.pyfcn)
-            if grad_fcn_ptr:
-                grad_fcn_ptr.resetNumGrad()
+            grad_ptr = dynamic_cast[PythonGradientFCNPtr](self.pyfcn)
+            if grad_ptr:
+                grad_ptr.resetNumGrad()
 
         #this returns a real object need to copy
         ncall_round = round(1.0 * (ncall) / nsplit)
@@ -786,7 +786,7 @@ cdef class Minuit:
         if self.cfmin is NULL:
             raise RuntimeError('Run migrad first')
         hesse = new MnHesse(self.strategy)
-        if self.grad_fcn is None:
+        if self.grad is None:
             self.last_upst = hesse.call(
                 deref(<FCNBase*> self.pyfcn),
                 self.last_upst,
@@ -856,7 +856,7 @@ cdef class Minuit:
                         'Specified variable name for minos is set to fixed'))
                     return None
                 continue
-            if self.grad_fcn is None:
+            if self.grad is None:
                 minos = new MnMinos(
                     deref(<FCNBase*> self.pyfcn),
                     deref(self.cfmin), self.strategy
@@ -1136,7 +1136,7 @@ cdef class Minuit:
 
     cdef _construct_FCN(self):
         """Construct or re-construct FCN"""
-        if self.grad_fcn is None:
+        if self.grad is None:
             self.pyfcn = new PythonFCN(
                 self.fcn,
                 self.use_array_call,
@@ -1146,7 +1146,7 @@ cdef class Minuit:
         else:
             self.pyfcn = new PythonGradientFCN(
                 self.fcn,
-                self.grad_fcn,
+                self.grad,
                 self.use_array_call,
                 self.errordef,
                 self.parameters,
@@ -1495,7 +1495,7 @@ cdef class Minuit:
         self.pyfcn.SetErrorDef(oldup * sigma * sigma)
 
         cdef auto_ptr[MnContours] mnc = auto_ptr[MnContours](NULL)
-        if self.grad_fcn is None:
+        if self.grad is None:
             mnc = auto_ptr[MnContours](
                 new MnContours(deref(<FCNBase *> self.pyfcn),
                                deref(self.cfmin),
