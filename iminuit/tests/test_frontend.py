@@ -496,7 +496,7 @@ Minos Status for y: VALID
     m = Minuit(f1, x=5, y=5,
                error_x=0.1, error_y=0.1,
                limit_x=(0, None), limit_y=(0, 10),
-               errordef=1)
+               errordef=1, frontend=console.ConsoleFrontend())
     m.print_param()
     assert r"""----------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed? |
