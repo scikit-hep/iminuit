@@ -8,7 +8,7 @@ __all__ = [
 ]
 
 
-def requires_dependency(name):
+def requires_dependency(*names):
     """Decorator to declare required dependencies for tests.
 
     Parameters
@@ -28,11 +28,12 @@ def requires_dependency(name):
             import numpy
             ...
     """
-    try:
-        __import__(name)
-        skip_it = False
-    except ImportError:
-        skip_it = True
+    skip_it = False
+    for name in names:
+        try:
+            __import__(name)
+        except ImportError:
+            skip_it = True
 
     reason = 'Missing dependency: {}'.format(name)
     import pytest
