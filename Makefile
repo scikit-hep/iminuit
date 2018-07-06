@@ -42,7 +42,7 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build htmlcov doc/_build iminuit/_libiminuit.cpp tutorial/.ipynb_checkpoints
+	rm -rf build htmlcov doc/_build iminuit/_libiminuit.cpp tutorial/.ipynb_checkpoints iminuit.egg-info
 	find . -name "*.pyc" -exec rm {} \;
 	find . -name "*.so" -exec rm {} \;
 	find . -name __pycache__ | xargs rm -fr
