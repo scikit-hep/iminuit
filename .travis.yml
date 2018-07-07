@@ -26,8 +26,9 @@ matrix:
         - python: 2.7
           env: BUILD=SDIST
 
-        - python: 3.6
-          env: BUILD=CONDA
+          # TODO: add this (travis-ci not running today, so disabling for now)
+#        - python: 3.6
+#          env: BUILD=CONDA
 
 # TODO: add osx builds; (setting up multi-os envs isn't trivial, see below)
 #        - os: osx
