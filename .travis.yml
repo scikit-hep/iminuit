@@ -10,8 +10,9 @@ matrix:
         - python: 3.5
           env: BUILD=ALL
 
-        - python: 3.7-dev
-          env: BUILD=TEST
+        # See https://github.com/iminuit/iminuit/issues/270
+#        - python: 3.7-dev
+#          env: BUILD=TEST
 
         - python: 3.5
           env: BUILD=COVERAGE
@@ -22,20 +23,23 @@ matrix:
         - python: 3.5
           env: BUILD=SDIST
 
-        - os: osx
-          python: 2.7
-          env: BUILD=ALL
-
-        - os: osx
-          python: 3.5
-          env: BUILD=ALL
+# TODO: add osx builds; (setting up multi-os envs isn't trivial, see below)
+#        - os: osx
+#          python: 2.7
+#          env: BUILD=ALL
+#
+#        - os: osx
+#          python: 3.5
+#          env: BUILD=ALL
 
         # TODO: add tests for conda build and install of conda package
 
 before_install:
-  # https://docs.travis-ci.com/user/multi-os/
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python  ; fi
+# https://docs.travis-ci.com/user/multi-os/
+# This might also be useful:
+# https://stackoverflow.com/questions/45257534/how-can-i-build-a-python-project-with-osx-environment-on-travis
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python  ; fi
 
 
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install cython ipython numpy matplotlib; fi
@@ -52,6 +56,10 @@ script:
   - if [[ $BUILD == ALL ]]; then make doc; fi
   - if [[ $BUILD == ALL ]]; then make test-notebooks; fi
   - if [[ $BUILD == SDIST ]]; then
+      make clean;
       python setup.py sdist;
       pip uninstall -y cython;
+      cd dist;
+      pip install iminuit-1.3.tar.gz;
+      python -m 'import iminuit; iminuit.test()'
     fi
