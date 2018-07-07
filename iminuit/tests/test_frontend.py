@@ -19,7 +19,6 @@ def f1(x, y):
 
 @requires_dependency('IPython')
 def test_html(capsys):
-
     def out():
         return capsys.readouterr()[0]
 
@@ -392,7 +391,6 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
 
 
 def test_console(capsys):
-
     def out():
         return capsys.readouterr()[0]
 
