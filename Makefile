@@ -80,3 +80,6 @@ pylint:
 	pylint -E $(PROJECT)/ -d E1103,E0611,E1101 \
 	       --ignore="" -f colorized \
 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
+
+conda:
+	python setup.py bdist_conda

@@ -1,19 +1,28 @@
-
-.. image:: https://travis-ci.org/iminuit/iminuit.svg?branch=master
-   :target: https://travis-ci.org/iminuit/iminuit
-.. image:: https://ci.appveyor.com/api/projects/status/bp9qt5xfvwd642n3?svg=true
-   :target: https://ci.appveyor.com/project/iminuit/iminuit
-.. image:: https://img.shields.io/pypi/v/iminuit.svg
-   :target: https://pypi.python.org/pypi/iminuit
-.. image:: https://img.shields.io/pypi/dm/iminuit.svg
-   :target: https://pypi.python.org/pypi/iminuit
-
 iminuit
 -------
 
 MINUIT from Python - Fitting like a boss
 
 `iminuit` is a Python interface to the `MINUIT` C++ package.
+
+It can be used as a general robust function minimisation method,
+but is most commonly used for likelihood fits of models to data,
+and to get model parameter error estimates from likelihood profile analysis.
+
+* Code: https://github.com/iminuit/iminuit
+* Documentation: https://iminuit.readthedocs.io
+* Mailing list: https://groups.google.com/forum/#!forum/iminuit
+* PyPI: https://pypi.org/project/iminuit/
+* License: MINUIT is LGPL and iminuit is MIT
+* Citation: https://github.com/iminuit/iminuit/blob/master/CITATION
+
+iminuit
+=======
+
+MINUIT from Python - Fitting like a boss
+
+`iminuit` is a Python interface to the `MINUIT` C++ package.
+
 It can be used as a general robust function minimisation method,
 but is most commonly used for likelihood fits of models to data,
 and to get model parameter error estimates from likelihood profile analysis.
@@ -24,3 +33,21 @@ and to get model parameter error estimates from likelihood profile analysis.
 * PyPI: https://pypi.org/project/iminuit/
 * License: MINUIT is LGPL and iminuit is MIT
 * Citation: https://github.com/iminuit/iminuit/blob/master/CITATION
+
+In a nutshell
+-------------
+
+.. code-block:: python
+
+    from iminuit import Minuit
+
+    def f(x, y, z):
+        return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
+
+    m = Minuit(f)
+
+    m.migrad()  # run optimiser
+    print(m.values)  # {'x': 2,'y': 3,'z': 4}
+
+    m.hesse()   # run covariance estimator
+    print(m.errors)  # {'x': 1,'y': 1,'z': 1}

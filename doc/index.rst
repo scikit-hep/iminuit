@@ -6,6 +6,7 @@ iminuit
 MINUIT from Python - Fitting like a boss
 
 `iminuit` is a Python interface to the `MINUIT` C++ package.
+
 It can be used as a general robust function minimisation method,
 but is most commonly used for likelihood fits of models to data,
 and to get model parameter error estimates from likelihood profile analysis.

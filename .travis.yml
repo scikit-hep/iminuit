@@ -5,16 +5,14 @@ sudo: false
 matrix:
     include:
         - python: 2.7
-          env: BUILD=TEST
-
-        - python: 2.7
-          env: BUILD=DOCS
+          env: BUILD=ALL
 
         - python: 3.5
-          env: BUILD=TEST
+          env: BUILD=ALL
 
-        - python: 3.5
-          env: BUILD=DOCS
+        # See https://github.com/iminuit/iminuit/issues/270
+#        - python: 3.7-dev
+#          env: BUILD=TEST
 
         - python: 3.5
           env: BUILD=COVERAGE
@@ -23,28 +21,76 @@ matrix:
           env: BUILD=NO_EXTRA_DEPS
 
         - python: 3.5
-          env: BUILD=NO_CYTHON
+          env: BUILD=SDIST
 
-        # TODO: add tests on Mac
+        - python: 2.7
+          env: BUILD=SDIST
 
-        # TODO: add tests for Python from conda
+          # TODO: add this (travis-ci not running today, so disabling for now)
+#        - python: 3.6
+#          env: BUILD=CONDA
+
+# TODO: add osx builds; (setting up multi-os envs isn't trivial, see below)
+#        - os: osx
+#          python: 2.7
+#          env: BUILD=ALL
+#
+#        - os: osx
+#          python: 3.5
+#          env: BUILD=ALL
+
+        # TODO: add tests for conda build and install of conda package
 
 before_install:
-  - pip install setuptools Cython
-  - if [[ $BUILD == NO_CYTHON ]]; then
-      python setup.py sdist;
-      pip uninstall -y cython;
-    fi
-  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
-  - if [[ $BUILD == DOCS ]]; then pip install numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
-  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]]; then pip install pytest pytest-cov numpy scipy matplotlib; fi
+# https://docs.travis-ci.com/user/multi-os/
+# This might also be useful:
+# https://stackoverflow.com/questions/45257534/how-can-i-build-a-python-project-with-osx-environment-on-travis
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python  ; fi
 
-install:
-  - python setup.py build_ext -i
-  - python setup.py install
+
+  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install cython ipython numpy matplotlib; fi
+  - if [[ $BUILD == ALL ]]; then pip install cython numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
+  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]] || [[ $BUILD == ALL ]]; then pip install cython pytest pytest-cov numpy scipy matplotlib; fi
+
+  - if [[ $BUILD == CONDA ]]; then
+      # Set up miniconda
+      - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      - bash miniconda.sh -b -p $HOME/miniconda
+      - export PATH="$HOME/miniconda/bin:$PATH"
+      - hash -r
+      - conda config --set always_yes yes --set changeps1 no
+      - conda update -q conda
+      - conda info -a
+    fi
+
+#install:
+#  - python setup.py build_ext -i
+#  - python setup.py install
+
 
 script:
-  - if [[ $BUILD == TEST ]]; then make test; fi
+  - if [[ $BUILD == TEST ]] || [[ $BUILD == ALL ]]; then make test; fi
   - if [[ $BUILD == COVERAGE ]]; then make coverage; fi
-  - if [[ $BUILD == DOCS ]]; then make doc; fi
-  - if [[ $BUILD == DOCS ]]; then make test-notebooks; fi
+  - if [[ $BUILD == ALL ]]; then make doc; fi
+  - if [[ $BUILD == ALL ]]; then make test-notebooks; fi
+  - if [[ $BUILD == SDIST ]]; then
+      make clean;
+      python setup.py sdist;
+      pip uninstall -y cython;
+      cd dist;
+      pip install iminuit-1.3.tar.gz;
+      python -c 'import iminuit; iminuit.test()';
+    fi
+
+  - if [[ $BUILD == CONDA ]]; then
+      # From https://conda.io/docs/bdist_conda.html
+      # bdist_conda must be installed into a root conda environment,
+      # as it imports conda and conda_build. It is included as part of the conda build package.
+      conda install -n root conda-build Cython numpy;
+      conda info;
+      conda --version;
+      conda build --version;
+      make conda;
+#      source activate root;
+    fi

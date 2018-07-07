@@ -42,5 +42,5 @@ def test(args=None):
     """
     # http://pytest.org/latest/usage.html#calling-pytest-from-python-code
     import pytest
-    args = '--pyargs iminuit'
+    args = ['-v', '--pyargs', 'iminuit']
     pytest.main(args)

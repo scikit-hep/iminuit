@@ -5,6 +5,7 @@ from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
 from iminuit.util import Struct
 import numpy as np
+
 parametrize = pytest.mark.parametrize
 
 
@@ -48,7 +49,7 @@ def func4_grad(x, y, z):
     dfdx = 0.4 * (x - 2.)
     dfdy = 0.2 * (y - 5.)
     dfdz = 0.5 * (z - 7.)
-    return (dfdx, dfdy, dfdz)
+    return dfdx, dfdy, dfdz
 
 
 def func5(x, long_variable_name_really_long_why_does_it_has_to_be_this_long, z):
@@ -59,11 +60,11 @@ def func5_grad(x, long_variable_name_really_long_why_does_it_has_to_be_this_long
     dfdx = 2 * x
     dfdy = 2 * long_variable_name_really_long_why_does_it_has_to_be_this_long
     dfdz = 2 * z
-    return (dfdx, dfdy, dfdz)
+    return dfdx, dfdy, dfdz
 
 
-def func6(x, m, s, A):
-    return A / ((x - m) ** 2 + s ** 2)
+def func6(x, m, s, a):
+    return a / ((x - m) ** 2 + s ** 2)
 
 
 def func7(*args):  # no signature
@@ -83,7 +84,7 @@ class Func9:
         sx = 2
         sy = 1
         corr = 0.5
-        cov = (sx**2, corr * sx * sy), (corr * sx * sy, sy**2)
+        cov = (sx ** 2, corr * sx * sy), (corr * sx * sy, sy ** 2)
         self.cinv = np.linalg.inv(cov)
 
     def __call__(self, x):
@@ -96,9 +97,9 @@ data_y = [0.552, 0.735, 0.846, 0.875, 1.059, 1.675, 1.622, 2.928,
 data_x = list(range(len(data_y)))
 
 
-def chi2(m, s, A):
+def chi2(m, s, a):
     """Chi2 fitting routine"""
-    return sum(((func6(x, m, s, A) - y) ** 2 for x, y in zip(data_x, data_y)))
+    return sum(((func6(x, m, s, a) - y) ** 2 for x, y in zip(data_x, data_y)))
 
 
 def functesthelper(f, **kwds):
@@ -480,7 +481,7 @@ def test_reverse_limit():
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
     with pytest.raises(ValueError):
-        m = Minuit(f, limit_x=(3., 2.), pedantic=False, print_level=0)
+        Minuit(f, limit_x=(3., 2.), pedantic=False, print_level=0)
 
 
 class TestOutputInterface:
@@ -553,10 +554,10 @@ class TestOutputInterface:
 
 def test_chi2_fit():
     """Fit a curve to data."""
-    m = Minuit(chi2, s=2., error_A=0.1, errordef=0.01,
+    m = Minuit(chi2, s=2., error_a=0.1, errordef=0.01,
                print_level=0, pedantic=False)
     m.migrad()
-    output = [round(10 * m.values['A']), round(100 * m.values['s']),
+    output = [round(10 * m.values['a']), round(100 * m.values['s']),
               round(100 * m.values['m'])]
     expected = [round(10 * 64.375993), round(100 * 4.267970),
                 round(100 * 9.839172)]
@@ -611,7 +612,7 @@ def test_num_call():
 
 
 def test_set_error_def():
-    m = Minuit(lambda x: x**2, pedantic=False, print_level=0, errordef=1)
+    m = Minuit(lambda x: x ** 2, pedantic=False, print_level=0, errordef=1)
     m.migrad()
     m.hesse()
     assert_allclose(m.errors["x"], 1)
@@ -706,7 +707,6 @@ y & \cellcolor[RGB]{209,185,152} 0.50 & \cellcolor[RGB]{255,117,117} 1.00\\
 
 
 def test_non_analytical_function():
-
     class Func:
         i = 0
 
@@ -730,7 +730,6 @@ def test_function_without_local_minimum():
 # Bug in Minuit2, this needs to be fixed in upstream ROOT
 @pytest.mark.xfail(strict=True)
 def test_function_with_maximum():
-
     def func(a):
         return -a ** 2
 

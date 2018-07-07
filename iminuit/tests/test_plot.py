@@ -6,6 +6,7 @@ from iminuit.tests.utils import assert_allclose, requires_dependency
 
 try:
     import matplotlib as mpl
+
     mpl.use('Agg')
 except ImportError:
     pass
@@ -24,6 +25,7 @@ def m():
     assert_allclose(m.values['x'], 1, atol=1e-3)
     assert_allclose(m.values['y'], 1, atol=1e-3)
     return m
+
 
 @requires_dependency('matplotlib')
 def test_profile(m):
