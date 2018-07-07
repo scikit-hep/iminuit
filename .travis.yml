@@ -10,9 +10,6 @@ matrix:
         - python: 3.5
           env: BUILD=ALL
 
-        - python: 3.7
-          env: BUILD=ALL
-
         - python: 3.5
           env: BUILD=COVERAGE
 
