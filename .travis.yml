@@ -10,6 +10,9 @@ matrix:
         - python: 3.5
           env: BUILD=ALL
 
+        - python: 3.7
+          env: BUILD=ALL
+
         - python: 3.5
           env: BUILD=COVERAGE
 
@@ -17,7 +20,7 @@ matrix:
           env: BUILD=NO_EXTRA_DEPS
 
         - python: 3.5
-          env: BUILD=NO_CYTHON
+          env: BUILD=SDIST
 
         - os: osx
           python: 2.7
@@ -27,24 +30,23 @@ matrix:
           python: 3.5
           env: BUILD=ALL
 
-        # TODO: add tests for Python from conda
+        # TODO: add tests for conda build and install of conda package
 
 before_install:
-  - pip install setuptools Cython
-  - if [[ $BUILD == NO_CYTHON ]]; then
-      python setup.py sdist;
-      pip uninstall -y cython;
-    fi
-  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install IPython numpy matplotlib; fi
-  - if [[ $BUILD == DOCS ]] || [[ $BUILD == ALL ]]; then pip install numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
-  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]] || [[ $BUILD == ALL ]]; then pip install pytest pytest-cov numpy scipy matplotlib; fi
+  - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install cython ipython numpy matplotlib; fi
+  - if [[ $BUILD == ALL ]]; then pip install cython numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
+  - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]] || [[ $BUILD == ALL ]]; then pip install cython pytest pytest-cov numpy scipy matplotlib; fi
 
-install:
-  - python setup.py build_ext -i
-  - python setup.py install
+#install:
+#  - python setup.py build_ext -i
+#  - python setup.py install
 
 script:
   - if [[ $BUILD == TEST ]] || [[ $BUILD == ALL ]]; then make test; fi
   - if [[ $BUILD == COVERAGE ]]; then make coverage; fi
-  - if [[ $BUILD == DOCS ]] || [[ $BUILD == ALL ]]; then make doc; fi
-  - if [[ $BUILD == DOCS ]] || [[ $BUILD == ALL ]]; then make test-notebooks; fi
+  - if [[ $BUILD == ALL ]]; then make doc; fi
+  - if [[ $BUILD == ALL ]]; then make test-notebooks; fi
+  - if [[ $BUILD == SDIST ]]; then
+      python setup.py sdist;
+      pip uninstall -y cython;
+    fi
