@@ -139,7 +139,7 @@ setup(
         'Topic :: Scientific/Engineering :: Physics',
         'Topic :: Scientific/Engineering :: Mathematics',
         'Intended Audience :: Science/Research',
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
         'License :: OSI Approved :: MIT License',
     ],
