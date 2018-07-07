@@ -11,7 +11,6 @@ from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import MSVCCompiler
 import distutils.ccompiler
 
-
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
 compiler_opts = {
@@ -61,7 +60,6 @@ def lazy_compile(self, sources, output_dir=None, macros=None,
 # monkey-patching lazy_compile into CCompiler
 distutils.ccompiler.CCompiler.compile = lazy_compile
 
-
 # Static linking
 cwd = dirname(__file__)
 minuit_src = glob(join(cwd, 'Minuit/src/*.cxx'))
@@ -89,6 +87,7 @@ ext = '.pyx' if USE_CYTHON else '.cpp'
 
 try:
     import numpy
+
     numpy_header = [numpy.get_include()]
 except ImportError:
     numpy_header = []
@@ -136,8 +135,8 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: C++',
         'Programming Language :: Cython',
         'Programming Language :: Python :: Implementation :: CPython',
@@ -149,7 +148,6 @@ setup(
         'License :: OSI Approved :: MIT License'
     ],
     cmdclass={
-        # 'coverage': CoverageCommand,
         'build_ext': SmartBuildExt,
     }
 )
