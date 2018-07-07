@@ -10,6 +10,9 @@ matrix:
         - python: 3.5
           env: BUILD=ALL
 
+        - python: 3.7-dev
+          env: BUILD=TEST
+
         - python: 3.5
           env: BUILD=COVERAGE
 
@@ -30,6 +33,11 @@ matrix:
         # TODO: add tests for conda build and install of conda package
 
 before_install:
+  # https://docs.travis-ci.com/user/multi-os/
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python  ; fi
+
+
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install cython ipython numpy matplotlib; fi
   - if [[ $BUILD == ALL ]]; then pip install cython numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
   - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]] || [[ $BUILD == ALL ]]; then pip install cython pytest pytest-cov numpy scipy matplotlib; fi
