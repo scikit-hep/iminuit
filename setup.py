@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 import os
 from os.path import dirname, join, exists
 from glob import glob
-
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-
 from distutils.ccompiler import CCompiler
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import MSVCCompiler
@@ -93,8 +90,7 @@ except ImportError:
     numpy_header = []
 
 libiminuit = Extension('iminuit._libiminuit',
-                       sources=(glob(join(cwd, 'iminuit/*' + ext)) +
-                                minuit_src),
+                       sources=(glob(join(cwd, 'iminuit/*' + ext)) + minuit_src),
                        include_dirs=minuit_header + numpy_header,
                        define_macros=[('WARNINGMSG', '1')])
 extensions = [libiminuit]
@@ -144,8 +140,8 @@ setup(
         'Topic :: Scientific/Engineering :: Mathematics',
         'Intended Audience :: Science/Research',
         'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: GNU General Public License (GPL)',
-        'License :: OSI Approved :: MIT License'
+        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+        'License :: OSI Approved :: MIT License',
     ],
     cmdclass={
         'build_ext': SmartBuildExt,
