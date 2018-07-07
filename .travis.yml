@@ -23,6 +23,9 @@ matrix:
         - python: 3.5
           env: BUILD=SDIST
 
+        - python: 2.7
+          env: BUILD=SDIST
+
 # TODO: add osx builds; (setting up multi-os envs isn't trivial, see below)
 #        - os: osx
 #          python: 2.7
@@ -61,5 +64,5 @@ script:
       pip uninstall -y cython;
       cd dist;
       pip install iminuit-1.3.tar.gz;
-      python -m 'import iminuit; iminuit.test()'
+      python -c 'import iminuit; iminuit.test()';
     fi
