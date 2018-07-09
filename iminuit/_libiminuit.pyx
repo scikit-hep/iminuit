@@ -134,14 +134,11 @@ cdef class BasicView:
         cdef int i = key if isinstance(key, (int, long)) else self._minuit.var2pos[key]
         self._set(i, value)
 
-    def copy(self):
-        return dict(self)
-
-    def __str__(self):
-        s = "%s{" % self.__class__.__name__
-        items = [" '{0}'={1}".format(k, v) for (k, v) in self.items()]
-        s += ",\n".join(items)
-        s += "\n}"
+    def __repr__(self):
+        s = "<%s of Minuit at %x>" % (self.__class__.__name__, id(self._minuit))
+        for (k, v) in self.items():
+            s += "\n  {0}: {1}".format(k, v)
+        s += "\n"
         return s
 
 
@@ -166,11 +163,12 @@ cdef class ArgsView:
             raise IndexError
         self._state.SetValue(i, value)
 
-    def copy(self):
-        return tuple(self)
-
-    def __str__(self):
-        return 'ArgsView[' + ', '.join(str(x) for x in self) + ']'
+    def __repr__(self):
+        s = "<ArgsView of Minuit at %x>" % id(self._minuit)
+        for v in self:
+            s += "\n  {0}".format(v)
+        s += "\n"
+        return s
 
 
 cdef class ValueView(BasicView):
