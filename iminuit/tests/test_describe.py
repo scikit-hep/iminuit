@@ -80,7 +80,7 @@ def test_generic_functor_with_fake_func():
     assert describe(A(), True) == ['x', 'y']
 
 
-@requires_dependency('Cython', 'cyfunc')
+@requires_dependency('Cython', 'pyximport', 'cyfunc')
 def test_cython_embedsig():
     import pyximport
     pyximport.install()
@@ -88,7 +88,7 @@ def test_cython_embedsig():
     assert describe(cyfunc.f, True) == ['a', 'b']
 
 
-@requires_dependency('Cython', 'cyfunc')
+@requires_dependency('Cython', 'pyximport', 'cyfunc')
 def test_cython_class_method():
     import pyximport
     pyximport.install()

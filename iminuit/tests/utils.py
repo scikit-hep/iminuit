@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from numpy.testing import assert_allclose
+import os
 
 __all__ = [
     'requires_dependency',
@@ -30,6 +31,10 @@ def requires_dependency(*names):
     """
     skip_it = False
     for name in names:
+        path = os.path.dirname(__file__)
+        p = os.path.join(path, name + ".pyx")
+        if os.path.exists(p):
+            continue
         try:
             __import__(name)
         except ImportError:
