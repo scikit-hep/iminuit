@@ -61,10 +61,6 @@ test-notebooks: build
 coverage: build
 	python -m pytest -v iminuit --cov iminuit --cov-report html --cov-report term-missing --cov-report xml
 
-# TODO: this runs Cython differently than via setup.py ... make it consistent!
-cython:
-	find $(PROJECT) -name "*.pyx" -exec $(CYTHON) --cplus  {} \;
-
 doc/_build/html/index.html: iminuit/_libiminuit.so $(wildcard doc/*.rst)
 	{ cd doc; make html; }
 
@@ -83,3 +79,10 @@ pylint:
 
 conda:
 	python setup.py bdist_conda
+
+sdist:
+	rm -rf dist iminuit.egg-info
+	python setup.py sdist
+
+upload: sdist
+	@echo "\n>>> Check content of dist folder, then run:\ntwine upload --username $(shell whoami) dist/*"
