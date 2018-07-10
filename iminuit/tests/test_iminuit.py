@@ -747,7 +747,7 @@ def test_function_with_maximum():
     def func(a):
         return -a ** 2
 
-    m = Minuit(func, pedantic=False, print_level=0)
+    m = Minuit(func, pedantic=False, print_level=2)
     fmin, param = m.migrad()
     assert fmin.is_valid is False
 
