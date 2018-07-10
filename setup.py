@@ -1,3 +1,6 @@
+# setup compiles with -O2 or -O3 by default, use
+# CFLAGS="-O0" python setup.py ... to override
+
 import os
 from os.path import dirname, join, exists
 from glob import glob
