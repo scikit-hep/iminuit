@@ -808,7 +808,7 @@ cdef class Minuit:
 
         return self.get_param_states()
 
-    def minos(self, var = None, sigma = 1., unsigned int maxcall=1000):
+    def minos(self, var=None, sigma=1., unsigned int maxcall=1000):
         """Run minos for parameter *var*.
 
         If *var* is None it runs minos for all parameters
@@ -908,21 +908,22 @@ cdef class Minuit:
 
         return ret
 
-    def print_matrix(self, **kwds):
-        """Show error_matrix"""
-        matrix = self.matrix(correlation=True)
+    def print_matrix(self):
+        """Show correlation matrix."""
+        matrix = self.matrix(correlation=True, skip_fixed=True)
         vnames = self.list_of_vary_param()
-        self.frontend.print_matrix(vnames, matrix, **kwds)
+        self.frontend.print_matrix(vnames, matrix)
 
     def latex_matrix(self):
-        """Build :class:`LatexFactory` object with the correlation matrix
-        """
-        matrix = self.matrix(correlation=True)
+        """Build :class:`LatexFactory` object with correlation matrix."""
+        matrix = self.matrix(correlation=True, skip_fixed=True)
         vnames = self.list_of_vary_param()
         return LatexFactory.build_matrix(vnames, matrix)
 
-    def np_matrix(self, correlation=False, skip_fixed=True):
-        """Error or correlation matrix in numpy array format.
+    def np_matrix(self, **kwds):
+        """Covariance or correlation matrix in numpy array format.
+
+        Keyword arguments are forwarded to :meth:`matrix`.
 
         The name of this function was chosen to be analogous to :meth:`matrix`,
         it returns the same information in a different format. For
@@ -932,7 +933,7 @@ cdef class Minuit:
 
             2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
         """
-        matrix = self.matrix(correlation=correlation, skip_fixed=skip_fixed)
+        matrix = self.matrix(**kwds)
         return np.array(matrix, dtype=np.double)
 
     def np_values(self):
