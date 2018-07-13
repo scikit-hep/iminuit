@@ -150,22 +150,23 @@ class ConsoleFrontend(Frontend):
         self.display(hline, migrad, hline + '\n')
 
     def print_matrix(self, vnames, matrix):
-        """TODO: properly implement this"""
-        maxlen = max(len(v) for v in vnames)
-        narg = len(matrix)
-        vfmt = '%%%ds' % maxlen
-        vblank = ' ' * maxlen
-        fmt = '%3.2f '  # 4char
-        dfmt = '%4d '
-        header = vblank + ' ' * 4 + '  | ' + (dfmt * narg) % tuple(range(narg))
+        def row_fmt(args):
+            s = '| ' + args[0] + ' |'
+            for x in args[1:]:
+                s += ' ' + x
+            s += ' |'
+            return s
+
+        row_width = max(max(len(v) for v in vnames), 4)
+        blank = ' ' * row_width
+        vnames = [('{:>%is}' % row_width).format(x) for x in vnames]
+        val_fmt = '{:%i.2f}' % row_width
+
+        header = row_fmt([blank] + vnames)
         hline = '-' * len(header)
-        title = 'Correlation'
-        tab = [hline, title, hline, header, hline]
-        for i, (v, row) in enumerate(zip(vnames, matrix)):
-            fmt = '%3.2f ' * narg
-            head = (vfmt + ' %4d | ') % (v, i)
-            content = (fmt) % tuple(row)
-            tab.append(head + content)
+        tab = [hline, "Correlation", hline, header, hline]
+        for (vn, row) in zip(vnames, matrix):
+            tab.append(row_fmt([vn] + [val_fmt.format(x) for x in row]))
         tab.append(hline)
         self.display(*tab)
 
