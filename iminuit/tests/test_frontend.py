@@ -503,3 +503,23 @@ Minos Status for y: VALID
 |  1 |    y | 5        | 0.1      |          |          | 0        | 10       |   No   |
 ----------------------------------------------------------------------------------------
 """ == out()
+
+
+def test_console_frontent_with_long_names(capsys):
+    def out():
+        return capsys.readouterr()[0]
+
+    matrix = ((1.0, 0.1), (0.1, 1.0))
+    vnames = ["super-long-name", "x"]
+    frontend = console.ConsoleFrontend()
+    frontend.print_matrix(vnames, matrix)
+
+    assert r"""-----------------------------------------------------
+Correlation
+-----------------------------------------------------
+|                 | super-long-name               x |
+-----------------------------------------------------
+| super-long-name |            1.00            0.10 |
+|               x |            0.10            1.00 |
+-----------------------------------------------------
+""" == out()
