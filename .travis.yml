@@ -42,7 +42,7 @@ matrix:
 # TODO: add tests for conda build and install of conda package
 
 install:
-  - python .travis/install_deps.py
+  - python ci-scripts/travis_install_deps.py
 
 script:
   - make test
@@ -51,5 +51,5 @@ script:
       make doc;
     fi
   - if [ $BUILD == COVERAGE ]; then make coverage; fi
-  - if [ $BUILD == SDIST ]; then source .travis/sdist_test.sh; fi
-  - if [ $BUILD == CONDA ]; then source .travis/conda_make.sh; fi
+  - if [ $BUILD == SDIST ]; then source ci-scripts/travis_sdist_test.sh; fi
+  - if [ $BUILD == CONDA ]; then source ci-scripts/travis_conda_make.sh; fi
