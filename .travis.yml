@@ -15,7 +15,7 @@ matrix:
 #          env: BUILD=TEST
 
         - python: 3.5
-          env: BUILD=ALL COVERAGE
+          env: BUILD=COVERAGE
 
         - python: 3.5
           env: BUILD=MINIMAL
@@ -41,13 +41,13 @@ matrix:
 
 # TODO: add tests for conda build and install of conda package
 
-before_install:
+install:
   - python .travis/install_deps.py
 
 script:
-  - test $BUILD == ALL && make test
-  - test $BUILD == ALL && make test-notebooks
-  - test $BUILD == ALL && make doc
-  - test $BUILD == COVERAGE && make coverage
-  - test $BUILD == SDIST && source .travis/sdist_test.sh
-  - test $BUILD == CONDA && source .travis/conda_make.sh
+  - if [ $BUILD == ALL ]; then make test; fi
+  - if [ $BUILD == ALL ]; then make test-notebooks; fi
+  - if [ $BUILD == ALL ]; then make doc; fi
+  - if [ $BUILD == COVERAGE ]; then make coverage; fi
+  - if [ $BUILD == SDIST ]; then source .travis/sdist_test.sh; fi
+  - if [ $BUILD == CONDA ]; then source .travis/conda_make.sh; fi

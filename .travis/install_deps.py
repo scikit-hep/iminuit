@@ -7,18 +7,17 @@ def install(package_string):
     pip.main(['install'] + package_string.split())
 
 
-builds = os.environ['BUILD'].lower().split()
-for build in builds:
-    if build == 'conda':
-        subp.call_check(['sh', 'install_conda.sh'])
-    elif build == 'all':
-        install('scipy matplotlib sphinx sphinx_rtd_theme jupyter ipython')
-    elif build == 'coverage':
-        install('pytest-cov')
-    elif build == 'sdist':
-        install('scipy matplotlib ipython')
-    elif build == 'minimal':
-        install('cython numpy pytest')
+build = os.environ['BUILD']
+if build == 'conda':
+    subp.call_check(['sh', 'install_conda.sh'])
+elif build == 'all':
+    install('scipy matplotlib sphinx sphinx_rtd_theme jupyter ipython')
+elif build == 'coverage':
+    install('scipy matplotlib sphinx sphinx_rtd_theme jupyter ipython pytest-cov')
+elif build == 'sdist':
+    install('scipy matplotlib ipython')
+elif build == 'minimal':
+    install('cython numpy pytest')
 
 
 # https://docs.travis-ci.com/user/multi-os/
