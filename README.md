@@ -9,8 +9,8 @@ master | [![Build Status Travis](https://travis-ci.org/iminuit/iminuit.svg?branc
 iminuit works with Python-2.7 to 3.5 on Windows, Mac (currently manually tested), and Linux.
 
 It can be used as a general robust function minimisation method, but it really
-shines when used in statistical likelihood fits of models to data,
-and to get model parameter error estimates from profile likelihood analysis.
+shines in statistical likelihood fits of models to data. Use iminuit to get
+uncertainty estimates of model parameters with the profile likelihood method.
 
 * Code: https://github.com/iminuit/iminuit
 * Documentation: http://iminuit.readthedocs.org/
