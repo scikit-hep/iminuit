@@ -6,8 +6,11 @@ iminuit
 ======  ======================  ========================
 Branch  Linux (Py-2.7, Py-3.6)  Windows (Py-2.7, Py-3.6)
 ======  ======================  ========================
-master  [![Build Status Travis](https://travis-ci.org/iminuit/iminuit.svg?branch=master)](https://travis-ci.org/iminuit/iminuit?branch=master)  [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true)](https://ci.appveyor.com/project/HDembinski/iminuit-b4eg8)
+master  |travis|                |appveyor|
 ======  ======================  ========================
+
+.. |travis| image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l/branch/master?svg=true
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l/branch/master?svg=true
 
 iminuit works with Python-2.7 to 3.5 on Windows, Mac (currently manually tested), and Linux.
 
