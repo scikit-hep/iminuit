@@ -4,6 +4,9 @@ sudo: false
 
 matrix:
     include:
+        - python: 3.5
+          env: BUILD=MINIMAL
+
         - python: 2.7
           env: BUILD=ALL
 
@@ -15,16 +18,13 @@ matrix:
 #          env: BUILD=TEST
 
         - python: 3.5
-          env: BUILD=COVERAGE
-
-        - python: 3.5
-          env: BUILD=MINIMAL
-
-        - python: 3.5
           env: BUILD=SDIST
 
         - python: 2.7
           env: BUILD=SDIST
+
+        - python: 3.5
+          env: BUILD=COVERAGE
 
 # TODO: add this (travis-ci not running today, so disabling for now)
 #        - python: 3.6
