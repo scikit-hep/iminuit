@@ -14,10 +14,6 @@ environment:
       PYTHON_VERSION: 2.7
       PYTHON_ARCH: 64
 
-    - PYTHON: C:\Python34-x64
-      PYTHON_VERSION: 3.4
-      PYTHON_ARCH: 64
-
     - PYTHON: C:\Python36-x64
       PYTHON_VERSION: 3.6
       PYTHON_ARCH: 64
@@ -50,18 +46,18 @@ install:
      print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
 
   # Upgrade to the latest pip.
-  - 'python -m pip install -U pip setuptools wheel'
+  - pip install -U pip setuptools wheel
 
   # Install the test dependencies.
-  - 'pip install -U --timeout 5 --retries 2 Cython numpy matplotlib pytest'
+  - pip install -U --timeout 5 --retries 2 Cython numpy matplotlib pytest
 
 build_script:
   # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
   # We then use the import library from the DLL to compile with MSVC
-  - python setup.py build_ext --inplace
+  - pip install -U .
 
 test_script:
-  - python -m pytest -v iminuit
+  - pytest
 
 after_build:
   # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.
