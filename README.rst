@@ -1,13 +1,20 @@
 iminuit
 =======
 
-MINUIT from Python - Fitting like a boss
+Branch | Linux (Py-2.7, Py-3.6) | Windows (Py-2.7, Py-3.6)
+------ | ---------------------- | ------------------------
+master | [![Build Status Travis](https://travis-ci.org/iminuit/iminuit.svg?branch=master)](https://travis-ci.org/iminuit/iminuit?branch=master) | [![Build status Appveyor](https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true)](https://ci.appveyor.com/project/HDembinski/iminuit-b4eg8)
 
-`iminuit` is a Python interface to the `MINUIT` C++ package.
+Fitting like a boss
+-------------------
 
-It can be used as a general robust function minimisation method,
-but is most commonly used for likelihood fits of models to data,
-and to get model parameter error estimates from likelihood profile analysis.
+`iminuit` is a Python interface to the `MINUIT2` C++ package.
+
+It works with Python-2.7 to 3.5 on Windows, Mac, and Linux.
+
+It can be used as a general robust function minimisation method, but it really
+shines when used in statistical likelihood fits of models to data,
+and to get model parameter error estimates from profile likelihood analysis.
 
 * Code: https://github.com/iminuit/iminuit
 * Documentation: http://iminuit.readthedocs.org/
