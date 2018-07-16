@@ -17,9 +17,8 @@ for build in builds:
         install('pytest-cov')
     elif build == 'sdist':
         install('scipy matplotlib ipython')
-
-# absolute minimum
-install('cython numpy pytest')
+    elif build == 'minimal':
+        install('cython numpy pytest')
 
 
 # https://docs.travis-ci.com/user/multi-os/

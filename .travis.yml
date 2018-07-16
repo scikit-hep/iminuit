@@ -15,9 +15,10 @@ matrix:
 #          env: BUILD=TEST
 
         - python: 3.5
-          env: BUILD="ALL COVERAGE"
+          env: BUILD=ALL COVERAGE
 
         - python: 3.5
+          env: BUILD=MINIMAL
 
         - python: 3.5
           env: BUILD=SDIST
@@ -44,9 +45,9 @@ before_install:
   - python .travis/install_deps.py
 
 script:
-  -| [[ $BUILD == ALL ]] && make test
-  -| [[ $BUILD == ALL ]] && make test-notebooks
-  -| [[ $BUILD == ALL ]] && make doc
-  -| [[ $BUILD == COVERAGE ]] && make coverage
-  -| [[ $BUILD == SDIST ]] && source .travis/sdist_test.sh
-  -| [[ $BUILD == CONDA ]] && source .travis/conda_make.sh
+  - test $BUILD == ALL && make test
+  - test $BUILD == ALL && make test-notebooks
+  - test $BUILD == ALL && make doc
+  - test $BUILD == COVERAGE && make coverage
+  - test $BUILD == SDIST && source .travis/sdist_test.sh
+  - test $BUILD == CONDA && source .travis/conda_make.sh
