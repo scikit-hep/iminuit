@@ -42,19 +42,18 @@ matrix:
         # TODO: add tests for conda build and install of conda package
 
 before_install:
-# https://docs.travis-ci.com/user/multi-os/
-# This might also be useful:
-# https://stackoverflow.com/questions/45257534/how-can-i-build-a-python-project-with-osx-environment-on-travis
-#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python  ; fi
-
+  # https://docs.travis-ci.com/user/multi-os/
+  # This might also be useful:
+  # https://stackoverflow.com/questions/45257534/how-can-i-build-a-python-project-with-osx-environment-on-travis
+  #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  #  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python  ; fi
 
   - if [[ $BUILD != NO_EXTRA_DEPS ]]; then pip install cython ipython numpy matplotlib; fi
   - if [[ $BUILD == ALL ]]; then pip install cython numpy scipy matplotlib sphinx sphinx_rtd_theme jupyter; fi
   - if [[ $BUILD == TEST ]] || [[ $BUILD == COVERAGE ]] || [[ $BUILD == ALL ]]; then pip install cython pytest pytest-cov numpy scipy matplotlib; fi
 
+  # Set up miniconda
   - if [[ $BUILD == CONDA ]]; then
-      # Set up miniconda
       - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
       - bash miniconda.sh -b -p $HOME/miniconda
       - export PATH="$HOME/miniconda/bin:$PATH"
@@ -83,14 +82,13 @@ script:
       python -c 'import iminuit; iminuit.test()';
     fi
 
+  # From https://conda.io/docs/bdist_conda.html
+  # bdist_conda must be installed into a root conda environment,
+  # as it imports conda and conda_build. It is included as part of the conda build package.
   - if [[ $BUILD == CONDA ]]; then
-      # From https://conda.io/docs/bdist_conda.html
-      # bdist_conda must be installed into a root conda environment,
-      # as it imports conda and conda_build. It is included as part of the conda build package.
       conda install -n root conda-build Cython numpy;
       conda info;
       conda --version;
       conda build --version;
       make conda;
-#      source activate root;
     fi
