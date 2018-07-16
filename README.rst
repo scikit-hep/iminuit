@@ -10,8 +10,9 @@ master  |travis|                |appveyor|
 ======  ======================  ========================
 
 .. |travis| image:: https://travis-ci.org/iminuit/iminuit.svg?branch=master
+   :target: https://travis-ci.org/iminuit/iminuit
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l/branch/master?svg=true
-
+   :target: https://ci.appveyor.com/project/iminuit/iminuit
 iminuit works with Python-2.7 to 3.5 on Windows, Mac (currently manually tested), and Linux.
 
 It can be used as a general robust function minimisation method, but it really
