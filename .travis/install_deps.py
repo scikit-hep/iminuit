@@ -11,11 +11,11 @@ build = os.environ['BUILD'].lower()
 if build == 'conda':
     subp.call_check(['sh', 'install_conda.sh'])
 elif build == 'all':
-    install('scipy matplotlib sphinx sphinx_rtd_theme jupyter ipython')
+    install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter')
 elif build == 'coverage':
-    install('scipy matplotlib sphinx sphinx_rtd_theme jupyter ipython pytest-cov')
+    install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov')
 elif build == 'sdist':
-    install('scipy matplotlib ipython')
+    install('cython numpy pytest matplotlib scipy ipython')
 elif build == 'minimal':
     install('cython numpy pytest')
 else:
