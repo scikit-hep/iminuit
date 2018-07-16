@@ -7,7 +7,7 @@ def install(package_string):
     pip.main(['install'] + package_string.split())
 
 
-build = os.environ['BUILD']
+build = os.environ['BUILD'].lower()
 if build == 'conda':
     subp.call_check(['sh', 'install_conda.sh'])
 elif build == 'all':
@@ -18,7 +18,8 @@ elif build == 'sdist':
     install('scipy matplotlib ipython')
 elif build == 'minimal':
     install('cython numpy pytest')
-
+else:
+    raise ValueError('build option not recognized')
 
 # https://docs.travis-ci.com/user/multi-os/
 # This might also be useful:

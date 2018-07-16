@@ -45,9 +45,11 @@ install:
   - python .travis/install_deps.py
 
 script:
-  - if [ $BUILD == ALL ]; then make test; fi
-  - if [ $BUILD == ALL ]; then make test-notebooks; fi
-  - if [ $BUILD == ALL ]; then make doc; fi
+  - make test
+  - if [ $BUILD == ALL ]; then
+      make test-notebooks;
+      make doc;
+    fi
   - if [ $BUILD == COVERAGE ]; then make coverage; fi
   - if [ $BUILD == SDIST ]; then source .travis/sdist_test.sh; fi
   - if [ $BUILD == CONDA ]; then source .travis/conda_make.sh; fi
