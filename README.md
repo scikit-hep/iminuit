@@ -1,5 +1,4 @@
-iminuit
-=======
+# iminuit
 
 **Python interface to the `MINUIT2` C++ package - Fitting like a boss**
 
@@ -20,10 +19,9 @@ and to get model parameter error estimates from profile likelihood analysis.
 * License: MINUIT is LGPL and iminuit is MIT
 * Citation: https://github.com/iminuit/iminuit/blob/master/CITATION
 
-In a nutshell
--------------
+## In a nutshell
 
-.. code-block:: python
+``python
 
     from iminuit import Minuit
 
@@ -37,3 +35,4 @@ In a nutshell
 
     m.hesse()   # run covariance estimator
     print(m.errors)  # {'x': 1,'y': 1,'z': 1}
+``
