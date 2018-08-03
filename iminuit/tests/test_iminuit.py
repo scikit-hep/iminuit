@@ -792,3 +792,32 @@ def test_view_lifetime():
     assert val['x'] == 3
     arg[0] = 5  # should not segfault
     assert arg[0] == 5
+
+
+def test_bad_functions():
+    def throwing(x):
+        raise RuntimeError
+    def returning_nan(x):
+        return np.nan
+    def returning_garbage(x):
+        return "foo"
+
+    for func in (throwing, returning_nan, returning_garbage):
+        m = Minuit(func, x=1, pedantic=False, throw_nan=True)
+        with pytest.raises(RuntimeError):
+            m.migrad()
+
+    def throwing(x):
+        raise RuntimeError
+    def returning_nan(x):
+        return np.array([1, np.nan])
+    def returning_noniterable(x):
+        return 0
+    def returning_garbage(x):
+        return np.array([1, "foo"])
+
+    for func in (throwing, returning_nan, returning_noniterable, returning_garbage):
+        m = Minuit(lambda x,y: 0, grad=func,
+                   x=1, y=1, pedantic=False, throw_nan=True)
+        with pytest.raises(RuntimeError):
+            m.migrad()
