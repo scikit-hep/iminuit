@@ -13,14 +13,6 @@
 
 namespace detail {
 
-//warn but do not reset the error flag
-inline void warn_preserve_error(const std::string& msg) {
-    PyObject *ptype, *pvalue, *ptraceback;
-    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-    PyErr_Warn(NULL, msg.c_str());
-    PyErr_Restore(ptype, pvalue, ptraceback);
-}
-
 inline std::string errormsg(const char* prefix,
                             const std::vector<std::string>& pname,
                             const std::vector<double>& x) {
@@ -121,8 +113,8 @@ public:
         if (PyErr_Occurred()) {
             std::string msg = detail::errormsg("Exception Occured\n",
                                                names, x);
-            detail::warn_preserve_error(msg.c_str());
             Py_XDECREF(result);
+            PyErr_Clear();
             throw std::runtime_error(msg);
         }
 
@@ -131,18 +123,19 @@ public:
 
         if (PyErr_Occurred()) {
             std::string msg = detail::errormsg("Cannot convert call result to double\n",
-                                       names, x);
-            detail::warn_preserve_error(msg.c_str());
+                                               names, x);
+            PyErr_Clear();
             throw std::runtime_error(msg);
+
         }
 
         if (detail::isnan(ret)) {
             std::string msg = detail::errormsg("result is Nan\n",
-                                       names, x);
-            detail::warn_preserve_error(msg.c_str());
+                                               names, x);
             if (throw_nan) {
-                PyErr_SetString(PyExc_RuntimeError, msg.c_str());
-                throw std::runtime_error(msg.c_str());
+                throw std::runtime_error(msg);
+            } else {
+                PyErr_Warn(NULL, msg.c_str());
             }
         }
 
@@ -155,13 +148,13 @@ public:
                                const bool throw_nan) const {
         PyObject* args = convert(x); // no error can occur here
         PyObject* result = PyObject_Call(fcn, args, NULL);
-        Py_DECREF(args);
+        Py_XDECREF(args);
 
         if (PyErr_Occurred()) {
             std::string msg = detail::errormsg("exception occured\n",
-                                       names, x);
-            detail::warn_preserve_error(msg.c_str());
+                                               names, x);
             Py_XDECREF(result);
+            PyErr_Clear();
             throw std::runtime_error(msg);
         }
 
@@ -170,8 +163,8 @@ public:
         if (iterator == NULL) {
             std::string msg = detail::errormsg("result must be iterable\n",
                                                names, x);
-            detail::warn_preserve_error(msg.c_str());
             Py_XDECREF(result);
+            PyErr_Clear();
             throw std::runtime_error(msg);
         }
 
@@ -185,18 +178,21 @@ public:
             if (PyErr_Occurred()) {
                 std::string msg = detail::errormsg("cannot convert to vector of doubles\n",
                                                    names, x);
-                detail::warn_preserve_error(msg.c_str());
+                Py_DECREF(iterator);
+                Py_DECREF(result);
+                PyErr_Clear();
                 throw std::runtime_error(msg);
             }
 
             if (detail::isnan(xi)) {
                 std::string msg = detail::errormsg("result is NaN\n",
                                                    names, x);
-                detail::warn_preserve_error(msg.c_str());
                 if (throw_nan) {
-                    PyErr_SetString(PyExc_RuntimeError, msg.c_str());
                     Py_DECREF(iterator);
-                    throw std::runtime_error(msg.c_str());
+                    Py_DECREF(result);
+                    throw std::runtime_error(msg);
+                } else {
+                    PyErr_Warn(NULL, msg.c_str());
                 }
             }
             result_vector.push_back(xi);

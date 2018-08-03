@@ -12,20 +12,20 @@ using namespace ROOT::Minuit2;
 
 //missing string printf
 inline std::string format(const char* fmt, ...){
-    const int size = strlen(fmt) * 2;
-    char* buf = new char[strlen(fmt) * 2]; // reserve twice the length of fmt
+    char buffer[256];
     va_list vl;
     va_start(vl, fmt);
-    const int nsize = vsnprintf(buf, size, fmt, vl);
-    if (size <= nsize) { // resize string and try again
-        delete [] buf;
-        buf = new char[nsize];
+    const int size = vsnprintf(buffer, 256, fmt, vl);
+    if (256 <= size) { // resize string and try again
+        char * buf = new char[size + 1];
         vsprintf(buf, fmt, vl);
+        va_end(vl);
+        std::string s(buf, buf + size);
+        delete [] buf;
+        return s;
     }
     va_end(vl);
-    std::string s(buf, buf+nsize);
-    delete [] buf;
-    return s;
+    return std::string(buffer, buffer + size);
 }
 
 //mnapplication() returns stack allocated functionminimum but
