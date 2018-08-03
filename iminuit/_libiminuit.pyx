@@ -50,21 +50,28 @@ cdef setParameterState(MnUserParameterStatePtr state, object parameters, dict fi
         if lim is not None:
             lb = -inf if lim[0] is None else lim[0]
             ub = inf if lim[1] is None else lim[1]
-            if lb >= ub:
-                raise ValueError(
-                    'limit for parameter %s is invalid. %r' % (pname, (lb, ub)))
-            if lb == -inf and ub == inf:
-                pass
-            elif ub == inf:
-                state.SetLowerLimit(i, lb)
-            elif lb == -inf:
-                state.SetUpperLimit(i, ub)
+            if lb == ub:
+                state.SetValue(i, lb)
+                state.Fix(i)
             else:
-                state.SetLimits(i, lb, ub)
-            #need to set value again
-            #taking care of internal/external transformation
-            state.SetValue(i, val)
-            state.SetError(i, err)
+                if lb > ub:
+                    raise ValueError(
+                        'limit for parameter %s is invalid. %r' % (pname, (lb, ub)))
+                if lb == -inf and ub == inf:
+                    pass
+                elif ub == inf:
+                    state.SetLowerLimit(i, lb)
+                elif lb == -inf:
+                    state.SetUpperLimit(i, ub)
+                else:
+                    state.SetLimits(i, lb, ub)
+                # need to set value again so that MINUIT can
+                # correct internal/external transformation;
+                # also use opportunity to correct a starting value outside of limit
+                val = max(val, lb)
+                val = min(val, ub)
+                state.SetValue(i, val)
+                state.SetError(i, err)
 
         if fitarg['fix_' + pname]:
             state.Fix(i)
