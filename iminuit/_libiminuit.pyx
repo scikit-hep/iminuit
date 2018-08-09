@@ -883,25 +883,33 @@ cdef class Minuit:
         cdef MnUserCovariance mncov = self.last_upst.Covariance()
         cdef vector[MinuitParameter] mp = self.last_upst.MinuitParameters()
 
+        # When some parameters are fixed, mncov is a sub-matrix. If skip-fixed
+        # is false, we need to expand the sub-matrix back into the full form.
+        # This requires a translation between sub-index und full-index.
         if skip_fixed:
-            ind = [i for i in range(mp.size()) if not mp[i].IsFixed()]
-            def cov(i, j): return mncov.get(i, j)
+            npar = 0
+            for i in range(mp.size()):
+                if not mp[i].IsFixed():
+                    npar += 1
+            ind = range(npar)
+            def cov(i, j):
+                return mncov.get(i, j)
         else:
+            ext2int = {}
+            iint = 0
+            for i in range(mp.size()):
+                if not mp[i].IsFixed():
+                    ext2int[i] = iint
+                    iint += 1
             ind = range(mp.size())
             def cov(i, j):
-                if mp[i].IsFixed() or mp[j].IsFixed():
+                if i not in ext2int or j not in ext2int:
                     return 0.0
-                return mncov.get(i, j)
+                return mncov.get(ext2int[i], ext2int[j])
 
         if correlation:
-            if skip_fixed:
-                def cor(i, j): return cov(i, j) / sqrt(cov(i, i) * cov(j, j))
-            else:
-                def cor(i, j):
-                    if i == j:
-                        return 1.0
-                    if mp[i].IsFixed() or mp[j].IsFixed(): return 0.0
-                    return mncov.get(i, j) / sqrt(mncov.get(i, i) * mncov.get(j, j))
+            def cor(i, j):
+                return cov(i, j) / (sqrt(cov(i, i) * cov(j, j)) + 1e-100)
             ret = tuple(tuple(cor(i, j) for i in ind) for j in ind)
         else:
             ret = tuple(tuple(cov(i, j) for i in ind) for j in ind)
