@@ -661,7 +661,7 @@ cdef class Minuit:
         return Minuit(fcn, **kwds)
 
 
-    def migrad(self, int ncall=0, resume=True, int nsplit=1, precision=None):
+    def migrad(self, int ncall=10000, resume=True, int nsplit=1, precision=None):
         """Run migrad.
 
         Migrad is an age-tested(over 40 years old, no kidding), super
@@ -673,10 +673,10 @@ cdef class Minuit:
         **Arguments:**
 
             * **ncall**: integer (approximate) maximum number of call before
-              migrad will stop trying. Default: 0 (uses internal heuristic by
-              C++ MINUIT). Note: Migrad may slightly violate this limit,
-              because it checks the condition only after a full iteration of
-              the algorithm, which usually performs several function calls.
+              migrad will stop trying. Default: 10000. Note: Migrad may
+              slightly violate this limit, because it checks the condition
+              only after a full iteration of the algorithm, which usually
+              performs several function calls.
 
             * **resume**: boolean indicating whether migrad should resume from
               the previous minimizer attempt(True) or should start from the
