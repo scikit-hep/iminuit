@@ -673,7 +673,7 @@ cdef class Minuit:
         **Arguments:**
 
             * **ncall**: integer (approximate) maximum number of call before
-              migrad will stop trying. Default 10000. Note: Migrad may
+              migrad will stop trying. Default: 10000. Note: Migrad may
               slightly violate this limit, because it checks the condition
               only after a full iteration of the algorithm, which usually
               performs several function calls.
@@ -761,7 +761,7 @@ cdef class Minuit:
 
         return self.get_fmin(), self.get_param_states()
 
-    def hesse(self, unsigned int maxcall=1000):
+    def hesse(self, unsigned int maxcall=0):
         """Run HESSE.
 
         HESSE estimates error matrix by the `second derivative at the minimim
@@ -773,6 +773,10 @@ cdef class Minuit:
         and give the correct error asymmetric error in all cases(Unless your
         likelihood profile is utterly discontinuous near the minimum). But,
         it is much more computationally expensive.
+
+        **Arguments:**
+            - **maxcall**: limit the number of calls made by MINOS.
+              Default: 0 (uses an internal heuristic by C++ MINUIT).
 
         **Returns:**
 
@@ -808,7 +812,7 @@ cdef class Minuit:
 
         return self.get_param_states()
 
-    def minos(self, var=None, sigma=1., unsigned int maxcall=1000):
+    def minos(self, var=None, sigma=1., unsigned int maxcall=0):
         """Run minos for parameter *var*.
 
         If *var* is None it runs minos for all parameters
@@ -818,6 +822,8 @@ cdef class Minuit:
             - **var**: optional variable name. Default None.(run minos for
               every variable)
             - **sigma**: number of :math:`\sigma` error. Default 1.0.
+            - **maxcall**: limit the number of calls made by MINOS.
+              Default: 0 (uses an internal heuristic by C++ MINUIT).
 
         **Returns:**
 
