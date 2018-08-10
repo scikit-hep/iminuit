@@ -316,7 +316,7 @@ def test_fix_param(grad):
     assert_allclose(m.fval, 35)
     assert m.list_of_vary_param() == ['x']
     assert m.list_of_fixed_param() == ['y']
-    assert_allclose(m.matrix(skip_fixed=True), [[4.]], atol=1e-4)
+    assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
     assert m.is_fixed('x') is False
