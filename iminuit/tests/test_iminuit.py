@@ -324,6 +324,14 @@ def test_fix_param(grad):
     with pytest.raises(KeyError):
         m.is_fixed('a')
 
+    # fix by setting limits
+    m = Minuit(func3, y=10., limit_y=(10,10), pedantic=False, print_level=0)
+    assert m.fixed['y']
+
+    # initial value out of range is forced in range
+    m = Minuit(func3, y=20., limit_y=(10,10), pedantic=False, print_level=0)
+    assert m.fixed['y']
+    assert m.values['y'] == 10
 
 def test_fitarg_oneside():
     m = Minuit(func4, print_level=0, y=10., fix_y=True, limit_x=(None, 20.),
