@@ -5,6 +5,19 @@
 Changelog
 =========
 
+1.3.2 (August 5, 2018)
+----------------------
+- allow fixing parameter by setting limits (x, x) with some value x
+- better defaults for maxcall arguments of hesse() and minos()
+- nicer output for print_matrix()
+- bug-fix: covariance matrix reported by iminuit was broken when some parameters were fixed
+- bug-fix: segfault when something in PythonCaller raised an exception
+
+1.3.1 (July 10, 2018)
+---------------------
+- fixed failing tests when only you installed iminuit with pip and don't
+  have Cython installed
+
 1.3 (July 5, 2018)
 ------------------
 
