@@ -321,6 +321,15 @@ def test_fix_param(grad):
 
     assert m.is_fixed('x') is False
     assert m.is_fixed('y') is True
+
+    m.fixed['x'] = True
+    m.fixed['y'] = False
+    m.migrad()
+    m.hesse()
+    assert_allclose(m.np_values(), (2, 5), rtol=1e-2)
+    assert_allclose(m.matrix(skip_fixed=True), [[1]], atol=1e-4)
+    assert_allclose(m.matrix(skip_fixed=False), [[0, 0], [0, 1]], atol=1e-4)
+
     with pytest.raises(KeyError):
         m.is_fixed('a')
 
