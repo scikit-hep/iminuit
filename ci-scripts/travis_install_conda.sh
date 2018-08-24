@@ -12,4 +12,4 @@ conda info -a
 # bdist_conda must be installed into a root conda environment,
 # as it imports conda and conda_build. It is included as part of the conda build package.
 conda build --version
-conda install -n root conda-build Cython numpy
+conda install -n root conda-build Cython numpy pytest matplotlib scipy ipython sphinx jupyter
