@@ -13,9 +13,8 @@ matrix:
         - python: 3.5
           env: BUILD=ALL
 
-# See https://github.com/iminuit/iminuit/issues/270
-#        - python: 3.7-dev
-#          env: BUILD=TEST
+        - python: 3.7
+          env: BUILD=TEST
 
         - python: 3.5
           env: BUILD=SDIST
@@ -26,9 +25,8 @@ matrix:
         - python: 3.5
           env: BUILD=COVERAGE
 
-# TODO: add this (travis-ci not running today, so disabling for now)
-#        - python: 3.6
-#          env: BUILD=CONDA
+        - python: 3.6
+          env: BUILD=CONDA
 
 # TODO: add osx builds; (setting up multi-os envs isn't trivial, see below)
 #        - os: osx
@@ -38,8 +36,6 @@ matrix:
 #        - os: osx
 #          python: 3.5
 #          env: BUILD=ALL
-
-# TODO: add tests for conda build and install of conda package
 
 install:
   - python ci-scripts/travis_install_deps.py
