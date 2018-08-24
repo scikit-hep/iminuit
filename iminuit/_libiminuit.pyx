@@ -537,7 +537,7 @@ cdef class Minuit:
         self.print_level = print_level
         self.throw_nan = throw_nan
 
-        self._construct_FCN()
+        self.pyfcn = self._construct_fcn()
 
         self.fitarg = {}
         for x in args:
@@ -1153,23 +1153,25 @@ cdef class Minuit:
 
     # Various utility functions
 
-    cdef _construct_FCN(self):
+    cdef _construct_fcn(self):
         """Construct or re-construct FCN"""
         if self.grad is None:
-            self.pyfcn = new PythonFCN(
+            return new PythonFCN(
                 self.fcn,
                 self.use_array_call,
                 self.errordef,
                 self.parameters,
-                self.throw_nan)
+                self.throw_nan,
+            )
         else:
-            self.pyfcn = new PythonGradientFCN(
+            return new PythonGradientFCN(
                 self.fcn,
                 self.grad,
                 self.use_array_call,
                 self.errordef,
                 self.parameters,
-                self.throw_nan)
+                self.throw_nan,
+            )
 
     def is_clean_state(self):
         """Check if minuit is in a clean state, ie. no migrad call"""
