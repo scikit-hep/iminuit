@@ -729,7 +729,7 @@ cdef class Minuit:
                 self.last_upst, deref(strat)
             )
 
-        del strat;
+        del strat
         strat = NULL
 
         self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
@@ -744,13 +744,12 @@ cdef class Minuit:
                 grad_ptr.resetNumGrad()
 
         #this returns a real object need to copy
-        ncall_round = round(1.0 * (ncall) / nsplit)
+        ncall_round = round(1.0 * ncall / nsplit)
         assert (ncall_round > 0)
         totalcalls = 0
         first = True
 
-        while (first) or \
-                (not self.cfmin.IsValid() and totalcalls < ncall):
+        while first or (not self.cfmin.IsValid() and totalcalls < ncall):
             first = False
             if self.cfmin:  # delete existing
                 del self.cfmin
@@ -761,7 +760,7 @@ cdef class Minuit:
             if self.print_level > 1 and nsplit != 1: self.print_fmin()
 
         self.last_upst = self.cfmin.UserState()
-        self.refreshInternalState()
+        self.refresh_internal_state()
 
         if self.print_level > 0:
             self.print_fmin()
@@ -810,7 +809,7 @@ cdef class Minuit:
         if not self.last_upst.HasCovariance():
             warn("HESSE Failed. Covariance and GlobalCC will not be available",
                  HesseFailedWarning)
-        self.refreshInternalState()
+        self.refresh_internal_state()
         del hesse
 
         if self.print_level > 0:
@@ -882,7 +881,7 @@ cdef class Minuit:
             if self.print_level > 0:
                 self.frontend.print_merror(
                     vname, self.merrors_struct[vname])
-        self.refreshInternalState()
+        self.refresh_internal_state()
         del minos
         self.pyfcn.SetErrorDef(oldup)
         return self.merrors_struct
@@ -1192,10 +1191,10 @@ cdef class Minuit:
         for vn in parameters:
             if vn not in kwds:
                 warn(('Parameter %s does not have initial value. '
-                      'Assume 0.') % (vn), InitialParamWarning)
+                      'Assume 0.') % vn, InitialParamWarning)
             if 'error_' + vn not in kwds and 'fix_' + param_name(vn) not in kwds:
                 warn(('Parameter %s is floating but does not '
-                      'have initial step size. Assume 1.') % (vn),
+                      'have initial step size. Assume 1.') % vn,
                      InitialParamWarning)
         for vlim in extract_limit(kwds):
             if param_name(vlim) not in parameters:
@@ -1259,7 +1258,7 @@ cdef class Minuit:
             m.migrad()
             migrad_status[i] = m.migrad_ok()
             if not m.migrad_ok():
-                warn(('Migrad fails to converge for %s=%f') % (vname, v))
+                warn('Migrad fails to converge for %s=%f' % (vname, v))
             results[i] = m.fval
             if m.fval < vmin:
                 vmin = m.fval
@@ -1573,7 +1572,7 @@ cdef class Minuit:
         return _plotting.draw_contour(self, x, y, bins,
                                       bound, args, show_sigma)
 
-    cdef refreshInternalState(self):
+    cdef refresh_internal_state(self):
         """Refresh internal state attributes.
 
         These attributes should be in a function instead
