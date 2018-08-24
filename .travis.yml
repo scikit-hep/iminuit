@@ -13,7 +13,8 @@ matrix:
         - python: 3.5
           env: BUILD=ALL
 
-        - python: 3.7
+        # TODO: remove "-dev" once 3.7 proper exists on travis-ci
+        - python: 3.7-dev
           env: BUILD=TEST
 
         - python: 3.5
