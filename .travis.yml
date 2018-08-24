@@ -37,6 +37,11 @@ matrix:
 #        - os: osx
 #          python: 3.5
 #          env: BUILD=ALL
+# https://docs.travis-ci.com/user/multi-os/
+# This might also be useful:
+# https://stackoverflow.com/questions/45257534/how-can-i-build-a-python-project-with-osx-environment-on-travis
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python  ; fi
 
 install:
   - python ci-scripts/travis_install_deps.py
@@ -50,3 +55,4 @@ script:
   - if [ $BUILD == COVERAGE ]; then make coverage; fi
   - if [ $BUILD == SDIST ]; then source ci-scripts/travis_sdist_test.sh; fi
   - if [ $BUILD == CONDA ]; then source ci-scripts/travis_conda_make.sh; fi
+
