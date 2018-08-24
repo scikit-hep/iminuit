@@ -74,7 +74,6 @@ def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
 
 def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
     from matplotlib import pyplot as plt
-    # from matplotlib.collections import LineCollection
     from matplotlib.contour import ContourSet
 
     c_val = []

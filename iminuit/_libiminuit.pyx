@@ -1,7 +1,6 @@
 # cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii
 # distutils: language = c++
-"""IPython Minuit class definition.
-"""
+"""IPython Minuit class definition."""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from warnings import warn
@@ -10,8 +9,7 @@ from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
 from iminuit.util import *
-from iminuit.iminuit_warnings import (InitialParamWarning,
-                                      HesseFailedWarning)
+from iminuit.iminuit_warnings import InitialParamWarning, HesseFailedWarning
 from iminuit.latex import LatexFactory
 from iminuit import _plotting
 
@@ -31,7 +29,7 @@ ctypedef PythonGradientFCN* PythonGradientFCNPtr
 ctypedef MnUserParameterState* MnUserParameterStatePtr
 
 # Helper functions
-cdef setParameterState(MnUserParameterStatePtr state, object parameters, dict fitarg):
+cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict fitarg):
     """Construct parameter state from user input.
 
     Caller is responsible for cleaning up the pointer.
@@ -105,6 +103,11 @@ cdef check_extra_args(parameters, kwd):
                 ('Cannot understand keyword %s. May be a typo?\n'
                  'The parameters are %r') % (k, parameters))
 
+def is_number(value):
+    return isinstance(value, (int, long, float))
+
+def is_int(value):
+    return isinstance(value, (int, long))
 
 # Helper classes
 cdef class BasicView:
@@ -134,11 +137,11 @@ cdef class BasicView:
         return [self._get(k) for k in range(len(self))]
 
     def __getitem__(self, key):
-        cdef int i = key if isinstance(key, (int, long)) else self._minuit.var2pos[key]
+        cdef int i = key if is_int(key) else self._minuit.var2pos[key]
         return self._get(i)
 
     def __setitem__(self, key, value):
-        cdef int i = key if isinstance(key, (int, long)) else self._minuit.var2pos[key]
+        cdef int i = key if is_int(key) else self._minuit.var2pos[key]
         self._set(i, value)
 
     def __repr__(self):
@@ -537,7 +540,23 @@ cdef class Minuit:
         self.print_level = print_level
         self.throw_nan = throw_nan
 
-        self._construct_FCN()
+        if self.grad is None:
+            self.pyfcn = new PythonFCN(
+                self.fcn,
+                self.use_array_call,
+                self.errordef,
+                self.parameters,
+                self.throw_nan,
+            )
+        else:
+            self.pyfcn = new PythonGradientFCN(
+                self.fcn,
+                self.grad,
+                self.use_array_call,
+                self.errordef,
+                self.parameters,
+                self.throw_nan,
+            )
 
         self.fitarg = {}
         for x in args:
@@ -552,7 +571,7 @@ cdef class Minuit:
 
         self.minimizer = NULL
         self.cfmin = NULL
-        setParameterState(&self.initial_upst, self.parameters, self.fitarg)
+        set_parameter_state(&self.initial_upst, self.parameters, self.fitarg)
         self.last_upst = self.initial_upst
 
         self.args = ArgsView(self)
@@ -729,7 +748,7 @@ cdef class Minuit:
                 self.last_upst, deref(strat)
             )
 
-        del strat;
+        del strat
         strat = NULL
 
         self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
@@ -744,13 +763,12 @@ cdef class Minuit:
                 grad_ptr.resetNumGrad()
 
         #this returns a real object need to copy
-        ncall_round = round(1.0 * (ncall) / nsplit)
+        ncall_round = round(1.0 * ncall / nsplit)
         assert (ncall_round > 0)
         totalcalls = 0
         first = True
 
-        while (first) or \
-                (not self.cfmin.IsValid() and totalcalls < ncall):
+        while first or (not self.cfmin.IsValid() and totalcalls < ncall):
             first = False
             if self.cfmin:  # delete existing
                 del self.cfmin
@@ -761,7 +779,7 @@ cdef class Minuit:
             if self.print_level > 1 and nsplit != 1: self.print_fmin()
 
         self.last_upst = self.cfmin.UserState()
-        self.refreshInternalState()
+        self.refresh_internal_state()
 
         if self.print_level > 0:
             self.print_fmin()
@@ -810,7 +828,7 @@ cdef class Minuit:
         if not self.last_upst.HasCovariance():
             warn("HESSE Failed. Covariance and GlobalCC will not be available",
                  HesseFailedWarning)
-        self.refreshInternalState()
+        self.refresh_internal_state()
         del hesse
 
         if self.print_level > 0:
@@ -882,7 +900,7 @@ cdef class Minuit:
             if self.print_level > 0:
                 self.frontend.print_merror(
                     vname, self.merrors_struct[vname])
-        self.refreshInternalState()
+        self.refresh_internal_state()
         del minos
         self.pyfcn.SetErrorDef(oldup)
         return self.merrors_struct
@@ -1049,8 +1067,6 @@ cdef class Minuit:
 
     def print_fmin(self):
         """Print current function minimum state"""
-        #cdef MnUserParameterState ust = MnUserParameterState(
-        #                               self.cfmin.UserState())
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
         sfmin = cfmin2struct(self.cfmin)
@@ -1154,24 +1170,6 @@ cdef class Minuit:
 
     # Various utility functions
 
-    cdef _construct_FCN(self):
-        """Construct or re-construct FCN"""
-        if self.grad is None:
-            self.pyfcn = new PythonFCN(
-                self.fcn,
-                self.use_array_call,
-                self.errordef,
-                self.parameters,
-                self.throw_nan)
-        else:
-            self.pyfcn = new PythonGradientFCN(
-                self.fcn,
-                self.grad,
-                self.use_array_call,
-                self.errordef,
-                self.parameters,
-                self.throw_nan)
-
     def is_clean_state(self):
         """Check if minuit is in a clean state, ie. no migrad call"""
         return self.minimizer is NULL and self.cfmin is NULL
@@ -1192,10 +1190,10 @@ cdef class Minuit:
         for vn in parameters:
             if vn not in kwds:
                 warn(('Parameter %s does not have initial value. '
-                      'Assume 0.') % (vn), InitialParamWarning)
+                      'Assume 0.') % vn, InitialParamWarning)
             if 'error_' + vn not in kwds and 'fix_' + param_name(vn) not in kwds:
                 warn(('Parameter %s is floating but does not '
-                      'have initial step size. Assume 1.') % (vn),
+                      'have initial step size. Assume 1.') % vn,
                      InitialParamWarning)
         for vlim in extract_limit(kwds):
             if param_name(vlim) not in parameters:
@@ -1237,7 +1235,7 @@ cdef class Minuit:
         if vname not in self.parameters:
             raise ValueError('Unknown parameter %s' % vname)
 
-        if isinstance(bound, (int, long, float)):
+        if is_number(bound):
             if not self.matrix_accurate():
                 warn('Specify nsigma bound but error '
                      'but error matrix is not accurate.')
@@ -1259,7 +1257,7 @@ cdef class Minuit:
             m.migrad()
             migrad_status[i] = m.migrad_ok()
             if not m.migrad_ok():
-                warn(('Migrad fails to converge for %s=%f') % (vname, v))
+                warn('Migrad fails to converge for %s=%f' % (vname, v))
             results[i] = m.fval
             if m.fval < vmin:
                 vmin = m.fval
@@ -1340,7 +1338,7 @@ cdef class Minuit:
                                "subtraction but no minimization has been done. "
                                "Run migrad first.")
 
-        if isinstance(bound, (int, long, float)):
+        if is_number(bound):
             start = self.values[vname]
             sigma = self.errors[vname]
             bound = (start - bound * sigma,
@@ -1439,7 +1437,7 @@ cdef class Minuit:
                                "subtraction but no minimization has been done. "
                                "Run migrad first.")
 
-        if isinstance(bound, (int, long, float)):
+        if is_number(bound):
             x_start = self.values[x]
             x_sigma = self.errors[x]
             x_bound = (x_start - bound * x_sigma, x_start + bound * x_sigma)
@@ -1573,7 +1571,7 @@ cdef class Minuit:
         return _plotting.draw_contour(self, x, y, bins,
                                       bound, args, show_sigma)
 
-    cdef refreshInternalState(self):
+    cdef refresh_internal_state(self):
         """Refresh internal state attributes.
 
         These attributes should be in a function instead
