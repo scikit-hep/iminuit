@@ -1,7 +1,6 @@
 # cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii
 # distutils: language = c++
-"""IPython Minuit class definition.
-"""
+"""IPython Minuit class definition."""
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from warnings import warn
@@ -10,8 +9,7 @@ from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
 from iminuit.util import *
-from iminuit.iminuit_warnings import (InitialParamWarning,
-                                      HesseFailedWarning)
+from iminuit.iminuit_warnings import InitialParamWarning, HesseFailedWarning
 from iminuit.latex import LatexFactory
 from iminuit import _plotting
 
@@ -31,7 +29,7 @@ ctypedef PythonGradientFCN* PythonGradientFCNPtr
 ctypedef MnUserParameterState* MnUserParameterStatePtr
 
 # Helper functions
-cdef setParameterState(MnUserParameterStatePtr state, object parameters, dict fitarg):
+cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict fitarg):
     """Construct parameter state from user input.
 
     Caller is responsible for cleaning up the pointer.
@@ -108,6 +106,9 @@ cdef check_extra_args(parameters, kwd):
 def is_number(value):
     return isinstance(value, (int, long, float))
 
+def is_int(value):
+    return isinstance(value, (int, long))
+
 # Helper classes
 cdef class BasicView:
     """Dict-like view of parameter state.
@@ -136,11 +137,11 @@ cdef class BasicView:
         return [self._get(k) for k in range(len(self))]
 
     def __getitem__(self, key):
-        cdef int i = key if isinstance(key, (int, long)) else self._minuit.var2pos[key]
+        cdef int i = key if is_int(key) else self._minuit.var2pos[key]
         return self._get(i)
 
     def __setitem__(self, key, value):
-        cdef int i = key if isinstance(key, (int, long)) else self._minuit.var2pos[key]
+        cdef int i = key if is_int(key) else self._minuit.var2pos[key]
         self._set(i, value)
 
     def __repr__(self):
@@ -570,7 +571,7 @@ cdef class Minuit:
 
         self.minimizer = NULL
         self.cfmin = NULL
-        setParameterState(&self.initial_upst, self.parameters, self.fitarg)
+        set_parameter_state(&self.initial_upst, self.parameters, self.fitarg)
         self.last_upst = self.initial_upst
 
         self.args = ArgsView(self)
@@ -1066,8 +1067,6 @@ cdef class Minuit:
 
     def print_fmin(self):
         """Print current function minimum state"""
-        #cdef MnUserParameterState ust = MnUserParameterState(
-        #                               self.cfmin.UserState())
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
         sfmin = cfmin2struct(self.cfmin)

@@ -58,9 +58,6 @@ class LatexTable:
     def _auto_align(self):
         return '|' + 'c|' * self.num_col
 
-    def _xcolor_from_tuple(self, c):
-        return '[RGB]{%d,%d,%d}' % (c[0], c[1], c[2])
-
     def _format(self, s):
         if s in self.latex_map:
             return self.latex_map[s]
@@ -134,8 +131,8 @@ class LatexTable:
         # decorate it
 
         for (i, j), c in self.cell_color.items():
-            tdata[i][j] = '\\cellcolor' + self._xcolor_from_tuple(c) + \
-                          ' ' + tdata[i][j]
+            xcolor = '[RGB]{%d,%d,%d}' % (c[0], c[1], c[2])
+            tdata[i][j] = '\\cellcolor' + xcolor + ' ' + tdata[i][j]
 
         for line in tdata:
             ret += ' & '.join(line) + '\\\\\n'
