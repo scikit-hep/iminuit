@@ -334,13 +334,14 @@ def test_fix_param(grad):
         m.is_fixed('a')
 
     # fix by setting limits
-    m = Minuit(func3, y=10., limit_y=(10,10), pedantic=False, print_level=0)
+    m = Minuit(func3, y=10., limit_y=(10, 10), pedantic=False, print_level=0)
     assert m.fixed['y']
 
     # initial value out of range is forced in range
-    m = Minuit(func3, y=20., limit_y=(10,10), pedantic=False, print_level=0)
+    m = Minuit(func3, y=20., limit_y=(10, 10), pedantic=False, print_level=0)
     assert m.fixed['y']
     assert m.values['y'] == 10
+
 
 def test_fitarg_oneside():
     m = Minuit(func4, print_level=0, y=10., fix_y=True, limit_x=(None, 20.),
@@ -814,8 +815,10 @@ def test_view_lifetime():
 def test_bad_functions():
     def throwing(x):
         raise RuntimeError
+
     def returning_nan(x):
         return np.nan
+
     def returning_garbage(x):
         return "foo"
 
@@ -826,15 +829,18 @@ def test_bad_functions():
 
     def throwing(x):
         raise RuntimeError
+
     def returning_nan(x):
         return np.array([1, np.nan])
+
     def returning_noniterable(x):
         return 0
+
     def returning_garbage(x):
         return np.array([1, "foo"])
 
     for func in (throwing, returning_nan, returning_noniterable, returning_garbage):
-        m = Minuit(lambda x,y: 0, grad=func,
+        m = Minuit(lambda x, y: 0, grad=func,
                    x=1, y=1, pedantic=False, throw_nan=True)
         with pytest.raises(RuntimeError):
             m.migrad()
