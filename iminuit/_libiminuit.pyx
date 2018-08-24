@@ -105,6 +105,8 @@ cdef check_extra_args(parameters, kwd):
                 ('Cannot understand keyword %s. May be a typo?\n'
                  'The parameters are %r') % (k, parameters))
 
+def is_number(value):
+    return isinstance(value, (int, long, float))
 
 # Helper classes
 cdef class BasicView:
@@ -1238,7 +1240,7 @@ cdef class Minuit:
         if vname not in self.parameters:
             raise ValueError('Unknown parameter %s' % vname)
 
-        if isinstance(bound, (int, long, float)):
+        if is_number(bound):
             if not self.matrix_accurate():
                 warn('Specify nsigma bound but error '
                      'but error matrix is not accurate.')
@@ -1341,7 +1343,7 @@ cdef class Minuit:
                                "subtraction but no minimization has been done. "
                                "Run migrad first.")
 
-        if isinstance(bound, (int, long, float)):
+        if is_number(bound):
             start = self.values[vname]
             sigma = self.errors[vname]
             bound = (start - bound * sigma,
@@ -1440,7 +1442,7 @@ cdef class Minuit:
                                "subtraction but no minimization has been done. "
                                "Run migrad first.")
 
-        if isinstance(bound, (int, long, float)):
+        if is_number(bound):
             x_start = self.values[x]
             x_sigma = self.errors[x]
             x_bound = (x_start - bound * x_sigma, x_start + bound * x_sigma)
