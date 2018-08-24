@@ -10,9 +10,7 @@ def pip_install(packages):
 
 
 def main():
-    if build == 'CONDA':
-        subprocess.check_call(['sh', 'ci-scripts/travis_install_conda.sh'])
-    elif build == 'ALL':
+    if build == 'ALL':
         pip_install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter')
     elif build in {'TEST', 'COVERAGE'}:
         pip_install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov')
