@@ -13,3 +13,4 @@ conda info -a
 # as it imports conda and conda_build. It is included as part of the conda build package.
 conda build --version
 conda install -n root conda-build Cython numpy pytest matplotlib scipy ipython sphinx jupyter
+conda activate root
