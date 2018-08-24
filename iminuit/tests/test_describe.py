@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 from iminuit.util import describe, make_func_code
 from iminuit.tests.utils import requires_dependency
 from math import ldexp
+import sys
 import pytest
 
 
@@ -34,6 +35,9 @@ def test_functor():
     assert describe(A(), True) == ['x', 'y']
 
 
+# This case can't work on Python 3.7
+# See https://github.com/iminuit/iminuit/issues/270
+@pytest.mark.skipif(sys.version_info >= (3, 7))
 def test_builtin_by_parsing_doc():
     assert describe(ldexp, True) == ['x', 'i']
 
