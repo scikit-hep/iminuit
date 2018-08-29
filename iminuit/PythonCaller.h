@@ -32,6 +32,26 @@ inline std::string errormsg(const char* prefix,
                                   x[i]);
         ret += line;
     }
+
+    // add original error to the message
+    ret += "Python exception report:\n";
+    PyObject *ptype, *pvalue, *ptraceback;
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    PyObject* tb_module = PyImport_ImportModule("traceback");
+    if (tb_module) {
+        PyObject* format = PyObject_GetAttrString(tb_module, "format_exception");
+        if (format && PyCallable_Check(format)) {
+            PyObject* list = PyObject_CallFunctionObjArgs(format, ptype, pvalue, ptraceback, NULL);
+            for (int i = 0, n = PySequence_Size(list); i < n; ++i) {
+                PyObject* s = PyList_GetItem(list, i);
+                ret += PyString_AsString(s);
+            }
+            Py_DECREF(list);
+        }
+    }
+
+    PyErr_Clear();
+
     return ret;
 }
 
@@ -111,10 +131,9 @@ public:
         Py_DECREF(args);
 
         if (PyErr_Occurred()) {
-            std::string msg = detail::errormsg("Exception Occured\n",
+            std::string msg = detail::errormsg("exception was raised in user function\n",
                                                names, x);
             Py_XDECREF(result);
-            PyErr_Clear();
             throw std::runtime_error(msg);
         }
 
@@ -124,7 +143,6 @@ public:
         if (PyErr_Occurred()) {
             std::string msg = detail::errormsg("Cannot convert call result to double\n",
                                                names, x);
-            PyErr_Clear();
             throw std::runtime_error(msg);
 
         }
