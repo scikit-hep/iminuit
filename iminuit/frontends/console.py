@@ -110,15 +110,15 @@ class ConsoleFrontend(Frontend):
         num_width = max(2, int(log10(max(num_max, 1)) + 1))
 
         header = (('| {0:^%is} | {1:^%is} | {2:^8s} | {3:^8s} | {4:^8s} |'
-                   ' {5:^8s} | {6:8s} | {7:8s} | {8:^6s} |') %
+                   ' {5:^8s} | {6:8s} | {7:8s} | {8:^5s} |') %
                   (num_width, name_width)).format(
             'No', 'Name', 'Value', 'Sym. Err',
-            "Err-", "Err+", "Limit-", "Limit+", "Fixed?")
+            "Err-", "Err+", "Limit-", "Limit+", "Fixed")
         hline = '-' * len(header)
-        linefmt = (('| {0:>%id} | {1:>%is} | {2:<8s} | {3:<8s} | {4:<8s} |'
-                    ' {5:<8s} | {6:8s} | {7:8s} | {8:^6s} |') %
+        linefmt = (('| {0:>%id} | {1:>%is} | {2:<9s}| {3:<9s}| {4:<9s}|'
+                    ' {5:<9s}| {6:9s}| {7:9s}| {8:^5s} |') %
                    (num_width, name_width))
-        nfmt = '{0:<8.4G}'
+        nfmt = '{0:<9.3G}'
         nformat = nfmt.format
         blank = ' ' * 8
 
@@ -136,7 +136,7 @@ class ConsoleFrontend(Frontend):
             tmp.append(nformat(mp.upper_limit) if mp.upper_limit is not None else blank)
 
             tmp.append(
-                'Yes' if mp.is_fixed else 'CONST' if mp.is_const else 'No')
+                'Yes' if mp.is_fixed else 'CONST' if mp.is_const else '')
 
             line = linefmt.format(*tmp)
             tab.append(line)
@@ -157,7 +157,7 @@ class ConsoleFrontend(Frontend):
             s += ' |'
             return s
 
-        row_width = max(max(len(v) for v in vnames), 4)
+        row_width = max(max(len(v) for v in vnames), 5)
         blank = ' ' * row_width
         vnames = [('{:>%is}' % row_width).format(x) for x in vnames]
         val_fmt = '{:%i.2f}' % row_width
