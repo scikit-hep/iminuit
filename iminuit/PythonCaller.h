@@ -11,6 +11,13 @@
 #include <cmath>
 #include "Utils.h"
 
+#if PY_MAJOR_VERSION < 3
+#define PyBytes_FromStringAndSize PyString_FromStringAndSize
+#define PyBytes_AS_STRING PyString_AS_STRING
+#define PyBytes_Size PyString_Size
+#define _PyBytes_Resize _PyString_Resize
+#endif
+
 namespace detail {
 
 inline std::string errormsg(const char* prefix,
@@ -32,6 +39,29 @@ inline std::string errormsg(const char* prefix,
                                   x[i]);
         ret += line;
     }
+
+    // add original error to the message
+    PyObject *ptype, *pvalue, *ptraceback;
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    PyObject* tb_module = PyImport_ImportModule("traceback");
+    if (tb_module) {
+        PyObject* format = PyObject_GetAttrString(tb_module, "format_exception");
+        if (format && PyCallable_Check(format)) {
+            PyObject* list = PyObject_CallFunctionObjArgs(format, ptype, pvalue, ptraceback, NULL);
+            if (list) {
+                ret += "Python exception report:\n";
+                for (int i = 0, n = PySequence_Size(list); i < n; ++i) {
+                    PyObject* s = PyList_GetItem(list, i);
+                    ret += PyBytes_AS_STRING(s);
+                }
+                Py_DECREF(list);
+            }
+        }
+        Py_XDECREF(format);
+        Py_DECREF(tb_module);
+    }
+    PyErr_Clear();
+
     return ret;
 }
 
@@ -111,10 +141,9 @@ public:
         Py_DECREF(args);
 
         if (PyErr_Occurred()) {
-            std::string msg = detail::errormsg("Exception Occured\n",
+            std::string msg = detail::errormsg("exception was raised in user function\n",
                                                names, x);
             Py_XDECREF(result);
-            PyErr_Clear();
             throw std::runtime_error(msg);
         }
 
@@ -124,13 +153,12 @@ public:
         if (PyErr_Occurred()) {
             std::string msg = detail::errormsg("Cannot convert call result to double\n",
                                                names, x);
-            PyErr_Clear();
             throw std::runtime_error(msg);
 
         }
 
         if (detail::isnan(ret)) {
-            std::string msg = detail::errormsg("result is Nan\n",
+            std::string msg = detail::errormsg("result is NaN\n",
                                                names, x);
             if (throw_nan) {
                 throw std::runtime_error(msg);
