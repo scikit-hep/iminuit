@@ -11,6 +11,13 @@
 #include <cmath>
 #include "Utils.h"
 
+#if PY_MAJOR_VERSION < 3
+#define PyBytes_FromStringAndSize PyString_FromStringAndSize
+#define PyBytes_AS_STRING PyString_AS_STRING
+#define PyBytes_Size PyString_Size
+#define _PyBytes_Resize _PyString_Resize
+#endif
+
 namespace detail {
 
 inline std::string errormsg(const char* prefix,
@@ -45,7 +52,7 @@ inline std::string errormsg(const char* prefix,
                 ret += "Python exception report:\n";
                 for (int i = 0, n = PySequence_Size(list); i < n; ++i) {
                     PyObject* s = PyList_GetItem(list, i);
-                    ret += PyString_AsString(s);
+                    ret += PyBytes_AS_STRING(s);
                 }
                 Py_DECREF(list);
             }
