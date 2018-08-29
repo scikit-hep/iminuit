@@ -34,7 +34,6 @@ inline std::string errormsg(const char* prefix,
     }
 
     // add original error to the message
-    ret += "Python exception report:\n";
     PyObject *ptype, *pvalue, *ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyObject* tb_module = PyImport_ImportModule("traceback");
@@ -42,14 +41,18 @@ inline std::string errormsg(const char* prefix,
         PyObject* format = PyObject_GetAttrString(tb_module, "format_exception");
         if (format && PyCallable_Check(format)) {
             PyObject* list = PyObject_CallFunctionObjArgs(format, ptype, pvalue, ptraceback, NULL);
-            for (int i = 0, n = PySequence_Size(list); i < n; ++i) {
-                PyObject* s = PyList_GetItem(list, i);
-                ret += PyString_AsString(s);
+            if (list) {
+                ret += "Python exception report:\n";
+                for (int i = 0, n = PySequence_Size(list); i < n; ++i) {
+                    PyObject* s = PyList_GetItem(list, i);
+                    ret += PyString_AsString(s);
+                }
+                Py_DECREF(list);
             }
-            Py_XDECREF(list);
         }
+        Py_XDECREF(format);
+        Py_DECREF(tb_module);
     }
-
     PyErr_Clear();
 
     return ret;
@@ -148,7 +151,7 @@ public:
         }
 
         if (detail::isnan(ret)) {
-            std::string msg = detail::errormsg("result is Nan\n",
+            std::string msg = detail::errormsg("result is NaN\n",
                                                names, x);
             if (throw_nan) {
                 throw std::runtime_error(msg);
