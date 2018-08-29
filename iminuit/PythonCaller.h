@@ -46,7 +46,7 @@ inline std::string errormsg(const char* prefix,
                 PyObject* s = PyList_GetItem(list, i);
                 ret += PyString_AsString(s);
             }
-            Py_DECREF(list);
+            Py_XDECREF(list);
         }
     }
 
