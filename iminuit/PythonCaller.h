@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <cstring> // for std::strlen
 #include <vector>
 #include <Python.h>
 // cannot use this, because cython enforces old api:
@@ -13,6 +14,8 @@
 
 namespace detail {
 
+// Helper to enable scoped ref counting, which is especially simplifies the
+// code when handling exceptions; the concept is borrowed from Boost.Python
 struct PyHandle {
     PyObject* ptr;
 
@@ -21,14 +24,6 @@ struct PyHandle {
     PyHandle& operator=(PyObject* o) {
         Py_XDECREF(ptr);
         ptr = o;
-        return *this;
-    }
-    PyHandle(const char* s) {
-        ptr = PyUnicode_DecodeASCII(s, std::strlen(s), NULL);
-    }
-    PyHandle& operator=(const char* s) {
-        Py_XDECREF(ptr);
-        ptr = PyUnicode_DecodeASCII(s, std::strlen(s), NULL);
         return *this;
     }
     ~PyHandle() {
