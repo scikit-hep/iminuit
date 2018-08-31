@@ -13,30 +13,6 @@
 
 namespace detail {
 
-// Helper to enable scoped ref counting, which is especially simplifies the
-// code when handling exceptions; the concept is borrowed from Boost.Python
-struct PyHandle {
-    PyObject* ptr;
-
-    PyHandle() : ptr(NULL) {}
-    PyHandle(PyObject* o) : ptr(o) {}
-    PyHandle& operator=(PyObject* o) {
-        Py_XDECREF(ptr);
-        ptr = o;
-        return *this;
-    }
-    ~PyHandle() {
-        Py_XDECREF(ptr);
-    }
-    operator PyObject* () { return ptr; }
-    PyObject** operator&() { return &ptr; }
-    operator bool() const { return bool(ptr); }
-private:
-    // no copying allowed
-    PyHandle(const PyHandle&);
-    PyHandle& operator=(const PyHandle&);
-};
-
 inline std::string errormsg(const char* prefix,
                             const std::vector<std::string>& pname,
                             const std::vector<double>& x) {
@@ -63,10 +39,10 @@ inline std::string errormsg(const char* prefix,
 
     if (ptype && pvalue) {
         // add original Python error report
-        PyHandle util_module(PyImport_ImportModule("iminuit.util"));
+        PyHandle util_module = PyImport_ImportModule("iminuit.util");
         if (!util_module) std::abort(); // should never happen
 
-        PyHandle format(PyObject_GetAttrString(util_module, "format_exception"));
+        PyHandle format = PyObject_GetAttrString(util_module, "format_exception");
         if (!(format && PyCallable_Check(format))) std::abort(); // should never happen
 
         PyHandle s;
@@ -79,7 +55,7 @@ inline std::string errormsg(const char* prefix,
 #if PY_MAJOR_VERSION < 3
             ret += PyString_AsString(s);
 #else
-            PyHandle b(PyUnicode_EncodeLocale(s, "surrogateescape"));
+            PyHandle b = PyUnicode_EncodeLocale(s, "surrogateescape");
             ret += PyBytes_AsString(b);
 #endif
         }
@@ -159,27 +135,28 @@ public:
     double scalar(const std::vector<double>& x,
                   const std::vector<std::string>& names,
                   const bool throw_nan) const {
-        detail::PyHandle args, result;
+        PyHandle args, result;
         args = convert(x); // no error can occur here
         result = PyObject_CallObject(fcn, args);
 
         if (!result) {
-            std::string msg = detail::errormsg("exception was raised in user function",
-                                               names, x);
+            std::string msg = detail::errormsg(
+                "exception was raised in user function",
+                names, x);
             throw std::runtime_error(msg);
         }
 
         const double ret = PyFloat_AsDouble(result);
 
         if (PyErr_Occurred()) {
-            std::string msg = detail::errormsg("cannot convert call result to double",
-                                names, x);
+            std::string msg = detail::errormsg(
+                "cannot convert call result to double",
+                names, x);
             throw std::runtime_error(msg);
         }
 
         if (detail::isnan(ret)) {
-            std::string msg = detail::errormsg("result is NaN",
-                                names, x);
+            std::string msg = detail::errormsg("result is NaN", names, x);
             if (throw_nan)
                 throw std::runtime_error(msg);
         }
@@ -191,32 +168,37 @@ public:
     std::vector<double> vector(const std::vector<double>& x,
                                const std::vector<std::string>& names,
                                const bool throw_nan) const {
-        detail::PyHandle args, result;
+        PyHandle args, result;
         args = convert(x); // no error can occur here
         result = PyObject_CallObject(fcn, args);
 
         if (!result) {
-            std::string msg = detail::errormsg("exception was raised in user function", names, x);
+            std::string msg = detail::errormsg(
+                "exception was raised in user function",
+                names, x);
             throw std::runtime_error(msg);
         }
 
         // Convert the iterable to a vector
-        detail::PyHandle iterator;
+        PyHandle iterator;
         iterator = PyObject_GetIter(result);
         if (!iterator) {
-            std::string msg = detail::errormsg("result must be iterable", names, x);
+            std::string msg = detail::errormsg(
+                "result must be iterable",
+                names, x);
             throw std::runtime_error(msg);
         }
 
         std::vector<double> result_vector;
         result_vector.reserve(PySequence_Size(result));
-        detail::PyHandle item;
+        PyHandle item;
         while (item = PyIter_Next(iterator)) {
             const double xi = PyFloat_AsDouble(item);
 
             if (PyErr_Occurred()) {
-                std::string msg = detail::errormsg("cannot convert to vector of doubles",
-                                    names, x);
+                std::string msg = detail::errormsg(
+                    "cannot convert to vector of doubles",
+                    names, x);
                 throw std::runtime_error(msg);
             }
 
