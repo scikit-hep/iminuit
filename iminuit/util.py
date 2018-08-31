@@ -17,6 +17,7 @@ __all__ = [
     'extract_fix',
     'remove_var',
     'arguments_from_docstring',
+    'format_exception',
 ]
 
 
@@ -301,3 +302,10 @@ def make_func_code(params):
     fc.co_varnames = params
     fc.co_argcount = len(params)
     return fc
+
+def format_exception(etype, evalue, tb):
+    # work around for https://bugs.python.org/issue17413
+    # the issue is not fixed in Python-3.7
+    import traceback
+    s = "".join(traceback.format_tb(tb))
+    return "%s: %s\n%s" % (etype.__name__, evalue, s)

@@ -11,20 +11,44 @@
 #include <cmath>
 #include "Utils.h"
 
-#if PY_MAJOR_VERSION < 3
-#define PyBytes_FromStringAndSize PyString_FromStringAndSize
-#define PyBytes_AS_STRING PyString_AS_STRING
-#define PyBytes_Size PyString_Size
-#define _PyBytes_Resize _PyString_Resize
-#endif
-
 namespace detail {
+
+struct PyHandle {
+    PyObject* ptr;
+
+    PyHandle() : ptr(NULL) {}
+    PyHandle(PyObject* o) : ptr(o) {}
+    PyHandle& operator=(PyObject* o) {
+        Py_XDECREF(ptr);
+        ptr = o;
+        return *this;
+    }
+    PyHandle(const char* s) {
+        ptr = PyUnicode_DecodeASCII(s, std::strlen(s), NULL);
+    }
+    PyHandle& operator=(const char* s) {
+        Py_XDECREF(ptr);
+        ptr = PyUnicode_DecodeASCII(s, std::strlen(s), NULL);
+        return *this;
+    }
+    ~PyHandle() {
+        Py_XDECREF(ptr);
+    }
+    operator PyObject* () { return ptr; }
+    PyObject** operator&() { return &ptr; }
+    operator bool() const { return bool(ptr); }
+private:
+    // no copying allowed
+    PyHandle(const PyHandle&);
+    PyHandle& operator=(const PyHandle&);
+};
 
 inline std::string errormsg(const char* prefix,
                             const std::vector<std::string>& pname,
                             const std::vector<double>& x) {
-    std::string ret = prefix;
-    ret += "fcn is called with following arguments:\n";
+    std::string ret;
+    ret += prefix;
+    ret += "\nUser function arguments:\n";
     assert(pname.size() == x.size());
     //determine longest variable length
     size_t maxlength = 0;
@@ -40,27 +64,32 @@ inline std::string errormsg(const char* prefix,
         ret += line;
     }
 
-    // add original error to the message
-    PyObject *ptype, *pvalue, *ptraceback;
+    PyHandle ptype, pvalue, ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-    PyObject* tb_module = PyImport_ImportModule("traceback");
-    if (tb_module) {
-        PyObject* format = PyObject_GetAttrString(tb_module, "format_exception");
-        if (format && PyCallable_Check(format)) {
-            PyObject* list = PyObject_CallFunctionObjArgs(format, ptype, pvalue, ptraceback, NULL);
-            if (list) {
-                ret += "Python exception report:\n";
-                for (int i = 0, n = PySequence_Size(list); i < n; ++i) {
-                    PyObject* s = PyList_GetItem(list, i);
-                    ret += PyBytes_AS_STRING(s);
-                }
-                Py_DECREF(list);
-            }
+
+    if (ptype && pvalue) {
+        // add original Python error report
+        PyHandle util_module(PyImport_ImportModule("iminuit.util"));
+        if (!util_module) std::abort(); // should never happen
+
+        PyHandle format(PyObject_GetAttrString(util_module, "format_exception"));
+        if (!(format && PyCallable_Check(format))) std::abort(); // should never happen
+
+        PyHandle s;
+        s = PyObject_CallFunctionObjArgs(format, (PyObject*)ptype,
+                                         (PyObject*)pvalue,
+                                         ptraceback ? (PyObject*)ptraceback : Py_None, NULL);
+
+        if (s) {
+            ret += "Original python exception in user function:\n";
+#if PY_MAJOR_VERSION < 3
+            ret += PyString_AsString(s);
+#else
+            PyHandle b(PyUnicode_EncodeLocale(s, "surrogateescape"));
+            ret += PyBytes_AsString(b);
+#endif
         }
-        Py_XDECREF(format);
-        Py_DECREF(tb_module);
     }
-    PyErr_Clear();
 
     return ret;
 }
@@ -136,35 +165,29 @@ public:
     double scalar(const std::vector<double>& x,
                   const std::vector<std::string>& names,
                   const bool throw_nan) const {
-        PyObject* args = convert(x); // no error can occur here
-        PyObject* result = PyObject_Call(fcn, args, NULL);
-        Py_DECREF(args);
+        detail::PyHandle args, result;
+        args = convert(x); // no error can occur here
+        result = PyObject_CallObject(fcn, args);
 
-        if (PyErr_Occurred()) {
-            std::string msg = detail::errormsg("exception was raised in user function\n",
+        if (!result) {
+            std::string msg = detail::errormsg("exception was raised in user function",
                                                names, x);
-            Py_XDECREF(result);
             throw std::runtime_error(msg);
         }
 
         const double ret = PyFloat_AsDouble(result);
-        Py_DECREF(result);
 
         if (PyErr_Occurred()) {
-            std::string msg = detail::errormsg("Cannot convert call result to double\n",
-                                               names, x);
+            std::string msg = detail::errormsg("cannot convert call result to double",
+                                names, x);
             throw std::runtime_error(msg);
-
         }
 
         if (detail::isnan(ret)) {
-            std::string msg = detail::errormsg("result is NaN\n",
-                                               names, x);
-            if (throw_nan) {
+            std::string msg = detail::errormsg("result is NaN",
+                                names, x);
+            if (throw_nan)
                 throw std::runtime_error(msg);
-            } else {
-                PyErr_Warn(NULL, msg.c_str());
-            }
         }
 
         ++ncall;
@@ -174,60 +197,42 @@ public:
     std::vector<double> vector(const std::vector<double>& x,
                                const std::vector<std::string>& names,
                                const bool throw_nan) const {
-        PyObject* args = convert(x); // no error can occur here
-        PyObject* result = PyObject_Call(fcn, args, NULL);
-        Py_XDECREF(args);
+        detail::PyHandle args, result;
+        args = convert(x); // no error can occur here
+        result = PyObject_CallObject(fcn, args);
 
-        if (PyErr_Occurred()) {
-            std::string msg = detail::errormsg("exception occured\n",
-                                               names, x);
-            Py_XDECREF(result);
-            PyErr_Clear();
+        if (!result) {
+            std::string msg = detail::errormsg("exception was raised in user function", names, x);
             throw std::runtime_error(msg);
         }
 
         // Convert the iterable to a vector
-        PyObject *iterator = PyObject_GetIter(result);
-        if (iterator == NULL) {
-            std::string msg = detail::errormsg("result must be iterable\n",
-                                               names, x);
-            Py_XDECREF(result);
-            PyErr_Clear();
+        detail::PyHandle iterator;
+        iterator = PyObject_GetIter(result);
+        if (!iterator) {
+            std::string msg = detail::errormsg("result must be iterable", names, x);
             throw std::runtime_error(msg);
         }
 
         std::vector<double> result_vector;
         result_vector.reserve(PySequence_Size(result));
-        PyObject *item = NULL;
+        detail::PyHandle item;
         while (item = PyIter_Next(iterator)) {
             const double xi = PyFloat_AsDouble(item);
-            Py_DECREF(item);
 
             if (PyErr_Occurred()) {
-                std::string msg = detail::errormsg("cannot convert to vector of doubles\n",
-                                                   names, x);
-                Py_DECREF(iterator);
-                Py_DECREF(result);
-                PyErr_Clear();
+                std::string msg = detail::errormsg("cannot convert to vector of doubles",
+                                    names, x);
                 throw std::runtime_error(msg);
             }
 
             if (detail::isnan(xi)) {
-                std::string msg = detail::errormsg("result is NaN\n",
-                                                   names, x);
-                if (throw_nan) {
-                    Py_DECREF(iterator);
-                    Py_DECREF(result);
+                std::string msg = detail::errormsg("result is NaN", names, x);
+                if (throw_nan)
                     throw std::runtime_error(msg);
-                } else {
-                    PyErr_Warn(NULL, msg.c_str());
-                }
             }
             result_vector.push_back(xi);
         }
-
-        Py_DECREF(iterator);
-        Py_DECREF(result);
 
         ++ncall;
         return result_vector;
