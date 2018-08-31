@@ -3,7 +3,6 @@
 
 #include <stdexcept>
 #include <string>
-#include <cstring> // for std::strlen
 #include <vector>
 #include <Python.h>
 // cannot use this, because cython enforces old api:
