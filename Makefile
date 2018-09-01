@@ -49,7 +49,7 @@ clean:
 
 build: iminuit/_libiminuit.so
 
-iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx Minuit/inc/*/*.h iminuit/*.pyx iminuit/*.pxi)
+iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi)
 	python setup.py build_ext --inplace
 
 test: build

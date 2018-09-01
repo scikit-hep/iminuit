@@ -814,7 +814,10 @@ def test_view_lifetime():
 
 def test_bad_functions():
     def throwing(x):
-        raise RuntimeError
+        raise RuntimeError("user message")
+
+    def divide_by_zero(x):
+        1/0
 
     def returning_nan(x):
         return np.nan
@@ -822,13 +825,15 @@ def test_bad_functions():
     def returning_garbage(x):
         return "foo"
 
-    for func in (throwing, returning_nan, returning_garbage):
+    for func, expected in (
+            (throwing, 'RuntimeError("user message")'),
+            (divide_by_zero, "ZeroDivisionError"),
+            (returning_nan, "result is NaN"),
+            (returning_garbage, "TypeError")):
         m = Minuit(func, x=1, pedantic=False, throw_nan=True)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             m.migrad()
-
-    def throwing(x):
-        raise RuntimeError
+        assert expected in excinfo.value.args[0]
 
     def returning_nan(x):
         return np.array([1, np.nan])
@@ -839,8 +844,14 @@ def test_bad_functions():
     def returning_garbage(x):
         return np.array([1, "foo"])
 
-    for func in (throwing, returning_nan, returning_noniterable, returning_garbage):
-        m = Minuit(lambda x, y: 0, grad=func,
-                   x=1, y=1, pedantic=False, throw_nan=True)
-        with pytest.raises(RuntimeError):
+    for func, expected in (
+            (throwing, 'RuntimeError("user message")'),
+            (divide_by_zero, "ZeroDivisionError"),
+            (returning_nan, "result is NaN"),
+            (returning_garbage, "TypeError"),
+            (returning_noniterable, "TypeError")):
+        m = Minuit.from_array_func(lambda x: 0, (1, 1), grad=func,
+                                   pedantic=False, throw_nan=True)
+        with pytest.raises(RuntimeError) as excinfo:
             m.migrad()
+        assert expected in excinfo.value.args[0]
