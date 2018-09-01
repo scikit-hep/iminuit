@@ -110,35 +110,31 @@ class ConsoleFrontend(Frontend):
         num_width = max(2, int(log10(max(num_max, 1)) + 1))
 
         header = (('| {0:^%is} | {1:^%is} | {2:^8s} | {3:^8s} | {4:^8s} |'
-                   ' {5:^8s} | {6:8s} | {7:8s} | {8:^6s} |') %
+                   ' {5:^8s} | {6:8s} | {7:8s} | {8:^5s} |') %
                   (num_width, name_width)).format(
             'No', 'Name', 'Value', 'Sym. Err',
-            "Err-", "Err+", "Limit-", "Limit+", "Fixed?")
+            "Err-", "Err+", "Limit-", "Limit+", "Fixed")
         hline = '-' * len(header)
-        linefmt = (('| {0:>%id} | {1:>%is} | {2:<8s} | {3:<8s} | {4:<8s} |'
-                    ' {5:<8s} | {6:8s} | {7:8s} | {8:^6s} |') %
+        linefmt = (('| {0:>%id} | {1:>%is} | {2:<9s}| {3:<9s}| {4:<9s}|'
+                    ' {5:<9s}| {6:9s}| {7:9s}| {8:^5s} |') %
                    (num_width, name_width))
-        nfmt = '{0:<8.4G}'
+        nfmt = '{0:<9.3G}'
         nformat = nfmt.format
         blank = ' ' * 8
 
         tab = [hline, header, hline]
-        for i, (v, mp) in enumerate(zip(vnames, mps)):
-            tmp = [i, v]
-
-            tmp.append(nfmt.format(mp.value))
-            tmp.append(nfmt.format(mp.error))
-
-            tmp.append(nformat(merr[v].lower) if v in merr else blank)
-            tmp.append(nformat(merr[v].upper) if v in merr else blank)
-
-            tmp.append(nformat(mp.lower_limit) if mp.lower_limit is not None else blank)
-            tmp.append(nformat(mp.upper_limit) if mp.upper_limit is not None else blank)
-
-            tmp.append(
-                'Yes' if mp.is_fixed else 'CONST' if mp.is_const else 'No')
-
-            line = linefmt.format(*tmp)
+        for i, mp in enumerate(mps):
+            v = mp.name
+            line = linefmt.format(
+                i, mp.name,
+                nformat(mp.value),
+                nformat(mp.error),
+                nformat(merr[v].lower) if v in merr else blank,
+                nformat(merr[v].upper) if v in merr else blank,
+                nformat(mp.lower_limit) if mp.lower_limit is not None else blank,
+                nformat(mp.upper_limit) if mp.upper_limit is not None else blank,
+                'Yes' if mp.is_fixed else 'CONST' if mp.is_const else ''
+            )
             tab.append(line)
         tab.append(hline)
         self.display(*tab)
@@ -157,15 +153,16 @@ class ConsoleFrontend(Frontend):
             s += ' |'
             return s
 
-        row_width = max(max(len(v) for v in vnames), 4)
-        blank = ' ' * row_width
-        vnames = [('{:>%is}' % row_width).format(x) for x in vnames]
+        first_row_width = max(len(v) for v in vnames)
+        row_width = max(first_row_width, 5)
+        v_names = [('{:>%is}' % first_row_width).format(x) for x in vnames]
+        h_names = [('{:>%is}' % row_width).format(x) for x in vnames]
         val_fmt = '{:%i.2f}' % row_width
 
-        header = row_fmt([blank] + vnames)
+        header = row_fmt([' ' * first_row_width] + h_names)
         hline = '-' * len(header)
         tab = [hline, "Correlation", hline, header, hline]
-        for (vn, row) in zip(vnames, matrix):
+        for (vn, row) in zip(v_names, matrix):
             tab.append(row_fmt([vn] + [val_fmt.format(x) for x in row]))
         tab.append(hline)
         self.display(*tab)
