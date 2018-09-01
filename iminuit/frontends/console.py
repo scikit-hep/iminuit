@@ -123,22 +123,18 @@ class ConsoleFrontend(Frontend):
         blank = ' ' * 8
 
         tab = [hline, header, hline]
-        for i, (v, mp) in enumerate(zip(vnames, mps)):
-            tmp = [i, v]
-
-            tmp.append(nfmt.format(mp.value))
-            tmp.append(nfmt.format(mp.error))
-
-            tmp.append(nformat(merr[v].lower) if v in merr else blank)
-            tmp.append(nformat(merr[v].upper) if v in merr else blank)
-
-            tmp.append(nformat(mp.lower_limit) if mp.lower_limit is not None else blank)
-            tmp.append(nformat(mp.upper_limit) if mp.upper_limit is not None else blank)
-
-            tmp.append(
-                'Yes' if mp.is_fixed else 'CONST' if mp.is_const else '')
-
-            line = linefmt.format(*tmp)
+        for i, mp in enumerate(mps):
+            v = mp.name
+            line = linefmt.format(
+                i, mp.name,
+                nformat(mp.value),
+                nformat(mp.error),
+                nformat(merr[v].lower) if v in merr else blank,
+                nformat(merr[v].upper) if v in merr else blank,
+                nformat(mp.lower_limit) if mp.lower_limit is not None else blank,
+                nformat(mp.upper_limit) if mp.upper_limit is not None else blank,
+                'Yes' if mp.is_fixed else 'CONST' if mp.is_const else ''
+            )
             tab.append(line)
         tab.append(hline)
         self.display(*tab)
@@ -157,15 +153,16 @@ class ConsoleFrontend(Frontend):
             s += ' |'
             return s
 
-        row_width = max(max(len(v) for v in vnames), 5)
-        blank = ' ' * row_width
-        vnames = [('{:>%is}' % row_width).format(x) for x in vnames]
+        first_row_width = max(len(v) for v in vnames)
+        row_width = max(first_row_width, 5)
+        v_names = [('{:>%is}' % first_row_width).format(x) for x in vnames]
+        h_names = [('{:>%is}' % row_width).format(x) for x in vnames]
         val_fmt = '{:%i.2f}' % row_width
 
-        header = row_fmt([blank] + vnames)
+        header = row_fmt([' ' * first_row_width] + h_names)
         hline = '-' * len(header)
         tab = [hline, "Correlation", hline, header, hline]
-        for (vn, row) in zip(vnames, matrix):
+        for (vn, row) in zip(v_names, matrix):
             tab.append(row_fmt([vn] + [val_fmt.format(x) for x in row]))
         tab.append(hline)
         self.display(*tab)
