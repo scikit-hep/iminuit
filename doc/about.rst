@@ -8,7 +8,7 @@ About
 What is iminuit?
 ----------------
 
-iminuit is the fast interactive IPython-friendly minimizer based on `Minuit2`_ in ROOT.
+iminuit is the fast interactive IPython-friendly minimizer based on `Minuit2`_ in ROOT-6.12.06.
 
 For a hands-on introduction, see the :ref:`tutorials`.
 
