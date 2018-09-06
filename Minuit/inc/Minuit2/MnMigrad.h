@@ -74,8 +74,8 @@ public:
 
    ~MnMigrad() {}
 
-   const ModularFunctionMinimizer& Minimizer() const {return fMinimizer;}
    ModularFunctionMinimizer& Minimizer() {return fMinimizer;}
+   const ModularFunctionMinimizer& Minimizer() const {return fMinimizer;}
 
 private:
 

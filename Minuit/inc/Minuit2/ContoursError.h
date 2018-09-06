@@ -27,7 +27,6 @@ public:
 
   ContoursError(unsigned int parx, unsigned int pary, const std::vector<std::pair<double,double> >& points, const MinosError& xmnos, const MinosError& ymnos, unsigned int nfcn) : fParX(parx), fParY(pary), fPoints(points), fXMinos(xmnos), fYMinos(ymnos), fNFcn(nfcn) {}
 
-  ContoursError() {}
   ~ContoursError() {}
 
   ContoursError(const ContoursError& cont) : fParX(cont.fParX), fParY(cont.fParY), fPoints(cont.fPoints), fXMinos(cont.fXMinos), fYMinos(cont.fYMinos), fNFcn(cont.fNFcn) {}
