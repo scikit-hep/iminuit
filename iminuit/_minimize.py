@@ -45,9 +45,6 @@ def minimize(fun, x0, args=(), method=None,
     if hess or hessp:
         warnings.warn("hess and hessp arguments cannot be handled and are ignored")
 
-    if constraints:
-        raise ValueError("Minuit only supports bounds, not constraints")
-
     if tol:
         warnings.warn("tol argument has no effect on Minuit")
 
