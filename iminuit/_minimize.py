@@ -40,13 +40,10 @@ def minimize(fun, x0, args=(), method=None,
         warnings.warn("method argument is ignored")
 
     if constraints is not None:
-        raise ValueError("Constraints are not supported by Migrad, only bounds")
+        raise ValueError("Constraints are not supported by Minuit, only bounds")
 
     if hess or hessp:
         warnings.warn("hess and hessp arguments cannot be handled and are ignored")
-
-    if constraints:
-        raise ValueError("Minuit only supports bounds, not constraints")
 
     if tol:
         warnings.warn("tol argument has no effect on Minuit")
