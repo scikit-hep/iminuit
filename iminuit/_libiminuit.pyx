@@ -147,7 +147,6 @@ cdef class BasicView:
         s = "<%s of Minuit at %x>" % (self.__class__.__name__, id(self._minuit))
         for (k, v) in self.items():
             s += "\n  {0}: {1}".format(k, v)
-        s += "\n"
         return s
 
 
@@ -176,7 +175,6 @@ cdef class ArgsView:
         s = "<ArgsView of Minuit at %x>" % id(self._minuit)
         for v in self:
             s += "\n  {0}".format(v)
-        s += "\n"
         return s
 
 

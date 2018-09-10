@@ -25,29 +25,49 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
 
     try:
         minpos = np.argmin(y)
-        ymin = y[minpos]
-        tmpy = y - ymin
-        # now scan for minpos to the right until greater than one
-        up = self.errordef
-        righty = np.power(tmpy[minpos:] - up, 2)
-        right_min = np.argmin(righty)
-        rightpos = right_min + minpos
-        lefty = np.power((tmpy[:minpos] - up), 2)
-        left_min = np.argmin(lefty)
-        leftpos = left_min
-        le = x[minpos] - x[leftpos]
-        re = x[rightpos] - x[minpos]
+
+        # Scan to the right of minimum until greater than min + errordef.
+        # Note: We need to find the *first* crossing of up, right from the
+        # minimum, because there can be several. If the loop is replaced by
+        # some numpy calls, make sure that this property is retained.
+        yup = self.errordef + y[minpos]
+        best = float("infinity")
+        for i in range(minpos, len(y)):
+            z = abs(y[i] - yup)
+            if z < best:
+                rightpos = i
+                best = z
+            else:
+                break
+        else:
+            raise ValueError("right edge not found")
+
+        # Scan to the left of minimum until greater than min + errordef.
+        best = float("infinity")
+        for i in range(minpos, 0, -1):
+            z = abs(y[i] - yup)
+            if z < best:
+                leftpos = i
+                best = z
+            else:
+                break
+        else:
+            raise ValueError("left edge not found")
+
+        plt.plot([x[leftpos], x[minpos], x[rightpos]],
+                 [y[leftpos], y[minpos], y[rightpos]], 'o')
 
         if band:
             plt.axvspan(x[leftpos], x[rightpos], facecolor='g', alpha=0.5)
 
         if text:
-            plt.figtext(0.5, 0.5,
-                        '%s = %7.3e ( -%7.3e , +%7.3e)' % (vname, x[minpos], le, re),
-                        ha='center')
+            plt.title('%s = %.3g - %.3g + %.3g (scan)' % (vname, x[minpos],
+                                                          x[minpos] - x[leftpos],
+                                                          x[rightpos] - x[minpos]),
+                      fontsize="large")
     except ValueError:
-        warnings.warn(RuntimeWarning('band and text is requested but'
-                                     ' the bound is too narrow.'))
+        warnings.warn(RuntimeWarning('band and text is requested but '
+                                     'the bound is too narrow.'))
 
     return x, y, s
 
