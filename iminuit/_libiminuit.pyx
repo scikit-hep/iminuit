@@ -8,7 +8,7 @@ from libc.math cimport sqrt
 from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
-from iminuit.util import *
+from iminuit import util as mutil
 from iminuit.iminuit_warnings import InitialParamWarning, HesseFailedWarning
 from iminuit.latex import LatexFactory
 from iminuit import _plotting
@@ -80,11 +80,10 @@ cdef auto_frontend():
 
     Use HTML frontend in IPython sessions and console frontend otherwise.
     """
-    try:
-        __IPYTHON__
+    if mutil.is_ipython_notebook():
         from iminuit.frontends.html import HtmlFrontend
         return HtmlFrontend()
-    except NameError:
+    else:
         from iminuit.frontends.console import ConsoleFrontend
         return ConsoleFrontend()
 
@@ -503,7 +502,7 @@ cdef class Minuit:
         if use_array_call and forced_parameters is None:
             raise KeyError("use_array_call=True requires that forced_parameters is set")
 
-        args = describe(fcn) if forced_parameters is None \
+        args = mutil.describe(fcn) if forced_parameters is None \
             else forced_parameters
 
         self.parameters = args
@@ -1191,22 +1190,22 @@ cdef class Minuit:
             if vn not in kwds:
                 warn(('Parameter %s does not have initial value. '
                       'Assume 0.') % vn, InitialParamWarning)
-            if 'error_' + vn not in kwds and 'fix_' + param_name(vn) not in kwds:
+            if 'error_' + vn not in kwds and 'fix_' + mutil.param_name(vn) not in kwds:
                 warn(('Parameter %s is floating but does not '
                       'have initial step size. Assume 1.') % vn,
                      InitialParamWarning)
-        for vlim in extract_limit(kwds):
-            if param_name(vlim) not in parameters:
+        for vlim in mutil.extract_limit(kwds):
+            if mutil.param_name(vlim) not in parameters:
                 warn(('%s is given. But there is no parameter %s. '
-                      'Ignore.' % (vlim, param_name(vlim)), InitialParamWarning))
-        for vfix in extract_fix(kwds):
-            if param_name(vfix) not in parameters:
+                      'Ignore.' % (vlim, mutil.param_name(vlim)), InitialParamWarning))
+        for vfix in mutil.extract_fix(kwds):
+            if mutil.param_name(vfix) not in parameters:
                 warn(('%s is given. But there is no parameter %s. \
-                    Ignore.' % (vfix, param_name(vfix)), InitialParamWarning))
-        for verr in extract_error(kwds):
-            if param_name(verr) not in parameters:
+                    Ignore.' % (vfix, mutil.param_name(vfix)), InitialParamWarning))
+        for verr in mutil.extract_error(kwds):
+            if mutil.param_name(verr) not in parameters:
                 warn(('%s float. But there is no parameter %s. \
-                    Ignore.') % (verr, param_name(verr)), InitialParamWarning)
+                    Ignore.') % (verr, mutil.param_name(verr)), InitialParamWarning)
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate minos profile around the specified range.

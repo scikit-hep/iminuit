@@ -1,5 +1,6 @@
 """Minuit C++ class to IMinuit Python struct mappings.
 """
+from iminuit.util import Struct
 
 cdef cfmin2struct(FunctionMinimum*cfmin):
     cfmin_struct = Struct(

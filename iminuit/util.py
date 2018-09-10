@@ -303,9 +303,32 @@ def make_func_code(params):
     fc.co_argcount = len(params)
     return fc
 
+
 def format_exception(etype, evalue, tb):
     # work around for https://bugs.python.org/issue17413
     # the issue is not fixed in Python-3.7
     import traceback
     s = "".join(traceback.format_tb(tb))
     return "%s: %s\n%s" % (etype.__name__, evalue, s)
+
+
+def is_ipython_notebook():
+    """Detect whether we are in a Jupyter notebook.
+
+    See
+    https://stackoverflow.com/questions/15411967/
+    how-can-i-check-if-code-is-executed-in-the-ipython-notebook
+
+    Actually, we should abandon the frontend system and provide
+    _repr_html_ methods for our classes instead.
+    This is a major change and may happen in the future. For now,
+    we just try to improve the Jupyter notebook detection.
+    """
+    try:
+        cfg = get_ipython().config
+        if 'IPKernelApp' in cfg:
+            return True
+        else:
+            return False
+    except NameError:
+        return False
