@@ -239,14 +239,16 @@ def test_view_repr():
     m = Minuit(func3, print_level=0, errordef=1,
                x=1, y=2, error_x=3, error_y=4)
     mid = id(m)
-    assert repr(m.values) == """<ValueView of Minuit at %x>
+    assert repr(m.values) == ("""
+<ValueView of Minuit at %x>
   x: 1.0
   y: 2.0
-""" % mid
-    assert repr(m.args) == """<ArgsView of Minuit at %x>
+""" % mid).strip()
+    assert repr(m.args) == ("""
+<ArgsView of Minuit at %x>
   1.0
   2.0
-""" % mid
+""" % mid).strip()
 
 
 def test_no_resume():
