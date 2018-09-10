@@ -5,6 +5,14 @@
 Changelog
 =========
 
+trunk
+-----
+- fix for broken table layout in print_param()
+- fix for missing error report when error is raised in user function
+- improved structure of user guide
+- added faq to docs
+
+
 1.3.2 (August 5, 2018)
 ----------------------
 - allow fixing parameter by setting limits (x, x) with some value x
