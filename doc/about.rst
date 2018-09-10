@@ -47,8 +47,8 @@ When you use iminuit/Minuit2 seriously, it is a good idea to understand a bit ho
 * Wikipedia for `Quasi Newton Method`_ and `DFP formula`_. The numerical algorithm behind MIGRAD.
 * `Variable Metric Method for Minimization`_ by William Davidon, 1991
 * `A New Approach to Variable Metric Algorithm`_ by R. Fletcher, 1970
-* Original user guide for C++ Minuit2: :download:`MINUIT User's guide <mnusersguide.pdf>` by F. James, 2004
-* Original Paper: `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_ by Fred James and Matts Roos, .
+* Original user guide for C++ Minuit2: :download:`MINUIT User's guide <mnusersguide.pdf>` by Fred James, 2004
+* Original Paper: `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_ by Fred James and Matts Roos, 1975.
 
 Team
 ----
