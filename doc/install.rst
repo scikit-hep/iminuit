@@ -23,7 +23,7 @@ have a C++ compiler available.
 Conda
 -----
 
-We do provide binary packages for `conda` users via https://anaconda.org/conda-forge/iminuit:
+We provide binary packages for `conda` users via https://anaconda.org/conda-forge/iminuit:
 
 .. code-block:: bash
 
