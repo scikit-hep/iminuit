@@ -12,10 +12,24 @@ import iminuit.frontends.html as html
 import iminuit.frontends.console as console
 from iminuit.tests.utils import requires_dependency
 from iminuit.util import Struct
+import subprocess as subp
 
 
 def f1(x, y):
     return (x - 2) ** 2 + (y - 1) ** 2 / 0.25 + 1
+
+
+def test_is_ipython_notebook_in_console():
+    subp.check_call(['python', '-c',
+                     'from iminuit.util import is_ipython_notebook; '
+                     'assert is_ipython_notebook() == False'])
+
+
+@requires_dependency('IPython')
+def test_is_ipython_notebook_in_ipython():
+    subp.check_call(['ipython', '-c',
+                     'from iminuit.util import is_ipython_notebook; '
+                     'assert is_ipython_notebook() == False'])
 
 
 @requires_dependency('IPython')
