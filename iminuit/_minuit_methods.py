@@ -1,6 +1,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-from warnings import warn_explicit, warn
+from warnings import warn
 from iminuit.iminuit_warnings import InitialParamWarning
 from iminuit import util as mutil
 import numpy as np
@@ -85,8 +85,8 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
                                                           x[rightpos] - x[minpos]),
                       fontsize="large")
     except ValueError:
-        warnings.warn(RuntimeWarning('band and text is requested but '
-                                     'the bound is too narrow.'))
+        warn(RuntimeWarning('band and text is requested but '
+                            'the bound is too narrow.'))
 
     return x, y, s
 
