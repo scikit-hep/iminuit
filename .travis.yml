@@ -26,10 +26,8 @@ matrix:
         - python: 3.5
           env: BUILD=COVERAGE
 
-# TODO: Fix conda build
-# see https://github.com/iminuit/iminuit/pull/291#issuecomment-415750851
-#        - python: 3.6
-#          env: BUILD=CONDA
+       - python: 3.6
+         env: BUILD=CONDA
 
 # TODO: add osx builds; (setting up multi-os envs isn't trivial, see below)
 #        - os: osx
