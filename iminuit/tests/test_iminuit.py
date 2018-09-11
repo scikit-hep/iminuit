@@ -859,12 +859,13 @@ def test_bad_functions():
         assert expected in excinfo.value.args[0]
 
 
-def test_pedantic_warning_message(capsys):
+def test_pedantic_warning_message(capfd):
     # use lineno of the next line for the test
     m = Minuit(lambda x: 0)
-    errout = ''.join(capsys.readouterr())
+    out, err = capfd.readouterr()
+    outerr = out + err
     file_and_lineno = __file__ + ":864"
-    assert errout == """
+    assert outerr == """
 {0}: InitialParamWarning: Parameter x does not have initial value. Assume 0.
   m = Minuit(lambda x: 0)
 {0}: InitialParamWarning: Parameter x is floating but does not have initial step size. Assume 1.
