@@ -857,3 +857,18 @@ def test_bad_functions():
         with pytest.raises(RuntimeError) as excinfo:
             m.migrad()
         assert expected in excinfo.value.args[0]
+
+
+def test_pedantic_warning_message(capsys):
+    # use lineno of the next line for the test
+    m = Minuit(lambda x: 0)
+    errout = ''.join(capsys.readouterr())
+    file_and_lineno = __file__ + ":864"
+    assert errout == """
+{0}: InitialParamWarning: Parameter x does not have initial value. Assume 0.
+  m = Minuit(lambda x: 0)
+{0}: InitialParamWarning: Parameter x is floating but does not have initial step size. Assume 1.
+  m = Minuit(lambda x: 0)
+{0}: InitialParamWarning: errordef is not given. Default to 1.
+  m = Minuit(lambda x: 0)
+""".format(file_and_lineno)[1:]
