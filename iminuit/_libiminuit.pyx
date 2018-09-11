@@ -9,9 +9,9 @@ from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
 from iminuit import util as mutil
-from iminuit.iminuit_warnings import InitialParamWarning, HesseFailedWarning
+from iminuit.iminuit_warnings import HesseFailedWarning
 from iminuit.latex import LatexFactory
-from iminuit import _plotting
+from iminuit import _minuit_methods
 
 include "Minuit2.pxi"
 include "Minuit2Struct.pxi"
@@ -512,25 +512,22 @@ cdef class Minuit:
         self.pos2var = tuple(args)
         self.var2pos = {k: i for i, k in enumerate(args)}
 
-        if pedantic: self.pedantic(args, kwds)
+        if errordef is None:
+            if hasattr(fcn, 'default_errordef'):
+                call = getattr(fcn, 'default_errordef')
+                errordef = call()
+        else:
+            if not is_number(errordef) or errordef <= 0:
+                raise ValueError("errordef must be a positive number")
 
+        if pedantic: _minuit_methods.pedantic(self, args, kwds, errordef)
+
+        self.errordef = errordef if errordef else 1
         self.fcn = fcn
         self.grad = grad
         self.use_array_call = use_array_call
 
         self.frontend = auto_frontend() if frontend is None else frontend
-
-        if errordef is None:
-            default_errordef = getattr(fcn, 'default_errordef', None)
-            if not callable(default_errordef):
-                if pedantic:
-                    warn(InitialParamWarning(
-                        'errordef is not given. Default to 1.'))
-                self.errordef = 1.0
-            else:
-                self.errordef = default_errordef()
-        else:
-            self.errordef = errordef
 
         self.tol = 0.1
         self.strategy = 1
@@ -1183,28 +1180,6 @@ cdef class Minuit:
     def __dealloc__(self):
         self.clear_cobj()
 
-    def pedantic(self, parameters, kwds):
-        for vn in parameters:
-            if vn not in kwds:
-                warn(('Parameter %s does not have initial value. '
-                      'Assume 0.') % vn, InitialParamWarning)
-            if 'error_' + vn not in kwds and 'fix_' + mutil.param_name(vn) not in kwds:
-                warn(('Parameter %s is floating but does not '
-                      'have initial step size. Assume 1.') % vn,
-                     InitialParamWarning)
-        for vlim in mutil.extract_limit(kwds):
-            if mutil.param_name(vlim) not in parameters:
-                warn(('%s is given. But there is no parameter %s. '
-                      'Ignore.' % (vlim, mutil.param_name(vlim)), InitialParamWarning))
-        for vfix in mutil.extract_fix(kwds):
-            if mutil.param_name(vfix) not in parameters:
-                warn(('%s is given. But there is no parameter %s. \
-                    Ignore.' % (vfix, mutil.param_name(vfix)), InitialParamWarning))
-        for verr in mutil.extract_error(kwds):
-            if mutil.param_name(verr) not in parameters:
-                warn(('%s float. But there is no parameter %s. \
-                    Ignore.') % (verr, mutil.param_name(verr)), InitialParamWarning)
-
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate minos profile around the specified range.
 
@@ -1301,8 +1276,8 @@ cdef class Minuit:
             :include-source:
         """
         x, y, s = self.mnprofile(vname, bins, bound, subtract_min)
-        return _plotting.draw_profile(self, vname, x, y, s,
-                                      band=band, text=text)
+        return _minuit_methods.draw_profile(self, vname, x, y, s,
+                                            band=band, text=text)
 
     def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
         """Calculate cost function profile around specify range.
@@ -1383,8 +1358,8 @@ cdef class Minuit:
             :meth:`profile`
         """
         x, y = self.profile(vname, bins, bound, args, subtract_min)
-        x, y, s = _plotting.draw_profile(self, vname, x, y,
-                                         band=band, text=text)
+        x, y, s = _minuit_methods.draw_profile(self, vname, x, y,
+                                               band=band, text=text)
         return x, y
 
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
@@ -1545,7 +1520,7 @@ cdef class Minuit:
             contour
 
         """
-        return _plotting.draw_mncontour(self, x, y, nsigma, numpoints)
+        return _minuit_methods.draw_mncontour(self, x, y, nsigma, numpoints)
 
     def draw_contour(self, x, y, bins=20, bound=2, args=None,
                      show_sigma=False):
@@ -1565,8 +1540,8 @@ cdef class Minuit:
             :meth:`contour`
             :meth:`mncontour`
         """
-        return _plotting.draw_contour(self, x, y, bins,
-                                      bound, args, show_sigma)
+        return _minuit_methods.draw_contour(self, x, y, bins,
+                                            bound, args, show_sigma)
 
     cdef refresh_internal_state(self):
         """Refresh internal state attributes.

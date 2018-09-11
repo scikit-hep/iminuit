@@ -4,6 +4,7 @@ import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
 from iminuit.util import Struct
+from iminuit.iminuit_warnings import InitialParamWarning
 import numpy as np
 
 parametrize = pytest.mark.parametrize
@@ -857,3 +858,18 @@ def test_bad_functions():
         with pytest.raises(RuntimeError) as excinfo:
             m.migrad()
         assert expected in excinfo.value.args[0]
+
+
+def test_pedantic_warning_message():
+    with warnings.catch_warnings(record=True) as w:
+        # use lineno of the next line for the test
+        m = Minuit(lambda x: 0)
+
+        assert len(w) == 3
+        for i, msg in enumerate((
+            "Parameter x does not have initial value. Assume 0.",
+            "Parameter x is floating but does not have initial step size. Assume 1.",
+            "errordef is not given. Default to 1.")):
+            assert str(w[i].message) == msg
+            assert w[i].filename == __file__
+            assert w[i].lineno == 866
