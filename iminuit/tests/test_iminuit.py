@@ -10,6 +10,21 @@ import numpy as np
 parametrize = pytest.mark.parametrize
 
 
+def test_pedantic_warning_message():
+    with warnings.catch_warnings(record=True) as w:
+        # use lineno of the next line for the test
+        m = Minuit(lambda x: 0)
+
+        assert len(w) == 3
+        for i, msg in enumerate((
+            "Parameter x does not have initial value. Assume 0.",
+            "Parameter x is floating but does not have initial step size. Assume 1.",
+            "errordef is not given. Default to 1.")):
+            assert str(w[i].message) == msg
+            assert w[i].filename == __file__
+            assert w[i].lineno == 16
+
+
 class Func_Code:
     def __init__(self, varname):
         self.co_varnames = varname
@@ -276,7 +291,6 @@ def test_no_resume():
 def test_typo():
     with pytest.raises(RuntimeError):
         Minuit(func4, printlevel=0)
-        # self.assertRaises(RuntimeError,Minuit,func4,printlevel=0)
 
 
 def test_non_invertible():
@@ -311,7 +325,6 @@ def test_fix_param(grad):
     assert_allclose(m.matrix(), ((4, 0), (0, 1)), atol=1e-4)
     for b in (True, False):
         assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
-    m.print_all_minos()
     # now fix y = 10
     m = Minuit(func3, y=10., fix_y=True, **kwds)
     m.migrad()
@@ -768,7 +781,7 @@ def test_function_with_maximum():
     def func(a):
         return -a ** 2
 
-    m = Minuit(func, pedantic=False, print_level=2)
+    m = Minuit(func, pedantic=False, print_level=0)
     fmin, param = m.migrad()
     assert fmin.is_valid is False
 
@@ -786,7 +799,8 @@ def test_perfect_correlation():
 
 
 def test_modify_param_state():
-    m = Minuit(func3, x=1, y=2, fix_y=True, pedantic=False)
+    m = Minuit(func3, x=1, y=2, fix_y=True, pedantic=False,
+               print_level=0)
     m.migrad()
     assert_allclose(m.np_values(), [2, 2], atol=1e-2)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
@@ -805,7 +819,7 @@ def test_modify_param_state():
 
 
 def test_view_lifetime():
-    m = Minuit(func3, x=1, y=2, pedantic=False)
+    m = Minuit(func3, x=1, y=2, pedantic=False, print_level=0)
     val = m.values
     arg = m.args
     del m
@@ -833,7 +847,8 @@ def test_bad_functions():
             (divide_by_zero, "ZeroDivisionError"),
             (returning_nan, "result is NaN"),
             (returning_garbage, "TypeError")):
-        m = Minuit(func, x=1, pedantic=False, throw_nan=True)
+        m = Minuit(func, x=1, pedantic=False, throw_nan=True,
+                   print_level=0)
         with pytest.raises(RuntimeError) as excinfo:
             m.migrad()
         assert expected in excinfo.value.args[0]
@@ -854,22 +869,8 @@ def test_bad_functions():
             (returning_garbage, "TypeError"),
             (returning_noniterable, "TypeError")):
         m = Minuit.from_array_func(lambda x: 0, (1, 1), grad=func,
-                                   pedantic=False, throw_nan=True)
+                                   pedantic=False, throw_nan=True,
+                                   print_level=0)
         with pytest.raises(RuntimeError) as excinfo:
             m.migrad()
         assert expected in excinfo.value.args[0]
-
-
-def test_pedantic_warning_message():
-    with warnings.catch_warnings(record=True) as w:
-        # use lineno of the next line for the test
-        m = Minuit(lambda x: 0)
-
-        assert len(w) == 3
-        for i, msg in enumerate((
-            "Parameter x does not have initial value. Assume 0.",
-            "Parameter x is floating but does not have initial step size. Assume 1.",
-            "errordef is not given. Default to 1.")):
-            assert str(w[i].message) == msg
-            assert w[i].filename == __file__
-            assert w[i].lineno == 866
