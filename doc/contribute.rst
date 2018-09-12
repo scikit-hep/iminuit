@@ -16,7 +16,7 @@ Please open issues and feature requests on `Github`_.
 
 We usually respond very quickly.
 
-Direct contributions to the docs, tests, and the source code are welcome! If you want to contribute, please `fork the project on Github <https://help.github.com/articles/fork-a-repo>`_, develop your change on the `develop` branch (not `master`!) and then make `pull request <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_. This allows us to review and discuss the change with you, which makes the integration very smooth.
+Direct contributions to the docs, tests, and the source code are welcome! If you want to contribute, please `fork the project on Github <https://help.github.com/articles/fork-a-repo>`_, develop your change on the `develop` branch (not `master`!) and then make a `pull request <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_. This allows us to review and discuss the change with you, which makes the integration very smooth.
 
 Development setup
 -----------------
@@ -31,6 +31,8 @@ To hack on `iminuit`, start by cloning the repository from `Github`_:
     $ git clone https://github.com/iminuit/iminuit.git
     $ cd iminuit
     $ git checkout develop # switch to develop branch for making changes
+
+We use `git-flow <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_. This means that all changes are applied to the `develop`, while the `master` branch only tracks releases.
 
 conda
 +++++
