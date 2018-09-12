@@ -1,5 +1,5 @@
 # setup compiles with -O2 or -O3 by default, use
-# CFLAGS="-O0" python setup.py ... to override
+# CFLAGS="-O0" python setup.py ... to override for debugging
 
 import os
 from os.path import dirname, join, exists
@@ -128,13 +128,16 @@ setup(
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
     install_requires=['setuptools', 'numpy'],
+    test_requires=['numpy', 'pytest'],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: C++',
         'Programming Language :: Cython',
         'Programming Language :: Python :: Implementation :: CPython',
