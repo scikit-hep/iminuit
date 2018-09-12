@@ -8,15 +8,13 @@ Contribute
 You can help
 ------------
 
-Please open issues and feature requests on `Github`_.
+Please open issues and feature requests on `Github`_. We respond quickly.
 
 * Documentation. Tell us what's missing, what's incorrect or misleading.
 * Tests. If you have an example that shows a bug or problem, please file an issue!
-* Performance. If you are a C/cython/python hacker go ahead and make it faster.
+* Performance. If you are a C/cython/python hacker and see a way to make the code faster, let us know!
 
-We usually respond very quickly.
-
-Direct contributions to the docs, tests, and the source code are welcome! If you want to contribute, please `fork the project on Github <https://help.github.com/articles/fork-a-repo>`_, develop your change on the `develop` branch (not `master`!) and then make a `pull request <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_. This allows us to review and discuss the change with you, which makes the integration very smooth.
+Direct contributions related to these items are welcome, too! If you want to contribute, please `fork the project on Github <https://help.github.com/articles/fork-a-repo>`_, develop your change and then make a `pull request <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_. This allows us to review and discuss the change with you, which makes the integration very smooth.
 
 Development setup
 -----------------
@@ -30,9 +28,13 @@ To hack on `iminuit`, start by cloning the repository from `Github`_:
 
     $ git clone https://github.com/iminuit/iminuit.git
     $ cd iminuit
-    $ git checkout develop # switch to develop branch for making changes
 
-We use the popular `Gitflow workflow <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_. This means that all changes are applied to the `develop` branch, while the `master` branch only tracks releases.
+Hack away. It is a good idea to develop your feature in a separate branch, so that your master branch remains clean and can follow our master branch.
+
+.. code-block:: bash
+
+    $ git checkout -b "my_cool_feature"
+    # now you in a feature branch, commit your edits here
 
 conda
 +++++
