@@ -5,6 +5,15 @@
 Changelog
 =========
 
+HEAD
+----
+- fix for broken table layout in print_param() and print_matrix()
+- fix for missing error report when error is raised in user function
+- fix of printout when ipython is used as a shell
+- fix for slow convergence when analytical gradient is provided
+- improved user guide with more detail information and improved structure
+- check conda build on travis CI
+
 1.3.2 (August 5, 2018)
 ----------------------
 - allow fixing parameter by setting limits (x, x) with some value x
