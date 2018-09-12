@@ -8,16 +8,15 @@ Contribute
 You can help
 ------------
 
-Github allows you to contribute to this project very easily just fork the
-repository, make changes and submit a pull request.
-
-Concrete open issues and feature requests or on `Github`_.
-
-More generally any contribution to the docs, tests and package itself is welcome!
+Please open issues and feature requests on `Github`_.
 
 * Documentation. Tell us what's missing, what's incorrect or misleading.
 * Tests. If you have an example that shows a bug or problem, please file an issue!
 * Performance. If you are a C/cython/python hacker go ahead and make it faster.
+
+We usually respond very quickly.
+
+Direct contributions to the docs, tests, and the source code are welcome! If you want to contribute, please `fork the project on Github <https://help.github.com/articles/fork-a-repo>`_, develop your change on the `develop` branch (not `master`!) and then make `pull request <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_. This allows us to review and discuss the change with you, which makes the integration very smooth.
 
 Development setup
 -----------------
@@ -31,6 +30,7 @@ To hack on `iminuit`, start by cloning the repository from `Github`_:
 
     $ git clone https://github.com/iminuit/iminuit.git
     $ cd iminuit
+    $ git checkout develop # switch to develop branch for making changes
 
 conda
 +++++
