@@ -32,7 +32,7 @@ To hack on `iminuit`, start by cloning the repository from `Github`_:
     $ cd iminuit
     $ git checkout develop # switch to develop branch for making changes
 
-We use `git-flow <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_. This means that all changes are applied to the `develop`, while the `master` branch only tracks releases.
+We use the popular `Gitflow workflow <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_. This means that all changes are applied to the `develop` branch, while the `master` branch only tracks releases.
 
 conda
 +++++
