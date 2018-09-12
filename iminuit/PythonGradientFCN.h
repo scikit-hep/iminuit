@@ -54,6 +54,9 @@ public:
     virtual int getNumGrad() const { return call_grad.ncall; }
     virtual void resetNumGrad() { call_grad.ncall = 0; }
 
+    // prevent Minuit2 from computing gradients numerically to check analytical gradient
+    virtual bool CheckGradient() const {return false;}
+
 private:
     PythonCaller call_fcn, call_grad;
 };

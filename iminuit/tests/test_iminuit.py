@@ -142,10 +142,12 @@ def test_f2():
     functesthelper(Func2())
 
 
-def test_f3():
-    functesthelper(func3)
-    m = functesthelper(func3, grad=func3_grad)
-    assert m.get_num_call_grad() > 0
+def test_f3(): # check that providing gradient improves convergence
+    m1 = functesthelper(func3)
+    m2 = functesthelper(func3, grad=func3_grad)
+    assert m1.get_num_call_grad() == 0
+    assert m2.get_num_call_grad() > 0
+    assert m1.get_num_call_fcn() > m2.get_num_call_fcn()
 
 
 def test_lambda():
