@@ -85,4 +85,4 @@ sdist:
 	python setup.py sdist
 
 upload: sdist
-	@echo "\n>>> Check content of dist folder, then run:\ntwine upload --username $(shell whoami) dist/*"
+	@echo "\n>>> Check content of dist folder, then run:\ntwine upload --username your_pypi_account_name dist/*"
