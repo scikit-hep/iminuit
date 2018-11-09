@@ -781,17 +781,19 @@ cdef class Minuit:
         return self.get_fmin(), self.get_param_states()
 
     def hesse(self, unsigned int maxcall=0):
-        """Run HESSE.
+        """Run HESSE to compute parabolic errors.
 
-        HESSE estimates error matrix by the `second derivative at the minimim
-        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This error matrix
-        is good if your :math:`\chi^2` or likelihood profile is parabolic at
-        the minimum. From my experience, most of the simple fits are.
+        HESSE estimates the covariance matrix by inverting the matrix of
+        `second derivatives (Hesse matrix) at the minimum
+        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This covariance
+        matrix is valid if your :math:`\chi^2` or likelihood profile looks
+        like a hyperparabola around the the minimum. This is usually the case,
+        especially when you fit many observations (in the limit of infinite
+        samples this is always the case). If you want to know how your
+        parameters are correlated, you also need to use HESSE.
 
-        :meth:`minos` makes no parabolic assumption and scan the likelihood
-        and give the correct error asymmetric error in all cases(Unless your
-        likelihood profile is utterly discontinuous near the minimum). But,
-        it is much more computationally expensive.
+        Also see :meth:`minos`, which computes the uncertainties in a
+        different way.
 
         **Arguments:**
             - **maxcall**: limit the number of calls made by MINOS.
@@ -832,22 +834,28 @@ cdef class Minuit:
         return self.get_param_states()
 
     def minos(self, var=None, sigma=1., unsigned int maxcall=0):
-        """Run minos for parameter *var*.
+        """Run MINOS to compute exact asymmetric profile uncertainties.
 
-        If *var* is None it runs minos for all parameters
+        MINOS makes no parabolic assumption. It scans the likelihood or
+        chi-square function to construct an (potentially) asymmetric
+        confidence interval. When the confidence intervals computed with
+        HESSE and MINOS differ, the MINOS intervals are to be preferred.
+
+        Since MINOS has to scan the (possibly high-dimensional) objective
+        function, it is much slower than HESSE.
 
         **Arguments:**
 
-            - **var**: optional variable name. Default None.(run minos for
-              every variable)
+            - **var**: optional variable name to compute the error for.
+              If var is not given, MINOS is run for every variable.
             - **sigma**: number of :math:`\sigma` error. Default 1.0.
             - **maxcall**: limit the number of calls made by MINOS.
               Default: 0 (uses an internal heuristic by C++ MINUIT).
 
         **Returns:**
 
-            Dictionary of varname to :ref:`minos-error-struct`
-            if minos is requested for all parameters.
+            Dictionary of varname to :ref:`minos-error-struct`, containing
+            all up to now computed errors, including the current request.
 
         """
         if self.cfmin is NULL:
