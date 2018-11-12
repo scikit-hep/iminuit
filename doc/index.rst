@@ -41,9 +41,10 @@ In a nutshell
     :maxdepth: 4
     :hidden:
 
+    about
     install
     tutorials
-    about
-    api
+    reference
+    faq
     changelog
     contribute

@@ -2,8 +2,8 @@
 
 .. _api:
 
-API
-===
+Reference
+=========
 
 .. currentmodule:: iminuit
 
