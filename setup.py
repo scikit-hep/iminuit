@@ -76,7 +76,7 @@ except ImportError:
     if exists('iminuit/_libiminuit.cpp'):
         print('Cython is not available ... using pre-generated cpp file.')
     else:
-        raise SystemExit('Looks like you are installing iminuit from github.'
+        raise SystemExit('Looks like you are installing iminuit from github. '
                          'This requires Cython. Run\n\n'
                          '   pip install cython\n\n'
                          'for a system-wide installation, or\n\n'
