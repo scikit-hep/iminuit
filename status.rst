@@ -1,7 +1,7 @@
 Status
 ======
 
-Continuous integration status of the iminuit master branch.
+Continuous integration status of the iminuit develop branch.
 
 This is useful for developers to quickly check the status.
 
