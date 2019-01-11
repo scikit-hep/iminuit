@@ -73,7 +73,8 @@ class HtmlFrontend(Frontend):
         description for each item."""
         goaledm = 0.0001 * tolerance * sfmin.up
         style = fmin_style(sfmin)
-        header = u"""<table>
+        header = u"""
+<table>
     <tr>
         <td title="Minimum value of function">FCN = {sfmin.fval}</td>
         <td title="Total number of call to FCN so far">TOTAL NCALL = {ncalls}</td>
@@ -85,8 +86,10 @@ class HtmlFrontend(Frontend):
         <td title="Error def. Amount of increase in FCN to be defined as 1 standard deviation">
         UP = {sfmin.up}</td>
     </tr>
-</table>\n""".format(**locals())
-        status = u"""<table>
+</table>
+""".format(**locals())
+        status = u"""
+<table>
     <tr>
         <td align="center" title="Validity of the migrad call">Valid</td>
         <td align="center" title="Validity of parameters">Valid Param</td>
@@ -115,13 +118,15 @@ class HtmlFrontend(Frontend):
         <td align="center"></td>
         <td align="center" style="{style.has_reached_call_limit}">{sfmin.has_reached_call_limit!r}</td>
     </tr>
-</table>""".format(**locals())
+</table>
+""".format(**locals())
         self.display(header + status)
 
     def print_merror(self, vname, smerr):
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
         style = minos_style(smerr)
-        to_print = """<span>Minos status for {vname}: <span style="{style.is_valid}">{stat}</span></span>
+        to_print = """
+<span>Minos status for {vname}: <span style="{style.is_valid}">{stat}</span></span>
 <table>
     <tr>
         <td title="lower and upper minos error of the parameter">Error</td>
@@ -167,7 +172,7 @@ class HtmlFrontend(Frontend):
         uid = randid(self.rng)
         header = """<table>
     <tr>
-        <td><a href="#" onclick="$('#{uid}').toggle()">+</a></td>
+        <td> </td>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Hesse error">Hesse Error</td>
@@ -197,37 +202,20 @@ class HtmlFrontend(Frontend):
     </tr>\n""".format(**locals())
             to_print += content
         to_print += "</table>\n"
-        ltable = LatexFactory.build_param_table(mps, merr,
-                                                float_format=float_format, smart_latex=smart_latex,
-                                                latex_map=latex_map)
-
-        # rows = str(ltable).count('\n')+1
-        to_print += self.hidden_table(str(ltable), uid)
         self.display(to_print)
 
     def print_banner(self, cmd):
         # display('<h2>%s</h2>'%cmd, raw=True)
         pass
 
-    def toggle_sign(self, uid):
-        return """<a onclick="$('#%s').toggle()" href="#">+</a>""" % uid
-
-    def hidden_table(self, s, uid):
-        rows = s.count('\n') + 2
-        ret = r"""<pre id="%s" style="display:none;">
-<textarea rows="%d" cols="50" onclick="this.select()" readonly>
-%s
-</textarea>
-</pre>""" % (uid, rows, s)
-        return ret
-
     def print_matrix(self, vnames, matrix, latex_map=None):
         latexuid = randid(self.rng)
         latextable = LatexFactory.build_matrix(vnames, matrix,
                                                latex_map=latex_map)
-        to_print = """<table>
+        to_print = """
+<table>
     <tr>
-        <td>%s</td>""" % self.toggle_sign(latexuid)
+        <td> </td>"""
         for v in vnames:
             to_print += " <td>{v}</td>".format(**locals())
         to_print += "\n    </tr>\n"
@@ -240,7 +228,6 @@ class HtmlFrontend(Frontend):
                 to_print += r""" <td style="background-color:{color}">{val:3.2f}</td>""".format(**locals())
             to_print += "\n    </tr>\n"
         to_print += '</table>\n'
-        to_print += self.hidden_table(str(latextable), latexuid)
         self.display(to_print)
 
     def print_hline(self, width=None):
