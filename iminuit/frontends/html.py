@@ -172,7 +172,7 @@ class HtmlFrontend(Frontend):
         uid = randid(self.rng)
         header = """<table>
     <tr>
-        <td> </td>
+        <td/>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Hesse error">Hesse Error</td>
@@ -215,7 +215,7 @@ class HtmlFrontend(Frontend):
         to_print = """
 <table>
     <tr>
-        <td> </td>"""
+        <td/>"""
         for v in vnames:
             to_print += " <td>{v}</td>".format(**locals())
         to_print += "\n    </tr>\n"
@@ -231,4 +231,4 @@ class HtmlFrontend(Frontend):
         self.display(to_print)
 
     def print_hline(self, width=None):
-        self.display('<hr>')
+        pass
