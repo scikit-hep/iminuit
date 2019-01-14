@@ -37,10 +37,6 @@ def fmin_style(sfmin):
     )
 
 
-def randid(rng):
-    return ''.join(rng.choice(string.ascii_letters) for _ in range(10))
-
-
 def minos_style(smerr):
     """Convert minos error to style"""
     return Struct(
@@ -85,7 +81,8 @@ class HtmlFrontend(Frontend):
         <td title="Error def. Amount of increase in FCN to be defined as 1 standard deviation">
         UP = {sfmin.up}</td>
     </tr>
-</table>\n""".format(**locals())
+</table>
+""".format(**locals())
         status = u"""<table>
     <tr>
         <td align="center" title="Validity of the migrad call">Valid</td>
@@ -115,7 +112,8 @@ class HtmlFrontend(Frontend):
         <td align="center"></td>
         <td align="center" style="{style.has_reached_call_limit}">{sfmin.has_reached_call_limit!r}</td>
     </tr>
-</table>""".format(**locals())
+</table>
+""".format(**locals())
         self.display(header + status)
 
     def print_merror(self, vname, smerr):
@@ -148,7 +146,8 @@ class HtmlFrontend(Frontend):
         <td style="{style.lower_new_min}">{smerr.lower_new_min}</td>
         <td style="{style.upper_new_min}">{smerr.upper_new_min}</td>
     </tr>
-</table>""".format(**locals())
+</table>
+""".format(**locals())
         self.display(to_print)
 
     def print_param(self, mps, merr=None, float_format='%5.3e',
@@ -164,10 +163,9 @@ class HtmlFrontend(Frontend):
                 symbol. default True
         """
         to_print = ""
-        uid = randid(self.rng)
         header = """<table>
     <tr>
-        <td><a href="#" onclick="$('#{uid}').toggle()">+</a></td>
+        <td/>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Hesse error">Hesse Error</td>
@@ -176,7 +174,7 @@ class HtmlFrontend(Frontend):
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
         <td title="Is the parameter fixed in the fit">Fixed?</td>
-    </tr>\n""".format(**locals())
+    </tr>""".format(**locals())
         to_print += header
         for i, mp in enumerate(mps):
             minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else \
@@ -184,7 +182,8 @@ class HtmlFrontend(Frontend):
             limit_p = '' if mp.upper_limit is None else '%g' % mp.upper_limit
             limit_m = '' if mp.lower_limit is None else '%g' % mp.lower_limit
             fixed = 'Yes' if mp.is_fixed else 'No'
-            content = """    <tr>
+            content = """
+    <tr>
         <td>{i}</td>
         <td>{mp.name}</td>
         <td>{mp.value:g}</td>
@@ -194,40 +193,22 @@ class HtmlFrontend(Frontend):
         <td>{limit_m}</td>
         <td>{limit_p}</td>
         <td>{fixed}</td>
-    </tr>\n""".format(**locals())
+    </tr>""".format(**locals())
             to_print += content
-        to_print += "</table>\n"
-        ltable = LatexFactory.build_param_table(mps, merr,
-                                                float_format=float_format, smart_latex=smart_latex,
-                                                latex_map=latex_map)
-
-        # rows = str(ltable).count('\n')+1
-        to_print += self.hidden_table(str(ltable), uid)
+        to_print += """
+</table>"""
         self.display(to_print)
 
     def print_banner(self, cmd):
         # display('<h2>%s</h2>'%cmd, raw=True)
         pass
 
-    def toggle_sign(self, uid):
-        return """<a onclick="$('#%s').toggle()" href="#">+</a>""" % uid
-
-    def hidden_table(self, s, uid):
-        rows = s.count('\n') + 2
-        ret = r"""<pre id="%s" style="display:none;">
-<textarea rows="%d" cols="50" onclick="this.select()" readonly>
-%s
-</textarea>
-</pre>""" % (uid, rows, s)
-        return ret
-
     def print_matrix(self, vnames, matrix, latex_map=None):
-        latexuid = randid(self.rng)
         latextable = LatexFactory.build_matrix(vnames, matrix,
                                                latex_map=latex_map)
         to_print = """<table>
     <tr>
-        <td>%s</td>""" % self.toggle_sign(latexuid)
+        <td/>"""
         for v in vnames:
             to_print += " <td>{v}</td>".format(**locals())
         to_print += "\n    </tr>\n"
@@ -239,9 +220,8 @@ class HtmlFrontend(Frontend):
                 color = Gradient.rgb_color_for(val)
                 to_print += r""" <td style="background-color:{color}">{val:3.2f}</td>""".format(**locals())
             to_print += "\n    </tr>\n"
-        to_print += '</table>\n'
-        to_print += self.hidden_table(str(latextable), latexuid)
+        to_print += "</table>\n"
         self.display(to_print)
 
     def print_hline(self, width=None):
-        self.display('<hr>')
+        pass

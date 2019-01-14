@@ -53,7 +53,7 @@ def test_html(capsys):
     m.print_initial_param()
     assert r"""<table>
     <tr>
-        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
+        <td/>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Hesse error">Hesse Error</td>
@@ -86,26 +86,12 @@ def test_html(capsys):
         <td>No</td>
     </tr>
 </table>
-<pre id="aaaaaaaaaa" style="display:none;">
-<textarea rows="10" cols="50" onclick="this.select()" readonly>
-\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
-\hline
- & Name & Value & Hesse Error & Minos Error- & Minos Error+ & Limit- & Limit+ & Fixed?\\
-\hline
-0 & x & 0 & 1 &  &  &  &  & No\\
-\hline
-1 & y & 0 & 1 &  &  &  &  & No\\
-\hline
-\end{tabular}
-</textarea>
-</pre>
 """ == out()
 
     m.migrad()
     fmin = m.get_fmin()
 
-    assert r"""<hr>
-<table>
+    assert r"""<table>
     <tr>
         <td title="Minimum value of function">FCN = 1.0</td>
         <td title="Total number of call to FCN so far">TOTAL NCALL = 24</td>
@@ -148,9 +134,10 @@ def test_html(capsys):
         <td align="center" style="background-color:#92CCA6">False</td>
     </tr>
 </table>
+
 <table>
     <tr>
-        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
+        <td/>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Hesse error">Hesse Error</td>
@@ -183,20 +170,6 @@ def test_html(capsys):
         <td>No</td>
     </tr>
 </table>
-<pre id="aaaaaaaaaa" style="display:none;">
-<textarea rows="10" cols="50" onclick="this.select()" readonly>
-\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
-\hline
- & Name & Value & Hesse Error & Minos Error- & Minos Error+ & Limit- & Limit+ & Fixed?\\
-\hline
-0 & x & 2 & 1 &  &  &  &  & No\\
-\hline
-1 & y & 1 & 0.5 &  &  &  &  & No\\
-\hline
-\end{tabular}
-</textarea>
-</pre>
-<hr>
 """ % fmin.edm == out()
 
     m.minos()
@@ -228,6 +201,7 @@ def test_html(capsys):
         <td style="background-color:#92CCA6">False</td>
     </tr>
 </table>
+
 <span>Minos status for y: <span style="background-color:#92CCA6">VALID</span></span>
 <table>
     <tr>
@@ -256,13 +230,14 @@ def test_html(capsys):
         <td style="background-color:#92CCA6">False</td>
     </tr>
 </table>
+
 """ % (m.merrors[('x', -1.0)], m.merrors[('x', 1.0)],
        m.merrors[('y', -1.0)], m.merrors[('y', 1.0)]) == out()
 
     m.print_matrix()
     assert r"""<table>
     <tr>
-        <td><a onclick="$('#aaaaaaaaaa').toggle()" href="#">+</a></td> <td>x</td> <td>y</td>
+        <td/> <td>x</td> <td>y</td>
     </tr>
     <tr>
         <td>x</td> <td style="background-color:rgb(255,117,117)">1.00</td> <td style="background-color:rgb(163,254,186)">0.00</td>
@@ -271,22 +246,7 @@ def test_html(capsys):
         <td>y</td> <td style="background-color:rgb(163,254,186)">0.00</td> <td style="background-color:rgb(255,117,117)">1.00</td>
     </tr>
 </table>
-<pre id="aaaaaaaaaa" style="display:none;">
-<textarea rows="13" cols="50" onclick="this.select()" readonly>
-%\usepackage[table]{xcolor} % include this for color
-%\usepackage{rotating} % include this for rotate header
-%\documentclass[xcolor=table]{beamer} % for beamer
-\begin{tabular}{|c|c|c|}
-\hline
-\rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
-\hline
-x & \cellcolor[RGB]{255,117,117} 1.00 & \cellcolor[RGB]{163,254,186} 0.00\\
-\hline
-y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
-\hline
-\end{tabular}
-</textarea>
-</pre>
+
 """ == out()
 
     m.print_all_minos()
@@ -318,6 +278,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td style="background-color:#92CCA6">False</td>
     </tr>
 </table>
+
 <span>Minos status for y: <span style="background-color:#92CCA6">VALID</span></span>
 <table>
     <tr>
@@ -346,6 +307,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td style="background-color:#92CCA6">False</td>
     </tr>
 </table>
+
 """ % (m.merrors[('x', -1.0)], m.merrors[('x', 1.0)],
        m.merrors[('y', -1.0)], m.merrors[('y', 1.0)]) == out()
 
@@ -356,7 +318,7 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
     m.print_param()
     assert r"""<table>
     <tr>
-        <td><a href="#" onclick="$('#aaaaaaaaaa').toggle()">+</a></td>
+        <td/>
         <td title="Variable name">Name</td>
         <td title="Value of parameter">Value</td>
         <td title="Hesse error">Hesse Error</td>
@@ -389,19 +351,6 @@ y & \cellcolor[RGB]{163,254,186} 0.00 & \cellcolor[RGB]{255,117,117} 1.00\\
         <td>No</td>
     </tr>
 </table>
-<pre id="aaaaaaaaaa" style="display:none;">
-<textarea rows="10" cols="50" onclick="this.select()" readonly>
-\begin{tabular}{|c|r|r|r|r|r|r|r|c|}
-\hline
- & Name & Value & Hesse Error & Minos Error- & Minos Error+ & Limit- & Limit+ & Fixed?\\
-\hline
-0 & x & 5 & 0.1 &  &  & 0.0 &  & No\\
-\hline
-1 & y & 5 & 0.1 &  &  & 0.0 & 10 & No\\
-\hline
-\end{tabular}
-</textarea>
-</pre>
 """ == out()
 
 
