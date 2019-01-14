@@ -6,16 +6,10 @@ build = os.environ['BUILD']
 
 
 def pip_install(packages):
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + packages.split())
-
-
-def pip_upgrade(packages):
-    subprocess.check_call([sys.executable, '-m', 'pip', 'upgrade'] + packages.split())
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade'] + packages.split())
 
 
 def main():
-    pip_upgrade('pytest')
-
     if build == 'ALL':
         pip_install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter')
     elif build in {'TEST', 'COVERAGE'}:
