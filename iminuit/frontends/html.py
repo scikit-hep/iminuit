@@ -37,10 +37,6 @@ def fmin_style(sfmin):
     )
 
 
-def randid(rng):
-    return ''.join(rng.choice(string.ascii_letters) for _ in range(10))
-
-
 def minos_style(smerr):
     """Convert minos error to style"""
     return Struct(
@@ -73,8 +69,7 @@ class HtmlFrontend(Frontend):
         description for each item."""
         goaledm = 0.0001 * tolerance * sfmin.up
         style = fmin_style(sfmin)
-        header = u"""
-<table>
+        header = u"""<table>
     <tr>
         <td title="Minimum value of function">FCN = {sfmin.fval}</td>
         <td title="Total number of call to FCN so far">TOTAL NCALL = {ncalls}</td>
@@ -88,8 +83,7 @@ class HtmlFrontend(Frontend):
     </tr>
 </table>
 """.format(**locals())
-        status = u"""
-<table>
+        status = u"""<table>
     <tr>
         <td align="center" title="Validity of the migrad call">Valid</td>
         <td align="center" title="Validity of parameters">Valid Param</td>
@@ -125,8 +119,7 @@ class HtmlFrontend(Frontend):
     def print_merror(self, vname, smerr):
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
         style = minos_style(smerr)
-        to_print = """
-<span>Minos status for {vname}: <span style="{style.is_valid}">{stat}</span></span>
+        to_print = """<span>Minos status for {vname}: <span style="{style.is_valid}">{stat}</span></span>
 <table>
     <tr>
         <td title="lower and upper minos error of the parameter">Error</td>
@@ -170,9 +163,7 @@ class HtmlFrontend(Frontend):
                 symbol. default True
         """
         to_print = ""
-        uid = randid(self.rng)
-        header = """
-<table>
+        header = """<table>
     <tr>
         <td/>
         <td title="Variable name">Name</td>
@@ -191,7 +182,8 @@ class HtmlFrontend(Frontend):
             limit_p = '' if mp.upper_limit is None else '%g' % mp.upper_limit
             limit_m = '' if mp.lower_limit is None else '%g' % mp.lower_limit
             fixed = 'Yes' if mp.is_fixed else 'No'
-            content = """    <tr>
+            content = """
+    <tr>
         <td>{i}</td>
         <td>{mp.name}</td>
         <td>{mp.value:g}</td>
@@ -204,8 +196,7 @@ class HtmlFrontend(Frontend):
     </tr>""".format(**locals())
             to_print += content
         to_print += """
-</table>
-"""
+</table>"""
         self.display(to_print)
 
     def print_banner(self, cmd):
@@ -213,11 +204,9 @@ class HtmlFrontend(Frontend):
         pass
 
     def print_matrix(self, vnames, matrix, latex_map=None):
-        latexuid = randid(self.rng)
         latextable = LatexFactory.build_matrix(vnames, matrix,
                                                latex_map=latex_map)
-        to_print = """
-<table>
+        to_print = """<table>
     <tr>
         <td/>"""
         for v in vnames:
@@ -231,9 +220,7 @@ class HtmlFrontend(Frontend):
                 color = Gradient.rgb_color_for(val)
                 to_print += r""" <td style="background-color:{color}">{val:3.2f}</td>""".format(**locals())
             to_print += "\n    </tr>\n"
-        to_print += """
-</table>
-"""
+        to_print += "</table>\n"
         self.display(to_print)
 
     def print_hline(self, width=None):
