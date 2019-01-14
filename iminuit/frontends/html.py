@@ -170,7 +170,8 @@ class HtmlFrontend(Frontend):
         """
         to_print = ""
         uid = randid(self.rng)
-        header = """<table>
+        header = """
+<table>
     <tr>
         <td/>
         <td title="Variable name">Name</td>
@@ -181,7 +182,7 @@ class HtmlFrontend(Frontend):
         <td title="Lower limit of the parameter">Limit-</td>
         <td title="Upper limit of the parameter">Limit+</td>
         <td title="Is the parameter fixed in the fit">Fixed?</td>
-    </tr>\n""".format(**locals())
+    </tr>""".format(**locals())
         to_print += header
         for i, mp in enumerate(mps):
             minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else \
@@ -199,9 +200,10 @@ class HtmlFrontend(Frontend):
         <td>{limit_m}</td>
         <td>{limit_p}</td>
         <td>{fixed}</td>
-    </tr>\n""".format(**locals())
+    </tr>""".format(**locals())
             to_print += content
-        to_print += "</table>\n"
+        to_print += """
+</table>"""
         self.display(to_print)
 
     def print_banner(self, cmd):
