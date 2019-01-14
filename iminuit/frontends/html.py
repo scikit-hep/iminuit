@@ -74,6 +74,7 @@ class HtmlFrontend(Frontend):
         goaledm = 0.0001 * tolerance * sfmin.up
         style = fmin_style(sfmin)
         header = u"""
+<div>
 <table>
     <tr>
         <td title="Minimum value of function">FCN = {sfmin.fval}</td>
@@ -87,8 +88,10 @@ class HtmlFrontend(Frontend):
         UP = {sfmin.up}</td>
     </tr>
 </table>
+</div>
 """.format(**locals())
         status = u"""
+<div>
 <table>
     <tr>
         <td align="center" title="Validity of the migrad call">Valid</td>
@@ -119,6 +122,7 @@ class HtmlFrontend(Frontend):
         <td align="center" style="{style.has_reached_call_limit}">{sfmin.has_reached_call_limit!r}</td>
     </tr>
 </table>
+</div>
 """.format(**locals())
         self.display(header + status)
 
@@ -126,6 +130,7 @@ class HtmlFrontend(Frontend):
         stat = 'VALID' if smerr.is_valid else 'PROBLEM'
         style = minos_style(smerr)
         to_print = """
+<div>
 <span>Minos status for {vname}: <span style="{style.is_valid}">{stat}</span></span>
 <table>
     <tr>
@@ -153,7 +158,9 @@ class HtmlFrontend(Frontend):
         <td style="{style.lower_new_min}">{smerr.lower_new_min}</td>
         <td style="{style.upper_new_min}">{smerr.upper_new_min}</td>
     </tr>
-</table>""".format(**locals())
+</table>
+</div>
+""".format(**locals())
         self.display(to_print)
 
     def print_param(self, mps, merr=None, float_format='%5.3e',
@@ -171,6 +178,7 @@ class HtmlFrontend(Frontend):
         to_print = ""
         uid = randid(self.rng)
         header = """
+<div>
 <table>
     <tr>
         <td/>
@@ -203,7 +211,9 @@ class HtmlFrontend(Frontend):
     </tr>""".format(**locals())
             to_print += content
         to_print += """
-</table>"""
+</table>
+</div>
+"""
         self.display(to_print)
 
     def print_banner(self, cmd):
@@ -215,6 +225,7 @@ class HtmlFrontend(Frontend):
         latextable = LatexFactory.build_matrix(vnames, matrix,
                                                latex_map=latex_map)
         to_print = """
+<div>
 <table>
     <tr>
         <td/>"""
@@ -229,7 +240,10 @@ class HtmlFrontend(Frontend):
                 color = Gradient.rgb_color_for(val)
                 to_print += r""" <td style="background-color:{color}">{val:3.2f}</td>""".format(**locals())
             to_print += "\n    </tr>\n"
-        to_print += '</table>\n'
+        to_print += """
+</table>
+</div>
+"""
         self.display(to_print)
 
     def print_hline(self, width=None):
