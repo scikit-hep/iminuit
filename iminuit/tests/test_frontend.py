@@ -20,16 +20,22 @@ def f1(x, y):
 
 
 def test_is_ipython_notebook_in_console():
-    subp.check_call(['python', '-c',
-                     'from iminuit.util import is_ipython_notebook; '
-                     'assert is_ipython_notebook() == False'])
+    for cmd in ('python%i' % sys.version_info.major, 'python'):
+        if subp.call([cmd, '-c', 'pass']) == 0:
+            subp.check_call([cmd, '-c',
+                             'from iminuit.util import is_ipython_notebook; '
+                             'assert is_ipython_notebook() == False'])
+            break
 
 
 @requires_dependency('IPython')
 def test_is_ipython_notebook_in_ipython():
-    subp.check_call(['ipython', '-c',
-                     'from iminuit.util import is_ipython_notebook; '
-                     'assert is_ipython_notebook() == False'])
+    for cmd in ('ipython%i' % sys.version_info.major, 'ipython'):
+        if subp.call([cmd, '-c', 'pass']) == 0:
+            subp.check_call([cmd, '-c',
+                            'from iminuit.util import is_ipython_notebook; '
+                            'assert is_ipython_notebook() == False'])
+            break
 
 
 @requires_dependency('IPython')
