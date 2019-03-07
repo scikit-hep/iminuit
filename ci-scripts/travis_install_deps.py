@@ -6,7 +6,7 @@ build = os.environ['BUILD']
 
 
 def pip_install(packages):
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + packages.split())
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade'] + packages.split())
 
 
 def main():
