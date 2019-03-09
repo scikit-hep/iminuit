@@ -12,6 +12,7 @@ from iminuit import util as mutil
 from iminuit.iminuit_warnings import HesseFailedWarning
 from iminuit.latex import LatexFactory
 from iminuit import _minuit_methods
+from collections import OrderedDict
 
 include "Minuit2.pxi"
 include "Minuit2Struct.pxi"
@@ -73,19 +74,6 @@ cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict 
 
         if fitarg['fix_' + pname]:
             state.Fix(i)
-
-
-cdef auto_frontend():
-    """Determine frontend automatically.
-
-    Use HTML frontend in IPython sessions and console frontend otherwise.
-    """
-    if mutil.is_ipython_notebook():
-        from iminuit.frontends.html import HtmlFrontend
-        return HtmlFrontend()
-    else:
-        from iminuit.frontends.console import ConsoleFrontend
-        return ConsoleFrontend()
 
 
 cdef check_extra_args(parameters, kwd):
@@ -356,15 +344,9 @@ cdef class Minuit:
     cdef public object merrors_struct
     """MINOS error calculation information (dict name -> struct)"""
 
-    cdef public object frontend
-    """Minuit frontend.
-
-    TODO: link to description.
-    """
-
     def __init__(self, fcn,
                  throw_nan=False, pedantic=True,
-                 frontend=None, forced_parameters=None, print_level=1,
+                 forced_parameters=None, print_level=1,
                  errordef=None, grad=None, use_array_call=False,
                  **kwds):
         """
@@ -410,16 +392,6 @@ cdef class Minuit:
 
             - **pedantic**: warns about parameters that do not have initial
               value or initial error/stepsize set.
-
-            - **frontend**: Minuit frontend. There are two builtin frontends.
-
-                1. ConsoleFrontend is designed to print out to terminal.
-
-                2. HtmlFrontend is designed to give a nice output in an
-                   IPython notebook session.
-
-              By Default, Minuit switches to HtmlFrontend automatically if it
-              is called in IPython session. It uses ConsoleFrontend otherwise.
 
             - **forced_parameters**: tell Minuit not to do function signature
               detection and use this argument instead. (Default None
@@ -527,8 +499,6 @@ cdef class Minuit:
         self.grad = grad
         self.use_array_call = use_array_call
 
-        self.frontend = auto_frontend() if frontend is None else frontend
-
         self.tol = 0.1
         self.strategy = 1
         self.print_level = print_level
@@ -583,7 +553,7 @@ cdef class Minuit:
         self.merrors = {}
         self.gcc = None
 
-        self.merrors_struct = {}
+        self.merrors_struct = mutil.MErrors()
 
 
     @classmethod
@@ -720,9 +690,6 @@ cdef class Minuit:
         #it's a clean state or resume=False
         cdef MnStrategy*strat = NULL
 
-        if self.print_level > 0:
-            self.frontend.print_banner('MIGRAD')
-
         if not resume:
             self.last_upst = self.initial_upst
 
@@ -805,7 +772,6 @@ cdef class Minuit:
         """
 
         cdef MnHesse*hesse = NULL
-        if self.print_level > 0: self.frontend.print_banner('HESSE')
         if self.cfmin is NULL:
             raise RuntimeError('Run migrad first')
         hesse = new MnHesse(self.strategy)
@@ -867,7 +833,6 @@ cdef class Minuit:
         cdef char*name = NULL
         cdef double oldup = self.pyfcn.Up()
         self.pyfcn.SetErrorDef(oldup * sigma * sigma)
-        if self.print_level > 0: self.frontend.print_banner('MINOS')
         if not self.cfmin.IsValid():
             raise RuntimeError(('Function mimimum is not valid. Make sure'
                                 ' migrad converge first'))
@@ -899,12 +864,9 @@ cdef class Minuit:
                 )
             mnerror = minos.Minos(index, maxcall)
             self.merrors_struct[vname] = minoserror2struct(mnerror)
-            if self.print_level > 0:
-                self.frontend.print_merror(
-                    vname, self.merrors_struct[vname])
         self.refresh_internal_state()
         del minos
-        self.pyfcn.SetErrorDef(oldup)
+        self.pyfcn.SetErrorDef(oldup)        
         return self.merrors_struct
 
     def matrix(self, correlation=False, skip_fixed=True):
@@ -940,26 +902,24 @@ cdef class Minuit:
                     return 0.0
                 return mncov.get(ext2int[i], ext2int[j])
 
+        names = self.list_of_vary_param() if skip_fixed else list(self.values)
         if correlation:
             def cor(i, j):
                 return cov(i, j) / (sqrt(cov(i, i) * cov(j, j)) + 1e-100)
-            ret = tuple(tuple(cor(i, j) for i in ind) for j in ind)
+            ret = mutil.Matrix(names, ((cor(i, j) for i in ind) for j in ind))
         else:
-            ret = tuple(tuple(cov(i, j) for i in ind) for j in ind)
-
+            ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
         return ret
 
     def print_matrix(self):
         """Show correlation matrix."""
         matrix = self.matrix(correlation=True, skip_fixed=True)
-        vnames = self.list_of_vary_param()
-        self.frontend.print_matrix(vnames, matrix)
+        print(matrix)
 
     def latex_matrix(self):
         """Build :class:`LatexFactory` object with correlation matrix."""
         matrix = self.matrix(correlation=True, skip_fixed=True)
-        vnames = self.list_of_vary_param()
-        return LatexFactory.build_matrix(vnames, matrix)
+        return LatexFactory.build_matrix(matrix.names, matrix)
 
     def np_matrix(self, **kwds):
         """Covariance or correlation matrix in numpy array format.
@@ -1042,48 +1002,36 @@ cdef class Minuit:
         """
         return self.fixed[vname]
 
-    #dealing with frontend conversion
     def print_param(self, **kwds):
-        """Print current parameter state.
-
-        Extra keyword arguments will be passed to frontend.print_param.
-        """
+        """Print current parameter state."""
         # fetches the initial state if migrad was not run
-        p = self.get_param_states()
-        self.frontend.print_param(p, self.merrors_struct, **kwds)
+        params = self.get_param_states()
+        print(params)
 
     def latex_param(self):
         """build :class:`iminuit.latex.LatexTable` for current parameter"""
-        p = self.get_param_states()
-        return LatexFactory.build_param_table(p, self.merrors_struct)
+        params = self.get_param_states()
+        return LatexFactory.build_param_table(params, self.merrors_struct)
 
     def print_initial_param(self, **kwds):
         """Print initial parameters"""
-        p = self.get_initial_param_states()
-        self.frontend.print_param(p, {}, **kwds)
+        params = self.get_initial_param_states()
+        print(params)
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
-        p = self.get_initial_param_states()
-        return LatexFactory.build_param_table(p, {})
+        params = self.get_initial_param_states()
+        return LatexFactory.build_param_table(params, {})
 
     def print_fmin(self):
         """Print current function minimum state"""
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
-        sfmin = cfmin2struct(self.cfmin)
-        ncalls = self.get_num_call_fcn()
-
-        self.frontend.print_hline()
-        self.frontend.print_fmin(sfmin, self.tol, ncalls)
-        self.print_param()
-        self.frontend.print_hline()
+        print(self.get_fmin())
 
     def print_all_minos(self):
         """Print all minos errors (and its states)"""
-        for vname in self.list_of_vary_param():
-            if vname in self.merrors_struct:
-                self.frontend.print_merror(vname, self.merrors_struct[vname])
+        print(self.merrors_struct)
 
     def set_up(self, double errordef):
         """Alias for :meth:`set_errordef`"""
@@ -1123,7 +1071,10 @@ cdef class Minuit:
 
     def get_fmin(self):
         """Current FunctionMinimum Struct"""
-        return cfmin2struct(self.cfmin) if self.cfmin is not NULL else None
+        sfmin = None
+        if self.cfmin is not NULL:
+            sfmin = cfmin2struct(self.cfmin, self.tol, self.get_num_call_fcn())
+        return sfmin
 
     # Expose internal state using various structs
 
@@ -1131,13 +1082,13 @@ cdef class Minuit:
         """List of current MinuitParameter Struct for all parameters"""
         up = self.last_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
-        return [minuitparam2struct(vmps[i]) for i in range(vmps.size())]
+        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())))
 
     def get_initial_param_states(self):
         """List of current MinuitParameter Struct for all parameters"""
         up = self.initial_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
-        return [minuitparam2struct(vmps[i]) for i in range(vmps.size())]
+        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())))
 
     def get_merrors(self):
         """Dictionary of varname-> MinosError Struct"""

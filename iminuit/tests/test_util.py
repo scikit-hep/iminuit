@@ -9,7 +9,8 @@ from iminuit.util import (fitarg_rename,
                           extract_fix,
                           remove_var,
                           arguments_from_docstring,
-                          Struct)
+                          Struct,
+                          Matrix)
 import pytest
 
 
@@ -120,7 +121,7 @@ def test_arguments_from_docstring():
 
 
 def test_Struct():
-    s = Struct(a=1, b=2)
+    s = Struct(a=1, b=2, repr_text=lambda self: "foo")
     assert set(s.keys()) == {'a', 'b'}
     assert s.a == 1
     assert s.b == 2
@@ -130,4 +131,18 @@ def test_Struct():
         s.c
     with pytest.raises(KeyError):
         s['c']
+    assert repr(s) == "foo"
     assert s == Struct(a=3, b=2)
+
+
+def test_Matrix():
+    x = Matrix([[1, 2],[3, 4]], repr_text=lambda self: "foo")
+    assert x[0] == (1, 2)
+    assert x[1] == (3, 4)
+    assert x == ((1, 2), (3, 4))
+    assert repr(x) == "foo"
+    with pytest.raises(TypeError):
+        x[0] = (1, 2)
+    with pytest.raises(TypeError):
+        x[0][0] = 1
+ 

@@ -128,7 +128,7 @@ setup(
     packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
     ext_modules=extensions,
     install_requires=['setuptools', 'numpy'],
-    test_requires=['numpy', 'pytest'],
+    tests_require=['numpy', 'pytest'],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
