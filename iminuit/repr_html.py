@@ -123,43 +123,43 @@ def fmin(sfmin):
     return str(s)
 
 
-def merror(name, me):    
+def merror(me):    
     s = Html()
     with span(s):
-        s += "Minos status for %s:" % name
+        s += "Minos status for %s: " % me.name
         with span(s, style=good(me.is_valid, True)):
-            s += 'VALID' if me.is_valid else 'PROBLEM'
+            s += 'Valid' if me.is_valid else 'Invalid'
     with table(s):
         with tr(s):
-            with td(s, title="lower and upper minos error of the parameter"):
+            with td(s, title="Lower and upper minos error of the parameter"):
                 s += "Error"
             with td(s):
                 s += "%.3g" % me.lower
             with td(s):
                 s += "%.3g" % me.upper
         with tr(s):
-            with td(s, title="Validity of minos error", style=good(me.is_valid, True)):
-                s += "Valid" if me.is_valid else "Problem"
+            with td(s, title="Validity of lower/upper minos error", style=good(me.is_valid, True)):
+                s += "Valid"
             with td(s, style=good(me.lower_valid, True)):
                 s += "%s" % me.lower_valid
             with td(s, style=good(me.upper_valid, True)):
                 s += "%s" % me.upper_valid
         with tr(s):
-            with td(s, title="Did minos error search hit limit of any parameter?"):
+            with td(s, title="Did scan hit limit of any parameter?"):
                 s += "At Limit"
             with td(s, style=good(me.at_lower_limit, False)):
                 s += "%s" % me.at_lower_limit
             with td(s, style=good(me.at_upper_limit, False)):
                 s += "%s" % me.at_upper_limit
         with tr(s):
-            with td(s, title="I don't really know what this one means... Post it in issue if you know"):
+            with td(s, title="Did scan hit function call limit?"):
                 s += "Max FCN"
             with td(s, style=good(me.at_lower_max_fcn, False)):
                 s += "%s" % me.at_lower_max_fcn
             with td(s, style=good(me.at_upper_max_fcn, False)):
                 s += "%s" % me.at_upper_max_fcn
         with tr(s):
-            with td(s, title="New minimum found when doing minos scan."):
+            with td(s, title="New minimum found when doing scan?"):
                 s += "New Min" 
             with td(s, style=good(me.lower_new_min, False)):
                 s += "%s" % me.lower_new_min

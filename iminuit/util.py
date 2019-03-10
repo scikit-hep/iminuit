@@ -62,11 +62,10 @@ class Struct(OrderedDict):
             raise AttributeError
 
 
-Param = namedtuple("Param", "number name value error "
+Param = namedtuple("Param", "index name value error "
                             "is_const is_fixed has_limits "
                             "has_lower_limit has_upper_limit "
                             "lower_limit upper_limit")
-
 
 class Params(list):
     def _repr_html_(self):
@@ -75,18 +74,28 @@ class Params(list):
         return repr_text.params(self)
 
 
+class MError(namedtuple("MErrorBase",
+    "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit "
+    "at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min")):
+    __slots__ = ()
+
+    def _repr_html_(self):
+        return repr_html.merror(self)
+    def __str__(self):
+        return repr_text.merror(self)
+
+
 class MErrors(Struct):
     def _repr_html_(self):
-        return "\n".join([repr_html.merror(*kv) for kv in self.items()])
+        return "\n".join([x._repr_html_() for x in self.values()])
     def __str__(self):
-        return "\n".join([repr_text.merror(*kv) for kv in self.items()])
+        return "\n".join([str(x) for x in self.values()])
 
 
-class FMin(namedtuple("FMinBase", "fval edm tolerance nfcn ncalls "
-                                  "up is_valid has_valid_parameters has_accurate_covar "
-                                  "has_posdef_covar has_made_posdef_covar "
-                                  "hesse_failed has_covariance is_above_max_edm "
-                                  "has_reached_call_limit")):
+class FMin(namedtuple("FMinBase",
+    "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar "
+    "has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm "
+    "has_reached_call_limit")):
     __slots__ = ()
 
     def _repr_html_(self):

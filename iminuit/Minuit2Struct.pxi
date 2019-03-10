@@ -1,6 +1,6 @@
 """Minuit C++ class to IMinuit Python struct mappings.
 """
-from iminuit.util import Struct, FMin, Param
+from iminuit.util import Struct, FMin, Param, MError
 
 cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls):
     return FMin(cfmin.Fval(), cfmin.Edm(), tolerance, cfmin.NFcn(), ncalls,
@@ -17,19 +17,8 @@ cdef minuitparam2struct(MinuitParameter mp):
                  mp.UpperLimit() if mp.HasUpperLimit() else None)
 
 
-cdef minoserror2struct(MinosError m):
-    return Struct(
-        [("is_valid", m.IsValid()),
-         ("lower", m.Lower()),
-         ("upper", m.Upper()),
-         ("lower_valid", m.LowerValid()),
-         ("upper_valid", m.UpperValid()),
-         ("at_lower_limit", m.AtLowerLimit()),
-         ("at_upper_limit", m.AtUpperLimit()),
-         ("at_lower_max_fcn", m.AtLowerMaxFcn()),
-         ("at_upper_max_fcn", m.AtUpperMaxFcn()),
-         ("lower_new_min", m.LowerNewMin()),
-         ("upper_new_min", m.UpperNewMin()),
-         ("nfcn", m.NFcn()),
-         ("min", m.Min())],
-    )
+cdef minoserror2struct(name, MinosError m):
+    return MError(name, m.IsValid(), m.Lower(), m.Upper(),
+      m.LowerValid(), m.UpperValid(), m.AtLowerLimit(), m.AtUpperLimit(),
+      m.AtLowerMaxFcn(), m.AtUpperMaxFcn(), m.LowerNewMin(), m.UpperNewMin(),
+      m.NFcn(), m.Min())

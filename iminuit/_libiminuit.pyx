@@ -865,7 +865,7 @@ cdef class Minuit:
                     deref(self.cfmin), self.strategy
                 )
             mnerror = minos.Minos(index, maxcall)
-            self.merrors_struct[vname] = minoserror2struct(mnerror)
+            self.merrors_struct[vname] = minoserror2struct(vname, mnerror)
         self.refresh_internal_state()
         del minos
         self.pyfcn.SetErrorDef(oldup)        
@@ -1456,8 +1456,8 @@ cdef class Minuit:
                                self.strategy))
         cdef ContoursError cerr = mnc.get().Contour(ix, iy, numpoints)
 
-        xminos = minoserror2struct(cerr.XMinosError())
-        yminos = minoserror2struct(cerr.YMinosError())
+        xminos = minoserror2struct(x, cerr.XMinosError())
+        yminos = minoserror2struct(y, cerr.YMinosError())
 
         self.pyfcn.SetErrorDef(oldup)
 

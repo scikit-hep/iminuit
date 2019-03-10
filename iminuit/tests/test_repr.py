@@ -186,67 +186,67 @@ def test_html_minos(minuit):
     mes = minuit.merrors_struct
     assert format_html(mes._repr_html_()) == \
 r"""<span>
-Minos status for x:
+Minos status for x: 
 <span style="background-color:#92CCA6">
-VALID
+Valid
 </span>
 </span>
 <table>
 <tr>
-<td title="lower and upper minos error of the parameter">Error</td>
+<td title="Lower and upper minos error of the parameter">Error</td>
 <td>%.3g</td>
 <td>%.3g</td>
 </tr>
 <tr>
-<td title="Validity of minos error" style="background-color:#92CCA6">Valid</td>
+<td title="Validity of lower/upper minos error" style="background-color:#92CCA6">Valid</td>
 <td style="background-color:#92CCA6">True</td>
 <td style="background-color:#92CCA6">True</td>
 </tr>
 <tr>
-<td title="Did minos error search hit limit of any parameter?">At Limit</td>
+<td title="Did scan hit limit of any parameter?">At Limit</td>
 <td style="background-color:#92CCA6">False</td>
 <td style="background-color:#92CCA6">False</td>
 </tr>
 <tr>
-<td title="I don't really know what this one means... Post it in issue if you know">Max FCN</td>
+<td title="Did scan hit function call limit?">Max FCN</td>
 <td style="background-color:#92CCA6">False</td>
 <td style="background-color:#92CCA6">False</td>
 </tr>
 <tr>
-<td title="New minimum found when doing minos scan.">New Min</td>
+<td title="New minimum found when doing scan?">New Min</td>
 <td style="background-color:#92CCA6">False</td>
 <td style="background-color:#92CCA6">False</td>
 </tr>
 </table>
 <span>
-Minos status for y:
+Minos status for y: 
 <span style="background-color:#92CCA6">
-VALID
+Valid
 </span>
 </span>
 <table>
 <tr>
-<td title="lower and upper minos error of the parameter">Error</td>
+<td title="Lower and upper minos error of the parameter">Error</td>
 <td>%.3g</td>
 <td>%.3g</td>
 </tr>
 <tr>
-<td title="Validity of minos error" style="background-color:#92CCA6">Valid</td>
+<td title="Validity of lower/upper minos error" style="background-color:#92CCA6">Valid</td>
 <td style="background-color:#92CCA6">True</td>
 <td style="background-color:#92CCA6">True</td>
 </tr>
 <tr>
-<td title="Did minos error search hit limit of any parameter?">At Limit</td>
+<td title="Did scan hit limit of any parameter?">At Limit</td>
 <td style="background-color:#92CCA6">False</td>
 <td style="background-color:#92CCA6">False</td>
 </tr>
 <tr>
-<td title="I don't really know what this one means... Post it in issue if you know">Max FCN</td>
+<td title="Did scan hit function call limit?">Max FCN</td>
 <td style="background-color:#92CCA6">False</td>
 <td style="background-color:#92CCA6">False</td>
 </tr>
 <tr>
-<td title="New minimum found when doing minos scan.">New Min</td>
+<td title="New minimum found when doing scan?">New Min</td>
 <td style="background-color:#92CCA6">False</td>
 <td style="background-color:#92CCA6">False</td>
 </tr>
@@ -322,25 +322,26 @@ r"""<table>
 
 
 def test_text_params(minuit):
-    assert minuit.get_initial_param_states()._repr_text_() == r"""---------------------------------------------------------------------------------------
+    assert str(minuit.get_initial_param_states()) == \
+r"""---------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
 ---------------------------------------------------------------------------------------
 |  0 |    x | 0        | 1        |          |          |          |          |       |
 |  1 |    y | 0        | 1        |          |          |          |          |       |
----------------------------------------------------------------------------------------
-"""
+---------------------------------------------------------------------------------------"""
 
-    assert repr_text.params(minuit.get_param_states()) == r"""---------------------------------------------------------------------------------------
+    assert str(minuit.get_param_states()) == \
+r"""---------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
 ---------------------------------------------------------------------------------------
 |  0 |    x | 2        | 1        |          |          |          |          |       |
 |  1 |    y | 1        | 0.5      |          |          |          |          |       |
----------------------------------------------------------------------------------------
-"""
+---------------------------------------------------------------------------------------"""
 
 
 def test_text_fmin(minuit):
-    assert repr_text.fmin(minuit.get_fmin()) == r"""--------------------------------------------------------------------------------------
+    assert str(minuit.get_fmin()) == \
+r"""--------------------------------------------------------------------------------------
 fval = 1.0 | total call = 24 | ncalls = 24
 edm = %s (Goal: 1e-08) | up = 1.0
 --------------------------------------------------------------------------------------
@@ -351,13 +352,13 @@ edm = %s (Goal: 1e-08) | up = 1.0
 |     Hesse Fail |        Has Cov |      Above EDM |                |  Reach calllim |
 --------------------------------------------------------------------------------------
 |          False |           True |          False |                |          False |
---------------------------------------------------------------------------------------
-""" % minuit.get_fmin().edm
+--------------------------------------------------------------------------------------""" % minuit.get_fmin().edm
 
 
 def test_text_minos(minuit):
-    assert repr_text.minos_struct(minuit.minos()) == r"""-------------------------------------------------
-Minos Status for x: VALID
+    assert str(minuit.minos()) == \
+r"""-------------------------------------------------
+| Minos Status for x: VALID                     |
 -------------------------------------------------
 |      Error      |      -1      |      1       |
 |    At Limit     |    False     |    False     |
@@ -365,27 +366,25 @@ Minos Status for x: VALID
 |     New Min     |    False     |    False     |
 -------------------------------------------------
 -------------------------------------------------
-Minos Status for y: VALID
+| Minos Status for y: Valid                     |
 -------------------------------------------------
 |      Error      |     -0.5     |     0.5      |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
--------------------------------------------------
-"""
+-------------------------------------------------"""
 
-    assert repr_text.matrix(m.matrix()) == r"""-------------------
-Correlation
--------------------
+    assert str(m.matrix()) == \
+r"""-------------------
 |   |     x     y |
 -------------------
 | x |  1.00  0.00 |
 | y |  0.00  1.00 |
--------------------
-"""
+-------------------"""
 
-    assert repr_text.minos_struct(m.merrors_struct) == r"""-------------------------------------------------
-Minos Status for x: VALID
+    assert str(m.merrors_struct) == \
+r"""-------------------------------------------------
+| Minos Status for x: Valid                     |
 -------------------------------------------------
 |      Error      |      -1      |      1       |
 |    At Limit     |    False     |    False     |
@@ -393,72 +392,67 @@ Minos Status for x: VALID
 |     New Min     |    False     |    False     |
 -------------------------------------------------
 -------------------------------------------------
-Minos Status for y: VALID
+| Minos Status for y: Valid                     |
 -------------------------------------------------
 |      Error      |     -0.5     |     0.5      |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
--------------------------------------------------
-"""
+-------------------------------------------------"""
 
     m = Minuit(f1, x=5, y=5,
                error_x=0.1, error_y=0.1,
                limit_x=(0, None), limit_y=(0, 10),
                errordef=1, frontend=console.ConsoleFrontend())
-    assert repr_text.params(m.get_param_states()) == r"""---------------------------------------------------------------------------------------
+    assert str(m.get_param_states()) == \
+r"""---------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
 ---------------------------------------------------------------------------------------
 |  0 |    x | 5        | 0.1      |          |          | 0        |          |       |
 |  1 |    y | 5        | 0.1      |          |          | 0        | 10       |       |
----------------------------------------------------------------------------------------
-"""
+---------------------------------------------------------------------------------------"""
 
 
 def test_console_frontend_with_long_names():
 
     matrix = Matrix(["super-long-name", "x"], ((1.0, 0.1), (0.1, 1.0)))
-    assert repr(matrix) == r"""
------------------------------------------------------
+    assert str(matrix) == \
+r"""-----------------------------------------------------
 |                 | super-long-name               x |
 -----------------------------------------------------
 | super-long-name |            1.00            0.10 |
 |               x |            0.10            1.00 |
------------------------------------------------------
-"""
+-----------------------------------------------------"""
 
     mps = Params(Struct(name="super-long-name", value=0, error=0,
                   lower_limit=None, upper_limit=None,
                   is_fixed=False, is_const=False),
                 repr_text=lambda self: repr_text.params)
-    assert repr(mps) == r"""
---------------------------------------------------------------------------------------------------
+    assert str(mps) == \
+r"""--------------------------------------------------------------------------------------------------
 | No |      Name       |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
 --------------------------------------------------------------------------------------------------
 |  0 | super-long-name | 0        | 0        |          |          |          |          |       |
---------------------------------------------------------------------------------------------------
-"""
+--------------------------------------------------------------------------------------------------"""
 
 
 def test_console_frontend_with_difficult_values():
     matrix = Matrix(("x", "y"), ((-1.23456, 0), (0, 0)))
-    assert repr(matrix) == r"""
--------------------
+    assert str(matrix) == \
+r"""-------------------
 |   |     x     y |
 -------------------
 | x | -1.23  0.00 |
 | y |  0.00  0.00 |
--------------------
-"""
+-------------------"""
 
     mps = Params(Struct(name="x", value=-1.234567e-11, error=1.234567e11,
                   lower_limit=None, upper_limit=None,
                   is_fixed=False, is_const=True))
 
-    assert repr_text.params(mps) == r"""
----------------------------------------------------------------------------------------
+    assert str(mps) == \
+r"""---------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
 ---------------------------------------------------------------------------------------
 |  0 |    x | -1.23E-11| 1.23E+11 |          |          |          |          | CONST |
----------------------------------------------------------------------------------------
-"""
+---------------------------------------------------------------------------------------"""
