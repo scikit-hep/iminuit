@@ -745,7 +745,8 @@ cdef class Minuit:
         if self.print_level > 0:
             self.print_fmin()
 
-        return self.get_fmin(), self.get_param_states()
+        return mutil.MigradResult(self.get_fmin(), self.get_param_states())
+
 
     def hesse(self, unsigned int maxcall=0):
         """Run HESSE to compute parabolic errors.
@@ -798,6 +799,7 @@ cdef class Minuit:
             self.print_matrix()
 
         return self.get_param_states()
+
 
     def minos(self, var=None, sigma=1., unsigned int maxcall=0):
         """Run MINOS to compute exact asymmetric profile uncertainties.
@@ -869,6 +871,7 @@ cdef class Minuit:
         self.pyfcn.SetErrorDef(oldup)        
         return self.merrors_struct
 
+
     def matrix(self, correlation=False, skip_fixed=True):
         """Error or correlation matrix in tuple or tuples format."""
         if not self.last_upst.HasCovariance():
@@ -913,8 +916,7 @@ cdef class Minuit:
 
     def print_matrix(self):
         """Show correlation matrix."""
-        matrix = self.matrix(correlation=True, skip_fixed=True)
-        print(matrix)
+        print(self.matrix(correlation=True, skip_fixed=True))
 
     def latex_matrix(self):
         """Build :class:`LatexFactory` object with correlation matrix."""
@@ -1005,8 +1007,7 @@ cdef class Minuit:
     def print_param(self, **kwds):
         """Print current parameter state."""
         # fetches the initial state if migrad was not run
-        params = self.get_param_states()
-        print(params)
+        print(self.get_param_states())
 
     def latex_param(self):
         """build :class:`iminuit.latex.LatexTable` for current parameter"""
@@ -1015,8 +1016,7 @@ cdef class Minuit:
 
     def print_initial_param(self, **kwds):
         """Print initial parameters"""
-        params = self.get_initial_param_states()
-        print(params)
+        print(self.get_initial_param_states())
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""

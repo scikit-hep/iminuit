@@ -7,9 +7,8 @@ from __future__ import (absolute_import, division, print_function)
 # https://stackoverflow.com/questions/7602171/unicode-error-unicodeescape-codec-cant-decode-bytes-string-with-u
 # We want the same code to work in Python 2 and 3 and chose this solution.
 from iminuit import Minuit
-from iminuit.util import Params
+from iminuit.util import Params, Struct, Matrix
 from iminuit import repr_html
-from iminuit.util import Struct
 import pytest
 
 
@@ -361,7 +360,6 @@ def test_text_minos(minuit):
 Minos Status for x: VALID
 -------------------------------------------------
 |      Error      |      -1      |      1       |
-|      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
@@ -370,7 +368,6 @@ Minos Status for x: VALID
 Minos Status for y: VALID
 -------------------------------------------------
 |      Error      |     -0.5     |     0.5      |
-|      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
@@ -391,7 +388,6 @@ Correlation
 Minos Status for x: VALID
 -------------------------------------------------
 |      Error      |      -1      |      1       |
-|      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
@@ -400,7 +396,6 @@ Minos Status for x: VALID
 Minos Status for y: VALID
 -------------------------------------------------
 |      Error      |     -0.5     |     0.5      |
-|      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
@@ -422,12 +417,8 @@ Minos Status for y: VALID
 
 def test_console_frontend_with_long_names():
 
-    matrix = mutil.Matrix((1.0, 0.1), (0.1, 1.0), 
-        repr_text=lambda self: repr_text.matrix(["super-long-name", "x"], self)
-    )
+    matrix = Matrix(["super-long-name", "x"], ((1.0, 0.1), (0.1, 1.0)))
     assert repr(matrix) == r"""
------------------------------------------------------
-Correlation
 -----------------------------------------------------
 |                 | super-long-name               x |
 -----------------------------------------------------
@@ -450,12 +441,8 @@ Correlation
 
 
 def test_console_frontend_with_difficult_values():
-    matrix = Matrix(((-1.23456, 0), (0, 0)),
-        repr_text=lambda self: repr_text.matrix(("x", "y"), self)
-    )
+    matrix = Matrix(("x", "y"), ((-1.23456, 0), (0, 0)))
     assert repr(matrix) == r"""
--------------------
-Correlation
 -------------------
 |   |     x     y |
 -------------------

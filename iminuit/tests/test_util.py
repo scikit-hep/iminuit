@@ -10,7 +10,10 @@ from iminuit.util import (fitarg_rename,
                           remove_var,
                           arguments_from_docstring,
                           Struct,
-                          Matrix)
+                          Matrix,
+                          FMin,
+                          Params,
+                          MigradResult)
 import pytest
 
 
@@ -121,7 +124,7 @@ def test_arguments_from_docstring():
 
 
 def test_Struct():
-    s = Struct(a=1, b=2, repr_text=lambda self: "foo")
+    s = Struct([("a", 1), ("b", 2)])
     assert set(s.keys()) == {'a', 'b'}
     assert s.a == 1
     assert s.b == 2
@@ -131,18 +134,30 @@ def test_Struct():
         s.c
     with pytest.raises(KeyError):
         s['c']
-    assert repr(s) == "foo"
-    assert s == Struct(a=3, b=2)
+    assert repr(s) == "Struct([('a', 3), ('b', 2)])"
+    assert s == Struct([("a", 3), ("b", 2)])
 
 
 def test_Matrix():
-    x = Matrix([[1, 2],[3, 4]], repr_text=lambda self: "foo")
+    x = Matrix(("a", "b"), [[1, 2],[3, 4]])
     assert x[0] == (1, 2)
     assert x[1] == (3, 4)
     assert x == ((1, 2), (3, 4))
-    assert repr(x) == "foo"
+    assert repr(x) == '[(1, 2), (3, 4)]'
     with pytest.raises(TypeError):
         x[0] = (1, 2)
     with pytest.raises(TypeError):
         x[0][0] = 1
  
+ 
+def test_MigradResult():
+    fmin = FMin(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+    params = Params()
+    mr = MigradResult(fmin, params)
+    assert mr.fmin is fmin
+    assert mr[0] is fmin
+    assert mr.params is params
+    assert mr[1] is params
+    a, b = mr
+    assert a is fmin
+    assert b is params

@@ -5,9 +5,10 @@ from __future__ import (absolute_import, division, print_function,
 import re
 from .py23_compat import is_string
 import types
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from . import repr_html
 from . import repr_text
+from operator import itemgetter
 
 
 class Matrix(list):
@@ -61,6 +62,12 @@ class Struct(OrderedDict):
             raise AttributeError
 
 
+Param = namedtuple("Param", "number name value error "
+                            "is_const is_fixed has_limits "
+                            "has_lower_limit has_upper_limit "
+                            "lower_limit upper_limit")
+
+
 class Params(list):
     def _repr_html_(self):
         return repr_html.params(self)
@@ -75,11 +82,27 @@ class MErrors(Struct):
         return "\n".join([repr_text.merror(*kv) for kv in self.items()])
 
 
-class FMin(Struct):
+class FMin(namedtuple("FMinBase", "fval edm tolerance nfcn ncalls "
+                                  "up is_valid has_valid_parameters has_accurate_covar "
+                                  "has_posdef_covar has_made_posdef_covar "
+                                  "hesse_failed has_covariance is_above_max_edm "
+                                  "has_reached_call_limit")):
+    __slots__ = ()
+
     def _repr_html_(self):
         return repr_html.fmin(self)
     def __str__(self):
         return repr_text.fmin(self)
+
+
+class MigradResult(namedtuple("MigradResultBase", "fmin params")):
+    __slots__ = ()
+
+    def __str__(self):
+        return str(self.fmin) + "\n" + str(self.params)
+
+    def _repr_html_(self):
+        return self.fmin._repr_html_() + self.params._repr_html_()
 
 
 def arguments_from_docstring(doc):
