@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 # https://stackoverflow.com/questions/7602171/unicode-error-unicodeescape-codec-cant-decode-bytes-string-with-u
 # We want the same code to work in Python 2 and 3 and chose this solution.
 from iminuit import Minuit
-from iminuit.util import Params, Struct, Matrix
+from iminuit.util import Params, Param, Matrix
 from iminuit import repr_html
 import pytest
 
@@ -22,14 +22,6 @@ def test_html_tag():
         s += "bar"
     assert str(s) == "<foo>\nbar\n</foo>\n"
 
-
-def test_struct():    
-    class Struct2(Struct):
-        def _repr_html_(self):
-            return "foo"
-    s = Struct2()
-    assert s._repr_html_() == "foo"
-    
 
 @pytest.fixture
 def minuit():
@@ -68,7 +60,7 @@ r"""<table>
 <td title="Minos upper error">Minos Error+</td>
 <td title="Lower limit of the parameter">Limit-</td>
 <td title="Upper limit of the parameter">Limit+</td>
-<td title="Is the parameter fixed in the fit">Fixed?</td>
+<td title="Is the parameter fixed in the fit">Fixed</td>
 </tr>
 <tr>
 <td>0</td>
@@ -79,7 +71,7 @@ r"""<table>
 <td></td>
 <td></td>
 <td></td>
-<td>No</td>
+<td></td>
 </tr>
 <tr>
 <td>1</td>
@@ -90,7 +82,7 @@ r"""<table>
 <td></td>
 <td></td>
 <td></td>
-<td>No</td>
+<td></td>
 </tr>
 </table>
 """
@@ -106,7 +98,7 @@ r"""<table>
 <td title="Minos upper error">Minos Error+</td>
 <td title="Lower limit of the parameter">Limit-</td>
 <td title="Upper limit of the parameter">Limit+</td>
-<td title="Is the parameter fixed in the fit">Fixed?</td>
+<td title="Is the parameter fixed in the fit">Fixed</td>
 </tr>
 <tr>
 <td>0</td>
@@ -117,7 +109,7 @@ r"""<table>
 <td></td>
 <td></td>
 <td></td>
-<td>No</td>
+<td></td>
 </tr>
 <tr>
 <td>1</td>
@@ -128,7 +120,7 @@ r"""<table>
 <td></td>
 <td></td>
 <td></td>
-<td>No</td>
+<td></td>
 </tr>
 </table>
 """
@@ -139,12 +131,12 @@ def test_html_fmin(minuit):
     assert format_html(fmin._repr_html_()) == \
 r"""<table>
 <tr>
-<td title="Minimum value of function">FCN = 1.0</td>
+<td title="Minimum value of function">FCN = 1</td>
 <td title="Total number of call to FCN so far">TOTAL NCALL = 67</td>
 <td title="Number of call in last migrad">NCALLS = 24</td>
 </tr>
 <tr>
-<td title="Estimated distance to minimum">EDM = %s</td>
+<td title="Estimated distance to minimum">EDM = %.3g</td>
 <td title="Maximum EDM definition of convergence">GOAL EDM = 1e-08</td>
 <td title="Error def. Amount of increase in FCN to be defined as 1 standard deviation">UP = 1.0</td>
 </tr>
@@ -293,7 +285,7 @@ r"""<table>
 <td title="Minos upper error">Minos Error+</td>
 <td title="Lower limit of the parameter">Limit-</td>
 <td title="Upper limit of the parameter">Limit+</td>
-<td title="Is the parameter fixed in the fit">Fixed?</td>
+<td title="Is the parameter fixed in the fit">Fixed</td>
 </tr>
 <tr>
 <td>0</td>
@@ -304,7 +296,7 @@ r"""<table>
 <td></td>
 <td>0</td>
 <td></td>
-<td>No</td>
+<td></td>
 </tr>
 <tr>
 <td>1</td>
@@ -315,7 +307,7 @@ r"""<table>
 <td></td>
 <td>0</td>
 <td>10</td>
-<td>No</td>
+<td></td>
 </tr>
 </table>
 """
@@ -342,8 +334,8 @@ r"""----------------------------------------------------------------------------
 def test_text_fmin(minuit):
     assert str(minuit.get_fmin()) == \
 r"""--------------------------------------------------------------------------------------
-fval = 1.0 | total call = 24 | ncalls = 24
-edm = %s (Goal: 1e-08) | up = 1.0
+fval = 1 | total call = 67 | ncalls = 24
+edm = %.3g (Goal: 1e-08) | up = 1.0
 --------------------------------------------------------------------------------------
 |          Valid |    Valid Param | Accurate Covar |         Posdef |    Made Posdef |
 --------------------------------------------------------------------------------------
@@ -358,9 +350,10 @@ edm = %s (Goal: 1e-08) | up = 1.0
 def test_text_minos(minuit):
     assert str(minuit.minos()) == \
 r"""-------------------------------------------------
-| Minos Status for x: VALID                     |
+| Minos Status for x: Valid                     |
 -------------------------------------------------
 |      Error      |      -1      |      1       |
+|      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
@@ -369,41 +362,28 @@ r"""-------------------------------------------------
 | Minos Status for y: Valid                     |
 -------------------------------------------------
 |      Error      |     -0.5     |     0.5      |
+|      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
 -------------------------------------------------"""
 
-    assert str(m.matrix()) == \
+
+def test_text_matrix(minuit):
+    assert str(minuit.matrix()) == \
 r"""-------------------
 |   |     x     y |
 -------------------
 | x |  1.00  0.00 |
-| y |  0.00  1.00 |
+| y |  0.00  0.25 |
 -------------------"""
 
-    assert str(m.merrors_struct) == \
-r"""-------------------------------------------------
-| Minos Status for x: Valid                     |
--------------------------------------------------
-|      Error      |      -1      |      1       |
-|    At Limit     |    False     |    False     |
-|     Max FCN     |    False     |    False     |
-|     New Min     |    False     |    False     |
--------------------------------------------------
--------------------------------------------------
-| Minos Status for y: Valid                     |
--------------------------------------------------
-|      Error      |     -0.5     |     0.5      |
-|    At Limit     |    False     |    False     |
-|     Max FCN     |    False     |    False     |
-|     New Min     |    False     |    False     |
--------------------------------------------------"""
 
+def test_text_params_with_limits():
     m = Minuit(f1, x=5, y=5,
                error_x=0.1, error_y=0.1,
                limit_x=(0, None), limit_y=(0, 10),
-               errordef=1, frontend=console.ConsoleFrontend())
+               errordef=1)
     assert str(m.get_param_states()) == \
 r"""---------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
@@ -424,10 +404,7 @@ r"""-----------------------------------------------------
 |               x |            0.10            1.00 |
 -----------------------------------------------------"""
 
-    mps = Params(Struct(name="super-long-name", value=0, error=0,
-                  lower_limit=None, upper_limit=None,
-                  is_fixed=False, is_const=False),
-                repr_text=lambda self: repr_text.params)
+    mps = Params([Param(0, "super-long-name", 0, 0, False, False, False, False, False, None, None)])
     assert str(mps) == \
 r"""--------------------------------------------------------------------------------------------------
 | No |      Name       |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
@@ -446,9 +423,7 @@ r"""-------------------
 | y |  0.00  0.00 |
 -------------------"""
 
-    mps = Params(Struct(name="x", value=-1.234567e-11, error=1.234567e11,
-                  lower_limit=None, upper_limit=None,
-                  is_fixed=False, is_const=True))
+    mps = Params([Param(0, "x",  -1.234567e-11, 1.234567e11, True, False, False, False, False, None, None)])
 
     assert str(mps) == \
 r"""---------------------------------------------------------------------------------------

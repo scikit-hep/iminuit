@@ -58,23 +58,23 @@ def caution(x, should_be):
 
 def fmin(sfmin):
     """Display FunctionMinum in html representation"""
-    goaledm = 0.0001 * sfmin.tolerance * sfmin.up
+    goaledm = 1e-4 * sfmin.tolerance * sfmin.up
     s = Html()
     with table(s):
         with tr(s):
             with td(s, title="Minimum value of function"):
-                s += "FCN = %s" % sfmin.fval
+                s += "FCN = %.3g" % sfmin.fval
             with td(s, title="Total number of call to FCN so far"):
                 s += "TOTAL NCALL = %i" % sfmin.ncalls
             with td(s, title="Number of call in last migrad"):
                 s += "NCALLS = %i" % sfmin.nfcn
         with tr(s):
             with td(s, title="Estimated distance to minimum"):
-                s += "EDM = %s" % sfmin.edm
+                s += "EDM = %.3g" % sfmin.edm
             with td(s, title="Maximum EDM definition of convergence"):
-                s += "GOAL EDM = %s" % goaledm
+                s += "GOAL EDM = %.3g" % goaledm
             with td(s, title="Error def. Amount of increase in FCN to be defined as 1 standard deviation"):
-                s += "UP = %s" % sfmin.up
+                s += "UP = %.1f" % sfmin.up
     with table(s):
         with tr(s):
             with td(s, align="center", title="Validity of the migrad call"):
@@ -168,13 +168,8 @@ def merror(me):
     return str(s)
     
 
-def params(mps, merr=None):
-    """print list of parameters
-    Arguments:
-
-        *mps* : minuit parameters struct
-        *merr* : minos error
-    """
+def params(mps, mes=None):
+    # TODO include Minos data
     
     s = Html()
     with table(s):
@@ -196,7 +191,7 @@ def params(mps, merr=None):
             with td(s, title="Upper limit of the parameter"):
                 s += "Limit+"
             with td(s, title="Is the parameter fixed in the fit"):
-                s += "Fixed?"
+                s += "Fixed"
 
         # body
         for i, mp in enumerate(mps):
@@ -210,32 +205,32 @@ def params(mps, merr=None):
                 with td(s):
                     s += "%.3g" % mp.error
                 with td(s):
-                    s += '' if merr is None or mp.name not in merr else '%.3g' % merr[mp.name].lower
+                    s += '' if mes is None or mp.name not in mes else '%.3g' % mes[mp.name].lower
                 with td(s):
-                    s += '' if merr is None or mp.name not in merr else '%.3g' % merr[mp.name].upper
+                    s += '' if mes is None or mp.name not in mes else '%.3g' % mes[mp.name].upper
                 with td(s):
                     s += '' if mp.lower_limit is None else '%.3g' % mp.lower_limit
                 with td(s):
                     s += '' if mp.upper_limit is None else '%.3g' % mp.upper_limit
                 with td(s):
-                    s += 'Yes' if mp.is_fixed else 'No'
+                    s += 'Yes' if mp.is_fixed else ('CONST' if mp.is_const else '')
     return str(s)
 
 
-def matrix(names, matrix):
+def matrix(m):
     s = Html()
     with table(s):
         with tr(s):
             s += "<td/>\n"
-            for v in names:
+            for v in m.names:
                 with td(s):
                     s += v
-        for i, v in enumerate(names):
+        for i, v in enumerate(m.names):
             with tr(s):
                 with td(s):
                     s += v
-                for j in range(len(names)):
-                    val = matrix[i][j]
+                for j in range(len(m.names)):
+                    val = m[i][j]
                     color = Gradient.rgb_color_for(val)
                     with td(s, style="background-color:"+color):
                         s += "%3.2f" % val

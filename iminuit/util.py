@@ -29,10 +29,10 @@ class Matrix(list):
         return True
 
     def _repr_html_(self):
-        return repr_html.matrix(self.names, self)
+        return repr_html.matrix(self)
 
     def __str__(self):
-        return repr_text.matrix(self.names, self)
+        return repr_text.matrix(self)
 
 
 class Struct(OrderedDict):
@@ -62,10 +62,11 @@ class Struct(OrderedDict):
             raise AttributeError
 
 
-Param = namedtuple("Param", "index name value error "
-                            "is_const is_fixed has_limits "
-                            "has_lower_limit has_upper_limit "
-                            "lower_limit upper_limit")
+class Param(namedtuple("ParamBase",
+    "index name value error is_const is_fixed has_limits "
+    "has_lower_limit has_upper_limit lower_limit upper_limit")):
+    pass
+    
 
 class Params(list):
     def _repr_html_(self):
