@@ -168,9 +168,7 @@ def merror(me):
     return str(s)
     
 
-def params(mps, mes=None):
-    # TODO include Minos data
-    
+def params(mps):    
     s = Html()
     with table(s):
         # header
@@ -193,6 +191,8 @@ def params(mps, mes=None):
             with td(s, title="Is the parameter fixed in the fit"):
                 s += "Fixed"
 
+        mes = mps.merrors
+
         # body
         for i, mp in enumerate(mps):
             with tr(s):
@@ -201,19 +201,19 @@ def params(mps, mes=None):
                 with td(s):
                     s += mp.name
                 with td(s):
-                    s += "%.3g" % mp.value
+                    s += '%.3g' % mp.value
                 with td(s):
-                    s += "%.3g" % mp.error
+                    s += '%.3g' % mp.error
                 with td(s):
-                    s += '' if mes is None or mp.name not in mes else '%.3g' % mes[mp.name].lower
+                    s += '%.3g' % mes[mp.name].lower if mes and mp.name in mes else ''
                 with td(s):
-                    s += '' if mes is None or mp.name not in mes else '%.3g' % mes[mp.name].upper
+                    s += '%.3g' % mes[mp.name].upper if mes and mp.name in mes else ''
                 with td(s):
-                    s += '' if mp.lower_limit is None else '%.3g' % mp.lower_limit
+                    s += '%.3g' % mp.lower_limit if mp.lower_limit is not None else ''
                 with td(s):
-                    s += '' if mp.upper_limit is None else '%.3g' % mp.upper_limit
+                    s += '%.3g' % mp.upper_limit if mp.upper_limit is not None else '' 
                 with td(s):
-                    s += 'Yes' if mp.is_fixed else ('CONST' if mp.is_const else '')
+                    s += 'yes' if mp.is_fixed else ('CONST' if mp.is_const else '')
     return str(s)
 
 

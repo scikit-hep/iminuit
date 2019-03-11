@@ -69,6 +69,9 @@ class Param(namedtuple("ParamBase",
     
 
 class Params(list):
+    def __init__(self, seq, merrors):
+        list.__init__(self, seq)
+        self.merrors = merrors
     def _repr_html_(self):
         return repr_html.params(self)
     def __str__(self):

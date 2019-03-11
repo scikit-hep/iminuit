@@ -105,8 +105,8 @@ r"""<table>
 <td>x</td>
 <td>2</td>
 <td>1</td>
-<td></td>
-<td></td>
+<td>-1</td>
+<td>1</td>
 <td></td>
 <td></td>
 <td></td>
@@ -116,8 +116,8 @@ r"""<table>
 <td>y</td>
 <td>1</td>
 <td>0.5</td>
-<td></td>
-<td></td>
+<td>-0.5</td>
+<td>0.5</td>
 <td></td>
 <td></td>
 <td></td>
@@ -270,8 +270,8 @@ r"""<table>
 
 
 def test_html_params_with_limits():
-    m = Minuit(f1, x=5, y=5,
-               error_x=0.1, error_y=0.1,
+    m = Minuit(f1, x=3, y=5, fix_x=True,
+               error_x=0.2, error_y=0.1,
                limit_x=(0, None), limit_y=(0, 10),
                errordef=1, print_level=0)
     assert format_html(m.get_initial_param_states()._repr_html_()) == \
@@ -290,13 +290,13 @@ r"""<table>
 <tr>
 <td>0</td>
 <td>x</td>
-<td>5</td>
-<td>0.1</td>
+<td>3</td>
+<td>0.2</td>
 <td></td>
 <td></td>
 <td>0</td>
 <td></td>
-<td></td>
+<td>yes</td>
 </tr>
 <tr>
 <td>1</td>
@@ -326,8 +326,8 @@ r"""----------------------------------------------------------------------------
 r"""---------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
 ---------------------------------------------------------------------------------------
-|  0 |    x | 2        | 1        |          |          |          |          |       |
-|  1 |    y | 1        | 0.5      |          |          |          |          |       |
+|  0 |    x | 2        | 1        | -1       | 1        |          |          |       |
+|  1 |    y | 1        | 0.5      | -0.5     | 0.5      |          |          |       |
 ---------------------------------------------------------------------------------------"""
 
 
@@ -380,20 +380,20 @@ r"""-------------------
 
 
 def test_text_params_with_limits():
-    m = Minuit(f1, x=5, y=5,
-               error_x=0.1, error_y=0.1,
+    m = Minuit(f1, x=3, y=5, fix_x=True,
+               error_x=0.2, error_y=0.1,
                limit_x=(0, None), limit_y=(0, 10),
                errordef=1)
-    assert str(m.get_param_states()) == \
+    assert str(m.get_initial_param_states()) == \
 r"""---------------------------------------------------------------------------------------
 | No | Name |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
 ---------------------------------------------------------------------------------------
-|  0 |    x | 5        | 0.1      |          |          | 0        |          |       |
+|  0 |    x | 3        | 0.2      |          |          | 0        |          |  yes  |
 |  1 |    y | 5        | 0.1      |          |          | 0        | 10       |       |
 ---------------------------------------------------------------------------------------"""
 
 
-def test_console_frontend_with_long_names():
+def test_text_with_long_names():
 
     matrix = Matrix(["super-long-name", "x"], ((1.0, 0.1), (0.1, 1.0)))
     assert str(matrix) == \
@@ -404,7 +404,7 @@ r"""-----------------------------------------------------
 |               x |            0.10            1.00 |
 -----------------------------------------------------"""
 
-    mps = Params([Param(0, "super-long-name", 0, 0, False, False, False, False, False, None, None)])
+    mps = Params([Param(0, "super-long-name", 0, 0, False, False, False, False, False, None, None)], None)
     assert str(mps) == \
 r"""--------------------------------------------------------------------------------------------------
 | No |      Name       |  Value   | Sym. Err |   Err-   |   Err+   | Limit-   | Limit+   | Fixed |
@@ -423,7 +423,7 @@ r"""-------------------
 | y |  0.00  0.00 |
 -------------------"""
 
-    mps = Params([Param(0, "x",  -1.234567e-11, 1.234567e11, True, False, False, False, False, None, None)])
+    mps = Params([Param(0, "x",  -1.234567e-11, 1.234567e11, True, False, False, False, False, None, None)], None)
 
     assert str(mps) == \
 r"""---------------------------------------------------------------------------------------

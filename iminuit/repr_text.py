@@ -83,7 +83,7 @@ def matrix(m):
     return "\n".join(lines)
     
     
-def params(mps, mes=None):
+def params(mps):
     # TODO include Minos data
     vnames = [mp.name for mp in mps]
     name_width = max([4] + [len(x) for x in vnames])
@@ -104,6 +104,7 @@ def params(mps, mes=None):
     blank = ' ' * 8
 
     lines = [hline, header, hline]
+    mes = mps.merrors
     for i, mp in enumerate(mps):
         v = mp.name
         line = linefmt.format(
@@ -114,7 +115,7 @@ def params(mps, mes=None):
             nformat(mes[v].upper) if mes and v in mes else blank,
             nformat(mp.lower_limit) if mp.lower_limit is not None else blank,
             nformat(mp.upper_limit) if mp.upper_limit is not None else blank,
-            'Yes' if mp.is_fixed else 'CONST' if mp.is_const else ''
+            'yes' if mp.is_fixed else 'CONST' if mp.is_const else ''
         )
         lines.append(line)
     lines.append(hline)

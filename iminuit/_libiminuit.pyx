@@ -346,7 +346,7 @@ cdef class Minuit:
 
     def __init__(self, fcn,
                  throw_nan=False, pedantic=True,
-                 forced_parameters=None, print_level=1,
+                 forced_parameters=None, print_level=0,
                  errordef=None, grad=None, use_array_call=False,
                  **kwds):
         """
@@ -1082,13 +1082,15 @@ cdef class Minuit:
         """List of current MinuitParameter Struct for all parameters"""
         up = self.last_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
-        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())))
+        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
+                            self.merrors_struct)
 
     def get_initial_param_states(self):
         """List of current MinuitParameter Struct for all parameters"""
         up = self.initial_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
-        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())))
+        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
+                            None)
 
     def get_merrors(self):
         """Dictionary of varname-> MinosError Struct"""

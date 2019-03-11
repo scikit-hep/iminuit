@@ -152,7 +152,7 @@ def test_Matrix():
  
 def test_MigradResult():
     fmin = FMin(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
-    params = Params()
+    params = Params([], None)
     mr = MigradResult(fmin, params)
     assert mr.fmin is fmin
     assert mr[0] is fmin
