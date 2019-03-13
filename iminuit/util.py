@@ -4,24 +4,38 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import re
 from .py23_compat import is_string
-
-__all__ = [
-    'describe',
-    'Struct',
-    'fitarg_rename',
-    'true_param',
-    'param_name',
-    'extract_iv',
-    'extract_limit',
-    'extract_error',
-    'extract_fix',
-    'remove_var',
-    'arguments_from_docstring',
-    'format_exception',
-]
+import types
+from collections import OrderedDict, namedtuple
+from . import repr_html
+from . import repr_text
+from operator import itemgetter
 
 
-class Struct(dict):
+class Matrix(list):
+    def __init__(self, names, data):
+        self.names = names
+        list.__init__(self, [tuple(x) for x in data])
+
+    def __setitem__(self, *args):
+        raise TypeError("Matrix does not support assignment")
+
+    def __eq__(self, rhs):
+        if len(self) != len(rhs):
+            return False
+        for i, x in enumerate(self):
+            for j, y in enumerate(x):
+                if y != rhs[i][j]:
+                    return False
+        return True
+
+    def _repr_html_(self):
+        return repr_html.matrix(self)
+
+    def __str__(self):
+        return repr_text.matrix(self)
+
+
+class Struct(OrderedDict):
     """A Struct is a Python dict with tab completion.
 
     Example:
@@ -32,17 +46,85 @@ class Struct(dict):
     >>> s.a
     42
     """
+    _attr_mode = False
+
+    def __init__(self, *args):
+        OrderedDict.__init__(self, *args)
+        self._attr_mode = True
+
     def __setattr__(self, key, value):
-        try:
-            self[key] = value
-        except KeyError:
-            raise AttributeError
+        if self._attr_mode:
+            try:
+                self[key] = value
+            except KeyError:
+                raise AttributeError
+        else:
+            OrderedDict.__setattr__(self, key, value)
 
     def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError
+        if self._attr_mode:
+            try:
+                return self[key]
+            except KeyError:
+                raise AttributeError
+        else:
+            OrderedDict.__getattr__(self, key)
+
+
+class Param(namedtuple("ParamBase",
+    "index name value error is_const is_fixed has_limits "
+    "has_lower_limit has_upper_limit lower_limit upper_limit")):
+    pass
+    
+
+class Params(list):
+    def __init__(self, seq, merrors):
+        list.__init__(self, seq)
+        self.merrors = merrors
+    def _repr_html_(self):
+        return repr_html.params(self)
+    def __str__(self):
+        return repr_text.params(self)
+
+
+class MError(namedtuple("MErrorBase",
+    "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit "
+    "at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min")):
+    __slots__ = ()
+
+    def _repr_html_(self):
+        return repr_html.merror(self)
+    def __str__(self):
+        return repr_text.merror(self)
+
+
+class MErrors(Struct):
+    def _repr_html_(self):
+        return "\n".join([x._repr_html_() for x in self.values()])
+    def __str__(self):
+        return "\n".join([str(x) for x in self.values()])
+
+
+class FMin(namedtuple("FMinBase",
+    "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar "
+    "has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm "
+    "has_reached_call_limit")):
+    __slots__ = ()
+
+    def _repr_html_(self):
+        return repr_html.fmin(self)
+    def __str__(self):
+        return repr_text.fmin(self)
+
+
+class MigradResult(namedtuple("MigradResultBase", "fmin params")):
+    __slots__ = ()
+
+    def __str__(self):
+        return str(self.fmin) + "\n" + str(self.params)
+
+    def _repr_html_(self):
+        return self.fmin._repr_html_() + self.params._repr_html_()
 
 
 def arguments_from_docstring(doc):
@@ -310,25 +392,3 @@ def format_exception(etype, evalue, tb):
     import traceback
     s = "".join(traceback.format_tb(tb))
     return "%s: %s\n%s" % (etype.__name__, evalue, s)
-
-
-def is_ipython_notebook():
-    """Detect whether we are in a Jupyter notebook.
-
-    See
-    https://stackoverflow.com/questions/15411967/
-    how-can-i-check-if-code-is-executed-in-the-ipython-notebook
-
-    Actually, we should abandon the frontend system and provide
-    _repr_html_ methods for our classes instead.
-    This is a major change and may happen in the future. For now,
-    we just try to improve the Jupyter notebook detection.
-    """
-    try:
-        cfg = get_ipython().config
-        if 'IPKernelApp' in cfg:
-            return True
-        else:
-            return False
-    except NameError:
-        return False

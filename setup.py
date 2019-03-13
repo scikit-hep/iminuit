@@ -125,10 +125,10 @@ setup(
     url='https://github.com/iminuit/iminuit',
     download_url='http://pypi.python.org/packages/source/i/'
                  'iminuit/iminuit-%s.tar.gz' % __version__,
-    packages=['iminuit', 'iminuit.frontends', 'iminuit.tests'],
+    packages=['iminuit', 'iminuit.tests'],
     ext_modules=extensions,
     install_requires=['setuptools', 'numpy'],
-    test_requires=['numpy', 'pytest'],
+    tests_require=['numpy', 'pytest'],
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',

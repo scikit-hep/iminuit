@@ -3,7 +3,7 @@ import warnings
 import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Struct
+from iminuit.util import Param
 from iminuit.iminuit_warnings import InitialParamWarning
 import numpy as np
 
@@ -676,66 +676,25 @@ def test_get_param_states():
                fix_x=True, limit_y=(None, 10),
                pedantic=False, errordef=1, print_level=0)
     # these are the initial param states
-    expected = [Struct(name='x',
-                       number=0,
-                       value=1,
-                       error=3,
-                       is_fixed=True,
-                       is_const=False,
-                       has_limits=False,
-                       has_lower_limit=False,
-                       has_upper_limit=False,
-                       lower_limit=None,
-                       upper_limit=None),
-                Struct(name='y',
-                       number=1,
-                       value=2,
-                       error=4,
-                       is_fixed=False,
-                       is_const=False,
-                       has_limits=True,
-                       has_lower_limit=False,
-                       has_upper_limit=True,
-                       lower_limit=None,
-                       upper_limit=10)
-                ]
+    expected = [Param(0, 'x', 1.0, 3.0, False, True, False, False, False, None, None),
+                Param(1, 'y', 2.0, 4.0, False, False, True, False, True, None, 10)]
     assert m.get_param_states() == expected
 
     m.migrad()
     assert m.get_initial_param_states() == expected
 
-    expected = [Struct(name='x',
-                       number=0,
-                       value=1.0,
-                       error=3.0,
-                       is_fixed=True,
-                       is_const=False,
-                       has_limits=False,
-                       has_lower_limit=False,
-                       has_upper_limit=False,
-                       lower_limit=None,
-                       upper_limit=None),
-                Struct(name='y',
-                       number=1,
-                       value=5.0,
-                       error=1.0,
-                       is_fixed=False,
-                       is_const=False,
-                       has_limits=True,
-                       has_lower_limit=False,
-                       has_upper_limit=True,
-                       lower_limit=None,
-                       upper_limit=10)]
+    expected = [Param(0, 'x', 1.0, 3.0, False, True, False, False, False, None, None),
+                Param(1, 'y', 5.0, 1.0, False, False, True, False, True, None, 10)]
 
-    param = m.get_param_states()
+    params = m.get_param_states()
     for i, exp in enumerate(expected):
-        p = param[i]
-        assert set(p.keys()) == set(exp.keys())
-        for key in exp:
+        p = params[i]
+        assert set(p._fields) == set(exp._fields)
+        for key in exp._fields:
             if key in ('value', 'error'):
-                assert_allclose(p[key], exp[key], rtol=1e-2)
+                assert_allclose(getattr(p, key), getattr(exp, key), rtol=1e-2)
             else:
-                assert p[key] == exp[key]
+                assert getattr(p, key) == getattr(exp, key)
 
 
 def test_latex_matrix():
