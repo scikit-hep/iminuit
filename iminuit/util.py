@@ -34,6 +34,12 @@ class Matrix(list):
     def __str__(self):
         return repr_text.matrix(self)
 
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("Matrix(...)")
+        else:
+            p.text(str(self))
+
 
 class Struct(OrderedDict):
     """A Struct is a Python dict with tab completion.
@@ -81,10 +87,18 @@ class Params(list):
     def __init__(self, seq, merrors):
         list.__init__(self, seq)
         self.merrors = merrors
+
     def _repr_html_(self):
         return repr_html.params(self)
+
     def __str__(self):
         return repr_text.params(self)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("[...]")
+        else:
+            p.text(str(self))
 
 
 class MError(namedtuple("MErrorBase",
@@ -94,15 +108,29 @@ class MError(namedtuple("MErrorBase",
 
     def _repr_html_(self):
         return repr_html.merror(self)
+
     def __str__(self):
         return repr_text.merror(self)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("MError(...)")
+        else:
+            p.text(str(self))
 
 
 class MErrors(Struct):
     def _repr_html_(self):
         return "\n".join([x._repr_html_() for x in self.values()])
+
     def __str__(self):
         return "\n".join([str(x) for x in self.values()])
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("MErrors(...)")
+        else:
+            p.text(str(self))
 
 
 class FMin(namedtuple("FMinBase",
@@ -113,8 +141,15 @@ class FMin(namedtuple("FMinBase",
 
     def _repr_html_(self):
         return repr_html.fmin(self)
+
     def __str__(self):
         return repr_text.fmin(self)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("FMin(...)")
+        else:
+            p.text(str(self))
 
 
 class MigradResult(namedtuple("MigradResultBase", "fmin params")):
@@ -125,6 +160,12 @@ class MigradResult(namedtuple("MigradResultBase", "fmin params")):
 
     def _repr_html_(self):
         return self.fmin._repr_html_() + self.params._repr_html_()
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("MigradResult(...)")
+        else:
+            p.text(str(self))
 
 
 def arguments_from_docstring(doc):
