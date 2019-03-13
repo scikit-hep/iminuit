@@ -46,20 +46,29 @@ class Struct(OrderedDict):
     >>> s.a
     42
     """
+    _attr_mode = False
+
     def __init__(self, *args):
         OrderedDict.__init__(self, *args)
+        self._attr_mode = True
 
     def __setattr__(self, key, value):
-        try:
-            self[key] = value
-        except KeyError:
-            raise AttributeError
+        if self._attr_mode:
+            try:
+                self[key] = value
+            except KeyError:
+                raise AttributeError
+        else:
+            OrderedDict.__setattr__(self, key, value)
 
     def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError
+        if self._attr_mode:
+            try:
+                return self[key]
+            except KeyError:
+                raise AttributeError
+        else:
+            OrderedDict.__getattr__(self, key)
 
 
 class Param(namedtuple("ParamBase",
