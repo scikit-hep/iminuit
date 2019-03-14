@@ -793,15 +793,9 @@ def test_view_lifetime():
 def test_bad_functions():
     def throwing(x):
         raise RuntimeError("user message")
-
-    def divide_by_zero(x):
-        1/0
-
-    def returning_nan(x):
-        return np.nan
-
-    def returning_garbage(x):
-        return "foo"
+    divide_by_zero = lambda x: 1/0
+    returning_nan = lambda x: np.nan
+    returning_garbage = lambda x: "foo"
 
     for func, expected in (
             (throwing, 'RuntimeError("user message")'),
@@ -814,14 +808,9 @@ def test_bad_functions():
             m.migrad()
         assert expected in excinfo.value.args[0]
 
-    def returning_nan(x):
-        return np.array([1, np.nan])
-
-    def returning_noniterable(x):
-        return 0
-
-    def returning_garbage(x):
-        return np.array([1, "foo"])
+    returning_nan = lambda x: np.array([1, np.nan])
+    returning_noniterable = lambda x: 0
+    returning_garbage = lambda x: np.array([1, "foo"])
 
     for func, expected in (
             (throwing, 'RuntimeError("user message")'),

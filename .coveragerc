@@ -1,6 +1,6 @@
 [run]
-source=iminuit/*
-omit = */py23_compat.py
+source = iminuit/*
+
 [report]
 exclude_lines =
     pragma: no cover

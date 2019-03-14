@@ -1,4 +1,4 @@
-# cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii
+# cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii, language_level=2
 # distutils: language = c++
 """IPython Minuit class definition."""
 from __future__ import (absolute_import, division, print_function,
@@ -868,7 +868,7 @@ cdef class Minuit:
             self.merrors_struct[vname] = minoserror2struct(vname, mnerror)
         self.refresh_internal_state()
         del minos
-        self.pyfcn.SetErrorDef(oldup)        
+        self.pyfcn.SetErrorDef(oldup)
         return self.merrors_struct
 
 
