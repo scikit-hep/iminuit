@@ -1,19 +1,29 @@
 iminuit
 =======
 
-MINUIT from Python - Fitting like a boss
+MINUIT2 from Python - Fitting like a boss
 
-`iminuit` is a Python interface to the `MINUIT` C++ package.
+.. image:: https://travis-ci.com/HDembinski/iminuit.svg?branch=develop
+   :target: https://travis-ci.com/HDembinski/iminuit
+.. image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true
+   :target: https://ci.appveyor.com/project/HDembinski/iminuit-b4eg8
+.. image:: https://img.shields.io/pypi/v/iminuit.svg
+   :target: https://pypi.org/project/iminuit/
 
-It can be used as a general robust function minimisation method,
+.. skip-marker-do-not-remove
+
+`iminuit` is a Python interface to the `MINUIT2` C++ package.
+
+It can be used as a general robust function minimization method,
 but is most commonly used for likelihood fits of models to data,
 and to get model parameter error estimates from likelihood profile analysis.
 
 * Code: https://github.com/scikit-hep/iminuit
 * Documentation: http://iminuit.readthedocs.org/
+* Gitter: https://gitter.im/HSF/PyHEP
 * Mailing list: https://groups.google.com/forum/#!forum/scikit-hep-forum
 * PyPI: https://pypi.org/project/iminuit/
-* License: MINUIT is LGPL and iminuit is MIT
+* License: MINUIT2 is LGPL and iminuit is MIT
 * Citation: https://github.com/iminuit/iminuit/blob/master/CITATION
 
 In a nutshell
