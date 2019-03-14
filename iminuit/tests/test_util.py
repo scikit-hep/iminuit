@@ -8,7 +8,6 @@ from iminuit.util import (fitarg_rename,
                           extract_fix,
                           remove_var,
                           arguments_from_docstring,
-                          Struct,
                           Matrix,
                           FMin,
                           Params,
@@ -122,27 +121,12 @@ def test_arguments_from_docstring():
     assert a == ['ncall_me', 'resume', 'nsplit']
 
 
-def test_Struct():
-    s = Struct([("a", 1), ("b", 2)])
-    assert set(s.keys()) == {'a', 'b'}
-    assert s.a == 1
-    assert s.b == 2
-    s.a = 3
-    assert s.a == 3
-    with pytest.raises(AttributeError):
-        s.c
-    with pytest.raises(KeyError):
-        s['c']
-    assert repr(s) == "Struct([('a', 3), ('b', 2)])"
-    assert s == Struct([("a", 3), ("b", 2)])
-
-
 def test_Matrix():
     x = Matrix(("a", "b"), [[1, 2],[3, 4]])
     assert x[0] == (1, 2)
     assert x[1] == (3, 4)
     assert x == ((1, 2), (3, 4))
-    assert repr(x) == '[(1, 2), (3, 4)]'
+    assert repr(x) == '((1, 2), (3, 4))'
     with pytest.raises(TypeError):
         x[0] = (1, 2)
     with pytest.raises(TypeError):

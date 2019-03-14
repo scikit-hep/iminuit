@@ -20,14 +20,13 @@ __all__ = [
     'Minuit',
     'minimize',
     'describe',
-    'Struct',
     '__version__',
     'test',
 ]
 
 from ._libiminuit import Minuit
 from ._minimize import minimize
-from .util import describe, Struct
+from .util import describe
 from .info import __version__
 
 

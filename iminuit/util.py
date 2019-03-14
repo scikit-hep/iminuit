@@ -11,22 +11,13 @@ from . import repr_text
 from operator import itemgetter
 
 
-class Matrix(list):
-    def __init__(self, names, data):
+class Matrix(tuple):
+    """Matrix data object (tuple of tuples)."""
+    __slots__ = ()
+
+    def __new__(self, names, data):
         self.names = names
-        list.__init__(self, [tuple(x) for x in data])
-
-    def __setitem__(self, *args):
-        raise TypeError("Matrix does not support assignment")
-
-    def __eq__(self, rhs):
-        if len(self) != len(rhs):
-            return False
-        for i, x in enumerate(self):
-            for j, y in enumerate(x):
-                if y != rhs[i][j]:
-                    return False
-        return True
+        return tuple.__new__(Matrix, (tuple(x) for x in data))
 
     def _repr_html_(self):
         return repr_html.matrix(self)
@@ -41,49 +32,15 @@ class Matrix(list):
             p.text(str(self))
 
 
-class Struct(OrderedDict):
-    """A Struct is a Python dict with tab completion.
-
-    Example:
-
-    >>> s = Struct(a=42)
-    >>> s['a']
-    42
-    >>> s.a
-    42
-    """
-    _attr_mode = False
-
-    def __init__(self, *args):
-        OrderedDict.__init__(self, *args)
-        self._attr_mode = True
-
-    def __setattr__(self, key, value):
-        if self._attr_mode:
-            try:
-                self[key] = value
-            except KeyError:
-                raise AttributeError
-        else:
-            OrderedDict.__setattr__(self, key, value)
-
-    def __getattr__(self, key):
-        if self._attr_mode:
-            try:
-                return self[key]
-            except KeyError:
-                raise AttributeError
-        else:
-            OrderedDict.__getattr__(self, key)
-
-
 class Param(namedtuple("ParamBase",
-    "index name value error is_const is_fixed has_limits "
+    "number name value error is_const is_fixed has_limits "
     "has_lower_limit has_upper_limit lower_limit upper_limit")):
-    pass
-    
+    """Data object for a single Parameter."""
+
 
 class Params(list):
+    """List of parameter data objects."""
+
     def __init__(self, seq, merrors):
         list.__init__(self, seq)
         self.merrors = merrors
@@ -104,6 +61,8 @@ class Params(list):
 class MError(namedtuple("MErrorBase",
     "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit "
     "at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min")):
+    """Minos result object."""
+
     __slots__ = ()
 
     def _repr_html_(self):
@@ -119,7 +78,9 @@ class MError(namedtuple("MErrorBase",
             p.text(str(self))
 
 
-class MErrors(Struct):
+class MErrors(OrderedDict):
+    """Dict from parameter name to Minos result object."""
+
     def _repr_html_(self):
         return "\n".join([x._repr_html_() for x in self.values()])
 
@@ -137,6 +98,8 @@ class FMin(namedtuple("FMinBase",
     "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar "
     "has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm "
     "has_reached_call_limit")):
+    """Function minimum status object."""
+
     __slots__ = ()
 
     def _repr_html_(self):
@@ -153,6 +116,8 @@ class FMin(namedtuple("FMinBase",
 
 
 class MigradResult(namedtuple("MigradResultBase", "fmin params")):
+    """Holds the Migrad result."""
+
     __slots__ = ()
 
     def __str__(self):

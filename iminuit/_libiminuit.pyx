@@ -1024,7 +1024,7 @@ cdef class Minuit:
         return LatexFactory.build_param_table(params, {})
 
     def print_fmin(self):
-        """Print current function minimum state"""
+        """Print current function minimum data object"""
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
         print(self.get_fmin())
@@ -1070,7 +1070,7 @@ cdef class Minuit:
             self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
 
     def get_fmin(self):
-        """Current FunctionMinimum Struct"""
+        """Current function minimum data object"""
         sfmin = None
         if self.cfmin is not NULL:
             sfmin = cfmin2struct(self.cfmin, self.tol, self.get_num_call_fcn())
@@ -1079,21 +1079,21 @@ cdef class Minuit:
     # Expose internal state using various structs
 
     def get_param_states(self):
-        """List of current MinuitParameter Struct for all parameters"""
+        """List of current parameter data objects"""
         up = self.last_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             self.merrors_struct)
 
     def get_initial_param_states(self):
-        """List of current MinuitParameter Struct for all parameters"""
+        """List of current parameter data objects set to the initial fit state"""
         up = self.initial_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             None)
 
     def get_merrors(self):
-        """Dictionary of varname-> MinosError Struct"""
+        """Dictionary of varname -> Minos data object"""
         return self.merrors_struct
 
     def get_num_call_fcn(self):
