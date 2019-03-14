@@ -1445,14 +1445,14 @@ cdef class Minuit:
         cdef double oldup = self.pyfcn.Up()
         self.pyfcn.SetErrorDef(oldup * sigma * sigma)
 
-        cdef unique_ptr[MnContours] mnc = unique_ptr[MnContours]()
+        cdef auto_ptr[MnContours] mnc = auto_ptr[MnContours](NULL)
         if self.grad is None:
-            mnc = unique_ptr[MnContours](
+            mnc = auto_ptr[MnContours](
                 new MnContours(deref(<FCNBase *> self.pyfcn),
                                deref(self.cfmin),
                                self.strategy))
         else:
-            mnc = unique_ptr[MnContours](
+            mnc = auto_ptr[MnContours](
                 new MnContours(deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
                                deref(self.cfmin),
                                self.strategy))
