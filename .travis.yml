@@ -8,11 +8,12 @@ matrix:
     - name: "3.7: test, doc, coverage"
       python: 3.7-dev
       install:
-        pip install --upgrade cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov
+        pip install --upgrade cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov codecov
       script:
         make cov &&
         make test-notebooks &&
-        make doc
+        make doc &&
+        codecov
 
     - name: "osx: test"
       os: osx
