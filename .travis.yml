@@ -17,7 +17,6 @@ matrix:
 
     - name: "osx: test"
       os: osx
-      language: sh
       install:
         virtualenv build
         source build/bin/activate
