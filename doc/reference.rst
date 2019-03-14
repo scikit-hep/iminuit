@@ -94,22 +94,21 @@ on them in your code. We list the ones that are for the public.
         extract_iv, extract_error, extract_fix, extract_limit
 
 
-Structs
--------
+Data objects
+------------
 
 .. currentmodule:: iminuit
 
-iminuit uses various structs as return values. This section lists these
-structs and their fields.
+iminuit uses various data objects as return values. This section lists them.
 
 .. _function-minimum-sruct:
 
-Function Minimum Struct
-~~~~~~~~~~~~~~~~~~~~~~~
+Function Minimum Data Object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Stores information about the fit result and returned by
-:meth:`Minuit.get_fmin` and :meth:`Minuit.migrad`
-Function Mimum Struct has the following attributes:
+Subclass of NamedTuple that stores information about the fit result. It is returned by
+:meth:`Minuit.get_fmin` and :meth:`Minuit.migrad`.
+It has the following attributes:
 
     * *fval*: FCN minimum value
 
@@ -152,12 +151,11 @@ Function Mimum Struct has the following attributes:
 
 .. _minos-error-struct:
 
-Minos Error Struct
-~~~~~~~~~~~~~~~~~~
+Minos Data Object
+~~~~~~~~~~~~~~~~~
 
-Minos Error Struct is used in return value from :meth:`Minuit.minos`.
-You can also call :meth:`Minuit.get_merrors` to get accumulated dictionary
-all minos errors that has been calculated. It contains various minos status:
+Subclass of NamedTuple which stores information about the Minos result. It is returned by :meth:`Minuit.minos`
+(as part of a dictionary from parameter name -> data object). You can get it also from :meth:`Minuit.get_merrors`. It has the following attributes:
 
     * *lower*: lower error value
 
@@ -186,13 +184,11 @@ all minos errors that has been calculated. It contains various minos status:
 
 .. _minuit-param-struct:
 
-Minuit Parameter Struct
-~~~~~~~~~~~~~~~~~~~~~~~
+Parameter Data Object
+~~~~~~~~~~~~~~~~~~~~~
 
-Minuit Parameter Struct is return value from :meth:`Minuit.hesse`
-You can, however, access the latest parameter by calling
-:meth:`Minuit.get_param_states`. Minuit Parameter Struct has the following
-attrubutes:
+Subclass of NamedTuple which stores the fit parameter state. It is returned by :meth:`Minuit.hesse` and as part of the :meth:`Minuit.migrad` result. You can access the latest parameter state by calling
+:meth:`Minuit.get_param_states`, and the initial state via :meth:`Minuit.get_initial_param_states`. It has the following attrubutes:
 
     * *number*: parameter number
 
