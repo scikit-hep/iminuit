@@ -5,7 +5,7 @@ sudo: false
 matrix:
   include:
     # remove "-dev" once 3.7 proper exists on travis-ci
-    - name: 3.7: test, doc, coverage
+    - name: "3.7: test, doc, coverage"
       python: 3.7-dev
       install:
         pip install --upgrade cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov
@@ -25,14 +25,14 @@ matrix:
         make test &&
         make test-notebooks
 
-    - name: 2.7: sdist
+    - name: "2.7: sdist"
       python: 2.7
       install:
         pip install --upgrade cython numpy
       script:
         source ci-scripts/travis_sdist_test.sh
 
-    - name: 3.7: sdist
+    - name: "3.7: sdist"
       python: 3.7-dev
       install:
         pip install --upgrade cython numpy
