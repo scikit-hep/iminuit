@@ -312,8 +312,7 @@ def fitarg_rename(fitarg, ren):
     """
     tmp = ren
     if is_string(ren):
-        def ren(x):
-            return tmp + '_' + x
+        ren = lambda x: tmp + '_' + x
     ret = {}
     prefix = ['limit_', 'fix_', 'error_', ]
     for k, v in fitarg.items():

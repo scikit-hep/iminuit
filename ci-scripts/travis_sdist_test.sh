@@ -1,6 +1,8 @@
 make clean
-python setup.py sdist
-pip uninstall -y cython
+make sdist
+virtualenv dist
+source dist/bin/activate
 cd dist
-pip install iminuit-*.tar.gz
+IMINUIT=$( ls iminuit-*.tar* )
+pip install ${IMINUIT}[tests]
 python -c 'import iminuit; iminuit.test()'

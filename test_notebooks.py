@@ -26,10 +26,10 @@ def test_notebook(filename):
 
 
 def test_all_notebooks():
-    filenames = sorted(glob("tutorial/*.ipynb")) + ["iminuit/tests/is_ipython_notebook.ipynb"]
+    filenames = sorted(glob("tutorial/*.ipynb"))
     broken_notebooks = [
         # See https://github.com/iminuit/iminuit/pull/245#issuecomment-402431753
-        'tutorial/hard-core-tutorial.ipynb',
+        'tutorial/hard_core_tutorial.ipynb',
     ]
     status_total = STATUS_SUCCEED
     for filename in filenames:

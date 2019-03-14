@@ -128,7 +128,9 @@ setup(
     packages=['iminuit', 'iminuit.tests'],
     ext_modules=extensions,
     install_requires=['setuptools', 'numpy'],
-    tests_require=['numpy', 'pytest'],
+    extras_require={
+        'tests': ['pytest', 'cython', 'matplotlib', 'scipy'],
+    },
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
