@@ -6,7 +6,9 @@ iminuit
 .. image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true
    :target: https://ci.appveyor.com/project/HDembinski/iminuit-b4eg8
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
-   :target: https://pypi.org/project/iminuit/
+   :target: https://pypi.org/project/iminuit
+.. image:: https://codecov.io/gh/HDembinski/iminuit/branch/develop/graph/badge.svg
+   :target: https://codecov.io/gh/HDembinski/iminuit/branch/develop
 
 .. skip-marker-do-not-remove
 
