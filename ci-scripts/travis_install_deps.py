@@ -13,7 +13,7 @@ def main():
     if build == 'ALL':
         pip_install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter')
     elif build in {'TEST', 'COVERAGE'}:
-        pip_install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov')
+        pip_install('cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter codecov')
     elif build == 'SDIST':
         pip_install('cython numpy pytest matplotlib scipy ipython')
     elif build == 'MINIMAL':

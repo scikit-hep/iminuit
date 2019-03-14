@@ -46,6 +46,6 @@ script:
   - if [ $BUILD == COVERAGE ]; then
       make test;
       make test-notebooks;
-      make coverage;
+      codecov;
     fi
   - if [ $BUILD == SDIST ]; then source ci-scripts/travis_sdist_test.sh; fi

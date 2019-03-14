@@ -58,8 +58,8 @@ test: build
 test-notebooks: build
 	python test_notebooks.py
 
-coverage: build
-	python -m pytest -v iminuit --cov iminuit --cov-report html --cov-report term-missing --cov-report xml
+cov: build
+	pytest iminuit --cov iminuit --cov-report term-missing
 
 doc/_build/html/index.html: iminuit/_libiminuit.so $(wildcard doc/*.rst)
 	{ cd doc; make html; }
