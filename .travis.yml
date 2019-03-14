@@ -20,8 +20,7 @@ matrix:
       install:
         pip install --user --upgrade cython numpy
       script:
-        make test &&
-        make test-notebooks
+        make test
 
     - name: "2.7: sdist"
       python: 2.7
