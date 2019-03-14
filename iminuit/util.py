@@ -3,7 +3,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import re
-from .py23_compat import is_string
 import types
 from collections import OrderedDict, namedtuple
 from . import repr_html
@@ -311,7 +310,7 @@ def fitarg_rename(fitarg, ren):
 
     """
     tmp = ren
-    if is_string(ren):
+    if isinstance(ren, str):
         ren = lambda x: tmp + '_' + x
     ret = {}
     prefix = ['limit_', 'fix_', 'error_', ]
