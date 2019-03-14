@@ -10,17 +10,15 @@ matrix:
       install:
         pip install --upgrade cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov
       script:
-        make test &&
+        make cov &&
         make test-notebooks &&
-        make doc &&
-        make cov
+        make doc
 
     - name: "osx: test"
       os: osx
+      language: sh
       install:
-        virtualenv build
-        source build/bin/activate
-        pip install --upgrade cython numpy
+        pip install --user --upgrade cython numpy
       script:
         make test &&
         make test-notebooks
