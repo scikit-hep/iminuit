@@ -10,7 +10,7 @@ matrix:
       install:
         pip install --upgrade cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov codecov
       script:
-        make cov &&
+        COVERAGE=1 make cov &&
         make test-notebooks &&
         make doc &&
         codecov
