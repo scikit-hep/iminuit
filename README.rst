@@ -1,8 +1,6 @@
 iminuit
 =======
 
-MINUIT2 from Python - Fitting like a boss
-
 .. image:: https://travis-ci.com/HDembinski/iminuit.svg?branch=develop
    :target: https://travis-ci.com/HDembinski/iminuit
 .. image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true
