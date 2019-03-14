@@ -114,7 +114,11 @@ def get_version():
 
 __version__ = get_version()
 
-long_description = ''.join(open('README.rst').readlines()[4:])
+with open('README.rst') as readme_rst:
+    txt = readme_rst.read()
+    # skip everything up to the skip marker
+    skip_marker = ".. skip-marker-do-not-remove"
+    long_description = txt[txt.index(skip_marker) + len(skip_marker):].lstrip()
 
 setup(
     name='iminuit',
@@ -122,6 +126,9 @@ setup(
     description='MINUIT from Python - Fitting like a boss',
     long_description=long_description,
     author='Piti Ongmongkolkul and others',
+    author_email='See maintainer email',
+    maintainer='Hans Dembinski',
+    maintainer_email='hans.dembinski - at - gmail.com',
     url='https://github.com/iminuit/iminuit',
     download_url='http://pypi.python.org/packages/source/i/'
                  'iminuit/iminuit-%s.tar.gz' % __version__,
