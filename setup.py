@@ -14,15 +14,18 @@ import distutils.ccompiler
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
 compiler_opts = {
-    CCompiler: dict(),
-    UnixCCompiler: dict(extra_compile_args=[
+    CCompiler: {},
+    UnixCCompiler: {
+    'extra_compile_args': [
         '-Wno-shorten-64-to-32', '-Wno-parentheses',
         '-Wno-unused-variable', '-Wno-sign-compare',
         '-Wno-cpp'  # suppresses #warnings from numpy
-    ]),
-    MSVCCompiler: dict(extra_compile_args=[
+    ] + ['--coverage'] if bool(os.environ.get("COVERAGE", False)) else [],
+    'extra_link_args': ['--coverage'] if bool(os.environ.get("COVERAGE", False)) else []
+    },
+    MSVCCompiler: {'extra_compile_args': [
         '/EHsc',
-    ]),
+    ]},
 }
 
 
