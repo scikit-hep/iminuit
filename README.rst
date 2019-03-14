@@ -10,7 +10,7 @@ iminuit
 
 .. skip-marker-do-not-remove
 
-`iminuit` is a Python interface to the `MINUIT2` C++ package.
+*iminuit* is a Python interface to the *MINUIT2* C++ package.
 
 It can be used as a general robust function minimization method,
 but is most commonly used for likelihood fits of models to data,
@@ -21,7 +21,7 @@ and to get model parameter error estimates from likelihood profile analysis.
 * Gitter: https://gitter.im/HSF/PyHEP
 * Mailing list: https://groups.google.com/forum/#!forum/scikit-hep-forum
 * PyPI: https://pypi.org/project/iminuit/
-* License: MINUIT2 is LGPL and iminuit is MIT
+* License: *MINUIT2* is LGPL and *iminuit* is MIT
 * Citation: https://github.com/iminuit/iminuit/blob/master/CITATION
 
 In a nutshell
