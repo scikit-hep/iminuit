@@ -15,7 +15,8 @@ matrix:
         make doc &&
         make cov
 
-    - os: osx
+    - name: "osx: test"
+      os: osx
       language: sh
       install:
         virtualenv build

@@ -1,4 +1,4 @@
-#cython: embedsignature=True
+#cython: embedsignature=True, language_level=2
 
 cpdef f(a, b):
     return a + 2 * b
