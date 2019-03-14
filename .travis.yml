@@ -18,7 +18,7 @@ matrix:
       os: osx
       language: sh
       install:
-        pip install --upgrade cython numpy pytest matplotlib scipy ipython
+        pip install --user --upgrade cython numpy pytest matplotlib scipy ipython
       script:
         make test
 
