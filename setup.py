@@ -19,7 +19,8 @@ compiler_opts = {
     'extra_compile_args': [
         '-Wno-shorten-64-to-32', '-Wno-parentheses',
         '-Wno-unused-variable', '-Wno-sign-compare',
-        '-Wno-cpp'  # suppresses #warnings from numpy
+        '-Wno-cpp',  # suppresses #warnings from numpy
+        '-Wno-deprecated-declarations'  # suppresses warnings about auto_ptr
     ] + ['--coverage'] if bool(os.environ.get("COVERAGE", False)) else [],
     'extra_link_args': ['--coverage'] if bool(os.environ.get("COVERAGE", False)) else []
     },
