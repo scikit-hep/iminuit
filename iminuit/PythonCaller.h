@@ -55,7 +55,7 @@ inline std::string errormsg(const char* prefix,
 #if PY_MAJOR_VERSION < 3
             ret += PyString_AsString(s);
 #else
-            PyHandle b = PyUnicode_EncodeLocale(s, "surrogateescape");
+            PyHandle b = PyUnicode_AsEncodedString(s, "ascii", "xmlcharrefreplace");
             ret += PyBytes_AsString(b);
 #endif
         }
