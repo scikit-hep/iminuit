@@ -5,6 +5,8 @@ from iminuit.tests.utils import requires_dependency
 from math import ldexp
 import sys
 import pytest
+import platform
+is_pypy = platform.python_implementation() == "PyPy"
 
 
 def test_function():
@@ -94,6 +96,10 @@ def test_cython_embedsig():
 
 
 @requires_dependency('Cython', 'pyximport', 'cyfunc')
+@pytest.mark.skipif(
+    is_pypy,
+    reason='Does not work in PyPy'
+)
 def test_cython_class_method():
     import pyximport
     pyximport.install()

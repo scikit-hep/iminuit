@@ -2,6 +2,11 @@ language: python
 
 sudo: false
 
+cache:
+  pip: true
+  directories:
+    - $HOME/pypy
+
 matrix:
   include:
     # remove "-dev" once 3.7 proper exists on travis-ci
@@ -19,7 +24,14 @@ matrix:
       os: osx
       language: sh
       install:
-        pip install --user --upgrade cython numpy pytest matplotlib scipy ipython
+        pip install --user --upgrade cython numpy pytest matplotlib scipy
+      script:
+        make test
+
+    - name: "pypy3.5: test"
+      language: sh
+      install:
+        source ci-scripts/install_pypy.sh
       script:
         make test
 
