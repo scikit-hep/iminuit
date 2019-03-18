@@ -2,7 +2,10 @@ language: python
 
 sudo: false
 
-cache: pip
+cache:
+  pip: true
+  directories:
+    - $HOME/pypy
 
 matrix:
   include:
@@ -26,9 +29,9 @@ matrix:
         make test
 
     - name: "pypy3.5: test"
-      python: pypy3.5
+      language: sh
       install:
-        pip install --upgrade cython numpy pytest matplotlib
+        source ci-scripts/install_pypy.sh
       script:
         make test
 
