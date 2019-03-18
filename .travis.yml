@@ -2,6 +2,8 @@ language: python
 
 sudo: false
 
+cache: pip
+
 matrix:
   include:
     # remove "-dev" once 3.7 proper exists on travis-ci
