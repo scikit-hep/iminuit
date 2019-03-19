@@ -22,11 +22,11 @@ inline std::string errormsg(const char* prefix,
     assert(pname.size() == x.size());
     //determine longest variable length
     size_t maxlength = 0;
-    for (int i=0; i < x.size(); i++) {
+    for (std::size_t i=0; i < x.size(); i++) {
         maxlength = std::max(pname[i].size(),
                              maxlength);
     }
-    for (int i=0; i < x.size(); i++) {
+    for (std::size_t i=0; i < x.size(); i++) {
         std::string line = format("%*s = %+f\n",
                                   maxlength+4,
                                   pname[i].c_str(),
@@ -81,7 +81,7 @@ typedef PyObject* (*ConvertFunction)(const std::vector<double>&);
 
 PyObject* vector2tuple(const std::vector<double>& x) {
     PyObject* tuple = PyTuple_New(x.size());
-    for (int i = 0; i < x.size(); ++i) {
+    for (std::size_t i = 0; i < x.size(); ++i) {
         PyObject* data = PyFloat_FromDouble(x[i]);
         PyTuple_SET_ITEM(tuple, i, data); // steals ref
     }
@@ -192,7 +192,7 @@ public:
         std::vector<double> result_vector;
         result_vector.reserve(PySequence_Size(result));
         PyHandle item;
-        while (item = PyIter_Next(iterator)) {
+        while ((item = PyIter_Next(iterator))) {
             const double xi = PyFloat_AsDouble(item);
 
             if (PyErr_Occurred()) {

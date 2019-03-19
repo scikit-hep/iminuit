@@ -2,6 +2,7 @@
 # CFLAGS="-O0" python setup.py ... to override for debugging
 
 import os
+import platform
 from os.path import dirname, join, exists
 from glob import glob
 from setuptools import setup, Extension
@@ -20,9 +21,12 @@ compiler_opts = {
         '-Wno-shorten-64-to-32', '-Wno-parentheses',
         '-Wno-unused-variable', '-Wno-sign-compare',
         '-Wno-cpp',  # suppresses #warnings from numpy
-        '-Wno-deprecated-declarations'  # suppresses warnings about auto_ptr
-    ] + ['--coverage'] if bool(os.environ.get("COVERAGE", False)) else [],
+        '-Wno-deprecated-declarations',  # suppresses warnings about auto_ptr
+    ]
+    + ['--coverage'] if bool(os.environ.get("COVERAGE", False)) else []
+    + ['-stdlib=libc++'] if platform.system() == "Darwin" else [],
     'extra_link_args': ['--coverage'] if bool(os.environ.get("COVERAGE", False)) else []
+    + ['-stdlib=libc++'] if platform.system() == "Darwin" else []
     },
     MSVCCompiler: {'extra_compile_args': [
         '/EHsc',
