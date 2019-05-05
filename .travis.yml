@@ -42,6 +42,13 @@ matrix:
       script:
         source ci-scripts/travis_sdist_test.sh
 
+    - name: "3.6: sdist"
+      python: 3.6
+      install:
+        pip install --upgrade cython numpy
+      script:
+        source ci-scripts/travis_sdist_test.sh
+
     - name: "3.7: sdist"
       python: 3.7-dev
       install:
