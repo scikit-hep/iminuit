@@ -48,3 +48,6 @@ matrix:
         pip install --upgrade cython numpy
       script:
         source ci-scripts/travis_sdist_test.sh
+
+  allow_failures:
+    - name: "pypy3.5: test"
