@@ -134,9 +134,8 @@ setup(
     description='MINUIT from Python - Fitting like a boss',
     long_description=long_description,
     author='Piti Ongmongkolkul and others',
-    author_email='See maintainer email',
     maintainer='Hans Dembinski',
-    maintainer_email='hans.dembinski - at - gmail.com',
+    maintainer_email='hans.dembinski@gmail.com',
     url='https://github.com/iminuit/iminuit',
     download_url='http://pypi.python.org/packages/source/i/'
                  'iminuit/iminuit-%s.tar.gz' % __version__,
