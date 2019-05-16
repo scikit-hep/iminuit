@@ -131,7 +131,7 @@ with open('README.rst') as readme_rst:
 setup(
     name='iminuit',
     version=__version__,
-    description='MINUIT from Python - Fitting like a boss',
+    description='MINUIT2 from Python - Fitting like a boss',
     long_description=long_description,
     author='Piti Ongmongkolkul and others',
     maintainer='Hans Dembinski',
