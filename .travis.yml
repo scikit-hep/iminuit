@@ -6,7 +6,6 @@ branches:
   only:
   - master
   - develop
-  - /^v\d/
 
 cache:
   pip: true
