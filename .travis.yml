@@ -54,16 +54,5 @@ matrix:
       script:
         source ci-scripts/travis_sdist_test.sh
 
-    - name: "integration: gammapy"
-      language: sh
-      install:
-        - pip install --user --upgrade cython numpy pytest matplotlib scipy
-        - pip install --user .
-        - pip install --user gammapy
-      script:
-        - cd /tmp
-        - gammapy info
-        - python -c "import sys, gammapy; sys.exit(gammapy.test())"
-
   allow_failures:
     - name: "pypy3.5: test"
