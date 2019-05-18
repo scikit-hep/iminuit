@@ -2,6 +2,7 @@
 # CFLAGS="-O0" python setup.py ... to override for debugging
 
 import os
+import sys
 import platform
 from os.path import dirname, join, exists
 from glob import glob
@@ -11,6 +12,9 @@ from distutils.ccompiler import CCompiler
 from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import MSVCCompiler
 import distutils.ccompiler
+
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
+pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
@@ -141,7 +145,8 @@ setup(
                  'iminuit/iminuit-%s.tar.gz' % __version__,
     packages=['iminuit', 'iminuit.tests'],
     ext_modules=extensions,
-    install_requires=['setuptools', 'numpy'],
+    install_requires=['numpy'],
+    setup_requires = [] + pytest_runner,
     extras_require={
         'tests': ['pytest', 'cython', 'matplotlib', 'scipy'],
     },
