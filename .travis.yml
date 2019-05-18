@@ -1,6 +1,13 @@
 language: python
 dist: xenial
 
+# Only build main branches and tags/branches starting with a v and a digit
+branches:
+  only:
+  - master
+  - develop
+  - /^v\d/
+
 cache:
   pip: true
   directories:
