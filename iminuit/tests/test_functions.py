@@ -1,6 +1,5 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-import random
 from math import sqrt, exp, cos, pi, e
 from iminuit import Minuit
 from iminuit.tests.utils import assert_allclose
@@ -12,7 +11,6 @@ def rosenbrock(x, y):
 
 
 def test_rosenbrock():
-    random.seed(0.258)
     m = Minuit(rosenbrock, x=0, y=0, pedantic=False, print_level=1)
     m.tol = 1e-4
     m.migrad()
@@ -28,9 +26,7 @@ def ackleys(x, y):
 
 
 def test_ackleys():
-    random.seed(0.258)
-
-    m = Minuit(ackleys, x=1.5 * random.random(), y=1.5 * random.random(),
+    m = Minuit(ackleys, x=0.3, y=-0.2,
                error_x=1.7, error_y=1.7,
                pedantic=False, print_level=0)
     m.tol = 1e-4
@@ -49,8 +45,7 @@ def beale(x, y):
 
 
 def test_beale():
-    random.seed(0.258)
-    m = Minuit(beale, x=random.random(), y=0.5 * random.random(),
+    m = Minuit(beale, x=0.5, y=0.25,
                pedantic=False, print_level=0)
     m.tol = 1e-4
     m.migrad()
@@ -64,8 +59,7 @@ def matyas(x, y):
 
 
 def test_matyas():
-    random.seed(0.258)
-    m = Minuit(matyas, x=random.random(), y=random.random(),
+    m = Minuit(matyas, x=0.5, y=0.5,
                pedantic=False, print_level=0)
     m.tol = 1e-4
     m.migrad()
@@ -76,8 +70,7 @@ def test_matyas():
 
 def test_matyas_oneside():
     """One-sided limit when the minimum is in the forbidden region"""
-    random.seed(0.258)
-    m = Minuit(matyas, x=2 + random.random(), y=random.random(),
+    m = Minuit(matyas, x=2 + 0.5, y=0.5,
                limit_x=(1, None),
                pedantic=False, print_level=0)
     m.tol = 1e-4
