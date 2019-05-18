@@ -61,6 +61,9 @@ class dict_interface_mixin(object):
         values = self.values()
         return tuple((keys[i], values[i]) for i in range(len(self)))
 
+    def __str__(self):
+        return self.__class__.__name__ + "(" + ", ".join("{}={}".format(k, repr(v)) for (k, v) in self.items()) + ")"
+
 
 class Param(dict_interface_mixin, namedtuple("Param",
     "number name value error is_const is_fixed has_limits "

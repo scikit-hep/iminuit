@@ -1,3 +1,6 @@
+pypy3.5
+gammapy
+
 *.pyxbldc
 *.root
 *.so
