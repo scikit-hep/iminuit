@@ -27,9 +27,9 @@ matrix:
         make test
 
     - name: "pypy3.5: test"
-      language: sh
+      python: pypy3.5
       install:
-        source ci-scripts/install_pypy.sh
+        pip install --upgrade cython numpy pytest # matplotlib doesn't compile
       script:
         make test
 
