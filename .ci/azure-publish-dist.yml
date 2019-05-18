@@ -1,0 +1,9 @@
+
+steps:
+- task: PublishPipelineArtifact@0
+  inputs:
+    artifactName: '$(Agent.OS)_$(Agent.JobName)_$(python.architecture)'
+    targetPath: 'dist'
+
+# You can set FULLBUILD_FORCE to anything non-blank to get the manylinux job to run.
+# Artifacts are attached to the build, and are published with an Azure release pipeline.
