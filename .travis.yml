@@ -13,7 +13,7 @@ cache:
 
 matrix:
   include:
-    # remove "-dev" once 3.7 proper exists on travis-ci
+    # main build where everything is tested and code coverage is generated
     - name: "3.7: test, doc, coverage"
       python: 3.7
       install:
