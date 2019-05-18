@@ -10,6 +10,8 @@ from iminuit.util import (fitarg_rename,
                           arguments_from_docstring,
                           Matrix,
                           FMin,
+                          Param,
+                          MError,
                           Params,
                           MigradResult)
 import pytest
@@ -131,8 +133,38 @@ def test_Matrix():
         x[0] = (1, 2)
     with pytest.raises(TypeError):
         x[0][0] = 1
- 
- 
+
+
+def test_Param():
+    # number name value error is_const is_fixed has_limits
+    # has_lower_limit has_upper_limit lower_limit upper_limit
+    p = Param(3, "foo", 1.2, 3.4, False, False, True, True, False, 42, None)
+
+    assert p.has_lower_limit == True
+    assert p.has_upper_limit == False
+    assert p["has_lower_limit"] == True
+    assert p["lower_limit"] == 42
+    assert p["upper_limit"] == None
+    assert "upper_limit" in p
+    assert "foo" not in p
+
+    fields = [key for key in p]
+    assert fields == "number name value error is_const is_fixed has_limits has_lower_limit has_upper_limit lower_limit upper_limit".split()
+    assert p.keys() == tuple(fields)
+    assert p.values() == tuple(p[k] for k in fields)
+    assert p.items() == tuple((k, p[k]) for k in fields)
+
+    assert str(p).startswith("Param(number=3, name='foo'")
+
+
+def test_MError():
+    pass
+
+
+def test_FMin():
+    pass
+
+
 def test_MigradResult():
     fmin = FMin(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
     params = Params([], None)

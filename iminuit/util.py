@@ -31,10 +31,43 @@ class Matrix(tuple):
             p.text(str(self))
 
 
-class Param(namedtuple("ParamBase",
+class dict_interface_mixin(object):
+    "Provides a dict-like interface for a namedtuple."
+
+    __slots__ = ()
+
+    def __getitem__(self, key):
+        base = super(dict_interface_mixin, self)
+        if isinstance(key, str):
+            return base.__getattribute__(key)
+        else:
+            return base.__getitem__(key)
+
+    def __contains__(self, key):
+        return key in self.keys()
+
+    def __iter__(self):
+        return iter(self.keys())
+
+    def keys(self):
+        return self._fields
+
+    def values(self):
+        base = super(dict_interface_mixin, self)
+        return tuple(base.__getitem__(i) for i in range(len(self)))
+
+    def items(self):
+        keys = self.keys()
+        values = self.values()
+        return tuple((keys[i], values[i]) for i in range(len(self)))
+
+
+class Param(dict_interface_mixin, namedtuple("ParamBase",
     "number name value error is_const is_fixed has_limits "
     "has_lower_limit has_upper_limit lower_limit upper_limit")):
     """Data object for a single Parameter."""
+
+    __slots__ = ()
 
 
 class Params(list):
@@ -57,7 +90,7 @@ class Params(list):
             p.text(str(self))
 
 
-class MError(namedtuple("MErrorBase",
+class MError(dict_interface_mixin, namedtuple("MErrorBase",
     "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit "
     "at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min")):
     """Minos result object."""
@@ -93,7 +126,7 @@ class MErrors(OrderedDict):
             p.text(str(self))
 
 
-class FMin(namedtuple("FMinBase",
+class FMin(dict_interface_mixin, namedtuple("FMinBase",
     "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar "
     "has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm "
     "has_reached_call_limit")):
@@ -114,6 +147,7 @@ class FMin(namedtuple("FMinBase",
             p.text(str(self))
 
 
+# MigradResult used to be a tuple, so we don't add the dict interface
 class MigradResult(namedtuple("MigradResultBase", "fmin params")):
     """Holds the Migrad result."""
 
