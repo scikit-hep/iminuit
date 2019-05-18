@@ -3,7 +3,7 @@ language: python
 cache:
   pip: true
   directories:
-    - $HOME/pypy
+    - pypy3.6
 
 matrix:
   include:
@@ -26,10 +26,10 @@ matrix:
       script:
         make test
 
-    - name: "pypy3.5: test"
+    - name: "pypy3.6: test"
       language: sh
       install:
-        source ci-scripts/install_pypy.sh
+        source ci-scripts/install_pypy3.6.sh
       script:
         make test
 
@@ -53,6 +53,3 @@ matrix:
         pip install --upgrade cython numpy
       script:
         source ci-scripts/travis_sdist_test.sh
-
-  allow_failures:
-    - name: "pypy3.5: test"
