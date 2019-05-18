@@ -38,10 +38,10 @@ class dict_interface_mixin(object):
 
     def __getitem__(self, key):
         base = super(dict_interface_mixin, self)
-        if isinstance(key, str):
-            return base.__getattribute__(key)
-        else:
+        if isinstance(key, int):
             return base.__getitem__(key)
+        else:
+            return base.__getattribute__(key)
 
     def __contains__(self, key):
         return key in self.keys()
