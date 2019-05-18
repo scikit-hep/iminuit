@@ -62,7 +62,7 @@ class dict_interface_mixin(object):
         return tuple((keys[i], values[i]) for i in range(len(self)))
 
 
-class Param(dict_interface_mixin, namedtuple("ParamBase",
+class Param(dict_interface_mixin, namedtuple("Param",
     "number name value error is_const is_fixed has_limits "
     "has_lower_limit has_upper_limit lower_limit upper_limit")):
     """Data object for a single Parameter."""
@@ -90,7 +90,7 @@ class Params(list):
             p.text(str(self))
 
 
-class MError(dict_interface_mixin, namedtuple("MErrorBase",
+class MError(dict_interface_mixin, namedtuple("MError",
     "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit "
     "at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min")):
     """Minos result object."""
@@ -126,7 +126,7 @@ class MErrors(OrderedDict):
             p.text(str(self))
 
 
-class FMin(dict_interface_mixin, namedtuple("FMinBase",
+class FMin(dict_interface_mixin, namedtuple("FMin",
     "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar "
     "has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm "
     "has_reached_call_limit")):
@@ -148,7 +148,7 @@ class FMin(dict_interface_mixin, namedtuple("FMinBase",
 
 
 # MigradResult used to be a tuple, so we don't add the dict interface
-class MigradResult(namedtuple("MigradResultBase", "fmin params")):
+class MigradResult(namedtuple("MigradResult", "fmin params")):
     """Holds the Migrad result."""
 
     __slots__ = ()

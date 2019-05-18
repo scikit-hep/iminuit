@@ -154,7 +154,7 @@ def test_Param():
     assert p.values() == tuple(p[k] for k in fields)
     assert p.items() == tuple((k, p[k]) for k in fields)
 
-    assert str(p).startswith("Param(number=3, name='foo'")
+    assert str(p) == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"
 
 
 def test_MError():
