@@ -1,14 +1,15 @@
 iminuit
 =======
 
-.. image:: https://travis-ci.com/HDembinski/iminuit.svg?branch=develop
-   :target: https://travis-ci.com/HDembinski/iminuit
+.. image:: https://travis-ci.org/scikit-hep/iminuit.svg?branch=develop
+    :target: https://travis-ci.org/scikit-hep/iminuit
 .. image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true
    :target: https://ci.appveyor.com/project/HDembinski/iminuit-b4eg8
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
-.. image:: https://codecov.io/gh/HDembinski/iminuit/branch/develop/graph/badge.svg
-   :target: https://codecov.io/gh/HDembinski/iminuit/branch/develop
+.. image:: https://codecov.io/gh/scikit-hep/iminuit/branch/develop/graph/badge.svg
+  :target: https://codecov.io/gh/scikit-hep/iminuit
+
 
 .. skip-marker-do-not-remove
 
