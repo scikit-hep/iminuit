@@ -29,7 +29,7 @@ matrix:
     - name: "pypy3.6: test"
       language: sh
       install:
-        ci-scripts/install_pypy3.6.sh
+        source ci-scripts/install_pypy3.6.sh
       script:
         make test
 
