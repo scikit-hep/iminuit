@@ -74,12 +74,14 @@ sdist:
 
 integration:
 	@echo
-	@echo "INFO: If integration tests fail, add new tests of the corrupted interface to iminuit"
+	@echo "Warning: If integration tests fail, add new tests of corrupted interface to iminuit."
 	@echo
-	.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh && touch integration
+	.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh
 
-release: integration sdist
+release: sdist
+	@echo ""
 	@echo "Release checklist:"
+	@echo "[ ] Integration tests ok 'make integration'"
 	@echo "[ ] Increase version number in iminuit/info.py"
 	@echo "[ ] Update doc/changelog.rst"
 	@echo "[ ] Tag release on Github"
