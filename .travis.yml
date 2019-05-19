@@ -35,18 +35,18 @@ matrix:
     - name: "pypy3.6: test"
       language: sh
       install:
-        source ci-scripts/install_pypy3.6.sh
+        source .ci/install_pypy3.6.sh
       script:
         make test
 
     - name: "2.7: sdist"
       python: 2.7
-      script: ci-scripts/travis_sdist_test.sh
+      script: .ci/travis_sdist_test.sh
 
     - name: "3.6: sdist"
       python: 3.6
-      script: ci-scripts/travis_sdist_test.sh
+      script: .ci/travis_sdist_test.sh
 
     - name: "3.7: sdist"
       python: 3.7
-      script: ci-scripts/travis_sdist_test.sh
+      script: .ci/travis_sdist_test.sh
