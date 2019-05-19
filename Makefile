@@ -1,7 +1,7 @@
 # Makefile with some convenient quick ways to do common things
 
 PROJECT = iminuit
-PYTHON ?= python3
+PYTHON ?= python
 
 default_target: build
 
