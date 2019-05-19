@@ -1,5 +1,7 @@
 pypy*
 gammapy
+probfit
+iminuit-dev
 
 *.pyxbldc
 *.root

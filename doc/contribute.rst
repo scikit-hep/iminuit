@@ -26,101 +26,109 @@ To hack on `iminuit`, start by cloning the repository from `Github`_:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/iminuit/iminuit.git
-    $ cd iminuit
+    git clone https://github.com/scikit-hep/iminuit.git
+    cd iminuit
 
-Hack away. It is a good idea to develop your feature in a separate branch, so that your master branch remains clean and can follow our master branch.
+It is a good idea to develop your feature in a separate branch, so that your develop branch remains clean and can follow our develop branch.
 
 .. code-block:: bash
 
-    $ git checkout -b "my_cool_feature"
-    # now you in a feature branch, commit your edits here
+    git checkout -b "my_cool_feature" develop
+
+Now you are in a feature branch, commit your edits here.
 
 conda
 +++++
 
-We recommend you make a dedicated environment for `iminuit`
-development, separate from the Python installation you use
-for other projects.
+You have the source code now, but you also want to build and test. We recommend to make a dedicated build environment for `iminuit`, separate from the Python installation you use for other projects.
 
 One way is to use `conda`_ environments and to use `environment-dev.yml`_
-to make the environment and install everything:
+to make the environment and install everything. You need to install a conda first, e.g. `miniconda`_:
 
 .. code-block:: bash
 
-    $ conda env create -f environment-dev.yml
-    $ conda activate iminuit-dev
+    conda env create -f environment-dev.yml
+    conda activate iminuit-dev
 
 If you ever need to update the environment, you can use:
 
 .. code-block:: bash
 
-    $ conda env update -f environment-dev.yml
+    conda env update -f environment-dev.yml
 
 It's also easy to deactivate or delete it:
 
 .. code-block:: bash
 
-    $ conda deactivate
-    $ conda env remove -n iminuit-dev
+    conda deactivate
+    conda env remove -n iminuit-dev
 
-virualenv and pip
-+++++++++++++++++
+virtualenv
+++++++++++
 
 Another way is to use `Python virtual environments`_ and to `pip` install via `requirements.txt`_
 
 .. code-block:: bash
 
-   $ python -m venv iminuit-dev
-   $ source activate iminuit-dev
-   $ pip install -f requirements.txt
+    pip install virtualenv
+    virtualenv iminuit-dev
+    source iminuit-dev/bin/activate
+    pip install -r requirements.txt
 
 Development workflow
 --------------------
 
-Hacking on `iminuit` usually means that you edit the Python or Cython files,
-and then run a `python setup.py` or `make` command to build the software
-or HTML documentation, or to run tests.
-
-The most thing to remember is that we have a `Makefile`_ and the you can run
-this command to get help printed concerning the most common available
-`make` and `python setup.py` commands:
+To simplify hacking, we have a Makefile to simplify common commands. To see what commands are available, do:
 
 .. code-block:: bash
 
-   $ make help
+   make help
 
-Build Minuit and `iminuit` in-place:
+Build `iminuit` in-place:
 
 .. code-block:: bash
 
-   $ make build
+   make
 
 Run the tests:
 
 .. code-block:: bash
 
-    $ make test
+    make test
 
 Run the notebook tests:
 
 .. code-block:: bash
 
-    $ make test-notebooks
+    make test-notebooks
 
-Run the tests with coverage report:
+Run the tests and generate a coverage report:
 
 .. code-block:: bash
 
-    $ make coverage
-    $ open htmlcov/index.htm
+    make cov
+    <your-web-browser> htmlcov/index.htm
 
 Build the docs:
 
 .. code-block:: bash
 
-   $ make doc
-   $ open doc/_build/html/index.html
+   make doc
+   <your-web-browser> doc/_build/html/index.html
+
+If you change the public interface of iminuit, you should run the integration tests in addition to iminuits internal tests. The integration tests will download and install some major consumers of iminuit to check their tests, to see that iminuit does not break them.
+
+.. code-block:: bash
+
+    make integration
+
+Maintainers that prepare a release, should run:
+
+.. code-block:: bash
+
+    make release
+
+It runs the integration tests and prints a checklist for the release.
 
 To check your `iminuit` version number and install location:
 
@@ -133,6 +141,7 @@ To check your `iminuit` version number and install location:
     >>> iminuit.__version__
     # version number is printed
 
+.. _miniconda: https://conda.io/en/latest/miniconda.html
 .. _requirements.txt: https://github.com/iminuit/iminuit/blob/master/requirements.txt
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/iminuit/iminuit

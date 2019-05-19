@@ -37,7 +37,7 @@ def test(args=None):
 
     From the command line:
 
-        python -c 'import iminuit; iminuit.test()
+        python -c 'import iminuit; iminuit.test()'
     """
     # http://pytest.org/latest/usage.html#calling-pytest-from-python-code
     import pytest

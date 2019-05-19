@@ -5,16 +5,22 @@
 Changelog
 =========
 
-1.3.5 (May 16, 2019)
---------------------
+1.3.6
+-----
 - fix for broken display of Jupyter notebooks on Github when iminuit output is shown
 - replaced brittle and broken REPL diplay system with standard _repr_html_ and friends
-- support for pypy-3.5
-- doc improvements
+- wheels support
+- support for pypy-3.6
+- documentation improvements
+- new integration tests to detect breaking changes in the API
 
-1.3.4 (May 16, 2019)
---------------------
-- incomplete release, use 1.3.4 instead
+1.3.5 (May 16, 2019) [do not use]
+---------------------------------
+- release with accidental breaking change in the API, use 1.3.6
+
+1.3.4 (May 16, 2019) [do not use]
+---------------------------------
+- incomplete release, use 1.3.6
 
 1.3.3 (August 13, 2018)
 -----------------------

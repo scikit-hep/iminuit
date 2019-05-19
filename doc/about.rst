@@ -58,10 +58,10 @@ iminuit was created by **Piti Ongmongkolkul** (@piti118). It is a logical succes
 Maintainers
 ~~~~~~~~~~~
 
+* Hans Dembinski (@HDembinski) [current]
+* Christoph Deil (@cdeil)
 * Piti Ongmongkolkul (@piti118)
 * Chih-hsiang Cheng (@gitcheng)
-* Christoph Deil (@cdeil)
-* Hans Dembinski (@HDembinski)
 
 Contributors
 ~~~~~~~~~~~~
