@@ -76,8 +76,7 @@ integration:
 	@echo
 	@echo "INFO: If integration tests fail, add new tests of the corrupted interface to iminuit"
 	@echo
-	#.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh && touch integration
-	.ci/probfit_integration_test.sh && touch integration
+	.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh && touch integration
 
 release: integration sdist
 	@echo "Release checklist:"
