@@ -16,9 +16,9 @@ For a hands-on introduction, see the :ref:`tutorials`.
 
 You can install iminuit with pip. It only needs a moderately recent C++ compiler on your machine. The Minuit2 code is bundled, so you don't need to install it separately.
 
-**Support for Python 2.7 to 3.5 and Numpy**
+**Support for Python 2.7 to 3.7 and PyPy-3.6 and Numpy**
 
-Whether you use the latest Python 3 or stick to classic Python 2, iminuit works for you. Numpy is supported: you can minimize functions that accept numpy arrays and get the fit results as numpy arrays. If you prefer to access parameters by name, that works as well!
+Whether you use the latest Python 3 or stick to classic Python 2, iminuit works for you. NumPy is supported: you can minimize functions that accept numpy arrays and get the fit results as numpy arrays. If you prefer to access parameters by name, that works as well!
 
 **Robust optimizer and error estimator**
 
@@ -38,6 +38,14 @@ iminuit is mostly compatible with PyMinuit. Existing PyMinuit code can be ported
 
 If you are interested in fitting a curve or distribution, take a look at `probfit`_.
 
+Who is using iminuit?
+---------------------
+
+This is an early list of known users of iminuit. Please let us know if you use iminuit, we like to keep in touch.
+
+* probfit_
+* gammapy_
+* flavio_
 
 Technical docs
 --------------
@@ -53,7 +61,7 @@ When you use iminuit/Minuit2 seriously, it is a good idea to understand a bit ho
 Team
 ----
 
-iminuit was created by **Piti Ongmongkolkul** (@piti118). It is a logical successor of pyminuit/pyminuit2, created by **Jim Pivarski** (@jpivarski).
+iminuit was created by **Piti Ongmongkolkul**. It is a logical successor of pyminuit/pyminuit2, created by **Jim Pivarski**. It is now maintained by **Hans Dembinski** and the Scikit-HEP_ community.
 
 Maintainers
 ~~~~~~~~~~~

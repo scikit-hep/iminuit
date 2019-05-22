@@ -66,19 +66,19 @@ It's also easy to deactivate or delete it:
 virtualenv
 ++++++++++
 
-Another way is to use `Python virtual environments`_ and to `pip` install via `requirements.txt`_
+Another way is to use `Python virtual environments`_ and `pip` to install the `dev-requirements.txt`_
 
 .. code-block:: bash
 
     pip install virtualenv
     virtualenv iminuit-dev
     source iminuit-dev/bin/activate
-    pip install -r requirements.txt
+    pip install -r dev-requirements.txt
 
 Development workflow
 --------------------
 
-To simplify hacking, we have a Makefile to simplify common commands. To see what commands are available, do:
+To simplify hacking, we have a Makefile with common commands. To see what commands are available, do:
 
 .. code-block:: bash
 
@@ -116,11 +116,13 @@ Build the docs:
    make doc
    <your-web-browser> doc/_build/html/index.html
 
-If you change the public interface of iminuit, you should run the integration tests in addition to iminuits internal tests. The integration tests will download and install some major consumers of iminuit to check their tests, to see that iminuit does not break them.
+If you change the public interface of iminuit, you should run the integration tests in addition to iminuits internal tests. The integration tests will download and install consumers of iminuit to check their tests. This allows us to see that iminuit does not break them.
 
 .. code-block:: bash
 
     make integration
+
+Ideally, the integration tests should never fail because of iminuit, because breaking changes in the public interface should be detected by our own unit tests. If you find a problem during integration, *you should add new tests to iminuit* which will detect this problem in the future without relying on others!
 
 Maintainers that prepare a release, should run:
 
@@ -141,10 +143,10 @@ To check your `iminuit` version number and install location:
     >>> iminuit.__version__
     # version number is printed
 
+.. _conda: https://conda.io/
 .. _miniconda: https://conda.io/en/latest/miniconda.html
-.. _requirements.txt: https://github.com/iminuit/iminuit/blob/master/requirements.txt
+.. _dev-requirements.txt: https://github.com/iminuit/iminuit/blob/master/dev-requirements.txt
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/iminuit/iminuit
-.. _conda: https://conda.io/
 .. _environment-dev.yml: https://github.com/iminuit/iminuit/blob/master/environment-dev.yml
 .. _Makefile: https://github.com/iminuit/iminuit/blob/master/Makefile

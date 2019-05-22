@@ -1,6 +1,9 @@
-.. _probfit: https://github.com/iminuit/probfit
+.. _Scikit-HEP: http://scikit-hep.org
+.. _probfit: https://github.com/scikit-hep/probfit
+.. _gammapy: https://github.com/gammapy/gammapy
+.. _flavio: https://github.com/flav-io/flavio
 .. _Minuit2: https://root.cern.ch/guides/minuit2-manual
-.. _PyMinuit: http://code.google.com/p/pyminuit/
+.. _PyMinuit: http://code.google.com/p/pyminuit
 .. _ipythonnb: http://ipython.org/ipython-doc/dev/notebook/index.html
 .. _Quasi Newton Method: http://en.wikipedia.org/wiki/Quasi-Newton_method
 .. _DFP formula: http://en.wikipedia.org/wiki/Davidon-Fletcher-Powell_formula
