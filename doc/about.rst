@@ -46,6 +46,7 @@ This is an early list of known users of iminuit. Please let us know if you use i
 * probfit_
 * gammapy_
 * flavio_
+* zfit_
 
 Technical docs
 --------------
