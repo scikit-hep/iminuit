@@ -5,8 +5,8 @@
 Changelog
 =========
 
-1.3.6
------
+1.3.6 (May 19, 2019)
+--------------------
 - fix for broken display of Jupyter notebooks on Github when iminuit output is shown
 - replaced brittle and broken REPL diplay system with standard _repr_html_ and friends
 - wheels support
