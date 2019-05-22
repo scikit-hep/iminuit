@@ -41,12 +41,18 @@ If you are interested in fitting a curve or distribution, take a look at `probfi
 Who is using iminuit?
 ---------------------
 
-This is an early list of known users of iminuit. Please let us know if you use iminuit, we like to keep in touch.
+This is a list of known users of iminuit. Please let us know if you use iminuit, we like to keep in touch.
 
 * probfit_
 * gammapy_
 * flavio_
+* Veusz_
+* TensorProb_
+* threeML_
+* pyhf_
 * zfit_
+* ctapipe_
+* lauztat_
 
 Technical docs
 --------------
