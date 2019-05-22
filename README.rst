@@ -11,8 +11,8 @@ iminuit
    :target: https://dev.azure.com/scikit-hep/iMinuit
 .. image:: https://codecov.io/gh/scikit-hep/iminuit/branch/develop/graph/badge.svg
   :target: https://codecov.io/gh/scikit-hep/iminuit
-.. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
-  :target: https://iminuit.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/iminuit/badge/?version=develop
+  :target: https://iminuit.readthedocs.io/en/develop/?badge=develop
   :alt: Documentation Status
 
 .. skip-marker-do-not-remove
