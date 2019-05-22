@@ -1,0 +1,10 @@
+steps:
+- script: |
+    docker run -e NPY_NUM_BUILD_JOBS=4 -e PLAT=$(plat) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/.ci/azure-wheel-helpers/build-wheels.sh
+  displayName: Build wheels
+
+- script: |
+    ls -lh wheelhouse/
+    mkdir -p dist
+    cp wheelhouse/$(package_name)*.whl dist/.
+  displayName: Show and copy wheels

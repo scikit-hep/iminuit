@@ -1,12 +1,22 @@
+# Template - you must copy (or symlink) this to your .ci folder
+# Packages usually will have a little custom code in here, and
+# can override any of the templates from here, as well
+
+
 trigger:
-  - develop
+  tags:
+    include:
+    - v*
 
 pr:
-  - develop
+- master
 
-variables:
-  package_name: iminuit
-  many_linux_base: quay.io/pypa/manylinux1_
+
+# variables:
+# Required variables:
+#   package_name:     This is the output name, - is replaced by _
+# Optional variables:
+#   many_linux_base:  Should be quay.io/pypa/manylinux1_ or skhep/manylinuxgcc-
 
 jobs:
 
@@ -17,7 +27,7 @@ jobs:
     python.architecture: 'none'
   steps:
     - script: |
-        python -m pip install setuptools cython
+        python -m pip install setuptools
         python setup.py sdist
       displayName: Publish sdist
     - template: azure-wheel-helpers/azure-publish-dist.yml
@@ -62,7 +72,7 @@ jobs:
   steps:
     - template: azure-wheel-helpers/azure-setup.yml
     - template: azure-wheel-helpers/azure-steps.yml
-    - template: azure-tests.yml
+    - template: azure-wheel-helpers/azure-tests.yml
     - template: azure-wheel-helpers/azure-publish-dist.yml
 
 - job: Windows
@@ -91,5 +101,5 @@ jobs:
   steps:
     - template: azure-wheel-helpers/azure-setup.yml
     - template: azure-wheel-helpers/azure-steps.yml
-    - template: azure-tests.yml
+    - template: azure-wheel-helpers/azure-tests.yml
     - template: azure-wheel-helpers/azure-publish-dist.yml

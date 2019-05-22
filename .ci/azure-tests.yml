@@ -1,0 +1,16 @@
+steps:
+- script: |
+    python -m pip install -r .ci/requirements-test.txt
+  displayName: Install testing requirements
+
+- script: |
+    python -m pytest --pyargs iminuit --junitxml=junit/test-results.xml
+  # I'm selecting a random directory to not trigger relative imports.
+  workingDirectory: tutorial
+  displayName: Test with pytest
+
+- task: PublishTestResults@2
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    testRunTitle: 'Publish test results for Python $(python.version)'
+  condition: succeededOrFailed()

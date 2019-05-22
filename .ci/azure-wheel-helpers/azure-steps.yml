@@ -24,18 +24,6 @@ steps:
   displayName: 'Install wheel'
 
 - script: |
-    python -m pytest --pyargs iminuit --junitxml=junit/test-results.xml
-  # I'm selecting a random directory to not trigger relative imports.
-  workingDirectory: tutorial
-  displayName: 'Test with pytest'
-
-- task: PublishTestResults@2
-  inputs:
-    testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results for Python $(python.version)'
-  condition: succeededOrFailed()
-
-- script: |
     python -m pip install delocate
     /Library/Frameworks/Python.framework/Versions/$(python.version)/bin/delocate-wheel dist/$(package_name)*.whl
   displayName: 'Delocate wheels'

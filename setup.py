@@ -145,7 +145,7 @@ setup(
                  'iminuit/iminuit-%s.tar.gz' % __version__,
     packages=['iminuit', 'iminuit.tests'],
     ext_modules=extensions,
-    install_requires=['numpy'],
+    install_requires=['numpy>=1.11.3'],
     setup_requires = [] + pytest_runner,
     extras_require={
         'tests': ['pytest', 'cython', 'matplotlib', 'scipy'],
