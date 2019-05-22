@@ -37,7 +37,7 @@ Minuit
     :undoc-members:
     :exclude-members: migrad, hesse, minos, args, values, errors,
         merror, fval, edm, fitarg, covariance, gcc, errordef,
-        fcn, frontend, pedantic, throw_nan, tol
+        fcn, pedantic, throw_nan, tol
 
     .. automethod:: migrad
 

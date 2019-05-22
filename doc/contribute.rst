@@ -33,7 +33,7 @@ It is a good idea to develop your feature in a separate branch, so that your dev
 
 .. code-block:: bash
 
-    git checkout -b "my_cool_feature" develop
+    git checkout -b my_cool_feature develop
 
 Now you are in a feature branch, commit your edits here.
 
@@ -66,14 +66,14 @@ It's also easy to deactivate or delete it:
 virtualenv
 ++++++++++
 
-Another way is to use `Python virtual environments`_ and `pip` to install the `dev-requirements.txt`_
+Another way is to use `Python virtual environments`_ and `pip` to install the `requirements-dev.txt`_
 
 .. code-block:: bash
 
     pip install virtualenv
     virtualenv iminuit-dev
     source iminuit-dev/bin/activate
-    pip install -r dev-requirements.txt
+    pip install -r requirements-dev.txt
 
 Development workflow
 --------------------
@@ -145,8 +145,8 @@ To check your `iminuit` version number and install location:
 
 .. _conda: https://conda.io/
 .. _miniconda: https://conda.io/en/latest/miniconda.html
-.. _dev-requirements.txt: https://github.com/iminuit/iminuit/blob/master/dev-requirements.txt
+.. _environment-dev.yml: https://github.com/iminuit/iminuit/blob/master/environment-dev.yml
+.. _requirements-dev.txt: https://github.com/iminuit/iminuit/blob/master/requirements-dev.txt
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/iminuit/iminuit
-.. _environment-dev.yml: https://github.com/iminuit/iminuit/blob/master/environment-dev.yml
 .. _Makefile: https://github.com/iminuit/iminuit/blob/master/Makefile
