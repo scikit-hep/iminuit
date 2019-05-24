@@ -4,16 +4,16 @@ iminuit
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
 .. image:: https://travis-ci.org/scikit-hep/iminuit.svg?branch=develop
-    :target: https://travis-ci.org/scikit-hep/iminuit
+   :target: https://travis-ci.org/scikit-hep/iminuit
 .. image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true
    :target: https://ci.appveyor.com/project/HDembinski/iminuit-b4eg8
-.. image:: https://dev.azure.com/scikit-hep/iMinuit/_apis/build/status/scikit-hep.iminuit?branchName=develop
-   :target: https://dev.azure.com/scikit-hep/iMinuit
 .. image:: https://codecov.io/gh/scikit-hep/iminuit/branch/develop/graph/badge.svg
-  :target: https://codecov.io/gh/scikit-hep/iminuit
+   :target: https://codecov.io/gh/scikit-hep/iminuit
 .. image:: https://readthedocs.org/projects/iminuit/badge/?version=develop
-  :target: https://iminuit.readthedocs.io/en/develop/?badge=develop
-  :alt: Documentation Status
+   :target: https://iminuit.readthedocs.io/en/develop/?badge=develop
+   :alt: Documentation Status
+.. image:: https://dev.azure.com/scikit-hep/iMinuit/_apis/build/status/scikit-hep.iminuit?branchName=master
+   :target: https://dev.azure.com/scikit-hep/iMinuit
 
 .. skip-marker-do-not-remove
 
