@@ -1,13 +1,10 @@
 trigger:
   - master
   - develop
-  tags:
-    include:
-    - v*
 
 pr:
-- master
-- develop
+  - master
+  - develop
 
 # Required variables (set in UI):
 #   package_name:     This is the output name, - is replaced by _
