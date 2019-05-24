@@ -37,24 +37,36 @@ It is a good idea to develop your feature in a separate branch, so that your dev
 
 Now you are in a feature branch, commit your edits here.
 
-conda
-+++++
+virtualenv
+++++++++++
 
 You have the source code now, but you also want to build and test. We recommend to make a dedicated build environment for `iminuit`, separate from the Python installation you use for other projects.
 
-One way is to use `conda`_ environments and to use `environment-dev.yml`_
+One way is to use `Python virtual environments`_ and `pip` to install the `requirements.txt`_
+
+.. code-block:: bash
+
+    pip install virtualenv
+    virtualenv iminuit-dev
+    source iminuit-dev/bin/activate
+    pip install -r requirements.txt
+
+conda
++++++
+
+Another way is to use `conda`_ environments and to use `environment.yml`_
 to make the environment and install everything. You need to install a conda first, e.g. `miniconda`_:
 
 .. code-block:: bash
 
-    conda env create -f environment-dev.yml
+    conda env create -f environment.yml
     conda activate iminuit-dev
 
 If you ever need to update the environment, you can use:
 
 .. code-block:: bash
 
-    conda env update -f environment-dev.yml
+    conda env update -f environment.yml
 
 It's also easy to deactivate or delete it:
 
@@ -62,18 +74,6 @@ It's also easy to deactivate or delete it:
 
     conda deactivate
     conda env remove -n iminuit-dev
-
-virtualenv
-++++++++++
-
-Another way is to use `Python virtual environments`_ and `pip` to install the `requirements-dev.txt`_
-
-.. code-block:: bash
-
-    pip install virtualenv
-    virtualenv iminuit-dev
-    source iminuit-dev/bin/activate
-    pip install -r requirements-dev.txt
 
 Development workflow
 --------------------
@@ -130,7 +130,7 @@ Maintainers that prepare a release, should run:
 
     make release
 
-It runs the integration tests and prints a checklist for the release.
+It generates the source distribution and prints a checklist for the release.
 
 To check your `iminuit` version number and install location:
 
@@ -145,8 +145,8 @@ To check your `iminuit` version number and install location:
 
 .. _conda: https://conda.io/
 .. _miniconda: https://conda.io/en/latest/miniconda.html
-.. _environment-dev.yml: https://github.com/iminuit/iminuit/blob/master/environment-dev.yml
-.. _requirements-dev.txt: https://github.com/iminuit/iminuit/blob/master/requirements-dev.txt
+.. _environment.yml: https://github.com/iminuit/iminuit/blob/master/environment.yml
+.. _requirements.txt: https://github.com/iminuit/iminuit/blob/master/requirements.txt
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/iminuit/iminuit
 .. _Makefile: https://github.com/iminuit/iminuit/blob/master/Makefile
