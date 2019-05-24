@@ -1,0 +1,106 @@
+trigger:
+  - master
+  - develop
+  tags:
+    include:
+    - v*
+
+pr:
+- master
+- develop
+
+# Required variables (set in UI):
+#   package_name:     This is the output name, - is replaced by _
+#   many_linux_base:  Should be quay.io/pypa/manylinux1_ or skhep/manylinuxgcc-
+variables:
+  package_name: iminuit
+  many_linux_base: quay.io/pypa/manylinux1_
+
+jobs:
+
+- job: LinuxSDist
+  pool:
+    vmImage: 'ubuntu-16.04'
+  variables:
+    python.architecture: 'none'
+  steps:
+    - script: |
+        python -m pip install setuptools cython
+        python setup.py sdist
+      displayName: Publish sdist
+    - template: azure-publish-dist.yml
+
+- job: ManyLinux
+  strategy:
+    matrix:
+      64Bit2010:
+        arch: x86_64
+        plat: manylinux2010_x86_64
+        image: quay.io/pypa/manylinux2010_x86_64
+        python.architecture: x64
+      64Bit:
+        arch: x86_64
+        plat: manylinux1_x86_64
+        image: $(many_linux_base)x86_64
+        python.architecture: x64
+      32Bit:
+        arch: i686
+        plat: manylinux1_i686
+        image: $(many_linux_base)i686
+        python.architecture: x86
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+    - script: |
+        docker run -e NPY_NUM_BUILD_JOBS=4 -e PLAT=$(plat) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/.ci/build-wheels.sh
+        ls -lh wheelhouse/
+        mkdir -p dist
+        cp wheelhouse/$(package_name)*.whl dist/.
+      displayName: Build wheels
+    - template: azure-publish-dist.yml
+
+- job: macOS
+  variables:
+    python.architecture: 'x64'
+  strategy:
+    matrix:
+      Python27:
+        python.version: '2.7'
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+  pool:
+    vmImage: 'macOS-10.14'
+  steps:
+    - template: azure-setup.yml
+    - template: azure-steps.yml
+    - template: azure-publish-dist.yml
+
+- job: Windows
+  strategy:
+    matrix:
+      Python27:
+        python.version: '2.7'
+        python.architecture: 'x64'
+      Python36:
+        python.version: '3.6'
+        python.architecture: 'x64'
+      Python37:
+        python.version: '3.7'
+        python.architecture: 'x64'
+      Python27_32:
+        python.version: '2.7'
+        python.architecture: 'x86'
+      Python36_32:
+        python.version: '3.6'
+        python.architecture: 'x86'
+      Python37_32:
+        python.version: '3.7'
+        python.architecture: 'x86'
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+    - template: azure-setup.yml
+    - template: azure-steps.yml
+    - template: azure-publish-dist.yml
