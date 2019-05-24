@@ -9,7 +9,7 @@ pys=(${pys[@]//*34*/})
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
-    "${PYBIN}/pip" install -r /io/dev-requirements.txt
+    "${PYBIN}/pip" install -r /io/.ci/requirements-build.txt
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/
 done
 
@@ -21,5 +21,9 @@ done
 # Install packages and test
 for PYBIN in "${pys[@]}"; do
     "${PYBIN}/python" -m pip install $package_name --no-index -f /io/wheelhouse
-    "${PYBIN}/pytest" /io/tests
+    if [ -d "/io/tests" ]; then
+        "${PYBIN}/pytest" /io/tests
+    else
+        "${PYBIN}/pytest" --pyargs $package_name
+    fi
 done

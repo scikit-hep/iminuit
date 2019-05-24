@@ -1,10 +1,10 @@
 language: python
 dist: xenial
 
+# master is tested by Azure
 branches:
   only:
-  - master
-  - develop
+    - develop
 
 cache:
   pip: true
@@ -39,14 +39,15 @@ matrix:
       script:
         make test
 
-    - name: "2.7: sdist"
-      python: 2.7
-      script: .ci/travis_sdist_test.sh
-
-    - name: "3.6: sdist"
-      python: 3.6
-      script: .ci/travis_sdist_test.sh
-
-    - name: "3.7: sdist"
-      python: 3.7
-      script: .ci/travis_sdist_test.sh
+    ## sdist tests are now done by Azure
+    # - name: "2.7: sdist"
+    #   python: 2.7
+    #   script: .ci/travis_sdist_test.sh
+    #
+    # - name: "3.6: sdist"
+    #   python: 3.6
+    #   script: .ci/travis_sdist_test.sh
+    #
+    # - name: "3.7: sdist"
+    #   python: 3.7
+    #   script: .ci/travis_sdist_test.sh
