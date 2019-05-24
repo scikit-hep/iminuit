@@ -1,8 +1,10 @@
+# Azure only builds master, Travis and Appveyor only build develop
+
 trigger:
-  - develop
+  - master
 
 pr:
-  - develop
+  - master
 
 variables:
   package_name: iminuit
