@@ -252,11 +252,11 @@ def matrix(m):
                     if is_correlation:
                         if i == j:
                             with td(s):
-                                s += "1.00"                        
+                                s += " 1.00"
                         else:
                             color = Gradient.rgb_color_for(val)
                             with td(s, style="background-color:"+color):
-                                s += "%.2f" % val
+                                s += "%5.2f" % val
                     else:
                         if i == j:
                             with td(s):

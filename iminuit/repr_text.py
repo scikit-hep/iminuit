@@ -6,12 +6,17 @@ def format_numbers(*args):
     scales = tuple(int(round(log10(abs(x)))) if x != 0 else 1 for x in args)
     nmax = max(scales)
     nsig = min(scales) - 1
+    all_pos = True
+    for arg in args:
+        if arg < 0:
+            all_pos = False
+            break
     if nmax <= 3 and nsig >= -3:
         if nsig >= 0:
-            return tuple("%i" % round(x, -nsig) for x in args)
+            return tuple(("%i" if x < 0 or all_pos else " %i") % round(x, -nsig) for x in args)
         else:
-            return tuple(("%%.%if" % min(-nsig, 3)) % x for x in args)
-    result = ["%%.%if" % min(nmax-nsig, 3) % (x / 10 ** nmax) for x in args]
+            return tuple((("%%.%if" if x < 0 or all_pos else " %%.%if") % min(-nsig, 3)) % x for x in args)
+    result = [("%%.%if" if x < 0 or all_pos else " %%.%if") % min(nmax-nsig, 3) % (x / 10 ** nmax) for x in args]
     if nmax != 0:
         return tuple(x + 'E%i' % nmax for x in result)
     return tuple(result)
@@ -106,12 +111,11 @@ def matrix(m):
             is_correlation = False
             break
 
-    if not is_correlation:
-        args = []
-        for mi in m:
-            for mj in mi:
-                args.append(mj)
-        nums = format_numbers(*args)        
+    args = []
+    for mi in m:
+        for mj in mi:
+            args.append(mj)
+    nums = format_numbers(*args)        
 
     def row_fmt(args):
         s = '| ' + args[0] + ' |'
@@ -121,16 +125,16 @@ def matrix(m):
         return s
 
     first_row_width = max(len(v) for v in m.names)
-    row_width = max(first_row_width, 6)
+    row_width = max(first_row_width, max(len(v) for v in nums))
     v_names = [('{:>%is}' % first_row_width).format(x) for x in m.names]
     h_names = [('{:>%is}' % row_width).format(x) for x in m.names]
-    val_fmt = (('{:%i.2f}' if is_correlation else '{:>%is}') % row_width).format
+    val_fmt = ('{:>%is}' % row_width).format
 
     header = row_fmt([' ' * first_row_width] + h_names)
     hline = '-' * len(header)
     lines = [hline, header, hline]
     
     for i, vn in enumerate(v_names):
-        lines.append(row_fmt([vn] + [val_fmt(m[i][j] if is_correlation else nums[n*i + j]) for j in range(n)]))
+        lines.append(row_fmt([vn] + [val_fmt(nums[n*i + j]) for j in range(n)]))
     lines.append(hline)
     return "\n".join(lines)

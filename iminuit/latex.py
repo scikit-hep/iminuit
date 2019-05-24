@@ -161,7 +161,7 @@ class LatexFactory:
 
         table = LatexTable(headers=headers, data=data, rotate_header=True,
                            latex_map=latex_map)
-        table.float_format = '%3.2f'
+        table.float_format = '%.2g'
         for (i, j), c in color.items():
             table.set_cell_color(i, j, c)
         return table

@@ -10,7 +10,7 @@ class Gradient:
     # from http://code.activestate.com/recipes/266466-html-colors-tofrom-rgb-tuples/
     @classmethod
     def color_for(cls, v, min=0., max=1., startcolor=(163, 254, 186),
-                  stopcolor=(255, 117, 117)):
+                  stopcolor=(255, 118, 118)):
         c = [0] * 3
         for i, sc in enumerate(startcolor):
             offset = 1.0 * (v - min) * (stopcolor[i] - startcolor[i]) / (max - min)

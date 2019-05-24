@@ -710,9 +710,9 @@ def test_latex_matrix():
 \hline
 \rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
 \hline
-x & \cellcolor[RGB]{255,117,117} 1.00 & \cellcolor[RGB]{209,185,152} 0.50\\
+x & \cellcolor[RGB]{255,118,118} 1 & \cellcolor[RGB]{209,186,152} 0.5\\
 \hline
-y & \cellcolor[RGB]{209,185,152} 0.50 & \cellcolor[RGB]{255,117,117} 1.00\\
+y & \cellcolor[RGB]{209,186,152} 0.5 & \cellcolor[RGB]{255,118,118} 1\\
 \hline
 \end{tabular}""" == str(m.latex_matrix())
 
