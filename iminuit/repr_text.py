@@ -5,7 +5,7 @@ from math import log10, floor
 def format_numbers(*args):
     scales = tuple(int(round(log10(abs(x)))) if x != 0 else 1 for x in args)
     nmax = max(scales)
-    nsig = min(scales) - 1
+    nsig = min(x for x in scales if nmax - x < 9) - 1
     all_pos = True
     for arg in args:
         if arg < 0:

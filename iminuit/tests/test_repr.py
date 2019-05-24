@@ -29,13 +29,14 @@ def test_format_numbers():
     assert repr_text.format_numbers(1.2567e4, 0.1234e4) == ("1.26E4", "0.12E4")
     assert repr_text.format_numbers(1.2567e-1, 0.1234e-1) == ("0.126", "0.012")
     assert repr_text.format_numbers(1.2567e-2, 0.1234e-2) == ("1.26E-2", "0.12E-2")
+    assert repr_text.format_numbers(1.0, 0.0, 0.25) == ("1.00", "0.00", "0.25")
     assert repr_text.format_numbers(0, 1, -1) == (" 0.0", " 1.0", "-1.0")
     assert repr_text.format_numbers(2, -1, 1) == (" 2.0", "-1.0", " 1.0")
     assert repr_text.format_numbers(2.01, -1.01, 1.01) == (" 2.0", "-1.0", " 1.0")
     assert repr_text.format_numbers(1.999, -0.999, 0.999) == (" 2.0", "-1.0", " 1.0")
     assert repr_text.format_numbers(1, 0.5, -0.5) == (" 1.0", " 0.5", "-0.5")
-    assert repr_text.format_numbers(1.0, 1e-10) == ("1.000", "0.000")
-    assert repr_text.format_numbers(1.234567e11, -1.234567e-11) == (" 1.235E11", "-0.000E11")
+    assert repr_text.format_numbers(1.0, 1e-10) == ("1.0", "0.0")
+    assert repr_text.format_numbers(1.234567e11, -1.234567e-11) == (" 1.2E11", "-0.0E11")
 
 
 @pytest.fixture
@@ -561,10 +562,10 @@ y
 x
 </th>
 <td>
-1.000
+1.00
 </td>
 <td style="background-color:rgb(163,254,186)">
-0.000
+0.00
 </td>
 </tr>
 <tr>
@@ -572,10 +573,10 @@ x
 y
 </th>
 <td style="background-color:rgb(163,254,186)">
-0.000
+0.00
 </td>
 <td>
-0.250
+0.25
 </td>
 </tr>
 </table>
@@ -658,14 +659,15 @@ r"""-------------------------------------------------
 
 
 def test_text_matrix(minuit):
+    matrix = minuit.matrix()
     assert \
-r"""-------------------
-|   |     x     y |
--------------------
-| x | 1.000 0.000 |
-| y | 0.000 0.250 |
--------------------""" \
-    == str(minuit.matrix())
+r"""-----------------
+|   |    x    y |
+-----------------
+| x | 1.00 0.00 |
+| y | 0.00 0.25 |
+-----------------""" \
+    == str(matrix)
 
 
 def test_text_with_long_names():
@@ -707,6 +709,6 @@ r"""-----------------
 r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    |-0.000E-11 | 1.235E-11 |            |            |         |         | CONST |
+| 0 | x    | -0.0E-11  |  1.2E-11  |            |            |         |         | CONST |
 ------------------------------------------------------------------------------------------""" \
     == str(mps)
