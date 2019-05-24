@@ -26,7 +26,8 @@ class Tag:
     def __init__(self, name, html, **kwargs):
         self.name = name
         self.html = html
-        self.html += " ".join(("<%s" % name,) + tuple('%s="%s"' % p for p in kwargs.items())) + ">"
+        # sort keys so that order is same on all platforms
+        self.html += " ".join(("<%s" % name,) + tuple('%s="%s"' % (k, kwargs[k]) for k in sorted(kwargs))) + ">"
     def __enter__(self):
         pass
     def __exit__(self, exc_type, exc_val, exc_tb):

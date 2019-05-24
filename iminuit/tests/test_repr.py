@@ -55,7 +55,7 @@ def test_html_fmin(minuit):
 <td colspan="2" title="Minimum value of function">
 FCN = 1
 </td>
-<td colspan="3" align="center" title="No. of calls in last algorithm and total number of calls">
+<td align="center" colspan="3" title="No. of calls in last algorithm and total number of calls">
 Ncalls = 24 (67 total)
 </td>
 </tr>
@@ -63,7 +63,7 @@ Ncalls = 24 (67 total)
 <td colspan="2" title="Estimated distance to minimum and target threshold">
 EDM = %.3G (Goal: 1E-08)
 </td>
-<td colspan="3" align="center" title="Increase in FCN which corresponds to 1 standard deviation">
+<td align="center" colspan="3" title="Increase in FCN which corresponds to 1 standard deviation">
 up = 1.0
 </td>
 </tr>
@@ -77,7 +77,7 @@ Valid Param.
 <td align="center" title="Is EDM above goal EDM?">
 Above EDM
 </td>
-<td colspan="2" align="center" title="Did last migrad call reach max call limit?">
+<td align="center" colspan="2" title="Did last migrad call reach max call limit?">
 Reached call limit
 </td>
 </tr>
@@ -91,7 +91,7 @@ True
 <td align="center" style="background-color:#92CCA6;">
 False
 </td>
-<td colspan="2" align="center" style="background-color:#92CCA6;">
+<td align="center" colspan="2" style="background-color:#92CCA6;">
 False
 </td>
 </tr>
@@ -415,7 +415,7 @@ def test_html_minos(minuit):
 <th title="Parameter name">
 x
 </th>
-<td colspan="2" style="background-color:#92CCA6;" align="center">
+<td align="center" colspan="2" style="background-color:#92CCA6;">
 Valid
 </td>
 </tr>
@@ -481,7 +481,7 @@ False
 <th title="Parameter name">
 y
 </th>
-<td colspan="2" style="background-color:#92CCA6;" align="center">
+<td align="center" colspan="2" style="background-color:#92CCA6;">
 Valid
 </td>
 </tr>
