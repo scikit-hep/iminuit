@@ -3,9 +3,9 @@ shallow_clone: true
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
 
+# master is tested by Azure
 branches:
   only:
-    - master
     - develop
 
 environment:
@@ -46,14 +46,12 @@ install:
      print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
 
   # Upgrade to the latest pip.
-  - 'python -m pip install -U pip setuptools wheel'
+  - 'python -m pip install --upgrade pip setuptools'
 
   # Install the test dependencies.
-  - 'pip install -U --timeout 5 --retries 2 Cython numpy matplotlib pytest'
+  - 'pip install --upgrade --timeout 5 --retries 2 cython numpy matplotlib pytest'
 
 build_script:
-  # Here, we add MinGW to the path to be able to link an OpenBLAS.dll
-  # We then use the import library from the DLL to compile with MSVC
   - python setup.py build_ext --inplace
 
 test_script:
