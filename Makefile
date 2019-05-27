@@ -27,7 +27,7 @@ help:
 	@echo ''
 	@echo ' More info:'
 	@echo ''
-	@echo ' * iminuit code: https://github.com/iminuit/iminuit'
+	@echo ' * iminuit code: https://github.com/scikit-hep/iminuit'
 	@echo ' * iminuit docs: https://iminuit.readthedocs.org/'
 	@echo ''
 

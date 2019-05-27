@@ -140,9 +140,9 @@ setup(
     author='Piti Ongmongkolkul and others',
     maintainer='Hans Dembinski',
     maintainer_email='hans.dembinski@gmail.com',
-    url='https://github.com/iminuit/iminuit',
+    url='https://github.com/scikit-hep/iminuit',
     download_url='http://pypi.python.org/packages/source/i/'
-                 'iminuit/iminuit-%s.tar.gz' % __version__,
+                 'scikit-hep/iminuit-%s.tar.gz' % __version__,
     packages=['iminuit', 'iminuit.tests'],
     ext_modules=extensions,
     install_requires=['numpy>=1.11.3'],

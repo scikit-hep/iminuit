@@ -28,7 +28,7 @@ def test_notebook(filename):
 def test_all_notebooks():
     filenames = sorted(glob("tutorial/*.ipynb"))
     broken_notebooks = [
-        # See https://github.com/iminuit/iminuit/pull/245#issuecomment-402431753
+        # See https://github.com/scikit-hep/iminuit/pull/245#issuecomment-402431753
         'tutorial/hard_core_tutorial.ipynb',
     ]
     status_total = STATUS_SUCCEED

@@ -60,10 +60,10 @@ Changelog
   that has the same arguments and return value format as ``scipy.optimize.minimize``.
 - Support for analytical gradients has been added, users can pass a ``grad`` callback function.
   This works, but for unknown reasons doesn't lead to performance improvements yet.
-  If you can help debug or fix this issue, please comment `here <https://github.com/iminuit/iminuit/issues/252>`__.
+  If you can help debug or fix this issue, please comment `here <https://github.com/scikit-hep/iminuit/issues/252>`__.
 - Several issues have been fixed.
   A complete list of issues and pull requests that went into the 1.3 release is
-  `here <https://github.com/iminuit/iminuit/milestone/4?closed=1>`__.
+  `here <https://github.com/scikit-hep/iminuit/milestone/4?closed=1>`__.
 
 Previously
 ----------
@@ -74,4 +74,4 @@ Previously
   was made. After that development was mostly inactive, except for the
   v1.2 release in Nov 2015.
 - The release history is available here: https://pypi.org/project/iminuit/#history
-- The git history and pull requests are here: https://github.com/iminuit/iminuit
+- The git history and pull requests are here: https://github.com/scikit-hep/iminuit

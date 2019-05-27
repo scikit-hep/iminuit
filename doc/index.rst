@@ -11,12 +11,12 @@ It can be used as a general robust function minimisation method,
 but is most commonly used for likelihood fits of models to data,
 and to get model parameter error estimates from likelihood profile analysis.
 
-* Code: https://github.com/iminuit/iminuit
+* Code: https://github.com/scikit-hep/iminuit
 * Documentation: http://iminuit.readthedocs.org/
 * Mailing list: https://groups.google.com/forum/#!forum/iminuit
 * PyPI: https://pypi.org/project/iminuit/
 * License: MINUIT is LGPL and iminuit is MIT
-* Citation: https://github.com/iminuit/iminuit/blob/master/CITATION
+* Citation: https://github.com/scikit-hep/iminuit/blob/master/CITATION
 
 In a nutshell
 -------------

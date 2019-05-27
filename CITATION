@@ -7,7 +7,7 @@ Recommended BibTeX entries for the above citations are (you need to include the 
 @MISC{iminuit,
   author = {iminuit team},
   title = {iminuit -- A Python interface to Minuit},
-  howpublished = {\url{https://github.com/iminuit/iminuit}},
+  howpublished = {\url{https://github.com/scikit-hep/iminuit}},
   note = {Accessed: 2018-03-05}
 }
 

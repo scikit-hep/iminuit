@@ -1,4 +1,5 @@
-"""MINUIT from Python - Fitting like a boss
+"""
+MINUIT2 from Python
 
 Basic usage example::
 
@@ -12,7 +13,7 @@ Basic usage example::
 
 Further information:
 
-* Code: https://github.com/iminuit/iminuit
+* Code: https://github.com/scikit-hep/iminuit
 * Docs: https://iminuit.readthedocs.io
 """
 
