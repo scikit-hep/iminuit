@@ -5,6 +5,12 @@
 Changelog
 =========
 
+1.3.7
+-----
+- fixed wheels support
+- fixed failing tests on some platforms
+- documentation updates
+
 1.3.6 (May 19, 2019)
 --------------------
 - fix for broken display of Jupyter notebooks on Github when iminuit output is shown
