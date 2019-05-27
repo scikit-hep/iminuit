@@ -42,31 +42,33 @@ virtualenv
 
 You have the source code now, but you also want to build and test. We recommend to make a dedicated build environment for `iminuit`, separate from the Python installation you use for other projects.
 
-One way is to use `Python virtual environments`_ and `pip` to install the `requirements.txt`_
+One way is to use `Python virtual environments`_ and `pip` to install the development packages listed in `requirements-dev.txt`_
 
 .. code-block:: bash
 
     pip install virtualenv
     virtualenv iminuit-dev
     source iminuit-dev/bin/activate
-    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
+
+To delete the virtual environment just delete the folder iminuit-dev.
 
 conda
 +++++
 
-Another way is to use `conda`_ environments and to use `environment.yml`_
+Another way is to use `conda`_ environments and `environment-dev.yml`_
 to make the environment and install everything. You need to install a conda first, e.g. `miniconda`_:
 
 .. code-block:: bash
 
-    conda env create -f environment.yml
+    conda env create -f environment-dev.yml
     conda activate iminuit-dev
 
 If you ever need to update the environment, you can use:
 
 .. code-block:: bash
 
-    conda env update -f environment.yml
+    conda env update -f environment-dev.yml
 
 It's also easy to deactivate or delete it:
 
@@ -145,8 +147,8 @@ To check your `iminuit` version number and install location:
 
 .. _conda: https://conda.io/
 .. _miniconda: https://conda.io/en/latest/miniconda.html
-.. _environment.yml: https://github.com/iminuit/iminuit/blob/master/environment.yml
-.. _requirements.txt: https://github.com/iminuit/iminuit/blob/master/requirements.txt
+.. _environment-dev.yml: https://github.com/scikit-hep/iminuit/blob/master/environment-dev.yml
+.. _requirements-dev.txt: https://github.com/scikit-hep/iminuit/blob/master/requirements-dev.txt
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
-.. _Github: https://github.com/iminuit/iminuit
-.. _Makefile: https://github.com/iminuit/iminuit/blob/master/Makefile
+.. _Github: https://github.com/scikit-hep/iminuit
+.. _Makefile: https://github.com/scikit-hep/iminuit/blob/master/Makefile
