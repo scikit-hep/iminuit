@@ -3,17 +3,17 @@ iminuit
 
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
+.. image:: https://dev.azure.com/scikit-hep/iMinuit/_apis/build/status/scikit-hep.iminuit?branchName=master
+   :target: https://dev.azure.com/scikit-hep/iMinuit
 .. image:: https://travis-ci.org/scikit-hep/iminuit.svg?branch=develop
    :target: https://travis-ci.org/scikit-hep/iminuit
 .. image:: https://ci.appveyor.com/api/projects/status/g6vymxvu9ax34e7l?svg=true
    :target: https://ci.appveyor.com/project/HDembinski/iminuit-b4eg8
 .. image:: https://codecov.io/gh/scikit-hep/iminuit/branch/develop/graph/badge.svg
    :target: https://codecov.io/gh/scikit-hep/iminuit
-.. image:: https://readthedocs.org/projects/iminuit/badge/?version=develop
-   :target: https://iminuit.readthedocs.io/en/develop/?badge=develop
+.. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
+   :target: https://iminuit.readthedocs.io/en/develop/?badge=latest
    :alt: Documentation Status
-.. image:: https://dev.azure.com/scikit-hep/iMinuit/_apis/build/status/scikit-hep.iminuit?branchName=master
-   :target: https://dev.azure.com/scikit-hep/iMinuit
 
 .. skip-marker-do-not-remove
 
