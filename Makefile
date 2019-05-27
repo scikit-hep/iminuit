@@ -79,6 +79,7 @@ integration:
 	.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh
 
 release: sdist
+	pip install --upgrade twine
 	@echo ""
 	@echo "Release checklist:"
 	@echo "[ ] Integration tests ok 'make integration'"
@@ -86,5 +87,9 @@ release: sdist
 	@echo "[ ] Update doc/changelog.rst"
 	@echo "[ ] Tag release on Github"
 	@echo ""
+	@echo "Upload to TestPyPI:"
+	@echo "twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
+	@echo ""
 	@echo "Upload to PyPI:"
-	@echo "twine upload --username your_pypi_account_name dist/*"
+	@echo "twine upload dist/*"
+	@echo ""
