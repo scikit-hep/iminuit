@@ -1,0 +1,3 @@
+[submodule ".ci/azure-wheel-helpers"]
+	path = .ci/azure-wheel-helpers
+	url = ../../scikit-hep/azure-wheel-helpers.git
