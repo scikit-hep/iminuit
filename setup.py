@@ -105,7 +105,7 @@ except ImportError:
     numpy_header = []
 
 libiminuit = Extension('iminuit._libiminuit',
-                       sources=(glob(join(cwd, 'iminuit/*' + ext)) + minuit_src),
+                       sources=sorted(glob(join(cwd, 'iminuit/*' + ext)) + minuit_src),
                        include_dirs=minuit_header + numpy_header,
                        define_macros=[('WARNINGMSG', '1')])
 extensions = [libiminuit]
