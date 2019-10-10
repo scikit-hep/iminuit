@@ -13,7 +13,8 @@ and to get model parameter error estimates from likelihood profile analysis.
 
 * Code: https://github.com/scikit-hep/iminuit
 * Documentation: http://iminuit.readthedocs.org/
-* Mailing list: https://groups.google.com/forum/#!forum/iminuit
+* Gitter: https://gitter.im/Scikit-HEP/community
+* Mailing list: https://groups.google.com/forum/#!forum/scikit-hep-forum
 * PyPI: https://pypi.org/project/iminuit/
 * License: MINUIT is LGPL and iminuit is MIT
 * Citation: https://github.com/scikit-hep/iminuit/blob/master/CITATION
