@@ -1186,6 +1186,7 @@ cdef class Minuit:
             fitparam['fix_%s' % vname] = True
             m = Minuit(self.fcn, print_level=0,
                        pedantic=False, forced_parameters=self.parameters,
+                       use_array_call=self.use_array_call,
                        **fitparam)
             m.migrad()
             migrad_status[i] = m.migrad_ok()
@@ -1237,8 +1238,7 @@ cdef class Minuit:
             :include-source:
         """
         x, y, s = self.mnprofile(vname, bins, bound, subtract_min)
-        return _minuit_methods.draw_profile(self, vname, x, y, s,
-                                            band=band, text=text)
+        return _minuit_methods.draw_profile(self, vname, x, y, s, band, text)
 
     def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
         """Calculate cost function profile around specify range.
@@ -1274,21 +1274,9 @@ cdef class Minuit:
         if is_number(bound):
             start = self.values[vname]
             sigma = self.errors[vname]
-            bound = (start - bound * sigma,
-                     start + bound * sigma)
+            bound = (start - bound * sigma, start + bound * sigma)
 
-        # center value
-        val = np.linspace(bound[0], bound[1], bins, dtype=np.double)
-        result = np.empty(bins, dtype=np.double)
-        cdef int pos = self.var2pos[vname]
-        cdef list arg = list(self.args if args is None else args)
-        cdef int n = val.shape[0]
-        for i in range(n):
-            arg[pos] = val[i]
-            result[i] = self.fcn(*arg)
-        if subtract_min:
-            result -= self.cfmin.Fval()
-        return val, result
+        return _minuit_methods.profile(self, vname, bins, bound, args, subtract_min)
 
     def draw_profile(self, vname, bins=100, bound=2, args=None,
                      subtract_min=False, band=True, text=True):
@@ -1319,9 +1307,7 @@ cdef class Minuit:
             :meth:`profile`
         """
         x, y = self.profile(vname, bins, bound, args, subtract_min)
-        x, y, s = _minuit_methods.draw_profile(self, vname, x, y,
-                                               band=band, text=text)
-        return x, y
+        return _minuit_methods.draw_profile(self, vname, x, y, None, band, text)
 
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
         """2D contour scan.
@@ -1390,11 +1376,20 @@ cdef class Minuit:
         cdef list arg = list(self.args if args is None else args)
 
         result = np.empty((bins, bins), dtype=np.double)
-        for i, x in enumerate(x_val):
-            arg[x_pos] = x
-            for j, y in enumerate(y_val):
-                arg[y_pos] = y
-                result[i, j] = self.fcn(*arg)
+        if self.use_array_call:
+            varg = np.array(arg, dtype=np.double)
+            for i, x in enumerate(x_val):
+                varg[x_pos] = x
+                for j, y in enumerate(y_val):
+                    varg[y_pos] = y
+                    result[i, j] = self.fcn(varg)
+        else:
+            for i, x in enumerate(x_val):
+                arg[x_pos] = x
+                for j, y in enumerate(y_val):
+                    arg[y_pos] = y
+                    result[i, j] = self.fcn(*arg)
+        
 
         if subtract_min:
             result -= self.cfmin.Fval()

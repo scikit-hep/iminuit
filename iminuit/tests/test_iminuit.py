@@ -580,6 +580,38 @@ def test_mnprofile(grad):
     m.mnprofile("y")
 
 
+def test_mncontour_array_func():
+    m = Minuit.from_array_func(
+        Func9(), (0, 0), name=("x", "y"), pedantic=False, print_level=0
+    )
+    m.migrad()
+    xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=1)
+    xminos_t = m.minos("x", sigma=1)["x"]
+    yminos_t = m.minos("y", sigma=1)["y"]
+    assert_allclose(xminos.upper, xminos_t.upper)
+    assert_allclose(xminos.lower, xminos_t.lower)
+    assert_allclose(yminos.upper, yminos_t.upper)
+    assert_allclose(yminos.lower, yminos_t.lower)
+    assert len(ctr) == 30
+    assert len(ctr[0]) == 2
+
+
+def test_profile_array_func():
+    m = Minuit.from_array_func(
+        Func9(), (0, 0), name=("x", "y"), pedantic=False, print_level=0
+    )
+    m.migrad()
+    m.profile("y")
+
+
+def test_mnprofile_array_func():
+    m = Minuit.from_array_func(
+        Func9(), (0, 0), name=("x", "y"), pedantic=False, print_level=0
+    )
+    m.migrad()
+    m.mnprofile("y")
+
+
 def test_printfmin_uninitialized():
     # issue 85
     def f(x):
@@ -789,9 +821,9 @@ def test_latex_matrix():
 \hline
 \rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
 \hline
-x & \cellcolor[RGB]{255,118,118} 1 & \cellcolor[RGB]{209,186,152} 0.5\\
+x & \cellcolor[RGB]{250,100,100} 1 & \cellcolor[RGB]{250,174,174} 0.5\\
 \hline
-y & \cellcolor[RGB]{209,186,152} 0.5 & \cellcolor[RGB]{255,118,118} 1\\
+y & \cellcolor[RGB]{250,174,174} 0.5 & \cellcolor[RGB]{250,100,100} 1\\
 \hline
 \end{tabular}""" == str(
         m.latex_matrix()

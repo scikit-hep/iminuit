@@ -15,14 +15,19 @@ def f1(x, y):
     return (1 - x) ** 2 + 100 * (y - 1) ** 2
 
 
-@pytest.fixture
-def m():
-    m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1)
-    m.tol = 1e-4
+def f2(par):
+    return f1(par[0], par[1])
+
+
+@pytest.fixture(params=("normal", "numpy"))
+def m(request):
+    if request.param == "normal":
+        m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1)
+    else:
+        m = Minuit.from_array_func(
+            f2, (0, 0), name=("x", "y"), pedantic=False, print_level=1
+        )
     m.migrad()
-    assert_allclose(m.fval, 0, atol=1e-6)
-    assert_allclose(m.values["x"], 1, atol=1e-3)
-    assert_allclose(m.values["y"], 1, atol=1e-3)
     return m
 
 

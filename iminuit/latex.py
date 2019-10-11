@@ -189,12 +189,17 @@ class LatexFactory:
         headers = [""] + list(vnames)
         data = []
         color = {}
+        grad = Gradient(
+            (-1.0, 120.0, 120.0, 250.0),
+            (0.0, 250.0, 250.0, 250.0),
+            (1.0, 250.0, 100.0, 100.0),
+        )
         for i, v1 in enumerate(vnames):
             tmp = [v1]
             for j, v2 in enumerate(vnames):
                 m = matrix[i][j]
                 tmp.append(m)
-                color[(i + 1, j + 1)] = Gradient.color_for(abs(m))
+                color[(i + 1, j + 1)] = grad(m)
                 # +1 for header on the side and top
             data.append(tmp)
 
