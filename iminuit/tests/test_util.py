@@ -1,94 +1,96 @@
-from __future__ import (absolute_import, division, print_function)
-from iminuit.util import (fitarg_rename,
-                          true_param,
-                          param_name,
-                          extract_iv,
-                          extract_limit,
-                          extract_error,
-                          extract_fix,
-                          remove_var,
-                          arguments_from_docstring,
-                          Matrix,
-                          FMin,
-                          Param,
-                          MError,
-                          Params,
-                          MigradResult)
+from __future__ import absolute_import, division, print_function
+from iminuit.util import (
+    fitarg_rename,
+    true_param,
+    param_name,
+    extract_iv,
+    extract_limit,
+    extract_error,
+    extract_fix,
+    remove_var,
+    arguments_from_docstring,
+    Matrix,
+    FMin,
+    Param,
+    MError,
+    Params,
+    MigradResult,
+)
 import pytest
 
 
 def test_fitarg_rename():
-    fitarg = {'x': 1, 'limit_x': (2, 3), 'fix_x': True, 'error_x': 10}
+    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
 
     def ren(x):
-        return 'z_' + x
+        return "z_" + x
 
     newfa = fitarg_rename(fitarg, ren)
-    assert 'z_x' in newfa
-    assert 'limit_z_x' in newfa
-    assert 'error_z_x' in newfa
-    assert 'fix_z_x' in newfa
+    assert "z_x" in newfa
+    assert "limit_z_x" in newfa
+    assert "error_z_x" in newfa
+    assert "fix_z_x" in newfa
     assert len(newfa) == 4
 
 
 def test_fitarg_rename_strprefix():
-    fitarg = {'x': 1, 'limit_x': (2, 3), 'fix_x': True, 'error_x': 10}
-    newfa = fitarg_rename(fitarg, 'z')
-    assert 'z_x' in newfa
-    assert 'limit_z_x' in newfa
-    assert 'error_z_x' in newfa
-    assert 'fix_z_x' in newfa
+    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
+    newfa = fitarg_rename(fitarg, "z")
+    assert "z_x" in newfa
+    assert "limit_z_x" in newfa
+    assert "error_z_x" in newfa
+    assert "fix_z_x" in newfa
     assert len(newfa) == 4
 
 
 def test_true_param():
-    assert true_param('N') is True
-    assert true_param('limit_N') is False
-    assert true_param('error_N') is False
-    assert true_param('fix_N') is False
+    assert true_param("N") is True
+    assert true_param("limit_N") is False
+    assert true_param("error_N") is False
+    assert true_param("fix_N") is False
 
 
 def test_param_name():
-    assert param_name('N') == 'N'
-    assert param_name('limit_N') == 'N'
-    assert param_name('error_N') == 'N'
-    assert param_name('fix_N') == 'N'
+    assert param_name("N") == "N"
+    assert param_name("limit_N") == "N"
+    assert param_name("error_N") == "N"
+    assert param_name("fix_N") == "N"
 
 
 def test_extract_iv():
-    d = dict(k=1., limit_k=1., error_k=1., fix_k=1.)
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
     ret = extract_iv(d)
-    assert 'k' in ret
-    assert 'limit_k' not in ret
-    assert 'error_k' not in ret
-    assert 'fix_k' not in ret
+    assert "k" in ret
+    assert "limit_k" not in ret
+    assert "error_k" not in ret
+    assert "fix_k" not in ret
 
 
 def test_extract_limit():
-    d = dict(k=1., limit_k=1., error_k=1., fix_k=1.)
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
     ret = extract_limit(d)
-    assert 'k' not in ret
-    assert 'limit_k' in ret
-    assert 'error_k' not in ret
-    assert 'fix_k' not in ret
+    assert "k" not in ret
+    assert "limit_k" in ret
+    assert "error_k" not in ret
+    assert "fix_k" not in ret
 
 
 def test_extract_error():
-    d = dict(k=1., limit_k=1., error_k=1., fix_k=1.)
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
     ret = extract_error(d)
-    assert 'k' not in ret
-    assert 'limit_k' not in ret
-    assert 'error_k' in ret
-    assert 'fix_k' not in ret
+    assert "k" not in ret
+    assert "limit_k" not in ret
+    assert "error_k" in ret
+    assert "fix_k" not in ret
 
 
 def test_extract_fix():
-    d = dict(k=1., limit_k=1., error_k=1., fix_k=1.)
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
     ret = extract_fix(d)
-    assert 'k' not in ret
-    assert 'limit_k' not in ret
-    assert 'error_k' not in ret
-    assert 'fix_k' in ret
+    assert "k" not in ret
+    assert "limit_k" not in ret
+    assert "error_k" not in ret
+    assert "fix_k" in ret
 
 
 def test_remove_var():
@@ -102,7 +104,7 @@ def test_remove_var():
     d.update(dm)
     d.update(dn)
 
-    ret = remove_var(d, ['k', 'm'])
+    ret = remove_var(d, ["k", "m"])
     for k in dk:
         assert k not in ret
     for k in dl:
@@ -114,21 +116,21 @@ def test_remove_var():
 
 
 def test_arguments_from_docstring():
-    s = 'f(x, y, z)'
+    s = "f(x, y, z)"
     a = arguments_from_docstring(s)
-    assert a == ['x', 'y', 'z']
+    assert a == ["x", "y", "z"]
     # this is a hard one
-    s = 'Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])'
+    s = "Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])"
     a = arguments_from_docstring(s)
-    assert a == ['ncall_me', 'resume', 'nsplit']
+    assert a == ["ncall_me", "resume", "nsplit"]
 
 
 def test_Matrix():
-    x = Matrix(("a", "b"), [[1, 2],[3, 4]])
+    x = Matrix(("a", "b"), [[1, 2], [3, 4]])
     assert x[0] == (1, 2)
     assert x[1] == (3, 4)
     assert x == ((1, 2), (3, 4))
-    assert repr(x) == '((1, 2), (3, 4))'
+    assert repr(x) == "((1, 2), (3, 4))"
     with pytest.raises(TypeError):
         x[0] = (1, 2)
     with pytest.raises(TypeError):
@@ -153,12 +155,30 @@ def test_Param():
     assert p.values() == values
     assert p.items() == tuple((k, v) for k, v in zip(keys, values))
 
-    assert str(p) == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"
+    assert (
+        str(p)
+        == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"
+    )
 
 
 def test_MError():
     keys = "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min".split()
-    values = "Foo", True, 0.1, 1.2, True, True, False, False, False, False, 0.1, 1.2, 42, 0.2
+    values = (
+        "Foo",
+        True,
+        0.1,
+        1.2,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        0.1,
+        1.2,
+        42,
+        0.2,
+    )
 
     m = MError(*values)
 
@@ -170,7 +190,23 @@ def test_MError():
 
 def test_FMin():
     keys = "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm has_reached_call_limit".split()
-    values = 0.2, 1e-3, 0.1, 10, 10, 1.2, False, False, False, False, False, False, False, False, False
+    values = (
+        0.2,
+        1e-3,
+        0.1,
+        10,
+        10,
+        1.2,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+    )
 
     f = FMin(*values)
 

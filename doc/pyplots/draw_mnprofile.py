@@ -7,4 +7,4 @@ def f(x, y, z):
 
 m = Minuit(f, print_level=0, pedantic=False)
 m.migrad()
-m.draw_mnprofile('y')
+m.draw_mnprofile("y")

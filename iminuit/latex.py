@@ -1,37 +1,76 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 from iminuit.color import Gradient
 
-__all__ = ['LatexTable']
+__all__ = ["LatexTable"]
 
 
 class LatexTable:
     """Latex table output.
     """
-    float_format = '%10.5g'
-    int_format = '%d'
+
+    float_format = "%10.5g"
+    int_format = "%d"
     latex_kwd = [
-        'alpha', 'beta', 'gamma',
-        'delta', 'epsilon', 'zeta',
-        'eta', 'theta', 'iota',
-        'kappa', 'lambda', 'mu',
-        'nu', 'xi', 'omicron',
-        'pi', 'rho', 'sigma',
-        'tau', 'upsilon', 'phi',
-        'chi', 'psi', 'omega',
-        'Alpha', 'Beta', 'Gamma',
-        'Delta', 'Epsilon', 'Zeta',
-        'Eta', 'Theta', 'Iota',
-        'Kappa', 'Lambda', 'Mu',
-        'Nu', 'Xi', 'Omicron',
-        'Pi', 'Rho', 'Sigma',
-        'Tau', 'Upsilon', 'Phi',
-        'Chi', 'Psi', 'Omega',
+        "alpha",
+        "beta",
+        "gamma",
+        "delta",
+        "epsilon",
+        "zeta",
+        "eta",
+        "theta",
+        "iota",
+        "kappa",
+        "lambda",
+        "mu",
+        "nu",
+        "xi",
+        "omicron",
+        "pi",
+        "rho",
+        "sigma",
+        "tau",
+        "upsilon",
+        "phi",
+        "chi",
+        "psi",
+        "omega",
+        "Alpha",
+        "Beta",
+        "Gamma",
+        "Delta",
+        "Epsilon",
+        "Zeta",
+        "Eta",
+        "Theta",
+        "Iota",
+        "Kappa",
+        "Lambda",
+        "Mu",
+        "Nu",
+        "Xi",
+        "Omicron",
+        "Pi",
+        "Rho",
+        "Sigma",
+        "Tau",
+        "Upsilon",
+        "Phi",
+        "Chi",
+        "Psi",
+        "Omega",
     ]
 
-    def __init__(self, data, headers=None, smart_latex=True,
-                 escape_under_score=True, alignment=None, rotate_header=False,
-                 latex_map=None):
+    def __init__(
+        self,
+        data,
+        headers=None,
+        smart_latex=True,
+        escape_under_score=True,
+        alignment=None,
+        rotate_header=False,
+        latex_map=None,
+    ):
         # Make sure #data columns matches #header columns, using any non-zero
         # length if data or headers are missing
         if len(data) > 0:
@@ -56,7 +95,7 @@ class LatexTable:
         self.cell_color = {}  # map of tuple (i,j)=>(r, g, b) #i,j include header
 
     def _auto_align(self):
-        return '|' + 'c|' * self.num_col
+        return "|" + "c|" * self.num_col
 
     def _format(self, s):
         if s in self.latex_map:
@@ -68,7 +107,7 @@ class LatexTable:
         elif self.smart_latex:
             return self._convert_smart_latex(s)
         elif self.escape_under_score:
-            return s.replace('_', r'\_')
+            return s.replace("_", r"\_")
         else:
             return s
 
@@ -81,21 +120,21 @@ class LatexTable:
         """
         # FIXME: implement this
 
-        parts = s.split('_')
+        parts = s.split("_")
         if len(parts) == 1:  # a to $a$ if a is greek letter else just a
             if parts[0] in self.latex_kwd:
-                return r'$\%s$' % str(parts[0])
+                return r"$\%s$" % str(parts[0])
             else:
                 return str(parts[0])
         elif len(parts) == 2:  # a_xxx to $a_{xxx}$ and
-            first = '\\%s' % parts[0] if parts[0] in self.latex_kwd else parts[0]
-            second = '\\%s' % parts[1] if parts[1] in self.latex_kwd else parts[1]
-            return r'$%s_{%s}$' % (first, second)
+            first = "\\%s" % parts[0] if parts[0] in self.latex_kwd else parts[0]
+            second = "\\%s" % parts[1] if parts[1] in self.latex_kwd else parts[1]
+            return r"$%s_{%s}$" % (first, second)
         else:  # a_xxx_yyy_zzz to a xxx $yyy_{zzz}$
             textpart = map(self._convert_smart_latex, parts[:-2])
-            textpart = ' '.join(textpart)
-            latexpart = self._convert_smart_latex('_'.join(parts[-2:]))
-            return textpart + ' ' + latexpart
+            textpart = " ".join(textpart)
+            latexpart = self._convert_smart_latex("_".join(parts[-2:]))
+            return textpart + " " + latexpart
 
     def set_cell_color(self, i, j, c):
         """colorize i,j cell with rgb color tuple c
@@ -111,7 +150,7 @@ class LatexTable:
         if self.headers:
             tmp = list(map(self._format, self.headers))
             if self.rotate_header:
-                tmp = list(map(lambda x: '\\rotatebox{90}{%s}' % x, tmp))
+                tmp = list(map(lambda x: "\\rotatebox{90}{%s}" % x, tmp))
 
             ret.append(tmp)
         for x in self.data:
@@ -119,25 +158,25 @@ class LatexTable:
         return ret
 
     def __str__(self):
-        hline = '\\hline\n'
-        ret = ''
+        hline = "\\hline\n"
+        ret = ""
         if len(self.cell_color) != 0:
-            ret += '%\\usepackage[table]{xcolor} % include this for color\n'
-            ret += '%\\usepackage{rotating} % include this for rotate header\n'
-            ret += '%\\documentclass[xcolor=table]{beamer} % for beamer\n'
-        ret += '\\begin{tabular}{%s}\n' % self.alignment
+            ret += "%\\usepackage[table]{xcolor} % include this for color\n"
+            ret += "%\\usepackage{rotating} % include this for rotate header\n"
+            ret += "%\\documentclass[xcolor=table]{beamer} % for beamer\n"
+        ret += "\\begin{tabular}{%s}\n" % self.alignment
         ret += hline
         tdata = self._prepare()
         # decorate it
 
         for (i, j), c in self.cell_color.items():
-            xcolor = '[RGB]{%d,%d,%d}' % (c[0], c[1], c[2])
-            tdata[i][j] = '\\cellcolor' + xcolor + ' ' + tdata[i][j]
+            xcolor = "[RGB]{%d,%d,%d}" % (c[0], c[1], c[2])
+            tdata[i][j] = "\\cellcolor" + xcolor + " " + tdata[i][j]
 
         for line in tdata:
-            ret += ' & '.join(line) + '\\\\\n'
+            ret += " & ".join(line) + "\\\\\n"
             ret += hline
-        ret += '\\end{tabular}\n'
+        ret += "\\end{tabular}\n"
 
         return ret.strip()
 
@@ -147,7 +186,7 @@ class LatexFactory:
     def build_matrix(cls, vnames, matrix, latex_map=None):
         """build latex correlation matrix"""
         # ret_link  = '<a onclick="$(\'#%s\').toggle()" href="#">Show Latex</a>'%uid
-        headers = [''] + list(vnames)
+        headers = [""] + list(vnames)
         data = []
         color = {}
         for i, v1 in enumerate(vnames):
@@ -159,32 +198,46 @@ class LatexFactory:
                 # +1 for header on the side and top
             data.append(tmp)
 
-        table = LatexTable(headers=headers, data=data, rotate_header=True,
-                           latex_map=latex_map)
-        table.float_format = '%.2g'
+        table = LatexTable(
+            headers=headers, data=data, rotate_header=True, latex_map=latex_map
+        )
+        table.float_format = "%.2g"
         for (i, j), c in color.items():
             table.set_cell_color(i, j, c)
         return table
 
     @classmethod
-    def build_param_table(cls, mps, merr=None, float_format='%5.3e',
-                          smart_latex=True, latex_map=None):
+    def build_param_table(
+        cls, mps, merr=None, float_format="%5.3e", smart_latex=True, latex_map=None
+    ):
         """build latex parameter table"""
-        headers = ['', 'Name', 'Value', 'Hesse Error', 'Minos Error-',
-                   'Minos Error+', 'Limit-', 'Limit+', 'Fixed?', ]
+        headers = [
+            "",
+            "Name",
+            "Value",
+            "Hesse Error",
+            "Minos Error-",
+            "Minos Error+",
+            "Limit-",
+            "Limit+",
+            "Fixed?",
+        ]
 
         data = []
         for i, mp in enumerate(mps):
-            minos_p, minos_m = ('', '') if merr is None or mp.name not in merr else \
-                ('%g' % merr[mp.name].upper, '%g' % merr[mp.name].lower)
-            limit_p = '' if mp.upper_limit is None else '%g' % mp.upper_limit
-            limit_m = '' if mp.lower_limit is None else '%s' % mp.lower_limit
-            fixed = 'Yes' if mp.is_fixed else 'No'
+            minos_p, minos_m = (
+                ("", "")
+                if merr is None or mp.name not in merr
+                else ("%g" % merr[mp.name].upper, "%g" % merr[mp.name].lower)
+            )
+            limit_p = "" if mp.upper_limit is None else "%g" % mp.upper_limit
+            limit_m = "" if mp.lower_limit is None else "%s" % mp.lower_limit
+            fixed = "Yes" if mp.is_fixed else "No"
             tmp = [
                 i,
                 mp.name,
-                '%g' % mp.value,
-                '%g' % mp.error,
+                "%g" % mp.value,
+                "%g" % mp.error,
                 minos_m,
                 minos_p,
                 limit_m,
@@ -192,8 +245,13 @@ class LatexFactory:
                 fixed,
             ]
             data.append(tmp)
-        alignment = '|c|r|r|r|r|r|r|r|c|'
-        ret = LatexTable(data, headers=headers, alignment=alignment,
-                         smart_latex=smart_latex, latex_map=latex_map)
+        alignment = "|c|r|r|r|r|r|r|r|c|"
+        ret = LatexTable(
+            data,
+            headers=headers,
+            alignment=alignment,
+            smart_latex=smart_latex,
+            latex_map=latex_map,
+        )
         ret.float_format = float_format
         return ret

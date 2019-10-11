@@ -20,11 +20,13 @@
 # http://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
 # on_rtd is whether we are on readthedocs.org
 import os
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 if not on_rtd:
     # Make sure local build of iminuit is found
     import sys
+
     sys.path.insert(0, os.path.dirname(__file__) + "/..")
 
 # -- General configuration -----------------------------------------------------
@@ -37,14 +39,14 @@ if not on_rtd:
 
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.autosummary',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autosummary",
     # 'matplotlib.sphinxext.only_directives',
-    'matplotlib.sphinxext.plot_directive',
+    "matplotlib.sphinxext.plot_directive",
 ]
 
-autoclass_content = 'both'
+autoclass_content = "both"
 autosummary_generate = True
 # def skip(app, what, name, obj, skip, options):
 #     if name == "__init__":
@@ -55,20 +57,20 @@ autosummary_generate = True
 #     app.connect("autodoc-skip-member", skip)
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = u'iminuit'
-copyright = u'2012, Piti Ongmongkolkul'
+project = u"iminuit"
+copyright = u"2012, Piti Ongmongkolkul"
 
 
 import iminuit.info
@@ -94,7 +96,7 @@ release = iminuit.info.__version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', '_themes']
+exclude_patterns = ["_build", "_themes"]
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 # default_role = None
@@ -111,7 +113,7 @@ exclude_patterns = ['_build', '_themes']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -119,7 +121,7 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output ---------------------------------------------------
 
-autodoc_member_order = 'bysource'
+autodoc_member_order = "bysource"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -147,7 +149,7 @@ autodoc_member_order = 'bysource'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -191,7 +193,7 @@ html_static_path = ['_static']
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'iminuitdoc'
+htmlhelp_basename = "iminuitdoc"
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -199,10 +201,8 @@ htmlhelp_basename = 'iminuitdoc'
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     # 'preamble': '',
 }
@@ -210,8 +210,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'iminuit.tex', u'iminuit Documentation',
-     u'Piti Ongmongkolkul', 'manual'),
+    ("index", "iminuit.tex", u"iminuit Documentation", u"Piti Ongmongkolkul", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -239,10 +238,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'iminuit', u'iminuit Documentation',
-     [u'Piti Ongmongkolkul'], 1)
-]
+man_pages = [("index", "iminuit", u"iminuit Documentation", [u"Piti Ongmongkolkul"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -254,9 +250,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'iminuit', u'iminuit Documentation',
-     u'Piti Ongmongkolkul', 'iminuit', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        "index",
+        "iminuit",
+        u"iminuit Documentation",
+        u"Piti Ongmongkolkul",
+        "iminuit",
+        "One line description of project.",
+        "Miscellaneous",
+    )
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -271,5 +273,6 @@ texinfo_documents = [
 if not on_rtd:
     # Import and set the theme if we're building docs locally
     import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
+
+    html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
