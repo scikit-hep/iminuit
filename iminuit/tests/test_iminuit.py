@@ -31,6 +31,12 @@ def test_pedantic_warning_message():
             assert w[i].lineno == 19  # the lineno of "m = Minuit(lambda x: 0)"
 
 
+def test_version():
+    import iminuit
+
+    assert iminuit.__version__
+
+
 class Func_Code:
     def __init__(self, varname):
         self.co_varnames = varname

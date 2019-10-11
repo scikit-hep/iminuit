@@ -1,1 +1,5 @@
-__version__ = "1.3.7"
+import warnings
+
+warnings.warn("import iminuit.version instead", DeprecationWarning, stacklevel=2)
+
+from iminuit.version import __version__

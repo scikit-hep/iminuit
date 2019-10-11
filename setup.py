@@ -135,16 +135,11 @@ if USE_CYTHON:
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
 # This is one of the recommended methods that works in Python 2 and 3:
-def get_version():
-    version = {}
-    with open("iminuit/info.py") as fp:
-        exec(fp.read(), version)
-    return version["__version__"]
+with open(join(cwd, "iminuit/version.py")) as fp:
+    exec(fp.read())  # this loads __version__
 
 
-__version__ = get_version()
-
-with open("README.rst") as readme_rst:
+with open(join(cwd, "README.rst")) as readme_rst:
     txt = readme_rst.read()
     # skip everything up to the skip marker
     skip_marker = ".. skip-marker-do-not-remove"

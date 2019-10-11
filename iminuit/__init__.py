@@ -22,7 +22,7 @@ __all__ = ["Minuit", "minimize", "describe", "__version__", "test"]
 from ._libiminuit import Minuit
 from ._minimize import minimize
 from .util import describe
-from .info import __version__
+from .version import __version__
 
 
 def test(args=None):
