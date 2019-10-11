@@ -1,4 +1,5 @@
 pypy*
+py[0-9]*
 gammapy
 probfit
 iminuit-dev
