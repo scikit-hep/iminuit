@@ -39,11 +39,30 @@ def pedantic(self, parameters, kwds, errordef):
         w("errordef is not given. Default to 1.")
 
 
-def draw_profile(self, vname, x, y, s=None, band=True, text=True):
+def profile(self, vname, bins, bound, args, subtract_min):
+    # center value
+    val = np.linspace(bound[0], bound[1], bins, dtype=np.double)
+    result = np.empty(bins, dtype=np.double)
+    pos = self.var2pos[vname]
+    n = val.shape[0]
+    arg = list(self.args if args is None else args)
+    if self.use_array_call:
+        varg = np.array(arg, dtype=np.double)
+        for i in range(n):
+            varg[pos] = val[i]
+            result[i] = self.fcn(varg)
+    else:
+        for i in range(n):
+            arg[pos] = val[i]
+            result[i] = self.fcn(*arg)
+    if subtract_min:
+        result -= self.fval
+    return val, result
+
+
+def draw_profile(self, vname, x, y, s, band, text):
     from matplotlib import pyplot as plt
 
-    x = np.array(x)
-    y = np.array(y)
     if s is not None:
         s = np.array(s, dtype=bool)
         x = x[s]
@@ -54,58 +73,33 @@ def draw_profile(self, vname, x, y, s=None, band=True, text=True):
     plt.xlabel(vname)
     plt.ylabel("FCN")
 
-    try:
-        minpos = np.argmin(y)
+    if vname in self.values:
+        v = self.values[vname]
+    else:
+        v = np.argmin(y)
+    vmin = None
+    vmax = None
+    if (vname, 1) in self.merrors:
+        vmin = v + self.merrors[(vname, -1)]
+        vmax = v + self.merrors[(vname, 1)]
+    if vname in self.errors:
+        vmin = v - self.errors[vname]
+        vmax = v + self.errors[vname]
 
-        # Scan to the right of minimum until greater than min + errordef.
-        # Note: We need to find the *first* crossing of up, right from the
-        # minimum, because there can be several. If the loop is replaced by
-        # some numpy calls, make sure that this property is retained.
-        yup = self.errordef + y[minpos]
-        best = float("infinity")
-        for i in range(minpos, len(y)):
-            z = abs(y[i] - yup)
-            if z < best:
-                rightpos = i
-                best = z
-            else:
-                break
-        else:
-            raise ValueError("right edge not found")
+    plt.axvline(v, color="r")
 
-        # Scan to the left of minimum until greater than min + errordef.
-        best = float("infinity")
-        for i in range(minpos, 0, -1):
-            z = abs(y[i] - yup)
-            if z < best:
-                leftpos = i
-                best = z
-            else:
-                break
-        else:
-            raise ValueError("left edge not found")
+    if vmin is not None and band:
+        plt.axvspan(vmin, vmax, facecolor="g", alpha=0.5)
 
-        plt.plot(
-            [x[leftpos], x[minpos], x[rightpos]],
-            [y[leftpos], y[minpos], y[rightpos]],
-            "o",
+    if text:
+        plt.title(
+            ("%s = %.3g" % (vname, v))
+            if vmin is None
+            else ("%s = %.3g - %.3g + %.3g" % (vname, v, v - vmin, vmax - v)),
+            fontsize="large",
         )
 
-        if band:
-            plt.axvspan(x[leftpos], x[rightpos], facecolor="g", alpha=0.5)
-
-        if text:
-            plt.title(
-                "%s = %.3g - %.3g + %.3g (scan)"
-                % (vname, x[minpos], x[minpos] - x[leftpos], x[rightpos] - x[minpos]),
-                fontsize="large",
-            )
-    except ValueError:
-        warn(
-            RuntimeWarning("band and text is requested but " "the bound is too narrow.")
-        )
-
-    return x, y, s
+    return x, y
 
 
 def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):

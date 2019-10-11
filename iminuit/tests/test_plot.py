@@ -19,50 +19,43 @@ def f2(par):
     return f1(par[0], par[1])
 
 
-@pytest.fixture
-def m1():
-    m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1)
-    m.migrad()
-    return m
-
-
-@pytest.fixture
-def m2():
-    m = Minuit(f2, (0, 0), pedantic=False, print_level=1)
+@pytest.fixture(params=("normal", "numpy"))
+def m(request):
+    if request.param == "normal":
+        m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1)
+    else:
+        m = Minuit.from_array_func(
+            f2, (0, 0), name=("x", "y"), pedantic=False, print_level=1
+        )
     m.migrad()
     return m
 
 
 @requires_dependency("matplotlib")
-@pytest.mark.parametrize("m", (m1, m2))
 def test_profile(m):
     m.minos("x")
     m.draw_profile("x")
 
 
 @requires_dependency("matplotlib")
-@pytest.mark.parametrize("m", (m1, m2))
 def test_mnprofile(m):
     m.minos("x")
     m.draw_mnprofile("x")
 
 
 @requires_dependency("matplotlib")
-@pytest.mark.parametrize("m", (m1, m2))
 def test_mncontour(m):
     m.minos()
     m.draw_mncontour("x", "y")
 
 
 @requires_dependency("matplotlib")
-@pytest.mark.parametrize("m", (m1, m2))
 def test_drawcontour(m):
     m.minos()
     m.draw_contour("x", "y")
 
 
 @requires_dependency("matplotlib")
-@pytest.mark.parametrize("m", (m1, m2))
 def test_drawcontour_show_sigma(m):
     m.minos()
     m.draw_contour("x", "y", show_sigma=True)

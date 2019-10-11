@@ -268,6 +268,12 @@ def matrix(m):
                 args.append(mj)
         nums = format_numbers(*args)
 
+    grad = Gradient(
+        (-1.0, 120.0, 120.0, 250.0),
+        (0.0, 250.0, 250.0, 250.0),
+        (1.0, 250.0, 100.0, 100.0),
+    )
+
     s = Html()
     with table(s):
         with tr(s):
@@ -286,7 +292,7 @@ def matrix(m):
                             with td(s):
                                 s += " 1.00"
                         else:
-                            color = Gradient.rgb_color_for(val)
+                            color = grad.rgb(val)
                             with td(s, style="background-color:" + color):
                                 s += "%5.2f" % val
                     else:
@@ -294,9 +300,7 @@ def matrix(m):
                             with td(s):
                                 s += nums[n * i + j]
                         else:
-                            color = Gradient.rgb_color_for(
-                                val / (m[i][i] * m[j][j]) ** 0.5
-                            )
+                            color = grad.rgb(val / (m[i][i] * m[j][j]) ** 0.5)
                             with td(s, style="background-color:" + color):
                                 s += nums[n * i + j]
 

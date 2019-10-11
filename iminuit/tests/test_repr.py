@@ -593,7 +593,7 @@ x
 <td>
 1.00
 </td>
-<td style="background-color:rgb(163,254,186)">
+<td style="background-color:rgb(250,250,250)">
 0.00
 </td>
 </tr>
@@ -601,7 +601,7 @@ x
 <th>
 y
 </th>
-<td style="background-color:rgb(163,254,186)">
+<td style="background-color:rgb(250,250,250)">
 0.00
 </td>
 <td>
