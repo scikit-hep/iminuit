@@ -1,23 +1,27 @@
-from __future__ import (absolute_import, division, unicode_literals)
+from __future__ import absolute_import, division, unicode_literals
 from iminuit.color import Gradient
 from iminuit.repr_text import format_numbers
 
-good_style = 'background-color:#92CCA6;'
-bad_style = 'background-color:#FF7878;'
-warn_style = 'background-color:#FFF79A;'
-backgrounds = ('background-color:#F4F4F4;', 'background-color:#FFFFFF;')
+good_style = "background-color:#92CCA6;"
+bad_style = "background-color:#FF7878;"
+warn_style = "background-color:#FFF79A;"
+backgrounds = ("background-color:#F4F4F4;", "background-color:#FFFFFF;")
 
-class Html:    
+
+class Html:
     def __init__(self):
         self.lines = []
+
     def __iadd__(self, s):
         self.lines.append(s)
         return self
+
     def __str__(self):
         s = ""
         for x in self.lines:
             s += x + "\n"
         return s
+
     def __repr__(self):
         return repr(self.lines)
 
@@ -27,9 +31,17 @@ class Tag:
         self.name = name
         self.html = html
         # sort keys so that order is same on all platforms
-        self.html += " ".join(("<%s" % name,) + tuple('%s="%s"' % (k, kwargs[k]) for k in sorted(kwargs))) + ">"
+        self.html += (
+            " ".join(
+                ("<%s" % name,)
+                + tuple('%s="%s"' % (k, kwargs[k]) for k in sorted(kwargs))
+            )
+            + ">"
+        )
+
     def __enter__(self):
         pass
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.html += "</" + self.name + ">"
 
@@ -62,15 +74,26 @@ def fmin(sfmin):
         with tr(s):
             with td(s, colspan="2", title="Minimum value of function"):
                 s += "FCN = %.4G" % sfmin.fval
-            with td(s, colspan="3",align="center",
-                    title="No. of calls in last algorithm and total number of calls"):
+            with td(
+                s,
+                colspan="3",
+                align="center",
+                title="No. of calls in last algorithm and total number of calls",
+            ):
                 s += "Ncalls = %i (%i total)" % (sfmin.nfcn, sfmin.ncalls)
         with tr(s):
-            with td(s, colspan="2",
-                    title="Estimated distance to minimum and target threshold"):
+            with td(
+                s,
+                colspan="2",
+                title="Estimated distance to minimum and target threshold",
+            ):
                 s += "EDM = %.3G (Goal: %G)" % (sfmin.edm, goaledm)
-            with td(s, colspan="3", align="center",
-                    title="Increase in FCN which corresponds to 1 standard deviation"):
+            with td(
+                s,
+                colspan="3",
+                align="center",
+                title="Increase in FCN which corresponds to 1 standard deviation",
+            ):
                 s += "up = %.1f" % sfmin.up
         with tr(s):
             with td(s, align="center", title="Validity of the migrad call"):
@@ -79,8 +102,12 @@ def fmin(sfmin):
                 s += "Valid Param."
             with td(s, align="center", title="Is EDM above goal EDM?"):
                 s += "Above EDM"
-            with td(s, colspan="2", align="center",
-                    title="Did last migrad call reach max call limit?"):
+            with td(
+                s,
+                colspan="2",
+                align="center",
+                title="Did last migrad call reach max call limit?",
+            ):
                 s += "Reached call limit"
         with tr(s):
             with td(s, align="center", style=good(sfmin.is_valid, True)):
@@ -89,8 +116,12 @@ def fmin(sfmin):
                 s += "%s" % sfmin.has_valid_parameters
             with td(s, align="center", style=good(sfmin.is_above_max_edm, False)):
                 s += "%s" % sfmin.is_above_max_edm
-            with td(s, colspan="2", align="center",
-                    style=good(sfmin.has_reached_call_limit, False)):
+            with td(
+                s,
+                colspan="2",
+                align="center",
+                style=good(sfmin.has_reached_call_limit, False),
+            ):
                 s += "%s" % sfmin.has_reached_call_limit
         with tr(s):
             with td(s, align="center", title="Did Hesse fail?"):
@@ -101,8 +132,9 @@ def fmin(sfmin):
                 s += "Accurate"
             with td(s, align="center", title="Is covariance matrix positive definite?"):
                 s += "Pos. def."
-            with td(s, align="center",
-                    title="Was positive definiteness enforced by Minuit?"):
+            with td(
+                s, align="center", title="Was positive definiteness enforced by Minuit?"
+            ):
                 s += "Forced"
         with tr(s):
             with td(s, align="center", style=good(sfmin.hesse_failed, False)):
@@ -126,7 +158,7 @@ def merror(me):
             with th(s, title="Parameter name"):
                 s += me.name
             with td(s, colspan="2", style=good(me.is_valid, True), align="center"):
-                s += 'Valid' if me.is_valid else 'Invalid'
+                s += "Valid" if me.is_valid else "Invalid"
         with tr(s):
             with td(s, title="Lower and upper minos error of the parameter"):
                 s += "Error"
@@ -157,15 +189,15 @@ def merror(me):
                 s += "%s" % me.at_upper_max_fcn
         with tr(s):
             with td(s, title="New minimum found when doing scan?"):
-                s += "New Min" 
+                s += "New Min"
             with td(s, style=good(me.lower_new_min, False)):
                 s += "%s" % me.lower_new_min
             with td(s, style=good(me.upper_new_min, False)):
                 s += "%s" % me.upper_new_min
     return str(s)
-    
 
-def params(mps):    
+
+def params(mps):
     s = Html()
     with table(s):
         # header
@@ -197,8 +229,8 @@ def params(mps):
                 v, e, mem, mep = format_numbers(mp.value, mp.error, me.lower, me.upper)
             else:
                 e, v = format_numbers(mp.error, mp.value)
-                mem = ''
-                mep = ''
+                mem = ""
+                mep = ""
             with tr(s, style=backgrounds[(i + 1) % 2]):
                 with td(s):
                     s += str(i)
@@ -213,11 +245,11 @@ def params(mps):
                 with td(s):
                     s += mep
                 with td(s):
-                    s += '%.3G' % mp.lower_limit if mp.lower_limit is not None else ''
+                    s += "%.3G" % mp.lower_limit if mp.lower_limit is not None else ""
                 with td(s):
-                    s += '%.3G' % mp.upper_limit if mp.upper_limit is not None else '' 
+                    s += "%.3G" % mp.upper_limit if mp.upper_limit is not None else ""
                 with td(s):
-                    s += 'yes' if mp.is_fixed else ('CONST' if mp.is_const else '')
+                    s += "yes" if mp.is_fixed else ("CONST" if mp.is_const else "")
     return str(s)
 
 
@@ -255,15 +287,17 @@ def matrix(m):
                                 s += " 1.00"
                         else:
                             color = Gradient.rgb_color_for(val)
-                            with td(s, style="background-color:"+color):
+                            with td(s, style="background-color:" + color):
                                 s += "%5.2f" % val
                     else:
                         if i == j:
                             with td(s):
-                                s += nums[n*i + j]
+                                s += nums[n * i + j]
                         else:
-                            color = Gradient.rgb_color_for(val / (m[i][i] * m[j][j]) ** 0.5)
-                            with td(s, style="background-color:"+color):
-                                s += nums[n*i + j]
+                            color = Gradient.rgb_color_for(
+                                val / (m[i][i] * m[j][j]) ** 0.5
+                            )
+                            with td(s, style="background-color:" + color):
+                                s += nums[n * i + j]
 
     return str(s)

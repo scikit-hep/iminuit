@@ -1,4 +1,5 @@
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 # Here we don't import unicode_literals, because otherwise we cannot write
 # in "\usepackage" and similar in the string literals below.
 # The problem is an inconsistency regarding the effect of
@@ -36,7 +37,10 @@ def test_format_numbers():
     assert repr_text.format_numbers(1.999, -0.999, 0.999) == (" 2.0", "-1.0", " 1.0")
     assert repr_text.format_numbers(1, 0.5, -0.5) == (" 1.0", " 0.5", "-0.5")
     assert repr_text.format_numbers(1.0, 1e-10) == ("1.0", "0.0")
-    assert repr_text.format_numbers(1.234567e11, -1.234567e-11) == (" 1.2E11", "-0.0E11")
+    assert repr_text.format_numbers(1.234567e11, -1.234567e-11) == (
+        " 1.2E11",
+        "-0.0E11",
+    )
 
 
 @pytest.fixture
@@ -51,7 +55,8 @@ def minuit():
 
 def test_html_fmin(minuit):
     fmin = minuit.get_fmin()
-    assert r"""<table>
+    assert (
+        r"""<table>
 <tr>
 <td colspan="2" title="Minimum value of function">
 FCN = 1
@@ -131,11 +136,15 @@ False
 </td>
 </tr>
 </table>
-""" % fmin.edm == fmin._repr_html_()
+"""
+        % fmin.edm
+        == fmin._repr_html_()
+    )
 
 
 def test_html_params(minuit):
-    assert r"""<table>
+    assert (
+        r"""<table>
 <tr style="background-color:#F4F4F4;">
 <td/>
 <th title="Variable name">
@@ -222,9 +231,12 @@ y
 </td>
 </tr>
 </table>
-""" == minuit.get_initial_param_states()._repr_html_()
+"""
+        == minuit.get_initial_param_states()._repr_html_()
+    )
 
-    assert """<table>
+    assert (
+        """<table>
 <tr style="background-color:#F4F4F4;">
 <td/>
 <th title="Variable name">
@@ -311,15 +323,26 @@ y
 </td>
 </tr>
 </table>
-""" == minuit.get_param_states()._repr_html_()
+"""
+        == minuit.get_param_states()._repr_html_()
+    )
 
 
 def test_html_params_with_limits():
-    m = Minuit(f1, x=3, y=5, fix_x=True,
-               error_x=0.2, error_y=0.1,
-               limit_x=(0, None), limit_y=(0, 10),
-               errordef=1, print_level=0)
-    assert r"""<table>
+    m = Minuit(
+        f1,
+        x=3,
+        y=5,
+        fix_x=True,
+        error_x=0.2,
+        error_y=0.1,
+        limit_x=(0, None),
+        limit_y=(0, 10),
+        errordef=1,
+        print_level=0,
+    )
+    assert (
+        r"""<table>
 <tr style="background-color:#F4F4F4;">
 <td/>
 <th title="Variable name">
@@ -406,12 +429,15 @@ y
 </td>
 </tr>
 </table>
-""" == m.get_initial_param_states()._repr_html_()
+"""
+        == m.get_initial_param_states()._repr_html_()
+    )
 
 
 def test_html_minos(minuit):
     mes = minuit.merrors_struct
-    assert r"""<table>
+    assert (
+        r"""<table>
 <tr>
 <th title="Parameter name">
 x
@@ -542,11 +568,14 @@ False
 </td>
 </tr>
 </table>
-""" == mes._repr_html_()
+"""
+        == mes._repr_html_()
+    )
 
 
 def test_html_matrix(minuit):
-    assert r"""<table>
+    assert (
+        r"""<table>
 <tr>
 <td/>
 
@@ -580,12 +609,13 @@ y
 </td>
 </tr>
 </table>
-""" == minuit.matrix()._repr_html_()
+"""
+        == minuit.matrix()._repr_html_()
+    )
 
 
 def test_text_fmin(minuit):
-    assert \
-r"""------------------------------------------------------------------
+    assert r"""------------------------------------------------------------------
 | FCN = 1                       |      Ncalls=24 (67 total)      |
 | EDM = %.3G (Goal: 1E-08)  |            up = 1.0            |
 ------------------------------------------------------------------
@@ -596,48 +626,55 @@ r"""------------------------------------------------------------------
 | Hesse failed  |   Has cov.    | Accurate  | Pos. def. | Forced |
 ------------------------------------------------------------------
 |     False     |     True      |   True    |   True    | False  |
-------------------------------------------------------------------""" \
-    % minuit.get_fmin().edm == str(minuit.get_fmin())
+------------------------------------------------------------------""" % minuit.get_fmin().edm == str(
+        minuit.get_fmin()
+    )
 
 
 def test_text_params(minuit):
-    assert \
-r"""------------------------------------------------------------------------------------------
+    assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
 | 0 | x    |    0.0    |    1.0    |            |            |         |         |       |
 | 1 | y    |    0.0    |    1.0    |            |            |         |         |       |
-------------------------------------------------------------------------------------------""" \
-    == str(minuit.get_initial_param_states())
+------------------------------------------------------------------------------------------""" == str(
+        minuit.get_initial_param_states()
+    )
 
-    assert \
-r"""------------------------------------------------------------------------------------------
+    assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
 | 0 | x    |    2.0    |    1.0    |    -1.0    |     1.0    |         |         |       |
 | 1 | y    |    1.0    |    0.5    |    -0.5    |     0.5    |         |         |       |
-------------------------------------------------------------------------------------------""" \
-    == str(minuit.get_param_states())
+------------------------------------------------------------------------------------------""" == str(
+        minuit.get_param_states()
+    )
 
 
 def test_text_params_with_limits():
-    m = Minuit(f1, x=3, y=5, fix_x=True,
-               error_x=0.2, error_y=0.1,
-               limit_x=(0, None), limit_y=(0, 10),
-               errordef=1)
-    assert \
-r"""------------------------------------------------------------------------------------------
+    m = Minuit(
+        f1,
+        x=3,
+        y=5,
+        fix_x=True,
+        error_x=0.2,
+        error_y=0.1,
+        limit_x=(0, None),
+        limit_y=(0, 10),
+        errordef=1,
+    )
+    assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
 | 0 | x    |   3.00    |   0.20    |            |            |    0    |         |  yes  |
 | 1 | y    |   5.00    |   0.10    |            |            |    0    |   10    |       |
-------------------------------------------------------------------------------------------""" \
-    == str(m.get_initial_param_states())
+------------------------------------------------------------------------------------------""" == str(
+        m.get_initial_param_states()
+    )
 
 
 def test_text_minos(minuit):
-    assert \
-r"""-------------------------------------------------
+    assert r"""-------------------------------------------------
 |        x        |            Valid            |
 -------------------------------------------------
 |      Error      |     -1.0     |      1.0     |
@@ -654,61 +691,96 @@ r"""-------------------------------------------------
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
 |     New Min     |    False     |    False     |
--------------------------------------------------""" \
-    == str(minuit.minos())
+-------------------------------------------------""" == str(
+        minuit.minos()
+    )
 
 
 def test_text_matrix(minuit):
     matrix = minuit.matrix()
-    assert \
-r"""-----------------
+    assert r"""-----------------
 |   |    x    y |
 -----------------
 | x | 1.00 0.00 |
 | y | 0.00 0.25 |
------------------""" \
-    == str(matrix)
+-----------------""" == str(
+        matrix
+    )
 
 
 def test_text_with_long_names():
 
     matrix = Matrix(["super-long-name", "x"], ((1.0, 0.1), (0.1, 1.0)))
-    assert \
-r"""-----------------------------------------------------
+    assert r"""-----------------------------------------------------
 |                 | super-long-name               x |
 -----------------------------------------------------
 | super-long-name |            1.00            0.10 |
 |               x |            0.10            1.00 |
------------------------------------------------------""" \
-    == str(matrix)
+-----------------------------------------------------""" == str(
+        matrix
+    )
 
-    mps = Params([Param(0, "super-long-name", 0, 0, False, False, False, False, False, None, None)], None)
-    assert \
-r"""-----------------------------------------------------------------------------------------------------
+    mps = Params(
+        [
+            Param(
+                0,
+                "super-long-name",
+                0,
+                0,
+                False,
+                False,
+                False,
+                False,
+                False,
+                None,
+                None,
+            )
+        ],
+        None,
+    )
+    assert r"""-----------------------------------------------------------------------------------------------------
 |   | Name            |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 -----------------------------------------------------------------------------------------------------
 | 0 | super-long-name |     0     |     0     |            |            |         |         |       |
------------------------------------------------------------------------------------------------------""" \
-    == str(mps)
+-----------------------------------------------------------------------------------------------------""" == str(
+        mps
+    )
 
 
 def test_console_frontend_with_difficult_values():
     matrix = Matrix(("x", "y"), ((-1.23456, 0), (0, 0)))
-    assert \
-r"""-----------------
+    assert r"""-----------------
 |   |    x    y |
 -----------------
 | x | -1.2  0.0 |
 | y |  0.0  0.0 |
------------------""" \
-    == str(matrix)
+-----------------""" == str(
+        matrix
+    )
 
-    mps = Params([Param(0, "x",  -1.234567e-22, 1.234567e-11, True, False, False, False, False, None, None)], None)
+    mps = Params(
+        [
+            Param(
+                0,
+                "x",
+                -1.234567e-22,
+                1.234567e-11,
+                True,
+                False,
+                False,
+                False,
+                False,
+                None,
+                None,
+            )
+        ],
+        None,
+    )
 
-    assert \
-r"""------------------------------------------------------------------------------------------
+    assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
 | 0 | x    | -0.0E-11  |  1.2E-11  |            |            |         |         | CONST |
-------------------------------------------------------------------------------------------""" \
-    == str(mps)
+------------------------------------------------------------------------------------------""" == str(
+        mps
+    )

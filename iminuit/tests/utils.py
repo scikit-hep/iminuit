@@ -1,12 +1,8 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 from numpy.testing import assert_allclose
 import os
 
-__all__ = [
-    'requires_dependency',
-    'assert_allclose',
-]
+__all__ = ["requires_dependency", "assert_allclose"]
 
 
 def requires_dependency(*names):
@@ -40,6 +36,7 @@ def requires_dependency(*names):
         except ImportError:
             skip_it = True
 
-    reason = 'Missing dependency: {}'.format(name)
+    reason = "Missing dependency: {}".format(name)
     import pytest
+
     return pytest.mark.skipif(skip_it, reason=reason)

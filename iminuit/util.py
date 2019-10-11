@@ -1,7 +1,6 @@
 """iminuit utility functions and classes.
 """
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 import re
 import types
 from collections import OrderedDict, namedtuple
@@ -12,6 +11,7 @@ from operator import itemgetter
 
 class Matrix(tuple):
     """Matrix data object (tuple of tuples)."""
+
     __slots__ = ()
 
     def __new__(self, names, data):
@@ -62,12 +62,22 @@ class dict_interface_mixin(object):
         return tuple((keys[i], values[i]) for i in range(len(self)))
 
     def __str__(self):
-        return self.__class__.__name__ + "(" + ", ".join("{}={}".format(k, repr(v)) for (k, v) in self.items()) + ")"
+        return (
+            self.__class__.__name__
+            + "("
+            + ", ".join("{}={}".format(k, repr(v)) for (k, v) in self.items())
+            + ")"
+        )
 
 
-class Param(dict_interface_mixin, namedtuple("Param",
-    "number name value error is_const is_fixed has_limits "
-    "has_lower_limit has_upper_limit lower_limit upper_limit")):
+class Param(
+    dict_interface_mixin,
+    namedtuple(
+        "Param",
+        "number name value error is_const is_fixed has_limits "
+        "has_lower_limit has_upper_limit lower_limit upper_limit",
+    ),
+):
     """Data object for a single Parameter."""
 
     __slots__ = ()
@@ -93,9 +103,14 @@ class Params(list):
             p.text(str(self))
 
 
-class MError(dict_interface_mixin, namedtuple("MError",
-    "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit "
-    "at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min")):
+class MError(
+    dict_interface_mixin,
+    namedtuple(
+        "MError",
+        "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit "
+        "at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min",
+    ),
+):
     """Minos result object."""
 
     __slots__ = ()
@@ -129,10 +144,15 @@ class MErrors(OrderedDict):
             p.text(str(self))
 
 
-class FMin(dict_interface_mixin, namedtuple("FMin",
-    "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar "
-    "has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm "
-    "has_reached_call_limit")):
+class FMin(
+    dict_interface_mixin,
+    namedtuple(
+        "FMin",
+        "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar "
+        "has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm "
+        "has_reached_call_limit",
+    ),
+):
     """Function minimum status object."""
 
     __slots__ = ()
@@ -179,42 +199,42 @@ def arguments_from_docstring(doc):
     """
 
     if doc is None:
-        raise RuntimeError('__doc__ is None')
+        raise RuntimeError("__doc__ is None")
 
     doc = doc.lstrip()
 
     # care only the firstline
     # docstring can be long
-    line = doc.split('\n', 1)[0]  # get the firstline
+    line = doc.split("\n", 1)[0]  # get the firstline
     if line.startswith("('...',)"):
-        line = doc.split('\n', 2)[1]  # get the second line
-    p = re.compile(r'^[\w|\s.]+\(([^)]*)\).*')
+        line = doc.split("\n", 2)[1]  # get the second line
+    p = re.compile(r"^[\w|\s.]+\(([^)]*)\).*")
     # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
     if sig is None:
         return []
     # iterable[, key=func]' -> ['iterable[' ,' key=func]']
-    sig = sig.groups()[0].split(',')
+    sig = sig.groups()[0].split(",")
     ret = []
     for s in sig:
         # get the last one after all space after =
         # ex: int x= True
-        tmp = s.split('=')[0].split()[-1]
+        tmp = s.split("=")[0].split()[-1]
         # clean up non _+alphanum character
-        tmp = ''.join([x for x in tmp if x.isalnum() or x == '_'])
+        tmp = "".join([x for x in tmp if x.isalnum() or x == "_"])
         ret.append(tmp)
         # re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         # ret += self.docstring_kwd_re.findall(s)
-    ret = list(filter(lambda x: x != '', ret))
+    ret = list(filter(lambda x: x != "", ret))
 
     if len(ret) == 0:
-        raise RuntimeError('Your doc is unparsable\n' + doc)
+        raise RuntimeError("Your doc is unparsable\n" + doc)
 
     return ret
 
 
 def fc_or_c(f):
-    if hasattr(f, 'func_code'):
+    if hasattr(f, "func_code"):
         return f.func_code
     else:
         return f.__code__
@@ -227,9 +247,9 @@ def arguments_from_funccode(f):
     vnames = fc.co_varnames
     nargs = fc.co_argcount
     # bound method and fake function will be None
-    args = vnames[1 if is_bound(f) else 0:nargs]
+    args = vnames[1 if is_bound(f) else 0 : nargs]
     if not args:
-        raise RuntimeError('Function has variable number of arguments')
+        raise RuntimeError("Function has variable number of arguments")
     return list(args)
 
 
@@ -240,14 +260,14 @@ def arguments_from_call_funccode(f):
     argcount = fc.co_argcount
     args = list(fc.co_varnames[1:argcount])
     if not args:
-        raise RuntimeError('Function has variable number of arguments')
+        raise RuntimeError("Function has variable number of arguments")
     return args
 
 
 def is_bound(f):
     """Test whether ``f`` is a bound function.
     """
-    return getattr(f, '__self__', None) is not None
+    return getattr(f, "__self__", None) is not None
 
 
 def dock_if_bound(f, v):
@@ -298,7 +318,7 @@ def better_arg_spec(f, verbose=False):
     # this is what cython gives
     try:
         t = arguments_from_docstring(f.__call__.__doc__)
-        if t[0] == 'self':
+        if t[0] == "self":
             t = t[1:]
         return t
     except Exception as e:
@@ -309,7 +329,7 @@ def better_arg_spec(f, verbose=False):
     # how about just __doc__
     try:
         t = arguments_from_docstring(f.__doc__)
-        if t[0] == 'self':
+        if t[0] == "self":
             t = t[1:]
         return t
     except Exception as e:
@@ -348,15 +368,15 @@ def fitarg_rename(fitarg, ren):
     """
     tmp = ren
     if isinstance(ren, str):
-        ren = lambda x: tmp + '_' + x
+        ren = lambda x: tmp + "_" + x
     ret = {}
-    prefix = ['limit_', 'fix_', 'error_', ]
+    prefix = ["limit_", "fix_", "error_"]
     for k, v in fitarg.items():
         vn = k
-        pf = ''
+        pf = ""
         for p in prefix:
             if k.startswith(p):
-                vn = k[len(p):]
+                vn = k[len(p) :]
                 pf = p
         newvn = pf + ren(vn)
         ret[newvn] = v
@@ -366,9 +386,11 @@ def fitarg_rename(fitarg, ren):
 def true_param(p):
     """Check if ``p`` is a parameter name, not a limit/error/fix attributes.
     """
-    return (not p.startswith('limit_') and
-            not p.startswith('error_') and
-            not p.startswith('fix_'))
+    return (
+        not p.startswith("limit_")
+        and not p.startswith("error_")
+        and not p.startswith("fix_")
+    )
 
 
 def param_name(p):
@@ -380,10 +402,10 @@ def param_name(p):
     - ``error_x`` -> ``x``
     - ``limit_x`` -> ``x``
     """
-    prefix = ['limit_', 'error_', 'fix_']
+    prefix = ["limit_", "error_", "fix_"]
     for prf in prefix:
         if p.startswith(prf):
-            return p[len(prf):]
+            return p[len(prf) :]
     return p
 
 
@@ -394,17 +416,17 @@ def extract_iv(b):
 
 def extract_limit(b):
     """Extract limit from fitargs dictionary."""
-    return dict((k, v) for k, v in b.items() if k.startswith('limit_'))
+    return dict((k, v) for k, v in b.items() if k.startswith("limit_"))
 
 
 def extract_error(b):
     """Extract error from fitargs dictionary."""
-    return dict((k, v) for k, v in b.items() if k.startswith('error_'))
+    return dict((k, v) for k, v in b.items() if k.startswith("error_"))
 
 
 def extract_fix(b):
     """extract fix attribute from fitargs dictionary"""
-    return dict((k, v) for k, v in b.items() if k.startswith('fix_'))
+    return dict((k, v) for k, v in b.items() if k.startswith("fix_"))
 
 
 def remove_var(b, exclude):
@@ -419,8 +441,10 @@ def make_func_code(params):
 
         make_func_code(describe(f))
     """
+
     class FuncCode(object):
-        __slots__ = ('co_varnames', 'co_argcount')
+        __slots__ = ("co_varnames", "co_argcount")
+
     fc = FuncCode()
     fc.co_varnames = params
     fc.co_argcount = len(params)
@@ -431,5 +455,6 @@ def format_exception(etype, evalue, tb):
     # work around for https://bugs.python.org/issue17413
     # the issue is not fixed in Python-3.7
     import traceback
+
     s = "".join(traceback.format_tb(tb))
     return "%s: %s\n%s" % (etype.__name__, evalue, s)

@@ -3,10 +3,20 @@ import warnings
 import numpy as np
 
 
-def minimize(fun, x0, args=(), method=None,
-             jac=None, hess=None, hessp=None,
-             bounds=None, constraints=None,
-             tol=None, callback=None, options=None):
+def minimize(
+    fun,
+    x0,
+    args=(),
+    method=None,
+    jac=None,
+    hess=None,
+    hessp=None,
+    bounds=None,
+    constraints=None,
+    tol=None,
+    callback=None,
+    options=None,
+):
     """An interface to MIGRAD using the ``scipy.optimize.minimize`` API.
 
     For a general description of the arguments, see ``scipy.optimize.minimize``.
@@ -36,7 +46,7 @@ def minimize(fun, x0, args=(), method=None,
     """
     from scipy.optimize import OptimizeResult
 
-    if method not in {None, 'migrad'}:
+    if method not in {None, "migrad"}:
         warnings.warn("method argument is ignored")
 
     if constraints is not None:
@@ -52,18 +62,21 @@ def minimize(fun, x0, args=(), method=None,
         if callback is None:
             return lambda x: func(x, *args)
         else:
+
             def f(x):
                 callback(x)
                 return func(x, *args)
+
             return f
+
     wrapped_fun = wrapped(fun, args, callback)
 
     maxfev = 10000
     error = None
-    kwargs = {'print_level': 0, 'errordef': 1}
+    kwargs = {"print_level": 0, "errordef": 1}
     if options:
         if "disp" in options:
-            kwargs['print_level'] = 1
+            kwargs["print_level"] = 1
         if "maxiter" in options:
             warnings.warn("maxiter not supported, acts like maxfev instead")
             maxfev = options["maxiter"]
@@ -84,12 +97,9 @@ def minimize(fun, x0, args=(), method=None,
     else:
         wrapped_grad = None
 
-    m = Minuit.from_array_func(wrapped_fun,
-                               x0,
-                               error=error,
-                               limit=bounds,
-                               grad=wrapped_grad,
-                               **kwargs)
+    m = Minuit.from_array_func(
+        wrapped_fun, x0, error=error, limit=bounds, grad=wrapped_grad, **kwargs
+    )
     m.migrad(ncall=maxfev)
 
     message = "Optimization terminated successfully."
