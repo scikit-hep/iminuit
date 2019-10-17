@@ -4,8 +4,19 @@ set -e -x
 # Collect the pythons
 pys=(/opt/python/*/bin)
 
+# Print list of Python's available
+echo "All Pythons: ${pys[@]}"
+
 # Filter out Python 3.4
 pys=(${pys[@]//*34*/})
+
+# Filter out Python 3.8 on manylinux1
+if [[ $PLAT =~ "manylinux1" ]]; then
+    pys=(${pys[@]//*38*/})
+fi
+
+# Print list of Python's being used
+echo "Using Pythons: ${pys[@]}"
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
