@@ -814,7 +814,9 @@ def test_latex_matrix():
         Func9(), (0, 0), name=("x", "y"), pedantic=False, print_level=0
     )
     m.migrad()
-    assert r"""%\usepackage[table]{xcolor} % include this for color
+    # hotfix for ManyLinux 32Bit, where rounding changes result
+    assert str(m.latex_matrix()) in (
+        r"""%\usepackage[table]{xcolor} % include this for color
 %\usepackage{rotating} % include this for rotate header
 %\documentclass[xcolor=table]{beamer} % for beamer
 \begin{tabular}{|c|c|c|}
@@ -825,8 +827,19 @@ x & \cellcolor[RGB]{250,100,100} 1 & \cellcolor[RGB]{250,174,174} 0.5\\
 \hline
 y & \cellcolor[RGB]{250,174,174} 0.5 & \cellcolor[RGB]{250,100,100} 1\\
 \hline
-\end{tabular}""" == str(
-        m.latex_matrix()
+\end{tabular}""",
+        r"""%\usepackage[table]{xcolor} % include this for color
+%\usepackage{rotating} % include this for rotate header
+%\documentclass[xcolor=table]{beamer} % for beamer
+\begin{tabular}{|c|c|c|}
+\hline
+\rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
+\hline
+x & \cellcolor[RGB]{250,100,100} 1 & \cellcolor[RGB]{250,175,175} 0.5\\
+\hline
+y & \cellcolor[RGB]{250,175,175} 0.5 & \cellcolor[RGB]{250,100,100} 1\\
+\hline
+\end{tabular}""",
     )
 
 
