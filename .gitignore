@@ -4,6 +4,7 @@ gammapy
 probfit
 iminuit-dev
 
+__pycache__
 *.pyxbldc
 *.root
 *.so

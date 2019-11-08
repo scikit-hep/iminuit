@@ -3,12 +3,6 @@
 from libcpp.vector cimport vector
 from libcpp.utility cimport pair
 
-cdef extern from "<memory>" namespace "std":
-    cdef cppclass auto_ptr[T]:
-        auto_ptr()
-        auto_ptr(T*ptr)
-        T*get()
-
 cdef extern from "Minuit2/FCNBase.h":
     cdef cppclass FCNBase:
         double call "operator()"(vector[double] x) except +
@@ -27,6 +21,14 @@ cdef extern from "IMinuitMixin.h":
 cdef extern from "Utils.h":
     FunctionMinimum* call_mnapplication_wrapper(
         MnApplication app, unsigned int i, double tol) except +
+
+    cdef cppclass MinosErrorHolder:
+        MinosErrorHolder()
+        MinosError x, y;
+        vector[pair[double, double]] points;
+
+    MinosErrorHolder get_minos_error(
+        FCNBase fcn, FunctionMinimum min, unsigned int stra, unsigned int ix, unsigned int iy, unsigned int npoints)
 
 cdef extern from "PythonFCN.h":
     cdef cppclass PythonFCN(FCNBase, IMinuitMixin):
@@ -196,16 +198,3 @@ cdef extern from "Minuit2/FunctionMinimum.h":
         bint HasCovariance()
         bint HasReachedCallLimit()
         bint IsAboveMaxEdm()
-
-cdef extern from "Minuit2/MnContours.h":
-    cdef cppclass MnContours:
-        MnContours(FCNBase fcn, FunctionMinimum fm, unsigned int stra)
-        MnContours(FCNGradientBase fcn, FunctionMinimum fm, unsigned int stra)
-        ContoursError Contour(unsigned int, unsigned int, unsigned int npoints)
-
-cdef extern from "Minuit2/ContoursError.h":
-    cdef cppclass ContoursError:
-        ContoursError()
-        vector[pair[double, double]] Points "operator()"()
-        MinosError XMinosError()
-        MinosError YMinosError()
