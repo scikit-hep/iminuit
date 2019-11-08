@@ -77,7 +77,7 @@ public:
     }
     operator PyObject* () { return ptr; }
     PyObject** operator&() { return &ptr; }
-    operator bool() const { return bool(ptr); }
+    operator bool() const { return ptr != nullptr; }
 private:
     PyObject* ptr;
 };
