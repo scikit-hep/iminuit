@@ -68,7 +68,7 @@ def lazy_compile(
         output_dir, macros, include_dirs, sources, depends, extra_postargs
     )
 
-    pp_opts += compiler_opts.get(self.__class__, {}).get("extra_compile_args", [])
+    pp_opts += compiler_opts.get(self, {}).get("extra_compile_args", [])
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
 
     for obj in objects:
