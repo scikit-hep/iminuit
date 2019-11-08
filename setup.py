@@ -92,14 +92,14 @@ cwd = dirname(__file__)
 try:
     from Cython.Build import cythonize
 
-    USE_CYTHON = True  # TODO: add command line option?
+    USE_CYTHON = True
 except ImportError:
     USE_CYTHON = False
     if exists("iminuit/_libiminuit.cpp"):
         print("Cython is not available ... using pre-generated cpp file.")
     else:
         raise SystemExit(
-            "Looks like you are installing iminuit from github. "
+            "Looks like you are compiling iminuit from sources. "
             "This requires Cython. Run\n\n"
             "   pip install cython\n\n"
             "for a system-wide installation, or\n\n"
@@ -119,7 +119,7 @@ except ImportError:
 minuit2_cxx = [
     join(cwd, "extern/Minuit2/src", x) + ".cxx"
     for x in open(join(cwd, "minuit2_cxx.lst"), "r").read().split("\n")
-    if x
+    if not x.isspace()
 ]
 
 libiminuit = Extension(
@@ -154,7 +154,7 @@ with open(join(cwd, "README.rst")) as readme_rst:
 setup(
     name="iminuit",
     version=__version__,
-    description="MINUIT2 from Python - Fitting like a boss",
+    description="Jupyter-friendly Python bindings for MINUIT2",
     long_description=long_description,
     author="Piti Ongmongkolkul and others",
     maintainer="Hans Dembinski",
