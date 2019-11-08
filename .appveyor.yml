@@ -6,6 +6,9 @@ branches:
   only:
     - develop
 
+image:
+  - Visual Studio 2015
+
 environment:
   matrix:
     - PYTHON: C:\Python27-x64
@@ -44,10 +47,10 @@ install:
      print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
 
   # Upgrade to the latest pip.
-  - 'python -m pip install --upgrade pip setuptools'
+  - python -m pip install --upgrade pip setuptools
 
   # Install the test dependencies.
-  - 'pip install --upgrade --timeout 5 --retries 2 cython numpy matplotlib pytest'
+  - pip install --upgrade --timeout 5 --retries 2 cython numpy matplotlib pytest
 
 build_script:
   - python setup.py build_ext --inplace
