@@ -88,8 +88,6 @@ distutils.ccompiler.CCompiler.compile = lazy_compile
 
 # Static linking
 cwd = dirname(__file__)
-minuit_src = glob(join(cwd, "extern/Minuit2/src/*.cxx"))
-minuit_header = [join(cwd, "extern/Minuit2/inc")]
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
@@ -120,11 +118,21 @@ try:
 except ImportError:
     numpy_header = []
 
+minuit2_cxx = [
+    join(cwd, "extern/Minuit2/src", x) + ".cxx"
+    for x in open(join(cwd, "minuit2_cxx.lst"), "r").read().split("\n")
+    if x
+]
+
 libiminuit = Extension(
     "iminuit._libiminuit",
-    sources=sorted(glob(join(cwd, "iminuit/*" + ext)) + minuit_src),
-    include_dirs=minuit_header + numpy_header,
-    define_macros=[("WARNINGMSG", "1")],
+    sources=sorted(glob(join(cwd, "iminuit/*" + ext)) + minuit2_cxx),
+    include_dirs=[join(cwd, "extern/Minuit2/inc")] + numpy_header,
+    define_macros=[
+        ("WARNINGMSG", "1"),
+        ("ROOT_Math_VecTypes", "1"),
+        ("MATH_NO_PLUGIN_MANAGER", "1"),
+    ],
 )
 extensions = [libiminuit]
 

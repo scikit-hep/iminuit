@@ -28,6 +28,14 @@ cdef extern from "Utils.h":
     FunctionMinimum* call_mnapplication_wrapper(
         MnApplication app, unsigned int i, double tol) except +
 
+    cdef cppclass MinosErrorHolder:
+        MinosErrorHolder()
+        MinosError x, y;
+        vector[pair[double, double]] points;
+
+    MinosErrorHolder get_minos_error(
+        FCNBase fcn, FunctionMinimum min, unsigned int stra, unsigned int ix, unsigned int iy, unsigned int npoints)
+
 cdef extern from "PythonFCN.h":
     cdef cppclass PythonFCN(FCNBase, IMinuitMixin):
         PythonFCN(object fcn, bint use_array_call, double up_parm, vector[string] pname, bint thrownan)
@@ -196,16 +204,3 @@ cdef extern from "Minuit2/FunctionMinimum.h":
         bint HasCovariance()
         bint HasReachedCallLimit()
         bint IsAboveMaxEdm()
-
-cdef extern from "Minuit2/MnContours.h":
-    cdef cppclass MnContours:
-        MnContours(FCNBase fcn, FunctionMinimum fm, unsigned int stra)
-        MnContours(FCNGradientBase fcn, FunctionMinimum fm, unsigned int stra)
-        ContoursError Contour(unsigned int, unsigned int, unsigned int npoints)
-
-cdef extern from "Minuit2/ContoursError.h":
-    cdef cppclass ContoursError:
-        ContoursError()
-        vector[pair[double, double]] Points "operator()"()
-        MinosError XMinosError()
-        MinosError YMinosError()

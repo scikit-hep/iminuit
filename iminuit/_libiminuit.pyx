@@ -1389,7 +1389,7 @@ cdef class Minuit:
                 for j, y in enumerate(y_val):
                     arg[y_pos] = y
                     result[i, j] = self.fcn(*arg)
-        
+
 
         if subtract_min:
             result -= self.cfmin.Fval()
@@ -1440,25 +1440,18 @@ cdef class Minuit:
         cdef double oldup = self.pyfcn.Up()
         self.pyfcn.SetErrorDef(oldup * sigma * sigma)
 
-        cdef auto_ptr[MnContours] mnc = auto_ptr[MnContours](NULL)
-        if self.grad is None:
-            mnc = auto_ptr[MnContours](
-                new MnContours(deref(<FCNBase *> self.pyfcn),
-                               deref(self.cfmin),
-                               self.strategy))
-        else:
-            mnc = auto_ptr[MnContours](
-                new MnContours(deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
-                               deref(self.cfmin),
-                               self.strategy))
-        cdef ContoursError cerr = mnc.get().Contour(ix, iy, numpoints)
+        cdef MinosErrorHolder meh
+        meh = get_minos_error(deref(<FCNBase *> self.pyfcn),
+                              deref(self.cfmin),
+                              self.strategy,
+                              ix, iy, numpoints)
 
-        xminos = minoserror2struct(x, cerr.XMinosError())
-        yminos = minoserror2struct(y, cerr.YMinosError())
+        xminos = minoserror2struct(x, meh.x)
+        yminos = minoserror2struct(y, meh.y)
 
         self.pyfcn.SetErrorDef(oldup)
 
-        return xminos, yminos, cerr.Points()  #using type coersion here
+        return xminos, yminos, meh.points  #using type coersion here
 
     def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
         """Draw minos contour.
