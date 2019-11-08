@@ -119,7 +119,7 @@ except ImportError:
 minuit2_cxx = [
     join(cwd, "extern/Minuit2/src", x) + ".cxx"
     for x in open(join(cwd, "minuit2_cxx.lst"), "r").read().split("\n")
-    if not x.isspace()
+    if x
 ]
 
 libiminuit = Extension(
