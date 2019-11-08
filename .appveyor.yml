@@ -33,7 +33,8 @@ init:
         }
 
 install:
-  - git submodule update --init
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - git submodule update --depth=5 --init --recursive
 
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
