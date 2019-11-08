@@ -16,10 +16,8 @@ import distutils.ccompiler
 needs_pytest = {"pytest", "test", "ptr"}.intersection(sys.argv)
 pytest_runner = ["pytest-runner"] if needs_pytest else []
 
-
-def flag_if(cond, flag):
-    return [flag] if cond else []
-
+coverage_flag = ["--coverage"] if bool(os.environ.get("COVERAGE", False)) else []
+darwin_flag = ["-stdlib=libc++"] if platform.system() == "Darwin" else []
 
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
@@ -34,12 +32,9 @@ compiler_opts = {
             "-Wno-sign-compare",
             "-Wno-cpp",  # suppresses #warnings from numpy
         ]
-        + flag_if(bool(os.environ.get("COVERAGE", False)), "--coverage")
-        + flag_if(platform.system() == "Darwin", "-stdlib=libc++"),
-        "extra_link_args": flag_if(
-            bool(os.environ.get("COVERAGE", False)), "--coverage"
-        )
-        + flag_if(platform.system() == "Darwin", "-stdlib=libc++"),
+        + coverage_flag
+        + darwin_flag,
+        "extra_link_args": coverage_flag + darwin_flag,
     },
     MSVCCompiler: {"extra_compile_args": ["/EHsc"]},
 }
