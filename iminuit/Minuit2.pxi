@@ -3,12 +3,6 @@
 from libcpp.vector cimport vector
 from libcpp.utility cimport pair
 
-cdef extern from "<memory>" namespace "std":
-    cdef cppclass auto_ptr[T]:
-        auto_ptr()
-        auto_ptr(T*ptr)
-        T*get()
-
 cdef extern from "Minuit2/FCNBase.h":
     cdef cppclass FCNBase:
         double call "operator()"(vector[double] x) except +
