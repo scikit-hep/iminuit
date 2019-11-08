@@ -88,8 +88,8 @@ distutils.ccompiler.CCompiler.compile = lazy_compile
 
 # Static linking
 cwd = dirname(__file__)
-minuit_src = glob(join(cwd, "Minuit/src/*.cxx"))
-minuit_header = [join(cwd, "Minuit/inc")]
+minuit_src = glob(join(cwd, "extern/Minuit2/src/*.cxx"))
+minuit_header = [join(cwd, "extern/Minuit2/inc")]
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
