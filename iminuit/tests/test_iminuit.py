@@ -3,6 +3,7 @@ import warnings
 import pytest
 from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
+from iminuit.errordef import lsq, ml
 from iminuit.util import Param
 from iminuit.iminuit_warnings import InitialParamWarning
 import numpy as np
@@ -28,7 +29,7 @@ def test_pedantic_warning_message():
         ):
             assert str(w[i].message) == msg
             assert w[i].filename == __file__
-            assert w[i].lineno == 19  # the lineno of "m = Minuit(lambda x: 0)"
+            assert w[i].lineno == 20  # the lineno of "m = Minuit(lambda x: 0)"
 
 
 def test_version():
@@ -214,7 +215,7 @@ def test_array_call():
         fix_a=False,
         fix_b=False,
         print_level=0,
-        errordef=1,
+        errordef=lsq.sigma,
         use_array_call=True,
         forced_parameters=("a", "b"),
     )
@@ -227,7 +228,9 @@ def test_array_call():
 
 
 def test_from_array_func_1():
-    m = Minuit.from_array_func(func8, (2, 1), error=(1, 1), errordef=1, print_level=0)
+    m = Minuit.from_array_func(
+        func8, (2, 1), error=(1, 1), errordef=lsq.sigma, print_level=0
+    )
     assert m.fitarg == {
         "x0": 2,
         "x1": 1,
@@ -254,7 +257,7 @@ def test_from_array_func_2():
         limit=((0, 2), (0, 2)),
         fix=(False, True),
         name=("a", "b"),
-        errordef=1,
+        errordef=lsq.sigma,
         print_level=0,
     )
     assert m.fitarg == {
@@ -276,7 +279,7 @@ def test_from_array_func_2():
 
 def test_from_array_func_with_broadcasting():
     m = Minuit.from_array_func(
-        func8, (1, 1), error=0.5, limit=(0, 2), errordef=1, print_level=0
+        func8, (1, 1), error=0.5, limit=(0, 2), errordef=lsq.sigma, print_level=0
     )
     assert m.fitarg == {
         "x0": 1,
@@ -296,7 +299,7 @@ def test_from_array_func_with_broadcasting():
 
 
 def test_view_repr():
-    m = Minuit(func3, print_level=0, errordef=1, x=1, y=2, error_x=3, error_y=4)
+    m = Minuit(func3, print_level=0, errordef=lsq.sigma, x=1, y=2, error_x=3, error_y=4)
     mid = id(m)
     assert (
         repr(m.values)
@@ -701,7 +704,14 @@ class TestOutputInterface:
 
 def test_chi2_fit():
     """Fit a curve to data."""
-    m = Minuit(chi2, s=2.0, error_a=0.1, errordef=0.01, print_level=0, pedantic=False)
+    m = Minuit(
+        chi2,
+        s=2.0,
+        error_a=0.1,
+        errordef=0.1 * lsq.sigma,
+        print_level=0,
+        pedantic=False,
+    )
     m.migrad()
     output = [
         round(10 * m.values["a"]),
@@ -760,14 +770,21 @@ def test_num_call():
     assert m.get_num_call_fcn() < ncall_without_limit
 
 
-def test_set_error_def():
-    m = Minuit(lambda x: x ** 2, pedantic=False, print_level=0, errordef=1)
+@pytest.mark.parametrize(
+    "fcn,mod", [(lambda x: x ** 2, lsq), (lambda x: 0.5 * x ** 2, ml)]
+)
+def test_set_error_def(fcn, mod):
+    m = Minuit(fcn, pedantic=False, print_level=0, errordef=0.683 * mod.cl)
     m.migrad()
     m.hesse()
-    assert_allclose(m.errors["x"], 1)
-    m.set_errordef(4)
+    assert_allclose(m.errors["x"], 1, atol=1e-3)
+    m.set_errordef(2 * mod.sigma)
+    assert m.errordef == float(2 * mod.sigma)
     m.hesse()
     assert_allclose(m.errors["x"], 2)
+
+    with pytest.raises(AttributeError, match="not writable"):
+        m.errordef = 4
 
 
 def test_get_param_states():
@@ -780,7 +797,7 @@ def test_get_param_states():
         fix_x=True,
         limit_y=(None, 10),
         pedantic=False,
-        errordef=1,
+        errordef=lsq.sigma,
         print_level=0,
     )
     # these are the initial param states

@@ -228,13 +228,10 @@ cdef class Minuit:
 
     # PyMinuit compatible fields
 
-    cdef public double errordef
-    """Amount of change in FCN that defines 1 :math:`sigma` error.
+    cdef readonly double errordef
+    """Amount of change in FCN that defines 1 :math:`sigma` error, which differ for a maximum-likelihood and a least-squares function.
 
-    Default value is 1.0. `errordef` should be 1.0 for :math:`\chi^2` cost
-    function and 0.5 for negative log likelihood function.
-
-    This parameter is sometimes called ``UP`` in the MINUIT docs.
+    The default value is correct for a least-squares function. To change the value, use the method :meth:`set_errordef`. This parameter is sometimes called ``UP`` in the MINUIT docs.
     """
 
     cdef public double tol
@@ -400,12 +397,14 @@ cdef class Minuit:
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos.
 
-            - **errordef**: Optional. Amount of increase in fcn to be defined
-              as 1 :math:`\sigma`. If None is given, it will look at
-              `fcn.default_errordef()`. If `fcn.default_errordef()` is not
-              defined or
-              not callable iminuit will give a warning and set errordef to 1.
-              Default None(which means errordef=1 with a warning).
+            - **errordef**: Optional. This sets the error definition for Hesse
+              and Minos. The size of the error intervals reported by these methods
+              increases with this value. To get standard deviations, one should
+              set this to `iminuit.errordef.lsq_sigma` for a least-squares function or `iminuit.errordef.ml_sigma` for a
+              maximum-likelihood function. If set to `None`, Minuit will try to
+              call `fcn.default_errordef()` to set the error definition. If this
+              fails, iminuit will raise a warning and set `errordef` to `iminuit.errordef.lsq_sigma`.
+              Default: `None` (which means `errordef=iminuit.errordef.lsq_sigma` with a warning).
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
@@ -489,6 +488,9 @@ cdef class Minuit:
                 call = getattr(fcn, 'default_errordef')
                 errordef = call()
         else:
+            if isinstance(errordef, mutil.ErrorDefBase):
+                errordef = float(errordef)
+            
             if not is_number(errordef) or errordef <= 0:
                 raise ValueError("errordef must be a positive number")
 
@@ -1038,13 +1040,16 @@ cdef class Minuit:
         self.set_errordef(errordef)
 
     def set_errordef(self, double errordef):
-        """Set error parameter 1 for :math:`\chi^2` and 0.5 for log likelihood.
+        """Set error definition parameter.
+        
+        To compute standard deviations, the value 1 is correct for a least-squares function and the value 0.5 is correct for a maximum-likelihood function. Instead of remembering this, you can also use one of the constants from :mod:`iminuit.errordef`.
+        
+        .. seealso::
 
-        See page 37 of http://hep.fi.infn.it/minuit.pdf
+            :mod:`iminuit.errordef`
+
         """
-        # TODO: try to get a HTML link for this again.
-        # It was this before, but that is currently broken.
-        # http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node31.html
+
         self.errordef = errordef
         self.pyfcn.SetErrorDef(errordef)
 
