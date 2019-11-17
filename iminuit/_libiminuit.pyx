@@ -397,10 +397,11 @@ cdef class Minuit:
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos.
 
-            - **errordef**: Optional. See :meth:`set_errordef` for details on how
-              to set this parameter. If set to `None` (the default), Minuit will
+            - **errordef**: Optional. See :meth:`set_errordef` for details on
+              this parameter. If set to `None` (the default), Minuit will
               try to call `fcn.default_errordef()` to set the error definition.
-              If this fails, iminuit will raise a warning and use a value that is appropriate to get standard errors for a least-squares function.
+              If this fails, iminuit will raise a warning and use a value that 
+              is appropriate to get standard errors for a least-squares function.
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
