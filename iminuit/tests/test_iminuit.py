@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function
 import warnings
 import pytest
-from iminuit.tests.utils import assert_allclose
+from iminuit.tests.utils import assert_allclose, requires_dependency
 from iminuit import Minuit
-from iminuit.errordef import lsq, ml
+from iminuit.errordef import nll, lsq
 from iminuit.util import Param
 from iminuit.iminuit_warnings import InitialParamWarning
 import numpy as np
@@ -770,21 +770,37 @@ def test_num_call():
     assert m.get_num_call_fcn() < ncall_without_limit
 
 
+def test_set_error_def_0():
+    m = Minuit(lambda x: x ** 2, pedantic=False, print_level=0, errordef=1)
+    assert m.errordef == 1
+    m.set_errordef(2)
+    assert m.errordef == 2
+    with pytest.raises(AttributeError, match="not writable"):
+        m.errordef = 4
+
+
 @pytest.mark.parametrize(
-    "fcn,mod", [(lambda x: x ** 2, lsq), (lambda x: 0.5 * x ** 2, ml)]
+    "fcn,sigma", [(lambda x: x ** 2, lsq.sigma), (lambda x: 0.5 * x ** 2, nll.sigma)]
 )
-def test_set_error_def(fcn, mod):
-    m = Minuit(fcn, pedantic=False, print_level=0, errordef=0.683 * mod.cl)
+def test_set_error_def_1(fcn, sigma):
+    m = Minuit(fcn, pedantic=False, print_level=0, errordef=1 * sigma)
     m.migrad()
     m.hesse()
     assert_allclose(m.errors["x"], 1, atol=1e-3)
-    m.set_errordef(2 * mod.sigma)
-    assert m.errordef == float(2 * mod.sigma)
+    m.set_errordef(2 * sigma)
     m.hesse()
-    assert_allclose(m.errors["x"], 2)
+    assert_allclose(m.errors["x"], 2, atol=1e-3)
 
-    with pytest.raises(AttributeError, match="not writable"):
-        m.errordef = 4
+
+@requires_dependency("scipy")
+@pytest.mark.parametrize(
+    "fcn,cl", [(lambda x: x ** 2, lsq.cl), (lambda x: 0.5 * x ** 2, nll.cl)]
+)
+def test_set_error_def_2(fcn, cl):
+    m = Minuit(fcn, pedantic=False, print_level=0, errordef=0.95 * cl)
+    m.migrad()
+    m.hesse()
+    assert_allclose(m.errors["x"], 1.95, atol=1e-2)
 
 
 def test_get_param_states():
