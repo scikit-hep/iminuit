@@ -4,8 +4,8 @@
 
 .. currentmodule:: iminuit
 
-Frequently-asked questions
-==========================
+FAQ
+===
 
 Disclaimer: Read the excellent MINUIT2 user guide!
 --------------------------------------------------
@@ -31,7 +31,7 @@ MINUIT was only designed to handle box constrains, meaning that the limits on th
 
 1) Change the variables so that the limits become independent, such as going from x,y to r, phi for a circle. This is not always possible or desirable, of course.
 
-2) Use another minimizer to locate the minimum which supports complex boundaries. The `nlopt library <https://nlopt.readthedocs.io/en/latest>`_ and `scipy.optimize <https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html>`_ have such minimizers. Once the minimum is found and if it is not near the boundary, place box constraints around the minimum and run iminuit to get the uncertainties (make sure that the box constraints are not too tight around the minimum). Neither nlopt nor scipy can give you the uncertainties.
+2) Use another minimizer to locate the minimum which supports complex boundaries. The `nlopt`_ library and `scipy.optimize`_ have such minimizers. Once the minimum is found and if it is not near the boundary, place box constraints around the minimum and run iminuit to get the uncertainties (make sure that the box constraints are not too tight around the minimum). Neither nlopt nor scipy can give you the uncertainties.
 
 3) Artificially increase the negative log-likelihood in the forbidden region. This is not as easy as it sounds.
 
@@ -42,7 +42,13 @@ Warning: you cannot just add a large value to the likelihood when the parameter 
 What happens when I change the strategy?
 ----------------------------------------
 
-See page 5 of the MINUIT2 user guide.
+See page 5 of the MINUIT2 user guide for a rough explanation what this does. Here is our detailed explanation, extracted from looking into the source code and doing benchmarks.
+
+* strategy = 0 is the fastest and the number of function calls required to minimize scales linearly with the number of fitted parameters. The Hesse matrix is not computed during the minimization (only an approximation that is continously updated). When the number of fitted parameters > 10, you should prefer this strategy. 
+* strategy = 1 (default) is medium in speed. The number of function calls required scales quadratically with the number of fitted parameters. The different scales comes from the fact that the Hesse matrix is explicitly computed in a Newton step, if Minuit detects significant correlations between parameters.
+* strategy = 2 has the same quadratic scaling as strategy 1 but is even slower. The Hesse matrix is always explicitly computed in each Newton step.
+
+If you have a function that is everywhere analytical and the Hesse matrix varies not too much, strategy 0 should give you good results. Strategy 1 and 2 are better when these conditions are not given. The approximated Hesse matrix can become distorted in this case. The explicit computation of the Hesse matrix may help Minuit to recover after passing through such a region.
 
 How do I get Hesse errors for sigma=2, 3, ...?
 ----------------------------------------------

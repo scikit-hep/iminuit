@@ -5,6 +5,19 @@
 Changelog
 =========
 
+- added benchmark to docs
+- expanded faq section in docs
+- build improvements for windows/msvc
+- switched from internal copy of Minuit2 to including Minuit2 repository from GooFit
+- updated Minuit2 code to ROOT-v6.15/01
+- compiler with C++11 support is now required to build iminuit
+
+1.3.8
+-----
+- fixed internal plotting when Minuit.from_array_func is used
+- documentation updates
+- reproduceable build
+
 1.3.7
 -----
 - fixed wheels support

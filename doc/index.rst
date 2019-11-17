@@ -46,6 +46,7 @@ In a nutshell
     install
     tutorials
     reference
+    benchmark
     faq
     changelog
     contribute
