@@ -397,14 +397,10 @@ cdef class Minuit:
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos.
 
-            - **errordef**: Optional. This sets the error definition for Hesse
-              and Minos. The size of the error intervals reported by these methods
-              increases with this value. To get standard deviations, one should
-              set this to `iminuit.errordef.lsq_sigma` for a least-squares function or `iminuit.errordef.ml_sigma` for a
-              maximum-likelihood function. If set to `None`, Minuit will try to
-              call `fcn.default_errordef()` to set the error definition. If this
-              fails, iminuit will raise a warning and set `errordef` to `iminuit.errordef.lsq_sigma`.
-              Default: `None` (which means `errordef=iminuit.errordef.lsq_sigma` with a warning).
+            - **errordef**: Optional. See :meth:`set_errordef` for details on how
+              to set this parameter. If set to `None` (the default), Minuit will
+              try to call `fcn.default_errordef()` to set the error definition.
+              If this fails, iminuit will raise a warning and use a value that is appropriate to get standard errors for a least-squares function.
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
@@ -1042,7 +1038,9 @@ cdef class Minuit:
     def set_errordef(self, double errordef):
         """Set error definition parameter.
         
-        To compute standard deviations, the value 1 is correct for a least-squares function and the value 0.5 is correct for a maximum-likelihood function. Instead of remembering this, you can also use one of the constants from :mod:`iminuit.errordef`.
+        This sets the error definition for the Hesse and Minos algorithms. The
+        sizes of the error intervals reported by these methods increases with this
+        value. To compute standard deviations, set the value to 1 for a least-squares function and to 0.5 for a maximum-likelihood function. Instead of remembering this, you can also use one of the constants from :mod:`iminuit.errordef`.
         
         .. seealso::
 
