@@ -239,7 +239,7 @@ cdef class Minuit:
     def errordef(self, value):
         self.pyfcn.SetErrorDef(value)
 
-    @deprecated("use :meth:`errordef` instead")
+    @deprecated("use :attr:`errordef` instead")
     def set_errordef(self, value):
         self.errordef = value
 
