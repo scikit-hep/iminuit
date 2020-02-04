@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, unicode_literals
 from iminuit.color import Gradient
-from iminuit.repr_text import format_numbers
+from iminuit.repr_text import format_numbers, goaledm
 
 good_style = "background-color:#92CCA6;"
 bad_style = "background-color:#FF7878;"
@@ -68,7 +68,6 @@ def good(x, should_be):
 
 def fmin(sfmin):
     """Display FunctionMinum in html representation"""
-    goaledm = 1e-4 * sfmin.tolerance * sfmin.up
     s = Html()
     with table(s):
         with tr(s):
@@ -87,7 +86,7 @@ def fmin(sfmin):
                 colspan="2",
                 title="Estimated distance to minimum and target threshold",
             ):
-                s += "EDM = %.3G (Goal: %G)" % (sfmin.edm, goaledm)
+                s += "EDM = %.3G (Goal: %G)" % (sfmin.edm, goaledm(sfmin))
             with td(
                 s,
                 colspan="3",

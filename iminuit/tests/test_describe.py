@@ -5,6 +5,7 @@ from math import ldexp
 import sys
 import pytest
 import platform
+import warnings
 
 is_pypy = platform.python_implementation() == "PyPy"
 
@@ -96,10 +97,12 @@ def test_generic_functor_with_fake_func():
 
 @requires_dependency("Cython", "pyximport", "cyfunc")
 def test_cython_embedsig():
-    import pyximport
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import pyximport
 
-    pyximport.install()
-    from . import cyfunc
+        pyximport.install()
+        from . import cyfunc
 
     assert describe(cyfunc.f, True) == ["a", "b"]
 
@@ -107,10 +110,12 @@ def test_cython_embedsig():
 @requires_dependency("Cython", "pyximport", "cyfunc")
 @pytest.mark.skipif(is_pypy, reason="Does not work in PyPy")
 def test_cython_class_method():
-    import pyximport
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        import pyximport
 
-    pyximport.install()
-    from . import cyfunc
+        pyximport.install()
+        from . import cyfunc
 
     cc = cyfunc.CyCallable()
     assert describe(cc.test, True) == ["c", "d"]

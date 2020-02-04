@@ -2,6 +2,11 @@ from __future__ import absolute_import, division, unicode_literals
 from math import log10, floor
 
 
+def goaledm(fmin):
+    # taken from the source code, see VariableMeticBuilder.cxx
+    return 2e-3 * fmin.tolerance * fmin.up
+
+
 def format_numbers(*args):
     scales = tuple(int(round(log10(abs(x)))) if x != 0 else 1 for x in args)
     nmax = max(scales)
@@ -43,16 +48,12 @@ def format_row(widths, *args):
 
 
 def fmin(fmin):
-    goaledm = 1e-4 * fmin.tolerance * fmin.up
-    # despite what the doc said the code is actually 1e-4
-    # http://wwwasdoc.web.cern.ch/wwwasdoc/hbook_html3/node125.html
-
     ws = (-32, 33)
     i1 = format_row(
         ws, "FCN = %.4G" % fmin.fval, "Ncalls=%i (%i total)" % (fmin.nfcn, fmin.ncalls)
     )
     i2 = format_row(
-        ws, "EDM = %.3G (Goal: %G)" % (fmin.edm, goaledm), "up = %.1f" % fmin.up
+        ws, "EDM = %.3G (Goal: %G)" % (fmin.edm, goaledm(fmin)), "up = %.1f" % fmin.up
     )
     ws = (16, 16, 12, 21)
     h1 = format_row(ws, "Valid Min.", "Valid Param.", "Above EDM", "Reached call limit")
