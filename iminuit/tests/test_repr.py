@@ -67,7 +67,7 @@ Ncalls = 24 (67 total)
 </tr>
 <tr>
 <td colspan="2" title="Estimated distance to minimum and target threshold">
-EDM = %.3G (Goal: 1E-08)
+EDM = %.3G (Goal: 2E-07)
 </td>
 <td align="center" colspan="3" title="Increase in FCN which corresponds to 1 standard deviation">
 up = 1.0
@@ -617,7 +617,7 @@ y
 def test_text_fmin(minuit):
     assert r"""------------------------------------------------------------------
 | FCN = 1                       |      Ncalls=24 (67 total)      |
-| EDM = %.3G (Goal: 1E-08)  |            up = 1.0            |
+| EDM = %.3G (Goal: 2E-07)  |            up = 1.0            |
 ------------------------------------------------------------------
 |  Valid Min.   | Valid Param.  | Above EDM | Reached call limit |
 ------------------------------------------------------------------

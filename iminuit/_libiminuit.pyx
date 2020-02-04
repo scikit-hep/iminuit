@@ -201,13 +201,13 @@ cdef class Minuit:
     # Standard stuff
 
     cdef readonly object fcn
-    """Cost function (usually a chi^2 or likelihood function)"""
+    """Cost function (usually a chi^2 or likelihood function)."""
 
     cdef readonly object grad
-    """Gradient function of the cost function"""
+    """Gradient function of the cost function."""
 
     cdef readonly bint use_array_call
-    """Whether to pass parameters as numpy array to cost function"""
+    """Boolean. Whether to pass parameters as numpy array to cost function."""
 
     cdef readonly tuple pos2var
     """Map variable position to name"""
@@ -247,40 +247,35 @@ cdef class Minuit:
     """Tolerance.
 
     One of the MIGRAD convergence criteria is ``edm < edm_max``,
-    where ``edm_max`` is calculated as ``edm_max = 0.0001 * tol * UP``.
+    where ``edm_max`` is calculated as ``edm_max = 0.002 * tol * errordef``.
     """
 
     cdef public unsigned int strategy
-    """Strategy integer code.
+    """Current minimization strategy.
 
-    0: fast
-    -------
-    - does not check a user-provided gradient
-    - does not check and does not improve Hesse matrix at minimum
-    - extra call to `.hesse()` after `.migrad()` is needed to get good error estimates
-    - use this when you pass a gradient to MINUIT to accelerate convergence
+    **0**: fast. Does not check a user-provided gradient. Does not improve Hesse matrix
+    at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed for
+    good error estimates. If you pass a user-provided gradient to MINUIT,
+    convergence is **faster**.
 
-    1: default
-    ----------
-    - checks user-provided gradient against numerical gradient
-    - checks and potentially improves Hesse matrix at minimum
-    - extra calls to `.hesse()` after `.migrad()` are usually superfluous
-    - if you pass a gradient to MINUIT in this mode, convergence is not accelerated
+    **1**: default. Checks user-provided gradient against numerical gradient. Checks and
+    usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
+    :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
+    MINUIT, convergence is **slower**.
 
-    2: careful
-    ----------
-    - like 1, but does extra checks of intermediate Hessian matrix during minimization
+    **2**: careful. Like 1, but does extra checks of intermediate Hessian matrix during
+    minimization.
     """
 
     cdef int _print_level
 
     @property
     def print_level(self):
-        """Print level.
+        """Current print level.
 
         - 0: quiet
-        - 1: print stuff the end
-        - 2: 1+fit status during call
+        - 1: info messages after minimization
+        - 2: debug messages during minimization
         """
         return self._print_level
 
@@ -291,7 +286,7 @@ cdef class Minuit:
             self.minimizer.Minimizer().Builder().SetPrintLevel(value)
 
     cdef readonly bint throw_nan
-    """Raise runtime error if function evaluate to nan."""
+    """Boolean. Whether to raise runtime error if function evaluate to nan."""
 
     # PyMinuit compatible interface
 
@@ -299,26 +294,28 @@ cdef class Minuit:
     """Parameter name tuple"""
 
     cdef public ArgsView args
-    """Parameter value tuple in a list-like object.
+    """Parameter values in a list-like object.
 
-    Use to read or write current parameter values based on the parameter index. If you change a parameter value and run :meth:`migrad`, the minimization will start from that value, similar for :meth:`hesse` and :meth:`minos`.
+    See :attr:`values` for details.
 
-    Use :meth:`values` if you want to read or write based on the parameter name as a
-    string.
+    .. seealso:: :attr:`values`, :attr:`errors`, :attr:`fixed`
     """
 
     cdef public ValueView values
     """Parameter values in a dict-like object.
 
-    Like :meth:`args`, but you can also read or write current parameter values based on
-    the parameter name as a string.
+    Use to read or write current parameter values based on the parameter index or the parameter name as a string. If you change a parameter value and run :meth:`migrad`, the minimization will start from that value, similar for :meth:`hesse` and :meth:`minos`.
+
+    .. seealso:: :attr:`errors`, :attr:`fixed`
     """
 
     cdef public ErrorView errors
     """Parameter parabolic errors in a dict-like object.
 
-    Like :meth:`values`, but instead of reading or writing the values, you read or write
+    Like :attr:`values`, but instead of reading or writing the values, you read or write
     the errors (which double as step sizes for MINUITs numerical gradient estimation).
+
+    .. seealso:: :attr:`values`, :attr:`fixed`
     """
 
     cdef public FixedView fixed
@@ -331,6 +328,8 @@ cdef class Minuit:
     In case of complex fits, it can help to fix some parameters first and only minimize
     the function with respect to the other parameters, then release the fixed parameters
     and minimize again starting from that state.
+
+    .. seealso:: :attr:`values`, :attr:`errors`
     """
 
     cdef readonly object covariance
@@ -349,29 +348,18 @@ cdef class Minuit:
     """Number of FCN call of last migrad / minos / hesse run."""
 
     cdef readonly double edm
-    """Estimated distance to minimum.
+    """Current estimated distance to minimum.
 
     .. seealso:: :meth:`get_fmin`
     """
 
     cdef readonly object merrors
-    """MINOS errors (dict).
-
-    Using this method is not recommended.
-    It was added only for PyMinuit compatibility.
-    Use :meth:`get_merrors` instead, which returns a dictionary of
-    name -> :ref:`minos-error-struct` instead.
-
-    Dictionary entries for each parameter:
-
-    * (name,1.0) -> upper error
-    * (name,-1.0) -> lower error
-    """
+    """Deprecated. Use :meth:`get_merrors` instead."""
 
     cdef readonly object gcc
-    """Global correlation coefficients (dict : name -> gcc)"""
+    """Global correlation coefficients (dict : name -> gcc)."""
 
-    cdef public object fitarg
+    cdef readonly object fitarg
     """Current Minuit state in form of a dict.
 
     * name -> value
@@ -392,9 +380,9 @@ cdef class Minuit:
     @property
     def narg(self):
         """Number of arguments"""
-        return len(self.args)
+        return len(self.parameters)
 
-    cdef public object merrors_struct
+    cdef readonly object merrors_struct
     """MINOS error calculation information (dict name -> struct)"""
 
     def __init__(self, fcn,
@@ -447,23 +435,22 @@ cdef class Minuit:
               value or initial error/stepsize set.
 
             - **forced_parameters**: tell Minuit not to do function signature
-              detection and use this argument instead. (Default None
+              detection and use this argument instead. (Default: None
               (automagically detect signature))
 
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
-              1 print out at the end of migrad/hesse/minos.
+              1 print out at the end of migrad/hesse/minos. 2 prints debug messages.
 
-            - **errordef**: Optional. Amount of increase in fcn to be defined
-              as 1 :math:`\sigma`. If None is given, it will look at
+            - **errordef**: Optional. Amount of increase in fcn that corresponds to
+              one standard deviation of a parameter. If None is given, it will look at
               `fcn.default_errordef()`. If `fcn.default_errordef()` is not
-              defined or
-              not callable iminuit will give a warning and set errordef to 1.
-              Default None(which means errordef=1 with a warning).
+              defined or not callable, iminuit will give a warning and set errordef to 1.
+              Default: None (which means errordef=1 with a warning).
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
               element for each dimension. If None is given minuit will
-              calculate the gradient numerically. (Default None)
+              calculate the gradient numerically. (Default: None)
 
             - **use_array_call**: Optional. Set this to true if your function
               signature accepts a single numpy array of the parameters. You
@@ -1079,7 +1066,7 @@ cdef class Minuit:
             raise RuntimeError("Function minimum has not been calculated.")
         print(self.get_fmin())
 
-    @deprecated("use `print(this_object.merrors_struct)` instead")
+    @deprecated("use `print(this_object.get_merrors())` instead")
     def print_all_minos(self):
         print(self.merrors_struct)
 
