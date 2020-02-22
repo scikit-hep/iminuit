@@ -243,26 +243,16 @@ cdef class Minuit:
     def set_errordef(self, value):
         self.errordef = value
 
+    @deprecated("use :attr:`errordef` instead")
+    def set_up(self, double errordef):
+        self.errordef = errordef
+
     cdef public double tol
     """Tolerance.
 
     One of the MIGRAD convergence criteria is ``edm < edm_max``,
     where ``edm_max`` is calculated as ``edm_max = 0.002 * tol * errordef``.
     """
-
-    def errordef(self):
-        """Amount of change in FCN that defines 1 :math:`sigma` error, which differ for a maximum-likelihood and a least-squares function.
-
-        Default value is 1.0, which is correct for a :math:`\chi^2` cost
-        function. The value 0.5 is for a negative log-likelihood function.
-
-        This parameter is sometimes called ``UP`` in the MINUIT docs.
-        """
-        return self.pyfcn.Up()
-
-    @errordef.setter
-    def errordef(self, value):
-        self.pyfcn.SetErrorDef(value)
 
     cdef public unsigned int strategy
     """Current minimization strategy.
@@ -281,6 +271,10 @@ cdef class Minuit:
     minimization.
     """
 
+    @deprecated("use :attr:`strategy` instead")
+    def set_strategy(self, value):
+        self.strategy = value
+
     cdef int _print_level
 
     @property
@@ -298,6 +292,10 @@ cdef class Minuit:
         self._print_level = value
         if self.minimizer:
             self.minimizer.Minimizer().Builder().SetPrintLevel(value)
+
+    @deprecated("use :attr:`print_level` instead")
+    def set_print_level(self, value):
+        self.print_level = value
 
     cdef readonly bint throw_nan
     """Boolean. Whether to raise runtime error if function evaluate to nan."""
@@ -1087,18 +1085,6 @@ cdef class Minuit:
     @deprecated("use `print(this_object.get_merrors())` instead")
     def print_all_minos(self):
         print(self.merrors_struct)
-
-    @deprecated("use :attr:`errordef` instead")
-    def set_up(self, double errordef):
-        self.errordef = errordef
-
-    @deprecated("use :attr:`strategy` instead")
-    def set_strategy(self, value):
-        self.strategy = value
-
-    @deprecated("use :attr:`print_level` instead")
-    def set_print_level(self, value):
-        self.print_level = value
 
     def get_fmin(self):
         """Current function minimum data object"""
