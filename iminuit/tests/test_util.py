@@ -15,8 +15,6 @@ from iminuit.util import (
     MError,
     Params,
     MigradResult,
-    ErrorDefSigma,
-    ErrorDefCL,
 )
 from iminuit.tests.utils import requires_dependency
 import pytest
@@ -231,54 +229,3 @@ def test_MigradResult():
     a, b = mr
     assert a is fmin
     assert b is params
-
-
-def test_ErrorDefSigma():
-    assert float(ErrorDefSigma(1, 1)) == 1
-    assert float(ErrorDefSigma(0.5, 1)) == 0.5
-
-    lsq = ErrorDefSigma(1, 1)
-    assert float(2 * lsq) == 4
-    assert float(3 * lsq) == 9
-    assert float(lsq * 3) == 9
-
-    ml = ErrorDefSigma(0.5, 1)
-    assert float(ml) == 0.5
-    assert float(2 * ml) == 0.5 * 4
-    assert float(ml * 2 * 1.5) == 0.5 * 9
-
-    with pytest.raises(TypeError):
-        ml + 1
-    with pytest.raises(ValueError):
-        ml * lsq
-
-    assert repr(ErrorDefSigma(0.5, 3)) == "ErrorDefSigma(0.5, 3)"
-    assert str(ErrorDefSigma(1, 1.5)) == "ErrorDefSigma(1.0, 1.5)"
-
-
-@requires_dependency("scipy")
-def test_ErrorDefCL():
-    assert float(ErrorDefCL(1, 0.683)) == approx(1, abs=2e-3)
-    assert float(ErrorDefCL(0.5, 0.683)) == approx(0.5, abs=2e-3)
-
-    lsq = ErrorDefCL(1, None)
-    with pytest.raises(ValueError):
-        float(lsq)
-    assert float(0.68 * lsq) == approx(0.99, abs=1e-2)
-    assert float(0.95 * lsq) == approx(3.84, abs=1e-2)
-    assert float(lsq * 0.99) == approx(6.64, abs=1e-2)
-
-    ml = ErrorDefCL(0.5, None)
-    with pytest.raises(ValueError):
-        float(ml)
-    assert float(0.68 * ml) == approx(0.5 * 0.99, abs=1e-2)
-    assert float(0.95 * ml) == approx(0.5 * 3.84, abs=1e-2)
-    assert float(ml * 0.99) == approx(0.5 * 6.64, abs=1e-2)
-
-    with pytest.raises(TypeError):
-        ErrorDefCL(0.5, 0.68) + 1
-    with pytest.raises(ValueError):
-        ErrorDefCL(0.5, 0.68) * ErrorDefCL(0.5, 0.68)
-
-    assert repr(ErrorDefCL(0.5, 0.68)) == "ErrorDefCL(0.5, 0.68)"
-    assert str(ErrorDefCL(1, 0.68)) == "ErrorDefCL(1.0, 0.68)"

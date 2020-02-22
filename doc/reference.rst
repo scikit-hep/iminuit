@@ -26,7 +26,6 @@ These are the things you will use a lot:
     Minuit.draw_mnprofile
     Minuit.mncontour
     Minuit.draw_mncontour
-    Minuit.errordef
     minimize
 
 Minuit
@@ -66,11 +65,6 @@ Minuit
     .. autoattribute:: errordef
 
     .. autoattribute:: tol
-
-errordef
---------
-
-.. automodule:: iminuit.errordef
 
 minimize
 --------

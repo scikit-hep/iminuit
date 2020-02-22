@@ -9,56 +9,6 @@ from . import repr_text
 from operator import itemgetter
 
 
-class ErrorDefBase(object):
-    """Base class for the special ErrorDef value classes."""
-
-    __slots__ = ["_scale", "_value"]
-
-    def __init__(self, scale, value):
-        if scale != 0.5 and scale != 1:
-            raise ValueError("scale must be 0.5 or 1")
-        self._scale = scale
-        self._value = value
-
-    def __mul__(self, other):
-        if not isinstance(other, float) and not isinstance(other, int):
-            raise ValueError("can only multiply with a number type")
-        return self.__class__(
-            self._scale, other if self._value is None else self._value * other
-        )
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
-
-    def __eq__(self, other):
-        return self._scale == other._scale and self._value == other._value
-
-    def __repr__(self):
-        return "%s(%.1f, %g)" % (self.__class__.__name__, self._scale, self._value)
-
-
-class ErrorDefSigma(ErrorDefBase):
-    """Set errordef in units of standard deviation."""
-
-    __slots__ = []
-
-    def __float__(self):
-        return float(self._scale * self._value ** 2)
-
-
-class ErrorDefCL(ErrorDefBase):
-    """Set errordef as X percent confidence level (may be approximate)."""
-
-    __slots__ = []
-
-    def __float__(self):
-        if self._value is None:
-            raise ValueError("confidence level not set")
-        from scipy.stats import chi2
-
-        return float(self._scale * chi2(1).ppf(self._value))
-
-
 class Matrix(tuple):
     """Matrix data object (tuple of tuples)."""
 

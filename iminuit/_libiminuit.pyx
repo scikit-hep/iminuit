@@ -228,12 +228,6 @@ cdef class Minuit:
 
     # PyMinuit compatible fields
 
-    cdef readonly double errordef
-    """Amount of change in FCN that defines 1 :math:`sigma` error, which differ for a maximum-likelihood and a least-squares function.
-
-    The default value is correct for a least-squares function. To change the value, use the method :meth:`set_errordef`. This parameter is sometimes called ``UP`` in the MINUIT docs.
-    """
-
     cdef public double tol
     """Tolerance.
 
@@ -241,7 +235,22 @@ cdef class Minuit:
     where ``edm_max`` is calculated as ``edm_max = 0.0001 * tol * UP``.
     """
 
-    cdef public unsigned int strategy
+    @property
+    def errordef(self):
+        """Amount of change in FCN that defines 1 :math:`sigma` error, which differ for a maximum-likelihood and a least-squares function.
+
+        Default value is 1.0, which is correct for a :math:`\chi^2` cost
+        function. The value 0.5 is for a negative log-likelihood function.
+
+        This parameter is sometimes called ``UP`` in the MINUIT docs.
+        """
+        return self.pyfcn.Up()
+
+    @errordef.setter
+    def errordef(self, value):
+        self.pyfcn.SetErrorDef(value)
+
+    cdef public unsigned strategy
     """Strategy integer code.
 
     - 0 fast
@@ -397,15 +406,15 @@ cdef class Minuit:
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos.
 
-            - **errordef**: Optional. See :meth:`set_errordef` for details on
+            - **errordef**: Optional. See :attr:`errordef` for details on
               this parameter. If set to `None` (the default), Minuit will
               try to call `fcn.default_errordef()` to set the error definition.
-              If this fails, iminuit will raise a warning and use a value that 
+              If this fails, iminuit will raise a warning and use a value that
               is appropriate to get standard errors for a least-squares function.
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
-              element for each dimension. If None is given minuit will
+              element for each dimension. If None is given MINUIT will
               calculate the gradient numerically. (Default None)
 
             - **use_array_call**: Optional. Set this to true if your function
@@ -485,15 +494,14 @@ cdef class Minuit:
                 call = getattr(fcn, 'default_errordef')
                 errordef = call()
         else:
-            if isinstance(errordef, mutil.ErrorDefBase):
-                errordef = float(errordef)
-            
             if not is_number(errordef) or errordef <= 0:
                 raise ValueError("errordef must be a positive number")
 
-        if pedantic: _minuit_methods.pedantic(self, args, kwds, errordef)
+        if pedantic:
+            _minuit_methods.pedantic(self, args, kwds, errordef)
+        if errordef is None:
+            errordef = 1.0
 
-        self.errordef = errordef if errordef else 1
         self.fcn = fcn
         self.grad = grad
         self.use_array_call = use_array_call
@@ -507,7 +515,7 @@ cdef class Minuit:
             self.pyfcn = new PythonFCN(
                 self.fcn,
                 self.use_array_call,
-                self.errordef,
+                errordef,
                 self.parameters,
                 self.throw_nan,
             )
@@ -516,7 +524,7 @@ cdef class Minuit:
                 self.fcn,
                 self.grad,
                 self.use_array_call,
-                self.errordef,
+                errordef,
                 self.parameters,
                 self.throw_nan,
             )
@@ -558,8 +566,7 @@ cdef class Minuit:
     @classmethod
     def from_array_func(cls, fcn, start, error=None, limit=None, fix=None,
                         name=None, **kwds):
-        """
-        Construct minuit object from given *fcn* and start sequence.
+        """Construct minuit object from given *fcn* and start sequence.
 
         This is an alternative named constructor for the minuit object. It is
         more convenient to use for functions that accept a numpy array.
@@ -1036,30 +1043,13 @@ cdef class Minuit:
         """Alias for :meth:`set_errordef`"""
         self.set_errordef(errordef)
 
-    def set_errordef(self, double errordef):
-        """Set error definition parameter.
-        
-        This sets the error definition for the Hesse and Minos algorithms. The
-        sizes of the error intervals reported by these methods increases with this
-        value. To compute standard deviations, set the value to 1 for a least-squares function and to 0.5 for a maximum-likelihood function. Instead of remembering this, you can also use one of the constants from :mod:`iminuit.errordef`.
-        
-        .. seealso::
-
-            :mod:`iminuit.errordef`
-
-        """
-
-        self.errordef = errordef
-        self.pyfcn.SetErrorDef(errordef)
-
     def set_strategy(self, value):
-        """Set strategy.
-
-        - 0 = fast
-        - 1 = default
-        - 2 = slow but accurate
-        """
+        """Deprecated. Just assign to self.strategy"""
         self.strategy = value
+
+    def set_errordef(self, value):
+        """Deprecated. Just assign to self.errordef"""
+        self.errordef = value
 
     def set_print_level(self, lvl):
         """Set print level.
