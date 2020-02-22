@@ -9,6 +9,7 @@ from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
 from iminuit import util as mutil
+from iminuit._deprecated import deprecated
 from iminuit.iminuit_warnings import HesseFailedWarning
 from iminuit.latex import LatexFactory
 from iminuit import _minuit_methods
@@ -200,16 +201,13 @@ cdef class Minuit:
     # Standard stuff
 
     cdef readonly object fcn
-    """Cost function (usually a chi^2 or likelihood function)"""
+    """Cost function (usually a chi^2 or likelihood function)."""
 
     cdef readonly object grad
-    """Gradient function of the cost function"""
+    """Gradient function of the cost function."""
 
     cdef readonly bint use_array_call
-    """Whether to pass parameters as numpy array to cost function"""
-
-    # TODO: remove or expose?
-    # cdef readonly object varname #:variable names
+    """Boolean. Whether to pass parameters as numpy array to cost function."""
 
     cdef readonly tuple pos2var
     """Map variable position to name"""
@@ -228,14 +226,30 @@ cdef class Minuit:
 
     # PyMinuit compatible fields
 
+    @property
+    def errordef(self):
+        """Amount of change in FCN that defines 1 :math:`sigma` error.
+
+        Default value is 1.0. `errordef` should be 1.0 for :math:`\chi^2` cost
+        function and 0.5 for negative log likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
+        """
+        return self.pyfcn.Up()
+
+    @errordef.setter
+    def errordef(self, value):
+        self.pyfcn.SetErrorDef(value)
+
+    @deprecated("use :attr:`errordef` instead")
+    def set_errordef(self, value):
+        self.errordef = value
+
     cdef public double tol
     """Tolerance.
 
     One of the MIGRAD convergence criteria is ``edm < edm_max``,
-    where ``edm_max`` is calculated as ``edm_max = 0.0001 * tol * UP``.
+    where ``edm_max`` is calculated as ``edm_max = 0.002 * tol * errordef``.
     """
 
-    @property
     def errordef(self):
         """Amount of change in FCN that defines 1 :math:`sigma` error, which differ for a maximum-likelihood and a least-squares function.
 
@@ -250,26 +264,43 @@ cdef class Minuit:
     def errordef(self, value):
         self.pyfcn.SetErrorDef(value)
 
-    cdef public unsigned strategy
-    """Strategy integer code.
+    cdef public unsigned int strategy
+    """Current minimization strategy.
 
-    - 0 fast
-    - 1 default
-    - 2 slow but accurate
+    **0**: fast. Does not check a user-provided gradient. Does not improve Hesse matrix
+    at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed for
+    good error estimates. If you pass a user-provided gradient to MINUIT,
+    convergence is **faster**.
+
+    **1**: default. Checks user-provided gradient against numerical gradient. Checks and
+    usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
+    :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
+    MINUIT, convergence is **slower**.
+
+    **2**: careful. Like 1, but does extra checks of intermediate Hessian matrix during
+    minimization.
     """
 
-    cdef public print_level
-    """Print level.
+    cdef int _print_level
 
-    - 0: quiet
-    - 1: print stuff the end
-    - 2: 1+fit status during call
+    @property
+    def print_level(self):
+        """Current print level.
 
-    Yes I know the case is wrong but this is to keep it compatible with PyMinuit.
-    """
+        - 0: quiet
+        - 1: info messages after minimization
+        - 2: debug messages during minimization
+        """
+        return self._print_level
+
+    @print_level.setter
+    def print_level(self, value):
+        self._print_level = value
+        if self.minimizer:
+            self.minimizer.Minimizer().Builder().SetPrintLevel(value)
 
     cdef readonly bint throw_nan
-    """Raise runtime error if function evaluate to nan."""
+    """Boolean. Whether to raise runtime error if function evaluate to nan."""
 
     # PyMinuit compatible interface
 
@@ -277,16 +308,43 @@ cdef class Minuit:
     """Parameter name tuple"""
 
     cdef public ArgsView args
-    """Parameter value tuple"""
+    """Parameter values in a list-like object.
+
+    See :attr:`values` for details.
+
+    .. seealso:: :attr:`values`, :attr:`errors`, :attr:`fixed`
+    """
 
     cdef public ValueView values
-    """Parameter values (dict: name -> value)"""
+    """Parameter values in a dict-like object.
+
+    Use to read or write current parameter values based on the parameter index or the parameter name as a string. If you change a parameter value and run :meth:`migrad`, the minimization will start from that value, similar for :meth:`hesse` and :meth:`minos`.
+
+    .. seealso:: :attr:`errors`, :attr:`fixed`
+    """
 
     cdef public ErrorView errors
-    """Parameter parabolic errors (dict: name -> error)"""
+    """Parameter parabolic errors in a dict-like object.
+
+    Like :attr:`values`, but instead of reading or writing the values, you read or write
+    the errors (which double as step sizes for MINUITs numerical gradient estimation).
+
+    .. seealso:: :attr:`values`, :attr:`fixed`
+    """
 
     cdef public FixedView fixed
-    """Whether parameter is fixed (dict: name -> bool)"""
+    """Access fixation state of a parameter in a dict-like object.
+
+    Use to read or write the fixation state of a parameter based on the parameter index
+    or the parameter name as a string. If you change the state and run :meth:`migrad`,
+    :meth:`hesse`, or :meth:`minos`, the new state is used.
+
+    In case of complex fits, it can help to fix some parameters first and only minimize
+    the function with respect to the other parameters, then release the fixed parameters
+    and minimize again starting from that state.
+
+    .. seealso:: :attr:`values`, :attr:`errors`
+    """
 
     cdef readonly object covariance
     """Covariance matrix (dict (name1, name2) -> covariance).
@@ -304,29 +362,18 @@ cdef class Minuit:
     """Number of FCN call of last migrad / minos / hesse run."""
 
     cdef readonly double edm
-    """Estimated distance to minimum.
+    """Current estimated distance to minimum.
 
     .. seealso:: :meth:`get_fmin`
     """
 
     cdef readonly object merrors
-    """MINOS errors (dict).
-
-    Using this method is not recommended.
-    It was added only for PyMinuit compatibility.
-    Use :meth:`get_merrors` instead, which returns a dictionary of
-    name -> :ref:`minos-error-struct` instead.
-
-    Dictionary entries for each parameter:
-
-    * (name,1.0) -> upper error
-    * (name,-1.0) -> lower error
-    """
+    """Deprecated. Use :meth:`get_merrors` instead."""
 
     cdef readonly object gcc
-    """Global correlation coefficients (dict : name -> gcc)"""
+    """Global correlation coefficients (dict : name -> gcc)."""
 
-    cdef public object fitarg
+    cdef readonly object fitarg
     """Current Minuit state in form of a dict.
 
     * name -> value
@@ -344,10 +391,12 @@ cdef class Minuit:
         m2 = Minuit(f, **fitarg)
     """
 
-    cdef readonly object narg
-    """Number of arguments"""
+    @property
+    def narg(self):
+        """Number of arguments"""
+        return len(self.parameters)
 
-    cdef public object merrors_struct
+    cdef readonly object merrors_struct
     """MINOS error calculation information (dict name -> struct)"""
 
     def __init__(self, fcn,
@@ -400,11 +449,11 @@ cdef class Minuit:
               value or initial error/stepsize set.
 
             - **forced_parameters**: tell Minuit not to do function signature
-              detection and use this argument instead. (Default None
+              detection and use this argument instead. (Default: None
               (automagically detect signature))
 
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
-              1 print out at the end of migrad/hesse/minos.
+              1 print out at the end of migrad/hesse/minos. 2 prints debug messages.
 
             - **errordef**: Optional. See :attr:`errordef` for details on
               this parameter. If set to `None` (the default), Minuit will
@@ -481,7 +530,6 @@ cdef class Minuit:
             else forced_parameters
 
         self.parameters = args
-        self.narg = len(args)
         check_extra_args(args, kwds)
 
         # Maintain 2 dictionaries to easily convert between
@@ -489,10 +537,13 @@ cdef class Minuit:
         self.pos2var = tuple(args)
         self.var2pos = {k: i for i, k in enumerate(args)}
 
+        if pedantic: _minuit_methods.pedantic(self, args, kwds, errordef)
+
         if errordef is None:
             if hasattr(fcn, 'default_errordef'):
-                call = getattr(fcn, 'default_errordef')
-                errordef = call()
+                errordef = fcn.default_errordef()
+            else:
+                errordef = 1
         else:
             if not is_number(errordef) or errordef <= 0:
                 raise ValueError("errordef must be a positive number")
@@ -743,13 +794,14 @@ cdef class Minuit:
                 deref(self.minimizer), ncall_round, self.tol)
             self.last_upst = self.cfmin.UserState()
             totalcalls += ncall_round  #self.cfmin.NFcn()
-            if self.print_level > 1 and nsplit != 1: self.print_fmin()
+            if self.print_level > 1 and nsplit != 1:
+                print(self.get_fmin())
 
         self.last_upst = self.cfmin.UserState()
         self.refresh_internal_state()
 
         if self.print_level > 0:
-            self.print_fmin()
+            print(self.get_fmin())
 
         return mutil.MigradResult(self.get_fmin(), self.get_param_states())
 
@@ -800,7 +852,7 @@ cdef class Minuit:
         self.refresh_internal_state()
         del hesse
 
-        if self.print_level > 0:
+        if self._print_level > 0:
             self.print_param()
             self.print_matrix()
 
@@ -920,8 +972,8 @@ cdef class Minuit:
             ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
         return ret
 
+    @deprecated("use `print(this_object.matrix())` instead")
     def print_matrix(self):
-        """Show correlation matrix."""
         print(self.matrix(correlation=True, skip_fixed=True))
 
     def latex_matrix(self):
@@ -1003,16 +1055,12 @@ cdef class Minuit:
         """
         return self.np_matrix(correlation=False, skip_fixed=False)
 
+    @deprecated("use :meth:`fixed` instead")
     def is_fixed(self, vname):
-        """Check if variable *vname* is fixed.
-
-        Note that `Minuit.fixed` was added to fix and release parameters.
-        """
         return self.fixed[vname]
 
+    @deprecated("use `print(this_object.get_param_states())` instead")
     def print_param(self, **kwds):
-        """Print current parameter state."""
-        # fetches the initial state if migrad was not run
         print(self.get_param_states())
 
     def latex_param(self):
@@ -1020,6 +1068,7 @@ cdef class Minuit:
         params = self.get_param_states()
         return LatexFactory.build_param_table(params, self.merrors_struct)
 
+    @deprecated("use `print(this_object.get_initial_param_states())` instead")
     def print_initial_param(self, **kwds):
         """Print initial parameters"""
         print(self.get_initial_param_states())
@@ -1029,39 +1078,27 @@ cdef class Minuit:
         params = self.get_initial_param_states()
         return LatexFactory.build_param_table(params, {})
 
+    @deprecated("use `print(this_object.get_fmin())` instead")
     def print_fmin(self):
-        """Print current function minimum data object"""
         if self.cfmin is NULL:
             raise RuntimeError("Function minimum has not been calculated.")
         print(self.get_fmin())
 
+    @deprecated("use `print(this_object.get_merrors())` instead")
     def print_all_minos(self):
-        """Print all minos errors (and its states)"""
         print(self.merrors_struct)
 
+    @deprecated("use :attr:`errordef` instead")
     def set_up(self, double errordef):
-        """Alias for :meth:`set_errordef`"""
-        self.set_errordef(errordef)
+        self.errordef = errordef
 
+    @deprecated("use :attr:`strategy` instead")
     def set_strategy(self, value):
-        """Deprecated. Just assign to self.strategy"""
         self.strategy = value
 
-    def set_errordef(self, value):
-        """Deprecated. Just assign to self.errordef"""
-        self.errordef = value
-
-    def set_print_level(self, lvl):
-        """Set print level.
-
-        - 0 quiet
-        - 1 normal
-        - 2 paranoid
-        - 3 really paranoid
-        """
-        self.print_level = lvl
-        if self.minimizer:
-            self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
+    @deprecated("use :attr:`print_level` instead")
+    def set_print_level(self, value):
+        self.print_level = value
 
     def get_fmin(self):
         """Current function minimum data object"""

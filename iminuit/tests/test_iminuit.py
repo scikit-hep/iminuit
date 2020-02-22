@@ -382,9 +382,8 @@ def test_fix_param(grad):
     assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
-    assert m.is_fixed("x") is False
-    assert m.is_fixed("y") is True
-
+    assert m.fixed["x"] is False
+    assert m.fixed["y"] is True
     m.fixed["x"] = True
     m.fixed["y"] = False
     m.migrad()
@@ -394,7 +393,15 @@ def test_fix_param(grad):
     assert_allclose(m.matrix(skip_fixed=False), [[0, 0], [0, 1]], atol=1e-4)
 
     with pytest.raises(KeyError):
-        m.is_fixed("a")
+        m.fixed["a"]
+
+    # deprecated
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        assert m.is_fixed("x") is True
+        assert m.is_fixed("y") is False
+        with pytest.raises(KeyError):
+            m.is_fixed("a")
 
     # fix by setting limits
     m = Minuit(func0, y=10.0, limit_y=(10, 10), pedantic=False, print_level=0)
@@ -468,11 +475,14 @@ def test_minos_all(grad, sigma):
 @parametrize("grad", (None, func0_grad))
 def test_minos_single(grad):
     m = Minuit(func0, grad=func0_grad, pedantic=False, print_level=0)
-    m.set_strategy(2)
+
+    m.strategy = 0
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        m.set_strategy(0)
+
     m.migrad()
-    m.minos("x")
-    assert_allclose(m.merrors[("x", -1.0)], -2)
-    assert_allclose(m.merrors[("x", 1.0)], 2)
+    assert m.ncalls < 6
 
 
 def test_minos_single_fixed_raising():
@@ -611,7 +621,9 @@ def test_printfmin_uninitialized():
 
     fitter = Minuit(f, pedantic=False)
     with pytest.raises(RuntimeError):
-        fitter.print_fmin()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            fitter.print_fmin()
 
 
 def test_reverse_limit():
@@ -751,11 +763,18 @@ def test_num_call():
 
 def test_set_error_def():
     m = Minuit(lambda x: x ** 2, pedantic=False, print_level=0, errordef=1)
+    m.migrad()
+    m.hesse()
     assert m.errordef == 1
+    assert_allclose(m.errors["x"], 1)
     m.errordef = 4
-    assert m.errordef == 4
-    m.set_errordef(2)
-    assert m.errordef == 2
+    m.hesse()
+    assert_allclose(m.errors["x"], 2)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        m.set_errordef(1)
+        m.hesse()
+        assert_allclose(m.errors["x"], 1)
 
 
 def test_get_param_states():

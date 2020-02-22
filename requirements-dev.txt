@@ -6,6 +6,8 @@ ipython
 jupyter
 pytest
 pytest-cov
+jax
+jaxlib
 
 sphinx
 sphinx_rtd_theme

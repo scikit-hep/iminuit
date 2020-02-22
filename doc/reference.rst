@@ -15,17 +15,17 @@ These are the things you will use a lot:
     Minuit
     Minuit.from_array_func
     Minuit.migrad
+    Minuit.hesse
     Minuit.minos
     Minuit.values
-    Minuit.args
     Minuit.errors
-    Minuit.get_merrors
+    Minuit.fixed
+    Minuit.errordef
+    Minuit.strategy
     Minuit.fval
     Minuit.fitarg
     Minuit.mnprofile
     Minuit.draw_mnprofile
-    Minuit.mncontour
-    Minuit.draw_mncontour
     minimize
 
 Minuit
@@ -34,37 +34,9 @@ Minuit
 .. autoclass:: Minuit
     :members:
     :undoc-members:
-    :exclude-members: migrad, hesse, minos, args, values, errors,
-        merror, fval, edm, fitarg, covariance, gcc, errordef,
-        fcn, pedantic, throw_nan, tol
+    :exclude-members: is_fixed, print_all_minos, print_fmin, print_param, print_initial_param, print_matrix, set_errordef, set_strategy, set_print_level, set_up, from_array_func, get_merrors
 
-    .. automethod:: migrad
-
-    .. automethod:: hesse
-
-    .. automethod:: minos
-
-    .. autoattribute:: args
-
-    .. autoattribute:: values
-
-    .. autoattribute:: errors
-
-    .. autoattribute:: fitarg
-
-    .. autoattribute:: merrors
-
-    .. autoattribute:: fval
-
-    .. autoattribute:: edm
-
-    .. autoattribute:: covariance
-
-    .. autoattribute:: gcc
-
-    .. autoattribute:: errordef
-
-    .. autoattribute:: tol
+    .. automethod:: from_array_func
 
 minimize
 --------
