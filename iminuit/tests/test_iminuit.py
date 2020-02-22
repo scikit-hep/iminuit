@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 import warnings
 import pytest
-from iminuit.tests.utils import assert_allclose, requires_dependency
+from iminuit.tests.utils import assert_allclose
 from iminuit import Minuit
 from iminuit.util import Param
 from iminuit.iminuit_warnings import InitialParamWarning
