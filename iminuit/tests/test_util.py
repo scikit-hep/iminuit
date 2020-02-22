@@ -16,9 +16,7 @@ from iminuit.util import (
     Params,
     MigradResult,
 )
-from iminuit.tests.utils import requires_dependency
 import pytest
-from pytest import approx
 
 
 def test_fitarg_rename():
