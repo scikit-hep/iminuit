@@ -566,7 +566,7 @@ cdef class Minuit:
     @classmethod
     def from_array_func(cls, fcn, start, error=None, limit=None, fix=None,
                         name=None, **kwds):
-        """Construct minuit object from given *fcn* and start sequence.
+        """Construct Minuit object from given *fcn* and start sequence.
 
         This is an alternative named constructor for the minuit object. It is
         more convenient to use for functions that accept a numpy array.
