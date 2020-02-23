@@ -17,7 +17,8 @@ class TrackingFcn:
     def __call__(self, par, *args):
         self.ncall += 1
         # make problem non-linear
-        return np.sum((self.y - par) ** 2) ** 1.5
+        z = self.y - par
+        return np.sum(z ** 2 + 0.1 * z ** 4)
 
 
 class Runner:
@@ -84,7 +85,7 @@ else:
 
     sg = SeedSequence(1)
     with Pool() as p:
-        results = tuple(p.map(Runner(npars), sg.spawn(4)))
+        results = tuple(p.map(Runner(npars), sg.spawn(16)))
 
     with open("bench.pkl", "wb") as f:
         pickle.dump(results, f)
@@ -205,9 +206,6 @@ for method, (m, ms) in zip(sorted(methods), markers):
         mew = 2
 
     data = methods[method]
-    npars = np.sort(list(data))
-    ncalls = np.empty_like(npars)
-    max_devs = np.empty_like(npars, dtype=float)
 
     x = []
     y = []
