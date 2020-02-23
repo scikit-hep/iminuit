@@ -12,7 +12,10 @@ is_pypy = platform.python_implementation() == "PyPy"
 
 def test_function():
     def f(x, y):
-        pass
+        # body is important
+        a = 1
+        b = 2
+        return a + b
 
     assert describe(f, True) == ["x", "y"]
 
@@ -20,7 +23,10 @@ def test_function():
 def test_class_method():
     class A:
         def f(self, x, y):
-            pass
+            # body is important
+            a = 1
+            b = 2
+            return a + b
 
     assert describe(A().f, True) == ["x", "y"]
 
@@ -29,7 +35,10 @@ def test_class_method():
 def test_class_unbound_method():
     class A:
         def f(self, x, y):
-            pass
+            # body is important
+            a = 1
+            b = 2
+            return a + b
 
     assert describe(A.f, True) == ["self", "x", "y"]
 
@@ -37,7 +46,10 @@ def test_class_unbound_method():
 def test_functor():
     class A:
         def __call__(self, x, y):
-            pass
+            # body is important
+            a = 1
+            b = 2
+            return a + b
 
     assert describe(A(), True) == ["x", "y"]
 
@@ -55,7 +67,10 @@ def test_lambda():
 
 def test_generic_function():
     def f(*args):
-        pass
+        # body is important
+        a = 1
+        b = 2
+        return a + b
 
     with pytest.raises(TypeError):
         describe(f, True)
@@ -69,7 +84,10 @@ def test_generic_lambda():
 def test_generic_class_method():
     class A:
         def f(self, *args):
-            pass
+            # body is important
+            a = 1
+            b = 2
+            return a + b
 
     with pytest.raises(TypeError):
         describe(A().f, True)
@@ -78,7 +96,10 @@ def test_generic_class_method():
 def test_generic_functor():
     class A:
         def __call__(self, *args):
-            pass
+            # body is important
+            a = 1
+            b = 2
+            return a + b
 
     with pytest.raises(TypeError):
         describe(A(), True)
@@ -89,33 +110,36 @@ def test_generic_functor_with_fake_func():
         def __init__(self):
             self.func_code = make_func_code(["x", "y"])
 
-        def __call__(self, *arg):
-            pass
+        def __call__(self, *args):
+            # body is important
+            a = 1
+            b = 2
+            return a + b
 
     assert describe(A(), True) == ["x", "y"]
 
 
-@requires_dependency("Cython", "pyximport", "cyfunc")
-def test_cython_embedsig():
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        import pyximport
-
-        pyximport.install()
-        from . import cyfunc
-
-    assert describe(cyfunc.f, True) == ["a", "b"]
-
-
-@requires_dependency("Cython", "pyximport", "cyfunc")
-@pytest.mark.skipif(is_pypy, reason="Does not work in PyPy")
-def test_cython_class_method():
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        import pyximport
-
-        pyximport.install()
-        from . import cyfunc
-
-    cc = cyfunc.CyCallable()
-    assert describe(cc.test, True) == ["c", "d"]
+# @requires_dependency("Cython", "pyximport", "cyfunc")
+# def test_cython_embedsig():
+#     with warnings.catch_warnings():
+#         warnings.simplefilter("ignore")
+#         import pyximport
+#
+#         pyximport.install()
+#         from . import cyfunc
+#
+#     assert describe(cyfunc.f, True) == ["a", "b"]
+#
+#
+# @requires_dependency("Cython", "pyximport", "cyfunc")
+# @pytest.mark.skipif(is_pypy, reason="Does not work in PyPy")
+# def test_cython_class_method():
+#     with warnings.catch_warnings():
+#         warnings.simplefilter("ignore")
+#         import pyximport
+#
+#         pyximport.install()
+#         from . import cyfunc
+#
+#     cc = cyfunc.CyCallable()
+#     assert describe(cc.test, True) == ["c", "d"]

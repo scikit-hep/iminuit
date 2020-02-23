@@ -198,6 +198,10 @@ cdef class FixedView(BasicView):
 
 
 cdef class Minuit:
+    # error definition constants
+    LEAST_SQUARES = 1.0
+    LIKELIHOOD = 0.5
+
     # Standard stuff
 
     cdef readonly object fcn
@@ -228,10 +232,19 @@ cdef class Minuit:
 
     @property
     def errordef(self):
-        """Amount of change in FCN that defines 1 :math:`sigma` error.
+        """Amount of change in FCN that corresponds to one standard deviation in a parameter.
 
-        Default value is 1.0. `errordef` should be 1.0 for :math:`\chi^2` cost
-        function and 0.5 for negative log likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
+        Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
+        function and 0.5 for negative log-likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
+
+        To make user code more readable, we provided two named constants::
+
+            from iminuit import Minuit
+            assert Minuit.LEAST_SQUARES == 1
+            assert Minuit.LIKELIHOOD == 0.5
+
+            Minuit(a_least_squares_function, errordef=Minuit.LEAST_SQUARES)
+            Minuit(a_likelihood_function, errordef=Minuit.LIKELIHOOD)
         """
         return self.pyfcn.Up()
 
@@ -243,29 +256,38 @@ cdef class Minuit:
     def set_errordef(self, value):
         self.errordef = value
 
-    cdef public double tol
-    """Tolerance.
+    @deprecated("use :attr:`errordef` instead")
+    def set_up(self, double errordef):
+        self.errordef = errordef
 
-    One of the MIGRAD convergence criteria is ``edm < edm_max``,
-    where ``edm_max`` is calculated as ``edm_max = 0.002 * tol * errordef``.
+    cdef public double tol
+    """Tolerance for convergence.
+
+    The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max`` is
+    calculated as ``edm_max = 0.002 * tol * errordef`` and EDM is the *estimated distance
+    to minimum*, as described in `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_.
     """
 
     cdef public unsigned int strategy
     """Current minimization strategy.
 
-    **0**: fast. Does not check a user-provided gradient. Does not improve Hesse matrix
+    **0**: Fast. Does not check a user-provided gradient. Does not improve Hesse matrix
     at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed for
     good error estimates. If you pass a user-provided gradient to MINUIT,
     convergence is **faster**.
 
-    **1**: default. Checks user-provided gradient against numerical gradient. Checks and
+    **1**: Default. Checks user-provided gradient against numerical gradient. Checks and
     usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
     :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
     MINUIT, convergence is **slower**.
 
-    **2**: careful. Like 1, but does extra checks of intermediate Hessian matrix during
-    minimization.
+    **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
+    minimization. The effect in benchmarks is a somewhat improved accuracy at the cost of more function evaluations. A similar effect can be achieved by reducing the tolerance attr:`tol` for convergence at any strategy level.
     """
+
+    @deprecated("use :attr:`strategy` instead")
+    def set_strategy(self, value):
+        self.strategy = value
 
     cdef int _print_level
 
@@ -284,6 +306,10 @@ cdef class Minuit:
         self._print_level = value
         if self.minimizer:
             self.minimizer.Minimizer().Builder().SetPrintLevel(value)
+
+    @deprecated("use :attr:`print_level` instead")
+    def set_print_level(self, value):
+        self.print_level = value
 
     cdef readonly bint throw_nan
     """Boolean. Whether to raise runtime error if function evaluate to nan."""
@@ -368,7 +394,7 @@ cdef class Minuit:
     * limit_name -> (lower_limit, upper_limit)
 
     This is very useful when you want to save the fit parameters and
-    re-use them later. For example,::
+    re-use them later. For example::
 
         m = Minuit(f, x=1)
         m.migrad()
@@ -379,8 +405,16 @@ cdef class Minuit:
 
     @property
     def narg(self):
-        """Number of arguments"""
+        """Number of parameters."""
         return len(self.parameters)
+
+    @property
+    def nfit(self):
+        """Number of fitted parameters (fixed parameters not counted)."""
+        nfit = 0
+        for v in self.fixed.values():
+            nfit += not v
+        return nfit
 
     cdef readonly object merrors_struct
     """MINOS error calculation information (dict name -> struct)"""
@@ -441,16 +475,16 @@ cdef class Minuit:
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of migrad/hesse/minos. 2 prints debug messages.
 
-            - **errordef**: Optional. Amount of increase in fcn that corresponds to
-              one standard deviation of a parameter. If None is given, it will look at
-              `fcn.default_errordef()`. If `fcn.default_errordef()` is not
-              defined or not callable, iminuit will give a warning and set errordef to 1.
-              Default: None (which means errordef=1 with a warning).
+            - **errordef**: Optional. See :attr:`errordef` for details on
+              this parameter. If set to `None` (the default), Minuit will try to call
+              `fcn.errordef` and `fcn.default_errordef()` (deprecated) to set the error
+              definition. If this fails, a warning is raised and use a value appropriate
+              for a least-squares function is used.
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
-              element for each dimension. If None is given minuit will
-              calculate the gradient numerically. (Default: None)
+              element for each dimension. If None is given MINUIT will
+              calculate the gradient numerically. (Default None)
 
             - **use_array_call**: Optional. Set this to true if your function
               signature accepts a single numpy array of the parameters. You
@@ -459,22 +493,21 @@ cdef class Minuit:
 
         **Parameter Keyword Arguments:**
 
-            Similar to PyMinuit. iminuit allows user to set initial value,
-            initial stepsize/error, limits of parameters and whether
-            parameter should be fixed or not by passing keyword arguments to
-            Minuit.
+            iminuit allows user to set initial value, initial stepsize/error, limits of
+            parameters and whether the parameter should be fixed by passing keyword
+            arguments to Minuit.
 
             This is best explained through examples::
 
                 def f(x, y):
                     return (x-2)**2 + (y-3)**2
 
-            * Initial value(varname)::
+            * Initial value (varname)::
 
                 #initial value for x and y
                 m = Minuit(f, x=1, y=2)
 
-            * Initial step size/error(fix_varname)::
+            * Initial step size (fix_varname)::
 
                 #initial step size for x and y
                 m = Minuit(f, error_x=0.5, error_y=0.5)
@@ -491,18 +524,14 @@ cdef class Minuit:
 
             .. note::
 
-                Tips: You can use python dictionary expansion to
-                programmatically change the fitting arguments.
+                You can use dictionary expansion to programmatically change parameters.::
 
-                ::
+                    kwargs = dict(x=1., error_x=0.5)
+                    m = Minuit(f, **kwargs)
 
-                    kwdarg = dict(x=1., error_x=0.5)
-                    m = Minuit(f, **kwdarg)
-
-                You can also obtain fit arguments from Minuit object
-                to reuse it later too. *fitarg* will be automatically
-                updated to the minimum value and the corresponding error when
-                you ran migrad/hesse::
+                You can also obtain fit arguments from Minuit object for later reuse.
+                *fitarg* will be automatically updated to the minimum value and the
+                corresponding error when you ran migrad/hesse.::
 
                     m = Minuit(f, x=1, error_x=0.5)
                     my_fitarg = m.fitarg
@@ -526,13 +555,22 @@ cdef class Minuit:
         if pedantic: _minuit_methods.pedantic(self, args, kwds, errordef)
 
         if errordef is None:
-            if hasattr(fcn, 'default_errordef'):
+            if hasattr(fcn, 'errordef'):
+                errordef = fcn.errordef
+            elif hasattr(fcn, 'default_errordef'):
+                warn("Using .default_errordef() is deprecated. Use .errordef instead",
+                     category=DeprecationWarning,
+                     stacklevel=2)
                 errordef = fcn.default_errordef()
-            else:
-                errordef = 1
-        else:
-            if not is_number(errordef) or errordef <= 0:
-                raise ValueError("errordef must be a positive number")
+
+        if errordef is not None and (is_number(errordef) == False or errordef <= 0):
+            raise ValueError("errordef must be a positive number")
+
+        if pedantic:
+            _minuit_methods.pedantic(self, args, kwds, errordef)
+
+        if errordef is None:
+            errordef = 1.0
 
         self.fcn = fcn
         self.grad = grad
@@ -598,8 +636,7 @@ cdef class Minuit:
     @classmethod
     def from_array_func(cls, fcn, start, error=None, limit=None, fix=None,
                         name=None, **kwds):
-        """
-        Construct minuit object from given *fcn* and start sequence.
+        """Construct Minuit object from given *fcn* and start sequence.
 
         This is an alternative named constructor for the minuit object. It is
         more convenient to use for functions that accept a numpy array.
@@ -1069,18 +1106,6 @@ cdef class Minuit:
     @deprecated("use `print(this_object.get_merrors())` instead")
     def print_all_minos(self):
         print(self.merrors_struct)
-
-    @deprecated("use :meth:`errordef` instead")
-    def set_up(self, double errordef):
-        self.errordef = errordef
-
-    @deprecated("use :meth:`strategy` instead")
-    def set_strategy(self, value):
-        self.strategy = value
-
-    @deprecated("use :meth:`print_level` instead")
-    def set_print_level(self, value):
-        self.print_level = value
 
     def get_fmin(self):
         """Current function minimum data object"""

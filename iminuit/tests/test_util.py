@@ -117,11 +117,13 @@ def test_remove_var():
 
 def test_arguments_from_docstring():
     s = "f(x, y, z)"
-    a = arguments_from_docstring(s)
+    ok, a = arguments_from_docstring(s)
+    assert ok
     assert a == ["x", "y", "z"]
     # this is a hard one
     s = "Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])"
-    a = arguments_from_docstring(s)
+    ok, a = arguments_from_docstring(s)
+    assert ok
     assert a == ["ncall_me", "resume", "nsplit"]
 
 
