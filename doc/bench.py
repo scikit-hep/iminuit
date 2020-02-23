@@ -1,36 +1,39 @@
 import numpy as np
+from numpy.random import default_rng
 from matplotlib import pyplot as plt
+import matplotlib as mpl
 from matplotlib.ticker import LogLocator
 import os
 import pickle
 
+mpl.rcParams.update(mpl.rcParamsDefault)
+
 
 class TrackingFcn:
-    def __init__(self, npar):
+    def __init__(self, rng, npar):
         self.ncall = 0
-        self.y = np.random.randn(npar)
+        self.y = 5 * rng.standard_normal(npar)
 
     def __call__(self, par, *args):
         self.ncall += 1
-        # use log to make problem non-linear
-        return np.log(np.sum((self.y - par) ** 2) + 1)
+        # make problem non-linear
+        return np.sum((self.y - par) ** 2) ** 1.5
 
 
 class Runner:
     def __init__(self, npars):
         self.npars = npars
 
-    def __call__(self, trial):
+    def __call__(self, seed):
         from iminuit import Minuit
         import nlopt
         from scipy.optimize import minimize
-        import numpy as np
 
-        np.random.seed(1 + trial)
         data = []
 
+        rng = default_rng(seed)
         for npar in self.npars:
-            fcn = TrackingFcn(npar)
+            fcn = TrackingFcn(rng, npar)
             for stra in (0, 1, 2):
                 key = f"Minuit2/strategy={stra}"
                 print(key, npar)
@@ -50,15 +53,14 @@ class Runner:
                 fcn.ncall = 0
                 opt = nlopt.opt(getattr(nlopt, "LN_" + algo), npar)
                 opt.set_min_objective(lambda par, grad: fcn(par))
-                opt.set_xtol_abs(1e-3)
+                opt.set_xtol_abs(1e-2)
                 try:
                     xopt = opt.optimize(np.zeros(npar))
-                except:
+                    max_dev = np.max(np.abs(xopt - fcn.y))
+                    key = f"nlopt/{algo}"
+                    data.append((key, npar, fcn.ncall, max_dev))
+                except Exception:
                     pass
-                max_dev = np.max(np.abs(xopt - fcn.y))
-
-                key = f"nlopt/{algo}"
-                data.append((key, npar, fcn.ncall, max_dev))
 
             for algo in ("BFGS", "CG", "Powell", "Nelder-Mead"):
                 print(algo, npar)
@@ -76,13 +78,28 @@ if os.path.exists("bench.pkl"):
         results = pickle.load(f)
 else:
     npars = (1, 2, 3, 4, 6, 10, 20, 30, 40, 60, 100)
-    from multiprocessing.pool import Pool
 
+    from numpy.random import SeedSequence
+    from concurrent.futures import ProcessPoolExecutor as Pool
+
+    sg = SeedSequence(1)
     with Pool() as p:
-        results = p.map(Runner(npars), range(100))
+        results = tuple(p.map(Runner(npars), sg.spawn(4)))
+
     with open("bench.pkl", "wb") as f:
         pickle.dump(results, f)
 
+
+# plt.figure()
+# f = TrackingFcn(default_rng(), 2)
+# x = np.linspace(-10, 10)
+# X, Y = np.meshgrid(x, x)
+# F = np.empty_like(X)
+# for i, xi in enumerate(x):
+#     for j, yi in enumerate(x):
+#         F[i, j] = f((xi, yi))
+# plt.pcolormesh(X, Y, F.T)
+# plt.colorbar()
 
 methods = {}
 for data in results:
@@ -90,27 +107,27 @@ for data in results:
         methods.setdefault(key, {}).setdefault(npar, []).append((ncal, maxdev))
 
 fig, ax = plt.subplots(1, 2, figsize=(10, 5), sharex=True)
-plt.subplots_adjust(left=0.12, right=0.75, wspace=0.6)
+plt.subplots_adjust(
+    top=0.96, bottom=0.14, left=0.075, right=0.81, hspace=0.2, wspace=0.25
+)
 handles = []
 labels = []
-markers = iter(
-    (
-        ("o", 10),
-        ("s", 7),
-        ("D", 7),
-        ("<", 7),
-        (">", 7),
-        ("^", 7),
-        ("v", 7),
-        ("*", 9),
-        ("X", 7),
-        ("P", 7),
-        ("p", 8),
-    )
+markers = (
+    ("o", 10),
+    ("s", 7),
+    ("D", 7),
+    ("<", 7),
+    (">", 7),
+    ("^", 7),
+    ("v", 7),
+    ("*", 9),
+    ("X", 7),
+    ("P", 7),
+    ("p", 8),
 )
 
-for method in sorted(methods):
-    m, ms = next(markers)
+
+for method, (m, ms) in zip(sorted(methods), markers):
     ls = "-"
     lw = 1
     zorder = None
@@ -169,13 +186,45 @@ for method in sorted(methods):
         mew=mew,
     )
     plt.loglog()
-    # plt.xticks((1, 10, 100))
-
-    plt.gca().xaxis.set_major_locator(LogLocator(numticks=10))
-    plt.gca().xaxis.set_minor_locator(LogLocator(numticks=10, subs="all"))
-    plt.xticks((1, 10, 100), ("1", "10", "100"))
     plt.gca().yaxis.set_major_locator(LogLocator(numticks=100))
 
 plt.figlegend(handles, labels, loc="center right", fontsize="small")
 plt.savefig("bench.svg")
+
+plt.figure(constrained_layout=True)
+plt.loglog()
+for method, (m, ms) in zip(sorted(methods), markers):
+    zorder = None
+    color = None
+    mfc = None
+    mew = 1
+    if "Minuit" in method:
+        zorder = 10
+        color = "k"
+        mfc = "w"
+        mew = 2
+
+    data = methods[method]
+    npars = np.sort(list(data))
+    ncalls = np.empty_like(npars)
+    max_devs = np.empty_like(npars, dtype=float)
+
+    x = []
+    y = []
+    s = []
+    for npar in (2, 10, 100):
+        if npar not in data:
+            continue
+        nc, md = np.transpose(data[npar])
+        x.append(np.median(nc) / npar)
+        y.append(np.median(md))
+        s.append(50 * npar ** 0.5)
+
+    plt.scatter(x, y, s, marker=m, color=mfc, edgecolor=color, zorder=zorder)
+
+plt.xlabel("$N_\\mathrm{call}$ / $N_\\mathrm{par}$")
+plt.ylabel("maximum deviation")
+plt.title("small: npar = 2, medium: npar = 10, large: npar = 100")
+plt.savefig("bench2d.svg")
+
 plt.show()

@@ -5,29 +5,31 @@
 Benchmark
 =========
 
-We compare the performane of Minuit2 (which is wrapped by iminuit) with other minimizers available in Python. We compare Minuit with the strategy settings 0 to 2 with several algorithms implemented in the `nlopt`_ library and `scipy.optimize`_. . 
+We compare the performance of Minuit2 (which is wrapped by iminuit) with other minimizers available in Python. We compare Minuit with the strategy settings 0 to 2 with several algorithms implemented in the `nlopt`_ library and `scipy.optimize`_. .
 
 Setup
 -----
 
-All algorithms minimize a dummy score function
+All algorithms minimize a dummy cost function
 
 .. code-block:: python
 
-    def score_function(par):
+    def cost_function(par):
         return log(sum((y - par) ** 2) + 1)
 
-where `y` are samples from a normal distribution. The logarithm makes sure that the score function is non-linear in the parameters and not too easy to minimize. No analytical gradient is provided for the algorithms, since this is the most common way how minimizers are used.
+where `y` are samples from a normal distribution. The logarithm makes sure that the cost function is non-linear in the parameters and not too easy to minimize. No analytical gradient is provided for the algorithms, since this is the most common way how minimizers are used.
 
 The score function is minimized for a variable number of parameters from 2 to 100. The number of function calls is recorded and the largest absolute deviation of the solution from the truth. The fit is repeated 100 times for each configuration to reduce the scatter of the results, and the medians of these trails are computed.
 
-The scipy algorithms are run with default settings. For nlopt, a stopping criterion must be selected. We stop when the absolute variation in the parameters is becomes less than 1e-3. The criterion was tuned to offer an accuracy comparable to Minuit2, which simplifies the comparison.
+The scipy algorithms are run with default settings. For nlopt, a stopping criterion must be selected. We stop when the absolute variation in the parameters is becomes less than 1e-2. The criterion was tuned to offer an accuracy comparable to Minuit2, which simplifies the comparison.
 
 Results
 -------
-The results are shown in the following plot.
+The results are shown in the following two plots. The best algorithms require the fewest function calls to achieve the highest accuracy.
 
 .. image:: bench.svg
+
+.. image:: bench2d.svg
 
 Convergence rate
 ~~~~~~~~~~~~~~~~
