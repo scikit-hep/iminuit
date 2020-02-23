@@ -3,13 +3,9 @@
 iminuit
 =======
 
-MINUIT from Python - Fitting like a boss
+Jupyter-friendly Python interface to the C++ Minuit2 library.
 
-`iminuit` is a Python interface to the `MINUIT` C++ package.
-
-It can be used as a general robust function minimisation method,
-but is most commonly used for likelihood fits of models to data,
-and to get model parameter error estimates from likelihood profile analysis.
+`iminuit` can be used for general function minimization, but is most commonly used for least-squares and maximum-likelihood fits of models to data, and to get model parameter error estimates from likelihood profile analysis.
 
 * Code: https://github.com/scikit-hep/iminuit
 * Documentation: http://iminuit.readthedocs.org/
@@ -34,7 +30,7 @@ In a nutshell
     m.migrad()  # run optimiser
     print(m.values)  # {'x': 2,'y': 3,'z': 4}
 
-    m.hesse()   # run covariance estimator
+    m.hesse()   # run uncertainty estimator
     print(m.errors)  # {'x': 1,'y': 1,'z': 1}
 
 

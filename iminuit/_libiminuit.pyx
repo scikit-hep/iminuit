@@ -237,7 +237,7 @@ cdef class Minuit:
         Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
         function and 0.5 for negative log-likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
 
-        To make user code more readable, the two constants can be imported:
+        To make user code more readable, the two constants can be imported::
 
             from iminuit import Minuit
             assert Minuit.LEAST_SQUARES == 1
@@ -393,7 +393,7 @@ cdef class Minuit:
     * limit_name -> (lower_limit, upper_limit)
 
     This is very useful when you want to save the fit parameters and
-    re-use them later. For example,::
+    re-use them later. For example::
 
         m = Minuit(f, x=1)
         m.migrad()
@@ -523,14 +523,14 @@ cdef class Minuit:
 
             .. note::
 
-                You can use dictionary expansion to programmatically change parameters.
+                You can use dictionary expansion to programmatically change parameters.::
 
-                    kwdarg = dict(x=1., error_x=0.5)
-                    m = Minuit(f, **kwdarg)
+                    kwargs = dict(x=1., error_x=0.5)
+                    m = Minuit(f, **kwargs)
 
                 You can also obtain fit arguments from Minuit object for later reuse.
                 *fitarg* will be automatically updated to the minimum value and the
-                corresponding error when you ran migrad/hesse.
+                corresponding error when you ran migrad/hesse.::
 
                     m = Minuit(f, x=1, error_x=0.5)
                     my_fitarg = m.fitarg
