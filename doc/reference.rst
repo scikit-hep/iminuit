@@ -193,12 +193,12 @@ Function Signature Extraction Ordering
     1. Using ``f.func_code.co_varnames``, ``f.func_code.co_argcount``
        All functions that are defined like::
 
-        def f(x,y):
-            return (x-2)**2+(y-3)**2
+        def f(x, y):
+            return (x - 2) ** 2 + (y - 3) ** 2
 
        or::
 
-        f = lambda x,y: (x-2)**2+(y-3)**2
+        f = lambda x, y: (x - 2) ** 2 + (y - 3) ** 2
 
        Have these two attributes.
 
@@ -206,14 +206,19 @@ Function Signature Extraction Ordering
        Minuit knows how to skip the `self` parameter. This allow you to do
        things like encapsulate your data with in a fitting algorithm::
 
-        class MyChi2:
-            def __init__(self, x, y):
-                self.x, self.y = (x,y)
-            def f(self, x, m, c):
-                return m*x + c
-            def __call__(self,m,c):
-                return sum([(self.f(x,m,c)-y)**2
-                           for x,y in zip(self.x ,self.y)])
+        class MyLeastSquares:
+            def __init__(self, data_x, data_y, data_yerr):
+                self.x = data_x
+                self.y = data_y
+                self.ye = data_yerr
+
+            def __call__(self, a, b):
+                result = 0.0
+                for x, y, ye in zip(self.x, self.y, self.ye):
+                    y_predicted = a * x + b
+                    residual = (y - y_predicted) / ye
+                    result += residual ** 2
+                return result
 
     3. If all fails, Minuit will try to read the function signature from the
        docstring to get function signature.

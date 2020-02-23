@@ -198,6 +198,10 @@ cdef class FixedView(BasicView):
 
 
 cdef class Minuit:
+    # error definition constants
+    LEAST_SQUARES = 1.0
+    LIKELIHOOD = 0.5
+
     # Standard stuff
 
     cdef readonly object fcn
@@ -228,10 +232,19 @@ cdef class Minuit:
 
     @property
     def errordef(self):
-        """Amount of change in FCN that defines 1 :math:`sigma` error.
+        """Amount of change in FCN that corresponds to one standard deviation in a parameter.
 
-        Default value is 1.0. `errordef` should be 1.0 for :math:`\chi^2` cost
-        function and 0.5 for negative log likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
+        Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
+        function and 0.5 for negative log-likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
+
+        To make user code more readable, the two constants can be imported:
+
+            from iminuit import Minuit
+            assert Minuit.LEAST_SQUARES == 1
+            assert Minuit.LIKELIHOOD == 0.5
+
+            Minuit(a_least_squares_function, errordef=Minuit.LEAST_SQUARES)
+            Minuit(a_likelihood_function, errordef=Minuit.LIKELIHOOD)
         """
         return self.pyfcn.Up()
 
@@ -391,8 +404,16 @@ cdef class Minuit:
 
     @property
     def narg(self):
-        """Number of arguments"""
+        """Number of parameters."""
         return len(self.parameters)
+
+    @property
+    def nfit(self):
+        """Number of fitted parameters (fixed parameters not counted)."""
+        nfit = 0
+        for v in self.fixed.values():
+            nfit += not v
+        return nfit
 
     cdef readonly object merrors_struct
     """MINOS error calculation information (dict name -> struct)"""
@@ -454,10 +475,10 @@ cdef class Minuit:
               1 print out at the end of migrad/hesse/minos. 2 prints debug messages.
 
             - **errordef**: Optional. See :attr:`errordef` for details on
-              this parameter. If set to `None` (the default), Minuit will
-              try to call `fcn.default_errordef()` to set the error definition.
-              If this fails, iminuit will raise a warning and use a value that
-              is appropriate to get standard errors for a least-squares function.
+              this parameter. If set to `None` (the default), Minuit will try to call
+              `fcn.errordef` and `fcn.default_errordef()` (deprecated) to set the error
+              definition. If this fails, a warning is raised and use a value appropriate
+              for a least-squares function is used.
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
@@ -471,22 +492,21 @@ cdef class Minuit:
 
         **Parameter Keyword Arguments:**
 
-            Similar to PyMinuit. iminuit allows user to set initial value,
-            initial stepsize/error, limits of parameters and whether
-            parameter should be fixed or not by passing keyword arguments to
-            Minuit.
+            iminuit allows user to set initial value, initial stepsize/error, limits of
+            parameters and whether the parameter should be fixed by passing keyword
+            arguments to Minuit.
 
             This is best explained through examples::
 
                 def f(x, y):
                     return (x-2)**2 + (y-3)**2
 
-            * Initial value(varname)::
+            * Initial value (varname)::
 
                 #initial value for x and y
                 m = Minuit(f, x=1, y=2)
 
-            * Initial step size/error(fix_varname)::
+            * Initial step size (fix_varname)::
 
                 #initial step size for x and y
                 m = Minuit(f, error_x=0.5, error_y=0.5)
@@ -503,18 +523,14 @@ cdef class Minuit:
 
             .. note::
 
-                Tips: You can use python dictionary expansion to
-                programmatically change the fitting arguments.
-
-                ::
+                You can use dictionary expansion to programmatically change parameters.
 
                     kwdarg = dict(x=1., error_x=0.5)
                     m = Minuit(f, **kwdarg)
 
-                You can also obtain fit arguments from Minuit object
-                to reuse it later too. *fitarg* will be automatically
-                updated to the minimum value and the corresponding error when
-                you ran migrad/hesse::
+                You can also obtain fit arguments from Minuit object for later reuse.
+                *fitarg* will be automatically updated to the minimum value and the
+                corresponding error when you ran migrad/hesse.
 
                     m = Minuit(f, x=1, error_x=0.5)
                     my_fitarg = m.fitarg
@@ -538,16 +554,20 @@ cdef class Minuit:
         if pedantic: _minuit_methods.pedantic(self, args, kwds, errordef)
 
         if errordef is None:
-            if hasattr(fcn, 'default_errordef'):
+            if hasattr(fcn, 'errordef'):
+                errordef = fcn.errordef
+            elif hasattr(fcn, 'default_errordef'):
+                warn("Using .default_errordef() is deprecated. Use .errordef instead",
+                     category=DeprecationWarning,
+                     stacklevel=2)
                 errordef = fcn.default_errordef()
-            else:
-                errordef = 1
-        else:
-            if not is_number(errordef) or errordef <= 0:
-                raise ValueError("errordef must be a positive number")
+
+        if errordef is not None and (is_number(errordef) == False or errordef <= 0):
+            raise ValueError("errordef must be a positive number")
 
         if pedantic:
             _minuit_methods.pedantic(self, args, kwds, errordef)
+
         if errordef is None:
             errordef = 1.0
 
