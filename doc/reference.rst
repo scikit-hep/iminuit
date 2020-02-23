@@ -22,11 +22,11 @@ These are the things you will use a lot:
     Minuit.fixed
     Minuit.errordef
     Minuit.strategy
+    Minuit.tol
     Minuit.fval
-    Minuit.fitarg
+    Minuit.nfit
     Minuit.mnprofile
     Minuit.draw_mnprofile
-    minimize
 
 Minuit
 ------
@@ -60,8 +60,10 @@ on them in your code. We list the ones that are for the public.
 .. automodule:: iminuit.util
     :members:
     :undoc-members:
-    :exclude-members: arguments_from_docstring, true_param, param_name,
-        extract_iv, extract_error, extract_fix, extract_limit
+    :exclude-members: arguments_from_docstring, arguments_from_funccode,
+        arguments_from_call_funccode, true_param, param_name,
+        extract_iv, extract_error, extract_fix, extract_limit,
+        remove_var, format_exception
 
 
 Data objects
@@ -234,6 +236,4 @@ Function Signature Extraction Ordering
 
     .. note::
 
-        If you are unsure what minuit will parse your function signature as
-        , you can use :func:`describe` which returns tuple of argument names
-        minuit will use as call signature.
+        If you are unsure what iminuit will parse your function signature, you can use :func:`describe` to check which argument names are detected.

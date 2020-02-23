@@ -237,7 +237,7 @@ cdef class Minuit:
         Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
         function and 0.5 for negative log-likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
 
-        To make user code more readable, the two constants can be imported::
+        To make user code more readable, we provided two named constants::
 
             from iminuit import Minuit
             assert Minuit.LEAST_SQUARES == 1
@@ -261,27 +261,28 @@ cdef class Minuit:
         self.errordef = errordef
 
     cdef public double tol
-    """Tolerance.
+    """Tolerance for convergence.
 
-    One of the MIGRAD convergence criteria is ``edm < edm_max``,
-    where ``edm_max`` is calculated as ``edm_max = 0.002 * tol * errordef``.
+    The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max`` is
+    calculated as ``edm_max = 0.002 * tol * errordef`` and EDM is the *estimated distance
+    to minimum*, as described in `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_.
     """
 
     cdef public unsigned int strategy
     """Current minimization strategy.
 
-    **0**: fast. Does not check a user-provided gradient. Does not improve Hesse matrix
+    **0**: Fast. Does not check a user-provided gradient. Does not improve Hesse matrix
     at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed for
     good error estimates. If you pass a user-provided gradient to MINUIT,
     convergence is **faster**.
 
-    **1**: default. Checks user-provided gradient against numerical gradient. Checks and
+    **1**: Default. Checks user-provided gradient against numerical gradient. Checks and
     usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
     :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
     MINUIT, convergence is **slower**.
 
-    **2**: careful. Like 1, but does extra checks of intermediate Hessian matrix during
-    minimization.
+    **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
+    minimization. The effect in benchmarks is a somewhat improved accuracy at the cost of more function evaluations. A similar effect can be achieved by reducing the tolerance attr:`tol` for convergence at any strategy level.
     """
 
     @deprecated("use :attr:`strategy` instead")

@@ -243,7 +243,7 @@ def make_func_code(params):
 
     You can make a funccode from describable object by::
 
-        make_func_code(describe(f))
+        make_func_code(["x", "y"])
     """
     return namedtuple("FuncCode", "co_varnames co_argcount")(params, len(params))
 
