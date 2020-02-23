@@ -58,11 +58,11 @@ def func0_grad(x, y):
 
 
 class Func1:
-    def __init__(self):
-        pass
-
     def __call__(self, x, y):
-        return func0(x, y)
+        return func0(x, y) * 4
+
+    def default_errordef(self):
+        return 4
 
 
 class Func2:
@@ -70,7 +70,9 @@ class Func2:
         self.func_code = Func_Code(["x", "y"])
 
     def __call__(self, *arg):
-        return func0(arg[0], arg[1])
+        return func0(arg[0], arg[1]) * 4
+
+    errordef = 4
 
 
 def func4(x, y, z):
@@ -156,7 +158,7 @@ def functesthelper(f, **kwds):
     val = m.values
     assert_allclose(val["x"], 2.0, rtol=1e-3)
     assert_allclose(val["y"], 5.0, rtol=1e-3)
-    assert_allclose(m.fval, 10.0, rtol=1e-3)
+    assert_allclose(m.fval, 10.0 * m.errordef, rtol=1e-3)
     assert m.matrix_accurate()
     assert m.migrad_ok()
     m.hesse()
@@ -179,7 +181,10 @@ def test_lambda():
 
 
 def test_Func1():
-    functesthelper(Func1())
+    with warnings.catch_warnings(record=True) as w:
+        functesthelper(Func1())
+    assert len(w) == 1
+    assert w[0].category is DeprecationWarning
 
 
 def test_Func2():
@@ -413,13 +418,14 @@ def test_fix_param(grad):
     with pytest.raises(KeyError):
         m.fixed["a"]
 
-    # deprecated
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with warnings.catch_warnings(record=True) as w:
         assert m.is_fixed("x") is True
         assert m.is_fixed("y") is False
         with pytest.raises(KeyError):
             m.is_fixed("a")
+    assert len(w) == 3
+    for wi in w:
+        assert wi.category is DeprecationWarning
 
     # fix by setting limits
     m = Minuit(func0, y=10.0, limit_y=(10, 10), pedantic=False, print_level=0)
