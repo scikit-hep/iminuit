@@ -1,5 +1,6 @@
-iminuit
-=======
+.. image:: docs/iminuit_logo.svg
+   :alt: iminuit
+   :target: http://iminuit.readthedocs.io/en/latest
 
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit

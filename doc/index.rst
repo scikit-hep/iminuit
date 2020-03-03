@@ -1,7 +1,7 @@
 .. include:: references.txt
 
-iminuit
-=======
+.. image:: docs/iminuit_logo.svg
+   :alt: iminuit
 
 Jupyter-friendly Python interface to the C++ Minuit2 library.
 
