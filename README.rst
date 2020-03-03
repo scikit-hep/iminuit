@@ -2,6 +2,7 @@
    :alt: iminuit
    :target: http://iminuit.readthedocs.io/en/latest
 
+
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
 .. image:: https://dev.azure.com/scikit-hep/iMinuit/_apis/build/status/scikit-hep.iminuit?branchName=master
