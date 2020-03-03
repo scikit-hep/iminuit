@@ -18,6 +18,9 @@
    :target: https://iminuit.readthedocs.io/en/develop/?badge=latest
    :alt: Documentation Status
 
+iminuit
+=======
+
 .. skip-marker-do-not-remove
 
 *iminuit* is a Python interface to the *MINUIT2* C++ package.
