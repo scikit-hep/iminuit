@@ -2,7 +2,8 @@
    :alt: iminuit
    :target: http://iminuit.readthedocs.io/en/latest
 
-..
+iminuit
+=======
 
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
