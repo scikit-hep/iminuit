@@ -5,9 +5,6 @@
 Installation
 ============
 
-- Supported Python versions: 2.7, 3.5+, PyPy3.5.
-- Supported platforms: Linux, OSX and Windows.
-
 pip
 ---
 

@@ -1,8 +1,9 @@
-.. image:: doc/iminuit_logo.svg
+.. |iminuit| image:: doc/iminuit_logo.svg
    :alt: iminuit
    :target: http://iminuit.readthedocs.io/en/latest
 
-------------------------------
+|iminuit|
+=========
 
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
@@ -17,8 +18,6 @@
 .. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
    :target: https://iminuit.readthedocs.io/en/develop/?badge=latest
    :alt: Documentation Status
-
-------------------------------
 
 .. skip-marker-do-not-remove
 
