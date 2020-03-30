@@ -63,7 +63,7 @@ A `print_level=2` or higher activates internal debug messages directly from C++ 
 Is it possible to stop iminuit by setting a tolerance for changes in the minimized function or the parameters?
 --------------------------------------------------------------------------------------------------------------------
 
-No. MINUIT2 only uses the `Estimated Distance to Minimum`_ (EDM) stopping criterion, in which MINUIT2 compares its current local parabolic estimate of the minimized function with reality. It stops if the vertical distance of the estimate is small. More information about the EDM criterion can be found in the MINUIT paper: `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_.
+No. MINUIT2 only uses the `Estimated Distance to Minimum`_ (EDM) stopping criterion, in which MINUIT2 compares its current local parabolic estimate of the minimized function with reality. It stops if the vertical distance of the estimate is small. More information about the EDM criterion can be found in the `MINUIT paper`_.
 
 I am not sure if minimization or error estimation is reliable. What can I do?
 -----------------------------------------------------------------------------
