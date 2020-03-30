@@ -378,7 +378,7 @@ cdef class Minuit:
     """
 
     cdef readonly int ncalls
-    """Number of FCN call of last migrad / minos / hesse run."""
+    """Number of FCN call of last MIGRAD / MINOS / HESSE run."""
 
     cdef readonly double edm
     """Current estimated distance to minimum.
@@ -480,7 +480,7 @@ cdef class Minuit:
               (automagically detect signature))
 
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
-              1 print out at the end of migrad/hesse/minos. 2 prints debug messages.
+              1 print out at the end of MIGRAD/HESSE/MINOS. 2 prints debug messages.
 
             - **errordef**: Optional. See :attr:`errordef` for details on
               this parameter. If set to `None` (the default), Minuit will try to call
@@ -1253,7 +1253,7 @@ cdef class Minuit:
 
     def draw_mnprofile(self, vname, bins=30, bound=2, subtract_min=False,
                        band=True, text=True):
-        """Draw minos profile around the specified range.
+        """Draw MINOS profile around the specified range.
 
         It is obtained by finding MIGRAD results with **vname** fixed
         at various places within **bound**.
@@ -1333,10 +1333,11 @@ cdef class Minuit:
         """A convenient wrapper for drawing profile using matplotlib.
 
         .. note::
-            This is not a real minos profile. It's just a simple 1D scan.
-            The number shown on the plot is taken from the green band.
-            They are not minos error. To get a real minos profile call
-            :meth:`mnprofile` or :meth:`draw_mnprofile`
+            A 1D scan of the cost function around the minimum, useful to inspect the
+            minimum and the FCN around the minimum for defects. For a fit with several
+            free parameters this is not the same as the MINOS profile computed by
+            :meth:`draw_mncontour`. Use :meth:`mnprofile` or :meth:`draw_mnprofile` to
+            compute confidence intervals.
 
         **Arguments:**
 
@@ -1379,10 +1380,10 @@ cdef class Minuit:
             - **y** variable name for Y axis of scan
 
             - **bound**
-              If bound is 2x2 array [[v1min,v1max],[v2min,v2max]].
+              If bound is 2x2 array, [[v1min,v1max],[v2min,v2max]].
               If bound is a number, it specifies how many :math:`\sigma`
               symmetrically from minimum (minimum+- bound*:math:`\sigma`).
-              Default 2
+              Default: 2.
 
             - **subtract_min** subtract_minimum off from return value. This
               makes it easy to label confidence interval. Default False.
@@ -1483,7 +1484,7 @@ cdef class Minuit:
 
         **Returns:**
 
-            x minos error struct, y minos error struct, contour line
+            x MINOS error struct, y MINOS error struct, contour line
 
             contour line is a list of the form
             [[x1,y1]...[xn,yn]]
@@ -1522,7 +1523,7 @@ cdef class Minuit:
         return xminos, yminos, meh.points  # using type coersion here
 
     def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
-        """Draw minos contour.
+        """Draw MINOS contour.
 
         **Arguments:**
 
@@ -1547,18 +1548,19 @@ cdef class Minuit:
                      show_sigma=False):
         """Convenience wrapper for drawing contours.
 
-        The argument is the same as :meth:`contour`.
+        The arguments are the same as :meth:`contour`.
         If `show_sigma=True`(Default), the label on the contour lines will show
         how many :math:`\sigma` away from the optimal value instead of raw value.
 
         .. note::
 
-            Like :meth:`contour`, the error shown on the plot is not strictly the
+            Like in case of :meth:`contour`, the line shown on the plot is not the
             1 :math:`\sigma` contour since the other parameters are fixed.
 
         .. seealso::
 
             :meth:`contour`
+            :meth:`draw_mncontour`
 
         """
         return _minuit_methods.draw_contour(self, x, y, bins,
