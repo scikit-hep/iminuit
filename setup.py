@@ -154,7 +154,7 @@ with open(join(cwd, "README.rst")) as readme_rst:
 setup(
     name="iminuit",
     version=__version__,
-    description="Jupyter-friendly Python bindings for MINUIT2",
+    description="Jupyter-friendly Python frontend for MINUIT2 in C++",
     long_description=long_description,
     author="Piti Ongmongkolkul and others",
     maintainer="Hans Dembinski",
