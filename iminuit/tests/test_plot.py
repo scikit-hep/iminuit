@@ -53,9 +53,6 @@ def test_mncontour(m):
 def test_drawcontour(m):
     m.minos()
     m.draw_contour("x", "y")
-
-
-@requires_dependency("matplotlib")
-def test_drawcontour_show_sigma(m):
-    m.minos()
+    m.draw_contour("x", "x", bins=20, bound=2)
+    m.draw_contour("x", "x", bins=20, bound=((-10, 10), (-10, 10)))
     m.draw_contour("x", "y", show_sigma=True)
