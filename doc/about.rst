@@ -8,7 +8,7 @@ About
 What is iminuit?
 ----------------
 
-iminuit is the fast interactive IPython-friendly minimizer based on `Minuit2`_ in ROOT-6.12.06.
+iminuit is the fast interactive IPython-friendly minimiser based on `Minuit2`_ in ROOT-6.12.06.
 
 For a hands-on introduction, see the :ref:`tutorials`.
 
@@ -16,13 +16,13 @@ For a hands-on introduction, see the :ref:`tutorials`.
 
 You can install iminuit with pip. It only needs a moderately recent C++ compiler on your machine. The Minuit2 code is bundled, so you don't need to install it separately.
 
-**Support for Python 2.7 to 3.7 and PyPy-3.6 and Numpy**
+**Support for Python 2.7 to 3.8, PyPy-3.5 to PyPy-3.6**
 
-Whether you use the latest Python 3 or stick to classic Python 2, iminuit works for you. NumPy is supported: you can minimize functions that accept numpy arrays and get the fit results as numpy arrays. If you prefer to access parameters by name, that works as well!
+Whether you use the latest Python 3 or stick to classic Python 2, iminuit works for you. We even support the latest PyPy. iminuit interoperates with NumPy. In addition to passing parameters individually, you can minimise functions that accept parameters as NumPy arrays. You can get the fit results as NumPy arrays.
 
-**Robust optimizer and error estimator**
+**Robust optimiser and error estimator**
 
-iminuit uses Minuit2 to minimize your functions, a battle-hardened code developed and maintained by scientists at CERN, the world's leading particle accelerator laboratory. Minuit2 has good performance compared to other minimizers, and it is one of the few codes out there which compute error estimates for your parameters. When you do statistics seriously, this is a must-have.
+iminuit uses Minuit2 to minimise your functions, a battle-hardened code developed and maintained by scientists at CERN, the world's leading particle accelerator laboratory. Minuit2 has good performance compared to other minimisers, and it is one of the few codes out there which compute error estimates for your parameters. When you do statistics seriously, this is a must-have.
 
 **Interactive convenience**
 
@@ -30,7 +30,7 @@ iminuit extracts the parameter names from your function signature (or the docstr
 
 **Support for Cython**
 
-iminuit was designed to work with Cython functions, in order to speed up the minimization of complex functions.
+iminuit was designed to work with Cython functions, in order to speed up the minimisation of complex functions.
 
 **Successor of PyMinuit**
 
