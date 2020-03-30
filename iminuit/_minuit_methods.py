@@ -102,12 +102,12 @@ def draw_profile(self, vname, x, y, s, band, text):
     return x, y
 
 
-def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
+def draw_contour(self, x, y, bins, bound, args, show_sigma):
     from matplotlib import pyplot as plt
 
     vx, vy, vz = self.contour(x, y, bins, bound, args, subtract_min=True)
 
-    v = [self.errordef * ((i + 1) ** 2) for i in range(bound)]
+    v = [self.errordef * ((i + 1) ** 2) for i in range(2)]
 
     CS = plt.contour(vx, vy, vz, v, colors=["b", "k", "r"])
     if not show_sigma:
@@ -123,7 +123,7 @@ def draw_contour(self, x, y, bins=20, bound=2, args=None, show_sigma=False):
     return vx, vy, vz
 
 
-def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
+def draw_mncontour(self, x, y, nsigma, numpoints):
     from matplotlib import pyplot as plt
     from matplotlib.contour import ContourSet
 
