@@ -1086,7 +1086,7 @@ cdef class Minuit:
         """
         return self.np_matrix(correlation=False, skip_fixed=False)
 
-    @deprecated("use :meth:`fixed` instead")
+    @deprecated("use :attr:`fixed` instead")
     def is_fixed(self, vname):
         return self.fixed[vname]
 
@@ -1253,7 +1253,7 @@ cdef class Minuit:
 
     def draw_mnprofile(self, vname, bins=30, bound=2, subtract_min=False,
                        band=True, text=True):
-        """Draw MINOS profile around the specified range.
+        """Draw MINOS profile in the specified range.
 
         It is obtained by finding MIGRAD results with **vname** fixed
         at various places within **bound**.
@@ -1288,9 +1288,9 @@ cdef class Minuit:
             :include-source:
         """
         x, y, s = self.mnprofile(vname, bins, bound, subtract_min)
-        return _minuit_methods.draw_profile(self, vname, x, y, s, band, text)
+        return _minuit_methods.draw_profile(self, vname, x, y, band, text)
 
-    def profile(self, vname, bins=100, bound=2, args=None, subtract_min=False):
+    def profile(self, vname, bins=100, bound=2, subtract_min=False, **kwargs):
         """Calculate cost function profile around specify range.
 
         **Arguments:**
@@ -1303,7 +1303,7 @@ cdef class Minuit:
               If bound is tuple, (left, right) scanning bound.
               If bound is a number, it specifies how many :math:`\sigma`
               symmetrically from minimum (minimum+- bound* :math:`\sigma`).
-              Default 2
+              Default: 2.
 
             * **subtract_min** subtract_minimum off from return value. This
               makes it easy to label confidence interval. Default False.
@@ -1315,7 +1315,16 @@ cdef class Minuit:
         .. seealso::
 
             :meth:`mnprofile`
-        """
+        """        
+        if "args" in kwargs:
+            warn("The args keyword has been removed.",
+                 DeprecationWarning,
+                 stacklevel=2)
+            del kwargs["args"]
+
+        if len(kwargs):
+            raise ValueError("Unrecognized keywords: " + " ".join(kwargs))
+
         if subtract_min and self.cfmin is NULL:
             raise RuntimeError("Request for minimization "
                                "subtraction but no minimization has been done. "
@@ -1326,18 +1335,22 @@ cdef class Minuit:
             sigma = self.errors[vname]
             bound = (start - bound * sigma, start + bound * sigma)
 
-        return _minuit_methods.profile(self, vname, bins, bound, args, subtract_min)
+        return _minuit_methods.profile(self, vname, bins, bound, subtract_min)
 
-    def draw_profile(self, vname, bins=100, bound=2, args=None,
-                     subtract_min=False, band=True, text=True):
+    def draw_profile(self, vname, bins=100, bound=2,
+                     subtract_min=False, band=True, text=True, **kwargs):
         """A convenient wrapper for drawing profile using matplotlib.
 
-        .. note::
-            A 1D scan of the cost function around the minimum, useful to inspect the
-            minimum and the FCN around the minimum for defects. For a fit with several
-            free parameters this is not the same as the MINOS profile computed by
-            :meth:`draw_mncontour`. Use :meth:`mnprofile` or :meth:`draw_mnprofile` to
-            compute confidence intervals.
+        A 1D scan of the cost function around the minimum, useful to inspect the
+        minimum and the FCN around the minimum for defects.
+        
+        For a fit with several free parameters this is not the same as the MINOS
+        profile computed by :meth:`draw_mncontour`. Use :meth:`mnprofile` or
+        :meth:`draw_mnprofile` to compute confidence intervals.
+
+        If a function minimum was found in a previous MIGRAD call, a vertical line
+        indicates the parameter value. An optional band indicates the uncertainty
+        interval of the parameter computed by HESSE or MINOS.
 
         **Arguments:**
 
@@ -1357,21 +1370,32 @@ cdef class Minuit:
             :meth:`draw_mnprofile`
             :meth:`profile`
         """
-        x, y = self.profile(vname, bins, bound, args, subtract_min)
-        return _minuit_methods.draw_profile(self, vname, x, y, None, band, text)
+        
+        if "args" in kwargs:
+            warn("The args keyword has been removed.",
+                 DeprecationWarning,
+                 stacklevel=2)
+            del kwargs["args"]
 
-    def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
+        if len(kwargs):
+            raise ValueError("Unrecognized keywords: " + " ".join(kwargs))
+
+        x, y = self.profile(vname, bins, bound, subtract_min)
+        return _minuit_methods.draw_profile(self, vname, x, y, band, text)
+
+    def contour(self, x, y, bins=50, bound=2, subtract_min=False, **kwargs):
         """2D contour scan.
 
         Return the contour of a function scan over **x** and **y**, while keeping
         all other parameters fixed.
         
-        The related :meth:`mncontour` works differently: it minimises the function
-        with the respect to the other parameters while scanning over **x** and **y**.
+        The related :meth:`mncontour` works differently: for new pair of **x** and **y**
+        in the scan, it minimises the function with the respect to the other parameters.
         
         This method is useful to inspect the function near the minimum to detect issues
-        (there should be no discrete jumps/jitter, there is really a minimum, etc.).
-        :meth:`mncontour` is useful to create confidence intervals for the parameters.
+        (the contours should look smooth). Use :meth:`mncontour` to create confidence
+        regions for the parameters. If the fit has only two free parameters, you can
+        use this instead of :meth:`mncontour`.
 
         **Arguments:**
 
@@ -1385,8 +1409,7 @@ cdef class Minuit:
               symmetrically from minimum (minimum+- bound*:math:`\sigma`).
               Default: 2.
 
-            - **subtract_min** subtract_minimum off from return value. This
-              makes it easy to label confidence interval. Default False.
+            - **subtract_min** subtract_minimum off from return values. Default False.
 
         **Returns:**
 
@@ -1400,15 +1423,16 @@ cdef class Minuit:
             :meth:`mncontour`
             :meth:`mnprofile`
 
-        .. note::
-
-            If `subtract_min=True`, the return value has the minimum subtracted
-            off. The value on the contour can be interpreted *loosely* as
-            :math:`i^2 \\times \\textrm{up}` where i is number of standard
-            deviation away from the fitted value *WITHOUT* taking into account
-            correlation with other parameters that's fixed.
-
         """
+
+        if "args" in kwargs:
+            warn("The args keyword has been removed.",
+                 DeprecationWarning,
+                 stacklevel=2)
+            del kwargs["args"]
+
+        if len(kwargs):
+            raise ValueError("Unrecognized keywords: " + " ".join(kwargs))
 
         if subtract_min and self.cfmin is NULL:
             raise RuntimeError("Request for minimization "
@@ -1432,7 +1456,7 @@ cdef class Minuit:
         cdef int x_pos = self.var2pos[x]
         cdef int y_pos = self.var2pos[y]
 
-        cdef list arg = list(self.args if args is None else args)
+        cdef list arg = list(self.args)
 
         result = np.empty((bins, bins), dtype=np.double)
         if self.use_array_call:
@@ -1455,7 +1479,7 @@ cdef class Minuit:
 
         return x_val, y_val, result
 
-    def mncontour(self, x, y, int numpoints=20, sigma=1.0):
+    def mncontour(self, x, y, int numpoints=100, sigma=1.0):
         """Two-dimensional MINOS contour scan.
 
         This scans over **x** and **y** and minimises all other free
@@ -1522,7 +1546,7 @@ cdef class Minuit:
 
         return xminos, yminos, meh.points  # using type coersion here
 
-    def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
+    def draw_mncontour(self, x, y, nsigma=2, numpoints=100):
         """Draw MINOS contour.
 
         **Arguments:**
@@ -1544,18 +1568,13 @@ cdef class Minuit:
         """
         return _minuit_methods.draw_mncontour(self, x, y, nsigma, numpoints)
 
-    def draw_contour(self, x, y, bins=20, bound=2, args=None,
-                     show_sigma=False):
+    def draw_contour(self, x, y, bins=50, bound=2, **kwargs):
         """Convenience wrapper for drawing contours.
 
         The arguments are the same as :meth:`contour`.
-        If `show_sigma=True`(Default), the label on the contour lines will show
-        how many :math:`\sigma` away from the optimal value instead of raw value.
 
-        .. note::
-
-            Like in case of :meth:`contour`, the line shown on the plot is not the
-            1 :math:`\sigma` contour since the other parameters are fixed.
+        Please read the docs of :meth:`contour` and :meth:`mncontour` to understand the
+        difference between the two.
 
         .. seealso::
 
@@ -1563,8 +1582,21 @@ cdef class Minuit:
             :meth:`draw_mncontour`
 
         """
-        return _minuit_methods.draw_contour(self, x, y, bins,
-                                            bound, args, show_sigma)
+        if "show_sigma" in kwargs:
+            warn("The show_sigma keyword has been removed due to potential confusion. "
+                 "Use draw_mncontour to draw sigma contours.",
+                 category=DeprecationWarning,
+                 stacklevel=2)
+            del kwargs["show_sigma"]
+        if "args" in kwargs:
+            warn("The args keyword is unused and has been removed.",
+                 category=DeprecationWarning,
+                 stacklevel=2)
+            del kwargs["args"]
+        if len(kwargs):
+            raise ValueError("Invalid keyword(s): " + " ".join(kwargs))
+
+        return _minuit_methods.draw_contour(self, x, y, bins, bound)
 
     cdef refresh_internal_state(self):
         """Refresh internal state attributes.
