@@ -232,10 +232,12 @@ cdef class Minuit:
 
     @property
     def errordef(self):
-        """Amount of change in FCN that corresponds to one standard deviation in a parameter.
+        """FCN increment above the minimum that corresponds to one standard deviation.
 
         Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
-        function and 0.5 for negative log-likelihood function. See page 37 of http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called ``UP`` in the MINUIT docs.
+        function and 0.5 for negative log-likelihood function. See page 37 of 
+        http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called
+        ``UP`` in the MINUIT docs.
 
         To make user code more readable, we provided two named constants::
 
@@ -265,7 +267,7 @@ cdef class Minuit:
 
     The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max`` is
     calculated as ``edm_max = 0.002 * tol * errordef`` and EDM is the *estimated distance
-    to minimum*, as described in `MINUIT - A SYSTEM FOR FUNCTION MINIMIZATION AND ANALYSIS OF THE PARAMETER ERRORS AND CORRELATIONS`_.
+    to minimum*, as described in the `MINUIT paper`_.
     """
 
     cdef public unsigned int strategy
@@ -282,7 +284,9 @@ cdef class Minuit:
     MINUIT, convergence is **slower**.
 
     **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
-    minimization. The effect in benchmarks is a somewhat improved accuracy at the cost of more function evaluations. A similar effect can be achieved by reducing the tolerance attr:`tol` for convergence at any strategy level.
+    minimization. The effect in benchmarks is a somewhat improved accuracy at the cost 
+    of more function evaluations. A similar effect can be achieved by reducing the
+    tolerance attr:`tol` for convergence at any strategy level.
     """
 
     @deprecated("use :attr:`strategy` instead")
@@ -330,7 +334,10 @@ cdef class Minuit:
     cdef public ValueView values
     """Parameter values in a dict-like object.
 
-    Use to read or write current parameter values based on the parameter index or the parameter name as a string. If you change a parameter value and run :meth:`migrad`, the minimization will start from that value, similar for :meth:`hesse` and :meth:`minos`.
+    Use to read or write current parameter values based on the parameter index or the
+    parameter name as a string. If you change a parameter value and run :meth:`migrad`,
+    the minimization will start from that value, similar for :meth:`hesse` and
+    :meth:`minos`.
 
     .. seealso:: :attr:`errors`, :attr:`fixed`
     """
@@ -728,31 +735,29 @@ cdef class Minuit:
 
 
     def migrad(self, int ncall=10000, resume=True, int nsplit=1, precision=None):
-        """Run migrad.
+        """Run MIGRAD.
 
-        Migrad is an age-tested(over 40 years old, no kidding), super
-        robust and stable minimization algorithm. It even has
-        `wiki page <http://en.wikipedia.org/wiki/MINUIT>`_.
-        You can read how it does the magic at
-        `here <http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/minmain.html>`_.
+        MIGRAD is a robust minimisation algorithm which earned its reputation
+        in 40+ years of almost exclusive usage in high-energy physics. How
+        MIGRAD works is described in the `MINUIT paper`_.
 
         **Arguments:**
 
             * **ncall**: integer (approximate) maximum number of call before
-              migrad will stop trying. Default: 10000. Note: Migrad may
+              MIGRAD will stop trying. Default: 10000. Note: MIGRAD may
               slightly violate this limit, because it checks the condition
               only after a full iteration of the algorithm, which usually
               performs several function calls.
 
-            * **resume**: boolean indicating whether migrad should resume from
-              the previous minimizer attempt(True) or should start from the
+            * **resume**: boolean indicating whether MIGRAD should resume from
+              the previous minimiser attempt(True) or should start from the
               beginning(False). Default True.
 
-            * **split**: split migrad in to *split* runs. Max fcn call
-              for each run is ncall/nsplit. Migrad stops when it found the
+            * **split**: split MIGRAD in to *split* runs. Max fcn call
+              for each run is ncall/nsplit. MIGRAD stops when it found the
               function minimum to be valid or ncall is reached. This is useful
               for getting progress. However, you need to make sure that
-              ncall/nsplit is large enough. Otherwise, migrad will think
+              ncall/nsplit is large enough. Otherwise, MIGRAD will think
               that the minimum is invalid due to exceeding max call
               (ncall/nsplit). Default 1(no split).
 
@@ -851,7 +856,7 @@ cdef class Minuit:
 
         cdef MnHesse*hesse = NULL
         if self.cfmin is NULL:
-            raise RuntimeError('Run migrad first')
+            raise RuntimeError('Run MIGRAD first')
         hesse = new MnHesse(self.strategy)
         if self.grad is None:
             self.last_upst = hesse.call(
@@ -879,15 +884,22 @@ cdef class Minuit:
 
 
     def minos(self, var=None, sigma=1., unsigned int maxcall=0):
-        """Run MINOS to compute exact asymmetric profile uncertainties.
+        """Run MINOS to compute asymmetric confidence intervals.
 
-        MINOS makes no parabolic assumption. It scans the likelihood or
-        chi-square function to construct an (potentially) asymmetric
-        confidence interval. When the confidence intervals computed with
-        HESSE and MINOS differ, the MINOS intervals are to be preferred.
+        MINOS uses the profile likelihood method to compute (asymmetric)
+        confidence intervals. It scans the negative log-likelihood or
+        (equivalently) the least-squares cost function around the minimum 
+        to construct an asymmetric confidence interval. This interval may
+        be more reasonable when a parameter is close to one of its
+        parameter limits. As a rule-of-thumb: when the confidence intervals 
+        computed with HESSE and MINOS differ strongly, the MINOS intervals
+        are to be preferred. Otherwise, HESSE intervals are preferred.
 
-        Since MINOS has to scan the (possibly high-dimensional) objective
-        function, it is much slower than HESSE.
+        Running MINOS is computationally expensive when there are many
+        fit parameters. Effectively, it scans over *var* in small steps
+        and runs MIGRAD to minimise the FCN with respect to all other free
+        parameters at each point. This is requires many more FCN evaluations
+        than running HESSE.
 
         **Arguments:**
 
@@ -904,8 +916,8 @@ cdef class Minuit:
 
         """
         if self.cfmin is NULL:
-            raise RuntimeError('Minos require function to be at the minimum.'
-                               ' Run migrad first.')
+            raise RuntimeError('MINOS require function to be at the minimum.'
+                               ' Run MIGRAD first.')
         cdef unsigned int index = 0
         cdef MnMinos*minos = NULL
         cdef MinosError mnerror
@@ -1042,7 +1054,7 @@ cdef class Minuit:
         return a
 
     def np_merrors(self):
-        """Minos parameter errors in numpy array format.
+        """MINOS parameter errors in numpy array format.
 
         Fixed parameters are included, the order follows :attr:`parameters`.
 
@@ -1149,7 +1161,7 @@ cdef class Minuit:
         return self.cfmin is not NULL and self.cfmin.IsValid()
 
     def matrix_accurate(self):
-        """Check if covariance (of the last migrad) is accurate"""
+        """Check if covariance (of the last MIGRAD run) is accurate"""
         return self.cfmin is not NULL and \
             self.cfmin.HasAccurateCovar()
 
@@ -1164,7 +1176,7 @@ cdef class Minuit:
     # Various utility functions
 
     def is_clean_state(self):
-        """Check if minuit is in a clean state, ie. no migrad call"""
+        """Check if minuit is in a clean state, ie. no MIGRAD call"""
         return self.minimizer is NULL and self.cfmin is NULL
 
     cdef void clear_cobj(self):
@@ -1180,9 +1192,9 @@ cdef class Minuit:
         self.clear_cobj()
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
-        """Calculate minos profile around the specified range.
+        """Calculate MINOS profile around the specified range.
 
-        That is Migrad minimum results with **vname** fixed at various places within **bound**.
+        Scans over **vname** and minimises FCN over the other parameters in each point.
 
         **Arguments:**
 
@@ -1201,7 +1213,7 @@ cdef class Minuit:
 
         **Returns:**
 
-            bins(center point), value, migrad results
+            bins(center point), value, MIGRAD results
         """
         if vname not in self.parameters:
             raise ValueError('Unknown parameter %s' % vname)
@@ -1229,7 +1241,7 @@ cdef class Minuit:
             m.migrad()
             migrad_status[i] = m.migrad_ok()
             if not m.migrad_ok():
-                warn('Migrad fails to converge for %s=%f' % (vname, v))
+                warn('MIGRAD fails to converge for %s=%f' % (vname, v))
             results[i] = m.fval
             if m.fval < vmin:
                 vmin = m.fval
@@ -1243,7 +1255,7 @@ cdef class Minuit:
                        band=True, text=True):
         """Draw minos profile around the specified range.
 
-        It is obtained by finding Migrad results with **vname** fixed
+        It is obtained by finding MIGRAD results with **vname** fixed
         at various places within **bound**.
 
         **Arguments:**
@@ -1307,7 +1319,7 @@ cdef class Minuit:
         if subtract_min and self.cfmin is NULL:
             raise RuntimeError("Request for minimization "
                                "subtraction but no minimization has been done. "
-                               "Run migrad first.")
+                               "Run MIGRAD first.")
 
         if is_number(bound):
             start = self.values[vname]
@@ -1350,8 +1362,15 @@ cdef class Minuit:
     def contour(self, x, y, bins=20, bound=2, args=None, subtract_min=False):
         """2D contour scan.
 
-        return contour of migrad result obtained by fixing all
-        others parameters except **x** and **y** which are let to varied.
+        Return the contour of a function scan over **x** and **y**, while keeping
+        all other parameters fixed.
+        
+        The related :meth:`mncontour` works differently: it minimises the function
+        with the respect to the other parameters while scanning over **x** and **y**.
+        
+        This method is useful to inspect the function near the minimum to detect issues
+        (there should be no discrete jumps/jitter, there is really a minimum, etc.).
+        :meth:`mncontour` is useful to create confidence intervals for the parameters.
 
         **Arguments:**
 
@@ -1378,6 +1397,7 @@ cdef class Minuit:
         .. seealso::
 
             :meth:`mncontour`
+            :meth:`mnprofile`
 
         .. note::
 
@@ -1392,7 +1412,7 @@ cdef class Minuit:
         if subtract_min and self.cfmin is NULL:
             raise RuntimeError("Request for minimization "
                                "subtraction but no minimization has been done. "
-                               "Run migrad first.")
+                               "Run MIGRAD first.")
 
         if is_number(bound):
             x_start = self.values[x]
@@ -1435,16 +1455,21 @@ cdef class Minuit:
         return x_val, y_val, result
 
     def mncontour(self, x, y, int numpoints=20, sigma=1.0):
-        """Minos contour scan.
+        """Two-dimensional MINOS contour scan.
 
-        A proper n **sigma** contour scan. This is the line
-        where the minimum of fcn  with x,y is fixed at points on the line and
-        letting the rest of variable varied is change by **sigma** * errordef^2
-        . The calculation is very very expensive since it has to run migrad
-        at various points.
+        This scans over **x** and **y** and minimises all other free
+        parameters in each scan point. This works as if **x** and **y** are
+        fixed, while the other parameters are minimised by MIGRAD. 
 
-        .. note::
-            See http://wwwasdoc.web.cern.ch/wwwasdoc/minuit/node7.html
+        This scan produces a statistical confidence region with the `profile
+        likelihood method <https://en.wikipedia.org/wiki/Likelihood_function#Profile_likelihood>`_.
+        The contour line represents the values of **x** and **y** where the
+        function passes the threshold that corresponds to `sigma` standard
+        deviations (note that 1 standard deviations in two dimensions has a
+        smaller coverage probability than 68 %).
+        
+        The calculation is expensive since it has to run MIGRAD at various
+        points.
 
         **Arguments:**
 
@@ -1463,9 +1488,14 @@ cdef class Minuit:
             contour line is a list of the form
             [[x1,y1]...[xn,yn]]
 
+        .. seealso::
+
+            :meth:`contour`
+            :meth:`mnprofile`
+
         """
         if self.cfmin is NULL:
-            raise ValueError('Run Migrad first')
+            raise ValueError('Run MIGRAD first')
 
         cdef unsigned int ix = self.var2pos[x]
         cdef unsigned int iy = self.var2pos[y]
@@ -1489,7 +1519,7 @@ cdef class Minuit:
 
         self.pyfcn.SetErrorDef(oldup)
 
-        return xminos, yminos, meh.points  #using type coersion here
+        return xminos, yminos, meh.points  # using type coersion here
 
     def draw_mncontour(self, x, y, nsigma=2, numpoints=20):
         """Draw minos contour.
@@ -1505,6 +1535,10 @@ cdef class Minuit:
         **Returns:**
 
             contour
+
+        .. seealso::
+
+            :meth:`mncontour`
 
         """
         return _minuit_methods.draw_mncontour(self, x, y, nsigma, numpoints)
@@ -1525,7 +1559,7 @@ cdef class Minuit:
         .. seealso::
 
             :meth:`contour`
-            :meth:`mncontour`
+
         """
         return _minuit_methods.draw_contour(self, x, y, bins,
                                             bound, args, show_sigma)
