@@ -1,9 +1,14 @@
 .. include:: references.txt
 
-iminuit
-=======
+.. |iminuit| image:: iminuit_logo.svg
+
+|iminuit|
+=========
 
 Jupyter-friendly Python interface to the C++ Minuit2 library.
+
+- Supported Python versions: 2.7, 3.5+, PyPy3.5.
+- Supported platforms: Linux, OSX and Windows.
 
 `iminuit` can be used for general function minimization, but is most commonly used for least-squares and maximum-likelihood fits of models to data, and to get model parameter error estimates from likelihood profile analysis.
 
