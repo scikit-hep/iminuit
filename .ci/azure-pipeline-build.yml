@@ -27,11 +27,15 @@ jobs:
         versionSpec: '3.8'
     - script: |
         python -m pip install --upgrade pip
-        python -m pip install setuptools cython
+        python -m pip install setuptools cython check-manifest
       displayName: Install sdist deps
+    - script: check-manifest
+      displayName: Check manifest
     - script: python setup.py sdist
       displayName: Prepare sdist
     - template: azure-wheel-helpers/azure-publish-dist.yml
+    - script: pip install dist/*
+      displayName: Install sdist
 
 - job: ManyLinux
   strategy:
