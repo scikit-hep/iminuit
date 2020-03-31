@@ -17,6 +17,11 @@ Covers the basics of using iminuit.
 
 How to compute function gradients for iminuit with jax_ and accelerate Python code with JAX's JIT compiler. Spoiler: a **32x** speed up over plain numpy is achieved. Also discusses how to do a least-squares fit with data that has uncertainties in *x* and *y*.
 
+`iminuit and an external minimizer <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/iminuit_and_external_minimizer.ipynb>`_
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+iminuit can run the HESSE algorithm on any point of the cost function. This means one can effectively combine iminuit with other minimizers: let the other minimizer find the minimum and only run iminuit to compute the parameter uncertainties. This does not work with MINOS, which requires that MIGRAD is run first.
+
 Outdated Cython tutorials
 -------------------------
 
