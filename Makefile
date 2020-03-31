@@ -76,4 +76,4 @@ integration:
 	@echo
 	@echo "Warning: If integration tests fail, add new tests of corrupted interface to iminuit."
 	@echo
-	.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh
+	.ci/probfit_integration_test.sh

@@ -1,8 +1,11 @@
 recursive-include iminuit *.h *.cpp *.pyx *.pxi *.py
 recursive-include tutorial *.py *.ipynb *.pyx
-recursive-include Minuit *
+recursive-include extern/Minuit2 *
 include *.py
 include README.rst
 include LICENSE
+include minuit2_cxx.lst
 include iminuit/tests/cyfunc.pyx
 include iminuit/tests/cyfunc.pyxbld
+include CITATION
+include CONTRIBUTING.md

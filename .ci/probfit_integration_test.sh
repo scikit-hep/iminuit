@@ -1,7 +1,7 @@
 #!/bin/bash
 # run this before a release to check that gammapy is not broken
 if [ ! -e probfit ]; then
-  virtualenv probfit
+  python -m venv probfit
 fi
 source probfit/bin/activate || { echo "Error: You must execute or source this script!"; exit 1; }
 pip install cython numpy pytest pytest-mpl matplotlib pyqt5

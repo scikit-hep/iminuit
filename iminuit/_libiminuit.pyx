@@ -855,8 +855,7 @@ cdef class Minuit:
         """
 
         cdef MnHesse*hesse = NULL
-        if self.cfmin is NULL:
-            raise RuntimeError('Run MIGRAD first')
+
         hesse = new MnHesse(self.strategy)
         if self.grad is None:
             self.last_upst = hesse.call(
@@ -925,11 +924,11 @@ cdef class Minuit:
         cdef double oldup = self.pyfcn.Up()
         self.pyfcn.SetErrorDef(oldup * sigma * sigma)
         if not self.cfmin.IsValid():
-            raise RuntimeError(('Function mimimum is not valid. Make sure'
-                                ' migrad converge first'))
+            raise RuntimeError(('Function minimum is not valid. Make sure '
+                                'MIGRAD converged first'))
         if var is not None and var not in self.parameters:
-            raise RuntimeError('Specified parameters(%r) cannot be found'
-                               ' in parameter list :' % var + str(self.parameters))
+            raise RuntimeError('Specified parameters(%r) cannot be found '
+                               'in parameter list :' % var + str(self.parameters))
 
         varlist = [var] if var is not None else self.parameters
 

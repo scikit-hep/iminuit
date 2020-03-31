@@ -1,0 +1,39 @@
+# Azure only builds master, Travis and Appveyor only build develop
+
+trigger:
+  branches:
+    include:
+      - develop
+pr:
+  - develop
+
+variables:
+  package_name: iminuit
+  many_linux_base: quay.io/pypa/manylinux1_
+  dev_requirements_file: .ci/requirements-build.txt
+  test_requirements_file: .ci/requirements-test.txt
+
+jobs:
+
+- job: LinuxSDist
+  pool:
+    vmImage: 'ubuntu-latest'
+  variables:
+    python.architecture: 'none'
+  steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+    - script: |
+        python -m pip install --upgrade pip
+        python -m pip install setuptools cython check-manifest
+      displayName: Install sdist deps
+    - script: check-manifest
+      displayName: Check manifest
+    - script: python setup.py sdist
+      displayName: Prepare sdist
+    - template: azure-wheel-helpers/azure-publish-dist.yml
+    - script: pip install dist/*
+      displayName: Install sdist
+    - template: azure-tests.yml
+
