@@ -5,8 +5,27 @@
 Changelog
 =========
 
-1.3.9
------
+1.3.10 (March, 31, 2020)
+------------------------
+
+Bug-fixes
+~~~~~~~~~
+- sdist package was broken, this was fixed by @henryiii
+
+Implementation
+~~~~~~~~~~~~~~
+- Allow HESSE to be called without running MIGRAD first
+
+Documentation
+~~~~~~~~~~~~~
+- Added tutorial to show how iminuit can compute parameter errors for other minimizers
+
+Other
+~~~~~
+- @henryiii added a CI test to check the sdist package and the MANIFEST
+
+1.3.9 (March, 31, 2020)
+-----------------------
 
 Bug-fixes
 ~~~~~~~~~
@@ -43,20 +62,23 @@ Documentation
 - fixed broken URLs for external documents
 - many small documentation improvements to increase consistency
 
-1.3.8
------
+1.3.8 (October 17, 2019)
+------------------------
+
 - fixed internal plotting when Minuit.from_array_func is used
 - documentation updates
 - reproduceable build
 
-1.3.7
------
+1.3.7 (June 12, 2019)
+---------------------
+
 - fixed wheels support
 - fixed failing tests on some platforms
 - documentation updates
 
 1.3.6 (May 19, 2019)
 --------------------
+
 - fix for broken display of Jupyter notebooks on Github when iminuit output is shown
 - replaced brittle and broken REPL diplay system with standard _repr_html_ and friends
 - wheels support
@@ -66,14 +88,17 @@ Documentation
 
 1.3.5 (May 16, 2019) [do not use]
 ---------------------------------
+
 - release with accidental breaking change in the API, use 1.3.6
 
 1.3.4 (May 16, 2019) [do not use]
 ---------------------------------
+
 - incomplete release, use 1.3.6
 
 1.3.3 (August 13, 2018)
 -----------------------
+
 - fix for broken table layout in print_param() and print_matrix()
 - fix for missing error report when error is raised in user function
 - fix of printout when ipython is used as a shell
@@ -82,6 +107,7 @@ Documentation
 
 1.3.2 (August 5, 2018)
 ----------------------
+
 - allow fixing parameter by setting limits (x, x) with some value x
 - better defaults for maxcall arguments of hesse() and minos()
 - nicer output for print_matrix()
@@ -90,6 +116,7 @@ Documentation
 
 1.3.1 (July 10, 2018)
 ---------------------
+
 - fixed failing tests when only you installed iminuit with pip and don't
   have Cython installed
 
