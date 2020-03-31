@@ -34,8 +34,6 @@ jobs:
     - script: python setup.py sdist
       displayName: Prepare sdist
     - template: azure-wheel-helpers/azure-publish-dist.yml
-    - script: pip install dist/*
-      displayName: Install sdist
 
 - job: ManyLinux
   strategy:
