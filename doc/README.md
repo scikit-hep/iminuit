@@ -5,11 +5,11 @@ The iminuit logo uses glyphs generated from the free Gentium Plus font.
 
 How to make a release
 =====================
-- create a branch on the master, called release_<version>
-- merge develop into this branch
+- merge develop into master
+- create a branch on the master, called release_<version>, do edits there
 - increase version number in iminuit/version.py
 - update doc/changelog.rst
-- check that new tutorials are list in the tutorials section of the docs
+- check that new tutorials are listed in the tutorials section of the docs
 - run `make integration` to do integration tests (if these fail, add tests to iminuit!)
 - run `.ci/download_azure_artifacts.py` to download all wheels from the latest pipeline
 - run `python -m twine upload dist/*` if everything looks ok
