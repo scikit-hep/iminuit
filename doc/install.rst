@@ -5,8 +5,18 @@
 Installation
 ============
 
-- Supported Python versions: 2.7, 3.5+, PyPy3.5.
-- Supported platforms: Linux, OSX and Windows.
+Note: iminuit is tested to work with PyPy3.5 and PyPy3.6, but we do not provide binary packages for PyPy. PyPy users need to install the source package of iminuit. This happens automatically when you install it via conda or pip, but requires a working C++ compiler.
+
+Conda
+-----
+
+We provide binary packages for `conda` users via https://anaconda.org/conda-forge/iminuit:
+
+.. code-block:: bash
+
+    $ conda install -c conda-forge iminuit
+
+`iminuit` only depends on `numpy`. The conda packages are semi-automatically maintained and usually quickly support the least Python version on all platforms.
 
 pip
 ---
@@ -18,18 +28,7 @@ To install the latest stable version from https://pypi.org/project/iminuit/ with
     $ pip install iminuit
 
 If your platform is not supported by a binary wheel, `pip install` requires that you
-have a C++ compiler available.
-
-Conda
------
-
-We provide binary packages for `conda` users via https://anaconda.org/conda-forge/iminuit:
-
-.. code-block:: bash
-
-    $ conda install -c conda-forge iminuit
-
-The only required dependency for `iminuit` is `numpy`. As explained in the documentation, using `ipython` and `jupyter` for interactive analysis, as well as `cython` for speed is advisable, so you might want to install those as well.
+have a C++ compiler available but otherwise runs the compilation automatically. As an alternative you can try to install iminuit with conda.
 
 Installing from source
 ----------------------

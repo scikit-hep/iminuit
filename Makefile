@@ -49,7 +49,7 @@ cov: build
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest iminuit --cov iminuit --cov-report html
 
-doc/_build/html/index.html: iminuit/_libiminuit.so $(wildcard doc/*.rst)
+doc/_build/html/index.html: iminuit/_libiminuit.so $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi iminuit/*.py iminuit/**/*.py wildcard doc/*.rst)
 	{ cd doc; make html; }
 
 doc: doc/_build/html/index.html
@@ -77,19 +77,3 @@ integration:
 	@echo "Warning: If integration tests fail, add new tests of corrupted interface to iminuit."
 	@echo
 	.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh
-
-release: sdist
-	pip install --upgrade twine
-	@echo ""
-	@echo "Release checklist:"
-	@echo "[ ] Integration tests ok 'make integration'"
-	@echo "[ ] Increase version number in iminuit/info.py"
-	@echo "[ ] Update doc/changelog.rst"
-	@echo "[ ] Tag release on Github"
-	@echo ""
-	@echo "Upload to TestPyPI:"
-	@echo "twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
-	@echo ""
-	@echo "Upload to PyPI:"
-	@echo "twine upload dist/*"
-	@echo ""

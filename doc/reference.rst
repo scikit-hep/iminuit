@@ -15,19 +15,18 @@ These are the things you will use a lot:
     Minuit
     Minuit.from_array_func
     Minuit.migrad
+    Minuit.hesse
     Minuit.minos
     Minuit.values
-    Minuit.args
     Minuit.errors
-    Minuit.get_merrors
+    Minuit.fixed
+    Minuit.errordef
+    Minuit.strategy
+    Minuit.tol
     Minuit.fval
-    Minuit.fitarg
+    Minuit.nfit
     Minuit.mnprofile
     Minuit.draw_mnprofile
-    Minuit.mncontour
-    Minuit.draw_mncontour
-    minimize
-    util.describe
 
 Minuit
 ------
@@ -35,38 +34,9 @@ Minuit
 .. autoclass:: Minuit
     :members:
     :undoc-members:
-    :exclude-members: migrad, hesse, minos, args, values, errors,
-        merror, fval, edm, fitarg, covariance, gcc, errordef,
-        fcn, pedantic, throw_nan, tol
+    :exclude-members: is_fixed, print_all_minos, print_fmin, print_param, print_initial_param, print_matrix, set_errordef, set_strategy, set_print_level, set_up, from_array_func, get_merrors
 
-    .. automethod:: migrad
-
-    .. automethod:: hesse
-
-    .. automethod:: minos
-
-    .. autoattribute:: args
-
-    .. autoattribute:: values
-
-    .. autoattribute:: errors
-
-    .. autoattribute:: fitarg
-
-    .. autoattribute:: merrors
-
-    .. autoattribute:: fval
-
-    .. autoattribute:: edm
-
-    .. autoattribute:: covariance
-
-    .. autoattribute:: gcc
-
-    .. autoattribute:: errordef
-
-    .. autoattribute:: tol
-
+    .. automethod:: from_array_func
 
 minimize
 --------
@@ -90,8 +60,10 @@ on them in your code. We list the ones that are for the public.
 .. automodule:: iminuit.util
     :members:
     :undoc-members:
-    :exclude-members: arguments_from_docstring, true_param, param_name,
-        extract_iv, extract_error, extract_fix, extract_limit
+    :exclude-members: arguments_from_docstring, arguments_from_funccode,
+        arguments_from_call_funccode, true_param, param_name,
+        extract_iv, extract_error, extract_fix, extract_limit,
+        remove_var, format_exception
 
 
 Data objects
@@ -223,12 +195,12 @@ Function Signature Extraction Ordering
     1. Using ``f.func_code.co_varnames``, ``f.func_code.co_argcount``
        All functions that are defined like::
 
-        def f(x,y):
-            return (x-2)**2+(y-3)**2
+        def f(x, y):
+            return (x - 2) ** 2 + (y - 3) ** 2
 
        or::
 
-        f = lambda x,y: (x-2)**2+(y-3)**2
+        f = lambda x, y: (x - 2) ** 2 + (y - 3) ** 2
 
        Have these two attributes.
 
@@ -236,14 +208,19 @@ Function Signature Extraction Ordering
        Minuit knows how to skip the `self` parameter. This allow you to do
        things like encapsulate your data with in a fitting algorithm::
 
-        class MyChi2:
-            def __init__(self, x, y):
-                self.x, self.y = (x,y)
-            def f(self, x, m, c):
-                return m*x + c
-            def __call__(self,m,c):
-                return sum([(self.f(x,m,c)-y)**2
-                           for x,y in zip(self.x ,self.y)])
+        class MyLeastSquares:
+            def __init__(self, data_x, data_y, data_yerr):
+                self.x = data_x
+                self.y = data_y
+                self.ye = data_yerr
+
+            def __call__(self, a, b):
+                result = 0.0
+                for x, y, ye in zip(self.x, self.y, self.ye):
+                    y_predicted = a * x + b
+                    residual = (y - y_predicted) / ye
+                    result += residual ** 2
+                return result
 
     3. If all fails, Minuit will try to read the function signature from the
        docstring to get function signature.
@@ -259,6 +236,4 @@ Function Signature Extraction Ordering
 
     .. note::
 
-        If you are unsure what minuit will parse your function signature as
-        , you can use :func:`describe` which returns tuple of argument names
-        minuit will use as call signature.
+        If you are unsure what iminuit will parse your function signature, you can use :func:`describe` to check which argument names are detected.

@@ -5,6 +5,50 @@
 Changelog
 =========
 
+1.3.9
+-----
+
+Bug-fixes
+~~~~~~~~~
+- `draw_contour` now accepts an integer for `bound` keyword as advertised in the docs
+- fixed wrong EDM goal in iminuit reports, was off by factor 5 in some
+
+Interface
+~~~~~~~~~
+- removed the undocumented keyword "args" in `(draw_)contour`, `(draw_)profile`
+- removed misleading "show_sigma" keyword in `draw_contour`
+- deprecated `Minuit.is_fixed`, replaced by `.fixed` attribute
+- deprecated `Minuit.set_strategy`, assign to `Minuit.strategy` instead
+- deprecated `Minuit.set_errordef`, assign to `Minuit.errordef` instead
+- deprecated `Minuit.set_print_level`, assign to `Minuit.print_level` instead
+- deprecated `Minuit.print_fmin`, `Minuit.print_matrix`, `Minuit.print_param`, `Minuit.print_initial_param`, `Minuit.print_all_minos`; use print() on the respective objects instead
+
+Implementation
+~~~~~~~~~~~~~~
+- improved style of draw_contour, draw more contour lines
+- increased default resolution for curves produced by `(draw_)mncontour`, `(draw_)contour`
+- switched from internal copy of Minuit2 to including Minuit2 repository from GooFit
+- build improvements for windows/msvc
+- updated Minuit2 code to ROOT-v6.15/01 (compiler with C++11 support is now required to build iminuit)
+- @henryiii added support for building Python-3.8 wheels
+
+Documentation
+~~~~~~~~~~~~~
+- added iminuit logo
+- added benchmark section
+- expanded FAQ section
+- updated basic tutorial to show how parameter values can be fixed and released
+- added tutorial about combining iminuit with automatic differentiation
+- clarified the difference between `profile` and `mnprofile`, `contour` and `mncontour`
+- fixed broken URLs for external documents
+- many small documentation improvements to increase consistency
+
+1.3.8
+-----
+- fixed internal plotting when Minuit.from_array_func is used
+- documentation updates
+- reproduceable build
+
 1.3.7
 -----
 - fixed wheels support

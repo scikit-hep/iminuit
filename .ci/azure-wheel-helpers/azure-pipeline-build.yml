@@ -1,22 +1,35 @@
+# Copyright (c) 2019, Henry Schreiner.
+#
+# Distributed under the 3-clause BSD license, see accompanying file LICENSE
+# or https://github.com/scikit-hep/azure-wheel-helpers for details.
+
 # Template - you must copy (or symlink) this to your .ci folder
 # Packages usually will have a little custom code in here, and
 # can override any of the templates from here, as well
 
-
+# Builds can always be triggered in the GUI.
 trigger:
-  tags:
+  branches:
     include:
-    - v*
+      - 'refs/tags/*'
 
-pr:
-- master
+pr: none
+
+# For a master-develop workflow:
+# pr:
+#   - master
+# trigger:
+#   - master
 
 
-# variables:
-# Required variables:
-#   package_name:     This is the output name, - is replaced by _
-# Optional variables:
-#   many_linux_base:  Should be quay.io/pypa/manylinux1_ or skhep/manylinuxgcc-
+
+# You must set the package name here. Optionally change the other variables.
+variables:
+  package_name:
+  many_linux_base: quay.io/pypa/manylinux1_
+  dev_requirements_file: .ci/azure-wheel-helpers/empty-requirements.txt
+  test_requirements_file: .ci/azure-wheel-helpers/empty-requirements.txt
+
 
 jobs:
 
@@ -26,10 +39,15 @@ jobs:
   variables:
     python.architecture: 'none'
   steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
     - script: |
+        python -m pip install --upgrade pip
         python -m pip install setuptools
-        python setup.py sdist
-      displayName: Publish sdist
+      displayName: Install sdist deps
+    - script: python setup.py sdist
+      displayName: Prepare sdist
     - template: azure-wheel-helpers/azure-publish-dist.yml
 
 - job: ManyLinux
@@ -67,6 +85,8 @@ jobs:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+      Python38:
+        python.version: '3.8'
   pool:
     vmImage: 'macOS-latest'
   steps:
@@ -87,6 +107,9 @@ jobs:
       Python37:
         python.version: '3.7'
         python.architecture: 'x64'
+      Python38:
+        python.version: '3.8'
+        python.architecture: 'x64'
       Python27_32:
         python.version: '2.7'
         python.architecture: 'x86'
@@ -96,8 +119,11 @@ jobs:
       Python37_32:
         python.version: '3.7'
         python.architecture: 'x86'
+      Python38_32:
+        python.version: '3.8'
+        python.architecture: 'x86'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-latest'
   steps:
     - template: azure-wheel-helpers/azure-setup.yml
     - template: azure-wheel-helpers/azure-steps.yml

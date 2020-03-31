@@ -4,12 +4,14 @@ gammapy
 probfit
 iminuit-dev
 
+__pycache__
 *.pyxbldc
 *.root
 *.so
 *.html
 *.pyc
 *.o
+*.pkl
 
 build
 _build

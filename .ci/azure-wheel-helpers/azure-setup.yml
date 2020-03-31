@@ -1,3 +1,8 @@
+# Copyright (c) 2019, Henry Schreiner.
+#
+# Distributed under the 3-clause BSD license, see accompanying file LICENSE
+# or https://github.com/scikit-hep/azure-wheel-helpers for details.
+
 # This is special for macOS because "UsePythonVersion"
 # does not use the official Python.org installers.
 
@@ -18,6 +23,6 @@ steps:
     mkdir -p dist
     python -m pip install --upgrade pip
     python -m pip install --upgrade pytest wheel twine setuptools
-    python -m pip install -r .ci/requirements-build.txt
+    python -m pip install -r $(dev_requirements_file)
   displayName: 'Install dependencies'
 

@@ -14,7 +14,7 @@ class Gradient:
         self._steps = steps
 
     @classmethod
-    @deprecated("use Gradient(...).__call__(...)")
+    @deprecated("use Gradient(...)(...)")
     def color_for(
         cls, v, min=0.0, max=1.0, startcolor=(163, 254, 186), stopcolor=(255, 118, 118)
     ):  # pragma: no cover
@@ -46,15 +46,3 @@ class Gradient:
 
     def rgb(self, v):
         return "rgb(%.0f,%.0f,%.0f)" % self(v)
-
-    @classmethod
-    @deprecated("no replacement")
-    def xcolor_for(cls, v):  # pragma: no cover
-        c = cls.color_for(v)
-        return "[rgb]{%3.2f,%3.2f,%3.2f}" % (c[0] / 255.0, c[1] / 255.0, c[2] / 255.0)
-
-    @classmethod
-    @deprecated("use Gradient(...).rgb(...)")
-    def rgb_color_for(cls, v):  # pragma: no cover
-        c = cls.color_for(v)
-        return "rgb(%d,%d,%d)" % c

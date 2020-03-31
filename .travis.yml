@@ -17,7 +17,8 @@ matrix:
     - name: "3.7: test, doc, coverage"
       python: 3.7
       install:
-        pip install --upgrade cython numpy pytest matplotlib scipy ipython sphinx sphinx_rtd_theme jupyter pytest-cov codecov
+        - pip install --upgrade -r requirements-dev.txt
+        - pip install codecov
       script:
         COVERAGE=1 make cov &&
         make test-notebooks &&

@@ -13,7 +13,7 @@ Recommended BibTeX entries for the above citations are (you need to include the 
 
 @ARTICLE{1975CoPhC..10..343J,
    author = {{James}, F. and {Roos}, M.},
-    title = "{Minuit -- a system for function minimization and analysis of the parameter errors and correlations}",
+    title = "{Minuit -- A System for Function Minimization and Analysis of the Parameter Errors and Correlations}",
   journal = {Computer Physics Communications},
      year = 1975,
     month = dec,

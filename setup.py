@@ -16,29 +16,25 @@ import distutils.ccompiler
 needs_pytest = {"pytest", "test", "ptr"}.intersection(sys.argv)
 pytest_runner = ["pytest-runner"] if needs_pytest else []
 
+coverage_flag = ["--coverage"] if bool(os.environ.get("COVERAGE", False)) else []
+darwin_flag = ["-stdlib=libc++"] if platform.system() == "Darwin" else []
+
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
 compiler_opts = {
     CCompiler: {},
     UnixCCompiler: {
         "extra_compile_args": [
+            "-std=c++11",
             "-Wno-shorten-64-to-32",
             "-Wno-parentheses",
             "-Wno-unused-variable",
             "-Wno-sign-compare",
             "-Wno-cpp",  # suppresses #warnings from numpy
-            "-Wno-deprecated-declarations",  # suppresses warnings about auto_ptr
         ]
-        + ["--coverage"]
-        if bool(os.environ.get("COVERAGE", False))
-        else [] + ["-stdlib=libc++"]
-        if platform.system() == "Darwin"
-        else [],
-        "extra_link_args": ["--coverage"]
-        if bool(os.environ.get("COVERAGE", False))
-        else [] + ["-stdlib=libc++"]
-        if platform.system() == "Darwin"
-        else [],
+        + coverage_flag
+        + darwin_flag,
+        "extra_link_args": coverage_flag + darwin_flag,
     },
     MSVCCompiler: {"extra_compile_args": ["/EHsc"]},
 }
@@ -71,6 +67,8 @@ def lazy_compile(
     macros, objects, extra_postargs, pp_opts, build = self._setup_compile(
         output_dir, macros, include_dirs, sources, depends, extra_postargs
     )
+
+    pp_opts += compiler_opts.get(self, {}).get("extra_compile_args", [])
     cc_args = self._get_cc_args(pp_opts, debug, extra_preargs)
 
     for obj in objects:
@@ -88,22 +86,20 @@ distutils.ccompiler.CCompiler.compile = lazy_compile
 
 # Static linking
 cwd = dirname(__file__)
-minuit_src = glob(join(cwd, "Minuit/src/*.cxx"))
-minuit_header = [join(cwd, "Minuit/inc")]
 
 # We follow the recommendation how to distribute Cython modules:
 # http://docs.cython.org/src/reference/compilation.html#distributing-cython-modules
 try:
     from Cython.Build import cythonize
 
-    USE_CYTHON = True  # TODO: add command line option?
+    USE_CYTHON = True
 except ImportError:
     USE_CYTHON = False
     if exists("iminuit/_libiminuit.cpp"):
         print("Cython is not available ... using pre-generated cpp file.")
     else:
         raise SystemExit(
-            "Looks like you are installing iminuit from github. "
+            "Looks like you are compiling iminuit from sources. "
             "This requires Cython. Run\n\n"
             "   pip install cython\n\n"
             "for a system-wide installation, or\n\n"
@@ -120,11 +116,21 @@ try:
 except ImportError:
     numpy_header = []
 
+minuit2_cxx = [
+    join(cwd, "extern/Minuit2/src", x) + ".cxx"
+    for x in open(join(cwd, "minuit2_cxx.lst"), "r").read().split("\n")
+    if x
+]
+
 libiminuit = Extension(
     "iminuit._libiminuit",
-    sources=sorted(glob(join(cwd, "iminuit/*" + ext)) + minuit_src),
-    include_dirs=minuit_header + numpy_header,
-    define_macros=[("WARNINGMSG", "1")],
+    sources=sorted(glob(join(cwd, "iminuit/*" + ext)) + minuit2_cxx),
+    include_dirs=[join(cwd, "extern/Minuit2/inc")] + numpy_header,
+    define_macros=[
+        ("WARNINGMSG", "1"),
+        ("ROOT_Math_VecTypes", "1"),
+        ("MATH_NO_PLUGIN_MANAGER", "1"),
+    ],
 )
 extensions = [libiminuit]
 
@@ -148,9 +154,9 @@ with open(join(cwd, "README.rst")) as readme_rst:
 setup(
     name="iminuit",
     version=__version__,
-    description="MINUIT2 from Python - Fitting like a boss",
+    description="Jupyter-friendly Python frontend for MINUIT2 in C++",
     long_description=long_description,
-    author="Piti Ongmongkolkul and others",
+    author="Piti Ongmongkolkul and the iminuit team",
     maintainer="Hans Dembinski",
     maintainer_email="hans.dembinski@gmail.com",
     url="https://github.com/scikit-hep/iminuit",
@@ -166,10 +172,10 @@ setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: C++",
         "Programming Language :: Cython",
         "Programming Language :: Python :: Implementation :: CPython",

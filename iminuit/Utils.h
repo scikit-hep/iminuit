@@ -7,6 +7,9 @@
 #include <algorithm>
 #include "Minuit2/MnApplication.h"
 #include "Minuit2/FunctionMinimum.h"
+#include "Minuit2/MinosError.h"
+#include "Minuit2/MnContours.h"
+#include "Minuit2/ContoursError.h"
 #include <Python.h>
 
 //missing string printf
@@ -32,6 +35,19 @@ inline std::string format(const char* fmt, ...){
 inline ROOT::Minuit2::FunctionMinimum* call_mnapplication_wrapper(
         ROOT::Minuit2::MnApplication& app, unsigned int i, double tol){
     return new ROOT::Minuit2::FunctionMinimum(app(i, tol));
+}
+
+struct MinosErrorHolder {
+  ROOT::Minuit2::MinosError x, y;
+  std::vector<std::pair<double, double> > points;
+};
+
+inline MinosErrorHolder get_minos_error(
+  ROOT::Minuit2::FCNBase& fcn, const ROOT::Minuit2::FunctionMinimum& min, unsigned stra, unsigned ix, unsigned iy, unsigned npoints
+) {
+  ROOT::Minuit2::MnContours mnc(fcn, min, stra);
+  ROOT::Minuit2::ContoursError ce = mnc.Contour(ix, iy, npoints);
+  return MinosErrorHolder{ce.XMinosError(), ce.YMinosError(), ce()};
 }
 
 // Helper to enable scoped ref-counting, which greatly simplifies the code
@@ -61,7 +77,7 @@ public:
     }
     operator PyObject* () { return ptr; }
     PyObject** operator&() { return &ptr; }
-    operator bool() const { return bool(ptr); }
+    operator bool() const { return ptr != nullptr; }
 private:
     PyObject* ptr;
 };

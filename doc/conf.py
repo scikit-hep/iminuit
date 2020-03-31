@@ -70,7 +70,7 @@ master_doc = "index"
 
 # General information about the project.
 project = u"iminuit"
-copyright = u"2012, Piti Ongmongkolkul"
+copyright = u"2020, Piti Ongmongkolkul and the iminuit team"
 
 
 import iminuit.info

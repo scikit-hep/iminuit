@@ -1,5 +1,3 @@
-shallow_clone: true
-
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
 
@@ -8,19 +6,21 @@ branches:
   only:
     - develop
 
+image:
+  - Visual Studio 2015
+
 environment:
   matrix:
-    - PYTHON: C:\Python27-x64
-      PYTHON_VERSION: 2.7
-      PYTHON_ARCH: 64
+    ## does not work with C++11
+    # - PYTHON: C:\Python27-x64
+    #   PYTHON_VERSION: 2.7
+    #   PYTHON_ARCH: 64
 
     - PYTHON: C:\Python36-x64
       PYTHON_VERSION: 3.6
       PYTHON_ARCH: 64
 
 init:
-  - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
-  - "ECHO \"%APPVEYOR_SCHEDULED_BUILD%\""
   # If there is a newer build queued for the same PR, cancel this one.
   # The AppVeyor 'rollout builds' option is supposed to serve the same
   # purpose but it is problematic because it tends to cancel builds pushed
@@ -33,6 +33,8 @@ init:
         }
 
 install:
+  - git submodule update --init --recursive
+
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
   # the parent CMD process).
@@ -46,10 +48,10 @@ install:
      print(sys.platform, platform.machine(), struct.calcsize('P') * 8, )"
 
   # Upgrade to the latest pip.
-  - 'python -m pip install --upgrade pip setuptools'
+  - python -m pip install --upgrade pip setuptools
 
   # Install the test dependencies.
-  - 'pip install --upgrade --timeout 5 --retries 2 cython numpy matplotlib pytest'
+  - pip install --upgrade --timeout 5 --retries 2 cython numpy matplotlib pytest
 
 build_script:
   - python setup.py build_ext --inplace

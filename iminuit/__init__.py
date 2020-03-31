@@ -1,5 +1,4 @@
-"""
-MINUIT2 from Python
+"""MINUIT2 from Python.
 
 Basic usage example::
 
