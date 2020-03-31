@@ -55,4 +55,3 @@ def test_drawcontour(m):
     m.draw_contour("x", "y")
     m.draw_contour("x", "x", bins=20, bound=2)
     m.draw_contour("x", "x", bins=20, bound=((-10, 10), (-10, 10)))
-    m.draw_contour("x", "y", show_sigma=True)
