@@ -7,13 +7,23 @@ Tutorials
 
 All the tutorials are in tutorial directory. You can view them online too:
 
-- `Basic tutorial <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/basic_tutorial.ipynb>`_.
-  Covers the basics of using iminuit.
+`Basic tutorial <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/basic_tutorial.ipynb>`_
+---------------------------------------------------------------------------------------------------------------------------------
+
+Covers the basics of using iminuit.
+
+`iminuit and automatic differentiation with JAX <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/automatic_differentiation.ipynb>`_
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+How to compute function gradients for iminuit with jax_ and accelerate Python code with JAX's JIT compiler. Spoiler: a **32x** speed up over plain numpy is achieved. Also discusses how to do a least-squares fit with data that has uncertainties in *x* and *y*.
+
+Outdated Cython tutorials
+-------------------------
+
+The following two tutorials are outdated. Users who want to speed up their fits should try the just-in-time compilers provided by numba_ or jax_ in CPython or use iminuit in PyPy to accelerate the computation. This is much simpler than using Cython and may achieve even better performance.
+
 - `Advanced tutorial <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/advanced_tutorial.ipynb>`_.
-  The advanced tutorial shows you how to speed up the computation of the
-  objective function with Cython and how to write wrapper classes that work
-  with iminuits parameter name discovery.
+  Shows how to speed up the computation of the cost function with Cython.
+
 - `Hard Core Cython tutorial <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/hard_core_tutorial.ipynb>`_.
-  If you need to do a huge likelihood fit that needs speed, this is for you.
-  If you don't care, just use `probfit`_.
-  It's a fun read though I think.
+  Goes into more detail on how to use Cython.
