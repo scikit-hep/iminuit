@@ -44,7 +44,7 @@ What happens when I change the strategy?
 
 See page 5 of the MINUIT2 user guide for a rough explanation what this does. Here is our detailed explanation, extracted from looking into the source code and doing benchmarks.
 
-* strategy = 0 is the fastest and the number of function calls required to minimize scales linearly with the number of fitted parameters. The Hesse matrix is not computed during the minimization (only an approximation that is continously updated). When the number of fitted parameters > 10, you should prefer this strategy. 
+* strategy = 0 is the fastest and the number of function calls required to minimize scales linearly with the number of fitted parameters. The Hesse matrix is not computed during the minimization (only an approximation that is continously updated). When the number of fitted parameters > 10, you should prefer this strategy.
 * strategy = 1 (default) is medium in speed. The number of function calls required scales quadratically with the number of fitted parameters. The different scales comes from the fact that the Hesse matrix is explicitly computed in a Newton step, if Minuit detects significant correlations between parameters.
 * strategy = 2 has the same quadratic scaling as strategy 1 but is even slower. The Hesse matrix is always explicitly computed in each Newton step.
 

@@ -235,7 +235,7 @@ cdef class Minuit:
         """FCN increment above the minimum that corresponds to one standard deviation.
 
         Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
-        function and 0.5 for negative log-likelihood function. See page 37 of 
+        function and 0.5 for negative log-likelihood function. See page 37 of
         http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called
         ``UP`` in the MINUIT docs.
 
@@ -284,7 +284,7 @@ cdef class Minuit:
     MINUIT, convergence is **slower**.
 
     **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
-    minimization. The effect in benchmarks is a somewhat improved accuracy at the cost 
+    minimization. The effect in benchmarks is a somewhat improved accuracy at the cost
     of more function evaluations. A similar effect can be achieved by reducing the
     tolerance attr:`tol` for convergence at any strategy level.
     """
@@ -888,10 +888,10 @@ cdef class Minuit:
 
         MINOS uses the profile likelihood method to compute (asymmetric)
         confidence intervals. It scans the negative log-likelihood or
-        (equivalently) the least-squares cost function around the minimum 
+        (equivalently) the least-squares cost function around the minimum
         to construct an asymmetric confidence interval. This interval may
         be more reasonable when a parameter is close to one of its
-        parameter limits. As a rule-of-thumb: when the confidence intervals 
+        parameter limits. As a rule-of-thumb: when the confidence intervals
         computed with HESSE and MINOS differ strongly, the MINOS intervals
         are to be preferred. Otherwise, HESSE intervals are preferred.
 
@@ -1315,7 +1315,7 @@ cdef class Minuit:
         .. seealso::
 
             :meth:`mnprofile`
-        """        
+        """
         if "args" in kwargs:
             warn("The args keyword has been removed.",
                  DeprecationWarning,
@@ -1343,7 +1343,7 @@ cdef class Minuit:
 
         A 1D scan of the cost function around the minimum, useful to inspect the
         minimum and the FCN around the minimum for defects.
-        
+
         For a fit with several free parameters this is not the same as the MINOS
         profile computed by :meth:`draw_mncontour`. Use :meth:`mnprofile` or
         :meth:`draw_mnprofile` to compute confidence intervals.
@@ -1370,7 +1370,7 @@ cdef class Minuit:
             :meth:`draw_mnprofile`
             :meth:`profile`
         """
-        
+
         if "args" in kwargs:
             warn("The args keyword has been removed.",
                  DeprecationWarning,
@@ -1388,10 +1388,10 @@ cdef class Minuit:
 
         Return the contour of a function scan over **x** and **y**, while keeping
         all other parameters fixed.
-        
+
         The related :meth:`mncontour` works differently: for new pair of **x** and **y**
         in the scan, it minimises the function with the respect to the other parameters.
-        
+
         This method is useful to inspect the function near the minimum to detect issues
         (the contours should look smooth). Use :meth:`mncontour` to create confidence
         regions for the parameters. If the fit has only two free parameters, you can
@@ -1484,7 +1484,7 @@ cdef class Minuit:
 
         This scans over **x** and **y** and minimises all other free
         parameters in each scan point. This works as if **x** and **y** are
-        fixed, while the other parameters are minimised by MIGRAD. 
+        fixed, while the other parameters are minimised by MIGRAD.
 
         This scan produces a statistical confidence region with the `profile
         likelihood method <https://en.wikipedia.org/wiki/Likelihood_function#Profile_likelihood>`_.
@@ -1492,7 +1492,7 @@ cdef class Minuit:
         function passes the threshold that corresponds to `sigma` standard
         deviations (note that 1 standard deviations in two dimensions has a
         smaller coverage probability than 68 %).
-        
+
         The calculation is expensive since it has to run MIGRAD at various
         points.
 
