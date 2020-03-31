@@ -77,19 +77,3 @@ integration:
 	@echo "Warning: If integration tests fail, add new tests of corrupted interface to iminuit."
 	@echo
 	.ci/gammapy_integration_test.sh && .ci/probfit_integration_test.sh
-
-release: sdist
-	pip install --upgrade twine
-	@echo ""
-	@echo "Release checklist:"
-	@echo "[ ] Integration tests ok 'make integration'"
-	@echo "[ ] Increase version number in iminuit/info.py"
-	@echo "[ ] Update doc/changelog.rst"
-	@echo "[ ] Tag release on Github"
-	@echo ""
-	@echo "Upload to TestPyPI:"
-	@echo "twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
-	@echo ""
-	@echo "Upload to PyPI:"
-	@echo "twine upload dist/*"
-	@echo ""
