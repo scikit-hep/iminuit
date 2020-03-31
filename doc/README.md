@@ -11,5 +11,9 @@ How to make a release
 - update doc/changelog.rst
 - check that new tutorials are list in the tutorials section of the docs
 - run `make integration` to do integration tests (if these fail, add tests to iminuit!)
-- deploy binaries to PyPI with Azure
-- tag release on Github
+- run `.ci/download_azure_artifacts.py` to download all wheels from the latest pipeline
+- run `python -m twine upload dist/*` if everything looks ok
+  (missing files can be uploaded later, but existing files cannot be overridden!)
+- merge release branch to master (do not squash!)
+- create release on Github
+- conda-forge should pick this up automatically and generate conda packages
