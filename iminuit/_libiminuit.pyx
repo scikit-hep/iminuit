@@ -150,15 +150,29 @@ cdef class ArgsView:
     def __len__(self):
         return len(self._minuit.pos2var)
 
-    def __getitem__(self, int i):
-        if i < 0 or i >= len(self):
+    def __getitem__(self, key):
+        cdef int i
+        if isinstance(key, slice):
+            return [self._state.Parameter(i).Value() for i in range(len(self))[key]]
+        i = key
+        if i < 0:
+            i += len(self)
+        if i >= len(self):
             raise IndexError
         return self._state.Parameter(i).Value()
 
-    def __setitem__(self, int i, double value):
-        if i < 0 or i >= len(self):
-            raise IndexError
-        self._state.SetValue(i, value)
+    def __setitem__(self, key, value):
+        cdef int i
+        if isinstance(key, slice):
+            for i, v in zip(range(len(self))[key], value):
+                self._state.SetValue(i, v)
+        else:
+            i = key
+            if i < 0:
+                i += len(self)
+            if i >= len(self):
+                raise IndexError
+            self._state.SetValue(i, value)
 
     def __repr__(self):
         s = "<ArgsView of Minuit at %x>" % id(self._minuit)

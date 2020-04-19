@@ -671,9 +671,21 @@ class TestOutputInterface:
         self.m.minos()
 
     def test_args(self):
-        actual = self.m.args
+        expected = [2.0, 5.0]
+        assert_allclose(self.m.args, expected, atol=1e-8)
+        self.m.args[:] = [1, 2]
+        assert_allclose(self.m.args, [1, 2])
+        assert_allclose(self.m.args[0], 1)
+        assert_allclose(self.m.args[-1], 2)
+        assert_allclose(self.m.args[1:], [2])
+        assert_allclose(self.m.args[:-1], [1])
+
+    def test_values(self):
+        actual = self.m.values.values()
         expected = [2.0, 5.0]
         assert_allclose(actual, expected, atol=1e-8)
+        assert_allclose(self.m.values[0], 2, atol=1e-8)
+        assert_allclose(self.m.values[1], 5, atol=1e-8)
 
     def test_matrix(self):
         actual = self.m.matrix()
