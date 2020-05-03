@@ -18,6 +18,8 @@
 .. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
    :target: https://iminuit.readthedocs.io/en/develop/?badge=latest
    :alt: Documentation Status
+.. image:: https://mybinder.org/badge_logo.svg
+  :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=tutorial
 
 .. skip-marker-do-not-remove
 
