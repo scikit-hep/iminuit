@@ -26,7 +26,7 @@ To hack on `iminuit`, start by cloning the repository from `Github`_:
 
 .. code-block:: bash
 
-    git clone https://github.com/scikit-hep/iminuit.git
+    git clone --recursive https://github.com/scikit-hep/iminuit.git
     cd iminuit
 
 It is a good idea to develop your feature in a separate branch, so that your develop branch remains clean and can follow our develop branch.
