@@ -166,7 +166,6 @@ setup(
     ext_modules=extensions,
     install_requires=["numpy>=1.11.3"],
     setup_requires=[] + pytest_runner,
-    extras_require={"tests": ["pytest", "cython", "matplotlib", "scipy"]},
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",

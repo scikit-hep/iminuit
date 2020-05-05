@@ -21,7 +21,6 @@ matrix:
         - pip install codecov
       script:
         COVERAGE=1 make cov &&
-        make test-notebooks &&
         make doc &&
         codecov
 
@@ -29,7 +28,7 @@ matrix:
       os: osx
       language: sh
       install:
-        pip install --user --upgrade cython numpy pytest matplotlib scipy
+        pip install --user --upgrade -r .ci/requirements-test.txt
       script:
         make test
 
