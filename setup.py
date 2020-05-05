@@ -116,8 +116,21 @@ try:
 except ImportError:
     numpy_header = []
 
+
+# Install missing Minuit2 submodule as needed
+if not os.listdir(join(cwd, "extern", "Minuit2")):
+    try:
+        import subprocess as subp
+
+        print("Minuit2 submodule is missing, attempting download...")
+        subp.check_call(["git", "submodule", "update"])
+    except:
+        raise SystemExit(
+            "Could not download Minuit2 submodule, run `git submodule update` manually"
+        )
+
 minuit2_cxx = [
-    join(cwd, "extern/Minuit2/src", x) + ".cxx"
+    join(cwd, "extern", "Minuit2", "src", x) + ".cxx"
     for x in open(join(cwd, "minuit2_cxx.lst"), "r").read().split("\n")
     if x
 ]
