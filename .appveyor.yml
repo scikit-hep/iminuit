@@ -51,13 +51,13 @@ install:
   - python -m pip install --upgrade pip setuptools
 
   # Install the test dependencies.
-  - pip install --upgrade --timeout 5 --retries 2 .ci/requirements-test.txt
+  - python -m pip install --upgrade --timeout 5 --retries 2 .ci\requirements-test.txt
 
 build_script:
   - python setup.py build_ext --inplace
 
 test_script:
-  - python -m pytest -v iminuit
+  - python -m pytest -v
 
 after_build:
   # Remove old or huge cache files to hopefully not exceed the 1GB cache limit.
