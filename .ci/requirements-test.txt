@@ -3,11 +3,6 @@ numpy==1.17.3; python_version>="3.5"
 
 scipy
 matplotlib
-nbconvert
-nbformat
-jax
-jaxlib
-jupyter_client
 cython
 
 pytest
