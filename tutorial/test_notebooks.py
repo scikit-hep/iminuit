@@ -18,5 +18,5 @@ class Processor(ExecutePreprocessor):
 def test_notebook(filename):
     with open(filename) as f:
         nb = nbformat.read(f, as_version=4)
-        ep = Processor(timeout=1000, kernel_name="myenv")
+        ep = Processor(timeout=1000)
         ep.preprocess(nb, {})
