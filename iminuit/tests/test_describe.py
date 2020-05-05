@@ -117,29 +117,3 @@ def test_generic_functor_with_fake_func():
             return a + b
 
     assert describe(A(), True) == ["x", "y"]
-
-
-# @requires_dependency("Cython", "pyximport", "cyfunc")
-# def test_cython_embedsig():
-#     with warnings.catch_warnings():
-#         warnings.simplefilter("ignore")
-#         import pyximport
-#
-#         pyximport.install()
-#         from . import cyfunc
-#
-#     assert describe(cyfunc.f, True) == ["a", "b"]
-#
-#
-# @requires_dependency("Cython", "pyximport", "cyfunc")
-# @pytest.mark.skipif(is_pypy, reason="Does not work in PyPy")
-# def test_cython_class_method():
-#     with warnings.catch_warnings():
-#         warnings.simplefilter("ignore")
-#         import pyximport
-#
-#         pyximport.install()
-#         from . import cyfunc
-#
-#     cc = cyfunc.CyCallable()
-#     assert describe(cc.test, True) == ["c", "d"]
