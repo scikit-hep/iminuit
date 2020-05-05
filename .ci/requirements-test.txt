@@ -1,6 +1,12 @@
 numpy==1.16.4; python_version<"3.5"
 numpy==1.17.3; python_version>="3.5"
+
 scipy
+matplotlib
+nbconvert
+nbformat
+jax
+jaxlib
 
 pytest
 pytest-cov
