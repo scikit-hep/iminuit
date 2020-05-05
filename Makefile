@@ -39,7 +39,7 @@ iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi)
 	$(PYTHON) setup.py build_ext --inplace
 
 test: build
-	$(PYTHON) -m pytest iminuit
+	$(PYTHON) -m pytest
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
