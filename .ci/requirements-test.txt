@@ -8,6 +8,7 @@ nbformat
 jax
 jaxlib
 jupyter_client
+cython
 
 pytest
 pytest-cov
