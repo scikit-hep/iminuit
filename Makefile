@@ -14,7 +14,6 @@ help:
 	@echo '     build            Build inplace (the default)'
 	@echo '     clean            Remove all generated files'
 	@echo '     test             Run tests'
-	@echo '     test-notebooks   Run notebook tests'
 	@echo '     cov              Run tests and write coverage report'
 	@echo '     doc              Run Sphinx to generate HTML docs'
 	@echo ''
@@ -40,10 +39,7 @@ iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi)
 	$(PYTHON) setup.py build_ext --inplace
 
 test: build
-	$(PYTHON) -m pytest iminuit
-
-test-notebooks: build
-	$(PYTHON) test_notebooks.py
+	$(PYTHON) -m pytest
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
