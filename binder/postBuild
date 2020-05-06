@@ -1,2 +1,2 @@
-python -m pip install --upgrade -r requirements-dev.txt
+python -m pip install --upgrade numpy cython scipy matplotlib ipython jupyter jax jaxlib
 python -m pip install .
