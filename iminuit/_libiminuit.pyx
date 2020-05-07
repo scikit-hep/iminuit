@@ -314,14 +314,20 @@ cdef class Minuit:
         """Current print level.
 
         - 0: quiet
-        - 1: info messages after minimization
+        - 1: messages after minimization
         - 2: debug messages during minimization
+        - 3: more debug messages
+
+        Note: Setting the level to 3 has a global side effect on all current instances of Minuit (this is an issue in C++ MINUIT2).
         """
         return self._print_level
 
     @print_level.setter
     def print_level(self, value):
         self._print_level = value
+        if value >= 3 or value < MnPrint.Level():
+            warn("Setting print_level >=3 has the side-effect of setting the level globally for all Minuit instances")
+            MnPrint.SetLevel(value)
         if self.minimizer:
             self.minimizer.Minimizer().Builder().SetPrintLevel(value)
 
@@ -931,10 +937,8 @@ cdef class Minuit:
         if self.cfmin is NULL:
             raise RuntimeError('MINOS require function to be at the minimum.'
                                ' Run MIGRAD first.')
-        cdef unsigned int index = 0
         cdef MnMinos*minos = NULL
         cdef MinosError mnerror
-        cdef char*name = NULL
         cdef double oldup = self.pyfcn.Up()
         self.pyfcn.SetErrorDef(oldup * sigma * sigma)
         if not self.cfmin.IsValid():
@@ -948,8 +952,6 @@ cdef class Minuit:
 
         fixed_param = self.list_of_fixed_param()
         for vname in varlist:
-            index = self.cfmin.UserState().Index(vname)
-
             if vname in fixed_param:
                 if var is not None:  #specifying vname but it's fixed
                     warn(RuntimeWarning(
@@ -966,8 +968,10 @@ cdef class Minuit:
                     deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
                     deref(self.cfmin), self.strategy
                 )
-            mnerror = minos.Minos(index, maxcall)
+
+            mnerror = minos.Minos(self.var2pos[vname], maxcall)
             self.merrors_struct[vname] = minoserror2struct(vname, mnerror)
+
         self.refresh_internal_state()
         del minos
         self.pyfcn.SetErrorDef(oldup)

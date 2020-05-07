@@ -3,6 +3,13 @@
 from libcpp.vector cimport vector
 from libcpp.utility cimport pair
 
+cdef extern from "Minuit2/MnPrint.h":
+    cdef cppclass MnPrint:
+       @staticmethod
+       int SetLevel(int)
+       @staticmethod
+       int Level()
+
 cdef extern from "Minuit2/FCNBase.h":
     cdef cppclass FCNBase:
         double call "operator()"(vector[double] x) except +
