@@ -268,14 +268,6 @@ cdef class Minuit:
     def errordef(self, value):
         self.pyfcn.SetErrorDef(value)
 
-    @deprecated("use :attr:`errordef` instead")
-    def set_errordef(self, value):
-        self.errordef = value
-
-    @deprecated("use :attr:`errordef` instead")
-    def set_up(self, double errordef):
-        self.errordef = errordef
-
     cdef public double tol
     """Tolerance for convergence.
 
@@ -303,10 +295,6 @@ cdef class Minuit:
     tolerance attr:`tol` for convergence at any strategy level.
     """
 
-    @deprecated("use :attr:`strategy` instead")
-    def set_strategy(self, value):
-        self.strategy = value
-
     cdef int _print_level
 
     @property
@@ -323,17 +311,14 @@ cdef class Minuit:
         return self._print_level
 
     @print_level.setter
-    def print_level(self, value):
-        self._print_level = value
-        if value >= 3 or value < MnPrint.Level():
+    def print_level(self, level):
+        if level < 0: level = 0
+        self._print_level = level
+        if level >= 3 or level < MnPrint.Level():
             warn("Setting print_level >=3 has the side-effect of setting the level globally for all Minuit instances")
-            MnPrint.SetLevel(value)
+            MnPrint.SetLevel(level)
         if self.minimizer:
-            self.minimizer.Minimizer().Builder().SetPrintLevel(value)
-
-    @deprecated("use :attr:`print_level` instead")
-    def set_print_level(self, value):
-        self.print_level = value
+            self.minimizer.Minimizer().Builder().SetPrintLevel(level)
 
     cdef readonly bint throw_nan
     """Boolean. Whether to raise runtime error if function evaluate to nan."""
@@ -391,20 +376,11 @@ cdef class Minuit:
     .. seealso:: :meth:`matrix`
     """
 
-    cdef readonly double fval
-    """Last evaluated FCN value
-
-    .. seealso:: :meth:`get_fmin`
-    """
-
     cdef readonly int ncalls
     """Number of FCN call of last MIGRAD / MINOS / HESSE run."""
 
-    cdef readonly double edm
-    """Current estimated distance to minimum.
-
-    .. seealso:: :meth:`get_fmin`
-    """
+    cdef readonly int ngrads
+    """Number of Gradient calls of last MIGRAD / MINOS / HESSE run."""
 
     cdef readonly object merrors
     """Deprecated. Use :meth:`get_merrors` instead."""
@@ -651,9 +627,8 @@ cdef class Minuit:
         self.fixed = FixedView(self)
         self.fixed._state = &self.last_upst
         self.covariance = None
-        self.fval = 0.
         self.ncalls = 0
-        self.edm = 1.
+        self.ngrads = 0
         self.merrors = {}
         self.gcc = None
 
@@ -830,6 +805,9 @@ cdef class Minuit:
         totalcalls = 0
         first = True
 
+        self.ncalls = self.ncalls_total
+        self.ngrads = self.ngrads_total
+
         while first or (not self.cfmin.IsValid() and totalcalls < ncall):
             first = False
             if self.cfmin:  # delete existing
@@ -839,15 +817,15 @@ cdef class Minuit:
             self.last_upst = self.cfmin.UserState()
             totalcalls += ncall_round  #self.cfmin.NFcn()
             if self.print_level > 1 and nsplit != 1:
-                print(self.get_fmin())
+                print(self.fmin)
 
         self.last_upst = self.cfmin.UserState()
         self.refresh_internal_state()
 
         if self.print_level > 0:
-            print(self.get_fmin())
+            print(self.fmin)
 
-        return mutil.MigradResult(self.get_fmin(), self.get_param_states())
+        return mutil.MigradResult(self.fmin, self.params)
 
 
     def hesse(self, unsigned int maxcall=0):
@@ -876,6 +854,9 @@ cdef class Minuit:
 
         cdef MnHesse*hesse = NULL
 
+        self.ncalls = self.ncalls_total
+        self.ngrads = self.ngrads_total
+
         hesse = new MnHesse(self.strategy)
         if self.grad is None:
             self.last_upst = hesse.call(
@@ -895,7 +876,7 @@ cdef class Minuit:
         self.refresh_internal_state()
         del hesse
 
-        return self.get_param_states()
+        return self.params
 
 
     def minos(self, var=None, sigma=1., unsigned int maxcall=0):
@@ -933,6 +914,7 @@ cdef class Minuit:
         if self.cfmin is NULL:
             raise RuntimeError('MINOS require function to be at the minimum.'
                                ' Run MIGRAD first.')
+
         cdef MnMinos*minos = NULL
         cdef MinosError mnerror
         cdef double oldup = self.pyfcn.Up()
@@ -945,8 +927,11 @@ cdef class Minuit:
                                'in parameter list :' % var + str(self.parameters))
 
         varlist = [var] if var is not None else self.parameters
-
         fixed_param = self.list_of_fixed_param()
+        
+        self.ncalls = self.ncalls_total
+        self.ngrads = self.ngrads_total
+
         for vname in varlist:
             if vname in fixed_param:
                 if var is not None:  #specifying vname but it's fixed
@@ -968,6 +953,7 @@ cdef class Minuit:
             mnerror = minos.Minos(self.var2pos[vname], maxcall)
             self.merrors_struct[vname] = minoserror2struct(vname, mnerror)
 
+        
         self.refresh_internal_state()
         del minos
         self.pyfcn.SetErrorDef(oldup)
@@ -1015,10 +1001,6 @@ cdef class Minuit:
         else:
             ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
         return ret
-
-    @deprecated("use `print(this_object.matrix())` instead")
-    def print_matrix(self):
-        print(self.matrix(correlation=True, skip_fixed=True))
 
     def latex_matrix(self):
         """Build :class:`LatexFactory` object with correlation matrix."""
@@ -1099,56 +1081,42 @@ cdef class Minuit:
         """
         return self.np_matrix(correlation=False, skip_fixed=False)
 
-    @deprecated("use :attr:`fixed` instead")
-    def is_fixed(self, vname):
-        return self.fixed[vname]
-
-    @deprecated("use `print(this_object.get_param_states())` instead")
-    def print_param(self, **kwds):
-        print(self.get_param_states())
-
     def latex_param(self):
         """build :class:`iminuit.latex.LatexTable` for current parameter"""
-        params = self.get_param_states()
-        return LatexFactory.build_param_table(params, self.merrors_struct)
-
-    @deprecated("use `print(this_object.get_initial_param_states())` instead")
-    def print_initial_param(self, **kwds):
-        """Print initial parameters"""
-        print(self.get_initial_param_states())
+        return LatexFactory.build_param_table(self.params, self.merrors_struct)
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
         params = self.get_initial_param_states()
         return LatexFactory.build_param_table(params, {})
 
-    @deprecated("use `print(this_object.get_fmin())` instead")
-    def print_fmin(self):
-        if self.cfmin is NULL:
-            raise RuntimeError("Function minimum has not been calculated.")
-        print(self.get_fmin())
-
-    @deprecated("use `print(this_object.get_merrors())` instead")
-    def print_all_minos(self):
-        print(self.merrors_struct)
-
-    def get_fmin(self):
+    @property
+    def fmin(self):
         """Current function minimum data object"""
-        sfmin = None
+        fmin = None
         if self.cfmin is not NULL:
-            sfmin = cfmin2struct(self.cfmin, self.tol, self.get_num_call_fcn())
-        return sfmin
+            fmin = cfmin2struct(self.cfmin, self.tol, self.ncalls_total)
+        return fmin
 
-    # Expose internal state using various structs
+    @property
+    def fval(self):
+        """Last evaluated FCN value
 
-    def get_param_states(self):
+        .. seealso:: :meth:`fmin`
+        """
+        fmin = self.fmin
+        return fmin.fval if fmin else None
+
+    @property
+    def params(self):
         """List of current parameter data objects"""
         up = self.last_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             self.merrors_struct)
 
-    def get_initial_param_states(self):
+    @property
+    def init_params(self):
         """List of current parameter data objects set to the initial fit state"""
         up = self.initial_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
@@ -1159,18 +1127,21 @@ cdef class Minuit:
         """Dictionary of varname -> Minos data object"""
         return self.merrors_struct
 
-    def get_num_call_fcn(self):
+    @property
+    def ncalls_total(self):
         """Total number of calls to FCN (not just the last operation)"""
         cdef IMinuitMixinPtr ptr = dynamic_cast[IMinuitMixinPtr](self.pyfcn)
         return ptr.getNumCall() if ptr else 0
-
-    def get_num_call_grad(self):
+        
+    @property
+    def ngrads_total(self):
         """Total number of calls to Gradient (not just the last operation)"""
         cdef PythonGradientFCNPtr ptr = dynamic_cast[PythonGradientFCNPtr](self.pyfcn)
         return ptr.getNumGrad() if ptr else 0
 
-    def migrad_ok(self):
-        """Check if minimum is valid."""
+    @property
+    def valid(self):
+        """Check if function minimum is valid"""
         return self.cfmin is not NULL and self.cfmin.IsValid()
 
     def matrix_accurate(self):
@@ -1252,8 +1223,8 @@ cdef class Minuit:
                        use_array_call=self.use_array_call,
                        **fitparam)
             m.migrad()
-            migrad_status[i] = m.migrad_ok()
-            if not m.migrad_ok():
+            migrad_status[i] = m.valid
+            if not m.valid:
                 warn('MIGRAD fails to converge for %s=%f' % (vname, v))
             results[i] = m.fval
             if m.fval < vmin:
@@ -1632,9 +1603,8 @@ cdef class Minuit:
                  for j, v2 in enumerate(vary_param)}
         else:
             self.covariance = None
-        self.fval = self.last_upst.Fval()
-        self.ncalls = self.last_upst.NFcn()
-        self.edm = self.last_upst.Edm()
+        self.ncalls = self.ncalls_total - self.ncalls
+        self.ngrads = self.ngrads_total - self.ngrads
         self.gcc = None
         if self.last_upst.HasGlobalCC() and self.last_upst.GlobalCC().IsValid():
             self.gcc = {v: self.last_upst.GlobalCC().GlobalCC()[i] for \
@@ -1644,3 +1614,78 @@ cdef class Minuit:
                         for k, v in self.merrors_struct.items()}
         self.merrors.update({(k, -1.0): v.lower
                              for k, v in self.merrors_struct.items()})
+
+    @property
+    def edm(self):
+        warn(
+             ":attr:`edm` is deprecated: Use `this_object.fmin.edm` instead",
+             category=DeprecationWarning,
+             stacklevel=2,
+        )
+        fmin = self.fmin
+        return fmin.edm if fmin else None
+                             
+    @deprecated("use `this_object.fmin` instead")
+    def get_fmin(self):
+        return self.fmin
+
+    @deprecated("Use `this_object.params` instead")
+    def get_param_states(self):
+        return self.params
+
+    @deprecated("Use `this_object.init_params` instead")
+    def get_initial_param_states(self):
+        return self.init_params
+
+    @deprecated("Use `this_object.ncalls_total` instead")
+    def get_num_call_fcn(self):
+        return self.ncalls_total
+
+    @deprecated("Use `this_object.ngrads_total` instead")
+    def get_num_call_grad(self):
+        return self.ngrads_total
+        
+    @deprecated("use `this_object.fixed` instead")
+    def is_fixed(self, vname):
+        return self.fixed[vname]
+
+    @deprecated("Use `this_object.valid` instead")
+    def migrad_ok(self):
+        return self.valid
+                                        
+    @deprecated("use `print(this_object.matrix())` instead")
+    def print_matrix(self):
+        print(self.matrix(correlation=True, skip_fixed=True))
+
+    @deprecated("use `print(this_object.fmin)` instead")
+    def print_fmin(self):
+        print(self.fmin)
+
+    @deprecated("use `print(this_object.get_merrors())` instead")
+    def print_all_minos(self):
+        print(self.merrors_struct)
+        
+    @deprecated("use `print(this_object.params)` instead")
+    def print_param(self, **kwds):
+        print(self.params)
+
+    @deprecated("use `print(this_object.init_params)` instead")
+    def print_initial_param(self, **kwds):
+        """Print initial parameters"""
+        print(self.get_initial_param_states())
+
+    @deprecated("use `this_object.errordef = value` instead")
+    def set_errordef(self, value):
+        self.errordef = value
+
+    @deprecated("use `this_object.errordef = value` instead")
+    def set_up(self, value):
+        self.errordef = value
+
+    @deprecated("use `this_object.strategy` instead")
+    def set_strategy(self, value):
+        self.strategy = value
+
+    @deprecated("use `this_object.print_level` instead")
+    def set_print_level(self, value):
+        self.print_level = value

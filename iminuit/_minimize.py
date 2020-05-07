@@ -103,10 +103,10 @@ def minimize(
     m.migrad(ncall=maxfev)
 
     message = "Optimization terminated successfully."
-    success = m.migrad_ok()
+    success = m.valid
     if not success:
         message = "Optimization failed."
-        fmin = m.get_fmin()
+        fmin = m.fmin
         if fmin.has_reached_call_limit:
             message += " Call limit was reached."
         if fmin.is_above_max_edm:
@@ -118,7 +118,7 @@ def minimize(
         fun=m.fval,
         hess_inv=m.np_covariance(),
         message=message,
-        nfev=m.get_num_call_fcn(),
-        njev=m.get_num_call_grad(),
+        nfev=m.ncalls,
+        njev=m.ngrads,
         minuit=m,
     )

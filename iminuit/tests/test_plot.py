@@ -22,11 +22,9 @@ def f2(par):
 @pytest.fixture(params=("normal", "numpy"))
 def m(request):
     if request.param == "normal":
-        m = Minuit(f1, x=0, y=0, pedantic=False, print_level=1)
+        m = Minuit(f1, x=0, y=0, pedantic=False)
     else:
-        m = Minuit.from_array_func(
-            f2, (0, 0), name=("x", "y"), pedantic=False, print_level=1
-        )
+        m = Minuit.from_array_func(f2, (0, 0), name=("x", "y"), pedantic=False)
     m.migrad()
     return m
 

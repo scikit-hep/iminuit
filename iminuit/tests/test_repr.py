@@ -54,7 +54,7 @@ def minuit():
 
 
 def test_html_fmin(minuit):
-    fmin = minuit.get_fmin()
+    fmin = minuit.fmin
     assert (
         r"""<table>
 <tr>
@@ -232,7 +232,7 @@ y
 </tr>
 </table>
 """
-        == minuit.get_initial_param_states()._repr_html_()
+        == minuit.init_params._repr_html_()
     )
 
     assert (
@@ -324,7 +324,7 @@ y
 </tr>
 </table>
 """
-        == minuit.get_param_states()._repr_html_()
+        == minuit.params._repr_html_()
     )
 
 
@@ -430,7 +430,7 @@ y
 </tr>
 </table>
 """
-        == m.get_initial_param_states()._repr_html_()
+        == m.init_params._repr_html_()
     )
 
 
@@ -626,8 +626,8 @@ def test_text_fmin(minuit):
 | Hesse failed  |   Has cov.    | Accurate  | Pos. def. | Forced |
 ------------------------------------------------------------------
 |     False     |     True      |   True    |   True    | False  |
-------------------------------------------------------------------""" % minuit.get_fmin().edm == str(
-        minuit.get_fmin()
+------------------------------------------------------------------""" % minuit.fmin.edm == str(
+        minuit.fmin
     )
 
 
@@ -638,7 +638,7 @@ def test_text_params(minuit):
 | 0 | x    |    0.0    |    1.0    |            |            |         |         |       |
 | 1 | y    |    0.0    |    1.0    |            |            |         |         |       |
 ------------------------------------------------------------------------------------------""" == str(
-        minuit.get_initial_param_states()
+        minuit.init_params
     )
 
     assert r"""------------------------------------------------------------------------------------------
@@ -647,7 +647,7 @@ def test_text_params(minuit):
 | 0 | x    |    2.0    |    1.0    |    -1.0    |     1.0    |         |         |       |
 | 1 | y    |    1.0    |    0.5    |    -0.5    |     0.5    |         |         |       |
 ------------------------------------------------------------------------------------------""" == str(
-        minuit.get_param_states()
+        minuit.params
     )
 
 
@@ -669,7 +669,7 @@ def test_text_params_with_limits():
 | 0 | x    |   3.00    |   0.20    |            |            |    0    |         |  yes  |
 | 1 | y    |   5.00    |   0.10    |            |            |    0    |   10    |       |
 ------------------------------------------------------------------------------------------""" == str(
-        m.get_initial_param_states()
+        m.init_params
     )
 
 
