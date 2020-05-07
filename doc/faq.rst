@@ -63,9 +63,11 @@ A `print_level=2` or higher activates internal debug messages directly from C++ 
 Is it possible to stop iminuit by setting a tolerance for changes in the minimized function or the parameters?
 --------------------------------------------------------------------------------------------------------------------
 
-No. MINUIT2 only uses the `Estimated Distance to Minimum`_ (EDM) stopping criterion, in which MINUIT2 compares its current local parabolic estimate of the minimized function with reality. It stops if the vertical distance of the estimate is small. More information about the EDM criterion can be found in the `MINUIT paper`_.
+No. MINUIT only uses the `Estimated Distance to Minimum`_ (EDM) stopping criterion. It stops, if the difference between the actual function value at the estimated minimum location and the estimated function value at that location, based on MINUIT's internal parabolic approximation of the function, is small. This criterion depends strongly on the numerically computed first and second derivatives. Therefore, problems with MINUIT's convergence are often related to numerical issues when the first and second derivatives are computed.
 
-I am not sure if minimization or error estimation is reliable. What can I do?
+More information about the EDM criterion can be found in the `MINUIT paper`_.
+
+I am not sure if minimisation or error estimation is reliable. What can I do?
 -----------------------------------------------------------------------------
 
 Plot the likelihood profile around the minimum as explained in the basic tutorial. Check that the parameter estimate is at the bottom. If the minimum is not parabolic, you may want to use MINOS to estimate the uncertainty interval instead of HESSE.
@@ -75,4 +77,4 @@ Why do you shout at me with CAPITAL LETTERS so much?
 
 Sorry, that's just how it was in the old FORTRAN days from which MINUIT originates. Computers were incredibly loud back then and everyone was shouting all the time!
 
-Seriously though: People were using type writers. There was only a single font and no way to make letters italic or even bold, to set apart normal text from code. So people used CAPITAL LETTERS a lot for code in writing. For these historic reasons, MINUIT, MIGRAD, and HESSE are often written with capital letters here.
+Seriously though: People were using type writers. There was only a single font and no way to make letters italic or even bold, to set apart normal text from code. So people used CAPITAL LETTERS a lot for code in technical writing. For these historic reasons, MINUIT, MIGRAD, and HESSE are often written with capital letters here.
