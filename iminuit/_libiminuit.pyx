@@ -314,9 +314,9 @@ cdef class Minuit:
         """Current print level.
 
         - 0: quiet
-        - 1: messages after minimization
-        - 2: debug messages during minimization
-        - 3: more debug messages
+        - 1: print minimal debug messages to terminal
+        - 2: print more debug messages to terminal
+        - 3: print even more debug messages to terminal
 
         Note: Setting the level to 3 has a global side effect on all current instances of Minuit (this is an issue in C++ MINUIT2).
         """
@@ -894,10 +894,6 @@ cdef class Minuit:
                  HesseFailedWarning)
         self.refresh_internal_state()
         del hesse
-
-        if self._print_level > 0:
-            self.print_param()
-            self.print_matrix()
 
         return self.get_param_states()
 
