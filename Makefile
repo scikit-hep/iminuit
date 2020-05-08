@@ -57,7 +57,7 @@ flake8:
 
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
 pylint:
-	@$(PYTHON) -m pylint $(PROJECT)/ -d E1103,E0611,E1101 -d C -f colorized \
+	@$(PYTHON) -m pylint -E $(PROJECT)/ -d E1103,E0611,E1101 -f colorized \
 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
 
 conda:
