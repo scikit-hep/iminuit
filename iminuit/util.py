@@ -30,7 +30,7 @@ class Matrix(tuple):
             p.text(str(self))
 
 
-class _DictInterface:
+class _DictInterface(object):
     """Provides a dict-like interface for a namedtuple."""
 
     __slots__ = ()

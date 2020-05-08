@@ -1,7 +1,7 @@
 import warnings
 
 
-class deprecated:
+class deprecated(object):
     def __init__(self, reason):
         self._reason = reason
 
