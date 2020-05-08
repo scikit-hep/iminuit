@@ -41,7 +41,7 @@ iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi)
 test: build
 	$(PYTHON) -m pytest
 
-cov: build
+cov:
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest iminuit --cov iminuit --cov-report html
 
