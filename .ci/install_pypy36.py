@@ -29,4 +29,4 @@ assert p.exists()
 p.rename("pypy36")
 p = Path("pypy36")
 
-subp.check_call([p / "bin" / "pypy3", "-m", "venv", p / "pypy3"])
+subp.check_call([str(p / "bin" / "pypy3"), "-m", "venv", str(p / "pypy3")])
