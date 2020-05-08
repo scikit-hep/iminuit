@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.util import Param
 
-is_pypy = platform.python_implementation()
+is_pypy = platform.python_implementation() == "PyPy"
 
 
 def test_pedantic_warning_message():
