@@ -4,7 +4,7 @@ from iminuit import minimize
 import numpy as np
 from numpy.testing import assert_allclose
 
-pytest.importorskip("scipy")  # needed when running minimize
+opt = pytest.importorskip("scipy.optimize")
 
 
 def func(x, *args):
@@ -73,3 +73,11 @@ def test_disp(capsys):
     assert capsys.readouterr()[0] == ""
     minimize(lambda x: x ** 2, 0, options={"disp": True})
     assert capsys.readouterr()[0] != ""
+
+
+def test_hessinv():
+    r = minimize(func, (1, 1, 1))
+    href = np.zeros((3, 3))
+    for i in range(3):
+        href[i, i] = 0.5
+    assert_allclose(r.hess_inv, href, atol=1e-8)
