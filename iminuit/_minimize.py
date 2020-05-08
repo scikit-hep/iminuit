@@ -29,7 +29,8 @@ def minimize(
     **Options:**
 
       - *disp* (bool): Set to true to print convergence messages. Default: False.
-      - *maxfev* (int): Maximum allowed number of iterations. Default: 10000.
+      - *tol* (float): Tolerance for convergence. Default: None.
+      - *maxfev* (int): Maximum allowed number of iterations. Default: None.
       - *eps* (sequence): Initial step size to numerical compute derivative.
         Minuit automatically refines this in subsequent iterations and is very
         insensitive to the initial choice. Default: 1.
@@ -46,6 +47,8 @@ def minimize(
     """
     from scipy.optimize import OptimizeResult
 
+    x0 = np.atleast_1d(x0)
+
     if method not in {None, "migrad"}:
         warnings.warn("method argument is ignored")
 
@@ -55,25 +58,21 @@ def minimize(
     if hess or hessp:
         warnings.warn("hess and hessp arguments cannot be handled and are ignored")
 
-    if tol:
-        warnings.warn("tol argument has no effect on Minuit")
-
     def wrapped(func, args, callback=None):
         if callback is None:
             return lambda x: func(x, *args)
-        else:
 
-            def f(x):
-                callback(x)
-                return func(x, *args)
+        def f(x):
+            callback(x)
+            return func(x, *args)
 
-            return f
+        return f
 
     wrapped_fun = wrapped(fun, args, callback)
 
-    maxfev = 10000
+    maxfev = 0
     error = None
-    kwargs = {"print_level": 0, "errordef": 1}
+    kwargs = {"print_level": 0, "errordef": 0.5}
     if options:
         if "disp" in options:
             kwargs["print_level"] = 1
@@ -100,11 +99,12 @@ def minimize(
     m = Minuit.from_array_func(
         wrapped_fun, x0, error=error, limit=bounds, grad=wrapped_grad, **kwargs
     )
+    if tol:
+        m.tol = tol
     m.migrad(ncall=maxfev)
 
     message = "Optimization terminated successfully."
-    success = m.valid
-    if not success:
+    if not m.valid:
         message = "Optimization failed."
         fmin = m.fmin
         if fmin.has_reached_call_limit:
@@ -112,11 +112,12 @@ def minimize(
         if fmin.is_above_max_edm:
             message += " Estimated distance to minimum too large."
 
+    n = len(x0)
     return OptimizeResult(
         x=m.np_values(),
-        success=success,
+        success=m.valid,
         fun=m.fval,
-        hess_inv=m.np_covariance(),
+        hess_inv=m.np_covariance() if m.valid else np.ones((n, n)),
         message=message,
         nfev=m.ncalls,
         njev=m.ngrads,

@@ -2,8 +2,9 @@ numpy
 cython
 scipy
 matplotlib
-ipython
-jupyter
+jupyter_client
+nbformat
+nbconvert
 pytest
 pytest-cov
 jax

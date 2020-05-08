@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
+# flake8: noqa E501
+
 # Here we don't import unicode_literals, because otherwise we cannot write
 # in "\usepackage" and similar in the string literals below.
 # The problem is an inconsistency regarding the effect of
@@ -615,6 +617,7 @@ y
 
 
 def test_text_fmin(minuit):
+    fmin = minuit.fmin
     assert r"""------------------------------------------------------------------
 | FCN = 1                       |      Ncalls=24 (67 total)      |
 | EDM = %.3G (Goal: 2E-07)  |            up = 1.0            |
@@ -626,8 +629,8 @@ def test_text_fmin(minuit):
 | Hesse failed  |   Has cov.    | Accurate  | Pos. def. | Forced |
 ------------------------------------------------------------------
 |     False     |     True      |   True    |   True    | False  |
-------------------------------------------------------------------""" % minuit.fmin.edm == str(
-        minuit.fmin
+------------------------------------------------------------------""" % fmin.edm == str(
+        fmin
     )
 
 

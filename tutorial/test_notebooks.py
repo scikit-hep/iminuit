@@ -13,8 +13,27 @@ class Processor(preproc.ExecutePreprocessor):
 
     def preprocess_cell(self, cell, resources, index):
         code = cell["source"]
-        cell["source"] = re.sub("%?%timeit *", "", code)
-        return super().preprocess_cell(cell, resources, index)
+
+        # remove %timeit magic to execute cell only once
+        # regex matches %timeit and %%timeit with cmdline arguments
+        code = re.sub(
+            "%?%timeit(?: *--?[a-zA-Z]+(?:(?:=| *)[a-zA-Z0-9]+) *)*", "", code
+        )
+        cell["source"] = code
+
+        # execute cell
+        cell, resources = super().preprocess_cell(cell, resources, index)
+
+        # assert that there are no DeprecationWarning in output
+        for output in cell.get("outputs", []):
+            if output["output_type"] != "stream":
+                continue
+            text = output["text"]
+            assert "DeprecationWarning" not in text, (
+                "DeprecationWarning in cell [%i]" % cell["execution_count"]
+            )
+
+        return cell, resources
 
 
 dir = os.path.dirname(__file__)
@@ -26,4 +45,4 @@ def test_notebook(filename):
     with open(pj(dir, filename)) as f:
         nb = nbformat.read(f, as_version=4)
         ep = Processor(timeout=1000)
-        ep.preprocess(nb, {})
+        ep.preprocess(nb, {"metadata": {"path": dir}})

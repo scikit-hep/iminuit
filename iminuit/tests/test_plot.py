@@ -1,14 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import pytest
 from iminuit import Minuit
-from iminuit.tests.utils import assert_allclose, requires_dependency
 
-try:
-    import matplotlib as mpl
-
-    mpl.use("Agg")
-except ImportError:
-    pass
+mpl = pytest.importorskip("matplotlib")
+mpl.use("Agg")
 
 
 def f1(x, y):
@@ -29,25 +24,21 @@ def m(request):
     return m
 
 
-@requires_dependency("matplotlib")
 def test_profile(m):
     m.minos("x")
     m.draw_profile("x")
 
 
-@requires_dependency("matplotlib")
 def test_mnprofile(m):
     m.minos("x")
     m.draw_mnprofile("x")
 
 
-@requires_dependency("matplotlib")
 def test_mncontour(m):
     m.minos()
     m.draw_mncontour("x", "y")
 
 
-@requires_dependency("matplotlib")
 def test_drawcontour(m):
     m.minos()
     m.draw_contour("x", "y")

@@ -41,7 +41,7 @@ iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi)
 test: build
 	$(PYTHON) -m pytest
 
-cov: build
+cov:
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest iminuit --cov iminuit --cov-report html
 
@@ -53,12 +53,11 @@ doc: doc/_build/html/index.html
 code-analysis: flake8 pylint
 
 flake8:
-	$(PYTHON) -m flake8 --max-line-length=90 $(PROJECT) | grep -v __init__ | grep -v external
+	@$(PYTHON) -m flake8 --max-line-length=95 $(PROJECT)
 
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
 pylint:
-	$(PYTHON) -m pylint -E $(PROJECT)/ -d E1103,E0611,E1101 \
-	       --ignore="" -f colorized \
+	@$(PYTHON) -m pylint -E $(PROJECT)/ -d E1103,E0611,E1101 -f colorized \
 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
 
 conda:
