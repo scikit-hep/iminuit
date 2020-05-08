@@ -20,9 +20,9 @@ matrix:
         - python -m pip install --upgrade -r requirements-dev.txt
         - python -m pip install codecov ipykernel
         - python -m ipykernel install --user --name python3
-        - python -m pip install -e .
+        - COVERAGE=1 python -m pip install -e .
       script:
-        COVERAGE=1 make cov && make doc && codecov && python -m pytest tutorial && make code-analysis
+        make cov && make doc && codecov && python -m pytest tutorial && make code-analysis
 
     - name: "osx: test"
       os: osx
