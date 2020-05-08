@@ -1036,7 +1036,7 @@ def test_bad_functions():
         (throwing, 'RuntimeError("user message")'),
         (divide_by_zero, "ZeroDivisionError"),
         (returning_nan_array, "result is NaN"),
-        (returning_garbage_array, "TypeError"),
+        (returning_garbage_array, "ValueError" if is_pypy else "TypeError"),
         (returning_noniterable, "TypeError"),
     ):
         m = Minuit.from_array_func(
