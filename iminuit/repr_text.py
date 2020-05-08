@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division, unicode_literals
-from math import log10, floor
+from math import log10
 
 
-def goaledm(fmin):
+def goaledm(fm):
     # taken from the source code, see VariableMeticBuilder.cxx
-    return 2e-3 * fmin.tolerance * fmin.up
+    return 2e-3 * fm.tolerance * fm.up
 
 
 def format_numbers(*args):
@@ -21,11 +21,10 @@ def format_numbers(*args):
             return tuple(
                 ("%i" if x < 0 or all_pos else " %i") % round(x, -nsig) for x in args
             )
-        else:
-            return tuple(
-                (("%%.%if" if x < 0 or all_pos else " %%.%if") % min(-nsig, 3)) % x
-                for x in args
-            )
+        return tuple(
+            (("%%.%if" if x < 0 or all_pos else " %%.%if") % min(-nsig, 3)) % x
+            for x in args
+        )
     result = [
         ("%%.%if" if x < 0 or all_pos else " %%.%if")
         % min(nmax - nsig, 3)
@@ -47,36 +46,36 @@ def format_row(widths, *args):
     )
 
 
-def fmin(fmin):
+def fmin(fm):
     ws = (-32, 33)
     i1 = format_row(
-        ws, "FCN = %.4G" % fmin.fval, "Ncalls=%i (%i total)" % (fmin.nfcn, fmin.ncalls)
+        ws, "FCN = %.4G" % fm.fval, "Ncalls=%i (%i total)" % (fm.nfcn, fm.ncalls)
     )
     i2 = format_row(
-        ws, "EDM = %.3G (Goal: %G)" % (fmin.edm, goaledm(fmin)), "up = %.1f" % fmin.up
+        ws, "EDM = %.3G (Goal: %G)" % (fm.edm, goaledm(fm)), "up = %.1f" % fm.up
     )
     ws = (16, 16, 12, 21)
     h1 = format_row(ws, "Valid Min.", "Valid Param.", "Above EDM", "Reached call limit")
     v1 = format_row(
         ws,
-        repr(fmin.is_valid),
-        repr(fmin.has_valid_parameters),
-        repr(fmin.is_above_max_edm),
-        repr(fmin.has_reached_call_limit),
+        repr(fm.is_valid),
+        repr(fm.has_valid_parameters),
+        repr(fm.is_above_max_edm),
+        repr(fm.has_reached_call_limit),
     )
     ws = (16, 16, 12, 12, 9)
     h2 = format_row(ws, "Hesse failed", "Has cov.", "Accurate", "Pos. def.", "Forced")
     v2 = format_row(
         ws,
-        repr(fmin.hesse_failed),
-        repr(fmin.has_covariance),
-        repr(fmin.has_accurate_covar),
-        repr(fmin.has_posdef_covar),
-        repr(fmin.has_made_posdef_covar),
+        repr(fm.hesse_failed),
+        repr(fm.has_covariance),
+        repr(fm.has_accurate_covar),
+        repr(fm.has_posdef_covar),
+        repr(fm.has_made_posdef_covar),
     )
 
-    l = len(h1) * "-"
-    return "\n".join((l, i1, i2, l, h1, l, v1, l, h2, l, v2, l))
+    ln = len(h1) * "-"
+    return "\n".join((ln, i1, i2, ln, h1, ln, v1, ln, h2, ln, v2, ln))
 
 
 def params(mps):
@@ -97,8 +96,8 @@ def params(mps):
         "Limit+",
         "Fixed",
     )
-    l = "-" * len(h)
-    lines = [l, h, l]
+    ln = "-" * len(h)
+    lines = [ln, h, ln]
     mes = mps.merrors
     for i, mp in enumerate(mps):
         if mes and mp.name in mes:
@@ -122,7 +121,7 @@ def params(mps):
                 "yes" if mp.is_fixed else "CONST" if mp.is_const else "",
             )
         )
-    lines.append(l)
+    lines.append(ln)
     return "\n".join(lines)
 
 
@@ -151,12 +150,6 @@ def merror(me):
 
 def matrix(m):
     n = len(m)
-
-    is_correlation = True
-    for i in range(n):
-        if m[i][i] != 1.0:
-            is_correlation = False
-            break
 
     args = []
     for mi in m:

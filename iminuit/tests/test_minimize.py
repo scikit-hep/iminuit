@@ -1,10 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import pytest
-
-minimize = pytest.importorskip("scipy")
 from iminuit import minimize
 import numpy as np
 from numpy.testing import assert_allclose
+
+pytest.importorskip("scipy")  # needed when running minimize
 
 
 def func(x, *args):

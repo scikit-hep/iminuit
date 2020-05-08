@@ -196,7 +196,7 @@ class LatexFactory:
         )
         for i, v1 in enumerate(vnames):
             tmp = [v1]
-            for j, v2 in enumerate(vnames):
+            for j in range(len(vnames)):
                 m = matrix[i][j]
                 tmp.append(m)
                 color[(i + 1, j + 1)] = grad(m)

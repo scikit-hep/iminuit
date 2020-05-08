@@ -95,24 +95,16 @@ def test_extract_fix():
 
 def test_remove_var():
     dk = dict(k=1, limit_k=1, error_k=1, fix_k=1)
-    dl = dict(l=1, limit_l=1, error_l=1, fix_l=1)
     dm = dict(m=1, limit_m=1, error_m=1, fix_m=1)
     dn = dict(n=1, limit_n=1, error_n=1, fix_n=1)
     d = {}
     d.update(dk)
-    d.update(dl)
     d.update(dm)
     d.update(dn)
 
-    ret = remove_var(d, ["k", "m"])
-    for k in dk:
-        assert k not in ret
-    for k in dl:
-        assert k in ret
-    for k in dm:
-        assert k not in ret
-    for k in dn:
-        assert k in ret
+    d = remove_var(d, ["k", "m"])
+    assert set(d.keys()) & set(dk.keys()) == set()
+    assert set(d.keys()) & set(dm.keys()) == set()
 
 
 def test_arguments_from_docstring():
@@ -134,37 +126,35 @@ def test_Matrix():
     assert x == ((1, 2), (3, 4))
     assert repr(x) == "((1, 2), (3, 4))"
     with pytest.raises(TypeError):
-        x[0] = (1, 2)
-    with pytest.raises(TypeError):
         x[0][0] = 1
 
 
 def test_Param():
-    keys = "number name value error is_const is_fixed has_limits has_lower_limit has_upper_limit lower_limit upper_limit".split()
+    keys = "number name value error is_const is_fixed has_limits has_lower_limit has_upper_limit lower_limit upper_limit".split()  # noqa: E501
     values = 3, "foo", 1.2, 3.4, False, False, True, True, False, 42, None
     p = Param(*values)
 
-    assert p.has_lower_limit == True
-    assert p.has_upper_limit == False
-    assert p["has_lower_limit"] == True
+    assert p.has_lower_limit is True
+    assert p.has_upper_limit is False
+    assert p["has_lower_limit"] is True
     assert p["lower_limit"] == 42
-    assert p["upper_limit"] == None
+    assert p["upper_limit"] is None
     assert "upper_limit" in p
     assert "foo" not in p
 
-    assert [key for key in p] == keys
+    assert list(p) == keys
     assert p.keys() == tuple(keys)
     assert p.values() == values
     assert p.items() == tuple((k, v) for k, v in zip(keys, values))
 
     assert (
         str(p)
-        == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"
+        == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"  # noqa: E501
     )
 
 
 def test_MError():
-    keys = "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min".split()
+    keys = "name is_valid lower upper lower_valid upper_valid at_lower_limit at_upper_limit at_lower_max_fcn at_upper_max_fcn lower_new_min upper_new_min nfcn min".split()  # noqa: E501
     values = (
         "Foo",
         True,
@@ -191,7 +181,7 @@ def test_MError():
 
 
 def test_FMin():
-    keys = "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm has_reached_call_limit".split()
+    keys = "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm has_reached_call_limit".split()  # noqa: E501
     values = (
         0.2,
         1e-3,

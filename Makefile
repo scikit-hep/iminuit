@@ -53,12 +53,11 @@ doc: doc/_build/html/index.html
 code-analysis: flake8 pylint
 
 flake8:
-	$(PYTHON) -m flake8 --max-line-length=90 $(PROJECT) | grep -v __init__ | grep -v external
+	@$(PYTHON) -m flake8 --max-line-length=95 $(PROJECT)
 
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
 pylint:
-	$(PYTHON) -m pylint -E $(PROJECT)/ -d E1103,E0611,E1101 \
-	       --ignore="" -f colorized \
+	@$(PYTHON) -m pylint $(PROJECT)/ -d E1103,E0611,E1101 -d C -f colorized \
 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
 
 conda:

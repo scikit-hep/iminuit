@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import pytest
 from iminuit import Minuit
-from numpy.testing import assert_allclose
 
 mpl = pytest.importorskip("matplotlib")
 mpl.use("Agg")

@@ -624,84 +624,95 @@ def test_reverse_limit():
         Minuit(f, limit_x=(3.0, 2.0), pedantic=False)
 
 
-class TestOutputInterface:
-    def setup(self):
-        self.m = Minuit(func0, pedantic=False)
-        self.m.migrad()
-        self.m.hesse()
-        self.m.minos()
+@pytest.fixture
+def minuit():
+    m = Minuit(func0, pedantic=False)
+    m.migrad()
+    m.hesse()
+    m.minos()
+    return m
 
-    def test_args(self):
-        expected = [2.0, 5.0]
-        assert_allclose(self.m.args, expected, atol=1e-8)
-        self.m.args[:] = [1, 2]
-        assert_allclose(self.m.args, [1, 2])
-        assert_allclose(self.m.args[0], 1)
-        assert_allclose(self.m.args[-1], 2)
-        assert_allclose(self.m.args[1:], [2])
-        assert_allclose(self.m.args[:-1], [1])
 
-    def test_values(self):
-        actual = self.m.values.values()
-        expected = [2.0, 5.0]
-        assert_allclose(actual, expected, atol=1e-8)
-        assert_allclose(self.m.values[0], 2, atol=1e-8)
-        assert_allclose(self.m.values[1], 5, atol=1e-8)
+def test_args(minuit):
+    expected = [2.0, 5.0]
+    assert_allclose(minuit.args, expected, atol=1e-8)
+    minuit.args[:] = [1, 2]
+    assert_allclose(minuit.args, [1, 2])
+    assert_allclose(minuit.args[0], 1)
+    assert_allclose(minuit.args[-1], 2)
+    assert_allclose(minuit.args[1:], [2])
+    assert_allclose(minuit.args[:-1], [1])
 
-    def test_matrix(self):
-        actual = self.m.matrix()
-        expected = [[4.0, 0.0], [0.0, 1.0]]
-        assert_allclose(actual, expected, atol=1e-8)
 
-    def test_matrix_correlation(self):
-        actual = self.m.matrix(correlation=True)
-        expected = [[1.0, 0.0], [0.0, 1.0]]
-        assert_allclose(actual, expected, atol=1e-8)
+def test_values(minuit):
+    actual = minuit.values.values()
+    expected = [2.0, 5.0]
+    assert_allclose(actual, expected, atol=1e-8)
+    assert_allclose(minuit.values[0], 2, atol=1e-8)
+    assert_allclose(minuit.values[1], 5, atol=1e-8)
 
-    def test_np_matrix(self):
-        actual = self.m.np_matrix()
-        expected = [[4.0, 0.0], [0.0, 1.0]]
-        assert_allclose(actual, expected, atol=1e-8)
-        assert isinstance(actual, np.ndarray)
-        assert actual.shape == (2, 2)
 
-    def test_np_matrix_correlation(self):
-        actual = self.m.np_matrix(correlation=True)
-        expected = [[1.0, 0.0], [0.0, 1.0]]
-        assert_allclose(actual, expected, atol=1e-8)
-        assert isinstance(actual, np.ndarray)
-        assert actual.shape == (2, 2)
+def test_matrix(minuit):
+    actual = minuit.matrix()
+    expected = [[4.0, 0.0], [0.0, 1.0]]
+    assert_allclose(actual, expected, atol=1e-8)
 
-    def test_np_values(self):
-        actual = self.m.np_values()
-        expected = [2.0, 5.0]
-        assert_allclose(actual, expected, atol=1e-8)
-        assert isinstance(actual, np.ndarray)
-        assert actual.shape == (2,)
 
-    def test_np_errors(self):
-        actual = self.m.np_errors()
-        expected = [2.0, 1.0]
-        assert_allclose(actual, expected, atol=1e-8)
-        assert isinstance(actual, np.ndarray)
-        assert actual.shape == (2,)
+def test_matrix_correlation(minuit):
+    actual = minuit.matrix(correlation=True)
+    expected = [[1.0, 0.0], [0.0, 1.0]]
+    assert_allclose(actual, expected, atol=1e-8)
 
-    def test_np_merrors(self):
-        actual = self.m.np_merrors()
-        # output format is [abs(down_delta), up_delta] following
-        # the matplotlib convention in matplotlib.pyplot.errorbar
-        down_delta = (-2, -1)
-        up_delta = (2, 1)
-        assert_allclose(actual, (np.abs(down_delta), up_delta), atol=1e-8)
-        assert isinstance(actual, np.ndarray)
-        assert actual.shape == (2, 2)
 
-    def test_np_covariance(self):
-        actual = self.m.np_covariance()
-        expected = [[4.0, 0.0], [0.0, 1.0]]
-        assert_allclose(actual, expected, atol=1e-8)
-        assert isinstance(actual, np.ndarray)
-        assert actual.shape == (2, 2)
+def test_np_matrix(minuit):
+    actual = minuit.np_matrix()
+    expected = [[4.0, 0.0], [0.0, 1.0]]
+    assert_allclose(actual, expected, atol=1e-8)
+    assert isinstance(actual, np.ndarray)
+    assert actual.shape == (2, 2)
+
+
+def test_np_matrix_correlation(minuit):
+    actual = minuit.np_matrix(correlation=True)
+    expected = [[1.0, 0.0], [0.0, 1.0]]
+    assert_allclose(actual, expected, atol=1e-8)
+    assert isinstance(actual, np.ndarray)
+    assert actual.shape == (2, 2)
+
+
+def test_np_values(minuit):
+    actual = minuit.np_values()
+    expected = [2.0, 5.0]
+    assert_allclose(actual, expected, atol=1e-8)
+    assert isinstance(actual, np.ndarray)
+    assert actual.shape == (2,)
+
+
+def test_np_errors(minuit):
+    actual = minuit.np_errors()
+    expected = [2.0, 1.0]
+    assert_allclose(actual, expected, atol=1e-8)
+    assert isinstance(actual, np.ndarray)
+    assert actual.shape == (2,)
+
+
+def test_np_merrors(minuit):
+    actual = minuit.np_merrors()
+    # output format is [abs(down_delta), up_delta] following
+    # the matplotlib convention in matplotlib.pyplot.errorbar
+    down_delta = (-2, -1)
+    up_delta = (2, 1)
+    assert_allclose(actual, (np.abs(down_delta), up_delta), atol=1e-8)
+    assert isinstance(actual, np.ndarray)
+    assert actual.shape == (2, 2)
+
+
+def test_np_covariance(minuit):
+    actual = minuit.np_covariance()
+    expected = [[4.0, 0.0], [0.0, 1.0]]
+    assert_allclose(actual, expected, atol=1e-8)
+    assert isinstance(actual, np.ndarray)
+    assert actual.shape == (2, 2)
 
 
 def test_chi2_fit():
@@ -923,14 +934,14 @@ def test_non_analytical_function():
             return self.i % 3
 
     m = Minuit(Func(), pedantic=False)
-    fmin, param = m.migrad()
+    fmin, _ = m.migrad()
     assert fmin.is_valid is False
     assert fmin.is_above_max_edm is True
 
 
 def test_function_without_local_minimum():
     m = Minuit(lambda a: -a, pedantic=False)
-    fmin, param = m.migrad()
+    fmin, _ = m.migrad()
     assert fmin.is_valid is False
     assert fmin.is_above_max_edm is True
 
@@ -942,7 +953,7 @@ def test_function_with_maximum():
         return -(a ** 2)
 
     m = Minuit(func, pedantic=False)
-    fmin, param = m.migrad()
+    fmin, _ = m.migrad()
     assert fmin.is_valid is False
 
 
@@ -951,7 +962,7 @@ def test_perfect_correlation():
         return (a - b) ** 2
 
     m = Minuit(func, pedantic=False)
-    fmin, param = m.migrad()
+    fmin, _ = m.migrad()
     assert fmin.is_valid is True
     assert fmin.has_accurate_covar is False
     assert fmin.has_posdef_covar is False
@@ -1012,20 +1023,20 @@ def test_bad_functions():
             m.migrad()
         assert expected in excinfo.value.args[0]
 
-    def returning_nan(x):
+    def returning_nan_array(x):
         return np.array([1, np.nan])
+
+    def returning_garbage_array(x):
+        return np.array([1, "foo"])
 
     def returning_noniterable(x):
         return 0
 
-    def returning_garbage(x):
-        return np.array([1, "foo"])
-
     for func, expected in (
         (throwing, 'RuntimeError("user message")'),
         (divide_by_zero, "ZeroDivisionError"),
-        (returning_nan, "result is NaN"),
-        (returning_garbage, "TypeError"),
+        (returning_nan_array, "result is NaN"),
+        (returning_garbage_array, "TypeError"),
         (returning_noniterable, "TypeError"),
     ):
         m = Minuit.from_array_func(
@@ -1050,8 +1061,8 @@ class Fcn:
 def test_deprecated(capsys):
     with pytest.warns(DeprecationWarning):
         m = Minuit(Fcn(), pedantic=False)
-        m.migrad()
-        m.errors["x"] == 2
+    m.migrad()
+    assert m.errors["x"] == 2
 
     with pytest.warns(DeprecationWarning):
         assert m.edm == pytest.approx(0)
@@ -1072,11 +1083,11 @@ def test_deprecated(capsys):
         assert m.get_num_call_grad() == m.ngrads_total
 
     with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("x") == False
+        assert m.is_fixed("x") is False
 
     m.fixed["x"] = True
     with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("x") == True
+        assert m.is_fixed("x") is True
     m.fixed["x"] = False
 
     with pytest.warns(DeprecationWarning):
