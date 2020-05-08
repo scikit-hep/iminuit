@@ -1,5 +1,4 @@
 from iminuit.color import Gradient
-import pytest
 
 
 def test_color_2():

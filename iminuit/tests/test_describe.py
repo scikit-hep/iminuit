@@ -4,7 +4,6 @@ from math import ldexp
 import sys
 import pytest
 import platform
-import warnings
 
 is_pypy = platform.python_implementation() == "PyPy"
 

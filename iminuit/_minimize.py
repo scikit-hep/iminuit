@@ -59,13 +59,12 @@ def minimize(
     def wrapped(func, args, callback=None):
         if callback is None:
             return lambda x: func(x, *args)
-        else:
 
-            def f(x):
-                callback(x)
-                return func(x, *args)
+        def f(x):
+            callback(x)
+            return func(x, *args)
 
-            return f
+        return f
 
     wrapped_fun = wrapped(fun, args, callback)
 

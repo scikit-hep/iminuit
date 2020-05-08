@@ -30,7 +30,7 @@ class Matrix(tuple):
             p.text(str(self))
 
 
-class _DictInterface(object):
+class _DictInterface:
     """Provides a dict-like interface for a namedtuple."""
 
     __slots__ = ()
@@ -39,8 +39,7 @@ class _DictInterface(object):
         base = super(_DictInterface, self)
         if isinstance(key, int):
             return base.__getitem__(key)
-        else:
-            return base.__getattribute__(key)
+        return base.__getattribute__(key)
 
     def __contains__(self, key):
         return key in self.keys()
@@ -251,7 +250,7 @@ def make_func_code(params):
 def _fc_or_c(f):
     if hasattr(f, "func_code"):
         return f.func_code
-    elif hasattr(f, "__code__"):
+    if hasattr(f, "__code__"):
         return f.__code__
     return make_func_code([])
 
@@ -284,14 +283,14 @@ def describe(f, verbose=False):
     ok, args = arguments_from_funccode(f)
     if ok:
         return args
-    elif verbose:
+    if verbose:
         print("Failed to extract arguments from f.func_code/__code__")
 
     # using __call__ funccode
     ok, args = arguments_from_call_funccode(f)
     if ok:
         return args
-    elif verbose:
+    if verbose:
         print("Failed to extract arguments from f.__call__.func_code/__code__")
 
     # now we are parsing __call__.__doc__
@@ -302,7 +301,7 @@ def describe(f, verbose=False):
         if args[0] == "self":
             args = args[1:]
         return args
-    elif verbose:
+    if verbose:
         print("Failed to parse __call__.__doc__")
 
     # how about just __doc__
@@ -311,7 +310,7 @@ def describe(f, verbose=False):
         if args[0] == "self":
             args = args[1:]
         return args
-    elif verbose:
+    if verbose:
         print("Failed to parse __doc__")
 
     raise TypeError("Unable to obtain function signature")
@@ -333,11 +332,9 @@ def fitarg_rename(fitarg, ren):
         #{'prefix_x':1, 'limit_prefix_x':1, 'fix_prefix_x':1, 'error_prefix_x':1}
 
     """
-    tmp = ren
     if isinstance(ren, str):
-
-        def ren(x):
-            return tmp + "_" + x
+        s = ren
+        ren = lambda x: s + "_" + x  # noqa: E731
 
     ret = {}
     prefix = ["limit_", "fix_", "error_"]
