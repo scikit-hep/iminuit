@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from iminuit.util import describe, make_func_code
-from iminuit.tests.utils import requires_dependency
 from math import ldexp
 import sys
 import pytest

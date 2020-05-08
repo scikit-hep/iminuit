@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from math import sqrt, exp, cos, pi, e
 from iminuit import Minuit
-from iminuit.tests.utils import assert_allclose
+from numpy.testing import assert_allclose
 
 
 def rosenbrock(x, y):

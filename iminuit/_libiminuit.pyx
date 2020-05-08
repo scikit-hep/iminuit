@@ -555,8 +555,6 @@ cdef class Minuit:
         self.pos2var = tuple(args)
         self.var2pos = {k: i for i, k in enumerate(args)}
 
-        if pedantic: _minuit_methods.pedantic(self, args, kwds, errordef)
-
         if errordef is None:
             if hasattr(fcn, 'errordef'):
                 errordef = fcn.errordef
@@ -729,7 +727,7 @@ cdef class Minuit:
         return Minuit(fcn, **kwds)
 
 
-    def migrad(self, int ncall=10000, resume=True, int nsplit=1, precision=None):
+    def migrad(self, int ncall=0, resume=True, int nsplit=1, precision=None):
         """Run MIGRAD.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -739,16 +737,17 @@ cdef class Minuit:
         **Arguments:**
 
             * **ncall**: integer (approximate) maximum number of call before
-              MIGRAD will stop trying. Default: 10000. Note: MIGRAD may
-              slightly violate this limit, because it checks the condition
-              only after a full iteration of the algorithm, which usually
-              performs several function calls.
+              MIGRAD will stop trying. Default: 0 (indicates to use MIGRAD's
+              internal heuristic). Using nsplit > 1 requires ncall > 0.
+              Note: MIGRAD may slightly violate this limit,
+              because it checks the condition only after a full iteration of the
+              algorithm, which usually performs several function calls.
 
             * **resume**: boolean indicating whether MIGRAD should resume from
               the previous minimiser attempt(True) or should start from the
               beginning(False). Default True.
 
-            * **split**: split MIGRAD in to *split* runs. Max fcn call
+            * **nsplit**: split MIGRAD in to *split* runs. Max fcn call
               for each run is ncall/nsplit. MIGRAD stops when it found the
               function minimum to be valid or ncall is reached. This is useful
               for getting progress. However, you need to make sure that
@@ -762,6 +761,9 @@ cdef class Minuit:
 
             :ref:`function-minimum-sruct`, list of :ref:`minuit-param-struct`
         """
+        if nsplit > 1 and ncall == 0:
+            raise ValueError("ncall > 0 is required for nsplit > 1")
+
         #construct new fcn and migrad if
         #it's a clean state or resume=False
         cdef MnStrategy*strat = NULL
@@ -801,7 +803,7 @@ cdef class Minuit:
 
         #this returns a real object need to copy
         ncall_round = round(1.0 * ncall / nsplit)
-        assert (ncall_round > 0)
+        assert (nsplit == 1 or ncall_round > 0)
         totalcalls = 0
         first = True
 

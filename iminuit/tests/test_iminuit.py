@@ -3,13 +3,11 @@ import warnings
 import platform
 import pytest
 import numpy as np
-from iminuit.tests.utils import assert_allclose
+from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.util import Param
 
 is_pypy = platform.python_implementation()
-
-parametrize = pytest.mark.parametrize
 
 
 def test_pedantic_warning_message():
@@ -363,7 +361,7 @@ def test_non_invertible():
         m.matrix()
 
 
-@parametrize("grad", (None, func0_grad))
+@pytest.mark.parametrize("grad", (None, func0_grad))
 def test_fix_param(grad):
     kwds = {"pedantic": False, "grad": grad}
     m = Minuit(func0, **kwds)
@@ -470,8 +468,8 @@ def test_fitarg():
     assert fitarg["limit_x"] == (0, 20)
 
 
-@parametrize("grad", (None, func0_grad))
-@parametrize("sigma", (1, 4))
+@pytest.mark.parametrize("grad", (None, func0_grad))
+@pytest.mark.parametrize("sigma", (1, 4))
 def test_minos_all(grad, sigma):
     m = Minuit(func0, grad=func0_grad, pedantic=False)
     m.migrad()
@@ -481,7 +479,7 @@ def test_minos_all(grad, sigma):
     assert_allclose(m.merrors[("y", 1.0)], sigma * 1, rtol=1e-2)
 
 
-@parametrize("grad", (None, func0_grad))
+@pytest.mark.parametrize("grad", (None, func0_grad))
 def test_minos_single(grad):
     m = Minuit(func0, grad=func0_grad, pedantic=False)
 
@@ -521,7 +519,7 @@ def test_minos_single_nonsense_variable():
         m.minos("nonsense")
 
 
-@parametrize("grad", (None, func5_grad))
+@pytest.mark.parametrize("grad", (None, func5_grad))
 def test_fixing_long_variable_name(grad):
     m = Minuit(
         func5,
@@ -542,8 +540,8 @@ def test_initial_value():
     assert_allclose(m.errors["x"], 3.0)
 
 
-@parametrize("grad", (None, func0_grad))
-@parametrize("sigma", (1, 2))
+@pytest.mark.parametrize("grad", (None, func0_grad))
+@pytest.mark.parametrize("sigma", (1, 2))
 def test_mncontour(grad, sigma):
     m = Minuit(func0, grad=grad, pedantic=False, x=1.0, y=2.0, error_x=3.0)
     m.migrad()
@@ -558,7 +556,7 @@ def test_mncontour(grad, sigma):
     assert len(ctr[0]) == 2
 
 
-@parametrize("grad", (None, func0_grad))
+@pytest.mark.parametrize("grad", (None, func0_grad))
 def test_contour(grad):
     # FIXME: check the result
     m = Minuit(func0, grad=grad, pedantic=False, x=1.0, y=2.0, error_x=3.0)
@@ -566,7 +564,7 @@ def test_contour(grad):
     m.contour("x", "y")
 
 
-@parametrize("grad", (None, func0_grad))
+@pytest.mark.parametrize("grad", (None, func0_grad))
 def test_profile(grad):
     # FIXME: check the result
     m = Minuit(func0, grad=grad, pedantic=False, x=1.0, y=2.0, error_x=3.0)
@@ -574,7 +572,7 @@ def test_profile(grad):
     m.profile("y")
 
 
-@parametrize("grad", (None, func0_grad))
+@pytest.mark.parametrize("grad", (None, func0_grad))
 def test_mnprofile(grad):
     # FIXME: check the result
     m = Minuit(func0, grad=grad, pedantic=False, x=1.0, y=2.0, error_x=3.0)
