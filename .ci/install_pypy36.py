@@ -3,6 +3,8 @@ from urllib.request import urlopen
 import tarfile
 import subprocess as subp
 from pathlib import Path
+import tempfile
+import shutil
 
 if Path("pypy36/pypy3/bin/activate").exists():
     raise SystemExit
@@ -14,12 +16,14 @@ url = "https://bitbucket.org/pypy/pypy/downloads/"
 plat = {"darwin": "osx64", "linux": "linux64"}[sys.platform]
 url += filename
 
-with urlopen(url) as f:
-    with tarfile.open(fileobj=f) as t:
-        t.extractall()
+with urlopen(url) as fi:
+    with tempfile.TemporaryFile() as tmp:
+        shutil.copyfileobj(fi, tmp)
+        tmp.seek(0)
+        with tarfile.open(fileobj=tmp) as t:
+            t.extractall()
 
-p = Path(filename)
-dirname = p.stem[: p.stem.index(".tar.bz2")]
+dirname = filename[: filename.index(".tar.bz2")]
 p = Path(dirname)
 assert p.exists()
 p.rename("pypy36")
