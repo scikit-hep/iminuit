@@ -5,9 +5,10 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param
+from iminuit.util import Param, HesseFailedWarning
+from pytest import approx
 
-is_pypy = platform.python_implementation()
+is_pypy = platform.python_implementation() == "PyPy"
 
 
 def test_pedantic_warning_message():
@@ -346,21 +347,6 @@ def test_typo():
         Minuit(func4, printlevel=0)
 
 
-def test_non_invertible():
-    # making sure it doesn't crash
-    def f(x, y):
-        return (x * y) ** 2
-
-    m = Minuit(f, pedantic=False)
-    m.migrad()
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        with pytest.raises(Warning):
-            m.hesse()
-    with pytest.raises(RuntimeError):
-        m.matrix()
-
-
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_fix_param(grad):
     kwds = {"pedantic": False, "grad": grad}
@@ -484,10 +470,6 @@ def test_minos_single(grad):
     m = Minuit(func0, grad=func0_grad, pedantic=False)
 
     m.strategy = 0
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        m.set_strategy(0)
-
     m.migrad()
     assert m.ncalls < 6
 
@@ -495,15 +477,9 @@ def test_minos_single(grad):
 def test_minos_single_fixed_raising():
     m = Minuit(func0, pedantic=False, fix_x=True)
     m.migrad()
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        with pytest.raises(RuntimeWarning):
-            m.minos("x")
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with pytest.warns(RuntimeWarning):
         ret = m.minos("x")
-        assert ret is None
+    assert ret is None
 
 
 def test_minos_single_no_migrad():
@@ -610,9 +586,6 @@ def test_fmin_uninitialized(capsys):
     m = Minuit(func0, pedantic=False)
     assert m.fmin is None
     assert m.fval is None
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        m.print_fmin()
 
 
 def test_reverse_limit():
@@ -655,7 +628,7 @@ def test_values(minuit):
 def test_matrix(minuit):
     actual = minuit.matrix()
     expected = [[4.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-8)
+    assert_allclose(actual, expected, atol=1e-7)
 
 
 def test_matrix_correlation(minuit):
@@ -667,7 +640,7 @@ def test_matrix_correlation(minuit):
 def test_np_matrix(minuit):
     actual = minuit.np_matrix()
     expected = [[4.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-8)
+    assert_allclose(actual, expected, atol=1e-7)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2, 2)
 
@@ -675,7 +648,7 @@ def test_np_matrix(minuit):
 def test_np_matrix_correlation(minuit):
     actual = minuit.np_matrix(correlation=True)
     expected = [[1.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-8)
+    assert_allclose(actual, expected, atol=1e-7)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2, 2)
 
@@ -710,7 +683,7 @@ def test_np_merrors(minuit):
 def test_np_covariance(minuit):
     actual = minuit.np_covariance()
     expected = [[4.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-8)
+    assert_allclose(actual, expected, atol=1e-7)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2, 2)
 
@@ -839,20 +812,15 @@ def test_ngrads():
     assert m.ngrads_total > 0
 
 
-def test_set_error_def():
-    m = Minuit(lambda x: x ** 2, pedantic=False)
+def test_errordef():
+    m = Minuit(lambda x: x ** 2, pedantic=False, errordef=4)
+    assert m.errordef == 4
     m.migrad()
     m.hesse()
-    assert m.errordef == 1
-    assert_allclose(m.errors["x"], 1)
-    m.errordef = 4
-    m.hesse()
     assert_allclose(m.errors["x"], 2)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        m.set_errordef(1)
-        m.hesse()
-        assert_allclose(m.errors["x"], 1)
+    m.errordef = 1
+    m.hesse()
+    assert_allclose(m.errors["x"], 1)
 
 
 def test_params():
@@ -939,6 +907,18 @@ def test_non_analytical_function():
     assert fmin.is_above_max_edm is True
 
 
+def test_non_invertible():
+    m = Minuit(lambda x, y: 0, pedantic=False)
+    m.strategy = 0
+    m.migrad()
+    assert m.fmin.is_valid
+    with pytest.warns(HesseFailedWarning):
+        m.hesse()
+    assert not m.fmin.is_valid
+    with pytest.raises(RuntimeError):
+        m.matrix()
+
+
 def test_function_without_local_minimum():
     m = Minuit(lambda a: -a, pedantic=False)
     fmin, _ = m.migrad()
@@ -972,20 +952,20 @@ def test_perfect_correlation():
 def test_modify_param_state():
     m = Minuit(func0, x=1, y=2, fix_y=True, pedantic=False)
     m.migrad()
-    assert_allclose(m.np_values(), [2, 2], atol=1e-2)
-    assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
+    assert_allclose(m.np_values(), [2, 2], atol=1e-4)
+    assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
     m.fixed["y"] = False
     m.values["x"] = 1
     m.errors["x"] = 1
-    assert_allclose(m.np_values(), [1, 2], atol=1e-2)
-    assert_allclose(m.np_errors(), [1, 1], atol=1e-2)
+    assert_allclose(m.np_values(), [1, 2], atol=1e-4)
+    assert_allclose(m.np_errors(), [1, 1], atol=1e-4)
     m.migrad()
-    assert_allclose(m.np_values(), [2, 5], atol=1e-2)
-    assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
+    assert_allclose(m.np_values(), [2, 5], atol=1e-4)
+    assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
     m.values["y"] = 6
-    m.hesse()  # does not change minimum
-    assert_allclose(m.np_values(), [2, 6], atol=1e-2)
-    assert_allclose(m.np_errors(), [2, 1], atol=1e-2)
+    m.hesse()  # hesse ignores change in value if migrad was run before
+    assert_allclose(m.np_values(), [2, 5], atol=1e-4)
+    assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
 
 
 def test_view_lifetime():
@@ -997,6 +977,21 @@ def test_view_lifetime():
     assert val["x"] == 3
     arg[0] = 5  # should not segfault
     assert arg[0] == 5
+
+
+def test_hesse_without_migrad():
+    m = Minuit(lambda x: x ** 2 + x ** 4, x=0, errordef=0.5, pedantic=False)
+    # second derivative: 12 x^2 + 2
+    m.hesse()
+    assert m.errors["x"] == approx(0.5 ** 0.5, abs=1e-4)
+    m.values["x"] = 1
+    m.hesse()
+    assert m.errors["x"] == approx((1.0 / 14.0) ** 0.5, abs=1e-4)
+    assert m.fmin is None
+
+    m = Minuit(lambda x: 0, pedantic=False)
+    with pytest.raises(RuntimeError):
+        m.hesse()
 
 
 def test_bad_functions():
@@ -1036,7 +1031,7 @@ def test_bad_functions():
         (throwing, 'RuntimeError("user message")'),
         (divide_by_zero, "ZeroDivisionError"),
         (returning_nan_array, "result is NaN"),
-        (returning_garbage_array, "TypeError"),
+        (returning_garbage_array, "ValueError" if is_pypy else "TypeError"),
         (returning_noniterable, "TypeError"),
     ):
         m = Minuit.from_array_func(
@@ -1065,7 +1060,7 @@ def test_deprecated(capsys):
     assert m.errors["x"] == 2
 
     with pytest.warns(DeprecationWarning):
-        assert m.edm == pytest.approx(0)
+        assert m.edm == approx(0)
 
     with pytest.warns(DeprecationWarning):
         assert m.get_fmin() == m.fmin
@@ -1115,21 +1110,11 @@ def test_deprecated(capsys):
         m.set_errordef(1)
     assert m.errordef == 1
 
-    m.errordef = 4
+    with pytest.warns(DeprecationWarning):
+        m.set_up(4)
     assert m.errordef == 4
-    with pytest.warns(DeprecationWarning):
-        m.set_up(1)
-    assert m.errordef == 1
 
     assert m.strategy == 1
-    with pytest.warns(DeprecationWarning):
-        m.set_strategy(2)
-    assert m.strategy == 2
-
-    with pytest.warns(DeprecationWarning):
-        m.set_strategy(1)
-    assert m.strategy == 1
-
     with pytest.warns(DeprecationWarning):
         m.set_strategy(2)
     assert m.strategy == 2
@@ -1138,3 +1123,12 @@ def test_deprecated(capsys):
     with pytest.warns(DeprecationWarning):
         m.set_print_level(2)
     assert m.print_level == 2
+
+    with pytest.warns(DeprecationWarning):
+        m.hesse(maxcall=10)
+
+    with pytest.warns(DeprecationWarning):
+        import iminuit.iminuit_warnings
+
+    with pytest.warns(DeprecationWarning):
+        from iminuit.iminuit_warnings import IMinuitWarning

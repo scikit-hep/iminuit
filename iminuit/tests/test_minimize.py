@@ -4,7 +4,7 @@ from iminuit import minimize
 import numpy as np
 from numpy.testing import assert_allclose
 
-pytest.importorskip("scipy")  # needed when running minimize
+opt = pytest.importorskip("scipy.optimize")
 
 
 def func(x, *args):
@@ -48,3 +48,36 @@ def test_callback():
     assert result.nfev == len(trace)
     assert_allclose(trace[0], np.ones(3), atol=1e-2)
     assert_allclose(trace[-1], result.x, atol=1e-2)
+
+
+def test_tol():
+    ref = np.ones(2)
+
+    def rosen(par):
+        x, y = par
+        return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
+
+    r1 = minimize(rosen, (0, 0), tol=1)
+    r2 = minimize(rosen, (0, 0), tol=1e-6)
+
+    assert max(np.abs(r2.x - ref)) < max(np.abs(r1.x - ref))
+
+
+def test_bad_function():
+    r = minimize(lambda x: 0, 0)
+    assert r.success is False
+
+
+def test_disp(capsys):
+    minimize(lambda x: x ** 2, 0)
+    assert capsys.readouterr()[0] == ""
+    minimize(lambda x: x ** 2, 0, options={"disp": True})
+    assert capsys.readouterr()[0] != ""
+
+
+def test_hessinv():
+    r = minimize(func, (1, 1, 1))
+    href = np.zeros((3, 3))
+    for i in range(3):
+        href[i, i] = 0.5
+    assert_allclose(r.hess_inv, href, atol=1e-8)

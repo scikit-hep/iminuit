@@ -47,6 +47,8 @@ def minimize(
     """
     from scipy.optimize import OptimizeResult
 
+    x0 = np.atleast_1d(x0)
+
     if method not in {None, "migrad"}:
         warnings.warn("method argument is ignored")
 
@@ -110,11 +112,12 @@ def minimize(
         if fmin.is_above_max_edm:
             message += " Estimated distance to minimum too large."
 
+    n = len(x0)
     return OptimizeResult(
         x=m.np_values(),
         success=m.valid,
         fun=m.fval,
-        hess_inv=m.np_covariance(),
+        hess_inv=m.np_covariance() if m.valid else np.ones((n, n)),
         message=message,
         nfev=m.ncalls,
         njev=m.ngrads,

@@ -1,5 +1,4 @@
-# setup compiles with -O2 or -O3 by default, use
-# CFLAGS="-O0" python setup.py ... to override for debugging
+# Use CFLAGS="-g -Og -DDEBUG" python setup.py ... for debugging
 
 import os
 import sys
@@ -16,8 +15,16 @@ import distutils.ccompiler
 needs_pytest = {"pytest", "test", "ptr"}.intersection(sys.argv)
 pytest_runner = ["pytest-runner"] if needs_pytest else []
 
-coverage_flag = ["--coverage"] if bool(os.environ.get("COVERAGE", False)) else []
-darwin_flag = ["-stdlib=libc++"] if platform.system() == "Darwin" else []
+extra_flags = []
+if bool(os.environ.get("COVERAGE", False)):
+    extra_flags += ["--coverage"]
+if platform.system() == "Darwin":
+    extra_flags += ["-stdlib=libc++"]
+if os.environ.get("CONDA_PREFIX", None):
+    p = os.environ["CONDA_PREFIX"] + "/lib/tapi"
+    matches = glob(p + "/*/include/stdarg.h")
+    if matches:
+        extra_flags += ["-I" + os.path.dirname(matches[0])]
 
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
@@ -32,9 +39,8 @@ compiler_opts = {
             "-Wno-sign-compare",
             "-Wno-cpp",  # suppresses #warnings from numpy
         ]
-        + coverage_flag
-        + darwin_flag,
-        "extra_link_args": coverage_flag + darwin_flag,
+        + extra_flags,
+        "extra_link_args": extra_flags,
     },
     MSVCCompiler: {"extra_compile_args": ["/EHsc"]},
 }

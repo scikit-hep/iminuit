@@ -2,6 +2,7 @@ numpy
 cython
 scipy
 matplotlib
+jupyter_client
 nbformat
 nbconvert
 pytest

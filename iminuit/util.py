@@ -4,6 +4,25 @@ import re
 from collections import OrderedDict, namedtuple
 from . import repr_html
 from . import repr_text
+import warnings
+
+
+class IMinuitWarning(RuntimeWarning):
+    """iminuit warning.
+    """
+
+
+class InitialParamWarning(IMinuitWarning):
+    """Initial parameter warning.
+    """
+
+
+class HesseFailedWarning(IMinuitWarning):
+    """HESSE failed warning.
+    """
+
+
+warnings.simplefilter("always", InitialParamWarning, append=True)
 
 
 class Matrix(tuple):
@@ -30,7 +49,7 @@ class Matrix(tuple):
             p.text(str(self))
 
 
-class _DictInterface:
+class _DictInterface(object):
     """Provides a dict-like interface for a namedtuple."""
 
     __slots__ = ()

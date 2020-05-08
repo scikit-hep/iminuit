@@ -58,13 +58,14 @@ def minuit():
 def test_html_fmin(minuit):
     fmin = minuit.fmin
     assert (
-        r"""<table>
+        fmin._repr_html_()
+        == r"""<table>
 <tr>
 <td colspan="2" title="Minimum value of function">
 FCN = 1
 </td>
 <td align="center" colspan="3" title="No. of calls in last algorithm and total number of calls">
-Ncalls = 24 (67 total)
+Ncalls = 34 (58 total)
 </td>
 </tr>
 <tr>
@@ -140,7 +141,6 @@ False
 </table>
 """
         % fmin.edm
-        == fmin._repr_html_()
     )
 
 
@@ -577,7 +577,8 @@ False
 
 def test_html_matrix(minuit):
     assert (
-        r"""<table>
+        minuit.matrix()._repr_html_()
+        == r"""<table>
 <tr>
 <td/>
 
@@ -593,10 +594,10 @@ y
 x
 </th>
 <td>
-1.00
+ 1.00
 </td>
 <td style="background-color:rgb(250,250,250)">
-0.00
+-0.00
 </td>
 </tr>
 <tr>
@@ -604,22 +605,23 @@ x
 y
 </th>
 <td style="background-color:rgb(250,250,250)">
-0.00
+-0.00
 </td>
 <td>
-0.25
+ 0.25
 </td>
 </tr>
 </table>
 """
-        == minuit.matrix()._repr_html_()
     )
 
 
 def test_text_fmin(minuit):
     fmin = minuit.fmin
-    assert r"""------------------------------------------------------------------
-| FCN = 1                       |      Ncalls=24 (67 total)      |
+    assert (
+        str(fmin)
+        == r"""------------------------------------------------------------------
+| FCN = 1                       |      Ncalls=34 (58 total)      |
 | EDM = %.3G (Goal: 2E-07)  |            up = 1.0            |
 ------------------------------------------------------------------
 |  Valid Min.   | Valid Param.  | Above EDM | Reached call limit |
@@ -629,8 +631,8 @@ def test_text_fmin(minuit):
 | Hesse failed  |   Has cov.    | Accurate  | Pos. def. | Forced |
 ------------------------------------------------------------------
 |     False     |     True      |   True    |   True    | False  |
-------------------------------------------------------------------""" % fmin.edm == str(
-        fmin
+------------------------------------------------------------------"""
+        % fmin.edm
     )
 
 
@@ -701,12 +703,12 @@ def test_text_minos(minuit):
 
 def test_text_matrix(minuit):
     matrix = minuit.matrix()
-    assert r"""-----------------
-|   |    x    y |
------------------
-| x | 1.00 0.00 |
-| y | 0.00 0.25 |
------------------""" == str(
+    assert r"""-------------------
+|   |     x     y |
+-------------------
+| x |  1.00 -0.00 |
+| y | -0.00  0.25 |
+-------------------""" == str(
         matrix
     )
 
