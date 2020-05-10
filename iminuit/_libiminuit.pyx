@@ -10,7 +10,7 @@ from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
 from iminuit import util as mutil
 from iminuit._deprecated import deprecated
-from iminuit.iminuit_warnings import HesseFailedWarning
+from iminuit.util import IMinuitWarning, HesseFailedWarning
 from iminuit.latex import LatexFactory
 from iminuit import _minuit_methods
 from collections import OrderedDict
@@ -267,6 +267,9 @@ cdef class Minuit:
     @errordef.setter
     def errordef(self, value):
         self.pyfcn.SetErrorDef(value)
+        if self.cfmin:
+            self.cfmin.SetErrorDef(value)
+
 
     cdef public double tol
     """Tolerance for convergence.
@@ -315,7 +318,9 @@ cdef class Minuit:
         if level < 0: level = 0
         self._print_level = level
         if level >= 3 or level < MnPrint.Level():
-            warn("Setting print_level >=3 has the side-effect of setting the level globally for all Minuit instances")
+            warn("Setting print_level >=3 has the side-effect of setting the level "
+                 "globally for all Minuit instances",
+                 IMinuitWarning)
             MnPrint.SetLevel(level)
         if self.minimizer:
             self.minimizer.Minimizer().Builder().SetPrintLevel(level)
@@ -560,7 +565,7 @@ cdef class Minuit:
                 errordef = fcn.errordef
             elif hasattr(fcn, 'default_errordef'):
                 warn("Using .default_errordef() is deprecated. Use .errordef instead",
-                     category=DeprecationWarning,
+                     DeprecationWarning,
                      stacklevel=2)
                 errordef = fcn.default_errordef()
 
@@ -727,7 +732,7 @@ cdef class Minuit:
         return Minuit(fcn, **kwds)
 
 
-    def migrad(self, int ncall=0, resume=True, int nsplit=1, precision=None):
+    def migrad(self, unsigned ncall=0, resume=True, int nsplit=1, precision=None):
         """Run MIGRAD.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -804,20 +809,19 @@ cdef class Minuit:
         #this returns a real object need to copy
         ncall_round = round(1.0 * ncall / nsplit)
         assert (nsplit == 1 or ncall_round > 0)
-        totalcalls = 0
-        first = True
+
+        def total_calls(self):
+            return self.ncalls_total - self.ncalls
 
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
-        while first or (not self.cfmin.IsValid() and totalcalls < ncall):
-            first = False
+        while total_calls(self) == 0 or (not self.cfmin.IsValid() and total_calls(self) < ncall):
             if self.cfmin:  # delete existing
                 del self.cfmin
             self.cfmin = call_mnapplication_wrapper(
                 deref(self.minimizer), ncall_round, self.tol)
             self.last_upst = self.cfmin.UserState()
-            totalcalls += ncall_round  #self.cfmin.NFcn()
             if self.print_level > 1 and nsplit != 1:
                 print(self.fmin)
 
@@ -830,7 +834,7 @@ cdef class Minuit:
         return mutil.MigradResult(self.fmin, self.params)
 
 
-    def hesse(self, unsigned int maxcall=0):
+    def hesse(self, unsigned ncall=0, **kwargs):
         """Run HESSE to compute parabolic errors.
 
         HESSE estimates the covariance matrix by inverting the matrix of
@@ -846,7 +850,7 @@ cdef class Minuit:
         different way.
 
         **Arguments:**
-            - **maxcall**: limit the number of calls made by MINOS.
+            - **ncall**: limit the number of calls made by MINOS.
               Default: 0 (uses an internal heuristic by C++ MINUIT).
 
         **Returns:**
@@ -854,28 +858,40 @@ cdef class Minuit:
             list of :ref:`minuit-param-struct`
         """
 
+        if "maxcall" in kwargs:
+            warn("using `maxcall` keyword is deprecated, use `ncall` keyword instead",
+                 DeprecationWarning);
+            ncall = kwargs.pop("maxcall")
+
+        if kwargs:
+            raise KeyError("keyword(s) not recognized: " + " ".join(kwargs))
+
         cdef MnHesse*hesse = NULL
 
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
         hesse = new MnHesse(self.strategy)
-        if self.grad is None:
+        
+        if self.cfmin:
+            hesse.call(
+                deref(<FCNBase*> self.pyfcn),
+                deref(self.cfmin),
+                ncall
+            )
+            self.last_upst = self.cfmin.UserState()
+        else:
             self.last_upst = hesse.call(
                 deref(<FCNBase*> self.pyfcn),
                 self.last_upst,
-                maxcall
+                ncall
             )
-        else:
-            self.last_upst = hesse.call(
-                deref(<FCNGradientBase*> self.pyfcn),
-                self.last_upst,
-                maxcall
-            )
+
         if not self.last_upst.HasCovariance():
             warn("HESSE Failed. Covariance and GlobalCC will not be available",
                  HesseFailedWarning)
         self.refresh_internal_state()
+
         del hesse
 
         return self.params
@@ -937,8 +953,8 @@ cdef class Minuit:
         for vname in varlist:
             if vname in fixed_param:
                 if var is not None:  #specifying vname but it's fixed
-                    warn(RuntimeWarning(
-                        'Specified variable name for minos is set to fixed'))
+                    warn('Specified variable name for minos is set to fixed',
+                         IMinuitWarning)
                     return None
                 continue
             if self.grad is None:
@@ -1207,7 +1223,8 @@ cdef class Minuit:
         if is_number(bound):
             if not self.matrix_accurate():
                 warn('Specify nsigma bound but error '
-                     'but error matrix is not accurate.')
+                     'but error matrix is not accurate.',
+                     IMinuitWarning)
             start = self.values[vname]
             sigma = self.errors[vname]
             bound = (start - bound * sigma, start + bound * sigma)
@@ -1227,7 +1244,8 @@ cdef class Minuit:
             m.migrad()
             migrad_status[i] = m.valid
             if not m.valid:
-                warn('MIGRAD fails to converge for %s=%f' % (vname, v))
+                warn('MIGRAD fails to converge for %s=%f' % (vname, v),
+                     IMinuitWarning)
             results[i] = m.fval
             if m.fval < vmin:
                 vmin = m.fval
@@ -1571,12 +1589,12 @@ cdef class Minuit:
         if "show_sigma" in kwargs:
             warn("The show_sigma keyword has been removed due to potential confusion. "
                  "Use draw_mncontour to draw sigma contours.",
-                 category=DeprecationWarning,
+                 DeprecationWarning,
                  stacklevel=2)
             del kwargs["show_sigma"]
         if "args" in kwargs:
             warn("The args keyword is unused and has been removed.",
-                 category=DeprecationWarning,
+                 DeprecationWarning,
                  stacklevel=2)
             del kwargs["args"]
         if len(kwargs):
@@ -1621,7 +1639,7 @@ cdef class Minuit:
     def edm(self):
         warn(
              ":attr:`edm` is deprecated: Use `this_object.fmin.edm` instead",
-             category=DeprecationWarning,
+             DeprecationWarning,
              stacklevel=2,
         )
         fmin = self.fmin
