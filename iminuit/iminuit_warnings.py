@@ -29,10 +29,3 @@ if pyver >= (3, 7):
 
 else:
     from .util import IMinuitWarning, InitialParamWarning, HesseFailedWarning
-
-
-warnings.warn(
-    "importing iminuit.iminuit_warnings is deprecated, "
-    "import warnings from iminuit.util instead",
-    DeprecationWarning,
-)
