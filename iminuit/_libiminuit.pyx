@@ -860,7 +860,8 @@ cdef class Minuit:
 
         if "maxcall" in kwargs:
             warn("using `maxcall` keyword is deprecated, use `ncall` keyword instead",
-                 DeprecationWarning);
+                 DeprecationWarning,
+                 stacklevel=2);
             ncall = kwargs.pop("maxcall")
 
         if kwargs:
@@ -880,6 +881,9 @@ cdef class Minuit:
                 ncall
             )
             self.last_upst = self.cfmin.UserState()
+            if not self.last_upst.HasCovariance():
+                warn("HESSE Failed. Covariance and GlobalCC will not be available",
+                     HesseFailedWarning)
         else:
             self.last_upst = hesse.call(
                 deref(<FCNBase*> self.pyfcn),
@@ -887,12 +891,14 @@ cdef class Minuit:
                 ncall
             )
 
-        if not self.last_upst.HasCovariance():
-            warn("HESSE Failed. Covariance and GlobalCC will not be available",
-                 HesseFailedWarning)
         self.refresh_internal_state()
 
         del hesse
+
+        if not self.cfmin:
+            # if cfmin does not exist and HESSE fails, we raise an exception
+            if not self.last_upst.HasCovariance():
+                raise RuntimeError("HESSE Failed")
 
         return self.params
 

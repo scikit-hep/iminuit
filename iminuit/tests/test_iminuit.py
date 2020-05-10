@@ -989,6 +989,10 @@ def test_hesse_without_migrad():
     assert m.errors["x"] == approx((1.0 / 14.0) ** 0.5, abs=1e-4)
     assert m.fmin is None
 
+    m = Minuit(lambda x: 0, pedantic=False)
+    with pytest.raises(RuntimeError):
+        m.hesse()
+
 
 def test_bad_functions():
     def throwing(x):

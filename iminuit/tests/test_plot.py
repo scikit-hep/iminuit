@@ -15,7 +15,7 @@ def f2(par):
 
 
 @pytest.fixture(params=("normal", "numpy"))
-def m(request):
+def minuit(request):
     if request.param == "normal":
         m = Minuit(f1, x=0, y=0, pedantic=False)
     else:
@@ -24,23 +24,25 @@ def m(request):
     return m
 
 
-def test_profile(m):
-    m.minos("x")
-    m.draw_profile("x")
+def test_profile(minuit):
+    minuit.minos("x")
+    minuit.draw_profile("x")
 
 
-def test_mnprofile(m):
-    m.minos("x")
-    m.draw_mnprofile("x")
+def test_mnprofile(minuit):
+    minuit.minos("x")
+    minuit.draw_mnprofile("x")
 
 
-def test_mncontour(m):
-    m.minos()
-    m.draw_mncontour("x", "y")
+def test_mncontour(minuit):
+    minuit.minos()
+    minuit.draw_mncontour("x", "y")
 
 
-def test_drawcontour(m):
-    m.minos()
-    m.draw_contour("x", "y")
-    m.draw_contour("x", "x", bins=20, bound=2)
-    m.draw_contour("x", "x", bins=20, bound=((-10, 10), (-10, 10)))
+def test_drawcontour(minuit):
+    minuit.minos()
+    minuit.draw_contour("x", "y")
+    minuit.draw_contour("x", "x", bins=20, bound=2)
+    minuit.draw_contour("x", "x", bins=20, bound=((-10, 10), (-10, 10)))
+    with pytest.warns(DeprecationWarning):
+        minuit.draw_contour("x", "y", show_sigma=True)
