@@ -12,82 +12,127 @@ class Fcn:
         return 4
 
 
-def test_deprecated(capsys):
-    with pytest.warns(DeprecationWarning):
-        m = Minuit(Fcn(), pedantic=False)
+@pytest.fixture
+def minuit():
+    m = Minuit(lambda x: x ** 2, pedantic=False)
     m.migrad()
-    assert m.errors["x"] == 2
+    return m
 
+
+def test_default_errordef():
     with pytest.warns(DeprecationWarning):
-        assert m.edm == approx(0)
+        Minuit(Fcn(), pedantic=False)
 
+
+def test_edm(minuit):
     with pytest.warns(DeprecationWarning):
-        assert m.get_fmin() == m.fmin
+        assert minuit.edm == approx(0)
 
+
+def test_get_fmin(minuit):
     with pytest.warns(DeprecationWarning):
-        assert m.get_param_states() == m.params
+        assert minuit.get_fmin() == minuit.fmin
 
+
+def test_get_param_states(minuit):
     with pytest.warns(DeprecationWarning):
-        assert m.get_initial_param_states() == m.init_params
+        assert minuit.get_param_states() == minuit.params
 
+
+def test_get_initial_param_states(minuit):
     with pytest.warns(DeprecationWarning):
-        assert m.get_num_call_fcn() == m.ncalls_total
+        assert minuit.get_initial_param_states() == minuit.init_params
 
+
+def test_get_num_call_fcn(minuit):
     with pytest.warns(DeprecationWarning):
-        assert m.get_num_call_grad() == m.ngrads_total
+        assert minuit.get_num_call_fcn() == minuit.ncalls_total
 
+
+def test_num_call_grad(minuit):
     with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("x") is False
+        assert minuit.get_num_call_grad() == minuit.ngrads_total
 
-    m.fixed["x"] = True
+
+def test_is_fixed(minuit):
     with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("x") is True
-    m.fixed["x"] = False
+        assert minuit.is_fixed("x") is False
 
+    minuit.fixed["x"] = True
     with pytest.warns(DeprecationWarning):
-        assert m.migrad_ok() == m.valid
+        assert minuit.is_fixed("x") is True
+    minuit.fixed["x"] = False
 
-    m.hesse()
+
+def test_migrad_ok(minuit):
     with pytest.warns(DeprecationWarning):
-        m.print_matrix()
+        assert minuit.migrad_ok() == minuit.valid
 
+
+def test_print_matrix(minuit):
+    minuit.hesse()
     with pytest.warns(DeprecationWarning):
-        m.print_fmin()
+        minuit.print_matrix()
 
+
+def test_print_fmin(minuit):
     with pytest.warns(DeprecationWarning):
-        m.print_all_minos()
+        minuit.print_fmin()
 
+
+def test_print_all_minos(minuit):
     with pytest.warns(DeprecationWarning):
-        m.print_param()
+        minuit.print_all_minos()
 
+
+def test_print_param(minuit):
     with pytest.warns(DeprecationWarning):
-        m.print_initial_param()
+        minuit.print_param()
 
-    m.errordef = 4
-    assert m.errordef == 4
+
+def test_print_initial_param(minuit):
     with pytest.warns(DeprecationWarning):
-        m.set_errordef(1)
-    assert m.errordef == 1
+        minuit.print_initial_param()
 
+
+def test_set_errordef(minuit):
+    assert minuit.errordef == 1
     with pytest.warns(DeprecationWarning):
-        m.set_up(4)
-    assert m.errordef == 4
+        minuit.set_errordef(4)
+    assert minuit.errordef == 4
 
-    assert m.strategy == 1
+
+def test_set_up(minuit):
+    assert minuit.errordef == 1
     with pytest.warns(DeprecationWarning):
-        m.set_strategy(2)
-    assert m.strategy == 2
+        minuit.set_up(4)
+    assert minuit.errordef == 4
 
-    m.print_level = 0
+
+def test_set_strategy(minuit):
+    assert minuit.strategy == 1
     with pytest.warns(DeprecationWarning):
-        m.set_print_level(2)
-    assert m.print_level == 2
+        minuit.set_strategy(2)
+    assert minuit.strategy == 2
 
+
+def test_set_print_level(minuit):
+    minuit.print_level = 0
     with pytest.warns(DeprecationWarning):
-        m.hesse(maxcall=10)
+        minuit.set_print_level(2)
+    assert minuit.print_level == 2
 
+
+def test_hesse_maxcall(minuit):
+    with pytest.warns(DeprecationWarning):
+        minuit.hesse(maxcall=10)
+
+
+def test_import_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
         import iminuit.iminuit_warnings
 
+
+def test_import_from_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
         from iminuit.iminuit_warnings import IMinuitWarning
