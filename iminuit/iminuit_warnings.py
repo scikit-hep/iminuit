@@ -28,4 +28,8 @@ if pyver >= (3, 7):
 
 
 else:
-    from .util import IMinuitWarning, InitialParamWarning, HesseFailedWarning
+    from .util import (  # noqa: F401
+        IMinuitWarning,
+        InitialParamWarning,
+        HesseFailedWarning,
+    )
