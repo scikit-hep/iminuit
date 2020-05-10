@@ -134,7 +134,7 @@ def test_import_iminuit_warnings():
         import iminuit.iminuit_warnings  # noqa: F401
 
 
-@pytest.mark.skip_if_not(pyver >= (3, 7))
+@pytest.mark.skip_if(pyver < (3, 7))
 def test_import_from_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
         from iminuit.iminuit_warnings import IMinuitWarning  # noqa: F40
