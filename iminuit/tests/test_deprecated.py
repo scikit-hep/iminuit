@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 from pytest import approx
 from iminuit import Minuit
+from sys import version_info as pyver
 
 
 class Fcn:
@@ -133,6 +134,7 @@ def test_import_iminuit_warnings():
         import iminuit.iminuit_warnings  # noqa: F401
 
 
+@pytest.mark.skip_if_not(pyver >= (3, 7))
 def test_import_from_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
         from iminuit.iminuit_warnings import IMinuitWarning  # noqa: F40
