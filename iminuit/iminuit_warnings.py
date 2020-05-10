@@ -28,7 +28,7 @@ if pyver >= (3, 7):
 
 
 else:
-    from _util import IMinuitWarning, InitialParamWarning, HesseFailedWarning
+    from .util import IMinuitWarning, InitialParamWarning, HesseFailedWarning
 
 
 warnings.warn(
