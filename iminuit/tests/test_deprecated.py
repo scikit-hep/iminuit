@@ -134,7 +134,10 @@ def test_import_iminuit_warnings():
         import iminuit.iminuit_warnings  # noqa: F401
 
 
-@pytest.mark.skip_if(pyver < (3, 7))
+@pytest.mark.skipif(
+    pyver < (3, 7),
+    reason="Deprecating module-level objects requires python-3.7 or newer",
+)
 def test_import_from_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
         from iminuit.iminuit_warnings import IMinuitWarning  # noqa: F40
