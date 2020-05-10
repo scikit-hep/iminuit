@@ -130,9 +130,9 @@ def test_hesse_maxcall(minuit):
 
 def test_import_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
-        import iminuit.iminuit_warnings
+        import iminuit.iminuit_warnings  # noqa: F401
 
 
 def test_import_from_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
-        from iminuit.iminuit_warnings import IMinuitWarning
+        from iminuit.iminuit_warnings import IMinuitWarning  # noqa: F40

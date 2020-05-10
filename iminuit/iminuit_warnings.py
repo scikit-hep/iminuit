@@ -3,7 +3,8 @@ from . import util as _util
 import warnings
 
 warnings.warn(
-    "importing iminuit.iminuit_warnings is deprecated, import warnings from iminuit.util instead",
+    "importing iminuit.iminuit_warnings is deprecated, "
+    "import warnings from iminuit.util instead",
     DeprecationWarning,
 )
 
@@ -13,9 +14,10 @@ deprecated_names = ["IMinuitWarning", "InitialParamWarning", "HesseFailedWarning
 def __getattr__(name):
     if name in deprecated_names:
         warnings.warn(
-            "importing {} from {} is deprecated, import from iminuit.util instead".format(
-                name, __name__
-            ),
+            (
+                "importing {} from {} is deprecated, "
+                "import from iminuit.util instead"
+            ).format(name, __name__),
             DeprecationWarning,
         )
         return getattr(_util, name)
@@ -23,6 +25,7 @@ def __getattr__(name):
 
 
 warnings.warn(
-    "importing iminuit.iminuit_warnings is deprecated, import warnings from iminuit.util instead",
+    "importing iminuit.iminuit_warnings is deprecated, "
+    "import warnings from iminuit.util instead",
     DeprecationWarning,
 )
