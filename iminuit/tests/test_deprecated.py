@@ -140,4 +140,4 @@ def test_import_iminuit_warnings():
 )
 def test_import_from_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
-        from iminuit.iminuit_warnings import IMinuitWarning  # noqa: F40
+        from iminuit.iminuit_warnings import IMinuitWarning  # noqa: F401
