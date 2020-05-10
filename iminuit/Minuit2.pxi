@@ -47,23 +47,6 @@ cdef extern from "PythonGradientFCN.h":
         int getNumGrad()
         void resetNumGrad()
 
-cdef extern from "Minuit2/FunctionMinimum.h":
-    cdef cppclass FunctionMinimum:
-        bint IsValid()
-        MnUserParameterState UserState()
-        bint HasAccurateCovar()
-        double Fval()
-        double Edm()
-        int NFcn()
-        double Up()
-        bint HasValidParameters()
-        bint HasPosDefCovar()
-        bint HasMadePosDefCovar()
-        bint HesseFailed()
-        bint HasCovariance()
-        bint HasReachedCallLimit()
-        bint IsAboveMaxEdm()
-
 cdef extern from "Minuit2/MinimumBuilder.h":
     cdef cppclass MinimumBuilder:
         int StorageLevel()
@@ -157,8 +140,8 @@ cdef extern from "Minuit2/MnMigrad.h":
 cdef extern from "Minuit2/MnHesse.h":
     cdef cppclass MnHesse:
         MnHesse(unsigned int stra)
-        MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned int maxcalls) except+
-        MnUserParameterState call "operator()"(FCNGradientBase, MnUserParameterState, unsigned int maxcalls) except+
+        MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned maxcalls) except+
+        MnUserParameterState call "operator()"(FCNBase, FunctionMinimum, unsigned maxcalls) except+
 
 cdef extern from "Minuit2/MnMinos.h":
     cdef cppclass MnMinos:
@@ -205,3 +188,5 @@ cdef extern from "Minuit2/FunctionMinimum.h":
         bint HasCovariance()
         bint HasReachedCallLimit()
         bint IsAboveMaxEdm()
+
+        void SetErrorDef(double up)

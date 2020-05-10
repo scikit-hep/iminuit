@@ -1,5 +1,4 @@
-# setup compiles with -O2 or -O3 by default, use
-# CFLAGS="-O0" python setup.py ... to override for debugging
+# Use CFLAGS="-g -Og -DDEBUG" python setup.py ... for debugging
 
 import os
 import sys
