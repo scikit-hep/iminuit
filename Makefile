@@ -41,22 +41,22 @@ src/iminuit/_libiminuit.so: $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi)
 test: build
 	$(PYTHON) -m pytest
 
-cov:
+cov: build
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
 
-doc/_build/html/index.html: src/iminuit/_libiminuit.so $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
+doc/_build/html/index.html: build $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
 	{ cd doc; make html; }
 
 doc: doc/_build/html/index.html
 
 analysis: flake8 pylint
 
-flake8:
+flake8: build
 	@$(PYTHON) -m flake8 --max-line-length=95 src/$(PROJECT)
 
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
-pylint:
+pylint: build
 	@$(PYTHON) -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
 
