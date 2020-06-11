@@ -43,7 +43,7 @@ test: build
 
 cov:
 	@echo "Note: This only shows the coverage in pure Python."
-	$(PYTHON) -m pytest --cov --cov-report html
+	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
 
 doc/_build/html/index.html: src/iminuit/_libiminuit.so $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
 	{ cd doc; make html; }
