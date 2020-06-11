@@ -82,6 +82,9 @@ class Param(
     def __iter__(self):
         return iter(self.keys())
 
+    def __str__(self):
+        return super(Param, self).__str__().replace("_Param", "Param")
+
 
 class MError(
     namedtuple(
