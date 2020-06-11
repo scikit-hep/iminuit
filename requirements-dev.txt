@@ -9,6 +9,8 @@ pytest
 pytest-cov
 jax
 jaxlib
+codecov
+ipykernel
 
 sphinx
 sphinx_rtd_theme

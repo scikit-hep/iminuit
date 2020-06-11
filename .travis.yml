@@ -24,14 +24,6 @@ matrix:
       script:
         make cov && make doc && codecov && python -m pytest tutorial && make analysis
 
-    - name: "osx: test"
-      os: osx
-      language: sh
-      install:
-        pip install --user --upgrade -r .ci/requirements-test.txt
-      script:
-        make test
-
     - name: "pypy3.6: test"
       language: sh
       install:
