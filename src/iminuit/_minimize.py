@@ -1,4 +1,4 @@
-from iminuit import Minuit
+from ._libiminuit import Minuit
 import warnings
 import numpy as np
 

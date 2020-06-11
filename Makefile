@@ -20,7 +20,7 @@ help:
 	@echo '     integration      Run integration check'
 	@echo '     release          Prepare a release (for maintainers)'
 	@echo ''
-	@echo '     code-analysis    Run code analysis (flake8 and pylint)'
+	@echo '     analysis         Run code analysis (flake8 and pylint)'
 	@echo '     flake8           Run code analysis (flake8)'
 	@echo '     pylint           Run code analysis (pylint)'
 	@echo ''
@@ -31,11 +31,11 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build htmlcov doc/_build iminuit/_libiminuit.cpp iminuit/_libiminuit*.so tutorial/.ipynb_checkpoints iminuit.egg-info .pytest_cache iminuit/__pycache__ iminuit/tests/__pycache__
+	rm -rf build htmlcov doc/_build src/iminuit/_libiminuit.cpp src/iminuit/_libiminuit*.so tutorial/.ipynb_checkpoints iminuit.egg-info .pytest_cache src/iminuit/__pycache__ src/iminuit/tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist
 
-build: iminuit/_libiminuit.so
+build: src/iminuit/_libiminuit.so
 
-iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi)
+src/iminuit/_libiminuit.so: $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi)
 	$(PYTHON) setup.py build_ext --inplace
 
 test: build
@@ -43,21 +43,21 @@ test: build
 
 cov:
 	@echo "Note: This only shows the coverage in pure Python."
-	$(PYTHON) -m pytest iminuit --cov iminuit --cov-report html
+	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
 
-doc/_build/html/index.html: iminuit/_libiminuit.so $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi iminuit/*.py iminuit/**/*.py wildcard doc/*.rst)
+doc/_build/html/index.html: src/iminuit/_libiminuit.so $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
 	{ cd doc; make html; }
 
 doc: doc/_build/html/index.html
 
-code-analysis: flake8 pylint
+analysis: flake8 pylint
 
 flake8:
-	@$(PYTHON) -m flake8 --max-line-length=95 $(PROJECT)
+	@$(PYTHON) -m flake8 --max-line-length=95 src/$(PROJECT)
 
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
 pylint:
-	@$(PYTHON) -m pylint -E $(PROJECT)/ -d E1103,E0611,E1101 -f colorized \
+	@$(PYTHON) -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
 
 conda:
