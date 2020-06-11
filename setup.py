@@ -12,19 +12,11 @@ from distutils.unixccompiler import UnixCCompiler
 from distutils.msvccompiler import MSVCCompiler
 import distutils.ccompiler
 
-needs_pytest = {"pytest", "test", "ptr"}.intersection(sys.argv)
-pytest_runner = ["pytest-runner"] if needs_pytest else []
-
 extra_flags = []
 if bool(os.environ.get("COVERAGE", False)):
     extra_flags += ["--coverage"]
 if platform.system() == "Darwin":
     extra_flags += ["-stdlib=libc++"]
-if os.environ.get("CONDA_PREFIX", None):
-    p = os.environ["CONDA_PREFIX"] + "/lib/tapi"
-    matches = glob(p + "/*/include/stdarg.h")
-    if matches:
-        extra_flags += ["-I" + os.path.dirname(matches[0])]
 
 # turn off warnings raised by Minuit and generated Cython code that need
 # to be fixed in the original code bases of Minuit and Cython
@@ -101,7 +93,7 @@ try:
     USE_CYTHON = True
 except ImportError:
     USE_CYTHON = False
-    if exists("iminuit/_libiminuit.cpp"):
+    if exists("src/iminuit/_libiminuit.cpp"):
         print("Cython is not available ... using pre-generated cpp file.")
     else:
         raise SystemExit(
@@ -124,7 +116,7 @@ except ImportError:
 
 
 # Install missing Minuit2 submodule as needed
-if not os.listdir(join(cwd, "extern", "Minuit2")):
+if not os.listdir(join(cwd, "extern/Minuit2")):
     try:
         import subprocess as subp
 
@@ -136,14 +128,14 @@ if not os.listdir(join(cwd, "extern", "Minuit2")):
         )
 
 minuit2_cxx = [
-    join(cwd, "extern", "Minuit2", "src", x) + ".cxx"
+    join(cwd, "extern/Minuit2/src", x) + ".cxx"
     for x in open(join(cwd, "minuit2_cxx.lst"), "r").read().split("\n")
     if x
 ]
 
 libiminuit = Extension(
     "iminuit._libiminuit",
-    sources=sorted(glob(join(cwd, "iminuit/*" + ext)) + minuit2_cxx),
+    sources=sorted(glob(join(cwd, "src/iminuit/*" + ext)) + minuit2_cxx),
     include_dirs=[join(cwd, "extern/Minuit2/inc")] + numpy_header,
     define_macros=[
         ("WARNINGMSG", "1"),
@@ -160,7 +152,7 @@ if USE_CYTHON:
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
 # This is one of the recommended methods that works in Python 2 and 3:
-with open(join(cwd, "iminuit/version.py")) as fp:
+with open(join(cwd, "src/iminuit/version.py")) as fp:
     exec(fp.read())  # this loads __version__
 
 
@@ -182,9 +174,9 @@ setup(
     download_url="http://pypi.python.org/packages/source/i/"
     "scikit-hep/iminuit-%s.tar.gz" % __version__,
     packages=["iminuit", "iminuit.tests"],
+    package_dir={"": "src"},
     ext_modules=extensions,
     install_requires=["numpy>=1.11.3"],
-    setup_requires=[] + pytest_runner,
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",

@@ -31,11 +31,11 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build htmlcov doc/_build iminuit/_libiminuit.cpp iminuit/_libiminuit*.so tutorial/.ipynb_checkpoints iminuit.egg-info .pytest_cache iminuit/__pycache__ iminuit/tests/__pycache__
+	rm -rf build htmlcov doc/_build src/iminuit/_libiminuit.cpp src/iminuit/_libiminuit*.so tutorial/.ipynb_checkpoints iminuit.egg-info .pytest_cache src/iminuit/__pycache__ src/iminuit/tests/__pycache__
 
-build: iminuit/_libiminuit.so
+build: src/iminuit/_libiminuit.so
 
-iminuit/_libiminuit.so: $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi)
+src/iminuit/_libiminuit.so: $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi)
 	$(PYTHON) setup.py build_ext --inplace
 
 test: build
@@ -45,7 +45,7 @@ cov:
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest iminuit --cov iminuit --cov-report html
 
-doc/_build/html/index.html: iminuit/_libiminuit.so $(wildcard Minuit/src/*.cxx iminuit/*.pyx iminuit/*.pxi iminuit/*.py iminuit/**/*.py wildcard doc/*.rst)
+doc/_build/html/index.html: src/iminuit/_libiminuit.so $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
 	{ cd doc; make html; }
 
 doc: doc/_build/html/index.html
