@@ -51,7 +51,7 @@ class Matrix(tuple):
 
 class Param(
     namedtuple(
-        "Param",
+        "_Param",
         "number name value error is_const is_fixed has_limits "
         "has_lower_limit has_upper_limit lower_limit upper_limit",
     )
@@ -64,7 +64,7 @@ class Param(
         return self._fields
 
     def values(self):
-        return self
+        return tuple(self[i] for i in range(len(self)))
 
     def items(self):
         keys = self.keys()
@@ -73,7 +73,7 @@ class Param(
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return super().__getitem__(key)
+            return super(Param, self).__getitem__(key)
         return self.__getattribute__(key)
 
     def __contains__(self, key):
@@ -85,7 +85,7 @@ class Param(
 
 class MError(
     namedtuple(
-        "MError",
+        "_MError",
         "name is_valid lower upper lower_valid upper_valid at_lower_limit "
         "at_upper_limit at_lower_max_fcn at_upper_max_fcn lower_new_min "
         "upper_new_min nfcn min",
@@ -112,7 +112,7 @@ class MError(
         return self._fields
 
     def values(self):
-        return self
+        return tuple(self[i] for i in range(len(self)))
 
     def items(self):
         keys = self.keys()
@@ -121,7 +121,7 @@ class MError(
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return super().__getitem__(key)
+            return super(MError, self).__getitem__(key)
         return self.__getattribute__(key)
 
     def __contains__(self, key):
@@ -133,7 +133,7 @@ class MError(
 
 class FMin(
     namedtuple(
-        "FMin",
+        "_FMin",
         "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters "
         "has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed "
         "has_covariance is_above_max_edm has_reached_call_limit",
@@ -160,7 +160,7 @@ class FMin(
         return self._fields
 
     def values(self):
-        return self
+        return tuple(self[i] for i in range(len(self)))
 
     def items(self):
         keys = self.keys()
@@ -169,7 +169,7 @@ class FMin(
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return super().__getitem__(key)
+            return super(FMin, self).__getitem__(key)
         return self.__getattribute__(key)
 
     def __contains__(self, key):
