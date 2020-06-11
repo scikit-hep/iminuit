@@ -49,16 +49,32 @@ class Matrix(tuple):
             p.text(str(self))
 
 
-class _DictInterface(object):
-    """Provides a dict-like interface for a namedtuple."""
+class Param(
+    namedtuple(
+        "Param",
+        "number name value error is_const is_fixed has_limits "
+        "has_lower_limit has_upper_limit lower_limit upper_limit",
+    )
+):
+    """Data object for a single Parameter."""
 
     __slots__ = ()
 
+    def keys(self):
+        return self._fields
+
+    def values(self):
+        return self
+
+    def items(self):
+        keys = self.keys()
+        values = self.values()
+        return tuple((keys[i], values[i]) for i in range(len(self)))
+
     def __getitem__(self, key):
-        base = super(_DictInterface, self)
         if isinstance(key, int):
-            return base.__getitem__(key)
-        return base.__getattribute__(key)
+            return super().__getitem__(key)
+        return self.__getattribute__(key)
 
     def __contains__(self, key):
         return key in self.keys()
@@ -66,38 +82,101 @@ class _DictInterface(object):
     def __iter__(self):
         return iter(self.keys())
 
+
+class MError(
+    namedtuple(
+        "MError",
+        "name is_valid lower upper lower_valid upper_valid at_lower_limit "
+        "at_upper_limit at_lower_max_fcn at_upper_max_fcn lower_new_min "
+        "upper_new_min nfcn min",
+    )
+):
+    """Minos result object."""
+
+    __slots__ = ()
+
+    def _repr_html_(self):
+        return repr_html.merror(self)
+
+    def __str__(self):
+        """Return string suitable for terminal."""
+        return repr_text.merror(self)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("MError(...)")
+        else:
+            p.text(str(self))
+
     def keys(self):
         return self._fields
 
     def values(self):
-        base = super(_DictInterface, self)
-        return tuple(base.__getitem__(i) for i in range(len(self)))
+        return self
 
     def items(self):
         keys = self.keys()
         values = self.values()
         return tuple((keys[i], values[i]) for i in range(len(self)))
 
-    def __str__(self):
-        return (
-            self.__class__.__name__
-            + "("
-            + ", ".join("{}={}".format(k, repr(v)) for (k, v) in self.items())
-            + ")"
-        )
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return super().__getitem__(key)
+        return self.__getattribute__(key)
+
+    def __contains__(self, key):
+        return key in self.keys()
+
+    def __iter__(self):
+        return iter(self.keys())
 
 
-class Param(
-    _DictInterface,
+class FMin(
     namedtuple(
-        "Param",
-        "number name value error is_const is_fixed has_limits "
-        "has_lower_limit has_upper_limit lower_limit upper_limit",
-    ),
+        "FMin",
+        "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters "
+        "has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed "
+        "has_covariance is_above_max_edm has_reached_call_limit",
+    )
 ):
-    """Data object for a single Parameter."""
+    """Function minimum status object."""
 
     __slots__ = ()
+
+    def __str__(self):
+        """Return string suitable for terminal."""
+        return repr_text.fmin(self)
+
+    def _repr_html_(self):
+        return repr_html.fmin(self)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("FMin(...)")
+        else:
+            p.text(str(self))
+
+    def keys(self):
+        return self._fields
+
+    def values(self):
+        return self
+
+    def items(self):
+        keys = self.keys()
+        values = self.values()
+        return tuple((keys[i], values[i]) for i in range(len(self)))
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return super().__getitem__(key)
+        return self.__getattribute__(key)
+
+    def __contains__(self, key):
+        return key in self.keys()
+
+    def __iter__(self):
+        return iter(self.keys())
 
 
 class Params(list):
@@ -122,33 +201,6 @@ class Params(list):
             p.text(str(self))
 
 
-class MError(
-    _DictInterface,
-    namedtuple(
-        "MError",
-        "name is_valid lower upper lower_valid upper_valid at_lower_limit "
-        "at_upper_limit at_lower_max_fcn at_upper_max_fcn lower_new_min "
-        "upper_new_min nfcn min",
-    ),
-):
-    """Minos result object."""
-
-    __slots__ = ()
-
-    def _repr_html_(self):
-        return repr_html.merror(self)
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return repr_text.merror(self)
-
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
-            p.text("MError(...)")
-        else:
-            p.text(str(self))
-
-
 class MErrors(OrderedDict):
     """Dict from parameter name to Minos result object."""
 
@@ -162,33 +214,6 @@ class MErrors(OrderedDict):
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("MErrors(...)")
-        else:
-            p.text(str(self))
-
-
-class FMin(
-    _DictInterface,
-    namedtuple(
-        "FMin",
-        "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters "
-        "has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed "
-        "has_covariance is_above_max_edm has_reached_call_limit",
-    ),
-):
-    """Function minimum status object."""
-
-    __slots__ = ()
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return repr_text.fmin(self)
-
-    def _repr_html_(self):
-        return repr_html.fmin(self)
-
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
-            p.text("FMin(...)")
         else:
             p.text(str(self))
 

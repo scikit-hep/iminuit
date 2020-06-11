@@ -22,7 +22,7 @@ matrix:
         - python -m ipykernel install --user --name python3
         - COVERAGE=1 python -m pip install -e .
       script:
-        make cov && make doc && codecov && python -m pytest tutorial && make code-analysis
+        make cov && make doc && codecov && python -m pytest tutorial && make analysis
 
     - name: "osx: test"
       os: osx
