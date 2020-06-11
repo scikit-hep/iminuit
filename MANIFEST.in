@@ -1,4 +1,4 @@
-recursive-include iminuit *.h *.cpp *.pyx *.pxi *.py
+recursive-include src/iminuit *.h *.cpp *.pyx *.pxi *.py
 recursive-include tutorial *.py *.ipynb *.pyx
 recursive-include extern/Minuit2 *
 include *.py

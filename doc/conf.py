@@ -27,7 +27,7 @@ if not on_rtd:
     # Make sure local build of iminuit is found
     import sys
 
-    sys.path.insert(0, os.path.dirname(__file__) + "/..")
+    sys.path.insert(0, os.path.dirname(__file__) + "/../src")
 
 # -- General configuration -----------------------------------------------------
 
