@@ -9,10 +9,13 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
         python-version: [3.5, 3.8, pypy3]
+
+    steps:
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -21,8 +24,11 @@ jobs:
       run: pip install -r .ci/requirements-test.txt
     - name: Test
       run: pytest
+
   cov:
     runs-on: ubuntu-latest
+
+    steps:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
