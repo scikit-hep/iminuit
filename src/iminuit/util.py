@@ -83,7 +83,10 @@ class Param(
         return iter(self.keys())
 
     def __str__(self):
-        return super(Param, self).__str__().replace("_Param", "Param")
+        pairs = []
+        for (k, v) in self.items():
+            pairs.append("%s=%s" % (k, repr(v)))
+        return "Param(" + ", ".join(pairs) + ")"
 
 
 class MError(
