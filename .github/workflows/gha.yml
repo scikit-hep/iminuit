@@ -21,6 +21,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.5
+    - run: python -m pip install --upgrade pip wheel
     - run: python -m pip install -r .ci/requirements-test.txt
     - run: python -m pip install -e .
     - run: pytest
@@ -35,6 +36,7 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: pypy3
+    - run: python -m pip install --upgrade pip wheel
     - run: python -m pip install --upgrade cython numpy==1.15.4 pytest
     - run: python -m pip install -e .
     - run: python -m pytest
@@ -50,8 +52,11 @@ jobs:
       with:
         python-version: 3.8
     - run: |
+        python -m pip install --upgrade pip wheel
         python -m pip install -r requirements-dev.txt
         python -m pip install codecov
         python -m ipykernel install --user --name python3
-    - run: |
-        COVERAGE=1 make analysis doc cov && codecov
+    - run: COVERAGE=1 make
+    - run: make analysis
+    - run: make doc
+    - run: make cov && CODECOV_TOKEN="32b3f8ee-7ff0-44e9-8e14-38abdb8d982a" codecov
