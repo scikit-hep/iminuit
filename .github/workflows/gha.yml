@@ -51,6 +51,7 @@ jobs:
         python-version: 3.8
     - run: |
         python -m pip install -r requirements-dev.txt
+        python -m pip install codecov
         python -m ipykernel install --user --name python3
     - run: |
-        COVERAGE=1 make analysis doc cov codecov
+        COVERAGE=1 make analysis doc cov && codecov
