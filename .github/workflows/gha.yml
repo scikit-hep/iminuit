@@ -53,5 +53,7 @@ jobs:
         python -m pip install -r requirements-dev.txt
         python -m pip install codecov
         python -m ipykernel install --user --name python3
-    - run: |
-        COVERAGE=1 make analysis doc cov && codecov
+    - run: COVERAGE=1 make
+    - run: make analysis
+    - run: make doc
+    - run: CODECOV_TOKEN="32b3f8ee-7ff0-44e9-8e14-38abdb8d982a" make cov && codecov
