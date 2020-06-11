@@ -1,5 +1,3 @@
-name: C++ CI
-
 on:
   pull_request:
     branches:
@@ -15,7 +13,6 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
         python-version: [3.5, 3.8, pypy3]
-      fail-fast: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
