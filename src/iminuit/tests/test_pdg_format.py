@@ -155,19 +155,19 @@ def test_term_format():
     assert ft(-2.3456e13, 9.5e11) == "(-23.5 ± 1.0)E+12"
     assert ft(-2.3456e13, 9.99e11) == "(-23.5 ± 1.0)E+12"
 
-    assert ft(math.nan, 1.0) == "nan ± 1.0"
+    assert ft(math.nan, 1.0) == "nan ± 1"
     assert ft(math.nan, 3.54) == "nan ± 3.5"
     assert ft(math.nan, 3.55) == "nan ± 4"
     assert ft(math.nan, 9.49) == "nan ± 9"
     assert ft(math.nan, 9.99) == "nan ± 10"
 
-    assert ft(math.inf, 1.0) == "inf ± 1.0"
+    assert ft(math.inf, 1.0) == "inf ± 1"
     assert ft(math.inf, 3.54) == "inf ± 3.5"
     assert ft(-math.inf, 3.55) == "-inf ± 4"
     assert ft(math.inf, 9.49) == "inf ± 9"
     assert ft(-math.inf, 9.99) == "-inf ± 10"
 
-    assert ft(math.nan, 1.0e3) == "(nan ± 1.0)E+03"
+    assert ft(math.nan, 1.0e3) == "(nan ± 1)E+03"
     assert ft(math.nan, 3.54e3) == "(nan ± 3.5)E+03"
     assert ft(math.nan, 3.55e3) == "(nan ± 4)E+03"
     assert ft(math.nan, 9.49e3) == "(nan ± 9)E+03"
@@ -221,7 +221,7 @@ def test_latex_format():
     assert ft(0.02345, 0.01234) == r"0.023 \pm 0.012"
     assert ft(0.02345, 0.09123) == r"0.02 \pm 0.09"
     assert ft(nan, 2.34e3) == r"(\mathrm{NaN} \pm 2.3) \times 10^{3}"
-    assert ft(1e9, nan) == r"(1.0000 \pm \mathrm{NaN}) \times 10^{9}"
+    assert ft(1e9, nan) == r"(1 \pm \mathrm{NaN}) \times 10^{9}"
     assert ft(inf, 2.345e3) == r"(\infty \pm 2.3) \times 10^{3}"
     assert ft(1.2345e9, inf) == r"(1.2345 \pm \infty) \times 10^{9}"
     assert ft(inf, -inf) == r"\infty {}_{-\infty}"  # tolerance against input errors
