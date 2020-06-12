@@ -26,23 +26,39 @@ def test_html_tag():
     assert str(s) == "<foo>\nbar\n</foo>\n"
 
 
-def test_format_numbers():
-    assert repr_text.format_numbers(1.2567, 0.1234) == ("1.26", "0.12")
-    assert repr_text.format_numbers(1.2567e3, 0.1234e3) == ("1260", "120")
-    assert repr_text.format_numbers(1.2567e4, 0.1234e4) == ("1.26E4", "0.12E4")
-    assert repr_text.format_numbers(1.2567e-1, 0.1234e-1) == ("0.126", "0.012")
-    assert repr_text.format_numbers(1.2567e-2, 0.1234e-2) == ("1.26E-2", "0.12E-2")
-    assert repr_text.format_numbers(1.0, 0.0, 0.25) == ("1.00", "0.00", "0.25")
-    assert repr_text.format_numbers(0, 1, -1) == (" 0.0", " 1.0", "-1.0")
-    assert repr_text.format_numbers(2, -1, 1) == (" 2.0", "-1.0", " 1.0")
-    assert repr_text.format_numbers(2.01, -1.01, 1.01) == (" 2.0", "-1.0", " 1.0")
-    assert repr_text.format_numbers(1.999, -0.999, 0.999) == (" 2.0", "-1.0", " 1.0")
-    assert repr_text.format_numbers(1, 0.5, -0.5) == (" 1.0", " 0.5", "-0.5")
-    assert repr_text.format_numbers(1.0, 1e-10) == ("1.0", "0.0")
-    assert repr_text.format_numbers(1.234567e11, -1.234567e-11) == (
-        " 1.2E11",
-        "-0.0E11",
-    )
+def test_pdg_format():
+    assert repr_text.pdg_format(1.2567, 0.1234) == ["1.26", "0.12"]
+    assert repr_text.pdg_format(1.2567e3, 0.1234e3) == ["1.26E3", "0.12E3"]
+    assert repr_text.pdg_format(1.2567e4, 0.1234e4) == ["12.6E3", "1.2E3"]
+    assert repr_text.pdg_format(1.2567e-1, 0.1234e-1) == ["0.126", "0.012"]
+    assert repr_text.pdg_format(1.2567e-2, 0.1234e-2) == ["12.6E-3", "1.2E-3"]
+    assert repr_text.pdg_format(1.0, 0.0, 0.25) == ["1.00", "0.00", "0.25"]
+    assert repr_text.pdg_format(0, 1, -1) == ["0", "1", "-1"]
+    assert repr_text.pdg_format(2, -1, 1) == ["2", "-1", "1"]
+    assert repr_text.pdg_format(2.01, -1.01, 1.01) == ["2", "-1", "1"]
+    assert repr_text.pdg_format(1.999, -0.999, 0.999) == ["2", "-1", "1"]
+    assert repr_text.pdg_format(1, 0.5, -0.5) == ["1.0", "0.5", "-0.5"]
+    assert repr_text.pdg_format(1.0, 1e-4) == ["1000.0E-3", "0.1E-3"]
+    assert repr_text.pdg_format(-1.234567e-22, 1.234567e-11) == ["-0", "1.2E-11"]
+    nan = float("nan")
+    assert repr_text.pdg_format(nan, 1.23e-2) == ["nan", "0.012"]
+    assert repr_text.pdg_format(nan, -nan) == ["nan", "nan"]
+
+
+def test_matrix_format():
+    nan = float("nan")
+    assert repr_text.matrix_format(1e1, 2e2, -3e3, -4e4) == [
+        "0.001E+04",
+        "0.020E+04",
+        "-0.300E+04",
+        "-4.000E+04",
+    ]
+    assert repr_text.matrix_format(nan, 2e2, -nan, -4e4) == [
+        "nan",
+        "200",
+        "nan",
+        "-40000",
+    ]
 
 
 @pytest.fixture
@@ -182,10 +198,10 @@ Fixed
 x
 </td>
 <td>
-0.0
+0
 </td>
 <td>
-1.0
+1
 </td>
 <td>
 
@@ -211,10 +227,10 @@ x
 y
 </td>
 <td>
-0.0
+0
 </td>
 <td>
-1.0
+1
 </td>
 <td>
 
@@ -274,16 +290,16 @@ Fixed
 x
 </td>
 <td>
- 2.0
+2
 </td>
 <td>
- 1.0
+1
 </td>
 <td>
--1.0
+-1
 </td>
 <td>
- 1.0
+1
 </td>
 <td>
 
@@ -303,16 +319,16 @@ x
 y
 </td>
 <td>
- 1.0
+1.0
 </td>
 <td>
- 0.5
+0.5
 </td>
 <td>
 -0.5
 </td>
 <td>
- 0.5
+0.5
 </td>
 <td>
 
@@ -380,10 +396,10 @@ Fixed
 x
 </td>
 <td>
-3.00
+3.0
 </td>
 <td>
-0.20
+0.2
 </td>
 <td>
 
@@ -409,10 +425,10 @@ yes
 y
 </td>
 <td>
-5.00
+5.0
 </td>
 <td>
-0.10
+0.1
 </td>
 <td>
 
@@ -453,10 +469,10 @@ Valid
 Error
 </td>
 <td>
--1.0
+-1
 </td>
 <td>
- 1.0
+1
 </td>
 </tr>
 <tr>
@@ -522,7 +538,7 @@ Error
 -0.5
 </td>
 <td>
- 0.5
+0.5
 </td>
 </tr>
 <tr>
@@ -594,7 +610,7 @@ y
 x
 </th>
 <td>
- 1.00
+1.00
 </td>
 <td style="background-color:rgb(250,250,250)">
 -0.00
@@ -608,7 +624,7 @@ y
 -0.00
 </td>
 <td>
- 0.25
+0.25
 </td>
 </tr>
 </table>
@@ -640,8 +656,8 @@ def test_text_params(minuit):
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    |    0.0    |    1.0    |            |            |         |         |       |
-| 1 | y    |    0.0    |    1.0    |            |            |         |         |       |
+| 0 | x    |     0     |     1     |            |            |         |         |       |
+| 1 | y    |     0     |     1     |            |            |         |         |       |
 ------------------------------------------------------------------------------------------""" == str(
         minuit.init_params
     )
@@ -649,8 +665,8 @@ def test_text_params(minuit):
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    |    2.0    |    1.0    |    -1.0    |     1.0    |         |         |       |
-| 1 | y    |    1.0    |    0.5    |    -0.5    |     0.5    |         |         |       |
+| 0 | x    |     2     |     1     |     -1     |     1      |         |         |       |
+| 1 | y    |    1.0    |    0.5    |    -0.5    |    0.5     |         |         |       |
 ------------------------------------------------------------------------------------------""" == str(
         minuit.params
     )
@@ -671,8 +687,8 @@ def test_text_params_with_limits():
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    |   3.00    |   0.20    |            |            |    0    |         |  yes  |
-| 1 | y    |   5.00    |   0.10    |            |            |    0    |   10    |       |
+| 0 | x    |    3.0    |    0.2    |            |            |    0    |         |  yes  |
+| 1 | y    |    5.0    |    0.1    |            |            |    0    |   10    |       |
 ------------------------------------------------------------------------------------------""" == str(
         m.init_params
     )
@@ -682,7 +698,7 @@ def test_text_minos(minuit):
     assert r"""-------------------------------------------------
 |        x        |            Valid            |
 -------------------------------------------------
-|      Error      |     -1.0     |      1.0     |
+|      Error      |      -1      |      1       |
 |      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
@@ -691,7 +707,7 @@ def test_text_minos(minuit):
 -------------------------------------------------
 |        y        |            Valid            |
 -------------------------------------------------
-|      Error      |     -0.5     |      0.5     |
+|      Error      |     -0.5     |     0.5      |
 |      Valid      |     True     |     True     |
 |    At Limit     |    False     |    False     |
 |     Max FCN     |    False     |    False     |
@@ -719,8 +735,8 @@ def test_text_with_long_names():
     assert r"""-----------------------------------------------------
 |                 | super-long-name               x |
 -----------------------------------------------------
-| super-long-name |            1.00            0.10 |
-|               x |            0.10            1.00 |
+| super-long-name |             1.0             0.1 |
+|               x |             0.1             1.0 |
 -----------------------------------------------------""" == str(
         matrix
     )
@@ -754,12 +770,12 @@ def test_text_with_long_names():
 
 def test_console_frontend_with_difficult_values():
     matrix = Matrix(("x", "y"), ((-1.23456, 0), (0, 0)))
-    assert r"""-----------------
-|   |    x    y |
------------------
-| x | -1.2  0.0 |
-| y |  0.0  0.0 |
------------------""" == str(
+    assert r"""---------------------
+|   |      x      y |
+---------------------
+| x | -1.235  0.000 |
+| y |  0.000  0.000 |
+---------------------""" == str(
         matrix
     )
 
@@ -785,7 +801,7 @@ def test_console_frontend_with_difficult_values():
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    | -0.0E-11  |  1.2E-11  |            |            |         |         | CONST |
+| 0 | x    |    -0     |  1.2E-11  |            |            |         |         | CONST |
 ------------------------------------------------------------------------------------------""" == str(
         mps
     )
