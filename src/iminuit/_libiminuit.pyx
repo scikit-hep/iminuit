@@ -1186,12 +1186,12 @@ cdef class Minuit:
 
     @property
     def valid(self):
-        """Check if function minimum is valid"""
+        """Check if function minimum is valid."""
         return self.cfmin is not NULL and self.cfmin.IsValid()
 
     @property
     def accurate(self):
-        """Check if covariance (of the last MIGRAD run) is accurate"""
+        """Check if covariance (of the last MIGRAD run) is accurate."""
         return self.cfmin is not NULL and self.cfmin.HasAccurateCovar()
 
     # Various utility functions

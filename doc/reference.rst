@@ -9,7 +9,7 @@ Reference
 
 Quick Summary
 -------------
-These are the things you will use a lot:
+These methods and attributes you will use a lot:
 
 .. autosummary::
     Minuit
@@ -18,13 +18,15 @@ These are the things you will use a lot:
     Minuit.hesse
     Minuit.minos
     Minuit.values
-    Minuit.errors
     Minuit.fixed
-    Minuit.errordef
-    Minuit.strategy
-    Minuit.tol
+    Minuit.valid
+    Minuit.accurate
     Minuit.fval
     Minuit.nfit
+    Minuit.np_values
+    Minuit.np_covariance
+    Minuit.np_errors
+    Minuit.np_merrors
     Minuit.mnprofile
     Minuit.draw_mnprofile
 
