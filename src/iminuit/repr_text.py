@@ -1,39 +1,44 @@
 from __future__ import absolute_import, division, unicode_literals
 from math import log10
+from .pdg_format import _round, _strip
+import numpy as np
+import re
+
+
+def pdg_format(value, *errors):
+    if value is None:
+        strings, nexp = _round((0, *errors), None, None)
+        strings = strings[1:]
+    else:
+        strings, nexp = _round((value, *errors), None, None)
+    strings = _strip(strings)
+    if nexp == 0:
+        return strings
+    for i, s in enumerate(strings):
+        m = re.match(r"(-?)0\.0+", s)
+        s = m.group(1) + "0" if m else "%sE%i" % (s, nexp)
+        strings[i] = s
+    return strings
+
+
+def matrix_format(*values):
+    vs = np.array(values)
+    mv = np.max(np.abs(vs))
+    smv = "%.3G" % mv
+    try:
+        i = smv.index("E")
+        sexp = smv[i + 1 :]
+        exp = int(sexp)
+        vs /= 10 ** exp
+        s = ["%.3fE%s" % (v, sexp) for v in vs]
+    except ValueError:
+        s = ["%.3f" % v for v in vs]
+    return _strip(s)
 
 
 def goaledm(fm):
     # taken from the source code, see VariableMeticBuilder.cxx
     return 2e-3 * fm.tolerance * fm.up
-
-
-def format_numbers(*args):
-    scales = tuple(int(round(log10(abs(x)))) if x != 0 else 1 for x in args)
-    nmax = max(scales)
-    nsig = min(x for x in scales if nmax - x < 9) - 1
-    all_pos = True
-    for arg in args:
-        if arg < 0:
-            all_pos = False
-            break
-    if nmax <= 3 and nsig >= -3:
-        if nsig >= 0:
-            return tuple(
-                ("%i" if x < 0 or all_pos else " %i") % round(x, -nsig) for x in args
-            )
-        return tuple(
-            (("%%.%if" if x < 0 or all_pos else " %%.%if") % min(-nsig, 3)) % x
-            for x in args
-        )
-    result = [
-        ("%%.%if" if x < 0 or all_pos else " %%.%if")
-        % min(nmax - nsig, 3)
-        % (x / 10 ** nmax)
-        for x in args
-    ]
-    if nmax != 0:
-        return tuple(x + "E%i" % nmax for x in result)
-    return tuple(result)
 
 
 def format_row(widths, *args):
@@ -102,9 +107,9 @@ def params(mps):
     for i, mp in enumerate(mps):
         if mes and mp.name in mes:
             me = mes[mp.name]
-            val, err, mel, meu = format_numbers(mp.value, mp.error, me.lower, me.upper)
+            val, err, mel, meu = pdg_format(mp.value, mp.error, me.lower, me.upper)
         else:
-            val, err = format_numbers(mp.value, mp.error)
+            val, err = pdg_format(mp.value, mp.error)
             mel = ""
             meu = ""
         lines.append(
@@ -126,7 +131,7 @@ def params(mps):
 
 
 def merror(me):
-    mel, meu = format_numbers(me.lower, me.upper)
+    mel, meu = pdg_format(None, me.lower, me.upper)
     stat = "Valid" if me.is_valid else "Invalid"
     summary = "| {0:^15s} | {1:^27s} |".format(me.name, stat)
     error = "| {0:^15s} | {1:^12s} | {2:^12s} |".format("Error", mel, meu)
@@ -155,7 +160,7 @@ def matrix(m):
     for mi in m:
         for mj in mi:
             args.append(mj)
-    nums = format_numbers(*args)
+    nums = matrix_format(*args)
 
     def row_fmt(args):
         s = "| " + args[0] + " |"

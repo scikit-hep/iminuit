@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, unicode_literals
 from iminuit.color import Gradient
-from iminuit.repr_text import format_numbers, goaledm
+from iminuit.repr_text import pdg_format, matrix_format, goaledm
 
 good_style = "background-color:#92CCA6;"
 bad_style = "background-color:#FF7878;"
@@ -150,7 +150,7 @@ def fmin(sfmin):
 
 
 def merror(me):
-    mel, meu = format_numbers(me.lower, me.upper)
+    mel, meu = pdg_format(None, me.lower, me.upper)
     s = Html()
     with table(s):
         with tr(s):
@@ -225,9 +225,9 @@ def params(mps):
         for i, mp in enumerate(mps):
             if mes and mp.name in mes:
                 me = mes[mp.name]
-                v, e, mem, mep = format_numbers(mp.value, mp.error, me.lower, me.upper)
+                v, e, mem, mep = pdg_format(mp.value, mp.error, me.lower, me.upper)
             else:
-                e, v = format_numbers(mp.error, mp.value)
+                v, e = pdg_format(mp.value, mp.error)
                 mem = ""
                 mep = ""
             with tr(s, style=backgrounds[(i + 1) % 2]):
@@ -265,7 +265,7 @@ def matrix(m):
         for mi in m:
             for mj in mi:
                 args.append(mj)
-        nums = format_numbers(*args)
+        nums = matrix_format(*args)
 
     grad = Gradient(
         (-1.0, 120.0, 120.0, 250.0),

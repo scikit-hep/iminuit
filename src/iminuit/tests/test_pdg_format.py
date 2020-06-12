@@ -203,6 +203,8 @@ def test_term_format():
     assert ft(*data_as_list, leader=1) == "1.2 -0.1 +0.2 ± 0.5"
     assert ft(1.2, -0.0, 0.0, 0.0, leader=0) == "1.2 -0.0 +0.0 ± 0.0"
 
+    assert ft(-1.234567e-22, 1.234567e-11) == "(-0.0 ± 1.2)E-11"
+
 
 def test_latex_format():
     def ft(*args, **kwargs):

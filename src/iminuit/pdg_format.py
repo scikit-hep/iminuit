@@ -93,7 +93,7 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
             <str: format spec for label>,
             <str: format spec for scientific notation>,
             <bool: whether to strip trailing zeros and dots>,
-            <tuple of str OR None: replacement for 'nan' and 'inf'> 
+            <tuple of str OR None: replacement for 'nan' and 'inf'>
         )
     leader : int, optional
         Index of uncertainty that should be used to determine the number of digits shown,
@@ -155,20 +155,22 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
 
 
 def _strip(items):
+    stripable = [(i, s) for (i, s) in enumerate(items) if s[-1] not in "nf"]
     # check if first item has a ".", then all have "."
-    if "." in items[0]:
+    if stripable and "." in stripable[0][1]:
         i = 0
         # strip common trailing "0"s
         while True:
-            if all(x[-1 - i] == "0" for x in items):
+            if all(x[1][-1 - i] == "0" for x in stripable):
                 i += 1
             else:
                 break
         # strip common trailing "."
-        if all(x[-1 - i] == "." for x in items):
+        if all(x[1][-1 - i] == "." for x in stripable):
             i += 1
         if i > 0:
-            return [x[:-i] for x in items]
+            for (k, s) in stripable:
+                items[k] = s[:-i]
     return items
 
 
@@ -212,7 +214,7 @@ def _unpacked_index(values, index):
 
 
 def _round(values, leader, n_exp_extern):
-    assert len(values) >= 2
+    assert len(values) >= 1
     assert _is_asym(values[0]) is False
     values = _unpack(values)
 
@@ -252,10 +254,7 @@ def _round(values, leader, n_exp_extern):
     if leader is None:
         # invalid leading error, cannot determine digits
         scale = 10 ** -n_exp
-        return (
-            [fmt(v * scale, 4) for v in values],
-            n_exp,
-        )
+        return ([fmt(v * scale, 4) for v in values], n_exp)
 
     scale = 10 ** -n_exp
     digits = round(lerror * scale, 3)
@@ -270,8 +269,14 @@ def _round(values, leader, n_exp_extern):
             digits = 1.0
 
     if n_exp_extern is None:
-        n_exp_shift = int(digits == 1.0) - int(n_exp < 0)
-        n_exp_extern = math.trunc((n_exp + n_exp_shift) / 3) * 3
+        if abs(values[0] / 10 ** n_exp) < 0.01:
+            if n_exp != 0:
+                n_exp_extern = n_exp - 1
+            else:
+                n_exp_extern = 0
+        else:
+            n_exp_shift = int(digits == 1.0) - int(n_exp < 0)
+            n_exp_extern = math.trunc((n_exp + n_exp_shift) / 3) * 3
 
     shift = n_exp - n_exp_extern
     values = [
