@@ -44,7 +44,7 @@ def profile(self, vname, bins, bound, subtract_min):
     val = np.linspace(bound[0], bound[1], bins, dtype=np.double)
     result = np.empty(bins, dtype=np.double)
     pos = self.var2pos[vname]
-    n = val.shape[0]  # pylint: disable=unsubscriptable-object
+    n = val.shape[0]
     arg = list(self.args)
     if self.use_array_call:
         varg = np.array(arg, dtype=np.double)

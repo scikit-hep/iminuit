@@ -50,15 +50,15 @@ doc/_build/html/index.html: build $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi
 
 doc: doc/_build/html/index.html
 
-analysis: flake8 pylint
+analysis: flake8
 
 flake8: build
 	@$(PYTHON) -m flake8 --extend-ignore=E203 --max-line-length=95 src/$(PROJECT)
 
-# TODO: once the errors are fixed, remove the -E option and tackle the warnings
-pylint: build
-	@$(PYTHON) -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
-	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
+## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
+# pylint: build
+# 	@$(PYTHON) -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
+# 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
 
 conda:
 	$(PYTHON) setup.py bdist_conda

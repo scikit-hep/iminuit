@@ -126,11 +126,11 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
         for i, x in enumerate(strings):
             c = x[-1]
             if c == "n":  # nan, -nan
-                x = trans[0]  # pylint: disable=unsubscriptable-object
+                x = trans[0]
             elif c == "f":  # inf, -inf
                 if x[0] == "-":
-                    x = "-" + trans[1]  # pylint: disable=unsubscriptable-object
-                x = trans[1]  # pylint: disable=unsubscriptable-object
+                    x = "-" + trans[1]
+                x = trans[1]
             strings[i] = x
 
     s = strings[0]
@@ -257,10 +257,10 @@ def _round(values, leader, n_exp_extern):
 
     if leader is None:
         # invalid leading error, cannot determine digits
-        scale = 10 ** -n_exp  # pylint: disable=invalid-unary-operand-type
+        scale = 10 ** -n_exp
         return ([fmt(v * scale, 4) for v in values], n_exp)
 
-    scale = 10 ** -n_exp  # pylint: disable=invalid-unary-operand-type
+    scale = 10 ** -n_exp
     digits = round(lerror * scale, 3)
     if digits < 0.355:
         n_digits = 2
