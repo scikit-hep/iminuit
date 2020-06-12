@@ -873,7 +873,7 @@ cdef class Minuit:
         self.ngrads = self.ngrads_total
 
         hesse = new MnHesse(self.strategy)
-        
+
         if self.cfmin:
             hesse.call(
                 deref(<FCNBase*> self.pyfcn),
@@ -952,7 +952,7 @@ cdef class Minuit:
 
         varlist = [var] if var is not None else self.parameters
         fixed_param = self.list_of_fixed_param()
-        
+
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
@@ -977,7 +977,7 @@ cdef class Minuit:
             mnerror = minos.Minos(self.var2pos[vname], maxcall)
             self.merrors_struct[vname] = minoserror2struct(vname, mnerror)
 
-        
+
         self.refresh_internal_state()
         del minos
         self.pyfcn.SetErrorDef(oldup)
@@ -1156,7 +1156,7 @@ cdef class Minuit:
         """Total number of calls to FCN (not just the last operation)"""
         cdef IMinuitMixinPtr ptr = dynamic_cast[IMinuitMixinPtr](self.pyfcn)
         return ptr.getNumCall() if ptr else 0
-        
+
     @property
     def ngrads_total(self):
         """Total number of calls to Gradient (not just the last operation)"""
@@ -1168,18 +1168,10 @@ cdef class Minuit:
         """Check if function minimum is valid"""
         return self.cfmin is not NULL and self.cfmin.IsValid()
 
-    def matrix_accurate(self):
+    @property
+    def accurate(self):
         """Check if covariance (of the last MIGRAD run) is accurate"""
-        return self.cfmin is not NULL and \
-            self.cfmin.HasAccurateCovar()
-
-    def list_of_fixed_param(self):
-        """List of (initially) fixed parameters"""
-        return [name for (name, is_fixed) in self.fixed.items() if is_fixed]
-
-    def list_of_vary_param(self):
-        """List of (initially) float varying parameters"""
-        return [name for (name, is_fixed) in self.fixed.items() if not is_fixed]
+        return self.cfmin is not NULL and self.cfmin.HasAccurateCovar()
 
     # Various utility functions
 
@@ -1650,7 +1642,7 @@ cdef class Minuit:
         )
         fmin = self.fmin
         return fmin.edm if fmin else None
-                             
+
     @deprecated("use `this_object.fmin` instead")
     def get_fmin(self):
         return self.fmin
@@ -1670,7 +1662,7 @@ cdef class Minuit:
     @deprecated("Use `this_object.ngrads_total` instead")
     def get_num_call_grad(self):
         return self.ngrads_total
-        
+
     @deprecated("use `this_object.fixed` instead")
     def is_fixed(self, vname):
         return self.fixed[vname]
@@ -1678,7 +1670,7 @@ cdef class Minuit:
     @deprecated("Use `this_object.valid` instead")
     def migrad_ok(self):
         return self.valid
-                                        
+
     @deprecated("use `print(this_object.matrix())` instead")
     def print_matrix(self):
         print(self.matrix(correlation=True, skip_fixed=True))
@@ -1690,7 +1682,7 @@ cdef class Minuit:
     @deprecated("use `print(this_object.get_merrors())` instead")
     def print_all_minos(self):
         print(self.merrors_struct)
-        
+
     @deprecated("use `print(this_object.params)` instead")
     def print_param(self, **kwds):
         print(self.params)
@@ -1715,3 +1707,17 @@ cdef class Minuit:
     @deprecated("use `this_object.print_level` instead")
     def set_print_level(self, value):
         self.print_level = value
+
+    @deprecated("use `[name for (name,fix) in this_object.fixed.items() if fix]`")
+    def list_of_fixed_param(self):
+        """List of (initially) fixed parameters"""
+        return [name for (name, is_fixed) in self.fixed.items() if is_fixed]
+
+    @deprecated("use `[name for (name,fix) in this_object.fixed.items() if not fix]`")
+    def list_of_vary_param(self):
+        """List of (initially) float varying parameters"""
+        return [name for (name, is_fixed) in self.fixed.items() if not is_fixed]
+
+    @deprecated("use `this_object.accurate`")
+    def matrix_accurate(self):
+        return self.accurate

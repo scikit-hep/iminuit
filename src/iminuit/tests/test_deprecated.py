@@ -30,6 +30,11 @@ def test_edm(minuit):
         assert minuit.edm == approx(0)
 
 
+def test_matrix_accurate(minuit):
+    with pytest.warns(DeprecationWarning):
+        assert minuit.matrix_accurate() == minuit.accurate
+
+
 def test_get_fmin(minuit):
     with pytest.warns(DeprecationWarning):
         assert minuit.get_fmin() == minuit.fmin
@@ -127,6 +132,18 @@ def test_set_print_level(minuit):
 def test_hesse_maxcall(minuit):
     with pytest.warns(DeprecationWarning):
         minuit.hesse(maxcall=10)
+
+
+def test_list_of_vary_param(minuit):
+    with pytest.warns(DeprecationWarning):
+        assert minuit.list_of_vary_param() == [
+            k for (k, v) in self.fixed.items() if not v
+        ]
+
+
+def test_list_of_fixed_param(minuit):
+    with pytest.warns(DeprecationWarning):
+        assert minuit.list_of_fixed_param() == [k for (k, v) in self.fixed.items() if v]
 
 
 def test_import_iminuit_warnings():

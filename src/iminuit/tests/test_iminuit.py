@@ -275,7 +275,7 @@ def test_from_array_func_2():
 
 def test_from_array_func_with_broadcasting():
     m = Minuit.from_array_func(
-        func7, (1, 1), error=0.5, limit=(0, 2), errordef=Minuit.LEAST_SQUARES,
+        func7, (1, 1), error=0.5, limit=(0, 2), errordef=Minuit.LEAST_SQUARES
     )
     assert m.fitarg == {
         "x0": 1,
@@ -368,8 +368,7 @@ def test_fix_param(grad):
     m.migrad()
     assert_allclose(m.np_values(), (2, 10), rtol=1e-2)
     assert_allclose(m.fval, 35)
-    assert m.list_of_vary_param() == ["x"]
-    assert m.list_of_fixed_param() == ["y"]
+    assert m.fixed.items() == {"x": False, "y": True}
     assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
@@ -615,6 +614,8 @@ def test_args(minuit):
     assert_allclose(minuit.args[-1], 2)
     assert_allclose(minuit.args[1:], [2])
     assert_allclose(minuit.args[:-1], [1])
+    minuit.args[:1] = [3]
+    assert_allclose(iminuit.args, [3, 2])
 
 
 def test_values(minuit):
@@ -718,7 +719,7 @@ def test_likelihood():
 
         return -np.sum(lnormal(data, mu, sigma))
 
-    m = Minuit(nll, errordef=Minuit.LIKELIHOOD, limit_sigma=(0, None), pedantic=False,)
+    m = Minuit(nll, errordef=Minuit.LIKELIHOOD, limit_sigma=(0, None), pedantic=False)
     m.migrad()
 
     mu = np.mean(data)
@@ -1035,7 +1036,7 @@ def test_bad_functions():
         (returning_noniterable, "TypeError"),
     ):
         m = Minuit.from_array_func(
-            lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True,
+            lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True
         )
         with pytest.raises(RuntimeError) as excinfo:
             m.migrad()
