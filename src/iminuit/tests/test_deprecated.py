@@ -137,13 +137,15 @@ def test_hesse_maxcall(minuit):
 def test_list_of_vary_param(minuit):
     with pytest.warns(DeprecationWarning):
         assert minuit.list_of_vary_param() == [
-            k for (k, v) in self.fixed.items() if not v
+            k for (k, v) in minuit.fixed.items() if not v
         ]
 
 
 def test_list_of_fixed_param(minuit):
     with pytest.warns(DeprecationWarning):
-        assert minuit.list_of_fixed_param() == [k for (k, v) in self.fixed.items() if v]
+        assert minuit.list_of_fixed_param() == [
+            k for (k, v) in minuit.fixed.items() if v
+        ]
 
 
 def test_import_iminuit_warnings():

@@ -10,7 +10,6 @@ from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
 from iminuit import util as mutil
 from iminuit._deprecated import deprecated
-from iminuit.util import IMinuitWarning, HesseFailedWarning
 from iminuit.latex import LatexFactory
 from iminuit import _minuit_methods
 from collections import OrderedDict
@@ -125,11 +124,24 @@ cdef class BasicView:
         return [self._get(k) for k in range(len(self))]
 
     def __getitem__(self, key):
-        cdef int i = key if is_int(key) else self._minuit.var2pos[key]
+        if isinstance(key, slice):
+            mutil._getitem_slice(self, key)
+        i = key if is_int(key) else self._minuit.var2pos[key]
+        if i < 0:
+            i += len(self)
+        if i >= len(self):
+            raise IndexError
         return self._get(i)
 
     def __setitem__(self, key, value):
-        cdef int i = key if is_int(key) else self._minuit.var2pos[key]
+        if isinstance(key, slice):
+            mutil._setitem_slice(self, key, value)
+            return
+        i = key if is_int(key) else self._minuit.var2pos[key]
+        if i < 0:
+            i += len(self)
+        if i >= len(self):
+            raise IndexError
         self._set(i, value)
 
     def __repr__(self):
@@ -153,7 +165,7 @@ cdef class ArgsView:
     def __getitem__(self, key):
         cdef int i
         if isinstance(key, slice):
-            return [self._state.Parameter(i).Value() for i in range(len(self))[key]]
+            return [self._state.Parameter(i).Value() for i in range(*key.indices(len(self)))]
         i = key
         if i < 0:
             i += len(self)
@@ -164,7 +176,7 @@ cdef class ArgsView:
     def __setitem__(self, key, value):
         cdef int i
         if isinstance(key, slice):
-            for i, v in zip(range(len(self))[key], value):
+            for i, v in zip(range(*key.indices(len(self))), value):
                 self._state.SetValue(i, v)
         else:
             i = key
@@ -320,7 +332,7 @@ cdef class Minuit:
         if level >= 3 or level < MnPrint.Level():
             warn("Setting print_level >=3 has the side-effect of setting the level "
                  "globally for all Minuit instances",
-                 IMinuitWarning)
+                 mutil.IMinuitWarning)
             MnPrint.SetLevel(level)
         if self.minimizer:
             self.minimizer.Minimizer().Builder().SetPrintLevel(level)
@@ -883,7 +895,7 @@ cdef class Minuit:
             self.last_upst = self.cfmin.UserState()
             if not self.last_upst.HasCovariance():
                 warn("HESSE Failed. Covariance and GlobalCC will not be available",
-                     HesseFailedWarning)
+                     mutil.HesseFailedWarning)
         else:
             self.last_upst = hesse.call(
                 deref(<FCNBase*> self.pyfcn),
@@ -951,7 +963,7 @@ cdef class Minuit:
                                'in parameter list :' % var + str(self.parameters))
 
         varlist = [var] if var is not None else self.parameters
-        fixed_param = self.list_of_fixed_param()
+        fixed_param = [k for (k, v) in self.fixed.items() if v]
 
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
@@ -960,7 +972,7 @@ cdef class Minuit:
             if vname in fixed_param:
                 if var is not None:  #specifying vname but it's fixed
                     warn('Specified variable name for minos is set to fixed',
-                         IMinuitWarning)
+                         mutil.IMinuitWarning)
                     return None
                 continue
             if self.grad is None:
@@ -1017,7 +1029,7 @@ cdef class Minuit:
                     return 0.0
                 return mncov.get(ext2int[i], ext2int[j])
 
-        names = self.list_of_vary_param() if skip_fixed else list(self.values)
+        names = [k for (k, v) in self.fixed.items() if not (skip_fixed and v)]
         if correlation:
             def cor(i, j):
                 return cov(i, j) / (sqrt(cov(i, i) * cov(j, j)) + 1e-100)
@@ -1219,10 +1231,10 @@ cdef class Minuit:
             raise ValueError('Unknown parameter %s' % vname)
 
         if is_number(bound):
-            if not self.matrix_accurate():
+            if not self.accurate:
                 warn('Specify nsigma bound but error '
                      'but error matrix is not accurate.',
-                     IMinuitWarning)
+                     mutil.IMinuitWarning)
             start = self.values[vname]
             sigma = self.errors[vname]
             bound = (start - bound * sigma, start + bound * sigma)
@@ -1243,7 +1255,7 @@ cdef class Minuit:
             migrad_status[i] = m.valid
             if not m.valid:
                 warn('MIGRAD fails to converge for %s=%f' % (vname, v),
-                     IMinuitWarning)
+                     mutil.IMinuitWarning)
             results[i] = m.fval
             if m.fval < vmin:
                 vmin = m.fval
@@ -1527,7 +1539,7 @@ cdef class Minuit:
         cdef unsigned int ix = self.var2pos[x]
         cdef unsigned int iy = self.var2pos[y]
 
-        vary_param = self.list_of_vary_param()
+        vary_param = [k for (k, v) in self.fixed.items() if not v]
 
         if x not in vary_param or y not in vary_param:
             raise ValueError('mncontour has to be run on vary parameters.')
@@ -1612,7 +1624,7 @@ cdef class Minuit:
         mpv = self.last_upst.MinuitParameters()
         self.fitarg.update({unicode(k): v for k, v in self.values.items()})
         self.fitarg.update({'error_' + k: v for k, v in self.errors.items()})
-        vary_param = self.list_of_vary_param()
+        vary_param = [k for (k, v) in self.fixed.items() if not v]
         if self.last_upst.HasCovariance():
             cov = self.last_upst.Covariance()
             self.covariance = \
@@ -1626,7 +1638,7 @@ cdef class Minuit:
         self.gcc = None
         if self.last_upst.HasGlobalCC() and self.last_upst.GlobalCC().IsValid():
             self.gcc = {v: self.last_upst.GlobalCC().GlobalCC()[i] for \
-                        i, v in enumerate(self.list_of_vary_param())}
+                        i, v in enumerate(vary_param)}
 
         self.merrors = {(k, 1.0): v.upper
                         for k, v in self.merrors_struct.items()}
