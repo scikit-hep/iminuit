@@ -224,7 +224,7 @@ def test_latex_format():
     assert ft(1e9, nan) == r"(1 \pm \mathrm{NaN}) \times 10^{9}"
     assert ft(inf, 2.345e3) == r"(\infty \pm 2.3) \times 10^{3}"
     assert ft(1.2345e9, inf) == r"(1.2345 \pm \infty) \times 10^{9}"
-    assert ft(inf, -inf) == r"\infty {}_{-\infty}"  # tolerance against input errors
+    assert ft(inf, -inf) == r"\infty \pm \infty"  # tolerance against input errors
     assert ft(0, 0) == r"0 \pm 0"
     assert ft(1.234, 0.123, 2.345) == r"1.23 \pm 0.12 \pm 2.35"
     assert ft(1.234, 0.96, 0.45) == r"1.2 \pm 1.0 \pm 0.5"
