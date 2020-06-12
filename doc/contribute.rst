@@ -90,19 +90,19 @@ Build `iminuit` in-place:
 
 .. code-block:: bash
 
-   make
+   python -m pip install -e .
 
 Run the tests:
 
 .. code-block:: bash
 
-    make test
+    python -m pytest
 
 Run the notebook tests:
 
 .. code-block:: bash
 
-    make test-notebooks
+    python -m pytest tutorial
 
 Run the tests and generate a coverage report:
 
