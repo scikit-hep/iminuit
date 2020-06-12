@@ -79,8 +79,6 @@ jobs:
     python.architecture: 'x64'
   strategy:
     matrix:
-      Python27:
-        python.version: '2.7'
       Python36:
         python.version: '3.6'
       Python37:
@@ -98,9 +96,6 @@ jobs:
 - job: Windows
   strategy:
     matrix:
-      Python27:
-        python.version: '2.7'
-        python.architecture: 'x64'
       Python36:
         python.version: '3.6'
         python.architecture: 'x64'
@@ -110,9 +105,6 @@ jobs:
       Python38:
         python.version: '3.8'
         python.architecture: 'x64'
-      Python27_32:
-        python.version: '2.7'
-        python.architecture: 'x86'
       Python36_32:
         python.version: '3.6'
         python.architecture: 'x86'

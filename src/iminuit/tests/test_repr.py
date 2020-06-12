@@ -1,14 +1,4 @@
-from __future__ import absolute_import, division, print_function
-
 # flake8: noqa E501
-
-# Here we don't import unicode_literals, because otherwise we cannot write
-# in "\usepackage" and similar in the string literals below.
-# The problem is an inconsistency regarding the effect of
-# from __future__ import unicode_literals in Python 2 and 3, which is
-# explained here:
-# https://stackoverflow.com/questions/7602171/unicode-error-unicodeescape-codec-cant-decode-bytes-string-with-u
-# We want the same code to work in Python 2 and 3 and chose this solution.
 from iminuit import Minuit
 from iminuit.util import Params, Param, Matrix
 from iminuit import repr_html, repr_text
@@ -591,9 +581,10 @@ False
     )
 
 
-def test_html_matrix(minuit):
+def test_html_matrix():
+    matrix = Matrix(["x", "y"], ((1.0, -0.0), (-0.0, 0.25)))
     assert (
-        minuit.matrix()._repr_html_()
+        matrix._repr_html_()
         == r"""<table>
 <tr>
 <td/>
@@ -717,8 +708,8 @@ def test_text_minos(minuit):
     )
 
 
-def test_text_matrix(minuit):
-    matrix = minuit.matrix()
+def test_text_matrix():
+    matrix = Matrix(["x", "y"], ((1.0, -0.0), (-0.0, 0.25)))
     assert r"""-------------------
 |   |     x     y |
 -------------------

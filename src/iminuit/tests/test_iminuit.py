@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function
 import warnings
 import platform
 import pytest
@@ -30,7 +29,7 @@ def test_pedantic_warning_message():
     ):
         assert str(w[i].message) == msg
         assert w[i].filename == __file__
-        assert w[i].lineno == lineno + 1  # from __future__ is not counted
+        assert w[i].lineno == lineno + 1
 
 
 def test_version():

@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, unicode_literals
 from iminuit.color import Gradient
 from iminuit.repr_text import pdg_format, matrix_format, goaledm
 

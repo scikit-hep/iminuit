@@ -16,7 +16,7 @@ For a hands-on introduction, see the :ref:`tutorials`.
 
 You can install iminuit with pip. It only needs a moderately recent C++ compiler on your machine. The Minuit2 code is bundled, so you don't need to install it separately.
 
-**Support for Python 2.7 to 3.8, PyPy-3.5 to PyPy-3.6**
+**Support for Python 3.5+, PyPy-3.5 to PyPy-3.6**
 
 Whether you use the latest Python 3 or stick to classic Python 2, iminuit works for you. We even support the latest PyPy. iminuit interoperates with NumPy. In addition to passing parameters individually, you can minimise functions that accept parameters as NumPy arrays. You can get the fit results as NumPy arrays.
 
