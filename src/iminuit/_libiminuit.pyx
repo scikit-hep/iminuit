@@ -125,7 +125,8 @@ cdef class BasicView:
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            return mutil._getitem_slice(self, key)
+            ind = range(*sl.indices(len(self)))
+            return [self._get(i) for i in ind]
         i = key if is_int(key) else self._minuit.var2pos[key]
         if i < 0:
             i += len(self)
@@ -135,7 +136,15 @@ cdef class BasicView:
 
     def __setitem__(self, key, value):
         if isinstance(key, slice):
-            mutil._setitem_slice(self, key, value)
+            ind = range(*sl.indices(len(self)))
+            if hasattr(val, "__getitem__") and hasattr(val, "__len__"):
+                if len(val) != len(ind):
+                    raise ValueError("length of {} does not match slice".format(val))
+                for i, v in zip(ind, val):
+                    self._set(i, v)
+            else:
+                for i in ind:
+                    self._set(i, val)
             return
         i = key if is_int(key) else self._minuit.var2pos[key]
         if i < 0:

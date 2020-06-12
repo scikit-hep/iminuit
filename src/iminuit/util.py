@@ -461,20 +461,3 @@ def format_exception(etype, evalue, tb):
 
     s = "".join(traceback.format_tb(tb))
     return "%s: %s\n%s" % (etype.__name__, evalue, s)
-
-
-def _setitem_slice(self, sl, val):
-    ind = range(*sl.indices(len(self)))
-    if hasattr(val, "__getitem__") and hasattr(val, "__len__"):
-        if len(val) != len(ind):
-            raise ValueError("length of {} does not match slice".format(val))
-        for i, v in zip(ind, val):
-            self._set(i, v)
-    else:
-        for i in ind:
-            self._set(i, val)
-
-
-def _getitem_slice(self, sl):
-    ind = range(*sl.indices(len(self)))
-    return [self._get(i) for i in ind]

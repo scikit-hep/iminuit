@@ -28,7 +28,7 @@ jobs:
     - run: python -m pip install -e .
     - run: python -m pytest
 
-  test_pypy:
+  pypy:
     runs-on: ubuntu-latest
 
     steps:
