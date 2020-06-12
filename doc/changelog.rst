@@ -5,6 +5,47 @@
 Changelog
 =========
 
+1.4.0 (June, 12, 2020)
+----------------------
+
+This release drops Python 2 support and modernizes the interface of iminuit's Minuit object to make it more pythonic. Outdated methods were deprecated and replaced with properties. Keywords in methods were made more consistent. The deprecated interface has been removed from the documentation, but is still there. Old code should still work (if not please file a bug report!).
+
+Bug-fixes
+~~~~~~~~~
+- Fixed an exception in the rich display when results were NaN
+- `Minuit.migrad_ok()` (now replaced by `Minuit.accurate`) now returns false if HESSE failed after MIGRAD and made the minimum invalid
+- Running `Minuit.hesse()` now properly updates the function minimum
+- Fixed incorrect `hess_inv` returned by `iminuit.minimize`
+- Fixed duplicated printing of pedantic warning messages
+
+Deprecated
+~~~~~~~~~~
+- `Minuit.list_of_fixed_params()`, `Minuit.list_of_vary_params()`: use `Minuit.fixed`
+- `Minuit.migrad_ok()`: use `Minuit.valid`
+- `Minuit.matrix_accurate()`: use `Minuit.accurate`
+- `Minuit.get_fmin()`: use `Minuit.fmin`
+- `Minuit.get_param_states()`: use `Minuit.param`
+- `Minuit.get_initial_param_states()`: use `Minuit.init_param`
+- `Minuit.get_num_call_fcn()`: use `Minuit.ncalls_total`
+- `Minuit.get_num_call_grad()`: use `Minuit.ngrads_total`
+- `Minuit.print_param_states()`: use `print()` on `Minuit.param`
+- `Minuit.print_initial_param_states()`: use `print()` on `Minuit.init_param`
+- `Minuit.hesse(maxcall=...)` keyword: use `ncall=...` like in `Minuit.migrad()`
+- `Minuit.edm`: use `Minuit.fmin.edm`
+
+New features
+~~~~~~~~~~~~
+- iminuit now uses the PDG formatting rule for quantities with errors
+- slicing and basic broadcasting support for `Minuit.values`, `Minuit.errors`, `Minuit.fixed`, e.g. the following works: `m.fixed[:] = True`, `m.values[:2] = [1, 2]`
+- `Minuit.migrad(ncall=0)` (the default) now uses MINUITs internal heuristic instead of a flat limit of 10000 calls
+- `iminuit.minimize` now supports the `tol` parameter
+- `Minuit` now supports `print_level=3`, which shows debug level information when MIGRAD runs
+- Binder support and Binder badge for tutorial notebooks added by @matthewfeickert
+
+Documentation
+~~~~~~~~~~~~~
+- New tutorials on error computation and on using automatic differentiation
+
 1.3.10 (March, 31, 2020)
 ------------------------
 

@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 from . import util as _util
 import warnings
 from sys import version_info as pyver

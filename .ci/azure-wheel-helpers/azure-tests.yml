@@ -13,6 +13,6 @@ steps:
   displayName: Install testing requirements
 
 - script: |
-    python -m pytest --cov $(project_name) --cov-report html
+    python -m pytest -vv
   workingDirectory: tests
   displayName: Test with pytest

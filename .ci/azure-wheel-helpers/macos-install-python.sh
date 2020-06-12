@@ -8,9 +8,6 @@
 PYTHON_VERSION="$1"
 
 case $PYTHON_VERSION in
-2.7)
-  FULL_VERSION=2.7.17
-  ;;
 3.6)
   FULL_VERSION=3.6.8
   ;;

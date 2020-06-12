@@ -5,8 +5,8 @@ The iminuit logo uses glyphs generated from the free Gentium Plus font.
 
 How to make a release
 =====================
-- merge develop into master
-- create a branch on the master, called release_<version>, do edits there
+- merge develop into master (possibly merge into branch first, to do history edits)
+- create a branch on the master, called release_<version>, make release edits there
 - increase version number in iminuit/version.py
 - update doc/changelog.rst
 - check that new tutorials are listed in the tutorials section of the docs

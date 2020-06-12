@@ -1,8 +1,6 @@
 # cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii, language_level=2
 # distutils: language = c++
 """IPython Minuit class definition."""
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
 from warnings import warn
 from libc.math cimport sqrt
 from libcpp.string cimport string

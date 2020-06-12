@@ -7,7 +7,7 @@
 
 Jupyter-friendly Python interface to the C++ Minuit2 library.
 
-- Supported CPython versions: 2.7, 3.5+
+- Supported CPython versions: 3.5+
 - Supported PyPy versions: 3.5, 3.6
 - Supported platforms: Linux, OSX and Windows.
 

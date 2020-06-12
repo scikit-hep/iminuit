@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 from iminuit._deprecated import deprecated
 
 __all__ = ["Gradient"]
