@@ -3,7 +3,7 @@ import warnings
 import platform
 import pytest
 import numpy as np
-from numpy.testing import assert_allclose, assert_equal
+from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.util import Param, HesseFailedWarning
 from pytest import approx
