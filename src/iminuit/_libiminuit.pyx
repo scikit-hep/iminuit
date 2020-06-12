@@ -1710,7 +1710,6 @@ cdef class Minuit:
 
     @deprecated("use `print(this_object.init_params)` instead")
     def print_initial_param(self, **kwds):
-        """Print initial parameters"""
         print(self.get_initial_param_states())
 
     @deprecated("use `this_object.errordef = value` instead")
@@ -1731,12 +1730,10 @@ cdef class Minuit:
 
     @deprecated("use `[name for (name,fix) in this_object.fixed.items() if fix]`")
     def list_of_fixed_param(self):
-        """List of (initially) fixed parameters"""
         return [name for (name, is_fixed) in self.fixed.items() if is_fixed]
 
     @deprecated("use `[name for (name,fix) in this_object.fixed.items() if not fix]`")
     def list_of_vary_param(self):
-        """List of (initially) float varying parameters"""
         return [name for (name, is_fixed) in self.fixed.items() if not is_fixed]
 
     @deprecated("use `this_object.accurate`")
