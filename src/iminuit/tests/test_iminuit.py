@@ -157,7 +157,7 @@ def func_test_helper(f, **kwds):
     assert_allclose(val["y"], 5.0, rtol=1e-3)
     assert_allclose(m.fval, 10.0 * m.errordef, rtol=1e-3)
     assert m.valid
-    assert m.matrix_accurate()
+    assert m.accurate
     m.hesse()
     err = m.errors
     assert_allclose(err["x"], 2.0, rtol=1e-3)
@@ -275,7 +275,7 @@ def test_from_array_func_2():
 
 def test_from_array_func_with_broadcasting():
     m = Minuit.from_array_func(
-        func7, (1, 1), error=0.5, limit=(0, 2), errordef=Minuit.LEAST_SQUARES,
+        func7, (1, 1), error=0.5, limit=(0, 2), errordef=Minuit.LEAST_SQUARES
     )
     assert m.fitarg == {
         "x0": 1,
@@ -368,8 +368,7 @@ def test_fix_param(grad):
     m.migrad()
     assert_allclose(m.np_values(), (2, 10), rtol=1e-2)
     assert_allclose(m.fval, 35)
-    assert m.list_of_vary_param() == ["x"]
-    assert m.list_of_fixed_param() == ["y"]
+    assert m.fixed.items() == [("x", False), ("y", True)]
     assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
@@ -408,6 +407,12 @@ def test_fix_param(grad):
     assert m.values["y"] == 10
     assert m.narg == 2
     assert m.nfit == 1
+
+    m.fixed[:] = True
+    assert m.fixed.values() == [True, True]
+    m.fixed[1:] = False
+    assert m.fixed.values() == [True, False]
+    assert m.fixed[:1] == [True]
 
 
 def test_fitarg_oneside():
@@ -615,14 +620,31 @@ def test_args(minuit):
     assert_allclose(minuit.args[-1], 2)
     assert_allclose(minuit.args[1:], [2])
     assert_allclose(minuit.args[:-1], [1])
+    minuit.args[:1] = [3]
+    assert_allclose(minuit.args, [3, 2])
+    assert_allclose(minuit.args[1:], [2])
 
 
 def test_values(minuit):
-    actual = minuit.values.values()
     expected = [2.0, 5.0]
-    assert_allclose(actual, expected, atol=1e-8)
-    assert_allclose(minuit.values[0], 2, atol=1e-8)
-    assert_allclose(minuit.values[1], 5, atol=1e-8)
+    assert len(minuit.values) == 2
+    assert_allclose(minuit.values.values(), expected, atol=1e-8)
+    minuit.values[:] = expected
+    assert minuit.values[:] == expected
+    assert minuit.values[0] == 2
+    assert minuit.values[1] == 5
+    assert minuit.values["x"] == 2
+    assert minuit.values["y"] == 5
+    assert minuit.values[:1] == [2]
+    minuit.values[1:] = [3]
+    assert minuit.values[:] == [2, 3]
+    assert minuit.values[-1] == 3
+    minuit.values[:] = 7
+    assert minuit.values[:] == [7, 7]
+    with pytest.raises(KeyError):
+        minuit.values["z"]
+    with pytest.raises(IndexError):
+        minuit.values[3]
 
 
 def test_matrix(minuit):
@@ -718,7 +740,7 @@ def test_likelihood():
 
         return -np.sum(lnormal(data, mu, sigma))
 
-    m = Minuit(nll, errordef=Minuit.LIKELIHOOD, limit_sigma=(0, None), pedantic=False,)
+    m = Minuit(nll, errordef=Minuit.LIKELIHOOD, limit_sigma=(0, None), pedantic=False)
     m.migrad()
 
     mu = np.mean(data)
@@ -1035,7 +1057,7 @@ def test_bad_functions():
         (returning_noniterable, "TypeError"),
     ):
         m = Minuit.from_array_func(
-            lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True,
+            lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True
         )
         with pytest.raises(RuntimeError) as excinfo:
             m.migrad()

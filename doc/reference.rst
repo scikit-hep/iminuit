@@ -9,7 +9,7 @@ Reference
 
 Quick Summary
 -------------
-These are the things you will use a lot:
+These methods and attributes you will use a lot:
 
 .. autosummary::
     Minuit
@@ -18,13 +18,15 @@ These are the things you will use a lot:
     Minuit.hesse
     Minuit.minos
     Minuit.values
-    Minuit.errors
     Minuit.fixed
-    Minuit.errordef
-    Minuit.strategy
-    Minuit.tol
+    Minuit.valid
+    Minuit.accurate
     Minuit.fval
     Minuit.nfit
+    Minuit.np_values
+    Minuit.np_covariance
+    Minuit.np_errors
+    Minuit.np_merrors
     Minuit.mnprofile
     Minuit.draw_mnprofile
 
@@ -34,7 +36,7 @@ Minuit
 .. autoclass:: Minuit
     :members:
     :undoc-members:
-    :exclude-members: is_fixed, print_all_minos, print_fmin, print_param, print_initial_param, print_matrix, set_errordef, set_strategy, set_print_level, set_up, from_array_func, get_merrors
+    :exclude-members: is_fixed, print_all_minos, print_fmin, print_param, print_initial_param, print_matrix, set_errordef, set_strategy, set_print_level, set_up, from_array_func, get_merrors, list_of_vary_param, list_of_fixed_param, get_fmin, get_initial_param_states, get_param_states, get_num_call_fcn, get_num_call_grad, matrix_accurate, merrors, migrad_ok
 
     .. automethod:: from_array_func
 
