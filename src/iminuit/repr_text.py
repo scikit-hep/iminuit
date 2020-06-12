@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, unicode_literals
-from math import log10
 from .pdg_format import _round, _strip
 import numpy as np
 import re

@@ -25,11 +25,18 @@ PDG formatting of numbers with uncertainties
 ============================================
 
 The PDG uses a special rounding rule for quantities with uncertainties. The description
-quoted from M. Tanabashi et al. (Particle Data Group), Phys. Rev. D 98, 030001 (2018), https://doi.org/10.1103/PhysRevD.98.030001:
+quoted from M. Tanabashi et al. (Particle Data Group), Phys. Rev. D 98, 030001 (2018),
+https://doi.org/10.1103/PhysRevD.98.030001:
 
-"The basic rule states that if the three highest order digits of the error lie between 100 and 354, we round to two significant digits. If they lie between 355 and 949, we round to one significant digit. Finally, if they lie between 950 and 999, we round up to 1000 and keep two significant digits. In all cases, the central value is given with a precision that matches that of the error. So, for example, the result (coming from an average) 0.827 +- 0.119 would appear as 0.83 +- 0.12, while 0.827 +- 0.367 would turn into 0.8 +- 0.4."
+"The basic rule states that if the three highest order digits of the error lie between 100
+and 354, we round to two significant digits. If they lie between 355 and 949, we round to
+one significant digit. Finally, if they lie between 950 and 999, we round up to 1000 and
+keep two significant digits. In all cases, the central value is given with a precision
+that matches that of the error. So, for example, the result (coming from an average) 0.827
++- 0.119 would appear as 0.83 +- 0.12, while 0.827 +- 0.367 would turn into 0.8 +- 0.4."
 
-In addition, the LHCb Editorial Board declared that in case of several errors, the most precise one defines the number of digits shown.
+In addition, the LHCb Editorial Board declared that in case of several errors, the most
+precise one defines the number of digits shown.
 
 This module offers functions that convert values and errors into a string representation.
 

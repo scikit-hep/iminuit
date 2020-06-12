@@ -53,7 +53,7 @@ doc: doc/_build/html/index.html
 analysis: flake8 pylint
 
 flake8: build
-	@$(PYTHON) -m flake8 --max-line-length=95 src/$(PROJECT)
+	@$(PYTHON) -m flake8 --extend-ignore=E203 --max-line-length=95 src/$(PROJECT)
 
 # TODO: once the errors are fixed, remove the -E option and tackle the warnings
 pylint: build

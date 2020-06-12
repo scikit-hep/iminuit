@@ -28,7 +28,6 @@ from iminuit.pdg_format import (
     _find_smallest_nonzero_abs_value,
     _is_asym,
     _unpack,
-    _round,
     _strip,
     _unpacked_index,
     pdg_format,
