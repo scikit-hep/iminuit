@@ -412,6 +412,7 @@ def test_fix_param(grad):
     assert m.fixed.values() == [True, True]
     m.fixed[1:] = False
     assert m.fixed.values() == [True, False]
+    assert m.fixed[:1] == [True]
 
 
 def test_fitarg_oneside():
@@ -634,9 +635,15 @@ def test_values(minuit):
     assert minuit.values[1] == 5
     assert minuit.values["x"] == 2
     assert minuit.values["y"] == 5
+    assert minuit.values[:1] == [2]
+    minuit.values[1:] = [3]
+    assert minuit.values[:] == [2, 3]
+    assert minuit.values[-1] == 3
+    minuit.values[:] = 7
+    assert minuit.values[:] == [7, 7]
     with pytest.raises(KeyError):
         minuit.values["z"]
-    with pytest.raises(KeyError):
+    with pytest.raises(IndexError):
         minuit.values[3]
 
 

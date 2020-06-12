@@ -125,7 +125,7 @@ cdef class BasicView:
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            mutil._getitem_slice(self, key)
+            return mutil._getitem_slice(self, key)
         i = key if is_int(key) else self._minuit.var2pos[key]
         if i < 0:
             i += len(self)
