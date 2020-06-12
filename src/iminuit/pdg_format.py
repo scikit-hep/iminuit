@@ -123,18 +123,15 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
         strings = _strip(strings)
 
     if trans:
-
-        def tr(x):
+        for i, x in enumerate(strings):
             c = x[-1]
             if c == "n":  # nan, -nan
-                return trans[0]
-            if c == "f":  # inf, -inf
+                x = trans[0]  # pylint: disable=unsubscriptable-object
+            elif c == "f":  # inf, -inf
                 if x[0] == "-":
-                    return "-" + trans[1]
-                return trans[1]
-            return x
-
-        strings = [tr(x) for x in strings]
+                    x = "-" + trans[1]  # pylint: disable=unsubscriptable-object
+                x = trans[1]  # pylint: disable=unsubscriptable-object
+            strings[i] = x
 
     s = strings[0]
     asym = False
@@ -260,10 +257,10 @@ def _round(values, leader, n_exp_extern):
 
     if leader is None:
         # invalid leading error, cannot determine digits
-        scale = 10 ** -n_exp
+        scale = 10 ** -n_exp  # pylint: disable=invalid-unary-operand-type
         return ([fmt(v * scale, 4) for v in values], n_exp)
 
-    scale = 10 ** -n_exp
+    scale = 10 ** -n_exp  # pylint: disable=invalid-unary-operand-type
     digits = round(lerror * scale, 3)
     if digits < 0.355:
         n_digits = 2
