@@ -5,6 +5,30 @@
 Changelog
 =========
 
+1.4.1 (June, 13, 2020)
+----------------------
+
+Mostly a bug-fix release, but also deprecates more old interface.
+
+Bug-fixes
+~~~~~~~~~
+- Fixed a bug when displaying nans in rich displays
+
+Deprecated
+~~~~~~~~~~
+- `Minuit.minoserror_struct`: use `Minuit.merrors`, which is now an alias for the former
+- `Minuit.merrors` now accepts indices and parameter names, like `Minuit.values`, etc.
+
+Features
+~~~~~~~~
+- Show engineering suffixes (1.23k, 123.4M, 0.8G, ...) in rich diplays instead of "scientific format", e.g. 1.23e-3
+- New initial step heuristic, replaces pedantic warning about missing step sizes
+- New initial value heuristic for parameters with limits
+
+Documentation
+~~~~~~~~~~~~~
+- New tutorial about using Numba to parallelize and jit-compile cost functions
+
 1.4.0 (June, 12, 2020)
 ----------------------
 

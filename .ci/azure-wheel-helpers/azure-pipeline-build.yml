@@ -25,10 +25,10 @@ pr: none
 
 # You must set the package name here. Optionally change the other variables.
 variables:
-  package_name:
+  package_name: <your package name>
   many_linux_base: quay.io/pypa/manylinux1_
-  dev_requirements_file: .ci/azure-wheel-helpers/empty-requirements.txt
-  test_requirements_file: .ci/azure-wheel-helpers/empty-requirements.txt
+  dev_requirements_file: <your build requirements>
+  test_requirements_file: <your test requirements>
 
 
 jobs:
