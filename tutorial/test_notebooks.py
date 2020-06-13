@@ -20,15 +20,14 @@ class Processor(preproc.ExecutePreprocessor):
         lines = code.split("\n")
         tmp = []
         for line in lines:
-            if "timeit" in line:
+            if "%timeit" in line:
                 items = shlex.split(line)
-                items = []
                 istart = 0
                 for i, x in enumerate(items):
                     if x.endswith("%timeit"):
                         istart = i
                     if x.startswith("-"):
-                        istart = i + 1
+                        istart = i + 2
                 line = " ".join(items[istart:])
             tmp.append(line)
         cell["source"] = "\n".join(tmp)
