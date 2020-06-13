@@ -17,6 +17,11 @@ Covers the basics of using iminuit.
 
 How to compute function gradients for iminuit with jax_ and accelerate Python code with JAX's JIT compiler. Spoiler: a **32x** speed up over plain numpy is achieved. Also discusses how to do a least-squares fit with data that has uncertainties in *x* and *y*.
 
+`How to accelerate and parallelize cost functions with Numba <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/jit_compilation_andparallelization_with_numba.ipynb>`_
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Shows how cost functions can be accelerated by Just-In-Time compilation with numba, and how important it is to optimize the most time-consuming hot spot.
+
 `iminuit and an external minimizer <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/iminuit_and_external_minimizer.ipynb>`_
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
