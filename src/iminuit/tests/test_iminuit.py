@@ -19,12 +19,11 @@ def test_pedantic_warning_message():
             if ("Minuit(lambda x: 0)  # MARKER") in line:
                 break
 
-    assert len(w) == 3
+    assert len(w) == 2
     for i, msg in enumerate(
         (
-            "Parameter x does not have initial value. Assume 0.",
-            "Parameter x is floating but does not have initial step size. " "Assume 1.",
-            "errordef is not given. Default to 1.",
+            "Parameter x does not have neither initial value nor limits.",
+            "errordef is not given, defaults to 1.",
         )
     ):
         assert str(w[i].message) == msg
@@ -344,6 +343,21 @@ def test_no_resume():
 def test_typo():
     with pytest.raises(RuntimeError):
         Minuit(func4, printlevel=0)
+    with pytest.raises(RuntimeError):
+        Minuit(lambda x: 0, y=1)
+    with pytest.raises(RuntimeError):
+        Minuit(lambda x: 0, error_y=1)
+    with pytest.raises(RuntimeError):
+        Minuit(lambda x: 0, limit_y=1)
+
+
+def test_initial_guesses():
+    m = Minuit(lambda x: 0, pedantic=False)
+    assert m.values["x"] == 0
+    assert m.errors["x"] == 0.1
+    m = Minuit(lambda x: 0, limit_x=(1, 2), pedantic=False)
+    assert m.values["x"] == 1.5
+    assert m.errors["x"] == 1.5e-2
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -419,7 +433,7 @@ def test_fitarg_oneside():
     fitarg = m.fitarg
     assert_allclose(fitarg["y"], 10.0)
     assert fitarg["fix_y"]
-    assert fitarg["limit_x"] == (None, 20)
+    assert fitarg["limit_x"] == (-np.inf, 20)
     m.migrad()
 
     fitarg = m.fitarg
@@ -433,22 +447,22 @@ def test_fitarg_oneside():
     assert "error_z" in fitarg
 
     assert fitarg["fix_y"]
-    assert fitarg["limit_x"] == (None, 20)
+    assert fitarg["limit_x"] == (-np.inf, 20)
 
 
 def test_fitarg():
-    m = Minuit(func4, y=10.0, fix_y=True, limit_x=(0, 20.0), pedantic=False)
+    m = Minuit(func4, y=10, fix_y=True, limit_x=(0, 20), pedantic=False)
     fitarg = m.fitarg
-    assert_allclose(fitarg["y"], 10.0)
+    assert_allclose(fitarg["y"], 10)
     assert fitarg["fix_y"] is True
     assert fitarg["limit_x"] == (0, 20)
     m.migrad()
 
     fitarg = m.fitarg
 
-    assert_allclose(fitarg["y"], 10.0)
-    assert_allclose(fitarg["x"], 2.0, atol=1e-2)
-    assert_allclose(fitarg["z"], 7.0, atol=1e-2)
+    assert_allclose(fitarg["y"], 10)
+    assert_allclose(fitarg["x"], 2, atol=1e-2)
+    assert_allclose(fitarg["z"], 7, atol=1e-2)
 
     assert "error_y" in fitarg
     assert "error_x" in fitarg
@@ -475,7 +489,7 @@ def test_minos_single(grad):
 
     m.strategy = 0
     m.migrad()
-    assert m.ncalls < 6
+    assert m.ncalls < 15
 
 
 def test_minos_single_fixed_raising():
@@ -612,7 +626,7 @@ def minuit():
 
 def test_args(minuit):
     expected = [2.0, 5.0]
-    assert_allclose(minuit.args, expected, atol=1e-8)
+    assert_allclose(minuit.args, expected, atol=5e-6)
     minuit.args[:] = [1, 2]
     assert_allclose(minuit.args, [1, 2])
     assert_allclose(minuit.args[0], 1)
@@ -627,7 +641,7 @@ def test_args(minuit):
 def test_values(minuit):
     expected = [2.0, 5.0]
     assert len(minuit.values) == 2
-    assert_allclose(minuit.values.values(), expected, atol=1e-8)
+    assert_allclose(minuit.values.values(), expected, atol=5e-6)
     minuit.values[:] = expected
     assert minuit.values[:] == expected
     assert minuit.values[0] == 2
@@ -677,7 +691,7 @@ def test_np_matrix_correlation(minuit):
 def test_np_values(minuit):
     actual = minuit.np_values()
     expected = [2.0, 5.0]
-    assert_allclose(actual, expected, atol=1e-8)
+    assert_allclose(actual, expected, atol=5e-6)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2,)
 
@@ -685,7 +699,7 @@ def test_np_values(minuit):
 def test_np_errors(minuit):
     actual = minuit.np_errors()
     expected = [2.0, 1.0]
-    assert_allclose(actual, expected, atol=1e-8)
+    assert_allclose(actual, expected, atol=1e-6)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2,)
 
@@ -696,7 +710,7 @@ def test_np_merrors(minuit):
     # the matplotlib convention in matplotlib.pyplot.errorbar
     down_delta = (-2, -1)
     up_delta = (2, 1)
-    assert_allclose(actual, (np.abs(down_delta), up_delta), atol=1e-8)
+    assert_allclose(actual, (np.abs(down_delta), up_delta), atol=5e-6)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2, 2)
 
@@ -732,19 +746,16 @@ def test_likelihood():
     data = 2 * randn(100) + 1
 
     def nll(mu, sigma):
-        def lnormal(x, mu, sigma):
-            sigma += np.finfo(float).eps
-            z = (x - mu) / sigma
-            return -0.5 * z ** 2 - np.log(sigma)
-
-        return -np.sum(lnormal(data, mu, sigma))
+        z = (data - mu) / sigma
+        logp = -0.5 * z ** 2 - np.log(sigma)
+        return -np.sum(logp)
 
     m = Minuit(nll, errordef=Minuit.LIKELIHOOD, limit_sigma=(0, None), pedantic=False)
     m.migrad()
 
     mu = np.mean(data)
     sigma = np.std(data)
-    assert_allclose(m.np_values(), (mu, sigma), rtol=1e-3)
+    assert_allclose(m.np_values(), (mu, sigma), rtol=5e-3)
     s_mu = sigma / len(data) ** 0.5
     assert_allclose(m.np_errors(), (s_mu, 0.12047), rtol=1e-1)
 
@@ -753,12 +764,10 @@ def test_oneside():
     m_limit = Minuit(func0, limit_x=(None, 9), pedantic=False)
     m_nolimit = Minuit(func0, pedantic=False)
     # Solution: x=2., y=5.
-    m_limit.tol = 1e-4
-    m_nolimit.tol = 1e-4
     m_limit.migrad()
     m_nolimit.migrad()
     assert_allclose(
-        list(m_limit.values.values()), list(m_nolimit.values.values()), atol=1e-4
+        list(m_limit.values.values()), list(m_nolimit.values.values()), atol=5e-3
     )
 
 
@@ -971,7 +980,7 @@ def test_perfect_correlation():
 
 
 def test_modify_param_state():
-    m = Minuit(func0, x=1, y=2, fix_y=True, pedantic=False)
+    m = Minuit(func0, x=1, y=2, error_y=1, fix_y=True, pedantic=False)
     m.migrad()
     assert_allclose(m.np_values(), [2, 2], atol=1e-4)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-4)

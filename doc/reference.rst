@@ -64,7 +64,6 @@ on them in your code. We list the ones that are for the public.
     :undoc-members:
     :exclude-members: arguments_from_docstring, arguments_from_funccode,
         arguments_from_call_funccode, true_param, param_name,
-        extract_iv, extract_error, extract_fix, extract_limit,
         remove_var, format_exception
 
 

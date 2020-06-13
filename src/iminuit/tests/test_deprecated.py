@@ -1,6 +1,6 @@
 import pytest
 from pytest import approx
-from iminuit import Minuit
+from iminuit import Minuit, util
 from sys import version_info as pyver
 
 
@@ -159,3 +159,74 @@ def test_import_iminuit_warnings():
 def test_import_from_iminuit_warnings():
     with pytest.warns(DeprecationWarning):
         from iminuit.iminuit_warnings import IMinuitWarning  # noqa: F401
+
+
+def test_true_param():
+    with pytest.warns(DeprecationWarning):
+        assert util.true_param("N") is True
+        assert util.true_param("limit_N") is False
+        assert util.true_param("error_N") is False
+        assert util.true_param("fix_N") is False
+
+
+def test_param_name():
+    with pytest.warns(DeprecationWarning):
+        assert util.param_name("N") == "N"
+        assert util.param_name("limit_N") == "N"
+        assert util.param_name("error_N") == "N"
+        assert util.param_name("fix_N") == "N"
+
+
+def test_extract_iv():
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
+    with pytest.warns(DeprecationWarning):
+        ret = util.extract_iv(d)
+    assert "k" in ret
+    assert "limit_k" not in ret
+    assert "error_k" not in ret
+    assert "fix_k" not in ret
+
+
+def test_extract_limit():
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
+    with pytest.warns(DeprecationWarning):
+        ret = util.extract_limit(d)
+    assert "k" not in ret
+    assert "limit_k" in ret
+    assert "error_k" not in ret
+    assert "fix_k" not in ret
+
+
+def test_extract_error():
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
+    with pytest.warns(DeprecationWarning):
+        ret = util.extract_error(d)
+    assert "k" not in ret
+    assert "limit_k" not in ret
+    assert "error_k" in ret
+    assert "fix_k" not in ret
+
+
+def test_extract_fix():
+    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
+    with pytest.warns(DeprecationWarning):
+        ret = util.extract_fix(d)
+    assert "k" not in ret
+    assert "limit_k" not in ret
+    assert "error_k" not in ret
+    assert "fix_k" in ret
+
+
+def test_remove_var():
+    dk = dict(k=1, limit_k=1, error_k=1, fix_k=1)
+    dm = dict(m=1, limit_m=1, error_m=1, fix_m=1)
+    dn = dict(n=1, limit_n=1, error_n=1, fix_n=1)
+    d = {}
+    d.update(dk)
+    d.update(dm)
+    d.update(dn)
+
+    with pytest.warns(DeprecationWarning):
+        d = util.remove_var(d, ["k", "m"])
+    assert set(d.keys()) & set(dk.keys()) == set()
+    assert set(d.keys()) & set(dm.keys()) == set()

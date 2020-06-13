@@ -80,7 +80,7 @@ def test_html_fmin(minuit):
 FCN = 1
 </td>
 <td align="center" colspan="3" title="No. of calls in last algorithm and total number of calls">
-Ncalls = 34 (58 total)
+Ncalls = 32 (56 total)
 </td>
 </tr>
 <tr>
@@ -197,10 +197,10 @@ Fixed
 x
 </td>
 <td>
-0
+0.0
 </td>
 <td>
-1
+0.1
 </td>
 <td>
 
@@ -226,10 +226,10 @@ x
 y
 </td>
 <td>
-0
+0.0
 </td>
 <td>
-1
+0.1
 </td>
 <td>
 
@@ -637,7 +637,7 @@ def test_text_fmin(minuit):
     assert (
         str(fmin)
         == r"""------------------------------------------------------------------
-| FCN = 1                       |      Ncalls=34 (58 total)      |
+| FCN = 1                       |      Ncalls=32 (56 total)      |
 | EDM = %.3g (Goal: 2e-07)  |            up = 1.0            |
 ------------------------------------------------------------------
 |  Valid Min.   | Valid Param.  | Above EDM | Reached call limit |
@@ -656,8 +656,8 @@ def test_text_params(minuit):
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    |     0     |     1     |            |            |         |         |       |
-| 1 | y    |     0     |     1     |            |            |         |         |       |
+| 0 | x    |    0.0    |    0.1    |            |            |         |         |       |
+| 1 | y    |    0.0    |    0.1    |            |            |         |         |       |
 ------------------------------------------------------------------------------------------""" == str(
         minuit.init_params
     )
