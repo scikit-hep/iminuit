@@ -478,9 +478,11 @@ def test_minos_all(grad, sigma):
     m = Minuit(func0, grad=func0_grad, pedantic=False)
     m.migrad()
     m.minos(sigma=sigma)
-    assert_allclose(m.merrors[("x", -1.0)], -sigma * 2, rtol=1e-2)
-    assert_allclose(m.merrors[("x", 1.0)], sigma * 2, rtol=1e-2)
-    assert_allclose(m.merrors[("y", 1.0)], sigma * 1, rtol=1e-2)
+    assert m.merrors["x"].lower == approx(-sigma * 2)
+    assert m.merrors["x"].upper == approx(sigma * 2)
+    assert m.merrors["y"].upper == approx(sigma * 1)
+    assert m.merrors[0].lower == approx(-sigma * 2)
+    assert m.merrors[1].upper == approx(sigma * 1)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))

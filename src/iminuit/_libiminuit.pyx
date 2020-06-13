@@ -396,14 +396,14 @@ cdef class Minuit:
     .. seealso:: :meth:`matrix`
     """
 
+    cdef readonly object merrors
+    """MINOS errors."""
+
     cdef readonly int ncalls
     """Number of FCN call of last MIGRAD / MINOS / HESSE run."""
 
     cdef readonly int ngrads
     """Number of Gradient calls of last MIGRAD / MINOS / HESSE run."""
-
-    cdef readonly object merrors
-    """Deprecated. Use :meth:`get_merrors` instead."""
 
     cdef readonly object gcc
     """Global correlation coefficients (dict : name -> gcc)."""
@@ -438,9 +438,6 @@ cdef class Minuit:
         for v in self.fixed.values():
             nfit += not v
         return nfit
-
-    cdef readonly object merrors_struct
-    """MINOS error calculation information (dict name -> struct)"""
 
     def __init__(self, fcn,
                  throw_nan=False, pedantic=True,
@@ -647,10 +644,9 @@ cdef class Minuit:
         self.covariance = None
         self.ncalls = 0
         self.ngrads = 0
-        self.merrors = {}
+        self.merrors = mutil.MErrors()
         self.gcc = None
 
-        self.merrors_struct = mutil.MErrors()
 
 
     @classmethod
@@ -990,13 +986,13 @@ cdef class Minuit:
                 )
 
             mnerror = minos.Minos(self.var2pos[vname], maxcall)
-            self.merrors_struct[vname] = minoserror2struct(vname, mnerror)
+            self.merrors[vname] = minoserror2struct(vname, mnerror)
 
 
         self.refresh_internal_state()
         del minos
         self.pyfcn.SetErrorDef(oldup)
-        return self.merrors_struct
+        return self.merrors
 
 
     def matrix(self, correlation=False, skip_fixed=True):
@@ -1105,8 +1101,9 @@ cdef class Minuit:
         # array format follows matplotlib conventions, see pyplot.errorbar
         a = np.empty((2, len(self.parameters)), dtype=np.double)
         for i, k in enumerate(self.parameters):
-            a[0, i] = -self.merrors[(k, -1.0)]
-            a[1, i] = self.merrors[(k, 1.0)]
+            me = self.merrors[k]
+            a[0, i] = -me.lower
+            a[1, i] = me.upper
         return a
 
     def np_covariance(self):
@@ -1122,7 +1119,7 @@ cdef class Minuit:
 
     def latex_param(self):
         """build :class:`iminuit.latex.LatexTable` for current parameter"""
-        return LatexFactory.build_param_table(self.params, self.merrors_struct)
+        return LatexFactory.build_param_table(self.params, self.merrors)
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
@@ -1152,7 +1149,7 @@ cdef class Minuit:
         up = self.last_upst
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
-                            self.merrors_struct)
+                            self.merrors)
 
     @property
     def init_params(self):
@@ -1161,10 +1158,6 @@ cdef class Minuit:
         cdef vector[MinuitParameter] vmps = up.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             None)
-
-    def get_merrors(self):
-        """Dictionary of varname -> Minos data object"""
-        return self.merrors_struct
 
     @property
     def ncalls_total(self):
@@ -1643,11 +1636,6 @@ cdef class Minuit:
             self.gcc = {v: self.last_upst.GlobalCC().GlobalCC()[i] for \
                         i, v in enumerate(vary_param)}
 
-        self.merrors = {(k, 1.0): v.upper
-                        for k, v in self.merrors_struct.items()}
-        self.merrors.update({(k, -1.0): v.lower
-                             for k, v in self.merrors_struct.items()})
-
     @property
     def edm(self):
         warn(
@@ -1657,6 +1645,19 @@ cdef class Minuit:
         )
         fmin = self.fmin
         return fmin.edm if fmin else None
+
+    @property
+    def merrors_struct(self):
+        warn(
+             ":attr:`merrors_struct` is deprecated: Use `this_object.merrors` instead",
+             DeprecationWarning,
+             stacklevel=2,
+        )
+        return self.merrors
+
+    @deprecated("use `this_object.merrors` instead")
+    def get_merrors(self):
+        return self.merrors
 
     @deprecated("use `this_object.fmin` instead")
     def get_fmin(self):
@@ -1694,9 +1695,9 @@ cdef class Minuit:
     def print_fmin(self):
         print(self.fmin)
 
-    @deprecated("use `print(this_object.get_merrors())` instead")
+    @deprecated("use `print(this_object.merrors)` instead")
     def print_all_minos(self):
-        print(self.merrors_struct)
+        print(self.merrors)
 
     @deprecated("use `print(this_object.params)` instead")
     def print_param(self, **kwds):

@@ -452,7 +452,7 @@ y
 
 
 def test_html_minos(minuit):
-    mes = minuit.merrors_struct
+    mes = minuit.merrors
     assert (
         r"""<table>
 <tr>

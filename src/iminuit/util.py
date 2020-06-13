@@ -225,6 +225,31 @@ class MErrors(OrderedDict):
         else:
             p.text(str(self))
 
+    def __getitem__(self, key):
+        is_deprecated_call = False
+        try:
+            key, ul = key
+            ul = int(ul)
+            is_deprecated_call = True
+            warnings.warn(
+                "`merrors[(name, +-1)]` is deprecated; use `merrors[name]`",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        except (ValueError, TypeError):
+            pass
+
+        if isinstance(key, int):
+            for k in self.keys():
+                if key == 0:
+                    key = k
+                    break
+                key -= 1
+        v = super(MErrors, self).__getitem__(key)
+        if is_deprecated_call:
+            return v.lower if ul == -1 else v.upper
+        return v
+
 
 # MigradResult used to be a tuple, so we don't add the dict interface
 class MigradResult(namedtuple("MigradResult", "fmin params")):
