@@ -1,10 +1,9 @@
-# Azure only builds master, Travis and Appveyor only build develop
+# Azure only builds master, GHA builds develop
 
 trigger:
   branches:
     include:
       - master
-      - 'refs/tags/*'
 pr:
   - master
 
