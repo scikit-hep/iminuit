@@ -71,7 +71,7 @@ def fmin(sfmin):
     with table(s):
         with tr(s):
             with td(s, colspan="2", title="Minimum value of function"):
-                s += "FCN = %.4G" % sfmin.fval
+                s += "FCN = %.4g" % sfmin.fval
             with td(
                 s,
                 colspan="3",
@@ -85,7 +85,7 @@ def fmin(sfmin):
                 colspan="2",
                 title="Estimated distance to minimum and target threshold",
             ):
-                s += "EDM = %.3G (Goal: %G)" % (sfmin.edm, goaledm(sfmin))
+                s += "EDM = %.3g (Goal: %g)" % (sfmin.edm, goaledm(sfmin))
             with td(
                 s,
                 colspan="3",

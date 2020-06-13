@@ -4,6 +4,9 @@ from iminuit.util import Params, Param, Matrix
 from iminuit import repr_html, repr_text
 import pytest
 
+nan = float("nan")
+inf = float("infinity")
+
 
 def f1(x, y):
     return (x - 2) ** 2 + (y - 1) ** 2 / 0.25 + 1
@@ -18,33 +21,39 @@ def test_html_tag():
 
 def test_pdg_format():
     assert repr_text.pdg_format(1.2567, 0.1234) == ["1.26", "0.12"]
-    assert repr_text.pdg_format(1.2567e3, 0.1234e3) == ["1.26E3", "0.12E3"]
-    assert repr_text.pdg_format(1.2567e4, 0.1234e4) == ["12.6E3", "1.2E3"]
+    assert repr_text.pdg_format(1.2567e3, 0.1234e3) == ["1.26e3", "0.12e3"]
+    assert repr_text.pdg_format(1.2567e4, 0.1234e4) == ["12.6e3", "1.2e3"]
     assert repr_text.pdg_format(1.2567e-1, 0.1234e-1) == ["0.126", "0.012"]
-    assert repr_text.pdg_format(1.2567e-2, 0.1234e-2) == ["12.6E-3", "1.2E-3"]
+    assert repr_text.pdg_format(1.2567e-2, 0.1234e-2) == ["12.6e-3", "1.2e-3"]
     assert repr_text.pdg_format(1.0, 0.0, 0.25) == ["1.00", "0.00", "0.25"]
     assert repr_text.pdg_format(0, 1, -1) == ["0", "1", "-1"]
     assert repr_text.pdg_format(2, -1, 1) == ["2", "-1", "1"]
     assert repr_text.pdg_format(2.01, -1.01, 1.01) == ["2", "-1", "1"]
     assert repr_text.pdg_format(1.999, -0.999, 0.999) == ["2", "-1", "1"]
     assert repr_text.pdg_format(1, 0.5, -0.5) == ["1.0", "0.5", "-0.5"]
-    assert repr_text.pdg_format(1.0, 1e-4) == ["1000.0E-3", "0.1E-3"]
-    assert repr_text.pdg_format(-1.234567e-22, 1.234567e-11) == ["-0", "1.2E-11"]
-    nan = float("nan")
+    assert repr_text.pdg_format(1.0, 1e-4) == ["1000.0e-3", "0.1e-3"]
+    assert repr_text.pdg_format(-1.234567e-22, 1.234567e-11) == ["-0", "1.2e-11"]
     assert repr_text.pdg_format(nan, 1.23e-2) == ["nan", "0.012"]
+    assert repr_text.pdg_format(nan, 1.23e10) == ["nan", "12e9"]
     assert repr_text.pdg_format(nan, -nan) == ["nan", "nan"]
+    assert repr_text.pdg_format(inf, 1.23e10) == ["inf", "12e9"]
 
 
 def test_matrix_format():
-    nan = float("nan")
     assert repr_text.matrix_format(1e1, 2e2, -3e3, -4e4) == [
-        "0.001E+04",
-        "0.020E+04",
-        "-0.300E+04",
-        "-4.000E+04",
+        "0.001e4",
+        "0.020e4",
+        "-0.300e4",
+        "-4.000e4",
     ]
     assert repr_text.matrix_format(nan, 2e2, -nan, -4e4) == [
         "nan",
+        "200",
+        "nan",
+        "-40000",
+    ]
+    assert repr_text.matrix_format(inf, 2e2, -nan, -4e4) == [
+        "inf",
         "200",
         "nan",
         "-40000",
@@ -76,7 +85,7 @@ Ncalls = 34 (58 total)
 </tr>
 <tr>
 <td colspan="2" title="Estimated distance to minimum and target threshold">
-EDM = %.3G (Goal: 2E-07)
+EDM = %.3g (Goal: 2e-07)
 </td>
 <td align="center" colspan="3" title="Increase in FCN which corresponds to 1 standard deviation">
 up = 1.0
@@ -629,7 +638,7 @@ def test_text_fmin(minuit):
         str(fmin)
         == r"""------------------------------------------------------------------
 | FCN = 1                       |      Ncalls=34 (58 total)      |
-| EDM = %.3G (Goal: 2E-07)  |            up = 1.0            |
+| EDM = %.3g (Goal: 2e-07)  |            up = 1.0            |
 ------------------------------------------------------------------
 |  Valid Min.   | Valid Param.  | Above EDM | Reached call limit |
 ------------------------------------------------------------------
@@ -792,7 +801,7 @@ def test_console_frontend_with_difficult_values():
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    |    -0     |  1.2E-11  |            |            |         |         | CONST |
+| 0 | x    |    -0     |  1.2e-11  |            |            |         |         | CONST |
 ------------------------------------------------------------------------------------------""" == str(
         mps
     )
