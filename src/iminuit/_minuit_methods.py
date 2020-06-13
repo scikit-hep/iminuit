@@ -1,6 +1,5 @@
 from warnings import warn
 from iminuit.util import InitialParamWarning
-from iminuit import util as mutil
 import numpy as np
 
 

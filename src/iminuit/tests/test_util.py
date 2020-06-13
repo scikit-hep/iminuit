@@ -141,8 +141,7 @@ def test_MigradResult():
 
 
 def test_normalize_limit():
-
-    assert util._normalize_limit(None) == None
+    assert util._normalize_limit(None) is None
     assert util._normalize_limit((None, 2)) == (-util.inf, 2)
     assert util._normalize_limit((2, None)) == (2, util.inf)
     assert util._normalize_limit((None, None)) == (-util.inf, util.inf)
