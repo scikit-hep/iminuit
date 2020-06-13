@@ -229,10 +229,10 @@ class MErrors(OrderedDict):
         try:
             key, ul = key
             ul = int(ul)
-            v = super(MErrors, self)[key]
+            v = super(MErrors, self).__getitem__(key)
             return v.lower if ul == -1 else v.upper
         except:
-            v = super(MErrors, self)[key]
+            v = super(MErrors, self).__getitem__(key)
             return v
 
 
