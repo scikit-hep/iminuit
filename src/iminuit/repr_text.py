@@ -10,13 +10,32 @@ def pdg_format(value, *errors):
     else:
         strings, nexp = _round((value, *errors), None, None)
     strings = _strip(strings)
-    if nexp == 0:
-        return strings
     for i, s in enumerate(strings):
         if s[-1] in "fn":
             continue
-        m = re.match(r"(-?)0\.0+", s)
-        s = m.group(1) + "0" if m else "%se%i" % (s, nexp)
+        m = None
+        if i == 0:
+            m = re.match(r"(-?)0\.0+$", s)
+            if m:
+                s = m.group(1) + "0"
+        suffix = ""
+        if not m:
+            suffix = {
+                -18: "a",
+                -15: "p",
+                -12: "f",
+                -9: "n",
+                -6: "u",
+                -3: "m",
+                0: "",
+                3: "k",
+                6: "M",
+                9: "G",
+                12: "T",
+                15: "P",
+                18: "E",
+            }.get(nexp, "e%i" % nexp)
+        s += suffix
         strings[i] = s
     return strings
 
