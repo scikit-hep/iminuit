@@ -4,8 +4,15 @@
 # or https://github.com/scikit-hep/azure-wheel-helpers for details.
 
 steps:
-- script: python -m pip install -r .ci/requirements-test.txt
+- script: |
+    python -m pip install -U pytest pytest-cov pytest-azurepipelines
+  displayName: Install Azure testing requirements
+
+- script: |
+    python -m pip install -r $(test_requirements_file)
   displayName: Install testing requirements
 
-- script: python -m pytest
+- script: |
+    python -m pytest -vv
+  workingDirectory: tests
   displayName: Test with pytest
