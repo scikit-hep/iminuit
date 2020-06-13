@@ -4,6 +4,9 @@ from collections import OrderedDict, namedtuple
 from . import repr_html
 from . import repr_text
 import warnings
+from ._deprecated import deprecated
+
+inf = float("infinity")
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -400,6 +403,7 @@ def fitarg_rename(fitarg, ren):
     return ret
 
 
+@deprecated("no replacement")
 def true_param(p):
     """Check if ``p`` is a parameter name, not a limit/error/fix attributes."""
     return (
@@ -409,6 +413,7 @@ def true_param(p):
     )
 
 
+@deprecated("no replacement")
 def param_name(p):
     """Extract parameter name from attributes.
 
@@ -427,26 +432,27 @@ def param_name(p):
     return p
 
 
+@deprecated("no replacement")
 def extract_iv(b):
-    """Extract initial value from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if true_param(k))
 
 
+@deprecated("no replacement")
 def extract_limit(b):
-    """Extract limit from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if k.startswith("limit_"))
 
 
+@deprecated("no replacement")
 def extract_error(b):
-    """Extract error from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if k.startswith("error_"))
 
 
+@deprecated("no replacement")
 def extract_fix(b):
-    """Extract fix attribute from fitargs dictionary."""
     return dict((k, v) for k, v in b.items() if k.startswith("fix_"))
 
 
+@deprecated("no replacement")
 def remove_var(b, exclude):
     """Exclude variable in exclude list from b."""
     return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
@@ -460,3 +466,31 @@ def format_exception(etype, evalue, tb):
 
     s = "".join(traceback.format_tb(tb))
     return "%s: %s\n%s" % (etype.__name__, evalue, s)
+
+
+def _normalize_limit(lim):
+    if lim is None:
+        return None
+    lim = list(lim)
+    if lim[0] is None:
+        lim[0] = -inf
+    if lim[1] is None:
+        lim[1] = inf
+    if lim[0] > lim[1]:
+        raise ValueError("limit " + str(lim) + " is invalid")
+    return tuple(lim)
+
+
+def _guess_initial_value(lim):
+    if lim is None:
+        return 0.0
+    if lim[1] == inf:
+        return lim[0] + 1.0
+    if lim[0] == -inf:
+        return lim[1] - 1.0
+    return 0.5 * (lim[0] + lim[1])
+
+
+def _guess_initial_step(val):
+    step = 1e-2 * val if val != 0 else 1e-1  # heuristic
+    return step

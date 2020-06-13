@@ -1,20 +1,4 @@
-from iminuit.util import (
-    fitarg_rename,
-    true_param,
-    param_name,
-    extract_iv,
-    extract_limit,
-    extract_error,
-    extract_fix,
-    remove_var,
-    arguments_from_docstring,
-    Matrix,
-    FMin,
-    Param,
-    MError,
-    Params,
-    MigradResult,
-)
+from iminuit import util
 import pytest
 
 
@@ -24,7 +8,7 @@ def test_fitarg_rename():
     def ren(x):
         return "z_" + x
 
-    newfa = fitarg_rename(fitarg, ren)
+    newfa = util.fitarg_rename(fitarg, ren)
     assert "z_x" in newfa
     assert "limit_z_x" in newfa
     assert "error_z_x" in newfa
@@ -34,7 +18,7 @@ def test_fitarg_rename():
 
 def test_fitarg_rename_strprefix():
     fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
-    newfa = fitarg_rename(fitarg, "z")
+    newfa = util.fitarg_rename(fitarg, "z")
     assert "z_x" in newfa
     assert "limit_z_x" in newfa
     assert "error_z_x" in newfa
@@ -42,84 +26,20 @@ def test_fitarg_rename_strprefix():
     assert len(newfa) == 4
 
 
-def test_true_param():
-    assert true_param("N") is True
-    assert true_param("limit_N") is False
-    assert true_param("error_N") is False
-    assert true_param("fix_N") is False
-
-
-def test_param_name():
-    assert param_name("N") == "N"
-    assert param_name("limit_N") == "N"
-    assert param_name("error_N") == "N"
-    assert param_name("fix_N") == "N"
-
-
-def test_extract_iv():
-    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
-    ret = extract_iv(d)
-    assert "k" in ret
-    assert "limit_k" not in ret
-    assert "error_k" not in ret
-    assert "fix_k" not in ret
-
-
-def test_extract_limit():
-    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
-    ret = extract_limit(d)
-    assert "k" not in ret
-    assert "limit_k" in ret
-    assert "error_k" not in ret
-    assert "fix_k" not in ret
-
-
-def test_extract_error():
-    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
-    ret = extract_error(d)
-    assert "k" not in ret
-    assert "limit_k" not in ret
-    assert "error_k" in ret
-    assert "fix_k" not in ret
-
-
-def test_extract_fix():
-    d = dict(k=1.0, limit_k=1.0, error_k=1.0, fix_k=1.0)
-    ret = extract_fix(d)
-    assert "k" not in ret
-    assert "limit_k" not in ret
-    assert "error_k" not in ret
-    assert "fix_k" in ret
-
-
-def test_remove_var():
-    dk = dict(k=1, limit_k=1, error_k=1, fix_k=1)
-    dm = dict(m=1, limit_m=1, error_m=1, fix_m=1)
-    dn = dict(n=1, limit_n=1, error_n=1, fix_n=1)
-    d = {}
-    d.update(dk)
-    d.update(dm)
-    d.update(dn)
-
-    d = remove_var(d, ["k", "m"])
-    assert set(d.keys()) & set(dk.keys()) == set()
-    assert set(d.keys()) & set(dm.keys()) == set()
-
-
 def test_arguments_from_docstring():
     s = "f(x, y, z)"
-    ok, a = arguments_from_docstring(s)
+    ok, a = util.arguments_from_docstring(s)
     assert ok
     assert a == ["x", "y", "z"]
     # this is a hard one
     s = "Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])"
-    ok, a = arguments_from_docstring(s)
+    ok, a = util.arguments_from_docstring(s)
     assert ok
     assert a == ["ncall_me", "resume", "nsplit"]
 
 
 def test_Matrix():
-    x = Matrix(("a", "b"), [[1, 2], [3, 4]])
+    x = util.Matrix(("a", "b"), [[1, 2], [3, 4]])
     assert x[0] == (1, 2)
     assert x[1] == (3, 4)
     assert x == ((1, 2), (3, 4))
@@ -131,7 +51,7 @@ def test_Matrix():
 def test_Param():
     keys = "number name value error is_const is_fixed has_limits has_lower_limit has_upper_limit lower_limit upper_limit".split()  # noqa: E501
     values = 3, "foo", 1.2, 3.4, False, False, True, True, False, 42, None
-    p = Param(*values)
+    p = util.Param(*values)
 
     assert p.has_lower_limit is True
     assert p.has_upper_limit is False
@@ -171,7 +91,7 @@ def test_MError():
         0.2,
     )
 
-    m = MError(*values)
+    m = util.MError(*values)
 
     assert m.keys() == tuple(keys)
     assert m.values() == values
@@ -199,7 +119,7 @@ def test_FMin():
         False,
     )
 
-    f = FMin(*values)
+    f = util.FMin(*values)
 
     assert f.keys() == tuple(keys)
     assert f.values() == values
@@ -208,9 +128,9 @@ def test_FMin():
 
 
 def test_MigradResult():
-    fmin = FMin(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
-    params = Params([], None)
-    mr = MigradResult(fmin, params)
+    fmin = util.FMin(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+    params = util.Params([], None)
+    mr = util.MigradResult(fmin, params)
     assert mr.fmin is fmin
     assert mr[0] is fmin
     assert mr.params is params
@@ -218,3 +138,24 @@ def test_MigradResult():
     a, b = mr
     assert a is fmin
     assert b is params
+
+
+def test_normalize_limit():
+    assert util._normalize_limit(None) is None
+    assert util._normalize_limit((None, 2)) == (-util.inf, 2)
+    assert util._normalize_limit((2, None)) == (2, util.inf)
+    assert util._normalize_limit((None, None)) == (-util.inf, util.inf)
+    with pytest.raises(ValueError):
+        util._normalize_limit((3, 2))
+
+
+def test_guess_initial_value():
+    assert util._guess_initial_value(None) == 0
+    assert util._guess_initial_value((-util.inf, 0)) == -1
+    assert util._guess_initial_value((0, util.inf)) == 1
+    assert util._guess_initial_value((1.0, 2.0)) == 1.5
+
+
+def test_guess_initial_step():
+    assert util._guess_initial_step(0) == 0.1
+    assert util._guess_initial_step(1) == 0.01

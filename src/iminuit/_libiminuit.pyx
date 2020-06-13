@@ -45,15 +45,11 @@ cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict 
 
         lim = fitarg['limit_' + pname]
         if lim is not None:
-            lb = -inf if lim[0] is None else lim[0]
-            ub = inf if lim[1] is None else lim[1]
+            lb, ub = lim
             if lb == ub:
                 state.SetValue(i, lb)
                 state.Fix(i)
             else:
-                if lb > ub:
-                    raise ValueError(
-                        'limit for parameter %s is invalid. %r' % (pname, (lb, ub)))
                 if lb == -inf and ub == inf:
                     pass
                 elif ub == inf:
@@ -626,9 +622,9 @@ cdef class Minuit:
 
         self.fitarg = {}
         for x in args:
-            val = kwds.get(x, 0.0)
-            err = kwds.get('error_' + x, 1.0)
-            lim = kwds.get('limit_' + x, None)
+            lim = mutil._normalize_limit(kwds.get('limit_' + x, None))
+            val = kwds.get(x, mutil._guess_initial_value(lim))
+            err = kwds.get('error_' + x, mutil._guess_initial_step(val))
             fix = kwds.get('fix_' + x, False)
             self.fitarg[unicode(x)] = val
             self.fitarg['error_' + x] = err

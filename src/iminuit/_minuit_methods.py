@@ -1,6 +1,5 @@
 from warnings import warn
 from iminuit.util import InitialParamWarning
-from iminuit import util as mutil
 import numpy as np
 
 
@@ -9,33 +8,11 @@ def pedantic(self, parameters, kwds, errordef):
         warn(msg, InitialParamWarning, stacklevel=3)
 
     for vn in parameters:
-        if vn not in kwds:
-            w("Parameter %s does not have initial value. Assume 0." % vn)
-        if "error_" + vn not in kwds and "fix_" + mutil.param_name(vn) not in kwds:
-            w(
-                "Parameter %s is floating but does not have initial step size. Assume 1."
-                % vn
-            )
-    for vlim in mutil.extract_limit(kwds):
-        if mutil.param_name(vlim) not in parameters:
-            w(
-                "%s is given. But there is no parameter %s. Ignore."
-                % (vlim, mutil.param_name(vlim))
-            )
-    for vfix in mutil.extract_fix(kwds):
-        if mutil.param_name(vfix) not in parameters:
-            w(
-                "%s is given. But there is no parameter %s. Ignore."
-                % (vfix, mutil.param_name(vfix))
-            )
-    for verr in mutil.extract_error(kwds):
-        if mutil.param_name(verr) not in parameters:
-            w(
-                "%s float. But there is no parameter %s. Ignore."
-                % (verr, mutil.param_name(verr))
-            )
+        if vn not in kwds and "limit_%s" % vn not in kwds:
+            w("Parameter %s does not have neither initial value nor limits." % vn)
+
     if errordef is None:
-        w("errordef is not given. Default to 1.")
+        w("errordef is not given, defaults to 1.")
 
 
 def profile(self, vname, bins, bound, subtract_min):
