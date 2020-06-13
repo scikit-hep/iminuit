@@ -1,2 +1,2 @@
-python -m pip install --upgrade numpy cython scipy matplotlib ipython jupyter jax jaxlib
+python -m pip install --upgrade numpy numba cython scipy matplotlib ipython jupyter jax jaxlib
 python -m pip install .
