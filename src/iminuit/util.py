@@ -225,6 +225,16 @@ class MErrors(OrderedDict):
         else:
             p.text(str(self))
 
+    def __getitem__(self, key):
+        try:
+            key, ul = key
+            ul = int(ul)
+            v = super(MErrors, self)[key]
+            return v.lower if ul == -1 else v.upper
+        except:
+            v = super(MErrors, self)[key]
+            return v
+
 
 # MigradResult used to be a tuple, so we don't add the dict interface
 class MigradResult(namedtuple("MigradResult", "fmin params")):
