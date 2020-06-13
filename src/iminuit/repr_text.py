@@ -13,8 +13,10 @@ def pdg_format(value, *errors):
     if nexp == 0:
         return strings
     for i, s in enumerate(strings):
+        if s[-1] in "fn":
+            continue
         m = re.match(r"(-?)0\.0+", s)
-        s = m.group(1) + "0" if m else "%sE%i" % (s, nexp)
+        s = m.group(1) + "0" if m else "%se%i" % (s, nexp)
         strings[i] = s
     return strings
 
@@ -22,13 +24,13 @@ def pdg_format(value, *errors):
 def matrix_format(*values):
     vs = np.array(values)
     mv = np.max(np.abs(vs))
-    smv = "%.3G" % mv
+    smv = "%.3g" % mv
     try:
-        i = smv.index("E")
+        i = smv.index("e")
         sexp = smv[i + 1 :]
         exp = int(sexp)
         vs /= 10 ** exp
-        s = ["%.3fE%s" % (v, sexp) for v in vs]
+        s = [("%.3fe%i" % (v, exp) if np.isfinite(v) else str(v)) for v in vs]
     except ValueError:
         s = ["%.3f" % v for v in vs]
     return _strip(s)
@@ -52,10 +54,10 @@ def format_row(widths, *args):
 def fmin(fm):
     ws = (-32, 33)
     i1 = format_row(
-        ws, "FCN = %.4G" % fm.fval, "Ncalls=%i (%i total)" % (fm.nfcn, fm.ncalls)
+        ws, "FCN = %.4g" % fm.fval, "Ncalls=%i (%i total)" % (fm.nfcn, fm.ncalls)
     )
     i2 = format_row(
-        ws, "EDM = %.3G (Goal: %G)" % (fm.edm, goaledm(fm)), "up = %.1f" % fm.up
+        ws, "EDM = %.3g (Goal: %g)" % (fm.edm, goaledm(fm)), "up = %.1f" % fm.up
     )
     ws = (16, 16, 12, 21)
     h1 = format_row(ws, "Valid Min.", "Valid Param.", "Above EDM", "Reached call limit")
