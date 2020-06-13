@@ -230,6 +230,11 @@ class MErrors(OrderedDict):
             key, ul = key
             ul = int(ul)
             v = super(MErrors, self).__getitem__(key)
+            warnings.warn(
+                "`merrors[(name, +-1)]` is deprecated; use `merrors[name]`",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             return v.lower if ul == -1 else v.upper
         except (ValueError, TypeError):
             v = super(MErrors, self).__getitem__(key)
