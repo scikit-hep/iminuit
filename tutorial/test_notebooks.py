@@ -1,6 +1,7 @@
 import pytest
 import re
 import os
+import shlex
 
 pj = os.path.join
 
@@ -16,10 +17,20 @@ class Processor(preproc.ExecutePreprocessor):
 
         # remove %timeit magic to execute cell only once
         # regex matches %timeit and %%timeit with cmdline arguments
-        code = re.sub(
-            "%?%timeit(?: *--?[a-zA-Z]+(?:(?:=| *)[a-zA-Z0-9]+) *)*", "", code
-        )
-        cell["source"] = code
+        lines = code.split("\n")
+        tmp = []
+        for line in lines:
+            if "%timeit" in line:
+                items = shlex.split(line)
+                istart = 0
+                for i, x in enumerate(items):
+                    if x.endswith("%timeit"):
+                        istart = i
+                    if x.startswith("-"):
+                        istart = i + 2
+                line = " ".join(items[istart:])
+            tmp.append(line)
+        cell["source"] = "\n".join(tmp)
 
         # execute cell
         cell, resources = super().preprocess_cell(cell, resources, index)

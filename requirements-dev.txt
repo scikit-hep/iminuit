@@ -1,4 +1,5 @@
 numpy
+numba
 cython
 scipy
 matplotlib
