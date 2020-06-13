@@ -13,10 +13,13 @@ def pdg_format(value, *errors):
     for i, s in enumerate(strings):
         if s[-1] in "fn":
             continue
-        m = re.match(r"(-?)0\.0+", s)
-        if m:
-            s = m.group(1) + "0"
-        else:
+        m = None
+        if i == 0:
+            m = re.match(r"(-?)0\.0+$", s)
+            if m:
+                s = m.group(1) + "0"
+        suffix = ""
+        if not m:
             suffix = {
                 -18: "a",
                 -15: "p",
@@ -32,7 +35,7 @@ def pdg_format(value, *errors):
                 15: "P",
                 18: "E",
             }.get(nexp, "e%i" % nexp)
-            s += suffix
+        s += suffix
         strings[i] = s
     return strings
 
