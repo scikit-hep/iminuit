@@ -231,7 +231,7 @@ class MErrors(OrderedDict):
             ul = int(ul)
             v = super(MErrors, self).__getitem__(key)
             return v.lower if ul == -1 else v.upper
-        except:
+        except (ValueError, TypeError):
             v = super(MErrors, self).__getitem__(key)
             return v
 
