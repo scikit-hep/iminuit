@@ -23,7 +23,7 @@ def get_latest_successful_build():
         (
             (b["finishTime"], b["id"], b["buildNumber"])
             for b in builds["value"]
-            if b["result"] == "succeeded"
+            if b.get("result", None) == "succeeded"
         ),
         reverse=True,
     )[0]
