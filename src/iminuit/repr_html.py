@@ -1,6 +1,5 @@
 from iminuit.color import Gradient
 from iminuit.repr_text import pdg_format, matrix_format, goaledm
-from itertools import chain
 
 good_style = "background-color:#92CCA6;"
 bad_style = "background-color:#FF7878;"
@@ -15,8 +14,18 @@ def tag(name, *args, delim=" ", **kwargs):
         v = kwargs[k]
         s += ' %s="%s"' % (k, v)
     s += ">"
-    for arg in args:
-        s += delim + arg
+
+    def visit(x):
+        if isinstance(x, str):
+            return delim + x
+        else:
+            s = ""
+            for xi in x:
+                s += visit(xi)
+            return s
+
+    for x in args:
+        s += visit(x)
     s += "%s</%s>" % (delim, name)
     return s
 
@@ -188,22 +197,24 @@ def params(mps):
     )
 
 
+def flatten(*pairs):
+    r = []
+    for a, b in pairs:
+        r.append(a)
+        r.append(b)
+    return r
+
+
 def merrors(mes):
     return table(
+        tr("<td/>", (th(me.name, title="Parameter name", colspan="2") for me in mes)),
         tr(
-            td(),
-            *(
-                th(me.name, title="Parameter name", colspan="2", align="center")
-                for me in mes
-            ),
+            th("Error", title="Lower and upper minos error of the parameter"),
+            ((td(x) for x in pdg_format(None, me.lower, me.upper)) for me in mes),
         ),
         tr(
-            td("Error", title="Lower and upper minos error of the parameter"),
-            *chain((td(x) for x in pdg_format(None, me.lower, me.upper)) for me in mes),
-        ),
-        tr(
-            td("Valid", title="Validity of lower/upper minos error"),
-            *chain(
+            th("Valid", title="Validity of lower/upper minos error"),
+            (
                 (
                     td(str(x), style=good(x, True))
                     for x in (me.lower_valid, me.upper_valid)
@@ -212,34 +223,34 @@ def merrors(mes):
             ),
         ),
         tr(
-            td("At Limit", title="Did scan hit limit of any parameter?"),
-            *chain(
+            th("At Limit", title="Did scan hit limit of any parameter?"),
+            (
                 (
-                    td(str(x), style=good(x, True))
+                    td(str(x), style=good(x, False))
                     for x in (me.at_lower_limit, me.at_upper_limit)
                 )
                 for me in mes
             ),
         ),
         tr(
-            td("Max FCN", title="Did scan hit function call limit?"),
-            *chain(
+            th("Max FCN", title="Did scan hit function call limit?"),
+            (
                 (
-                    td(str(x), style=good(x, True))
+                    td(str(x), style=good(x, False))
                     for x in (me.at_lower_max_fcn, me.at_upper_max_fcn)
                 )
                 for me in mes
             ),
         ),
         tr(
-            td("New Min", title="New minimum found when doing scan?")
-            * chain(
+            th("New Min", title="New minimum found when doing scan?"),
+            (
                 (
                     td(str(x), style=good(x, False))
                     for x in (me.lower_new_min, me.upper_new_min)
                 )
                 for me in mes
-            )
+            ),
         ),
     )
 

@@ -386,36 +386,12 @@ def test_html_minos(minuit):
     assert (
         mes._repr_html_()
         == r"""<table>
-<tr>
-  <td/>
-  <th title="Parameter name"> x </th>
-  <td align="center" colspan="2" style="background-color:#92CCA6;"> Valid </td>
-</tr>
-<tr>
-  <td title="Lower and upper minos error of the parameter">Error</td>
-  <td> -1 </td>
-  <td> 1 </td>
-</tr>
-<tr>
-  <td title="Validity of lower/upper minos error"> Valid </td>
-  <td style="background-color:#92CCA6;"> True </td>
-  <td style="background-color:#92CCA6;"> True </td>
-</tr>
-<tr>
-  <td title="Did scan hit limit of any parameter?"> At Limit </td>
-  <td style="background-color:#92CCA6;"> False </td>
-  <td style="background-color:#92CCA6;"> False </td>
-</tr>
-<tr>
-  <td title="Did scan hit function call limit?"> Max FCN </td>
-  <td style="background-color:#92CCA6;"> False </td>
-  <td style="background-color:#92CCA6;"> False </td>
-</tr>
-<tr>
-  <td title="New minimum found when doing scan?"> New Min </td>
-  <td style="background-color:#92CCA6;"> False </td>
-  <td style="background-color:#92CCA6;"> False </td>
-</tr>
+<tr> <td/> <th colspan="2" title="Parameter name"> x </th> <th colspan="2" title="Parameter name"> y </th> </tr>
+<tr> <th title="Lower and upper minos error of the parameter"> Error </th> <td> -1 </td> <td> 1 </td> <td> -0.5 </td> <td> 0.5 </td> </tr>
+<tr> <th title="Validity of lower/upper minos error"> Valid </th> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> </tr>
+<tr> <th title="Did scan hit limit of any parameter?"> At Limit </th> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> </tr>
+<tr> <th title="Did scan hit function call limit?"> Max FCN </th> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> </tr>
+<tr> <th title="New minimum found when doing scan?"> New Min </th> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> </tr>
 </table>
 """
     )
