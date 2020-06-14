@@ -697,25 +697,17 @@ def test_text_params_with_limits():
 
 
 def test_text_minos(minuit):
-    assert r"""-------------------------------------------------
-|        x        |            Valid            |
--------------------------------------------------
-|      Error      |      -1      |      1       |
-|      Valid      |     True     |     True     |
-|    At Limit     |    False     |    False     |
-|     Max FCN     |    False     |    False     |
-|     New Min     |    False     |    False     |
--------------------------------------------------
--------------------------------------------------
-|        y        |            Valid            |
--------------------------------------------------
-|      Error      |     -0.5     |     0.5      |
-|      Valid      |     True     |     True     |
-|    At Limit     |    False     |    False     |
-|     Max FCN     |    False     |    False     |
-|     New Min     |    False     |    False     |
--------------------------------------------------""" == str(
-        minuit.minos()
+    assert (
+        str(minuit.minos())
+        == r"""------------------------------------------------------------
+|          |           x           |           y           |
+------------------------------------------------------------
+|  Error   |    -1     |     1     |   -0.5    |    0.5    |
+|  Valid   |   True    |   True    |   True    |   True    |
+| At Limit |   False   |   False   |   False   |   False   |
+| Max FCN  |   False   |   False   |   False   |   False   |
+| New Min  |   False   |   False   |   False   |   False   |
+------------------------------------------------------------"""
     )
 
 

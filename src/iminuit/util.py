@@ -104,11 +104,11 @@ class MError(
     __slots__ = ()
 
     def _repr_html_(self):
-        return repr_html.merror(self)
+        return repr_html.merrors([self])
 
     def __str__(self):
         """Return string suitable for terminal."""
-        return repr_text.merror(self)
+        return repr_text.merrors([self])
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -213,11 +213,11 @@ class MErrors(OrderedDict):
     """Dict from parameter name to Minos result object."""
 
     def _repr_html_(self):
-        return "\n".join([x._repr_html_() for x in self.values()])
+        return repr_html.merrors(self.values())
 
     def __str__(self):
         """Return string suitable for terminal."""
-        return "\n".join([str(x) for x in self.values()])
+        return repr_text.merrors(self.values())
 
     def _repr_pretty_(self, p, cycle):
         if cycle:

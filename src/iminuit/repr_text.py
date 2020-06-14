@@ -136,26 +136,40 @@ def params(mps):
     return "\n".join(lines)
 
 
-def merror(me):
-    mel, meu = pdg_format(None, me.lower, me.upper)
-    stat = "Valid" if me.is_valid else "Invalid"
-    summary = "| {0:^15s} | {1:^27s} |".format(me.name, stat)
-    error = "| {0:^15s} | {1:^12s} | {2:^12s} |".format("Error", mel, meu)
-    valid = "| {0:^15s} | {1:^12s} | {2:^12s} |".format(
-        "Valid", str(me.lower_valid), str(me.upper_valid)
-    )
-    at_limit = "| {0:^15s} | {1:^12s} | {2:^12s} |".format(
-        "At Limit", str(me.at_lower_limit), str(me.at_upper_limit)
-    )
-    max_fcn = "| {0:^15s} | {1:^12s} | {2:^12s} |".format(
-        "Max FCN", str(me.at_lower_max_fcn), str(me.at_upper_max_fcn)
-    )
-    new_min = "| {0:^15s} | {1:^12s} | {2:^12s} |".format(
-        "New Min", str(me.lower_new_min), str(me.upper_new_min)
-    )
-    hline = "-" * len(error)
+def merrors(mes):
+    n = len(mes)
+    ws = [11] + [24] * n
+    header = format_row(ws, "", *(m.name for m in mes))
+    ws = [11] + [12] * (2 * n)
+    x = []
+    for m in mes:
+        mel, meu = pdg_format(None, m.lower, m.upper)
+        x.append(mel)
+        x.append(meu)
+    error = format_row(ws, "Error", *x)
+    x = []
+    for m in mes:
+        x.append(str(m.lower_valid))
+        x.append(str(m.upper_valid))
+    valid = format_row(ws, "Valid", *x)
+    x = []
+    for m in mes:
+        x.append(str(m.at_lower_limit))
+        x.append(str(m.at_upper_limit))
+    at_limit = format_row(ws, "At Limit", *x)
+    x = []
+    for m in mes:
+        x.append(str(m.at_lower_max_fcn))
+        x.append(str(m.at_upper_max_fcn))
+    max_fcn = format_row(ws, "Max FCN", *x)
+    x = []
+    for m in mes:
+        x.append(str(m.lower_new_min))
+        x.append(str(m.upper_new_min))
+    new_min = format_row(ws, "New Min", *x)
+    line = "-" * len(header)
     return "\n".join(
-        (hline, summary, hline, error, valid, at_limit, max_fcn, new_min, hline)
+        (line, header, line, error, valid, at_limit, max_fcn, new_min, line)
     )
 
 

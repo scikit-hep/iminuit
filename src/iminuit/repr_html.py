@@ -148,53 +148,6 @@ def fmin(sfmin):
     return str(s)
 
 
-def merror(me):
-    mel, meu = pdg_format(None, me.lower, me.upper)
-    s = Html()
-    with table(s):
-        with tr(s):
-            with th(s, title="Parameter name"):
-                s += me.name
-            with td(s, colspan="2", style=good(me.is_valid, True), align="center"):
-                s += "Valid" if me.is_valid else "Invalid"
-        with tr(s):
-            with td(s, title="Lower and upper minos error of the parameter"):
-                s += "Error"
-            with td(s):
-                s += mel
-            with td(s):
-                s += meu
-        with tr(s):
-            with td(s, title="Validity of lower/upper minos error"):
-                s += "Valid"
-            with td(s, style=good(me.lower_valid, True)):
-                s += "%s" % me.lower_valid
-            with td(s, style=good(me.upper_valid, True)):
-                s += "%s" % me.upper_valid
-        with tr(s):
-            with td(s, title="Did scan hit limit of any parameter?"):
-                s += "At Limit"
-            with td(s, style=good(me.at_lower_limit, False)):
-                s += "%s" % me.at_lower_limit
-            with td(s, style=good(me.at_upper_limit, False)):
-                s += "%s" % me.at_upper_limit
-        with tr(s):
-            with td(s, title="Did scan hit function call limit?"):
-                s += "Max FCN"
-            with td(s, style=good(me.at_lower_max_fcn, False)):
-                s += "%s" % me.at_lower_max_fcn
-            with td(s, style=good(me.at_upper_max_fcn, False)):
-                s += "%s" % me.at_upper_max_fcn
-        with tr(s):
-            with td(s, title="New minimum found when doing scan?"):
-                s += "New Min"
-            with td(s, style=good(me.lower_new_min, False)):
-                s += "%s" % me.lower_new_min
-            with td(s, style=good(me.upper_new_min, False)):
-                s += "%s" % me.upper_new_min
-    return str(s)
-
-
 def params(mps):
     s = Html()
     with table(s):
@@ -248,6 +201,59 @@ def params(mps):
                     s += "%.3G" % mp.upper_limit if mp.upper_limit is not None else ""
                 with td(s):
                     s += "yes" if mp.is_fixed else ("CONST" if mp.is_const else "")
+    return str(s)
+
+
+def merrors(mes):
+    s = Html()
+    with table(s):
+        with tr(s):
+            with td(s):
+                pass
+            for me in mes:
+                with th(s, title="Parameter name", colspan="2", align="center"):
+                    s += me.name
+        with tr(s):
+            with td(s, title="Lower and upper minos error of the parameter"):
+                s += "Error"
+            for me in mes:
+                mel, meu = pdg_format(None, me.lower, me.upper)
+                with td(s):
+                    s += mel
+                with td(s):
+                    s += meu
+        with tr(s):
+            with td(s, title="Validity of lower/upper minos error"):
+                s += "Valid"
+            for me in mes:
+                with td(s, style=good(me.lower_valid, True)):
+                    s += "%s" % me.lower_valid
+                with td(s, style=good(me.upper_valid, True)):
+                    s += "%s" % me.upper_valid
+        with tr(s):
+            with td(s, title="Did scan hit limit of any parameter?"):
+                s += "At Limit"
+            for me in mes:
+                with td(s, style=good(me.at_lower_limit, False)):
+                    s += "%s" % me.at_lower_limit
+                with td(s, style=good(me.at_upper_limit, False)):
+                    s += "%s" % me.at_upper_limit
+        with tr(s):
+            with td(s, title="Did scan hit function call limit?"):
+                s += "Max FCN"
+            for me in mes:
+                with td(s, style=good(me.at_lower_max_fcn, False)):
+                    s += "%s" % me.at_lower_max_fcn
+                with td(s, style=good(me.at_upper_max_fcn, False)):
+                    s += "%s" % me.at_upper_max_fcn
+        with tr(s):
+            with td(s, title="New minimum found when doing scan?"):
+                s += "New Min"
+            for me in mes:
+                with td(s, style=good(me.lower_new_min, False)):
+                    s += "%s" % me.lower_new_min
+                with td(s, style=good(me.upper_new_min, False)):
+                    s += "%s" % me.upper_new_min
     return str(s)
 
 
