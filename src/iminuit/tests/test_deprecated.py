@@ -21,10 +21,14 @@ def minuit():
 
 def test_minos_merrors(minuit):
     minuit.minos()
+    m = minuit.merrors
     with pytest.warns(DeprecationWarning):
-        assert minuit.merrors[("x", -1.0)] == approx(-1)
+        assert m[("x", -1)] == approx(-1)
     with pytest.warns(DeprecationWarning):
-        assert minuit.merrors[("x", 1.0)] == approx(1)
+        assert m[("x", 1)] == approx(1)
+    with pytest.warns(DeprecationWarning):
+        with pytest.raises(ValueError):
+            m[("x", 2)]
 
 
 def test_default_errordef():

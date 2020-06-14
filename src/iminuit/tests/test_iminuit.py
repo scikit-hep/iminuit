@@ -483,6 +483,14 @@ def test_minos_all(grad, sigma):
     assert m.merrors["y"].upper == approx(sigma * 1)
     assert m.merrors[0].lower == approx(-sigma * 2)
     assert m.merrors[1].upper == approx(sigma * 1)
+    assert m.merrors[-1].upper == approx(sigma * 1)
+
+    with pytest.raises(KeyError):
+        m.merrors["xy"]
+    with pytest.raises(KeyError):
+        m.merrors["z"]
+    with pytest.raises(IndexError):
+        m.merrors[-3]
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
