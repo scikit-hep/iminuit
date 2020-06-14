@@ -227,26 +227,37 @@ class MErrors(OrderedDict):
 
     def __getitem__(self, key):
         is_deprecated_call = False
-        try:
-            key, ul = key
-            ul = int(ul)
-            is_deprecated_call = True
-            warnings.warn(
-                "`merrors[(name, +-1)]` is deprecated; use `merrors[name]`",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        except (ValueError, TypeError):
-            pass
-
         if isinstance(key, int):
+            if key >= len(self):
+                raise IndexError("index out of range")
+            if key < 0:
+                key += len(self)
+            if key < 0:
+                raise IndexError("index out of range")
             for k in self.keys():
                 if key == 0:
                     key = k
                     break
                 key -= 1
+        else:
+            if not isinstance(key, str):
+                try:
+                    k, ul = key
+                    ul = int(ul)
+                    is_deprecated_call = True
+                    key = k
+                    warnings.warn(
+                        "`merrors[(name, +-1)]` is deprecated; use `merrors[name]`",
+                        DeprecationWarning,
+                        stacklevel=2,
+                    )
+                except (ValueError, TypeError):
+                    pass
+
         v = super(MErrors, self).__getitem__(key)
         if is_deprecated_call:
+            if ul not in (-1, 1):
+                raise ValueError("key must be (name, 1) or (name, -1)")
             return v.lower if ul == -1 else v.upper
         return v
 
