@@ -5,6 +5,15 @@
 Changelog
 =========
 
+1.4.2 (June, 14, 2020)
+----------------------
+
+Hot-fix release to correct an error in `Minuit.merrors` indexing.
+
+Documentation
+~~~~~~~~~~~~~
+- New tutorial about using Numba to parallelize and jit-compile cost functions
+
 1.4.1 (June, 13, 2020)
 ----------------------
 
