@@ -3,6 +3,7 @@ from iminuit import Minuit
 from iminuit.util import Params, Param, Matrix
 from iminuit import repr_html, repr_text
 import pytest
+from xml.etree import ElementTree
 
 nan = float("nan")
 inf = float("infinity")
@@ -13,10 +14,9 @@ def f1(x, y):
 
 
 def test_html_tag():
-    s = repr_html.Html()
-    with repr_html.Tag("foo", s):
-        s += "bar"
-    assert str(s) == "<foo>\nbar\n</foo>\n"
+    tag = repr_html.tag("foo", "bar", baz="hi", xyzzy="2")
+    assert tag == '<foo baz="hi" xyzzy="2"> bar </foo>'
+    assert repr_html.tag("foo") == "<foo> </foo>"
 
 
 def test_pdg_format():
@@ -77,84 +77,12 @@ def test_html_fmin(minuit):
     assert (
         fmin._repr_html_()
         == r"""<table>
-<tr>
-<td colspan="2" title="Minimum value of function">
-FCN = 1
-</td>
-<td align="center" colspan="3" title="No. of calls in last algorithm and total number of calls">
-Ncalls = 32 (56 total)
-</td>
-</tr>
-<tr>
-<td colspan="2" title="Estimated distance to minimum and target threshold">
-EDM = %.3g (Goal: 2e-07)
-</td>
-<td align="center" colspan="3" title="Increase in FCN which corresponds to 1 standard deviation">
-up = 1.0
-</td>
-</tr>
-<tr>
-<td align="center" title="Validity of the migrad call">
-Valid Min.
-</td>
-<td align="center" title="Validity of parameters">
-Valid Param.
-</td>
-<td align="center" title="Is EDM above goal EDM?">
-Above EDM
-</td>
-<td align="center" colspan="2" title="Did last migrad call reach max call limit?">
-Reached call limit
-</td>
-</tr>
-<tr>
-<td align="center" style="background-color:#92CCA6;">
-True
-</td>
-<td align="center" style="background-color:#92CCA6;">
-True
-</td>
-<td align="center" style="background-color:#92CCA6;">
-False
-</td>
-<td align="center" colspan="2" style="background-color:#92CCA6;">
-False
-</td>
-</tr>
-<tr>
-<td align="center" title="Did Hesse fail?">
-Hesse failed
-</td>
-<td align="center" title="Has covariance matrix">
-Has cov.
-</td>
-<td align="center" title="Is covariance matrix accurate?">
-Accurate
-</td>
-<td align="center" title="Is covariance matrix positive definite?">
-Pos. def.
-</td>
-<td align="center" title="Was positive definiteness enforced by Minuit?">
-Forced
-</td>
-</tr>
-<tr>
-<td align="center" style="background-color:#92CCA6;">
-False
-</td>
-<td align="center" style="background-color:#92CCA6;">
-True
-</td>
-<td align="center" style="background-color:#92CCA6;">
-True
-</td>
-<td align="center" style="background-color:#92CCA6;">
-True
-</td>
-<td align="center" style="background-color:#92CCA6;">
-False
-</td>
-</tr>
+<tr> <td colspan="2" title="Minimum value of function"> FCN = 1 </td> <td align="center" colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 32 (56 total) </td> </tr>
+<tr> <td colspan="2" title="Estimated distance to minimum and target threshold"> EDM = %.3g (Goal: 2e-07) </td> <td align="center" colspan="3" title="Increase in FCN which corresponds to 1 standard deviation"> up = 1.0 </td> </tr>
+<tr> <td align="center" title="Validity of the migrad call"> Valid Min. </td> <td align="center" title="Validity of parameters"> Valid Param. </td> <td align="center" title="Is EDM above goal EDM?"> Above EDM </td> <td align="center" colspan="2" title="Did last migrad call reach max call limit?"> Reached call limit </td> </tr>
+<tr> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> False </td> <td align="center" colspan="2" style="background-color:#92CCA6;"> False </td> </tr>
+<tr> <td align="center" title="Did Hesse fail?"> Hesse failed </td> <td align="center" title="Has covariance matrix"> Has cov. </td> <td align="center" title="Is covariance matrix accurate?"> Accurate </td> <td align="center" title="Is covariance matrix positive definite?"> Pos. def. </td> <td align="center" title="Was positive definiteness enforced by Minuit?"> Forced </td> </tr>
+<tr> <td align="center" style="background-color:#92CCA6;"> False </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> False </td> </tr>
 </table>
 """
         % fmin.edm
@@ -456,139 +384,40 @@ y
 def test_html_minos(minuit):
     mes = minuit.merrors
     assert (
-        r"""<table>
+        mes._repr_html_()
+        == r"""<table>
 <tr>
-<th title="Parameter name">
-x
-</th>
-<td align="center" colspan="2" style="background-color:#92CCA6;">
-Valid
-</td>
+  <td/>
+  <th title="Parameter name"> x </th>
+  <td align="center" colspan="2" style="background-color:#92CCA6;"> Valid </td>
 </tr>
 <tr>
-<td title="Lower and upper minos error of the parameter">
-Error
-</td>
-<td>
--1
-</td>
-<td>
-1
-</td>
+  <td title="Lower and upper minos error of the parameter">Error</td>
+  <td> -1 </td>
+  <td> 1 </td>
 </tr>
 <tr>
-<td title="Validity of lower/upper minos error">
-Valid
-</td>
-<td style="background-color:#92CCA6;">
-True
-</td>
-<td style="background-color:#92CCA6;">
-True
-</td>
+  <td title="Validity of lower/upper minos error"> Valid </td>
+  <td style="background-color:#92CCA6;"> True </td>
+  <td style="background-color:#92CCA6;"> True </td>
 </tr>
 <tr>
-<td title="Did scan hit limit of any parameter?">
-At Limit
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
+  <td title="Did scan hit limit of any parameter?"> At Limit </td>
+  <td style="background-color:#92CCA6;"> False </td>
+  <td style="background-color:#92CCA6;"> False </td>
 </tr>
 <tr>
-<td title="Did scan hit function call limit?">
-Max FCN
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
+  <td title="Did scan hit function call limit?"> Max FCN </td>
+  <td style="background-color:#92CCA6;"> False </td>
+  <td style="background-color:#92CCA6;"> False </td>
 </tr>
 <tr>
-<td title="New minimum found when doing scan?">
-New Min
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-</tr>
-</table>
-
-<table>
-<tr>
-<th title="Parameter name">
-y
-</th>
-<td align="center" colspan="2" style="background-color:#92CCA6;">
-Valid
-</td>
-</tr>
-<tr>
-<td title="Lower and upper minos error of the parameter">
-Error
-</td>
-<td>
--0.5
-</td>
-<td>
-0.5
-</td>
-</tr>
-<tr>
-<td title="Validity of lower/upper minos error">
-Valid
-</td>
-<td style="background-color:#92CCA6;">
-True
-</td>
-<td style="background-color:#92CCA6;">
-True
-</td>
-</tr>
-<tr>
-<td title="Did scan hit limit of any parameter?">
-At Limit
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-</tr>
-<tr>
-<td title="Did scan hit function call limit?">
-Max FCN
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-</tr>
-<tr>
-<td title="New minimum found when doing scan?">
-New Min
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
-<td style="background-color:#92CCA6;">
-False
-</td>
+  <td title="New minimum found when doing scan?"> New Min </td>
+  <td style="background-color:#92CCA6;"> False </td>
+  <td style="background-color:#92CCA6;"> False </td>
 </tr>
 </table>
 """
-        == mes._repr_html_()
     )
 
 
@@ -597,38 +426,9 @@ def test_html_matrix():
     assert (
         matrix._repr_html_()
         == r"""<table>
-<tr>
-<td/>
-
-<th>
-x
-</th>
-<th>
-y
-</th>
-</tr>
-<tr>
-<th>
-x
-</th>
-<td>
-1.00
-</td>
-<td style="background-color:rgb(250,250,250)">
--0.00
-</td>
-</tr>
-<tr>
-<th>
-y
-</th>
-<td style="background-color:rgb(250,250,250)">
--0.00
-</td>
-<td>
-0.25
-</td>
-</tr>
+<tr> <td/> <th> x </th> <th> y </th> </tr>
+<tr> <th> x </th> <td> 1.00 </td> <td style="background-color:rgb(250,250,250)"> -0.00 </td> </tr>
+<tr> <th> y </th> <td style="background-color:rgb(250,250,250)"> -0.00 </td> <td> 0.25 </td> </tr>
 </table>
 """
     )
