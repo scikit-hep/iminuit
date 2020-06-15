@@ -54,96 +54,71 @@ def fmin(sfmin):
     """Display FunctionMinum in html representation"""
     return table(
         tr(
-            td("FCN = %.4g" % sfmin.fval, colspan=2, title="Minimum value of function"),
+            td(
+                "FCN = %.4g" % sfmin.fval,
+                colspan=2,
+                title="Minimum value of function",
+                style="text-align:center",
+            ),
             td(
                 "Ncalls = %i (%i total)" % (sfmin.nfcn, sfmin.ncalls),
                 colspan=3,
-                align="center",
                 title="No. of calls in last algorithm and total number of calls",
             ),
         ),
         tr(
             td(
                 "EDM = %.3g (Goal: %g)" % (sfmin.edm, goaledm(sfmin)),
-                colspan="2",
+                colspan=2,
+                style="text-align:center",
                 title="Estimated distance to minimum and target threshold",
             ),
             td(
                 "up = %.1f" % sfmin.up,
-                colspan="3",
-                align="center",
+                colspan=3,
                 title="Increase in FCN which corresponds to 1 standard deviation",
             ),
         ),
         tr(
-            td("Valid Min.", align="center", title="Validity of the migrad call"),
-            td("Valid Param.", align="center", title="Validity of parameters"),
-            td("Above EDM", align="center", title="Is EDM above goal EDM?"),
+            td("Valid Min.", title="Validity of the migrad call"),
+            td("Valid Param.", title="Validity of parameters"),
+            td("Above EDM", title="Is EDM above goal EDM?"),
             td(
                 "Reached call limit",
-                colspan="2",
-                align="center",
+                colspan=2,
                 title="Did last migrad call reach max call limit?",
             ),
         ),
         tr(
-            td(str(sfmin.is_valid), align="center", style=good(sfmin.is_valid, True)),
+            td(str(sfmin.is_valid), style=good(sfmin.is_valid, True)),
             td(
                 str(sfmin.has_valid_parameters),
-                align="center",
                 style=good(sfmin.has_valid_parameters, True),
             ),
-            td(
-                str(sfmin.is_above_max_edm),
-                align="center",
-                style=good(sfmin.is_above_max_edm, False),
-            ),
+            td(str(sfmin.is_above_max_edm), style=good(sfmin.is_above_max_edm, False)),
             td(
                 str(sfmin.has_reached_call_limit),
-                colspan="2",
-                align="center",
+                colspan=2,
                 style=good(sfmin.has_reached_call_limit, False),
             ),
         ),
         tr(
-            td("Hesse failed", align="center", title="Did Hesse fail?"),
-            td("Has cov.", align="center", title="Has covariance matrix"),
-            td("Accurate", align="center", title="Is covariance matrix accurate?"),
-            td(
-                "Pos. def.",
-                align="center",
-                title="Is covariance matrix positive definite?",
-            ),
-            td(
-                "Forced",
-                align="center",
-                title="Was positive definiteness enforced by Minuit?",
-            ),
+            td("Hesse failed", title="Did Hesse fail?"),
+            td("Has cov.", title="Has covariance matrix"),
+            td("Accurate", title="Is covariance matrix accurate?"),
+            td("Pos. def.", title="Is covariance matrix positive definite?"),
+            td("Forced", title="Was positive definiteness enforced by Minuit?"),
         ),
         tr(
-            td(
-                str(sfmin.hesse_failed),
-                align="center",
-                style=good(sfmin.hesse_failed, False),
-            ),
-            td(
-                str(sfmin.has_covariance),
-                align="center",
-                style=good(sfmin.has_covariance, True),
-            ),
+            td(str(sfmin.hesse_failed), style=good(sfmin.hesse_failed, False)),
+            td(str(sfmin.has_covariance), style=good(sfmin.has_covariance, True)),
             td(
                 str(sfmin.has_accurate_covar),
-                align="center",
                 style=good(sfmin.has_accurate_covar, True),
             ),
-            td(
-                str(sfmin.has_posdef_covar),
-                align="center",
-                style=good(sfmin.has_posdef_covar, True),
-            ),
+            td(str(sfmin.has_posdef_covar), style=good(sfmin.has_posdef_covar, True)),
             td(
                 str(sfmin.has_made_posdef_covar),
-                align="center",
                 style=good(sfmin.has_made_posdef_covar, False),
             ),
         ),
@@ -207,7 +182,18 @@ def flatten(*pairs):
 
 def merrors(mes):
     return table(
-        tr("<td/>", (th(me.name, title="Parameter name", colspan="2") for me in mes)),
+        tr(
+            "<td/>",
+            (
+                th(
+                    me.name,
+                    colspan=2,
+                    title="Parameter name",
+                    style="text-align:center",
+                )
+                for me in mes
+            ),
+        ),
         tr(
             th("Error", title="Lower and upper minos error of the parameter"),
             ((td(x) for x in pdg_format(None, me.lower, me.upper)) for me in mes),
