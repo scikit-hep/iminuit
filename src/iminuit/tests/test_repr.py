@@ -77,12 +77,12 @@ def test_html_fmin(minuit):
     assert (
         fmin._repr_html_()
         == r"""<table>
-<tr> <td colspan="2" title="Minimum value of function"> FCN = 1 </td> <td align="center" colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 32 (56 total) </td> </tr>
-<tr> <td colspan="2" title="Estimated distance to minimum and target threshold"> EDM = %.3g (Goal: 2e-07) </td> <td align="center" colspan="3" title="Increase in FCN which corresponds to 1 standard deviation"> up = 1.0 </td> </tr>
-<tr> <td align="center" title="Validity of the migrad call"> Valid Min. </td> <td align="center" title="Validity of parameters"> Valid Param. </td> <td align="center" title="Is EDM above goal EDM?"> Above EDM </td> <td align="center" colspan="2" title="Did last migrad call reach max call limit?"> Reached call limit </td> </tr>
-<tr> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> False </td> <td align="center" colspan="2" style="background-color:#92CCA6;"> False </td> </tr>
-<tr> <td align="center" title="Did Hesse fail?"> Hesse failed </td> <td align="center" title="Has covariance matrix"> Has cov. </td> <td align="center" title="Is covariance matrix accurate?"> Accurate </td> <td align="center" title="Is covariance matrix positive definite?"> Pos. def. </td> <td align="center" title="Was positive definiteness enforced by Minuit?"> Forced </td> </tr>
-<tr> <td align="center" style="background-color:#92CCA6;"> False </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> True </td> <td align="center" style="background-color:#92CCA6;"> False </td> </tr>
+<tr> <td colspan="2" style="text-align:center" title="Minimum value of function"> FCN = 1 </td> <td colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 32 (56 total) </td> </tr>
+<tr> <td colspan="2" style="text-align:center" title="Estimated distance to minimum and target threshold"> EDM = %.3g (Goal: 2e-07) </td> <td colspan="3" title="Increase in FCN which corresponds to 1 standard deviation"> up = 1.0 </td> </tr>
+<tr> <td title="Validity of the migrad call"> Valid Min. </td> <td title="Validity of parameters"> Valid Param. </td> <td title="Is EDM above goal EDM?"> Above EDM </td> <td colspan="2" title="Did last migrad call reach max call limit?"> Reached call limit </td> </tr>
+<tr> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> False </td> <td colspan="2" style="background-color:#92CCA6;"> False </td> </tr>
+<tr> <td title="Did Hesse fail?"> Hesse failed </td> <td title="Has covariance matrix"> Has cov. </td> <td title="Is covariance matrix accurate?"> Accurate </td> <td title="Is covariance matrix positive definite?"> Pos. def. </td> <td title="Was positive definiteness enforced by Minuit?"> Forced </td> </tr>
+<tr> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> False </td> </tr>
 </table>
 """
         % fmin.edm
@@ -140,7 +140,7 @@ def test_html_minos(minuit):
     assert (
         mes._repr_html_()
         == r"""<table>
-<tr> <td/> <th colspan="2" title="Parameter name"> x </th> <th colspan="2" title="Parameter name"> y </th> </tr>
+<tr> <td/> <th colspan="2" style="text-align:center" title="Parameter name"> x </th> <th colspan="2" style="text-align:center" title="Parameter name"> y </th> </tr>
 <tr> <th title="Lower and upper minos error of the parameter"> Error </th> <td> -1 </td> <td> 1 </td> <td> -0.5 </td> <td> 0.5 </td> </tr>
 <tr> <th title="Validity of lower/upper minos error"> Valid </th> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> </tr>
 <tr> <th title="Did scan hit limit of any parameter?"> At Limit </th> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> </tr>

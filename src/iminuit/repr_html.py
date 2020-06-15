@@ -280,11 +280,6 @@ def matrix(m):
                     color = grad.rgb(val / (m[i][i] * m[j][j]) ** 0.5)
                     t = td(nums[n * i + j], style="background-color:" + color)
             cols.append(t)
-        rows.append(tr(*cols))
+        rows.append(tr(cols))
 
-    return table(
-        # header
-        tr("<td/>", *(th(v) for v in m.names)),
-        # body
-        *rows,
-    )
+    return table(tr("<td/>", (th(v) for v in m.names)), rows)
