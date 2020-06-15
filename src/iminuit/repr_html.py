@@ -140,7 +140,7 @@ def params(mps):
             mep = ""
         rows.append(
             tr(
-                td(str(i)),
+                th(str(i)),
                 td(mp.name),
                 td(v),
                 td(e),
@@ -170,14 +170,6 @@ def params(mps):
         # body
         *rows,
     )
-
-
-def flatten(*pairs):
-    r = []
-    for a, b in pairs:
-        r.append(a)
-        r.append(b)
-    return r
 
 
 def merrors(mes):

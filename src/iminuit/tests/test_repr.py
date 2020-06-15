@@ -93,8 +93,8 @@ def test_html_params(minuit):
     assert (
         r"""<table>
 <tr style="background-color:#F4F4F4;"> <td/> <th title="Variable name"> Name </th> <th title="Value of parameter"> Value </th> <th title="Hesse error"> Hesse Error </th> <th title="Minos lower error"> Minos Error- </th> <th title="Minos upper error"> Minos Error+ </th> <th title="Lower limit of the parameter"> Limit- </th> <th title="Upper limit of the parameter"> Limit+ </th> <th title="Is the parameter fixed in the fit"> Fixed </th> </tr>
-<tr style="background-color:#FFFFFF;"> <td> 0 </td> <td> x </td> <td> 0.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> </tr>
-<tr style="background-color:#F4F4F4;"> <td> 1 </td> <td> y </td> <td> 0.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> </tr>
+<tr style="background-color:#FFFFFF;"> <th> 0 </th> <td> x </td> <td> 0.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> </tr>
+<tr style="background-color:#F4F4F4;"> <th> 1 </th> <td> y </td> <td> 0.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> </tr>
 </table>
 """
         == minuit.init_params._repr_html_()
@@ -103,8 +103,8 @@ def test_html_params(minuit):
     assert (
         """<table>
 <tr style="background-color:#F4F4F4;"> <td/> <th title="Variable name"> Name </th> <th title="Value of parameter"> Value </th> <th title="Hesse error"> Hesse Error </th> <th title="Minos lower error"> Minos Error- </th> <th title="Minos upper error"> Minos Error+ </th> <th title="Lower limit of the parameter"> Limit- </th> <th title="Upper limit of the parameter"> Limit+ </th> <th title="Is the parameter fixed in the fit"> Fixed </th> </tr>
-<tr style="background-color:#FFFFFF;"> <td> 0 </td> <td> x </td> <td> 2 </td> <td> 1 </td> <td> -1 </td> <td> 1 </td> <td>  </td> <td>  </td> <td>  </td> </tr>
-<tr style="background-color:#F4F4F4;"> <td> 1 </td> <td> y </td> <td> 1.0 </td> <td> 0.5 </td> <td> -0.5 </td> <td> 0.5 </td> <td>  </td> <td>  </td> <td>  </td> </tr>
+<tr style="background-color:#FFFFFF;"> <th> 0 </th> <td> x </td> <td> 2 </td> <td> 1 </td> <td> -1 </td> <td> 1 </td> <td>  </td> <td>  </td> <td>  </td> </tr>
+<tr style="background-color:#F4F4F4;"> <th> 1 </th> <td> y </td> <td> 1.0 </td> <td> 0.5 </td> <td> -0.5 </td> <td> 0.5 </td> <td>  </td> <td>  </td> <td>  </td> </tr>
 </table>
 """
         == minuit.params._repr_html_()
@@ -127,8 +127,8 @@ def test_html_params_with_limits():
     assert (
         r"""<table>
 <tr style="background-color:#F4F4F4;"> <td/> <th title="Variable name"> Name </th> <th title="Value of parameter"> Value </th> <th title="Hesse error"> Hesse Error </th> <th title="Minos lower error"> Minos Error- </th> <th title="Minos upper error"> Minos Error+ </th> <th title="Lower limit of the parameter"> Limit- </th> <th title="Upper limit of the parameter"> Limit+ </th> <th title="Is the parameter fixed in the fit"> Fixed </th> </tr>
-<tr style="background-color:#FFFFFF;"> <td> 0 </td> <td> x </td> <td> 3.0 </td> <td> 0.2 </td> <td>  </td> <td>  </td> <td> 0 </td> <td>  </td> <td> yes </td> </tr>
-<tr style="background-color:#F4F4F4;"> <td> 1 </td> <td> y </td> <td> 5.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td> 0 </td> <td> 10 </td> <td>  </td> </tr>
+<tr style="background-color:#FFFFFF;"> <th> 0 </th> <td> x </td> <td> 3.0 </td> <td> 0.2 </td> <td>  </td> <td>  </td> <td> 0 </td> <td>  </td> <td> yes </td> </tr>
+<tr style="background-color:#F4F4F4;"> <th> 1 </th> <td> y </td> <td> 5.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td> 0 </td> <td> 10 </td> <td>  </td> </tr>
 </table>
 """
         == m.init_params._repr_html_()
