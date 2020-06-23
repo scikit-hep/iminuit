@@ -273,14 +273,14 @@ def _round(values, leader, n_exp_extern):
             digits = 1.0
 
     if n_exp_extern is None:
-        if abs(values[0] / 10 ** n_exp) < 0.01:
-            if n_exp != 0:
-                n_exp_extern = n_exp - 1
-            else:
-                n_exp_extern = 0
+        if abs(n_exp) > 2:
+            n_exp_extern = int(round(n_exp / 3) * 3)
         else:
-            n_exp_shift = int(digits == 1.0) - int(n_exp < 0)
-            n_exp_extern = math.trunc((n_exp + n_exp_shift) / 3) * 3
+            n_exp_extern = 0
+        if math.isfinite(values[0]) and values[0] != 0:
+            n = math.floor(math.log10(abs(values[0])) / 3) * 3
+            if n > n_exp_extern:
+                n_exp_extern = n
 
     shift = n_exp - n_exp_extern
     values = [
