@@ -40,9 +40,11 @@ class Processor(preproc.ExecutePreprocessor):
             if output["output_type"] != "stream":
                 continue
             text = output["text"]
-            assert "DeprecationWarning" not in text, (
-                "DeprecationWarning in cell [%i]" % cell["execution_count"]
-            )
+            # temporary fix
+            assert (
+                "Creating an ndarray from ragged nested sequences" in text
+                or "DeprecationWarning" not in text
+            ), ("DeprecationWarning in cell [%i]" % cell["execution_count"])
 
         return cell, resources
 

@@ -100,7 +100,7 @@ cdef extern from "Minuit2/MnUserParameterState.h":
         void Add(char*name, double val, double err, double, double)
         void Add(char*, double)
 
-        vector[MinuitParameter] MinuitParameters()
+        const vector[MinuitParameter]& MinuitParameters()
         MnUserCovariance Covariance()
         MnGlobalCorrelationCoeff GlobalCC()
 
@@ -139,6 +139,7 @@ cdef extern from "Minuit2/MnMigrad.h":
 
 cdef extern from "Minuit2/MnHesse.h":
     cdef cppclass MnHesse:
+        MnHesse()
         MnHesse(unsigned int stra)
         MnUserParameterState call "operator()"(FCNBase, MnUserParameterState, unsigned maxcalls) except+
         MnUserParameterState call "operator()"(FCNBase, FunctionMinimum, unsigned maxcalls) except+
@@ -168,8 +169,8 @@ cdef extern from "Minuit2/MinosError.h":
 cdef extern from "Minuit2/FunctionMinimum.h":
     cdef cppclass FunctionMinimum:
         FunctionMinimum(FunctionMinimum)
-        MnUserParameterState UserState()
-        MnUserCovariance UserCovariance()
+        const MnUserParameterState& UserState()
+        const MnUserCovariance& UserCovariance()
         # const_MinimumParameter parameters()
         # const_MinimumError error()
 

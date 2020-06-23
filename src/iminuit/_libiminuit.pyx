@@ -26,6 +26,7 @@ ctypedef FCNGradientBase* FCNGradientBasePtr
 ctypedef IMinuitMixin* IMinuitMixinPtr
 ctypedef PythonGradientFCN* PythonGradientFCNPtr
 ctypedef MnUserParameterState* MnUserParameterStatePtr
+ctypedef const MnUserParameterState* MnUserParameterStateConstPtr
 
 # Helper functions
 cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict fitarg):
@@ -83,6 +84,20 @@ cdef check_extra_args(parameters, kwd):
             raise RuntimeError(
                 ('Cannot understand keyword %s. May be a typo?\n'
                  'The parameters are %r') % (k, parameters))
+
+
+cdef states_equal(n, MnUserParameterStateConstPtr a, MnUserParameterStateConstPtr b):
+    result = False
+    for i in range(n):
+        result |= a.Parameter(i).Value() != b.Parameter(i).Value()
+        result |= a.Parameter(i).Error() != b.Parameter(i).Error()
+        result |= a.Parameter(i).IsFixed() != b.Parameter(i).IsFixed()
+        result |= a.Parameter(i).HasLowerLimit() != b.Parameter(i).HasLowerLimit()
+        result |= a.Parameter(i).HasUpperLimit() != b.Parameter(i).HasUpperLimit()
+        result |= a.Parameter(i).LowerLimit() != b.Parameter(i).LowerLimit()
+        result |= a.Parameter(i).UpperLimit() != b.Parameter(i).UpperLimit()
+    return result
+
 
 def is_number(value):
     return isinstance(value, (int, long, float))
@@ -821,13 +836,13 @@ cdef class Minuit:
         ncall_round = round(1.0 * ncall / nsplit)
         assert (nsplit == 1 or ncall_round > 0)
 
-        def total_calls(self):
+        def total_calls():
             return self.ncalls_total - self.ncalls
 
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
-        while total_calls(self) == 0 or (not self.cfmin.IsValid() and total_calls(self) < ncall):
+        while total_calls() == 0 or (not self.cfmin.IsValid() and total_calls() < ncall):
             if self.cfmin:  # delete existing
                 del self.cfmin
             self.cfmin = call_mnapplication_wrapper(
@@ -878,20 +893,28 @@ cdef class Minuit:
         if kwargs:
             raise KeyError("keyword(s) not recognized: " + " ".join(kwargs))
 
-        cdef MnHesse*hesse = NULL
-
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
-        hesse = new MnHesse(self.strategy)
+        cdef MnHesse hesse = MnHesse(self.strategy)
 
         if self.cfmin:
-            hesse.call(
-                deref(<FCNBase*> self.pyfcn),
-                deref(self.cfmin),
-                ncall
-            )
-            self.last_upst = self.cfmin.UserState()
+            if states_equal(len(self.parameters), &self.last_upst, &self.cfmin.UserState()):
+                # last_upst has been modified, cannot just update last cfmin
+                self.last_upst = hesse.call(
+                    deref(<FCNBase*> self.pyfcn),
+                    self.last_upst,
+                    ncall
+                )
+            else:
+                # last_upst not modified, can update cfmin which is more efficient
+                hesse.call(
+                    deref(<FCNBase*> self.pyfcn),
+                    deref(self.cfmin),
+                    ncall
+                )
+                self.last_upst = self.cfmin.UserState()
+
             if not self.last_upst.HasCovariance():
                 warn("HESSE Failed. Covariance and GlobalCC will not be available",
                      mutil.HesseFailedWarning)
@@ -903,8 +926,6 @@ cdef class Minuit:
             )
 
         self.refresh_internal_state()
-
-        del hesse
 
         if not self.cfmin:
             # if cfmin does not exist and HESSE fails, we raise an exception
@@ -1146,16 +1167,14 @@ cdef class Minuit:
     @property
     def params(self):
         """List of current parameter data objects"""
-        up = self.last_upst
-        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             self.merrors)
 
     @property
     def init_params(self):
         """List of current parameter data objects set to the initial fit state"""
-        up = self.initial_upst
-        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        cdef vector[MinuitParameter] vmps = self.initial_upst.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             None)
 

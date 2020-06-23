@@ -1004,7 +1004,7 @@ def test_modify_param_state():
     assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
     m.values["y"] = 6
     m.hesse()  # hesse ignores change in value if migrad was run before
-    assert_allclose(m.np_values(), [2, 5], atol=1e-4)
+    assert_allclose(m.np_values(), [2, 6], atol=1e-4)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
 
 
@@ -1083,3 +1083,19 @@ def test_bad_functions():
             pass
         else:
             assert expected in excinfo.value.args[0]
+
+
+def test_issue_424():
+    from iminuit import Minuit
+
+    def lsq(x, y, z):
+        return (x - 1) ** 2 + (y - 4) ** 2 / 2 + (z - 9) ** 2 / 3
+
+    m = Minuit(lsq, errordef=1.0, x=0.0, y=0.0, z=0.0)
+    m.migrad()
+
+    m.fixed["x"] = True
+    m.errors["x"] = 2
+    m.hesse()
+    assert m.fixed["x"] is True
+    assert m.errors["x"] == 2
