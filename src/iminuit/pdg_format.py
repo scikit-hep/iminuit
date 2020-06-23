@@ -273,7 +273,10 @@ def _round(values, leader, n_exp_extern):
             digits = 1.0
 
     if n_exp_extern is None:
-        n_exp_extern = math.trunc(n_exp / 3) * 3
+        if abs(n_exp) > 2:
+            n_exp_extern = int(round(n_exp / 3) * 3)
+        else:
+            n_exp_extern = 0
         if math.isfinite(values[0]) and values[0] != 0:
             n = math.floor(math.log10(abs(values[0])) / 3) * 3
             if n > n_exp_extern:
