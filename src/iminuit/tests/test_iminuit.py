@@ -1097,5 +1097,5 @@ def test_issue_424():
     m.fixed["x"] = True
     m.errors["x"] = 2
     m.hesse()
-    assert m.fixed["x"] == True
+    assert m.fixed["x"] is True
     assert m.errors["x"] == 2
