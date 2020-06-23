@@ -31,7 +31,7 @@ def test_pdg_format():
     assert repr_text.pdg_format(2.01, -1.01, 1.01) == ["2", "-1", "1"]
     assert repr_text.pdg_format(1.999, -0.999, 0.999) == ["2", "-1", "1"]
     assert repr_text.pdg_format(1, 0.5, -0.5) == ["1.0", "0.5", "-0.5"]
-    assert repr_text.pdg_format(1.0, 1e-4) == ["1000.0m", "0.1m"]
+    assert repr_text.pdg_format(1.0, 1e-3) == ["1000m", "1m"]
     assert repr_text.pdg_format(-1.234567e-22, 1.234567e-11) == ["-0", "1.2e-11"]
     assert repr_text.pdg_format(nan, 1.23e-2) == ["nan", "0.012"]
     assert repr_text.pdg_format(nan, 1.23e10) == ["nan", "12G"]

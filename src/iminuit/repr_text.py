@@ -21,21 +21,7 @@ def pdg_format(value, *errors):
                     s = m.group(1) + "0"
             suffix = ""
             if not m:
-                suffix = {
-                    -18: "a",
-                    -15: "p",
-                    -12: "f",
-                    -9: "n",
-                    -6: "u",
-                    -3: "m",
-                    0: "",
-                    3: "k",
-                    6: "M",
-                    9: "G",
-                    12: "T",
-                    15: "P",
-                    18: "E",
-                }.get(nexp, "e%i" % nexp)
+                suffix = "e%i" % nexp
             s += suffix
             strings[i] = s
     return strings
