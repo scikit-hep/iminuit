@@ -26,6 +26,7 @@ ctypedef FCNGradientBase* FCNGradientBasePtr
 ctypedef IMinuitMixin* IMinuitMixinPtr
 ctypedef PythonGradientFCN* PythonGradientFCNPtr
 ctypedef MnUserParameterState* MnUserParameterStatePtr
+ctypedef const MnUserParameterState* MnUserParameterStateConstPtr
 
 # Helper functions
 cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict fitarg):
@@ -83,6 +84,20 @@ cdef check_extra_args(parameters, kwd):
             raise RuntimeError(
                 ('Cannot understand keyword %s. May be a typo?\n'
                  'The parameters are %r') % (k, parameters))
+
+
+cdef states_equal(n, MnUserParameterStateConstPtr a, MnUserParameterStateConstPtr b):
+    result = False
+    for i in range(n):
+        result |= a.Parameter(i).Value() != b.Parameter(i).Value()
+        result |= a.Parameter(i).Error() != b.Parameter(i).Error()
+        result |= a.Parameter(i).IsFixed() != b.Parameter(i).IsFixed()
+        result |= a.Parameter(i).HasLowerLimit() != b.Parameter(i).HasLowerLimit()
+        result |= a.Parameter(i).HasUpperLimit() != b.Parameter(i).HasUpperLimit()
+        result |= a.Parameter(i).LowerLimit() != b.Parameter(i).LowerLimit()
+        result |= a.Parameter(i).UpperLimit() != b.Parameter(i).UpperLimit()
+    return result
+
 
 def is_number(value):
     return isinstance(value, (int, long, float))
@@ -884,13 +899,7 @@ cdef class Minuit:
         cdef MnHesse hesse = MnHesse(self.strategy)
 
         if self.cfmin:
-            state_modified = False
-            for i in range(len(self.parameters)):
-                state_modified |= self.last_upst.Parameter(i).Value() != self.cfmin.UserState().Parameter(i).Value()
-                state_modified |= self.last_upst.Parameter(i).Error() != self.cfmin.UserState().Parameter(i).Error()
-                state_modified |= self.last_upst.Parameter(i).IsFixed() != self.cfmin.UserState().Parameter(i).IsFixed()
-
-            if state_modified:
+            if states_equal(len(self.parameters), &self.last_upst, &self.cfmin.UserState()):
                 # last_upst has been modified, cannot just update last cfmin
                 self.last_upst = hesse.call(
                     deref(<FCNBase*> self.pyfcn),
@@ -1165,8 +1174,7 @@ cdef class Minuit:
     @property
     def init_params(self):
         """List of current parameter data objects set to the initial fit state"""
-        up = self.initial_upst
-        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        cdef vector[MinuitParameter] vmps = self.initial_upst.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             None)
 
