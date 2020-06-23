@@ -36,9 +36,9 @@ def test_pdg_format():
     assert repr_text.pdg_format(1.0, 1e-5) == ["1.00000", "0.00001"]
     assert repr_text.pdg_format(-1.234567e-22, 1.234567e-11) == ["-0", "0.012e-9"]
     assert repr_text.pdg_format(nan, 1.23e-2) == ["nan", "0.012"]
-    assert repr_text.pdg_format(nan, 1.23e10) == ["nan", "12e9"]
+    assert repr_text.pdg_format(nan, 1.23e10) == ["nan", "0.012e12"]
     assert repr_text.pdg_format(nan, -nan) == ["nan", "nan"]
-    assert repr_text.pdg_format(inf, 1.23e10) == ["inf", "12e9"]
+    assert repr_text.pdg_format(inf, 1.23e10) == ["inf", "0.012e12"]
 
 
 def test_matrix_format():
