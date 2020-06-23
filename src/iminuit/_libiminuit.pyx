@@ -821,13 +821,13 @@ cdef class Minuit:
         ncall_round = round(1.0 * ncall / nsplit)
         assert (nsplit == 1 or ncall_round > 0)
 
-        def total_calls(self):
+        def total_calls():
             return self.ncalls_total - self.ncalls
 
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
-        while total_calls(self) == 0 or (not self.cfmin.IsValid() and total_calls(self) < ncall):
+        while total_calls() == 0 or (not self.cfmin.IsValid() and total_calls() < ncall):
             if self.cfmin:  # delete existing
                 del self.cfmin
             self.cfmin = call_mnapplication_wrapper(
@@ -878,20 +878,34 @@ cdef class Minuit:
         if kwargs:
             raise KeyError("keyword(s) not recognized: " + " ".join(kwargs))
 
-        cdef MnHesse*hesse = NULL
-
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
-        hesse = new MnHesse(self.strategy)
+        cdef MnHesse hesse = MnHesse(self.strategy)
 
         if self.cfmin:
-            hesse.call(
-                deref(<FCNBase*> self.pyfcn),
-                deref(self.cfmin),
-                ncall
-            )
-            self.last_upst = self.cfmin.UserState()
+            state_modified = False
+            for i in range(len(self.parameters)):
+                state_modified |= self.last_upst.Parameter(i).Value() != self.cfmin.UserState().Parameter(i).Value()
+                state_modified |= self.last_upst.Parameter(i).Error() != self.cfmin.UserState().Parameter(i).Error()
+                state_modified |= self.last_upst.Parameter(i).IsFixed() != self.cfmin.UserState().Parameter(i).IsFixed()
+
+            if state_modified:
+                # last_upst has been modified, cannot just update last cfmin
+                self.last_upst = hesse.call(
+                    deref(<FCNBase*> self.pyfcn),
+                    self.last_upst,
+                    ncall
+                )
+            else:
+                # last_upst not modified, can update cfmin which is more efficient
+                hesse.call(
+                    deref(<FCNBase*> self.pyfcn),
+                    deref(self.cfmin),
+                    ncall
+                )
+                self.last_upst = self.cfmin.UserState()
+
             if not self.last_upst.HasCovariance():
                 warn("HESSE Failed. Covariance and GlobalCC will not be available",
                      mutil.HesseFailedWarning)
@@ -903,8 +917,6 @@ cdef class Minuit:
             )
 
         self.refresh_internal_state()
-
-        del hesse
 
         if not self.cfmin:
             # if cfmin does not exist and HESSE fails, we raise an exception
@@ -1146,8 +1158,7 @@ cdef class Minuit:
     @property
     def params(self):
         """List of current parameter data objects"""
-        up = self.last_upst
-        cdef vector[MinuitParameter] vmps = up.MinuitParameters()
+        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
         return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
                             self.merrors)
 
