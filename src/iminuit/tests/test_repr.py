@@ -21,22 +21,24 @@ def test_html_tag():
 
 def test_pdg_format():
     assert repr_text.pdg_format(1.2567, 0.1234) == ["1.26", "0.12"]
-    assert repr_text.pdg_format(1.2567e3, 0.1234e3) == ["1.26k", "0.12k"]
-    assert repr_text.pdg_format(1.2567e4, 0.1234e4) == ["12.6k", "1.2k"]
+    assert repr_text.pdg_format(1.2567e3, 0.1234e3) == ["1.26e3", "0.12e3"]
+    assert repr_text.pdg_format(1.2567e4, 0.1234e4) == ["12.6e3", "1.2e3"]
     assert repr_text.pdg_format(1.2567e-1, 0.1234e-1) == ["0.126", "0.012"]
-    assert repr_text.pdg_format(1.2567e-2, 0.1234e-2) == ["12.6m", "1.2m"]
+    assert repr_text.pdg_format(1.2567e-2, 0.1234e-2) == ["0.0126", "0.0012"]
     assert repr_text.pdg_format(1.0, 0.0, 0.25) == ["1.00", "0.00", "0.25"]
     assert repr_text.pdg_format(0, 1, -1) == ["0", "1", "-1"]
     assert repr_text.pdg_format(2, -1, 1) == ["2", "-1", "1"]
     assert repr_text.pdg_format(2.01, -1.01, 1.01) == ["2", "-1", "1"]
     assert repr_text.pdg_format(1.999, -0.999, 0.999) == ["2", "-1", "1"]
     assert repr_text.pdg_format(1, 0.5, -0.5) == ["1.0", "0.5", "-0.5"]
-    assert repr_text.pdg_format(1.0, 1e-3) == ["1000m", "1m"]
-    assert repr_text.pdg_format(-1.234567e-22, 1.234567e-11) == ["-0", "1.2e-11"]
+    assert repr_text.pdg_format(1.0, 1e-3) == ["1.000", "0.001"]
+    assert repr_text.pdg_format(1.0, 1e-4) == ["1.0000", "0.0001"]
+    assert repr_text.pdg_format(1.0, 1e-5) == ["1.00000", "0.00001"]
+    assert repr_text.pdg_format(-1.234567e-22, 1.234567e-11) == ["-0", "0.012e-9"]
     assert repr_text.pdg_format(nan, 1.23e-2) == ["nan", "0.012"]
-    assert repr_text.pdg_format(nan, 1.23e10) == ["nan", "12G"]
+    assert repr_text.pdg_format(nan, 1.23e10) == ["nan", "12e9"]
     assert repr_text.pdg_format(nan, -nan) == ["nan", "nan"]
-    assert repr_text.pdg_format(inf, 1.23e10) == ["inf", "12G"]
+    assert repr_text.pdg_format(inf, 1.23e10) == ["inf", "12e9"]
 
 
 def test_matrix_format():
@@ -801,7 +803,7 @@ def test_console_frontend_with_difficult_values():
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
 ------------------------------------------------------------------------------------------
-| 0 | x    |    -0     |  1.2e-11  |            |            |         |         | CONST |
+| 0 | x    |    -0     | 0.012e-9  |            |            |         |         | CONST |
 ------------------------------------------------------------------------------------------""" == str(
         mps
     )
