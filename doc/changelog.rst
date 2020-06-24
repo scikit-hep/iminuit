@@ -5,6 +5,28 @@
 Changelog
 =========
 
+1.4.3 (June, 24, 2020)
+----------------------
+
+Bug-fixes
+~~~~~~~~~
+- Fixed a bug where running `.hesse()` after `.migrad()`, which would ignore any changes to parameters (fixing/releasing them, changing their values, ...)
+- Fix number formatting issues in new quantities display
+- Removed engineering suffixes again in favour of standard exponential notation
+
+Deprecated
+~~~~~~~~~~
+- keyword `forced_parameters` in `Minuit.__init__` is deprecated, use `name`
+
+Features
+~~~~~~~~
+- Added general purpose cost functions for binned and unbinned maximum-likelihood estimation (normal and so called extended)
+
+Documentation
+~~~~~~~~~~~~~
+- Updated error computation tutorial
+- New tutorial which demonstrates usage of cost functions
+
 1.4.2 (June, 14, 2020)
 ----------------------
 
