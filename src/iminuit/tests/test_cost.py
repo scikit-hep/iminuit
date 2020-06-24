@@ -8,6 +8,7 @@ from scipy.stats import norm
 
 np.random.seed(1)
 x = np.random.randn(1000)
+nx, xe = np.histogram(x, bins=50, range=(-3, 3))
 truth = (len(x), np.mean(x), np.std(x, ddof=1))
 
 
@@ -20,21 +21,9 @@ def test_UnbinnedNLL():
     assert_allclose(m.args, truth[1:], atol=1e-3)
 
 
-def test_BinnedNLL():
-    def cdf(x, mu, sigma):
-        return norm(mu, sigma).cdf(x)
-
-    n, xe = np.histogram(x, bins=300)
-    m = Minuit(BinnedNLL(n, xe, cdf), mu=0, sigma=1, limit_sigma=(0, None))
-    m.migrad()
-    assert_allclose(m.args, truth[1:], atol=1e-3)
-
-
 def test_ExtendedUnbinnedNLL():
     def scaled_pdf(x, n, mu, sigma):
-        return norm(mu, sigma).pdf(x) * n
-
-    scaled_pdf.integral = lambda n, mu, sigma: n
+        return n, n * norm(mu, sigma).pdf(x)
 
     m = Minuit(
         ExtendedUnbinnedNLL(x, scaled_pdf),
@@ -48,13 +37,22 @@ def test_ExtendedUnbinnedNLL():
     assert_allclose(m.args, truth, atol=1e-3)
 
 
+def test_BinnedNLL():
+    def cdf(x, mu, sigma):
+        return norm(mu, sigma).cdf(x)
+
+    m = Minuit(BinnedNLL(nx, xe, cdf), mu=0, sigma=1, limit_sigma=(0, None))
+    m.migrad()
+    # binning loses information compared to unbinned case
+    assert_allclose(m.args, truth[1:], rtol=0.15)
+
+
 def test_ExtendedBinnedNLL():
     def scaled_cdf(x, n, mu, sigma):
-        return norm(mu, sigma).cdf(x) * n
+        return n * norm(mu, sigma).cdf(x)
 
-    n, xe = np.histogram(x, bins=1000)
     m = Minuit(
-        ExtendedBinnedNLL(n, xe, scaled_cdf),
+        ExtendedBinnedNLL(nx, xe, scaled_cdf),
         n=len(x),
         mu=0,
         sigma=1,
@@ -62,4 +60,5 @@ def test_ExtendedBinnedNLL():
         limit_sigma=(0, None),
     )
     m.migrad()
-    assert_allclose(m.args, truth, atol=1e-3)
+    # binning loses information compared to unbinned case
+    assert_allclose(m.args, truth, rtol=0.15)
