@@ -4,7 +4,10 @@ import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.cost import UnbinnedNLL, BinnedNLL, ExtendedUnbinnedNLL, ExtendedBinnedNLL
-from scipy.stats import norm
+
+stats = pytest.importorskip("scipy.stats")
+norm = stats.norm
+
 
 np.random.seed(1)
 x = np.random.randn(1000)
