@@ -191,7 +191,7 @@ def test_no_signature():
     with pytest.raises(TypeError):
         Minuit(no_signature)
 
-    m = Minuit(no_signature, forced_parameters=("x", "y"), pedantic=False)
+    m = Minuit(no_signature, name=("x", "y"), pedantic=False)
     m.migrad()
     val = m.values
     assert_allclose((val["x"], val["y"], m.fval), (1, 2, 0), atol=1e-8)
@@ -212,7 +212,7 @@ def test_use_array_call():
         fix_a=False,
         fix_b=False,
         errordef=Minuit.LEAST_SQUARES,
-        forced_parameters=("a", "b"),
+        name=("a", "b"),
     )
     m.migrad()
     v = m.values

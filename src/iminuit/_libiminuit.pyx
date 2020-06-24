@@ -454,10 +454,10 @@ cdef class Minuit:
             nfit += not v
         return nfit
 
-    def __init__(self, fcn,
-                 throw_nan=False, pedantic=True,
-                 forced_parameters=None, print_level=0,
-                 errordef=None, grad=None, use_array_call=False,
+    def __init__(self, fcn, grad=None, errordef=None,
+                 print_level=0, name=None,
+                 pedantic=True, throw_nan=False,
+                 use_array_call=False,
                  **kwds):
         """
         Construct minuit object from given *fcn*
@@ -503,9 +503,8 @@ cdef class Minuit:
             - **pedantic**: warns about parameters that do not have initial
               value or initial error/stepsize set.
 
-            - **forced_parameters**: tell Minuit not to do function signature
-              detection and use this argument instead. (Default: None
-              (automagically detect signature))
+            - **name**: sequence of strings. If set, this is used to detect
+              parameter names instead of iminuit's function signature detection.
 
             - **print_level**: set the print_level for this Minuit. 0 is quiet.
               1 print out at the end of MIGRAD/HESSE/MINOS. 2 prints debug messages.
@@ -523,7 +522,7 @@ cdef class Minuit:
 
             - **use_array_call**: Optional. Set this to true if your function
               signature accepts a single numpy array of the parameters. You
-              need to also pass the `forced_parameters` keyword then to
+              need to also pass the `name` keyword then to
               explicitly name the parameters.
 
         **Parameter Keyword Arguments:**
@@ -573,11 +572,20 @@ cdef class Minuit:
                     another_fit = Minuit(f, **my_fitarg)
 
         """
-        if use_array_call and forced_parameters is None:
-            raise KeyError("use_array_call=True requires that forced_parameters is set")
 
-        args = mutil.describe(fcn) if forced_parameters is None \
-            else forced_parameters
+        if name is None:
+            name = kwds.get("forced_parameters", None)
+            if name is not None:
+                warn("Using keyword `forced_parameters` is deprecated. Use `name` instead",
+                     DeprecationWarning,
+                     stacklevel=2)
+                del kwds["forced_parameters"]
+
+        if use_array_call and name is None:
+            raise KeyError("`use_array_call=True` requires that `name` is set")
+
+        args = mutil.describe(fcn) if name is None \
+            else name
 
         self.parameters = args
         check_extra_args(args, kwds)
@@ -729,7 +737,7 @@ cdef class Minuit:
         """
         npar = len(start)
         pnames = name if name is not None else ["x%i"%i for i in range(npar)]
-        kwds["forced_parameters"] = pnames
+        kwds["name"] = pnames
         kwds["use_array_call"] = True
         if error is not None:
             if np.isscalar(error):

@@ -19,6 +19,11 @@ def minuit():
     return m
 
 
+def test_forced_parameters():
+    with pytest.warns(DeprecationWarning):
+        Minuit(lambda x: 0, forced_parameters="x", pedantic=False)
+
+
 def test_minos_merrors(minuit):
     minuit.minos()
     m = minuit.merrors
