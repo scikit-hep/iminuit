@@ -91,7 +91,8 @@ class ExtendedUnbinnedNLL:
         scaled_pdf: callable
             Scaled probability density function of the form f(data, par0, par1, ...,
             parN), where `data` is the data sample and par0, ... parN are model
-            parameters. Must return a tuple (integral over f in data range, f evaluated at data points).
+            parameters. Must return a tuple (<integral over f in data range>,
+            <f evaluated at data points>).
         verbose: int, optional
             Verbosity level
             - 0: is no output (default)
@@ -173,7 +174,6 @@ class ExtendedBinnedNLL:
         scaled_cdf: callable
             Scaled Cumulative density function of the form f(x, par0, par1, ..., parN),
             where `x` is the observation value and par0, ... parN are model parameters.
-            Must return a tuple (integral over f in data range, f evaluated at x).
         verbose: int, optional
             Verbosity level
             - 0: is no output (default)
