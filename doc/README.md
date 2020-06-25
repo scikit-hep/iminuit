@@ -10,9 +10,9 @@ How to make a release
 - increase version number in iminuit/version.py
 - update doc/changelog.rst
 - run `make integration` to do integration tests (if these fail, add tests to iminuit!)
-- run `.ci/download_azure_artifacts.py` to download all wheels from the latest pipeline
-- run `python -m twine upload dist/*` if everything looks ok
-  (missing files can be uploaded later, but existing files cannot be overridden!)
 - merge release branch to master
 - create release on Github
+  - triggers an upload of the latest build artefacts to PyPI
+  - prerelease are published on TestPyPI
+  - upload uses API tokens configured in PyPI, TestPyPI, and Github "Secrets"
 - conda-forge should pick this up automatically and generate conda packages

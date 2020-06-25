@@ -1,0 +1,34 @@
+name: PyPI
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        # latest minor release
+        python-version: "3.x"
+
+    - run: |
+        python3 -m pip install requests
+        python3 .ci/download_azure_artifacts.py
+
+    - name: Prerelease
+      if: "github.event.release.prerelease"
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{secrets.test_pypi_password}}
+        repository_url: https://test.pypi.org/legacy/
+
+    - name: Release
+      if: "!github.event.release.prerelease"
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{secrets.pypi_password}}

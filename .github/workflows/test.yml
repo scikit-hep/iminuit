@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+    paths-ignore:
+      - '.ci/**'
+
+jobs:
+  cov:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - run: |
+        python -m pip install --upgrade pip wheel
+        python -m pip install -r requirements-dev.txt
+        python -m ipykernel install --user --name python3
+    - run: COVERAGE=1 make
+    - run: make analysis
+    - run: make doc
+    - run: python -m pytest tutorial
+    - run: make cov
+    - uses: codecov/codecov-action@v1

@@ -3,9 +3,16 @@
 trigger:
   branches:
     include:
-      - master
+    - master
+
 pr:
-  - master
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+      - 'doc/'
+      - '.github/workflows/'
 
 variables:
   package_name: iminuit
