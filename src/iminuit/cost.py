@@ -20,17 +20,19 @@ def _sum_log_poisson(n, mu):
     return np.sum(mu - n * _safe_log(mu))
 
 
-def _sum_z_squared(y, ye, ym):
+def _z_squared(y, ye, ym):
     z = y - ym
     z /= ye
-    return np.sum(z ** 2)
+    return z * z
+
+
+def _sum_z_squared(y, ye, ym):
+    return np.sum(_z_squared(y, ye, ym))
 
 
 def _sum_z_squared_soft_l1(y, ye, ym):
-    z = y - ym
-    z /= ye
-    z = 2 * (np.sqrt(1.0 + z) - 1.0)
-    return np.sum(z ** 2)
+    z = _z_squared(y, ye, ym)
+    return np.sum(2 * (np.sqrt(1.0 + z) - 1.0))
 
 
 try:
@@ -42,7 +44,9 @@ try:
     _sum_log_x = jit(_sum_log_x)
     _sum_n_log_mu = jit(_sum_n_log_mu)
     _sum_log_poisson = jit(_sum_log_poisson)
+    _z_squared = jit(_z_squared)
     _sum_z_squared = jit(_sum_z_squared)
+    _sum_z_squared_soft_l1 = jit(_sum_z_squared_soft_l1)
 
     del jit
     del nb
@@ -243,7 +247,7 @@ class LeastSquares:
         self.yerror = yerror
         self.model = model
         if hasattr(loss, "__call__"):
-            self.cost = lambda y, ye, ym: np.sum(loss((y - ym) / ye) ** 2)
+            self.cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
         elif loss == "linear":
             self.cost = _sum_z_squared
         elif loss == "soft_l1":

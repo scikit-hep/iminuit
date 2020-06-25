@@ -72,7 +72,8 @@ def test_ExtendedBinnedNLL():
     assert_allclose(m.args, truth, rtol=0.15)
 
 
-def test_LeastSquares():
+@pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
+def test_LeastSquares(loss):
     np.random.seed(1)
     x = np.random.rand(20)
     y = 2 * x + 1
@@ -82,6 +83,6 @@ def test_LeastSquares():
     def model(x, a, b):
         return a + b * x
 
-    m = Minuit(LeastSquares(x, y, ye, model), a=0, b=0)
+    m = Minuit(LeastSquares(x, y, ye, model, loss=loss), a=0, b=0)
     m.migrad()
-    assert_allclose(m.args, (2, 1))
+    assert_allclose(m.args, (1, 2), rtol=0.03)
