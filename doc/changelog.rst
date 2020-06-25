@@ -5,6 +5,12 @@
 Changelog
 =========
 
+1.4.5 (June, 25, 2020)
+----------------------
+
+- Improved pretty printing for Minos Errors object `MErrors`
+- Added docs for cost functions
+
 1.4.4 (June, 24, 2020)
 ----------------------
 
