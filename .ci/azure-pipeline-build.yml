@@ -4,6 +4,11 @@ trigger:
   branches:
     include:
       - master
+  paths:
+    exclude:
+      - 'doc/**'
+      - '.github/**'
+
 pr:
   - master
 
