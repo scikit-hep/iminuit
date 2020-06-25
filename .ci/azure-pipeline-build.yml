@@ -3,13 +3,13 @@
 # for our badge
 trigger:
   branches:
-    - master
+    master
 
 # for pull requests, independent of trigger
 pr:
   branches:
     include:
-      - master
+      master
   paths:
     exclude:
       - 'doc/'
