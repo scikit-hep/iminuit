@@ -167,6 +167,7 @@ setup(
     version=__version__,
     description="Jupyter-friendly Python frontend for MINUIT2 in C++",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Piti Ongmongkolkul and the iminuit team",
     maintainer="Hans Dembinski",
     maintainer_email="hans.dembinski@gmail.com",
