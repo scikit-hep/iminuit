@@ -7,6 +7,8 @@ on:
       - develop
     paths-ignore:
       - 'doc/**'
+      - '.ci/**'
+      - '.github/**'
 
 jobs:
   test:
