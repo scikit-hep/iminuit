@@ -5,6 +5,12 @@
 Changelog
 =========
 
+1.4.4 (June, 24, 2020)
+----------------------
+
+- Reverted: create MnHesse C++ instance on the stack instead on the heap
+- Added least-squares cost function and tests
+
 1.4.3 (June, 24, 2020)
 ----------------------
 
