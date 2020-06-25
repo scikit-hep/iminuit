@@ -1,3 +1,7 @@
+"""
+Cost functions to minimize.
+"""
+
 from .util import describe, make_func_code
 import numpy as np
 
@@ -66,15 +70,18 @@ class UnbinnedNLL:
 
     def __init__(self, data, pdf, verbose=0):
         """
-        Parameters
-        ----------
+        **Parameters**
+
         data: array-like
             Sample of observations.
+
         pdf: callable
             Probability density function of the form f(data, par0, par1, ..., parN),
             where `data` is the data sample and par0, ... parN are model parameters.
+
         verbose: int, optional
             Verbosity level
+
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
@@ -102,17 +109,20 @@ class ExtendedUnbinnedNLL:
 
     def __init__(self, data, scaled_pdf, verbose=0):
         """
-        Parameters
-        ----------
+        **Parameters**
+
         data: array-like
             Sample of observations.
+
         scaled_pdf: callable
             Scaled probability density function of the form f(data, par0, par1, ...,
             parN), where `data` is the data sample and par0, ... parN are model
             parameters. Must return a tuple (<integral over f in data range>,
             <f evaluated at data points>).
+
         verbose: int, optional
             Verbosity level
+
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
@@ -140,17 +150,21 @@ class BinnedNLL:
 
     def __init__(self, n, xe, cdf, verbose=0):
         """
-        Parameters
-        ----------
+        **Parameters**
+
         n: array-like
             Histogram counts.
+
         xe: array-like
             Bin edge locations, must be len(n) + 1.
+
         cdf: callable
             Cumulative density function of the form f(x, par0, par1, ..., parN),
             where `x` is the observation value and par0, ... parN are model parameters.
+
         verbose: int, optional
             Verbosity level
+
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
@@ -183,17 +197,21 @@ class ExtendedBinnedNLL:
 
     def __init__(self, n, xe, scaled_cdf, verbose=0):
         """
-        Parameters
-        ----------
+        **Parameters**
+
         n: array-like
             Histogram counts.
+
         xe: array-like
             Bin edge locations, must be len(n) + 1.
+
         scaled_cdf: callable
             Scaled Cumulative density function of the form f(x, par0, par1, ..., parN),
             where `x` is the observation value and par0, ... parN are model parameters.
+
         verbose: int, optional
             Verbosity level
+
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
@@ -222,23 +240,29 @@ class LeastSquares:
 
     def __init__(self, x, y, yerror, model, loss="linear", verbose=0):
         """
-        Parameters
-        ----------
+        **Parameters**
+
         x: array-like
             Locations where the model is evaluated.
+
         y: array-like
             Observed values.
+
         yerror: array-like
             Estimated uncertainty of observed values.
+
         model: callable
             Function of the form f(x, par0, par1, ..., parN) whose output is compared
             to observed values, where `x` is the location and par0, ... parN are model
             parameters.
+
         loss: str or callable, optional
             See scipyl.optimize.least_squares.
             Only "soft_l1" and "linear" (default) are currently recognized.
+
         verbose: int, optional
             Verbosity level
+
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
