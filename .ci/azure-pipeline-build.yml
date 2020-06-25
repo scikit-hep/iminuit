@@ -5,11 +5,7 @@ trigger:
   branches:
     master
 
-# for pull requests, independent of trigger
 pr:
-  branches:
-    include:
-      master
   paths:
     exclude:
       - 'doc/'
