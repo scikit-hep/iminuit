@@ -1,11 +1,12 @@
 # Azure only builds master
 
-# for our badge
 trigger:
   branches:
-    master
+    include:
+      - master
 
 pr:
+  - master
   paths:
     exclude:
       - 'doc/'
