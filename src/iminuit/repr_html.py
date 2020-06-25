@@ -7,58 +7,43 @@ warn_style = "background-color:#FFF79A;"
 backgrounds = ("background-color:#F4F4F4;", "background-color:#FFFFFF;")
 
 
-class Html:
-    def __init__(self):
-        self.lines = []
+def tag(name, *args, delim=" ", **kwargs):
+    # sort keys so that order is same on all platforms
+    s = "<" + name
+    for k in sorted(kwargs):
+        v = kwargs[k]
+        s += ' %s="%s"' % (k, v)
+    s += ">"
 
-    def __iadd__(self, s):
-        self.lines.append(s)
-        return self
+    def visit(x):
+        if isinstance(x, str):
+            return delim + x
+        else:
+            s = ""
+            for xi in x:
+                s += visit(xi)
+            return s
 
-    def __str__(self):
-        s = ""
-        for x in self.lines:
-            s += x + "\n"
-        return s
-
-    def __repr__(self):
-        return repr(self.lines)
-
-
-class Tag:
-    def __init__(self, name, html, **kwargs):
-        self.name = name
-        self.html = html
-        # sort keys so that order is same on all platforms
-        self.html += (
-            " ".join(
-                ("<%s" % name,)
-                + tuple('%s="%s"' % (k, kwargs[k]) for k in sorted(kwargs))
-            )
-            + ">"
-        )
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.html += "</" + self.name + ">"
+    for x in args:
+        s += visit(x)
+    s += "%s</%s>" % (delim, name)
+    return s
 
 
-def table(html, **kwargs):
-    return Tag("table", html, **kwargs)
+def table(*args, **kwargs):
+    return tag("table", *args, delim="\n", **kwargs) + "\n"
 
 
-def tr(html, **kwargs):
-    return Tag("tr", html, **kwargs)
+def tr(*args, **kwargs):
+    return tag("tr", *args, **kwargs)
 
 
-def th(html, **kwargs):
-    return Tag("th", html, **kwargs)
+def th(*args, **kwargs):
+    return tag("th", *args, **kwargs)
 
 
-def td(html, **kwargs):
-    return Tag("td", html, **kwargs)
+def td(*args, **kwargs):
+    return tag("td", *args, **kwargs)
 
 
 def good(x, should_be):
@@ -67,188 +52,185 @@ def good(x, should_be):
 
 def fmin(sfmin):
     """Display FunctionMinum in html representation"""
-    s = Html()
-    with table(s):
-        with tr(s):
-            with td(s, colspan="2", title="Minimum value of function"):
-                s += "FCN = %.4g" % sfmin.fval
-            with td(
-                s,
-                colspan="3",
-                align="center",
+    return table(
+        tr(
+            td(
+                "FCN = %.4g" % sfmin.fval,
+                colspan=2,
+                title="Minimum value of function",
+                style="text-align:center",
+            ),
+            td(
+                "Ncalls = %i (%i total)" % (sfmin.nfcn, sfmin.ncalls),
+                colspan=3,
                 title="No. of calls in last algorithm and total number of calls",
-            ):
-                s += "Ncalls = %i (%i total)" % (sfmin.nfcn, sfmin.ncalls)
-        with tr(s):
-            with td(
-                s,
-                colspan="2",
+            ),
+        ),
+        tr(
+            td(
+                "EDM = %.3g (Goal: %g)" % (sfmin.edm, goaledm(sfmin)),
+                colspan=2,
+                style="text-align:center",
                 title="Estimated distance to minimum and target threshold",
-            ):
-                s += "EDM = %.3g (Goal: %g)" % (sfmin.edm, goaledm(sfmin))
-            with td(
-                s,
-                colspan="3",
-                align="center",
+            ),
+            td(
+                "up = %.1f" % sfmin.up,
+                colspan=3,
                 title="Increase in FCN which corresponds to 1 standard deviation",
-            ):
-                s += "up = %.1f" % sfmin.up
-        with tr(s):
-            with td(s, align="center", title="Validity of the migrad call"):
-                s += "Valid Min."
-            with td(s, align="center", title="Validity of parameters"):
-                s += "Valid Param."
-            with td(s, align="center", title="Is EDM above goal EDM?"):
-                s += "Above EDM"
-            with td(
-                s,
-                colspan="2",
-                align="center",
+            ),
+        ),
+        tr(
+            td("Valid Min.", title="Validity of the migrad call"),
+            td("Valid Param.", title="Validity of parameters"),
+            td("Above EDM", title="Is EDM above goal EDM?"),
+            td(
+                "Reached call limit",
+                colspan=2,
                 title="Did last migrad call reach max call limit?",
-            ):
-                s += "Reached call limit"
-        with tr(s):
-            with td(s, align="center", style=good(sfmin.is_valid, True)):
-                s += "%s" % sfmin.is_valid
-            with td(s, align="center", style=good(sfmin.has_valid_parameters, True)):
-                s += "%s" % sfmin.has_valid_parameters
-            with td(s, align="center", style=good(sfmin.is_above_max_edm, False)):
-                s += "%s" % sfmin.is_above_max_edm
-            with td(
-                s,
-                colspan="2",
-                align="center",
+            ),
+        ),
+        tr(
+            td(str(sfmin.is_valid), style=good(sfmin.is_valid, True)),
+            td(
+                str(sfmin.has_valid_parameters),
+                style=good(sfmin.has_valid_parameters, True),
+            ),
+            td(str(sfmin.is_above_max_edm), style=good(sfmin.is_above_max_edm, False)),
+            td(
+                str(sfmin.has_reached_call_limit),
+                colspan=2,
                 style=good(sfmin.has_reached_call_limit, False),
-            ):
-                s += "%s" % sfmin.has_reached_call_limit
-        with tr(s):
-            with td(s, align="center", title="Did Hesse fail?"):
-                s += "Hesse failed"
-            with td(s, align="center", title="Has covariance matrix"):
-                s += "Has cov."
-            with td(s, align="center", title="Is covariance matrix accurate?"):
-                s += "Accurate"
-            with td(s, align="center", title="Is covariance matrix positive definite?"):
-                s += "Pos. def."
-            with td(
-                s, align="center", title="Was positive definiteness enforced by Minuit?"
-            ):
-                s += "Forced"
-        with tr(s):
-            with td(s, align="center", style=good(sfmin.hesse_failed, False)):
-                s += "%s" % sfmin.hesse_failed
-            with td(s, align="center", style=good(sfmin.has_covariance, True)):
-                s += "%s" % sfmin.has_covariance
-            with td(s, align="center", style=good(sfmin.has_accurate_covar, True)):
-                s += "%s" % sfmin.has_accurate_covar
-            with td(s, align="center", style=good(sfmin.has_posdef_covar, True)):
-                s += "%s" % sfmin.has_posdef_covar
-            with td(s, align="center", style=good(sfmin.has_made_posdef_covar, False)):
-                s += "%s" % sfmin.has_made_posdef_covar
-    return str(s)
-
-
-def merror(me):
-    mel, meu = pdg_format(None, me.lower, me.upper)
-    s = Html()
-    with table(s):
-        with tr(s):
-            with th(s, title="Parameter name"):
-                s += me.name
-            with td(s, colspan="2", style=good(me.is_valid, True), align="center"):
-                s += "Valid" if me.is_valid else "Invalid"
-        with tr(s):
-            with td(s, title="Lower and upper minos error of the parameter"):
-                s += "Error"
-            with td(s):
-                s += mel
-            with td(s):
-                s += meu
-        with tr(s):
-            with td(s, title="Validity of lower/upper minos error"):
-                s += "Valid"
-            with td(s, style=good(me.lower_valid, True)):
-                s += "%s" % me.lower_valid
-            with td(s, style=good(me.upper_valid, True)):
-                s += "%s" % me.upper_valid
-        with tr(s):
-            with td(s, title="Did scan hit limit of any parameter?"):
-                s += "At Limit"
-            with td(s, style=good(me.at_lower_limit, False)):
-                s += "%s" % me.at_lower_limit
-            with td(s, style=good(me.at_upper_limit, False)):
-                s += "%s" % me.at_upper_limit
-        with tr(s):
-            with td(s, title="Did scan hit function call limit?"):
-                s += "Max FCN"
-            with td(s, style=good(me.at_lower_max_fcn, False)):
-                s += "%s" % me.at_lower_max_fcn
-            with td(s, style=good(me.at_upper_max_fcn, False)):
-                s += "%s" % me.at_upper_max_fcn
-        with tr(s):
-            with td(s, title="New minimum found when doing scan?"):
-                s += "New Min"
-            with td(s, style=good(me.lower_new_min, False)):
-                s += "%s" % me.lower_new_min
-            with td(s, style=good(me.upper_new_min, False)):
-                s += "%s" % me.upper_new_min
-    return str(s)
+            ),
+        ),
+        tr(
+            td("Hesse failed", title="Did Hesse fail?"),
+            td("Has cov.", title="Has covariance matrix"),
+            td("Accurate", title="Is covariance matrix accurate?"),
+            td("Pos. def.", title="Is covariance matrix positive definite?"),
+            td("Forced", title="Was positive definiteness enforced by Minuit?"),
+        ),
+        tr(
+            td(str(sfmin.hesse_failed), style=good(sfmin.hesse_failed, False)),
+            td(str(sfmin.has_covariance), style=good(sfmin.has_covariance, True)),
+            td(
+                str(sfmin.has_accurate_covar),
+                style=good(sfmin.has_accurate_covar, True),
+            ),
+            td(str(sfmin.has_posdef_covar), style=good(sfmin.has_posdef_covar, True)),
+            td(
+                str(sfmin.has_made_posdef_covar),
+                style=good(sfmin.has_made_posdef_covar, False),
+            ),
+        ),
+    )
 
 
 def params(mps):
-    s = Html()
-    with table(s):
+    mes = mps.merrors
+
+    # body
+    rows = []
+    for i, mp in enumerate(mps):
+        if mes and mp.name in mes:
+            me = mes[mp.name]
+            v, e, mem, mep = pdg_format(mp.value, mp.error, me.lower, me.upper)
+        else:
+            v, e = pdg_format(mp.value, mp.error)
+            mem = ""
+            mep = ""
+        rows.append(
+            tr(
+                th(str(i)),
+                td(mp.name),
+                td(v),
+                td(e),
+                td(mem),
+                td(mep),
+                td("%.3G" % mp.lower_limit if mp.lower_limit is not None else ""),
+                td("%.3G" % mp.upper_limit if mp.upper_limit is not None else ""),
+                td("yes" if mp.is_fixed else ("CONST" if mp.is_const else "")),
+                style=backgrounds[(i + 1) % 2],
+            )
+        )
+
+    return table(
         # header
-        with tr(s, style=backgrounds[0]):
-            s += "<td/>"
-            with th(s, title="Variable name"):
-                s += "Name"
-            with th(s, title="Value of parameter"):
-                s += "Value"
-            with th(s, title="Hesse error"):
-                s += "Hesse Error"
-            with th(s, title="Minos lower error"):
-                s += "Minos Error-"
-            with th(s, title="Minos upper error"):
-                s += "Minos Error+"
-            with th(s, title="Lower limit of the parameter"):
-                s += "Limit-"
-            with th(s, title="Upper limit of the parameter"):
-                s += "Limit+"
-            with th(s, title="Is the parameter fixed in the fit"):
-                s += "Fixed"
-
-        mes = mps.merrors
-
+        tr(
+            "<td/>",
+            th("Name", title="Variable name"),
+            th("Value", title="Value of parameter"),
+            th("Hesse Error", title="Hesse error"),
+            th("Minos Error-", title="Minos lower error"),
+            th("Minos Error+", title="Minos upper error"),
+            th("Limit-", title="Lower limit of the parameter"),
+            th("Limit+", title="Upper limit of the parameter"),
+            th("Fixed", title="Is the parameter fixed in the fit"),
+            style=backgrounds[0],
+        ),
         # body
-        for i, mp in enumerate(mps):
-            if mes and mp.name in mes:
-                me = mes[mp.name]
-                v, e, mem, mep = pdg_format(mp.value, mp.error, me.lower, me.upper)
-            else:
-                v, e = pdg_format(mp.value, mp.error)
-                mem = ""
-                mep = ""
-            with tr(s, style=backgrounds[(i + 1) % 2]):
-                with td(s):
-                    s += str(i)
-                with td(s):
-                    s += mp.name
-                with td(s):
-                    s += v
-                with td(s):
-                    s += e
-                with td(s):
-                    s += mem
-                with td(s):
-                    s += mep
-                with td(s):
-                    s += "%.3G" % mp.lower_limit if mp.lower_limit is not None else ""
-                with td(s):
-                    s += "%.3G" % mp.upper_limit if mp.upper_limit is not None else ""
-                with td(s):
-                    s += "yes" if mp.is_fixed else ("CONST" if mp.is_const else "")
-    return str(s)
+        *rows,
+    )
+
+
+def merrors(mes):
+    return table(
+        tr(
+            "<td/>",
+            (
+                th(
+                    me.name,
+                    colspan=2,
+                    title="Parameter name",
+                    style="text-align:center",
+                )
+                for me in mes
+            ),
+        ),
+        tr(
+            th("Error", title="Lower and upper minos error of the parameter"),
+            ((td(x) for x in pdg_format(None, me.lower, me.upper)) for me in mes),
+        ),
+        tr(
+            th("Valid", title="Validity of lower/upper minos error"),
+            (
+                (
+                    td(str(x), style=good(x, True))
+                    for x in (me.lower_valid, me.upper_valid)
+                )
+                for me in mes
+            ),
+        ),
+        tr(
+            th("At Limit", title="Did scan hit limit of any parameter?"),
+            (
+                (
+                    td(str(x), style=good(x, False))
+                    for x in (me.at_lower_limit, me.at_upper_limit)
+                )
+                for me in mes
+            ),
+        ),
+        tr(
+            th("Max FCN", title="Did scan hit function call limit?"),
+            (
+                (
+                    td(str(x), style=good(x, False))
+                    for x in (me.at_lower_max_fcn, me.at_upper_max_fcn)
+                )
+                for me in mes
+            ),
+        ),
+        tr(
+            th("New Min", title="New minimum found when doing scan?"),
+            (
+                (
+                    td(str(x), style=good(x, False))
+                    for x in (me.lower_new_min, me.upper_new_min)
+                )
+                for me in mes
+            ),
+        ),
+    )
 
 
 def matrix(m):
@@ -272,34 +254,24 @@ def matrix(m):
         (1.0, 250.0, 100.0, 100.0),
     )
 
-    s = Html()
-    with table(s):
-        with tr(s):
-            s += "<td/>\n"
-            for v in m.names:
-                with th(s):
-                    s += v
-        for i, v in enumerate(m.names):
-            with tr(s):
-                with th(s):
-                    s += v
-                for j in range(len(m.names)):
-                    val = m[i][j]
-                    if is_correlation:
-                        if i == j:
-                            with td(s):
-                                s += " 1.00"
-                        else:
-                            color = grad.rgb(val)
-                            with td(s, style="background-color:" + color):
-                                s += "%5.2f" % val
-                    else:
-                        if i == j:
-                            with td(s):
-                                s += nums[n * i + j]
-                        else:
-                            color = grad.rgb(val / (m[i][i] * m[j][j]) ** 0.5)
-                            with td(s, style="background-color:" + color):
-                                s += nums[n * i + j]
+    rows = []
+    for i, v in enumerate(m.names):
+        cols = [th(v)]
+        for j in range(len(m.names)):
+            val = m[i][j]
+            if is_correlation:
+                if i == j:
+                    t = td("1.00")
+                else:
+                    color = grad.rgb(val)
+                    t = td("%5.2f" % val, style="background-color:" + color)
+            else:
+                if i == j:
+                    t = td(nums[n * i + j])
+                else:
+                    color = grad.rgb(val / (m[i][i] * m[j][j]) ** 0.5)
+                    t = td(nums[n * i + j], style="background-color:" + color)
+            cols.append(t)
+        rows.append(tr(cols))
 
-    return str(s)
+    return table(tr("<td/>", (th(v) for v in m.names)), rows)

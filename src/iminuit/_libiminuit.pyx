@@ -1155,8 +1155,7 @@ cdef class Minuit:
 
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
-        params = self.get_initial_param_states()
-        return LatexFactory.build_param_table(params, {})
+        return LatexFactory.build_param_table(self.init_params, {})
 
     @property
     def fmin(self):
