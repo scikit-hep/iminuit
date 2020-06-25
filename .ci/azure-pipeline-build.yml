@@ -3,7 +3,7 @@
 # for our badge
 trigger:
   branches:
-    - master
+    master
 
 pr:
   paths:
