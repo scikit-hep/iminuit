@@ -7,6 +7,7 @@ Reference
 
 .. currentmodule:: iminuit
 
+
 Quick Summary
 -------------
 These methods and attributes you will use a lot:
@@ -30,6 +31,7 @@ These methods and attributes you will use a lot:
     Minuit.mnprofile
     Minuit.draw_mnprofile
 
+
 Minuit
 ------
 
@@ -40,6 +42,14 @@ Minuit
 
     .. automethod:: from_array_func
 
+
+Cost functions
+--------------
+
+.. automodule:: iminuit.cost
+    :members:
+
+
 minimize
 --------
 
@@ -49,6 +59,7 @@ Eventually, you still may want to learn the interface of the :class:`iminuit.Min
 as it provides more functionality if you are interested in parameter uncertainties.
 
 .. autofunction:: iminuit.minimize
+
 
 Utility Functions
 -----------------
@@ -64,7 +75,7 @@ on them in your code. We list the ones that are for the public.
     :undoc-members:
     :exclude-members: arguments_from_docstring, arguments_from_funccode,
         arguments_from_call_funccode, true_param, param_name,
-        remove_var, format_exception
+        remove_var, format_exception, fitarg_rename
 
 
 Data objects

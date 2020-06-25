@@ -1449,7 +1449,7 @@ cdef class Minuit:
               symmetrically from minimum (minimum+- bound*:math:`\sigma`).
               Default: 2.
 
-            - **subtract_min** subtract_minimum off from return values. Default False.
+            - **subtract_min** Subtract minimum off from return values. Default False.
 
         **Returns:**
 
