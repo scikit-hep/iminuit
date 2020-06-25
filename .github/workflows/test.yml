@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - '.ci/**'
 
+jobs:
   cov:
     runs-on: ubuntu-latest
 
