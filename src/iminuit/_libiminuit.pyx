@@ -904,7 +904,8 @@ cdef class Minuit:
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
-        cdef MnHesse hesse = MnHesse(self.strategy)
+        # must be allocated with new to avoid random crashes
+        cdef MnHesse* hesse = new MnHesse(self.strategy)
 
         if self.cfmin:
             if states_equal(len(self.parameters), &self.last_upst, &self.cfmin.UserState()):
@@ -932,6 +933,8 @@ cdef class Minuit:
                 self.last_upst,
                 ncall
             )
+
+        del hesse
 
         self.refresh_internal_state()
 
