@@ -1,4 +1,4 @@
-name: PyPI upload
+name: PyPI
 
 on:
   release:
@@ -15,8 +15,8 @@ jobs:
         python-version: "3.x"
 
     - run: |
-      python3 -m pip install --upgrade pip wheel twine
-      python3 .ci/download_azure_artifacts.py
+        python3 -m pip install --upgrade pip wheel twine
+        python3 .ci/download_azure_artifacts.py
 
     - name: Prerelease
       if: "github.event.release.prerelease"
