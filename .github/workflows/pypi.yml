@@ -1,10 +1,8 @@
 name: PyPI
 
-# on:
-#   release:
-#     types: [published]
-
-on: pull_request
+on:
+  release:
+    types: [published]
 
 jobs:
   upload:
