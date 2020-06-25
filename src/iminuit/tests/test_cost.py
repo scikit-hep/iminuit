@@ -2,7 +2,13 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.cost import UnbinnedNLL, BinnedNLL, ExtendedUnbinnedNLL, ExtendedBinnedNLL
+from iminuit.cost import (
+    UnbinnedNLL,
+    BinnedNLL,
+    ExtendedUnbinnedNLL,
+    ExtendedBinnedNLL,
+    LeastSquares,
+)
 
 stats = pytest.importorskip("scipy.stats")
 norm = stats.norm
@@ -64,3 +70,19 @@ def test_ExtendedBinnedNLL():
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.args, truth, rtol=0.15)
+
+
+@pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
+def test_LeastSquares(loss):
+    np.random.seed(1)
+    x = np.random.rand(20)
+    y = 2 * x + 1
+    ye = 0.1
+    y += ye * np.random.randn(len(y))
+
+    def model(x, a, b):
+        return a + b * x
+
+    m = Minuit(LeastSquares(x, y, ye, model, loss=loss), a=0, b=0)
+    m.migrad()
+    assert_allclose(m.args, (1, 2), rtol=0.03)
