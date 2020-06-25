@@ -1,6 +1,12 @@
 # Azure only builds master
 
+# for our badge
 trigger:
+  branches:
+    - master
+
+# for pull requests, independent of trigger
+pr:
   branches:
     include:
       - master
@@ -8,9 +14,6 @@ trigger:
     exclude:
       - 'doc/'
       - '.github/workflows/'
-
-pr:
-  - master
 
 variables:
   package_name: iminuit
