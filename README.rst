@@ -20,7 +20,7 @@
    :target: https://iminuit.readthedocs.io/en/develop/?badge=latest
    :alt: Documentation Status
 .. image:: https://mybinder.org/badge_logo.svg
-  :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/faster_binder?filepath=tutorial
+  :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/master?filepath=tutorial
 
 .. skip-marker-do-not-remove
 
