@@ -1,5 +1,5 @@
 """
-Cost functions to minimize.
+Standard cost functions to minimize.
 """
 
 from .util import describe, make_func_code
@@ -257,8 +257,10 @@ class LeastSquares:
             parameters.
 
         loss: str or callable, optional
-            See scipyl.optimize.least_squares.
-            Only "soft_l1" and "linear" (default) are currently recognized.
+            The loss function can be modified to make the fit robust against outliers,
+            see scipy.optimize.least_squares for details. Only "linear" (default) and "soft_l1" are currently implemented, but users can pass any loss function
+            as this argument. It should be a monotonic, twice differentiable function,
+            which accepts the squared residual and returns a modified squared residual.
 
         verbose: int, optional
             Verbosity level
