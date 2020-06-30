@@ -264,10 +264,11 @@ class LeastSquares:
             Locations where the model is evaluated.
 
         y: array-like
-            Observed values.
+            Observed values. Must have the same length as `x`.
 
-        yerror: array-like
-            Estimated uncertainty of observed values.
+        yerror: array-like or float
+            Estimated uncertainty of observed values. Must have same shape as `y` or
+            be a scalar, which is then broadcasted to same shape as `y`.
 
         model: callable
             Function of the form f(x, par0, par1, ..., parN) whose output is compared
@@ -287,9 +288,22 @@ class LeastSquares:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
+        x = np.atleast_1d(x)
+        y = np.atleast_1d(y)
+
+        if len(x) != len(y):
+            raise ValueError("x and y must have same length")
+
+        if np.ndim(yerror) == 0:
+            yerror = yerror * np.ones_like(y)
+        else:
+            if np.shape(yerror) != y.shape:
+                raise ValueError("y and yerror must have same shape")
+
         self.x = x
         self.y = y
         self.yerror = yerror
+
         self.model = model
         if hasattr(loss, "__call__"):
             self.cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
