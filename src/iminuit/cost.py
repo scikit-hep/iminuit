@@ -129,7 +129,7 @@ class ExtendedUnbinnedNLL:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        self.data = data
+        self.data = np.atleast_1d(data)
         self.scaled_pdf = scaled_pdf
         self.verbose = verbose
         self.func_code = make_func_code(describe(self.scaled_pdf)[1:])
@@ -173,6 +173,12 @@ class BinnedNLL:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
+        n = np.atleast_1d(n)
+        xe = np.atleast_1d(xe)
+
+        if np.any((np.array(n.shape) + 1) != xe.shape):
+            raise ValueError("n and xe have incompatible shapes")
+
         self.n = n
         self.xe = xe
         self.cdf = cdf
@@ -226,6 +232,12 @@ class ExtendedBinnedNLL:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
+        n = np.atleast_1d(n)
+        xe = np.atleast_1d(xe)
+
+        if np.any((np.array(n.shape) + 1) != xe.shape):
+            raise ValueError("n and xe have incompatible shapes")
+
         self.n = n
         self.xe = xe
         self.scaled_cdf = scaled_cdf
