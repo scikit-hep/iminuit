@@ -65,6 +65,7 @@ class UnbinnedNLL:
     unbinned data is available.
     """
 
+    mask = None
     verbose = False
     errordef = 0.5
 
@@ -91,7 +92,8 @@ class UnbinnedNLL:
         self.func_code = make_func_code(describe(self.pdf)[1:])
 
     def __call__(self, *args):
-        r = -_sum_log_x(self.pdf(self.data, *args))
+        data = self.data if self.mask is None else self.data[self.mask]
+        r = -_sum_log_x(self.pdf(data, *args))
         if self.verbose >= 1:
             print(args, "->", r)
         return r
@@ -104,6 +106,7 @@ class ExtendedUnbinnedNLL:
     original unbinned data is available.
     """
 
+    mask = None
     verbose = False
     errordef = 0.5
 
@@ -126,13 +129,14 @@ class ExtendedUnbinnedNLL:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        self.data = data
+        self.data = np.atleast_1d(data)
         self.scaled_pdf = scaled_pdf
         self.verbose = verbose
         self.func_code = make_func_code(describe(self.scaled_pdf)[1:])
 
     def __call__(self, *args):
-        ns, s = self.scaled_pdf(self.data, *args)
+        data = self.data if self.mask is None else self.data[self.mask]
+        ns, s = self.scaled_pdf(data, *args)
         r = ns - _sum_log_x(s)
         if self.verbose >= 1:
             print(args, "->", r)
@@ -145,6 +149,7 @@ class BinnedNLL:
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
     """
 
+    mask = None
     verbose = False
     errordef = 0.5
 
@@ -168,18 +173,29 @@ class BinnedNLL:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
+        n = np.atleast_1d(n)
+        xe = np.atleast_1d(xe)
+
+        if np.any((np.array(n.shape) + 1) != xe.shape):
+            raise ValueError("n and xe have incompatible shapes")
+
         self.n = n
         self.xe = xe
-        self.tot = np.sum(n)
         self.cdf = cdf
         self.verbose = verbose
         self.func_code = make_func_code(describe(self.cdf)[1:])
 
     def __call__(self, *args):
-        c = self.cdf(self.xe, *args)
-        mu = self.tot * np.diff(c)
+        prob = np.diff(self.cdf(self.xe, *args))
+        ma = self.mask
+        if ma is None:
+            n = self.n
+        else:
+            n = self.n[ma]
+            prob = prob[ma]
+        mu = np.sum(n) * prob
         # + np.sum(mu) can be skipped, it is effectively constant
-        r = -_sum_n_log_mu(self.n, mu)
+        r = -_sum_n_log_mu(n, mu)
         if self.verbose >= 1:
             print(args, "->", r)
         return r
@@ -192,6 +208,7 @@ class ExtendedBinnedNLL:
     is binned.
     """
 
+    mask = None
     verbose = False
     errordef = 0.5
 
@@ -215,6 +232,12 @@ class ExtendedBinnedNLL:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
+        n = np.atleast_1d(n)
+        xe = np.atleast_1d(xe)
+
+        if np.any((np.array(n.shape) + 1) != xe.shape):
+            raise ValueError("n and xe have incompatible shapes")
+
         self.n = n
         self.xe = xe
         self.scaled_cdf = scaled_cdf
@@ -223,7 +246,13 @@ class ExtendedBinnedNLL:
 
     def __call__(self, *args):
         mu = np.diff(self.scaled_cdf(self.xe, *args))
-        r = _sum_log_poisson(self.n, mu)
+        ma = self.mask
+        if ma is None:
+            n = self.n
+        else:
+            n = self.n[ma]
+            mu = mu[ma]
+        r = _sum_log_poisson(n, mu)
         if self.verbose >= 1:
             print(args, "->", r)
         return r
@@ -235,6 +264,7 @@ class LeastSquares:
     Use this if you have data of the form (x, y +/- yerror).
     """
 
+    mask = None
     verbose = False
     errordef = 1.0
 
@@ -246,10 +276,11 @@ class LeastSquares:
             Locations where the model is evaluated.
 
         y: array-like
-            Observed values.
+            Observed values. Must have the same length as `x`.
 
-        yerror: array-like
-            Estimated uncertainty of observed values.
+        yerror: array-like or float
+            Estimated uncertainty of observed values. Must have same shape as `y` or
+            be a scalar, which is then broadcasted to same shape as `y`.
 
         model: callable
             Function of the form f(x, par0, par1, ..., parN) whose output is compared
@@ -269,9 +300,22 @@ class LeastSquares:
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
+        x = np.atleast_1d(x)
+        y = np.atleast_1d(y)
+
+        if len(x) != len(y):
+            raise ValueError("x and y must have same length")
+
+        if np.ndim(yerror) == 0:
+            yerror = yerror * np.ones_like(y)
+        else:
+            if np.shape(yerror) != y.shape:
+                raise ValueError("y and yerror must have same shape")
+
         self.x = x
         self.y = y
         self.yerror = yerror
+
         self.model = model
         if hasattr(loss, "__call__"):
             self.cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
@@ -285,7 +329,17 @@ class LeastSquares:
         self.func_code = make_func_code(describe(self.model)[1:])
 
     def __call__(self, *args):
-        r = self.cost(self.y, self.yerror, self.model(self.x, *args))
+        ma = self.mask
+        if ma is None:
+            x = self.x
+            y = self.y
+            yerror = self.yerror
+        else:
+            x = self.x[ma]
+            y = self.y[ma]
+            yerror = self.yerror[ma]
+        ym = self.model(x, *args)
+        r = self.cost(y, yerror, ym)
         if self.verbose >= 1:
             print(args, "->", r)
         return r

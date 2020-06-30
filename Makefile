@@ -53,7 +53,7 @@ doc: doc/_build/html/index.html
 analysis: flake8
 
 flake8: build
-	@$(PYTHON) -m flake8 --extend-ignore=E203 --max-line-length=95 src/$(PROJECT)
+	@$(PYTHON) -m flake8 src/$(PROJECT)
 
 ## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
 # pylint: build

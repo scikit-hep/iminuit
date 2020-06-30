@@ -14,66 +14,102 @@ stats = pytest.importorskip("scipy.stats")
 norm = stats.norm
 
 
-np.random.seed(1)
-x = np.random.randn(1000)
-nx, xe = np.histogram(x, bins=50, range=(-3, 3))
-truth = (len(x), np.mean(x), np.std(x, ddof=1))
+@pytest.fixture
+def unbinned():
+    np.random.seed(1)
+    x = np.random.randn(1000)
+    mle = (len(x), np.mean(x), np.std(x, ddof=1))
+    return mle, x
 
 
-def test_UnbinnedNLL():
+@pytest.fixture
+def binned(unbinned):
+    mle, x = unbinned
+    nx, xe = np.histogram(x, bins=50, range=(-3, 3))
+    return mle, nx, xe
+
+
+@pytest.mark.parametrize("verbose", (0, 1))
+def test_UnbinnedNLL(unbinned, verbose):
+    mle, x = unbinned
+
     def pdf(x, mu, sigma):
         return norm(mu, sigma).pdf(x)
 
-    m = Minuit(UnbinnedNLL(x, pdf, verbose=2), mu=0, sigma=1, limit_sigma=(0, None))
+    cost = UnbinnedNLL(x, pdf, verbose=verbose)
+    m = Minuit(cost, mu=0, sigma=1, limit_sigma=(0, None))
     m.migrad()
-    assert_allclose(m.args, truth[1:], atol=1e-3)
+    assert_allclose(m.args, mle[1:], atol=1e-3)
+
+    # add bad value and mask it out
+    cost.data[1] = np.nan
+    cost.mask = np.arange(len(cost.data)) != 1
+    m.migrad()
+    assert_allclose(m.args, mle[1:], rtol=0.02)
 
 
-def test_ExtendedUnbinnedNLL():
+@pytest.mark.parametrize("verbose", (0, 1))
+def test_ExtendedUnbinnedNLL(unbinned, verbose):
+    mle, x = unbinned
+
     def scaled_pdf(x, n, mu, sigma):
         return n, n * norm(mu, sigma).pdf(x)
 
-    m = Minuit(
-        ExtendedUnbinnedNLL(x, scaled_pdf),
-        n=len(x),
-        mu=0,
-        sigma=1,
-        limit_n=(0, None),
-        limit_sigma=(0, None),
-    )
+    cost = ExtendedUnbinnedNLL(x, scaled_pdf, verbose=verbose)
+    m = Minuit(cost, n=len(x), mu=0, sigma=1, limit_n=(0, None), limit_sigma=(0, None),)
     m.migrad()
-    assert_allclose(m.args, truth, atol=1e-3)
+    assert_allclose(m.args, mle, atol=1e-3)
+
+    # add bad value and mask it out
+    cost.data[1] = np.nan
+    cost.mask = np.arange(len(cost.data)) != 1
+    m.migrad()
+    assert_allclose(m.args, mle, rtol=0.02)
 
 
-def test_BinnedNLL():
+@pytest.mark.parametrize("verbose", (0, 1))
+def test_BinnedNLL(binned, verbose):
+    mle, nx, xe = binned
+
     def cdf(x, mu, sigma):
         return norm(mu, sigma).cdf(x)
 
-    m = Minuit(BinnedNLL(nx, xe, cdf), mu=0, sigma=1, limit_sigma=(0, None))
+    cost = BinnedNLL(nx, xe, cdf, verbose=verbose)
+    m = Minuit(cost, mu=0, sigma=1, limit_sigma=(0, None))
     m.migrad()
     # binning loses information compared to unbinned case
-    assert_allclose(m.args, truth[1:], rtol=0.15)
+    assert_allclose(m.args, mle[1:], rtol=0.15)
+
+    # add bad value and mask it out
+    cost.n[1] = -1000
+    cost.mask = np.arange(len(cost.n)) != 1
+    m.migrad()
+    assert_allclose(m.args, mle[1:], atol=0.04)
 
 
-def test_ExtendedBinnedNLL():
+@pytest.mark.parametrize("verbose", (0, 1))
+def test_ExtendedBinnedNLL(binned, verbose):
+    mle, nx, xe = binned
+
     def scaled_cdf(x, n, mu, sigma):
         return n * norm(mu, sigma).cdf(x)
 
-    m = Minuit(
-        ExtendedBinnedNLL(nx, xe, scaled_cdf),
-        n=len(x),
-        mu=0,
-        sigma=1,
-        limit_n=(0, None),
-        limit_sigma=(0, None),
-    )
+    cost = ExtendedBinnedNLL(nx, xe, scaled_cdf, verbose=verbose)
+    m = Minuit(cost, n=mle[0], mu=0, sigma=1, limit_n=(0, None), limit_sigma=(0, None))
     m.migrad()
     # binning loses information compared to unbinned case
-    assert_allclose(m.args, truth, rtol=0.15)
+    assert_allclose(m.args, mle, rtol=0.15)
+
+    # add bad value and mask it out
+    cost.n[1] = -1000
+    cost.mask = np.arange(len(cost.n)) != 1
+    m.migrad()
+    assert_allclose(m.args, mle, rtol=0.06)
 
 
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
-def test_LeastSquares(loss):
+@pytest.mark.parametrize("verbose", (0, 1))
+def test_LeastSquares(loss, verbose):
     np.random.seed(1)
     x = np.random.rand(20)
     y = 2 * x + 1
@@ -83,6 +119,13 @@ def test_LeastSquares(loss):
     def model(x, a, b):
         return a + b * x
 
-    m = Minuit(LeastSquares(x, y, ye, model, loss=loss), a=0, b=0)
+    cost = LeastSquares(x, y, ye, model, loss=loss, verbose=verbose)
+    m = Minuit(cost, a=0, b=0)
+    m.migrad()
+    assert_allclose(m.args, (1, 2), rtol=0.03)
+
+    # add bad value and mask it out
+    cost.y[1] = np.nan
+    cost.mask = np.arange(len(y)) != 1
     m.migrad()
     assert_allclose(m.args, (1, 2), rtol=0.03)
