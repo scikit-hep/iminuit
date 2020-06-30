@@ -1273,7 +1273,7 @@ cdef class Minuit:
             fitparam[vname] = v
             fitparam['fix_%s' % vname] = True
             m = Minuit(self.fcn, print_level=0,
-                       pedantic=False, forced_parameters=self.parameters,
+                       pedantic=False, name=self.parameters,
                        use_array_call=self.use_array_call,
                        **fitparam)
             m.migrad()
