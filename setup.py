@@ -121,7 +121,7 @@ if not os.listdir(join(cwd, "extern/Minuit2")):
 
         print("Minuit2 submodule is missing, attempting download...")
         subp.check_call(["git", "submodule", "update"])
-    except:
+    except subp.CalledProcessError:
         raise SystemExit(
             "Could not download Minuit2 submodule, run `git submodule update` manually"
         )
@@ -149,11 +149,11 @@ if USE_CYTHON:
 
 
 # Getting the version number at this point is a bit tricky in Python:
-# https://packaging.python.org/en/latest/development.html#single-sourcing-the-version-across-setup-py-and-your-project
-# This is one of the recommended methods that works in Python 2 and 3:
+# https://packaging.python.org/guides/single-sourcing-package-version/?highlight=single%20sourcing
 with open(join(cwd, "src/iminuit/version.py")) as fp:
-    exec(fp.read())  # this loads __version__
-
+    version = {}
+    exec(fp.read(), version)  # this loads __version__
+    version = version["__version__"]
 
 with open(join(cwd, "README.rst")) as readme_rst:
     txt = readme_rst.read()
@@ -163,16 +163,18 @@ with open(join(cwd, "README.rst")) as readme_rst:
 
 setup(
     name="iminuit",
-    version=__version__,
+    version=version,
     description="Jupyter-friendly Python frontend for MINUIT2 in C++",
     long_description=long_description,
     long_description_content_type="text/x-rst",
     author="Piti Ongmongkolkul and the iminuit team",
     maintainer="Hans Dembinski",
     maintainer_email="hans.dembinski@gmail.com",
-    url="https://github.com/scikit-hep/iminuit",
-    download_url="http://pypi.python.org/packages/source/i/"
-    "scikit-hep/iminuit-%s.tar.gz" % __version__,
+    url="http://github.com/scikit-hep/iminuit",
+    project_urls={
+        "Documentation": "https://iminuit.readthedocs.io",
+        "Source Code": "http://github.com/scikit-hep/iminuit",
+    },
     packages=["iminuit", "iminuit.tests"],
     package_dir={"": "src"},
     ext_modules=extensions,
