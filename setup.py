@@ -1,7 +1,6 @@
 # Use CFLAGS="-g -Og -DDEBUG" python setup.py ... for debugging
 
 import os
-import sys
 import platform
 from os.path import dirname, join, exists
 from glob import glob
