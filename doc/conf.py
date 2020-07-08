@@ -119,7 +119,7 @@ pygments_style = "sphinx"
 
 # autodoc_member_order = "bysource"
 
-# html_logo = "_static/iminuit_logo.svg"
+html_logo = "_static/iminuit_logo.svg"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
