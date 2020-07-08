@@ -1,4 +1,4 @@
-.. |iminuit| image:: doc/iminuit_logo.svg
+.. |iminuit| image:: doc/_static/iminuit_logo.svg
    :alt: iminuit
    :target: http://iminuit.readthedocs.io/en/latest
 

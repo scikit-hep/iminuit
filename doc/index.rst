@@ -1,6 +1,6 @@
 .. include:: references.txt
 
-.. |iminuit| image:: iminuit_logo.svg
+.. |iminuit| image:: _static/iminuit_logo.svg
 
 |iminuit|
 =========

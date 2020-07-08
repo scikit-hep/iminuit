@@ -29,9 +29,9 @@ Results
 
 The results are shown in the following three plots. The best algorithms require the fewest function calls to achieve the highest accuracy.
 
-.. image:: bench.svg
+.. image:: _static/bench.svg
 
-.. image:: bench2d.svg
+.. image:: _static/bench2d.svg
 
 Shown in the first plot is the number of calls to the cost function divided by the number of parameters. Smaller is better. Note that the algorithms achieve varying levels of accuracy, therefore this plot alone cannot show which algorithm is best. Shown in the second plot is the accuracy of  the solution when the minimizer is stopped. The stopping criteria vary from algorithm to algorithm.
 

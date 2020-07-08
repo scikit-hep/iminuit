@@ -123,6 +123,12 @@ def test_LeastSquares(loss, verbose):
     m = Minuit(cost, a=0, b=0)
     m.migrad()
     assert_allclose(m.args, (1, 2), rtol=0.03)
+    assert cost.loss == loss
+    if loss != "linear":
+        cost.loss = "linear"
+        assert cost.loss != loss
+    m.migrad()
+    assert_allclose(m.args, (1, 2), rtol=0.02)
 
     # add bad value and mask it out
     cost.y[1] = np.nan
