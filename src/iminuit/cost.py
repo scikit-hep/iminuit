@@ -164,8 +164,8 @@ class BinnedNLL:
             Bin edge locations, must be len(n) + 1.
 
         cdf: callable
-            Cumulative density function of the form f(x, par0, par1, ..., parN),
-            where `x` is the observation value and par0, ... parN are model parameters.
+            Cumulative density function of the form f(xe, par0, par1, ..., parN),
+            where `xe` is a bin edge and par0, ... parN are model parameters.
 
         verbose: int, optional
             Verbosity level
@@ -223,8 +223,8 @@ class ExtendedBinnedNLL:
             Bin edge locations, must be len(n) + 1.
 
         scaled_cdf: callable
-            Scaled Cumulative density function of the form f(x, par0, par1, ..., parN),
-            where `x` is the observation value and par0, ... parN are model parameters.
+            Scaled Cumulative density function of the form f(xe, par0, par1, ..., parN),
+            where `xe` is a bin edge and par0, ... parN are model parameters.
 
         verbose: int, optional
             Verbosity level
@@ -267,6 +267,8 @@ class LeastSquares:
     mask = None
     verbose = False
     errordef = 1.0
+    _loss = None
+    _cost = None
 
     def __init__(self, x, y, yerror, model, loss="linear", verbose=0):
         """
@@ -294,6 +296,8 @@ class LeastSquares:
             as this argument. It should be a monotonic, twice differentiable function,
             which accepts the squared residual and returns a modified squared residual.
 
+            .. plot:: plots/loss.py
+
         verbose: int, optional
             Verbosity level
 
@@ -317,16 +321,25 @@ class LeastSquares:
         self.yerror = yerror
 
         self.model = model
-        if hasattr(loss, "__call__"):
-            self.cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
-        elif loss == "linear":
-            self.cost = _sum_z_squared
-        elif loss == "soft_l1":
-            self.cost = _sum_z_squared_soft_l1
-        else:
-            raise ValueError("unknown loss type: " + loss)
+        self.loss = loss
         self.verbose = verbose
         self.func_code = make_func_code(describe(self.model)[1:])
+
+    @property
+    def loss(self):
+        return self._loss
+
+    @loss.setter
+    def loss(self, loss):
+        self._loss = loss
+        if hasattr(loss, "__call__"):
+            self._cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
+        elif loss == "linear":
+            self._cost = _sum_z_squared
+        elif loss == "soft_l1":
+            self._cost = _sum_z_squared_soft_l1
+        else:
+            raise ValueError("unknown loss type: " + loss)
 
     def __call__(self, *args):
         ma = self.mask
@@ -339,7 +352,7 @@ class LeastSquares:
             y = self.y[ma]
             yerror = self.yerror[ma]
         ym = self.model(x, *args)
-        r = self.cost(y, yerror, ym)
+        r = self._cost(y, yerror, ym)
         if self.verbose >= 1:
             print(args, "->", r)
         return r

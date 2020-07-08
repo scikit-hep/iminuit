@@ -1323,7 +1323,7 @@ cdef class Minuit:
 
             bins(center point), value, migrad results
 
-        .. plot:: pyplots/draw_mnprofile.py
+        .. plot:: plots/mnprofile.py
             :include-source:
         """
         x, y, s = self.mnprofile(vname, bins, bound, subtract_min)
@@ -1604,6 +1604,8 @@ cdef class Minuit:
 
             :meth:`mncontour`
 
+        .. plot:: plots/mncontour.py
+            :include-source:
         """
         return _minuit_methods.draw_mncontour(self, x, y, nsigma, numpoints)
 
