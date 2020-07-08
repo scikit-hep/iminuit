@@ -24,8 +24,10 @@ import sys
 
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
-# Make sure local build of iminuit is found
-sys.path.insert(0, os.path.dirname(__file__) + "/../src")
+if not on_rtd:
+    # Make sure local build of iminuit is found
+    sys.path.insert(0, os.path.dirname(__file__) + "/../src")
+
 import iminuit.version  # noqa
 
 # -- General configuration -----------------------------------------------------
