@@ -5,14 +5,17 @@ The iminuit logo uses glyphs generated from the free Gentium Plus font.
 
 How to make a release
 =====================
-- merge develop into master (possibly merge into branch first, to do history edits)
-- create a branch on the master, called release_<version>, make release edits there
-- increase version number in iminuit/version.py
-- update doc/changelog.rst
-- run `make integration` to do integration tests (if these fail, add tests to iminuit!)
-- merge release branch to master
-- create release on Github
-  - triggers an upload of the latest build artefacts to PyPI
-  - prerelease are published on TestPyPI
-  - upload uses API tokens configured in PyPI, TestPyPI, and Github "Secrets"
-- conda-forge should pick this up automatically and generate conda packages
+
+- Merge develop into master
+  - Option: do a `git rebase -i` to make history edits
+- Create a branch on the master, called release_<version>, make release edits there
+  - Increase version number in iminuit/version.py
+  - Update doc/changelog.rst
+  - Check that all wheels are build (Azure should trigger)
+- Run `make integration` to do integration tests (if these fail, add tests to iminuit!)
+- Merge release branch to master
+- Create release on Github
+  - This triggers an upload of the latest build artefacts to PyPI
+  - Note: a prerelease is published on TestPyPI, a release on PyPI
+  - Upload uses API tokens configured in PyPI, TestPyPI, and Github "Secrets"
+- Conda-forge should pick this up automatically and generate conda packages
