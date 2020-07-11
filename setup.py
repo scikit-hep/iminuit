@@ -29,6 +29,7 @@ compiler_opts = {
             "-Wno-unused-variable",
             "-Wno-sign-compare",
             "-Wno-cpp",  # suppresses #warnings from numpy
+            "-Wno-deprecated-declarations",
         ]
         + extra_flags,
         "extra_link_args": extra_flags,
