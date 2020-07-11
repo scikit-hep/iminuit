@@ -966,8 +966,6 @@ def test_function_without_local_minimum():
     assert fmin.is_above_max_edm is True
 
 
-# Bug in Minuit2, this needs to be fixed in upstream ROOT
-@pytest.mark.xfail(strict=True)
 def test_function_with_maximum():
     def func(a):
         return -(a ** 2)
