@@ -9,13 +9,12 @@ Changelog
 ----------------------
 
 - Update to Minuit2 C++ code to ROOT v6.23-01
-  - Fixed open issue where iminuit reported a valid fit for cost function
-    that has only a maximum, not a minimum
-- loss function in iminuit.cost.LeastSquares is now mutable
-- cost functions in iminuit.cost now support value masks
+- Fixed: iminuit now reports an invalid fit if a cost function has only a maximum, not a minimum (fixed upstream)
+- Loss function in `iminuit.cost.LeastSquares` is now mutable
+- Cost functions in `iminuit.cost` now support value masks
 - Documentation improvements
 - Fixed a deprecation warning in `Minuit.mnprofile`
-- binder now uses wheels instead of compiling current iminuit
+- Binder now uses wheels instead of compiling current iminuit
 
 1.4.5 (June, 25, 2020)
 ----------------------
