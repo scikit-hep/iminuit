@@ -61,8 +61,8 @@ except ImportError:
 class Cost:
     """Common base class for cost functions.
 
-    Attributes
-    ----------
+    **Attributes**
+
     mask : array-like or None
         If not None, only values selected by the mask are considered. The mask acts on
         the first dimension of a value array, i.e. values[mask]. Default is None.
