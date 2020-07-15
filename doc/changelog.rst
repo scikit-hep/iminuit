@@ -5,6 +5,11 @@
 Changelog
 =========
 
+1.4.7 (July, 15, 2020)
+----------------------
+
+- Fixed: iminuit.cost.LeastSquares failed when yerror is passed as list and mask is set
+
 1.4.6 (July, 11, 2020)
 ----------------------
 
