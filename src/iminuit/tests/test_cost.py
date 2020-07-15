@@ -40,12 +40,7 @@ def test_UnbinnedNLL(unbinned, verbose):
     m = Minuit(cost, mu=0, sigma=1, limit_sigma=(0, None))
     m.migrad()
     assert_allclose(m.args, mle[1:], atol=1e-3)
-
-    # add bad value and mask it out
-    cost.data[1] = np.nan
-    cost.mask = np.arange(len(cost.data)) != 1
-    m.migrad()
-    assert_allclose(m.args, mle[1:], rtol=0.02)
+    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -59,12 +54,7 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
     m = Minuit(cost, n=len(x), mu=0, sigma=1, limit_n=(0, None), limit_sigma=(0, None),)
     m.migrad()
     assert_allclose(m.args, mle, atol=1e-3)
-
-    # add bad value and mask it out
-    cost.data[1] = np.nan
-    cost.mask = np.arange(len(cost.data)) != 1
-    m.migrad()
-    assert_allclose(m.args, mle, rtol=0.02)
+    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -79,12 +69,7 @@ def test_BinnedNLL(binned, verbose):
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.args, mle[1:], rtol=0.15)
-
-    # add bad value and mask it out
-    cost.n[1] = -1000
-    cost.mask = np.arange(len(cost.n)) != 1
-    m.migrad()
-    assert_allclose(m.args, mle[1:], atol=0.04)
+    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -99,12 +84,7 @@ def test_ExtendedBinnedNLL(binned, verbose):
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.args, mle, rtol=0.15)
-
-    # add bad value and mask it out
-    cost.n[1] = -1000
-    cost.mask = np.arange(len(cost.n)) != 1
-    m.migrad()
-    assert_allclose(m.args, mle, rtol=0.06)
+    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
 
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
@@ -130,8 +110,40 @@ def test_LeastSquares(loss, verbose):
     m.migrad()
     assert_allclose(m.args, (1, 2), rtol=0.02)
 
-    # add bad value and mask it out
-    cost.y[1] = np.nan
-    cost.mask = np.arange(len(y)) != 1
-    m.migrad()
-    assert_allclose(m.args, (1, 2), rtol=0.03)
+
+def test_UnbinnedNLL_mask():
+    c = UnbinnedNLL([1, np.nan, 2], lambda x, a: x + a)
+
+    assert np.isnan(c(0)) == True
+    c.mask = np.arange(3) != 1
+    assert np.isnan(c(0)) == False
+
+
+def test_ExtendedUnbinnedNLL_mask():
+    c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
+
+    assert np.isnan(c(0)) == True
+    c.mask = np.arange(3) != 1
+    assert np.isnan(c(0)) == False
+
+
+def test_BinnedNLL_mask():
+    c = BinnedNLL([1, -1000, 2], [0, 1, 2, 3], lambda x, a: x)
+
+    assert np.isnan(c(0)) == True
+    c.mask = np.arange(3) != 1
+    assert np.isnan(c(0)) == False
+
+
+def test_ExtendedBinnedNLL_mask():
+    c = ExtendedBinnedNLL([1, -1000, 2], [0, 1, 2, 3], lambda x, a: a * x)
+    assert c(2) > 600
+    c.mask = np.arange(3) != 1
+    assert c(2) < 2
+
+
+def test_LeastSquares_mask():
+    c = LeastSquares([1, 2, 3], [3, np.nan, 4], [1, 1, 1], lambda x, a: x + a)
+    assert np.isnan(c(0)) == True
+    c.mask = np.arange(3) != 1
+    assert np.isnan(c(0)) == False

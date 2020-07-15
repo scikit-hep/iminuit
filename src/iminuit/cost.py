@@ -58,16 +58,39 @@ except ImportError:
     pass
 
 
-class UnbinnedNLL:
+class Cost:
+    """Common base class for cost functions.
+
+    **Attributes**
+
+    mask : array-like or None
+        If not None, only values selected by the mask are considered. The mask acts on
+        the first dimension of a value array, i.e. values[mask]. Default is None.
+    verbose : int
+        Verbosity level. Default is 0.
+    errordef : int
+        Error definition constant used by Minuit. For internal use.
+    """
+
+    mask = None
+    verbose = 0
+
+    @property
+    def errordef(self):
+        return self._errordef
+
+    def __init__(self, args, verbose, errordef):
+        self.func_code = make_func_code(args)
+        self.verbose = verbose
+        self._errordef = errordef
+
+
+class UnbinnedNLL(Cost):
     """Unbinned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the original
     unbinned data is available.
     """
-
-    mask = None
-    verbose = False
-    errordef = 0.5
 
     def __init__(self, data, pdf, verbose=0):
         """
@@ -88,8 +111,7 @@ class UnbinnedNLL:
         """
         self.data = np.atleast_1d(data)
         self.pdf = pdf
-        self.verbose = verbose
-        self.func_code = make_func_code(describe(self.pdf)[1:])
+        Cost.__init__(self, describe(self.pdf)[1:], verbose, 0.5)
 
     def __call__(self, *args):
         data = self.data if self.mask is None else self.data[self.mask]
@@ -99,16 +121,12 @@ class UnbinnedNLL:
         return r
 
 
-class ExtendedUnbinnedNLL:
+class ExtendedUnbinnedNLL(Cost):
     """Unbinned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the
     original unbinned data is available.
     """
-
-    mask = None
-    verbose = False
-    errordef = 0.5
 
     def __init__(self, data, scaled_pdf, verbose=0):
         """
@@ -131,8 +149,7 @@ class ExtendedUnbinnedNLL:
         """
         self.data = np.atleast_1d(data)
         self.scaled_pdf = scaled_pdf
-        self.verbose = verbose
-        self.func_code = make_func_code(describe(self.scaled_pdf)[1:])
+        Cost.__init__(self, describe(self.scaled_pdf)[1:], verbose, 0.5)
 
     def __call__(self, *args):
         data = self.data if self.mask is None else self.data[self.mask]
@@ -143,15 +160,11 @@ class ExtendedUnbinnedNLL:
         return r
 
 
-class BinnedNLL:
+class BinnedNLL(Cost):
     """Binned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
     """
-
-    mask = None
-    verbose = False
-    errordef = 0.5
 
     def __init__(self, n, xe, cdf, verbose=0):
         """
@@ -182,8 +195,7 @@ class BinnedNLL:
         self.n = n
         self.xe = xe
         self.cdf = cdf
-        self.verbose = verbose
-        self.func_code = make_func_code(describe(self.cdf)[1:])
+        Cost.__init__(self, describe(self.cdf)[1:], verbose, 0.5)
 
     def __call__(self, *args):
         prob = np.diff(self.cdf(self.xe, *args))
@@ -201,16 +213,12 @@ class BinnedNLL:
         return r
 
 
-class ExtendedBinnedNLL:
+class ExtendedBinnedNLL(Cost):
     """Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data
     is binned.
     """
-
-    mask = None
-    verbose = False
-    errordef = 0.5
 
     def __init__(self, n, xe, scaled_cdf, verbose=0):
         """
@@ -241,8 +249,7 @@ class ExtendedBinnedNLL:
         self.n = n
         self.xe = xe
         self.scaled_cdf = scaled_cdf
-        self.verbose = verbose
-        self.func_code = make_func_code(describe(self.scaled_cdf)[1:])
+        Cost.__init__(self, describe(self.scaled_cdf)[1:], verbose, 0.5)
 
     def __call__(self, *args):
         mu = np.diff(self.scaled_cdf(self.xe, *args))
@@ -258,15 +265,12 @@ class ExtendedBinnedNLL:
         return r
 
 
-class LeastSquares:
+class LeastSquares(Cost):
     """Least-squares cost function (aka chisquare function).
 
     Use this if you have data of the form (x, y +/- yerror).
     """
 
-    mask = None
-    verbose = False
-    errordef = 1.0
     _loss = None
     _cost = None
 
@@ -313,17 +317,16 @@ class LeastSquares:
         if np.ndim(yerror) == 0:
             yerror = yerror * np.ones_like(y)
         else:
-            if np.shape(yerror) != y.shape:
+            yerror = np.asarray(yerror)
+            if yerror.shape != y.shape:
                 raise ValueError("y and yerror must have same shape")
 
         self.x = x
         self.y = y
         self.yerror = yerror
-
         self.model = model
         self.loss = loss
-        self.verbose = verbose
-        self.func_code = make_func_code(describe(self.model)[1:])
+        Cost.__init__(self, describe(self.model)[1:], verbose, 1.0)
 
     @property
     def loss(self):
