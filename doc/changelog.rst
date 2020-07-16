@@ -8,7 +8,8 @@ Changelog
 1.4.8 (July, 17, 2020)
 ----------------------
 
-- Allow ncall=none in .migrad, .hesse, .minos, and deprecate maxcall in .minos
+- Allow `ncall=None` in `Minuit.migrad`, `Minuit.hesse`, `Minuit.minos`
+- Deprecated `maxcall` argument in `Minuit.minos`: use `ncall` instead
 
 1.4.7 (July, 15, 2020)
 ----------------------
