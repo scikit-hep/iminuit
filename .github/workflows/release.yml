@@ -1,1 +1,16 @@
 name: Release check
+
+on:
+  pull_request:
+    branches:
+      - release_*
+
+jobs:
+  check:
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - run: |
+      python .ci/release_check.py src/iminuit/version.py doc/changelog.rst
