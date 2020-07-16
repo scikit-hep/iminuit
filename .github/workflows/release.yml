@@ -3,10 +3,12 @@ name: Release check
 on:
   pull_request:
     branches:
-    - master
+      - master
 
 jobs:
-  check:
+  test:
+    runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
