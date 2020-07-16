@@ -145,6 +145,11 @@ def test_set_print_level(minuit):
     assert minuit.print_level == 2
 
 
+def test_minos_maxcall(minuit):
+    with pytest.warns(DeprecationWarning):
+        minuit.minos(maxcall=10)
+
+
 def test_hesse_maxcall(minuit):
     with pytest.warns(DeprecationWarning):
         minuit.hesse(maxcall=10)
