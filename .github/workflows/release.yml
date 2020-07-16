@@ -14,4 +14,6 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - run: python .ci/release_check.py src/iminuit/version.py doc/changelog.rst
+    - run:
+        - python -m pip install requests
+        - python .ci/release_check.py src/iminuit/version.py doc/changelog.rst
