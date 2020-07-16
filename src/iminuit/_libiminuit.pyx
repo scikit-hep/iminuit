@@ -776,10 +776,9 @@ cdef class Minuit:
         **Arguments:**
 
             * **ncall**: integer or None, optional; (approximate)
-              maximum number of call before
-              MIGRAD will stop trying. Default: 0 (indicates to use MIGRAD's
-              internal heuristic). Using nsplit > 1 requires ncall > 0.
-              Note: MIGRAD may slightly violate this limit,
+              maximum number of call before MIGRAD will stop trying. Default: None
+              (indicates to use MIGRAD's internal heuristic). Using nsplit > 1
+              requires ncall > 0. Note: MIGRAD may slightly violate this limit,
               because it checks the condition only after a full iteration of the
               algorithm, which usually performs several function calls.
 

@@ -38,7 +38,7 @@ Minuit
 .. autoclass:: Minuit
     :members:
     :undoc-members:
-    :exclude-members: is_fixed, print_all_minos, print_fmin, print_param, print_initial_param, print_matrix, set_errordef, set_strategy, set_print_level, set_up, from_array_func, get_merrors, list_of_vary_param, list_of_fixed_param, get_fmin, get_initial_param_states, get_param_states, get_num_call_fcn, get_num_call_grad, matrix_accurate, migrad_ok, merrors_struct
+    :exclude-members: is_fixed, print_all_minos, print_fmin, print_param, print_initial_param, print_matrix, set_errordef, set_strategy, set_print_level, set_up, from_array_func, get_merrors, list_of_vary_param, list_of_fixed_param, get_fmin, get_initial_param_states, get_param_states, get_num_call_fcn, get_num_call_grad, matrix_accurate, migrad_ok, merrors_struct, edm
 
     .. automethod:: from_array_func
 
