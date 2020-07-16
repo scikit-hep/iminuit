@@ -3,9 +3,9 @@
 trigger: none
 
 pr:
-  paths:
+  branches:
     include:
-    - src/iminuit/version.py
+    - release_*
 
 variables:
   package_name: iminuit
