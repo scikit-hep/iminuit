@@ -2,9 +2,8 @@ name: Release check
 
 on:
   pull_request:
-    paths:
-      include:
-      - src/iminuit/version.py
+    branches:
+    - release_*
 
 jobs:
   check:
