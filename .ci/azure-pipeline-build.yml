@@ -5,7 +5,7 @@ trigger: none
 pr:
   branches:
     include:
-    - release_*
+    - master
 
 variables:
   package_name: iminuit

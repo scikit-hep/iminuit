@@ -3,7 +3,7 @@ name: Release check
 on:
   pull_request:
     branches:
-    - release_*
+    - master
 
 jobs:
   check:
