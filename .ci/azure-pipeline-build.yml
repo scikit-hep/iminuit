@@ -1,12 +1,11 @@
-# Azure only builds master and release branches
+# Azure only builds release pull requests
 
-trigger:
-  branches:
+trigger: none
+
+pr:
+  paths:
     include:
-    - master
-    - release_*
-
-pr: none
+    - src/iminuit/version.py
 
 variables:
   package_name: iminuit
