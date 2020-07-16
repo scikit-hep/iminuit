@@ -36,6 +36,7 @@ and to get model parameter error estimates from likelihood profile analysis.
 
 * PyPI: https://pypi.org/project/iminuit
 * Documentation: http://iminuit.readthedocs.org
+* Source: https://github.com/scikit-hep/iminuit
 * Gitter: https://gitter.im/Scikit-HEP/community
 * License: *MINUIT2* is LGPL and *iminuit* is MIT
 * Citation: https://github.com/scikit-hep/iminuit/blob/master/CITATION
