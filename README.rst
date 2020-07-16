@@ -21,6 +21,8 @@
    :alt: Documentation Status
 .. image:: https://mybinder.org/badge_logo.svg
   :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/master?filepath=tutorial
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
+   :target: https://doi.org/10.5281/zenodo.3949207
 
 .. skip-marker-do-not-remove
 
@@ -39,7 +41,7 @@ and to get model parameter error estimates from likelihood profile analysis.
 * Source: https://github.com/scikit-hep/iminuit
 * Gitter: https://gitter.im/Scikit-HEP/community
 * License: *MINUIT2* is LGPL and *iminuit* is MIT
-* Citation: https://github.com/scikit-hep/iminuit/blob/master/CITATION
+* Citation: https://doi.org/10.5281/zenodo.3949207
 
 In a nutshell
 -------------
