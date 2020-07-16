@@ -1,14 +1,9 @@
 name: Release check
 
 on:
-  push:
-    branches:
-      - master
-      - release_*
   pull_request:
     branches:
       - master
-      - release_*
 
 jobs:
   test:
