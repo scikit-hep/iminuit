@@ -5,6 +5,11 @@
 Changelog
 =========
 
+1.4.8 (July, 17, 2020)
+----------------------
+
+- Allow ncall=none in .migrad, .hesse, .minos, and deprecate maxcall in .minos
+
 1.4.7 (July, 15, 2020)
 ----------------------
 
