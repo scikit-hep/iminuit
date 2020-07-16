@@ -871,7 +871,7 @@ cdef class Minuit:
         return mutil.MigradResult(self.fmin, self.params)
 
 
-    def hesse(self, unsigned ncall=0, **kwargs):
+    def hesse(self, ncall=None, **deprecated_kwargs):
         """Run HESSE to compute parabolic errors.
 
         HESSE estimates the covariance matrix by inverting the matrix of
@@ -887,22 +887,24 @@ cdef class Minuit:
         different way.
 
         **Arguments:**
-            - **ncall**: limit the number of calls made by MINOS.
-              Default: 0 (uses an internal heuristic by C++ MINUIT).
+            - **ncall**: integer or None, limit the number of calls made by MINOS.
+              Default: None (uses an internal heuristic by C++ MINUIT).
 
         **Returns:**
 
             list of :ref:`minuit-param-struct`
         """
 
-        if "maxcall" in kwargs:
+        if "maxcall" in deprecated_kwargs:
             warn("using `maxcall` keyword is deprecated, use `ncall` keyword instead",
                  DeprecationWarning,
                  stacklevel=2);
-            ncall = kwargs.pop("maxcall")
+            ncall = deprecated_kwargs.pop("maxcall")
 
-        if kwargs:
-            raise KeyError("keyword(s) not recognized: " + " ".join(kwargs))
+        if deprecated_kwargs:
+            raise KeyError("keyword(s) not recognized: " + " ".join(deprecated_kwargs))
+
+        cdef int ncall_c = 0 if ncall is None else int(ncall)
 
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
@@ -916,14 +918,14 @@ cdef class Minuit:
                 self.last_upst = hesse.call(
                     deref(<FCNBase*> self.pyfcn),
                     self.last_upst,
-                    ncall
+                    ncall_c
                 )
             else:
                 # last_upst not modified, can update cfmin which is more efficient
                 hesse.call(
                     deref(<FCNBase*> self.pyfcn),
                     deref(self.cfmin),
-                    ncall
+                    ncall_c
                 )
                 self.last_upst = self.cfmin.UserState()
 
@@ -934,7 +936,7 @@ cdef class Minuit:
             self.last_upst = hesse.call(
                 deref(<FCNBase*> self.pyfcn),
                 self.last_upst,
-                ncall
+                ncall_c
             )
 
         del hesse
@@ -949,7 +951,7 @@ cdef class Minuit:
         return self.params
 
 
-    def minos(self, var=None, sigma=1., unsigned int maxcall=0):
+    def minos(self, var=None, sigma=1., ncall=None, **deprecated_kwargs):
         """Run MINOS to compute asymmetric confidence intervals.
 
         MINOS uses the profile likelihood method to compute (asymmetric)
@@ -972,8 +974,8 @@ cdef class Minuit:
             - **var**: optional variable name to compute the error for.
               If var is not given, MINOS is run for every variable.
             - **sigma**: number of :math:`\sigma` error. Default 1.0.
-            - **maxcall**: limit the number of calls made by MINOS.
-              Default: 0 (uses an internal heuristic by C++ MINUIT).
+            - **ncall**: integer or None, limit the number of calls made by MINOS.
+              Default: None (uses an internal heuristic by C++ MINUIT).
 
         **Returns:**
 
@@ -984,6 +986,17 @@ cdef class Minuit:
         if self.cfmin is NULL:
             raise RuntimeError('MINOS require function to be at the minimum.'
                                ' Run MIGRAD first.')
+
+        if "maxcall" in deprecated_kwargs:
+            warn("using `maxcall` keyword is deprecated, use `ncall` keyword instead",
+                  DeprecationWarning,
+                  stacklevel=2);
+            ncall = deprecated_kwargs.pop("maxcall")
+
+        if deprecated_kwargs:
+            raise KeyError("keyword(s) not recognized: " + " ".join(deprecated_kwargs))
+
+        cdef int ncall_c = 0 if ncall is None else int(ncall)
 
         cdef MnMinos*minos = NULL
         cdef MinosError mnerror
@@ -996,33 +1009,29 @@ cdef class Minuit:
             raise RuntimeError('Specified parameters(%r) cannot be found '
                                'in parameter list :' % var + str(self.parameters))
 
-        varlist = [var] if var is not None else self.parameters
-        fixed_param = [k for (k, v) in self.fixed.items() if v]
-
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
 
-        for vname in varlist:
-            if vname in fixed_param:
+        if self.grad is None:
+            minos = new MnMinos(
+                deref(<FCNBase*> self.pyfcn),
+                deref(self.cfmin), self.strategy
+            )
+        else:
+            minos = new MnMinos(
+                deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
+                deref(self.cfmin), self.strategy
+            )
+
+        for vname in self.parameters:
+            if self.fixed[vname]:
                 if var is not None:  #specifying vname but it's fixed
-                    warn('Specified variable name for minos is set to fixed',
+                    warn('Specified variable name for minos is fixed',
                          mutil.IMinuitWarning)
                     return None
                 continue
-            if self.grad is None:
-                minos = new MnMinos(
-                    deref(<FCNBase*> self.pyfcn),
-                    deref(self.cfmin), self.strategy
-                )
-            else:
-                minos = new MnMinos(
-                    deref(dynamic_cast[FCNGradientBasePtr](self.pyfcn)),
-                    deref(self.cfmin), self.strategy
-                )
-
-            mnerror = minos.Minos(self.var2pos[vname], maxcall)
+            mnerror = minos.Minos(self.var2pos[vname], ncall_c)
             self.merrors[vname] = minoserror2struct(vname, mnerror)
-
 
         self.refresh_internal_state()
         del minos
@@ -1332,7 +1341,7 @@ cdef class Minuit:
         x, y, s = self.mnprofile(vname, bins, bound, subtract_min)
         return _minuit_methods.draw_profile(self, vname, x, y, band, text)
 
-    def profile(self, vname, bins=100, bound=2, subtract_min=False, **kwargs):
+    def profile(self, vname, bins=100, bound=2, subtract_min=False, **deprecated_kwargs):
         """Calculate cost function profile around specify range.
 
         **Arguments:**
@@ -1358,14 +1367,14 @@ cdef class Minuit:
 
             :meth:`mnprofile`
         """
-        if "args" in kwargs:
+        if "args" in deprecated_kwargs:
             warn("The args keyword has been removed.",
                  DeprecationWarning,
                  stacklevel=2)
-            del kwargs["args"]
+            del deprecated_kwargs["args"]
 
-        if len(kwargs):
-            raise ValueError("Unrecognized keywords: " + " ".join(kwargs))
+        if len(deprecated_kwargs):
+            raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
 
         if subtract_min and self.cfmin is NULL:
             raise RuntimeError("Request for minimization "
@@ -1380,7 +1389,7 @@ cdef class Minuit:
         return _minuit_methods.profile(self, vname, bins, bound, subtract_min)
 
     def draw_profile(self, vname, bins=100, bound=2,
-                     subtract_min=False, band=True, text=True, **kwargs):
+                     subtract_min=False, band=True, text=True, **deprecated_kwargs):
         """A convenient wrapper for drawing profile using matplotlib.
 
         A 1D scan of the cost function around the minimum, useful to inspect the
@@ -1413,19 +1422,19 @@ cdef class Minuit:
             :meth:`profile`
         """
 
-        if "args" in kwargs:
+        if "args" in deprecated_kwargs:
             warn("The args keyword has been removed.",
                  DeprecationWarning,
                  stacklevel=2)
-            del kwargs["args"]
+            del deprecated_kwargs["args"]
 
-        if len(kwargs):
-            raise ValueError("Unrecognized keywords: " + " ".join(kwargs))
+        if len(deprecated_kwargs):
+            raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
 
         x, y = self.profile(vname, bins, bound, subtract_min)
         return _minuit_methods.draw_profile(self, vname, x, y, band, text)
 
-    def contour(self, x, y, bins=50, bound=2, subtract_min=False, **kwargs):
+    def contour(self, x, y, bins=50, bound=2, subtract_min=False, **deprecated_kwargs):
         """2D contour scan.
 
         Return the contour of a function scan over **x** and **y**, while keeping
@@ -1467,14 +1476,14 @@ cdef class Minuit:
 
         """
 
-        if "args" in kwargs:
+        if "args" in deprecated_kwargs:
             warn("The args keyword has been removed.",
                  DeprecationWarning,
                  stacklevel=2)
-            del kwargs["args"]
+            del deprecated_kwargs["args"]
 
-        if len(kwargs):
-            raise ValueError("Unrecognized keywords: " + " ".join(kwargs))
+        if len(deprecated_kwargs):
+            raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
 
         if subtract_min and self.cfmin is NULL:
             raise RuntimeError("Request for minimization "
@@ -1612,7 +1621,7 @@ cdef class Minuit:
         """
         return _minuit_methods.draw_mncontour(self, x, y, nsigma, numpoints)
 
-    def draw_contour(self, x, y, bins=50, bound=2, **kwargs):
+    def draw_contour(self, x, y, bins=50, bound=2, **deprecated_kwargs):
         """Convenience wrapper for drawing contours.
 
         The arguments are the same as :meth:`contour`.
@@ -1626,19 +1635,19 @@ cdef class Minuit:
             :meth:`draw_mncontour`
 
         """
-        if "show_sigma" in kwargs:
+        if "show_sigma" in deprecated_kwargs:
             warn("The show_sigma keyword has been removed due to potential confusion. "
                  "Use draw_mncontour to draw sigma contours.",
                  DeprecationWarning,
                  stacklevel=2)
-            del kwargs["show_sigma"]
-        if "args" in kwargs:
+            del deprecated_kwargs["show_sigma"]
+        if "args" in deprecated_kwargs:
             warn("The args keyword is unused and has been removed.",
                  DeprecationWarning,
                  stacklevel=2)
-            del kwargs["args"]
-        if len(kwargs):
-            raise ValueError("Invalid keyword(s): " + " ".join(kwargs))
+            del deprecated_kwargs["args"]
+        if len(deprecated_kwargs):
+            raise ValueError("Invalid keyword(s): " + " ".join(deprecated_kwargs))
 
         return _minuit_methods.draw_contour(self, x, y, bins, bound)
 
