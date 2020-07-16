@@ -84,10 +84,6 @@ def minimize(
         if "eps" in options:
             error = options["eps"]
 
-    # prevent warnings from Minuit about missing initial step
-    if error is None:
-        error = np.ones_like(x0)
-
     if bool(jac):
         if jac is True:
             raise ValueError("jac=True is not supported, only jac=callable")

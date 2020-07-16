@@ -128,18 +128,19 @@ def test_ExtendedUnbinnedNLL_mask():
 
 
 def test_BinnedNLL_mask():
-    c = BinnedNLL([1, -1000, 2], [0, 1, 2, 3], lambda x, a: x)
+    c = BinnedNLL([1, 1000, 2], [0, 1, 2, 3], lambda x, a: x + a)
 
-    assert np.isnan(c(0)) == True
+    assert c(2) == pytest.approx(-7000, rel=0.1)
     c.mask = np.arange(3) != 1
-    assert np.isnan(c(0)) == False
+    assert c(2) == pytest.approx(-3, rel=0.1)
 
 
 def test_ExtendedBinnedNLL_mask():
-    c = ExtendedBinnedNLL([1, -1000, 2], [0, 1, 2, 3], lambda x, a: a * x)
-    assert c(2) > 600
+    c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], lambda x, a: a * x)
+
+    assert c(2) == pytest.approx(-700, rel=0.1)
     c.mask = np.arange(3) != 1
-    assert c(2) < 2
+    assert c(2) == pytest.approx(2, rel=0.1)
 
 
 def test_LeastSquares_mask():
