@@ -766,7 +766,7 @@ cdef class Minuit:
         return Minuit(fcn, **kwds)
 
 
-    def migrad(self, unsigned ncall=0, resume=True, int nsplit=1, precision=None):
+    def migrad(self, ncall=None, resume=True, int nsplit=1, precision=None):
         """Run MIGRAD.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -775,7 +775,8 @@ cdef class Minuit:
 
         **Arguments:**
 
-            * **ncall**: integer (approximate) maximum number of call before
+            * **ncall**: integer or None, optional; (approximate)
+              maximum number of call before
               MIGRAD will stop trying. Default: 0 (indicates to use MIGRAD's
               internal heuristic). Using nsplit > 1 requires ncall > 0.
               Note: MIGRAD may slightly violate this limit,
@@ -800,6 +801,9 @@ cdef class Minuit:
 
             :ref:`function-minimum-sruct`, list of :ref:`minuit-param-struct`
         """
+        if ncall is None:
+            ncall = 0 # tells C++ Minuit to use its internal heuristic
+
         if nsplit > 1 and ncall == 0:
             raise ValueError("ncall > 0 is required for nsplit > 1")
 
