@@ -493,6 +493,17 @@ def test_minos_all(grad, sigma):
         m.merrors[-3]
 
 
+def test_minos_all_some_fix():
+    m = Minuit(func0, fix_x=True, pedantic=False)
+    m.migrad()
+    m.minos()
+    assert "x" not in m.merrors
+    me = m.merrors["y"]
+    assert me.name == "y"
+    assert me.lower == pytest.approx(-1)
+    assert me.upper == pytest.approx(1)
+
+
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_minos_single(grad):
     m = Minuit(func0, grad=func0_grad, pedantic=False)
@@ -500,6 +511,16 @@ def test_minos_single(grad):
     m.strategy = 0
     m.migrad()
     assert m.ncalls < 15
+
+
+def test_minos_single_fixed():
+    m = Minuit(func0, fix_x=True, pedantic=False)
+    m.migrad()
+    m.minos("y")
+    me = m.merrors["y"]
+    assert me.name == "y"
+    assert me.lower == pytest.approx(-1)
+    assert me.upper == pytest.approx(1)
 
 
 def test_minos_single_fixed_raising():

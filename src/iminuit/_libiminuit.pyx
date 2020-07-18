@@ -1023,9 +1023,11 @@ cdef class Minuit:
                 deref(self.cfmin), self.strategy
             )
 
-        for vname in self.parameters:
+
+        vnames = self.parameters if var is None else [var]
+        for vname in vnames:
             if self.fixed[vname]:
-                if var is not None:  #specifying vname but it's fixed
+                if var is not None and var == vname:
                     warn('Specified variable name for minos is fixed',
                          mutil.IMinuitWarning)
                     return None
