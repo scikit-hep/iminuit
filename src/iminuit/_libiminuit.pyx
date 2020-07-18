@@ -1023,15 +1023,20 @@ cdef class Minuit:
                 deref(self.cfmin), self.strategy
             )
 
-        for vname in self.parameters:
-            if self.fixed[vname]:
-                if var is not None:  #specifying vname but it's fixed
-                    warn('Specified variable name for minos is fixed',
-                         mutil.IMinuitWarning)
-                    return None
-                continue
-            mnerror = minos.Minos(self.var2pos[vname], ncall_c)
-            self.merrors[vname] = minoserror2struct(vname, mnerror)
+
+        if var is None:
+            for vname in self.parameters:
+                if self.fixed[vname]:
+                    continue
+                mnerror = minos.Minos(self.var2pos[vname], ncall_c)
+                self.merrors[vname] = minoserror2struct(vname, mnerror)
+        else:
+            if self.fixed[var]:
+                warn('Specified variable name for minos is fixed',
+                     mutil.IMinuitWarning)
+                return None
+            mnerror = minos.Minos(self.var2pos[var], ncall_c)
+            self.merrors[var] = minoserror2struct(var, mnerror)
 
         self.refresh_internal_state()
         del minos
