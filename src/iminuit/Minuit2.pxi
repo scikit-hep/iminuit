@@ -45,7 +45,6 @@ cdef extern from "PythonGradientFCN.h":
     cdef cppclass PythonGradientFCN(FCNGradientBase, IMinuitMixin):
         PythonGradientFCN(object fcn, object grad, bint use_array_call, double up_parm, vector[string] pname, bint thrownan)
         int getNumGrad()
-        void resetNumGrad()
 
 cdef extern from "Minuit2/MinimumBuilder.h":
     cdef cppclass MinimumBuilder:

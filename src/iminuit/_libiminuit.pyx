@@ -27,7 +27,7 @@ ctypedef IMinuitMixin* IMinuitMixinPtr
 ctypedef PythonGradientFCN* PythonGradientFCNPtr
 ctypedef MnUserParameterState* MnUserParameterStatePtr
 ctypedef const MnUserParameterState* MnUserParameterStateConstPtr
-ctypedef vector[MinuitParameter]* MinuitParameterVectorPtr
+ctypedef const vector[MinuitParameter]* MinuitParameterVectorConstPtr
 
 # Helper functions
 cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict fitarg):
@@ -72,6 +72,9 @@ cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict 
             state.Fix(i)
 
 
+cdef get_params(MinuitParameterVectorConstPtr mps, merrors):
+    return mutil.Params((minuitparam2struct(deref(mps)[i]) for i in range(mps.size())),
+                        merrors)
 
 
 cdef states_equal(n, MnUserParameterStateConstPtr a, MnUserParameterStateConstPtr b):
@@ -390,12 +393,6 @@ cdef class Minuit:
     .. seealso:: :attr:`values`, :attr:`errors`
     """
 
-    cdef readonly object covariance
-    """Covariance matrix (dict (name1, name2) -> covariance).
-
-    .. seealso:: :meth:`matrix`
-    """
-
     cdef readonly object merrors
     """MINOS errors."""
 
@@ -405,26 +402,42 @@ cdef class Minuit:
     cdef readonly int ngrads
     """Number of Gradient calls of last MIGRAD / MINOS / HESSE run."""
 
-    cdef readonly object gcc
-    """Global correlation coefficients (dict : name -> gcc)."""
+    @property
+    def fitarg(self):
+        """Current Minuit state in form of a dict.
 
-    cdef readonly object fitarg
-    """Current Minuit state in form of a dict.
+        * name -> value
+        * error_name -> error
+        * fix_name -> fix
+        * limit_name -> (lower_limit, upper_limit)
 
-    * name -> value
-    * error_name -> error
-    * fix_name -> fix
-    * limit_name -> (lower_limit, upper_limit)
+        This is very useful when you want to save the fit parameters and
+        re-use them later. For example::
 
-    This is very useful when you want to save the fit parameters and
-    re-use them later. For example::
+            m = Minuit(f, x=1)
+            m.migrad()
+            fitarg = m.fitarg
 
-        m = Minuit(f, x=1)
-        m.migrad()
-        fitarg = m.fitarg
+            m2 = Minuit(f, **fitarg)
+        """
+        values = {unicode(k): v for k, v in self.values.items()}
+        errors = {'error_' + k: v for k, v in self.errors.items()}
+        fixations = {'fix_' + k: v for k, v in self.fixed.items()}
 
-        m2 = Minuit(f, **fitarg)
-    """
+        cdef MinuitParameterVectorConstPtr mps = &self.last_upst.MinuitParameters()
+        limits = {}
+        for i in range(mps.size()):
+            has_lower_limit = deref(mps)[i].HasLowerLimit()
+            has_upper_limit = deref(mps)[i].HasUpperLimit()
+            if not has_lower_limit and not has_upper_limit:
+                limit = None
+            else:
+                limit = (
+                    deref(mps)[i].LowerLimit() if has_lower_limit else -np.inf,
+                    deref(mps)[i].UpperLimit() if has_upper_limit else np.inf,
+                )
+            limits['limit_' + self.pos2var[i]] = limit
+        return {**values, **errors, **fixations, **limits}
 
     @property
     def parameters(self):
@@ -439,10 +452,38 @@ cdef class Minuit:
     @property
     def nfit(self):
         """Number of fitted parameters (fixed parameters not counted)."""
-        nfit = 0
-        for v in self.fixed.values():
-            nfit += not v
-        return nfit
+        return self.narg - sum(self.fixed.values())
+
+    @property
+    def covariance(self):
+        """Covariance matrix (dict (name1, name2) -> covariance).
+
+        .. seealso:: :meth:`matrix`
+        """
+        vary_param = []
+        for name in self.pos2var:
+            if not self.fixed[name]:
+                vary_param.append(name)
+
+        cdef const MnUserCovariance* cov = &self.last_upst.Covariance()
+        if self.last_upst.HasCovariance():
+            return {(v1, v2): cov.get(i, j) \
+               for i, v1 in enumerate(vary_param) \
+               for j, v2 in enumerate(vary_param)}
+        return None
+
+    @property
+    def gcc(self):
+      """Global correlation coefficients (dict : name -> gcc)."""
+      vary_param = []
+      for name in self.pos2var:
+          if not self.fixed[name]:
+            vary_param.append(name)
+
+      if self.last_upst.HasGlobalCC() and self.last_upst.GlobalCC().IsValid():
+          return {v: self.last_upst.GlobalCC().GlobalCC()[i]
+                  for i, v in enumerate(vary_param)}
+      return None
 
     def __init__(self, fcn, grad=None, errordef=None,
                  print_level=0, name=None,
@@ -627,22 +668,28 @@ cdef class Minuit:
                 self.throw_nan,
             )
 
-        self.fitarg = {}
+        fitarg = {}
         for x in args:
             lim = mutil._normalize_limit(kwds.get('limit_' + x, None))
             val = kwds.get(x, mutil._guess_initial_value(lim))
             err = kwds.get('error_' + x, mutil._guess_initial_step(val))
             fix = kwds.get('fix_' + x, False)
-            self.fitarg[unicode(x)] = val
-            self.fitarg['error_' + x] = err
-            self.fitarg['limit_' + x] = lim
-            self.fitarg['fix_' + x] = fix
+            fitarg[unicode(x)] = val
+            fitarg['error_' + x] = err
+            fitarg['limit_' + x] = lim
+            fitarg['fix_' + x] = fix
 
         self.minimizer = NULL
         self.cfmin = NULL
-        set_parameter_state(&self.initial_upst, self.pos2var, self.fitarg)
+        set_parameter_state(&self.initial_upst, self.pos2var, fitarg)
         self.last_upst = self.initial_upst
+        self._init_args_values_errors_fixed()
 
+        self.merrors = mutil.MErrors()
+        self.ncalls = 0
+        self.ngrads = 0
+
+    def _init_args_values_errors_fixed(self):
         self.args = ArgsView(self)
         self.args._state = &self.last_upst
         self.values = ValueView(self)
@@ -651,12 +698,30 @@ cdef class Minuit:
         self.errors._state = &self.last_upst
         self.fixed = FixedView(self)
         self.fixed._state = &self.last_upst
-        self.covariance = None
-        self.ncalls = 0
-        self.ngrads = 0
-        self.merrors = mutil.MErrors()
-        self.gcc = None
 
+    def _set_fcn_and_grad(self, fcn, grad, errordef, use_array_call, throw_nan):
+        self.fcn = fcn
+        self.grad = grad
+        self.errordef = errordef
+        self.use_array_call = use_array_call
+        self.throw_nan = throw_nan
+        if self.grad is None:
+            self.pyfcn = new PythonFCN(
+                self.fcn,
+                self.use_array_call,
+                errordef,
+                self.pos2var,
+                self.throw_nan,
+            )
+        else:
+            self.pyfcn = new PythonGradientFCN(
+                self.fcn,
+                self.grad,
+                self.use_array_call,
+                errordef,
+                self.pos2var,
+                self.throw_nan,
+            )
 
     @classmethod
     def from_array_func(cls, fcn, start, error=None, limit=None, fix=None,
@@ -798,6 +863,10 @@ cdef class Minuit:
 
         if not resume:
             self.last_upst = self.initial_upst
+            if self.grad is None:
+                (<PythonFCN*> self.pyfcn).resetNumCall()
+            else:
+                (<PythonGradientFCN*> self.pyfcn).resetNumCall()
 
         if self.minimizer is not NULL:
             del self.minimizer
@@ -822,22 +891,15 @@ cdef class Minuit:
         if precision is not None:
             self.minimizer.SetPrecision(precision)
 
-        cdef PythonGradientFCNPtr grad_ptr = NULL
-        if not resume:
-            dynamic_cast[IMinuitMixinPtr](self.pyfcn).resetNumCall()
-            grad_ptr = dynamic_cast[PythonGradientFCNPtr](self.pyfcn)
-            if grad_ptr:
-                grad_ptr.resetNumGrad()
-
         #this returns a real object need to copy
         ncall_round = round(1.0 * ncall / nsplit)
         assert (nsplit == 1 or ncall_round > 0)
 
-        def total_calls():
-            return self.ncalls_total - self.ncalls
+        ncalls_total_before = self.ncalls_total
+        ngrads_total_before = self.ngrads_total
 
-        self.ncalls = self.ncalls_total
-        self.ngrads = self.ngrads_total
+        def total_calls():
+            return self.ncalls_total - ncalls_total_before
 
         while total_calls() == 0 or (not self.cfmin.IsValid() and total_calls() < ncall):
             if self.cfmin:  # delete existing
@@ -849,7 +911,9 @@ cdef class Minuit:
                 print(self.fmin)
 
         self.last_upst = self.cfmin.UserState()
-        self.refresh_internal_state()
+
+        self.ncalls = self.ncalls_total - ncalls_total_before
+        self.ngrads = self.ngrads_total - ngrads_total_before
 
         if self.print_level > 0:
             print(self.fmin)
@@ -892,8 +956,8 @@ cdef class Minuit:
 
         cdef int ncall_c = 0 if ncall is None else int(ncall)
 
-        self.ncalls = self.ncalls_total
-        self.ngrads = self.ngrads_total
+        ncalls_total_before = int(self.ncalls_total)
+        ngrads_total_before = int(self.ngrads_total)
 
         # must be allocated with new to avoid random crashes
         cdef MnHesse* hesse = new MnHesse(self.strategy)
@@ -927,7 +991,8 @@ cdef class Minuit:
 
         del hesse
 
-        self.refresh_internal_state()
+        self.ncalls = self.ncalls_total - ncalls_total_before
+        self.ngrads = self.ngrads_total - ngrads_total_before
 
         if not self.cfmin:
             # if cfmin does not exist and HESSE fails, we raise an exception
@@ -995,8 +1060,8 @@ cdef class Minuit:
             raise RuntimeError('Specified parameters(%r) cannot be found '
                                'in parameter list :' % var + str(self.pos2var))
 
-        self.ncalls = self.ncalls_total
-        self.ngrads = self.ngrads_total
+        ncalls_total_before = int(self.ncalls_total)
+        ngrads_total_before = int(self.ngrads_total)
 
         if self.grad is None:
             minos = new MnMinos(
@@ -1021,8 +1086,11 @@ cdef class Minuit:
             mnerror = minos.Minos(self.var2pos[vname], ncall_c)
             self.merrors[vname] = minoserror2struct(vname, mnerror)
 
-        self.refresh_internal_state()
         del minos
+
+        self.ncalls = self.ncalls_total - ncalls_total_before
+        self.ngrads = self.ngrads_total - ngrads_total_before
+
         self.pyfcn.SetErrorDef(oldup)
         return self.merrors
 
@@ -1176,16 +1244,12 @@ cdef class Minuit:
     @property
     def params(self):
         """List of current parameter data objects"""
-        cdef vector[MinuitParameter] vmps = self.last_upst.MinuitParameters()
-        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
-                            self.merrors)
+        return get_params(&self.last_upst.MinuitParameters(), self.merrors)
 
     @property
     def init_params(self):
         """List of current parameter data objects set to the initial fit state"""
-        cdef vector[MinuitParameter] vmps = self.initial_upst.MinuitParameters()
-        return mutil.Params((minuitparam2struct(vmps[i]) for i in range(vmps.size())),
-                            None)
+        return get_params(&self.initial_upst.MinuitParameters(), None)
 
     @property
     def ncalls_total(self):
@@ -1637,34 +1701,6 @@ cdef class Minuit:
             raise ValueError("Invalid keyword(s): " + " ".join(deprecated_kwargs))
 
         return _minuit_methods.draw_contour(self, x, y, bins, bound)
-
-    cdef refresh_internal_state(self):
-        """Refresh internal state attributes.
-
-        These attributes should be in a function instead
-        but kept here for PyMinuit compatibility
-        """
-        cdef vector[MinuitParameter] mpv
-        cdef MnUserCovariance cov
-        cdef double tmp = 0
-        mpv = self.last_upst.MinuitParameters()
-        self.fitarg.update({unicode(k): v for k, v in self.values.items()})
-        self.fitarg.update({'error_' + k: v for k, v in self.errors.items()})
-        vary_param = [k for (k, v) in self.fixed.items() if not v]
-        if self.last_upst.HasCovariance():
-            cov = self.last_upst.Covariance()
-            self.covariance = \
-                {(v1, v2): cov.get(i, j) \
-                 for i, v1 in enumerate(vary_param) \
-                 for j, v2 in enumerate(vary_param)}
-        else:
-            self.covariance = None
-        self.ncalls = self.ncalls_total - self.ncalls
-        self.ngrads = self.ngrads_total - self.ngrads
-        self.gcc = None
-        if self.last_upst.HasGlobalCC() and self.last_upst.GlobalCC().IsValid():
-            self.gcc = {v: self.last_upst.GlobalCC().GlobalCC()[i] for \
-                        i, v in enumerate(vary_param)}
 
     @property
     def edm(self):
