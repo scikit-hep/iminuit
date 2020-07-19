@@ -27,6 +27,7 @@ ctypedef IMinuitMixin* IMinuitMixinPtr
 ctypedef PythonGradientFCN* PythonGradientFCNPtr
 ctypedef MnUserParameterState* MnUserParameterStatePtr
 ctypedef const MnUserParameterState* MnUserParameterStateConstPtr
+ctypedef vector[MinuitParameter]* MinuitParameterVectorPtr
 
 # Helper functions
 cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict fitarg):
@@ -71,19 +72,6 @@ cdef set_parameter_state(MnUserParameterStatePtr state, object parameters, dict 
             state.Fix(i)
 
 
-cdef check_extra_args(parameters, kwd):
-    """Check keyword arguments to find unwanted/typo keyword arguments"""
-    fixed_param = set('fix_' + p for p in parameters)
-    limit_param = set('limit_' + p for p in parameters)
-    error_param = set('error_' + p for p in parameters)
-    for k in kwd.keys():
-        if k not in parameters and \
-                        k not in fixed_param and \
-                        k not in limit_param and \
-                        k not in error_param:
-            raise RuntimeError(
-                ('Cannot understand keyword %s. May be a typo?\n'
-                 'The parameters are %r') % (k, parameters))
 
 
 cdef states_equal(n, MnUserParameterStateConstPtr a, MnUserParameterStateConstPtr b):
@@ -584,16 +572,14 @@ cdef class Minuit:
         if use_array_call and name is None:
             raise KeyError("`use_array_call=True` requires that `name` is set")
 
-        args = mutil.describe(fcn) if name is None \
-            else name
+        args = mutil.describe(fcn) if name is None else name
 
         self.parameters = args
-        check_extra_args(args, kwds)
-
         # Maintain 2 dictionaries to easily convert between
         # parameter names and position
         self.pos2var = tuple(args)
         self.var2pos = {k: i for i, k in enumerate(args)}
+        _minuit_methods.check_extra_args(args, kwds)
 
         if errordef is None:
             if hasattr(fcn, 'errordef'):
@@ -913,7 +899,7 @@ cdef class Minuit:
         cdef MnHesse* hesse = new MnHesse(self.strategy)
 
         if self.cfmin:
-            if states_equal(len(self.parameters), &self.last_upst, &self.cfmin.UserState()):
+            if states_equal(self.narg, &self.last_upst, &self.cfmin.UserState()):
                 # last_upst has been modified, cannot just update last cfmin
                 self.last_upst = hesse.call(
                     deref(<FCNBase*> self.pyfcn),
@@ -1048,15 +1034,14 @@ cdef class Minuit:
                 "Covariance is not valid. May be the last Hesse call failed?")
 
         cdef MnUserCovariance mncov = self.last_upst.Covariance()
-        cdef vector[MinuitParameter] mp = self.last_upst.MinuitParameters()
 
         # When some parameters are fixed, mncov is a sub-matrix. If skip-fixed
         # is false, we need to expand the sub-matrix back into the full form.
         # This requires a translation between sub-index und full-index.
         if skip_fixed:
             npar = 0
-            for i in range(mp.size()):
-                if not mp[i].IsFixed():
+            for i in range(self.narg):
+                if not self.fixed[i]:
                     npar += 1
             ind = range(npar)
             def cov(i, j):
@@ -1064,11 +1049,11 @@ cdef class Minuit:
         else:
             ext2int = {}
             iint = 0
-            for i in range(mp.size()):
-                if not mp[i].IsFixed():
+            for i in range(self.narg):
+                if not self.fixed[i]:
                     ext2int[i] = iint
                     iint += 1
-            ind = range(mp.size())
+            ind = range(self.narg)
             def cov(i, j):
                 if i not in ext2int or j not in ext2int:
                     return 0.0
@@ -1124,7 +1109,7 @@ cdef class Minuit:
 
             ``numpy.ndarray`` of shape (N,).
         """
-        a = np.empty(len(self.parameters), dtype=np.double)
+        a = np.empty(self.narg, dtype=np.double)
         for i, k in enumerate(self.parameters):
             a[i] = self.errors[k]
         return a
@@ -1145,7 +1130,7 @@ cdef class Minuit:
             ``numpy.ndarray`` of shape (2, N).
         """
         # array format follows matplotlib conventions, see pyplot.errorbar
-        a = np.empty((2, len(self.parameters)), dtype=np.double)
+        a = np.empty((2, self.narg), dtype=np.double)
         for i, k in enumerate(self.parameters):
             me = self.merrors[k]
             a[0, i] = -me.lower
