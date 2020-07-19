@@ -824,8 +824,8 @@ cdef class Minuit:
             ncall = 0 # tells C++ Minuit to use its internal heuristic
 
         if "nsplit" in deprecated_kwargs:
-            warn("`nsplit` keyword has been deprecated without replacement",
-                 DeprecationWarning,
+            warn("`nsplit` keyword has been removed and is ignored",
+                 RuntimeWarning,
                  stacklevel=2);
             del deprecated_kwargs["nsplit"]
 
