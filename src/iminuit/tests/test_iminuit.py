@@ -222,6 +222,21 @@ def test_use_array_call():
     assert_allclose((c[("a", "a")], c[("b", "b")]), (1, 1))
 
 
+def test_covariance():
+    m = Minuit(func0, pedantic=False)
+    assert m.covariance is None
+    m.migrad()
+    c = m.covariance
+    assert_allclose((c[("x", "x")], c[("y", "y")]), (4, 1))
+
+
+def test_gcc():
+    m = Minuit(lambda x, y: (x - y) ** 2 + x ** 2, pedantic=False)
+    assert m.gcc is None
+    m.migrad()
+    assert_allclose([m.gcc["x"], m.gcc["y"]], np.sqrt((0.5, 0.5)))
+
+
 def test_from_array_func_1():
     m = Minuit.from_array_func(
         func7, (2, 1), error=(1, 1), errordef=Minuit.LEAST_SQUARES

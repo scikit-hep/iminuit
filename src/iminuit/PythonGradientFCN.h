@@ -49,10 +49,12 @@ public:
     virtual void SetErrorDef(double x) { up = x; }
 
     virtual int getNumCall() const { return call_fcn.ncall; }
-    virtual void resetNumCall() { call_fcn.ncall = 0; }
-
     virtual int getNumGrad() const { return call_grad.ncall; }
-    virtual void resetNumGrad() { call_grad.ncall = 0; }
+
+    virtual void resetNumCall() {
+      call_fcn.ncall = 0;
+      call_grad.ncall = 0;
+    }
 
     // prevent Minuit2 from computing gradients numerically to check analytical gradient
     virtual bool CheckGradient() const {return false;}

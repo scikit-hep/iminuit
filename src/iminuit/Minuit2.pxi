@@ -45,7 +45,6 @@ cdef extern from "PythonGradientFCN.h":
     cdef cppclass PythonGradientFCN(FCNGradientBase, IMinuitMixin):
         PythonGradientFCN(object fcn, object grad, bint use_array_call, double up_parm, vector[string] pname, bint thrownan)
         int getNumGrad()
-        void resetNumGrad()
 
 cdef extern from "Minuit2/MinimumBuilder.h":
     cdef cppclass MinimumBuilder:
@@ -68,7 +67,7 @@ cdef extern from "Minuit2/MinuitParameter.h":
     cdef cppclass MinuitParameter:
         MinuitParameter(unsigned int, char*, double)
         unsigned int Number()
-        char*Name()
+        char* Name()
         double Value()
         double Error()
         bint IsConst()
@@ -101,12 +100,11 @@ cdef extern from "Minuit2/MnUserParameterState.h":
         void Add(char*, double)
 
         const vector[MinuitParameter]& MinuitParameters()
-        MnUserCovariance Covariance()
-        MnGlobalCorrelationCoeff GlobalCC()
+        MnUserCovariance& Covariance()
+        MnGlobalCorrelationCoeff& GlobalCC()
 
         double Fval()
         double Edm()
-        unsigned int NFcn()
 
         const MinuitParameter& Parameter(unsigned int)
 
@@ -124,7 +122,7 @@ cdef extern from "Minuit2/MnUserParameterState.h":
         bint HasGlobalCC()
 
         unsigned int Index(char*)
-        char*Name(unsigned int)
+        char* Name(unsigned int)
 
 cdef extern from "Minuit2/MnStrategy.h":
     cdef cppclass MnStrategy:

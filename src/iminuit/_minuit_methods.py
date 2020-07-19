@@ -103,3 +103,24 @@ def draw_mncontour(self, x, y, nsigma, numpoints):
     plt.xlabel(x)
     plt.ylabel(y)
     return cs
+
+
+def check_extra_args(parameters, kwd):
+    """Check keyword arguments to find unwanted/typo keyword arguments"""
+    fixed_param = {"fix_" + p for p in parameters}
+    limit_param = {"limit_" + p for p in parameters}
+    error_param = {"error_" + p for p in parameters}
+    for k in kwd:
+        if (
+            k not in parameters
+            and k not in fixed_param
+            and k not in limit_param
+            and k not in error_param
+        ):
+            raise RuntimeError(
+                (
+                    "Cannot understand keyword %s. May be a typo?\n"
+                    "The parameters are %r"
+                )
+                % (k, parameters)
+            )
