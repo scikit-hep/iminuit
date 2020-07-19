@@ -614,7 +614,7 @@ cdef class Minuit:
                 self.fcn,
                 self.use_array_call,
                 errordef,
-                self.parameters,
+                self.pos2var,
                 self.throw_nan,
             )
         else:
@@ -623,7 +623,7 @@ cdef class Minuit:
                 self.grad,
                 self.use_array_call,
                 errordef,
-                self.parameters,
+                self.pos2var,
                 self.throw_nan,
             )
 
@@ -640,7 +640,7 @@ cdef class Minuit:
 
         self.minimizer = NULL
         self.cfmin = NULL
-        set_parameter_state(&self.initial_upst, self.parameters, self.fitarg)
+        set_parameter_state(&self.initial_upst, self.pos2var, self.fitarg)
         self.last_upst = self.initial_upst
 
         self.args = ArgsView(self)
@@ -991,9 +991,9 @@ cdef class Minuit:
         if not self.cfmin.IsValid():
             raise RuntimeError(('Function minimum is not valid. Make sure '
                                 'MIGRAD converged first'))
-        if var is not None and var not in self.parameters:
+        if var is not None and var not in self.pos2var:
             raise RuntimeError('Specified parameters(%r) cannot be found '
-                               'in parameter list :' % var + str(self.parameters))
+                               'in parameter list :' % var + str(self.pos2var))
 
         self.ncalls = self.ncalls_total
         self.ngrads = self.ngrads_total
@@ -1010,7 +1010,7 @@ cdef class Minuit:
             )
 
 
-        vnames = self.parameters if var is None else [var]
+        vnames = self.pos2var if var is None else [var]
         for vname in vnames:
             if self.fixed[vname]:
                 if var is not None and var == vname:
@@ -1110,8 +1110,8 @@ cdef class Minuit:
             ``numpy.ndarray`` of shape (N,).
         """
         a = np.empty(self.narg, dtype=np.double)
-        for i, k in enumerate(self.parameters):
-            a[i] = self.errors[k]
+        for i in range(self.narg):
+            a[i] = self.errors[i]
         return a
 
     def np_merrors(self):
@@ -1131,8 +1131,8 @@ cdef class Minuit:
         """
         # array format follows matplotlib conventions, see pyplot.errorbar
         a = np.empty((2, self.narg), dtype=np.double)
-        for i, k in enumerate(self.parameters):
-            me = self.merrors[k]
+        for i in range(self.narg):
+            me = self.merrors[i]
             a[0, i] = -me.lower
             a[1, i] = me.upper
         return a
@@ -1251,7 +1251,7 @@ cdef class Minuit:
 
             bins(center point), value, MIGRAD results
         """
-        if vname not in self.parameters:
+        if vname not in self.pos2var:
             raise ValueError('Unknown parameter %s' % vname)
 
         if is_number(bound):
@@ -1272,7 +1272,7 @@ cdef class Minuit:
             fitparam[vname] = v
             fitparam['fix_%s' % vname] = True
             m = Minuit(self.fcn, print_level=0,
-                       pedantic=False, name=self.parameters,
+                       pedantic=False, name=self.pos2var,
                        use_array_call=self.use_array_call,
                        **fitparam)
             m.migrad()
