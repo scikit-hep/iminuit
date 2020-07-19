@@ -5,6 +5,11 @@
 Changelog
 =========
 
+1.4.9 (July, 18, 2020)
+----------------------
+
+- Fixes an error introduced in 1.4.8 in `Minuit.minos` when `var` keyword is used and at least one parameter is fixed
+
 1.4.8 (July, 17, 2020)
 ----------------------
 
