@@ -641,32 +641,16 @@ cdef class Minuit:
         if errordef is None:
             errordef = 1.0
 
+        self.tol = 0.1
+        self.strategy = 1
+
         self.fcn = fcn
         self.grad = grad
         self.use_array_call = use_array_call
-
-        self.tol = 0.1
-        self.strategy = 1
-        self.print_level = print_level
         self.throw_nan = throw_nan
+        self.print_level = print_level
 
-        if self.grad is None:
-            self.pyfcn = new PythonFCN(
-                self.fcn,
-                self.use_array_call,
-                errordef,
-                self.pos2var,
-                self.throw_nan,
-            )
-        else:
-            self.pyfcn = new PythonGradientFCN(
-                self.fcn,
-                self.grad,
-                self.use_array_call,
-                errordef,
-                self.pos2var,
-                self.throw_nan,
-            )
+        self._init_pyfcn(errordef)
 
         fitarg = {}
         for x in args:
@@ -679,15 +663,15 @@ cdef class Minuit:
             fitarg['limit_' + x] = lim
             fitarg['fix_' + x] = fix
 
-        self.minimizer = NULL
-        self.cfmin = NULL
         set_parameter_state(&self.initial_upst, self.pos2var, fitarg)
         self.last_upst = self.initial_upst
         self._init_args_values_errors_fixed()
-
         self.merrors = mutil.MErrors()
         self.ncalls = 0
         self.ngrads = 0
+
+        self.minimizer = NULL
+        self.cfmin = NULL
 
     def _init_args_values_errors_fixed(self):
         self.args = ArgsView(self)
@@ -699,12 +683,10 @@ cdef class Minuit:
         self.fixed = FixedView(self)
         self.fixed._state = &self.last_upst
 
-    def _set_fcn_and_grad(self, fcn, grad, errordef, use_array_call, throw_nan):
-        self.fcn = fcn
-        self.grad = grad
-        self.errordef = errordef
-        self.use_array_call = use_array_call
-        self.throw_nan = throw_nan
+    def _init_pyfcn(self, errordef):
+        if self.pyfcn:
+            del self.pyfcn
+
         if self.grad is None:
             self.pyfcn = new PythonFCN(
                 self.fcn,
