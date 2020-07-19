@@ -109,7 +109,7 @@ cdef class BasicView:
         return self._minuit.pos2var.__iter__()
 
     def __len__(self):
-        return len(self._minuit.pos2var)
+        return self._minuit.narg
 
     def keys(self):
         return [k for k in self]
@@ -166,7 +166,7 @@ cdef class ArgsView:
         self._minuit = minuit
 
     def __len__(self):
-        return len(self._minuit.pos2var)
+        return self._minuit.narg
 
     def __getitem__(self, key):
         cdef int i
@@ -348,9 +348,6 @@ cdef class Minuit:
 
     # PyMinuit compatible interface
 
-    cdef readonly object parameters
-    """Parameter name tuple"""
-
     cdef public ArgsView args
     """Parameter values in a list-like object.
 
@@ -430,9 +427,14 @@ cdef class Minuit:
     """
 
     @property
+    def parameters(self):
+        """Parameter name tuple"""
+        return self.pos2var
+
+    @property
     def narg(self):
         """Number of parameters."""
-        return len(self.parameters)
+        return self.initial_upst.MinuitParameters().size()
 
     @property
     def nfit(self):
@@ -574,7 +576,6 @@ cdef class Minuit:
 
         args = mutil.describe(fcn) if name is None else name
 
-        self.parameters = args
         # Maintain 2 dictionaries to easily convert between
         # parameter names and position
         self.pos2var = tuple(args)
@@ -655,7 +656,6 @@ cdef class Minuit:
         self.ngrads = 0
         self.merrors = mutil.MErrors()
         self.gcc = None
-
 
 
     @classmethod
