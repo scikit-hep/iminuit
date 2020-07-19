@@ -252,9 +252,9 @@ cdef class Minuit:
     """Map variable name to position"""
 
     # C++ object state
-    cdef FCNBase*pyfcn  #:FCN
-    cdef MnApplication*minimizer  #:migrad
-    cdef FunctionMinimum*cfmin  #:last migrad result
+    cdef FCNBase* pyfcn  #:FCN
+    cdef MnApplication* minimizer  #:migrad
+    cdef FunctionMinimum* cfmin  #:last migrad result
     #:initial parameter state
     cdef MnUserParameterState initial_upst
     #:last parameter state(from hesse/migrad)
