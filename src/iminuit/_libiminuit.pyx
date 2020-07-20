@@ -255,9 +255,8 @@ cdef class Minuit:
     """Map variable name to position"""
 
     # C++ object state
-    cdef FCNBase* pyfcn  #:FCN
-    cdef MnApplication* minimizer  #:migrad
-    cdef FunctionMinimum* cfmin  #:last migrad result
+    cdef FCNBase*pyfcn  #:FCN
+    cdef FunctionMinimum*cfmin  #:last migrad result
     #:initial parameter state
     cdef MnUserParameterState initial_upst
     #:last parameter state(from hesse/migrad)
@@ -343,8 +342,6 @@ cdef class Minuit:
                  "globally for all Minuit instances",
                  mutil.IMinuitWarning)
             MnPrint.SetLevel(level)
-        if self.minimizer:
-            self.minimizer.Minimizer().Builder().SetPrintLevel(level)
 
     cdef readonly bint throw_nan
     """Boolean. Whether to raise runtime error if function evaluate to nan."""
@@ -670,7 +667,6 @@ cdef class Minuit:
         self.ncalls = 0
         self.ngrads = 0
 
-        self.minimizer = NULL
         self.cfmin = NULL
 
     def _init_args_values_errors_fixed(self):
@@ -799,7 +795,7 @@ cdef class Minuit:
         return Minuit(fcn, **kwds)
 
 
-    def migrad(self, ncall=None, resume=True, int nsplit=1, precision=None):
+    def migrad(self, ncall=None, resume=True, precision=None, **deprecated_kwargs):
         """Run MIGRAD.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -810,22 +806,13 @@ cdef class Minuit:
 
             * **ncall**: integer or None, optional; (approximate)
               maximum number of call before MIGRAD will stop trying. Default: None
-              (indicates to use MIGRAD's internal heuristic). Using nsplit > 1
-              requires ncall > 0. Note: MIGRAD may slightly violate this limit,
-              because it checks the condition only after a full iteration of the
-              algorithm, which usually performs several function calls.
+              (indicates to use MIGRAD's internal heuristic). Note: MIGRAD may slightly
+              violate this limit, because it checks the condition only after a full
+              iteration of the algorithm, which usually performs several function calls.
 
             * **resume**: boolean indicating whether MIGRAD should resume from
               the previous minimiser attempt(True) or should start from the
               beginning(False). Default True.
-
-            * **nsplit**: split MIGRAD in to *split* runs. Max fcn call
-              for each run is ncall/nsplit. MIGRAD stops when it found the
-              function minimum to be valid or ncall is reached. This is useful
-              for getting progress. However, you need to make sure that
-              ncall/nsplit is large enough. Otherwise, MIGRAD will think
-              that the minimum is invalid due to exceeding max call
-              (ncall/nsplit). Default 1(no split).
 
             * **precision**: override miniut own's internal precision.
 
@@ -836,66 +823,57 @@ cdef class Minuit:
         if ncall is None:
             ncall = 0 # tells C++ Minuit to use its internal heuristic
 
-        if nsplit > 1 and ncall == 0:
-            raise ValueError("ncall > 0 is required for nsplit > 1")
+        if "nsplit" in deprecated_kwargs:
+            warn("`nsplit` keyword has been removed and is ignored",
+                 RuntimeWarning,
+                 stacklevel=2);
+            del deprecated_kwargs["nsplit"]
+
+        if deprecated_kwargs:
+            raise KeyError("keyword(s) not recognized: " + " ".join(deprecated_kwargs))
 
         #construct new fcn and migrad if
         #it's a clean state or resume=False
-        cdef MnStrategy*strat = NULL
 
         if not resume:
             self.last_upst = self.initial_upst
-            if self.grad is None:
-                (<PythonFCN*> self.pyfcn).resetNumCall()
-            else:
+            del self.cfmin
+            if self.grad:
                 (<PythonGradientFCN*> self.pyfcn).resetNumCall()
+            else:
+                (<PythonFCN*> self.pyfcn).resetNumCall()
 
-        if self.minimizer is not NULL:
-            del self.minimizer
-            self.minimizer = NULL
-        strat = new MnStrategy(self.strategy)
+        cdef MnStrategy* strat = new MnStrategy(self.strategy)
+        cdef MnApplication *minimizer = NULL
 
         if self.grad is None:
-            self.minimizer = new MnMigrad(
+            minimizer = new MnMigrad(
                 deref(<FCNBase*> self.pyfcn),
                 self.last_upst, deref(strat)
             )
         else:
-            self.minimizer = new MnMigrad(
+            minimizer = new MnMigrad(
                 deref(<FCNGradientBase*> self.pyfcn),
                 self.last_upst, deref(strat)
             )
 
         del strat
-        strat = NULL
 
-        self.minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
+        minimizer.Minimizer().Builder().SetPrintLevel(self.print_level)
         if precision is not None:
-            self.minimizer.SetPrecision(precision)
+            minimizer.SetPrecision(precision)
 
-        #this returns a real object need to copy
-        ncall_round = round(1.0 * ncall / nsplit)
-        assert (nsplit == 1 or ncall_round > 0)
+        ncalls_total_before = int(self.ncalls_total)
+        ngrads_total_before = int(self.ngrads_total)
 
-        ncalls_total_before = self.ncalls_total
-        ngrads_total_before = self.ngrads_total
+        self.cfmin = call_mnapplication_wrapper(deref(minimizer), ncall, self.tol)
 
-        def total_calls():
-            return self.ncalls_total - ncalls_total_before
-
-        while total_calls() == 0 or (not self.cfmin.IsValid() and total_calls() < ncall):
-            if self.cfmin:  # delete existing
-                del self.cfmin
-            self.cfmin = call_mnapplication_wrapper(
-                deref(self.minimizer), ncall_round, self.tol)
-            self.last_upst = self.cfmin.UserState()
-            if self.print_level > 1 and nsplit != 1:
-                print(self.fmin)
-
-        self.last_upst = self.cfmin.UserState()
+        del minimizer
 
         self.ncalls = self.ncalls_total - ncalls_total_before
         self.ngrads = self.ngrads_total - ngrads_total_before
+
+        self.last_upst = self.cfmin.UserState()
 
         if self.print_level > 0:
             print(self.fmin)
@@ -1259,14 +1237,12 @@ cdef class Minuit:
 
     def is_clean_state(self):
         """Check if minuit is in a clean state, ie. no MIGRAD call"""
-        return self.minimizer is NULL and self.cfmin is NULL
+        return self.cfmin is NULL
 
     cdef void clear_cobj(self):
         # clear C++ internal state
         del self.pyfcn
         self.pyfcn = NULL
-        del self.minimizer
-        self.minimizer = NULL
         del self.cfmin
         self.cfmin = NULL
 

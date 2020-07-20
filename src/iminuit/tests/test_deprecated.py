@@ -41,6 +41,11 @@ def test_default_errordef():
         Minuit(Fcn(), pedantic=False)
 
 
+def test_migrad_nsplit(minuit):
+    with pytest.warns(RuntimeWarning):
+        minuit.migrad(nsplit=2)
+
+
 def test_edm(minuit):
     with pytest.warns(DeprecationWarning):
         assert minuit.edm == approx(0)
