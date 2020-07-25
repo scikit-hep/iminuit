@@ -46,12 +46,11 @@ One way is to use `Python virtual environments`_ and `pip` to install the develo
 
 .. code-block:: bash
 
-    pip install virtualenv
-    virtualenv iminuit-dev
-    source iminuit-dev/bin/activate
+    python -m venv py3 # folders called py* are ignored by git
+    source py3/bin/activate
     pip install -r requirements-dev.txt
 
-To delete the virtual environment just delete the folder iminuit-dev.
+To delete the virtual environment just delete the folder `py3`.
 
 conda
 +++++
@@ -80,7 +79,7 @@ It's also easy to deactivate or delete it:
 Development workflow
 --------------------
 
-To simplify hacking, we have a Makefile with common commands. To see what commands are available, do:
+To simplify hacking on OSX and Linux, we have a Makefile with common commands. To see what commands are available, do:
 
 .. code-block:: bash
 
@@ -118,21 +117,7 @@ Build the docs:
    make doc
    <your-web-browser> doc/_build/html/index.html
 
-If you change the public interface of iminuit, you should run the integration tests in addition to iminuits internal tests. The integration tests will download and install consumers of iminuit to check their tests. This allows us to see that iminuit does not break them.
-
-.. code-block:: bash
-
-    make integration
-
-Ideally, the integration tests should never fail because of iminuit, because breaking changes in the public interface should be detected by our own unit tests. If you find a problem during integration, *you should add new tests to iminuit* which will detect this problem in the future without relying on others!
-
-Maintainers that prepare a release, should run:
-
-.. code-block:: bash
-
-    make release
-
-It generates the source distribution and prints a checklist for the release.
+Maintainers that prepare a release, should follow the instructions in `doc/README.md`_
 
 To check your `iminuit` version number and install location:
 
@@ -152,3 +137,4 @@ To check your `iminuit` version number and install location:
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/scikit-hep/iminuit
 .. _Makefile: https://github.com/scikit-hep/iminuit/blob/master/Makefile
+.. _doc/README.md: https://github.com/scikit-hep/iminuit/blob/master/doc/README.md
