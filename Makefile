@@ -17,13 +17,6 @@ help:
 	@echo '     cov              Run tests and write coverage report'
 	@echo '     doc              Run Sphinx to generate HTML docs'
 	@echo ''
-	@echo '     integration      Run integration check'
-	@echo '     release          Prepare a release (for maintainers)'
-	@echo ''
-	@echo '     analysis         Run code analysis (flake8 and pylint)'
-	@echo '     flake8           Run code analysis (flake8)'
-	@echo '     pylint           Run code analysis (pylint)'
-	@echo ''
 	@echo ' More info:'
 	@echo ''
 	@echo ' * iminuit code: https://github.com/scikit-hep/iminuit'
@@ -35,9 +28,6 @@ clean:
 
 build: src/iminuit/_libiminuit.so
 
-src/iminuit/_libiminuit.so: $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi)
-	$(PYTHON) setup.py build_ext --inplace
-
 test: build
 	$(PYTHON) -m pytest
 
@@ -45,30 +35,18 @@ cov: build
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
 
-doc/_build/html/index.html: build $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
-	{ cd doc; make html; }
-
-doc: doc/_build/html/index.html
-
-analysis: flake8
+	doc: doc/_build/html/index.html
 
 flake8: build
 	@$(PYTHON) -m flake8 src/$(PROJECT)
+
+src/iminuit/_libiminuit.so: $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi)
+	$(PYTHON) setup.py build_ext --inplace
+
+doc/_build/html/index.html: build $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
+	{ cd doc; make html; }
 
 ## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
 # pylint: build
 # 	@$(PYTHON) -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
 # 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
-
-conda:
-	$(PYTHON) setup.py bdist_conda
-
-sdist:
-	rm -rf dist iminuit.egg-info
-	$(PYTHON) setup.py sdist
-
-integration:
-	@echo
-	@echo "Warning: If integration tests fail, add new tests of corrupted interface to iminuit."
-	@echo
-	.ci/probfit_integration_test.sh
