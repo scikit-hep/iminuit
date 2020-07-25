@@ -16,6 +16,7 @@ url = "https://bitbucket.org/pypy/pypy/downloads/"
 plat = {"darwin": "osx64", "linux": "linux64"}[sys.platform]
 url += filename
 
+print("Download and extract sources")
 with urlopen(url) as fi:
     with tempfile.TemporaryFile() as tmp:
         shutil.copyfileobj(fi, tmp)
@@ -29,4 +30,5 @@ assert p.exists()
 p.rename("pypy36")
 p = Path("pypy36")
 
+print("Create virtual environment")
 subp.check_call([str(p / "bin" / "pypy3"), "-m", "venv", str(p / "pypy3")])
