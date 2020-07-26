@@ -792,7 +792,7 @@ cdef class Minuit:
                 kwds["limit_" + name] = limit[i]
             if fix is not None:
                 kwds["fix_" + name] = fix[i]
-        return Minuit(fcn, **kwds)
+        return cls(fcn, **kwds)
 
 
     def migrad(self, ncall=None, resume=True, precision=None, **deprecated_kwargs):
