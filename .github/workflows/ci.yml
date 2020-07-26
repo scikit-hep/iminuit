@@ -9,7 +9,7 @@ on:
       - '.ci/**'
 
 jobs:
-  test:
+  cpython:
     runs-on: ${{ matrix.os }}
 
     strategy:
