@@ -24,7 +24,7 @@ jobs:
         python -m pip install -r requirements-dev.txt
         python -m ipykernel install --user --name python3
     - run: COVERAGE=1 make
-    - run: make analysis
+    - run: make flake8
     - run: make doc
     - run: python -m pytest tutorial
     - run: make cov
