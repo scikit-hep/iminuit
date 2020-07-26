@@ -9,7 +9,7 @@ on:
       - '.ci/**'
 
 jobs:
-  test:
+  covdoc:
     runs-on: ubuntu-latest
 
     steps:
