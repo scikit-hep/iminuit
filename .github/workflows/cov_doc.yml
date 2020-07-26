@@ -1,4 +1,4 @@
-name: Cov/Doc
+name: Cov&Doc
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - '.ci/**'
 
 jobs:
-  covdoc:
+  cpython:
     runs-on: ubuntu-latest
 
     steps:
