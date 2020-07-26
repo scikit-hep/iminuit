@@ -1,4 +1,4 @@
-name: Test
+name: Cov/Doc
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ on:
       - '.ci/**'
 
 jobs:
-  cov:
+  test:
     runs-on: ubuntu-latest
 
     steps:

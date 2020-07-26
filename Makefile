@@ -35,7 +35,7 @@ cov: build
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
 
-	doc: doc/_build/html/index.html
+doc: doc/_build/html/index.html
 
 flake8: build
 	@$(PYTHON) -m flake8 src/$(PROJECT)
