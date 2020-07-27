@@ -68,7 +68,7 @@ def fmin(sfmin):
         ),
         tr(
             td(
-                "EDM = %.3g (Goal: %g)" % (sfmin.edm, goaledm(sfmin)),
+                "EDM = %.3g (Goal: %.3g)" % (sfmin.edm, goaledm(sfmin)),
                 colspan=2,
                 style="text-align:center",
                 title="Estimated distance to minimum and target threshold",

@@ -184,6 +184,28 @@ def test_text_fmin(minuit):
     )
 
 
+def test_text_fmin_tiny_tol():
+    m = Minuit(lambda x: x ** 2, pedantic=False)
+    m.tol = 1e-20
+    m.migrad()
+    fmin = m.fmin
+    assert (
+        str(fmin)
+        == r"""------------------------------------------------------------------
+| FCN = 0                       |      Ncalls=10 (10 total)      |
+| EDM = 0 (Goal: 1.19e-10)      |            up = 1.0            |
+------------------------------------------------------------------
+|  Valid Min.   | Valid Param.  | Above EDM | Reached call limit |
+------------------------------------------------------------------
+|     True      |     True      |   False   |       False        |
+------------------------------------------------------------------
+| Hesse failed  |   Has cov.    | Accurate  | Pos. def. | Forced |
+------------------------------------------------------------------
+|     False     |     True      |   True    |   True    | False  |
+------------------------------------------------------------------"""
+    )
+
+
 def test_text_params(minuit):
     assert r"""------------------------------------------------------------------------------------------
 |   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |

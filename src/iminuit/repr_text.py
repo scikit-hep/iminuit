@@ -43,8 +43,10 @@ def matrix_format(*values):
 
 
 def goaledm(fm):
-    # taken from the source code, see VariableMeticBuilder.cxx
-    return 2e-3 * fm.tolerance * fm.up
+    # taken from the source code, see VariableMeticBuilder::Minimum and
+    # ModularFunctionMinimizer::Minimize
+    mn_eps_2 = 4 * np.sqrt(np.finfo("float").eps)
+    return 2e-3 * max(fm.tolerance * fm.up, mn_eps_2)
 
 
 def format_row(widths, *args):
@@ -63,7 +65,7 @@ def fmin(fm):
         ws, "FCN = %.4g" % fm.fval, "Ncalls=%i (%i total)" % (fm.nfcn, fm.ncalls)
     )
     i2 = format_row(
-        ws, "EDM = %.3g (Goal: %g)" % (fm.edm, goaledm(fm)), "up = %.1f" % fm.up
+        ws, "EDM = %.3g (Goal: %.3g)" % (fm.edm, goaledm(fm)), "up = %.1f" % fm.up
     )
     ws = (16, 16, 12, 21)
     h1 = format_row(ws, "Valid Min.", "Valid Param.", "Above EDM", "Reached call limit")
