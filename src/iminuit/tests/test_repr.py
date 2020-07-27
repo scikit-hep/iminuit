@@ -394,7 +394,7 @@ def test_text_fmin_good(fmin_good):
     # fmt: off
     assert framed(fmin_good) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
-│ FCN = 1.235e-10                  │         Ncalls=10 (20 total)         │
+│ FCN = 1.235e-10                  │        Ncalls = 10 (20 total)        │
 │ EDM = 1.23e-10 (Goal: 0.0001)    │               up = 0.5               │
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │ Valid Minimum │ Valid Parameters │        No Parameters at limit        │
@@ -411,7 +411,7 @@ def test_text_fmin_bad(fmin_bad):
     # fmt: off
     assert framed(fmin_bad) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
-│ FCN = nan                        │     Ncalls=100000 (200000 total)     │
+│ FCN = nan                        │    Ncalls = 100000 (200000 total)    │
 │ EDM = 1.23e-10 (Goal: 1.19e-10)  │               up = 0.5               │
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │INVALID Minimum│INVALID Parameters│       SOME Parameters at limit       │
