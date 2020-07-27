@@ -94,16 +94,15 @@ Subclass of NamedTuple that stores information about the fit result. It is retur
 :meth:`Minuit.get_fmin` and :meth:`Minuit.migrad`.
 It has the following attributes:
 
-    * *fval*: FCN minimum value
+    * *fval*: Value of the cost function at the minimum.
 
-    * *edm*: Estimated Distance to Minimum
+    * *edm*: Estimated Distance to Minimum.
 
-    * *nfcn*: Number of function call in last mimizier call
+    * *nfcn*: Number of function call in last Migrad call
 
-    * *up*: UP parameter. This determine how minimizer define 1 :math:`\sigma`
-      error
+    * *up*: Equal to the value of `errordef` when Migrad ran.
 
-    * *is_valid*: Validity of function minimum. This is defined as
+    * *is_valid*: Whether the function minimum is ok, defined as
 
         * has_valid_parameters
         * and not has_reached_call_limit
@@ -115,23 +114,24 @@ It has the following attributes:
            Valid error is not necessarily accurate.
         2. The parameters value must be valid
 
-    * *has_accurate_covariance*: Boolean indicating whether covariance matrix
-      is accurate.
+    * *has_accurate_covariance*: Whether covariance matrix is accurate.
 
-    * *has_pos_def_covar*: Positive definiteness of covariance
+    * *has_pos_def_covar*: Positive definiteness of covariance matrix.
+      Must be true if the extremum is a minimum.
 
-    * *has_made_posdef_covar*: Whether minimizer has to force covariance matrix
-      to be positive definite by adding diagonal matrix.
+    * *has_made_posdef_covar*: Whether Migrad has to force covariance matrix
+      to be positive definite by adding a diagonal matrix (should not happen!).
 
-    * *hesse_failed*: Successfulness of the hesse call after minimizer.
+    * *hesse_failed*: Whether a call to Hesse after Migrad was successful.
 
     * *has_covaraince*: Has Covariance.
 
-    * *is_above_max_edm*: Is EDM above 0.0001*tolerance*up? The convergence
-      of migrad is defined by EDM being below this number.
+    * *is_above_max_edm*: Is estimated distance to minimum above its goal?
+      This is the convergence criterion of Migrad, if it is violated, Migrad did not
+      converge.
 
-    * *has_reached_call_limit*: Whether the last minimizer exceeds number of
-      FCN calls it is allowd.
+    * *has_reached_call_limit*: Whether Migrad exceeded the allowed number of
+      function calls.
 
 .. _minos-error-struct:
 
