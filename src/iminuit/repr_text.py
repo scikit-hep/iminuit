@@ -67,41 +67,39 @@ def format_line(widths, edges):
     return s
 
 
-def fmin(fm):
-    w = (-34, 38)
-    l1 = format_line(w, "┌┬┐")
-    i1 = format_row(
-        w, "FCN = %.4g" % fm.fval, "Ncalls=%i (%i total)" % (fm.nfcn, fm.ncalls)
-    )
-    i2 = format_row(
-        w, "EDM = %.3g (Goal: %.3g)" % (fm.edm, goaledm(fm)), "up = %.1f" % fm.up
-    )
-    w = (15, 18, 38)
-    l2 = format_line(w, "├┬┼┤")
-    v1 = format_row(
-        w,
-        f"{'Valid' if fm.is_valid else 'INVALID'} Minimum",
-        f"{'Valid' if fm.has_valid_parameters else 'INVALID'} Parameters",
-        "SOME PARAMETERS AT LIMIT"
-        if fm.has_parameters_at_limit
-        else "No Parameters at limit",
-    )
-    l3 = format_line(w, "├┴┼┤")
-    v2 = format_row(
-        (34, 38),
-        f"{'ABOVE' if fm.is_above_max_edm else 'Below'} EDM goal",
-        f"{'ABOVE' if fm.has_reached_call_limit else 'Below'} call limit",
-    )
-    w = (15, 18, 11, 13, 12)
-    l4 = format_line(w, "├┬┼┬┬┤")
-    v3 = format_row(
-        w,
-        f"Hesse {'FAILED' if fm.hesse_failed else 'ok'}",
-        f"{'Has' if fm.has_covariance else 'NO'} Covariance",
+def fmin_fields(fm):
+    return [
+        "FCN = %.4g" % fm.fval,
+        "Ncalls=%i (%i total)" % (fm.nfcn, fm.ncalls),
+        "EDM = %.3g (Goal: %.3g)" % (fm.edm, goaledm(fm)),
+        "up = %.1f" % fm.up,
+        ("Valid" if fm.is_valid else "INVALID") + " Minimum",
+        ("Valid" if fm.has_valid_parameters else "INVALID") + " Parameters",
+        ("SOME" if fm.has_parameters_at_limit else "No") + " Parameters at limit",
+        ("ABOVE" if fm.is_above_max_edm else "Below") + " EDM goal",
+        ("ABOVE" if fm.has_reached_call_limit else "Below") + " call limit",
+        "Hesse " + ("FAILED" if fm.hesse_failed else "ok"),
+        ("Has" if fm.has_covariance else "NO") + " Covariance",
         "Accurate" if fm.has_accurate_covar else "APPROXIMATE",
         "Pos. def." if fm.has_posdef_covar else "NOT pos. def.",
         "FORCED" if fm.has_made_posdef_covar else "Not forced",
-    )
+    ]
+
+
+def fmin(fm):
+    ff = fmin_fields(fm)
+    w = (-34, 38)
+    l1 = format_line(w, "┌┬┐")
+    i1 = format_row(w, *ff[0:2])
+    i2 = format_row(w, *ff[2:4])
+    w = (15, 18, 38)
+    l2 = format_line(w, "├┬┼┤")
+    v1 = format_row(w, *ff[4:7])
+    l3 = format_line(w, "├┴┼┤")
+    v2 = format_row((34, 38), *ff[7:9])
+    w = (15, 18, 11, 13, 12)
+    l4 = format_line(w, "├┬┼┬┬┤")
+    v3 = format_row(w, *ff[9:14])
     l5 = format_line(w, "└┴┴┴┴┘")
     return "\n".join((l1, i1, i2, l2, v1, l3, v2, l4, v3, l5))
 

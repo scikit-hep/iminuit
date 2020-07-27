@@ -1,5 +1,5 @@
 from iminuit.color import Gradient
-from iminuit.repr_text import pdg_format, matrix_format, goaledm
+from iminuit.repr_text import pdg_format, matrix_format, fmin_fields
 
 good_style = "background-color:#92CCA6;"
 bad_style = "background-color:#FF7878;"
@@ -28,16 +28,16 @@ def to_str(tag):
 
 def tag(name, *args, **kwargs):
     # sort keys so that order is same on all platforms
-    head = f"<{name}"
+    head = "<" + name
     for k in sorted(kwargs):
         v = kwargs[k]
-        head += f' {k}="{v}"'
+        head += ' %s="%s"' % (k, v)
     head += ">"
-    tail = f"</{name}>"
+    tail = "</%s>" % name
     if len(args) == 0:
         return [head + tail]
     if len(args) == 1 and isinstance(args[0], str):
-        return [f"{head} {args[0]} {tail}"]
+        return ["{0} {1} {2}".format(head, args[0], tail)]
     return [head, *args, tail]
 
 
@@ -62,47 +62,44 @@ def good(x, should_be, alt_style=bad_style):
 
 
 def fmin(fm):
-    """Display FunctionMinum in html representation"""
+    ff = fmin_fields(fm)
     return to_str(
         table(
             tr(
                 td(
-                    "FCN = %.4g" % fm.fval,
+                    ff[0],
                     colspan=2,
                     title="Minimum value of function",
                     style="text-align:center",
                 ),
                 td(
-                    "Ncalls = %i (%i total)" % (fm.nfcn, fm.ncalls),
+                    ff[1],
                     colspan=3,
                     title="No. of calls in last algorithm and total number of calls",
                 ),
             ),
             tr(
                 td(
-                    "EDM = %.3g (Goal: %.3g)" % (fm.edm, goaledm(fm)),
+                    ff[2],
                     colspan=2,
                     style="text-align:center",
                     title="Estimated distance to minimum and goal",
                 ),
                 td(
-                    "up = %.1f" % fm.up,
+                    ff[3],
                     colspan=3,
                     style="text-align:center",
                     title="Increase in FCN which corresponds to 1 standard deviation",
                 ),
             ),
             tr(
+                td(ff[4], style="text-align:center;" + good(fm.is_valid, True),),
                 td(
-                    f"{'Valid' if fm.is_valid else 'INVALID'} Minimum",
-                    style="text-align:center;" + good(fm.is_valid, True),
-                ),
-                td(
-                    f"{'Valid' if fm.has_valid_parameters else 'INVALID'} Parameters",
+                    ff[5],
                     style="text-align:center;" + good(fm.has_valid_parameters, True),
                 ),
                 td(
-                    f"{'SOME' if fm.has_parameters_at_limit else 'No'} Parameters at limit",
+                    ff[6],
                     colspan="3",
                     style="text-align:center;"
                     + good(fm.has_parameters_at_limit, False, warn_style),
@@ -110,38 +107,32 @@ def fmin(fm):
             ),
             tr(
                 td(
-                    f"{'ABOVE' if fm.is_above_max_edm else 'Below'} EDM goal",
+                    ff[7],
                     colspan="2",
                     style="text-align:center;" + good(fm.is_above_max_edm, False),
                 ),
                 td(
-                    f"{'ABOVE' if fm.has_reached_call_limit else 'Below'} call limit",
+                    ff[8],
                     colspan=3,
                     style="text-align:center;" + good(fm.has_reached_call_limit, False),
                 ),
             ),
             tr(
+                td(ff[9], style="text-align:center;" + good(fm.hesse_failed, False),),
+                td(ff[10], style="text-align:center;" + good(fm.has_covariance, True),),
                 td(
-                    f"Hesse {'FAILED' if fm.hesse_failed else 'ok'}",
-                    style="text-align:center;" + good(fm.hesse_failed, False),
-                ),
-                td(
-                    f"{'Has' if fm.has_covariance else 'NO'} Covariance",
-                    style="text-align:center;" + good(fm.has_covariance, True),
-                ),
-                td(
-                    "Accurate" if fm.has_accurate_covar else "APPROXIMATE",
+                    ff[11],
                     title="Is covariance matrix accurate?",
                     style="text-align:center;"
                     + good(fm.has_accurate_covar, True, warn_style),
                 ),
                 td(
-                    "Pos. def." if fm.has_posdef_covar else "NOT pos. def.",
+                    ff[12],
                     style="text-align:center;" + good(fm.has_posdef_covar, True),
                     title="Is covariance matrix positive definite?",
                 ),
                 td(
-                    "FORCED" if fm.has_made_posdef_covar else "Not forced",
+                    ff[13],
                     style="text-align:center;" + good(fm.has_made_posdef_covar, False),
                     title="Was positive definiteness enforced by Minuit?",
                 ),
