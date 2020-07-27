@@ -57,87 +57,92 @@ def td(*args, **kwargs):
     return tag("td", *args, **kwargs)
 
 
-def good(x, should_be):
-    return good_style if x == should_be else bad_style
+def good(x, should_be, alt_style=bad_style):
+    return good_style if x == should_be else alt_style
 
 
-def fmin(sfmin):
+def fmin(fm):
     """Display FunctionMinum in html representation"""
     return to_str(
         table(
             tr(
                 td(
-                    "FCN = %.4g" % sfmin.fval,
+                    "FCN = %.4g" % fm.fval,
                     colspan=2,
                     title="Minimum value of function",
                     style="text-align:center",
                 ),
                 td(
-                    "Ncalls = %i (%i total)" % (sfmin.nfcn, sfmin.ncalls),
+                    "Ncalls = %i (%i total)" % (fm.nfcn, fm.ncalls),
                     colspan=3,
                     title="No. of calls in last algorithm and total number of calls",
                 ),
             ),
             tr(
                 td(
-                    "EDM = %.3g (Goal: %.3g)" % (sfmin.edm, goaledm(sfmin)),
+                    "EDM = %.3g (Goal: %.3g)" % (fm.edm, goaledm(fm)),
                     colspan=2,
                     style="text-align:center",
-                    title="Estimated distance to minimum and target threshold",
+                    title="Estimated distance to minimum and goal",
                 ),
                 td(
-                    "up = %.1f" % sfmin.up,
+                    "up = %.1f" % fm.up,
                     colspan=3,
+                    style="text-align:center",
                     title="Increase in FCN which corresponds to 1 standard deviation",
                 ),
             ),
             tr(
-                td("Valid Min.", title="Validity of the migrad call"),
-                td("Valid Param.", title="Validity of parameters"),
-                td("Above EDM", title="Is EDM above goal EDM?"),
                 td(
-                    "Reached call limit",
-                    colspan=2,
-                    title="Did last migrad call reach max call limit?",
+                    f"{'Valid' if fm.is_valid else 'INVALID'} Minimum",
+                    style="text-align:center;" + good(fm.is_valid, True),
+                ),
+                td(
+                    f"{'Valid' if fm.has_valid_parameters else 'INVALID'} Parameters",
+                    style="text-align:center;" + good(fm.has_valid_parameters, True),
+                ),
+                td(
+                    f"{'SOME' if fm.has_parameters_at_limit else 'No'} Parameters at limit",
+                    colspan="3",
+                    style="text-align:center;"
+                    + good(fm.has_parameters_at_limit, False, warn_style),
                 ),
             ),
             tr(
-                td(str(sfmin.is_valid), style=good(sfmin.is_valid, True)),
                 td(
-                    str(sfmin.has_valid_parameters),
-                    style=good(sfmin.has_valid_parameters, True),
+                    f"{'ABOVE' if fm.is_above_max_edm else 'Below'} EDM goal",
+                    colspan="2",
+                    style="text-align:center;" + good(fm.is_above_max_edm, False),
                 ),
                 td(
-                    str(sfmin.is_above_max_edm),
-                    style=good(sfmin.is_above_max_edm, False),
-                ),
-                td(
-                    str(sfmin.has_reached_call_limit),
-                    colspan=2,
-                    style=good(sfmin.has_reached_call_limit, False),
+                    f"{'Reached' if fm.has_reached_call_limit else 'Below'} call limit",
+                    colspan=3,
+                    style="text-align:center;" + good(fm.has_reached_call_limit, False),
                 ),
             ),
             tr(
-                td("Hesse failed", title="Did Hesse fail?"),
-                td("Has cov.", title="Has covariance matrix"),
-                td("Accurate", title="Is covariance matrix accurate?"),
-                td("Pos. def.", title="Is covariance matrix positive definite?"),
-                td("Forced", title="Was positive definiteness enforced by Minuit?"),
-            ),
-            tr(
-                td(str(sfmin.hesse_failed), style=good(sfmin.hesse_failed, False)),
-                td(str(sfmin.has_covariance), style=good(sfmin.has_covariance, True)),
                 td(
-                    str(sfmin.has_accurate_covar),
-                    style=good(sfmin.has_accurate_covar, True),
+                    f"Hesse {'FAILED' if fm.hesse_failed else 'ok'}",
+                    style="text-align:center;" + good(fm.hesse_failed, False),
                 ),
                 td(
-                    str(sfmin.has_posdef_covar),
-                    style=good(sfmin.has_posdef_covar, True),
+                    f"{'Has' if fm.has_covariance else 'NO'} Covariance",
+                    style="text-align:center;" + good(fm.has_covariance, True),
                 ),
                 td(
-                    str(sfmin.has_made_posdef_covar),
-                    style=good(sfmin.has_made_posdef_covar, False),
+                    "Accurate" if fm.has_accurate_covar else "APPROXIMATE",
+                    title="Is covariance matrix accurate?",
+                    style="text-align:center;" + good(fm.has_accurate_covar, True),
+                ),
+                td(
+                    "Pos. def." if fm.has_posdef_covar else "NOT pos. def.",
+                    style="text-align:center;" + good(fm.has_posdef_covar, True),
+                    title="Is covariance matrix positive definite?",
+                ),
+                td(
+                    "FORCED" if fm.has_made_posdef_covar else "Not forced",
+                    style="text-align:center;" + good(fm.has_made_posdef_covar, False),
+                    title="Was positive definiteness enforced by Minuit?",
                 ),
             ),
         )
