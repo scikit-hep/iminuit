@@ -179,7 +179,7 @@ def test_html_fmin_bad(fmin_bad):
     <tr>
         <td style="text-align:center;background-color:#FF7878;"> Hesse FAILED </td>
         <td style="text-align:center;background-color:#FF7878;"> NO Covariance </td>
-        <td style="text-align:center;background-color:#FF7878;" title="Is covariance matrix accurate?"> APPROXIMATE </td>
+        <td style="text-align:center;background-color:#FFF79A;" title="Is covariance matrix accurate?"> APPROXIMATE </td>
         <td style="text-align:center;background-color:#FF7878;" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
         <td style="text-align:center;background-color:#FF7878;" title="Was positive definiteness enforced by Minuit?"> FORCED </td>
     </tr>

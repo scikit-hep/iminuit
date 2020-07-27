@@ -132,7 +132,8 @@ def fmin(fm):
                 td(
                     "Accurate" if fm.has_accurate_covar else "APPROXIMATE",
                     title="Is covariance matrix accurate?",
-                    style="text-align:center;" + good(fm.has_accurate_covar, True),
+                    style="text-align:center;"
+                    + good(fm.has_accurate_covar, True, warn_style),
                 ),
                 td(
                     "Pos. def." if fm.has_posdef_covar else "NOT pos. def.",
