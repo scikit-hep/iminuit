@@ -1,9 +1,8 @@
 # flake8: noqa E501
 from iminuit import Minuit
-from iminuit.util import Params, Param, Matrix
+from iminuit.util import Params, Param, Matrix, FMin
 from iminuit import repr_html, repr_text
 import pytest
-from xml.etree import ElementTree
 
 nan = float("nan")
 inf = float("infinity")
@@ -14,9 +13,23 @@ def f1(x, y):
 
 
 def test_html_tag():
-    tag = repr_html.tag("foo", "bar", baz="hi", xyzzy="2")
-    assert tag == '<foo baz="hi" xyzzy="2"> bar </foo>'
-    assert repr_html.tag("foo") == "<foo> </foo>"
+    tag = repr_html.tag
+
+    def stag(*args, **kwargs):
+        return repr_html.to_str(tag(*args, **kwargs))
+
+    # fmt: off
+    assert stag("foo", "bar", baz="hi", xyzzy="2") == '<foo baz="hi" xyzzy="2"> bar </foo>'
+    assert stag("foo") == """<foo></foo>"""
+    assert tag("foo", tag("bar", "baz")) == ["<foo>", ["<bar> baz </bar>"], "</foo>"]
+    assert stag("foo", tag("bar", "baz")) == """<foo>
+    <bar> baz </bar>
+</foo>"""
+    # fmt: on
+
+
+def framed(s):
+    return "\n" + str(s) + "\n"
 
 
 def test_pdg_format():
@@ -72,43 +85,186 @@ def minuit():
     return m
 
 
-def test_html_fmin(minuit):
-    fmin = minuit.fmin
-    assert (
-        fmin._repr_html_()
-        == r"""<table>
-<tr> <td colspan="2" style="text-align:center" title="Minimum value of function"> FCN = 1 </td> <td colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 32 (56 total) </td> </tr>
-<tr> <td colspan="2" style="text-align:center" title="Estimated distance to minimum and target threshold"> EDM = %.3g (Goal: 2e-07) </td> <td colspan="3" title="Increase in FCN which corresponds to 1 standard deviation"> up = 1.0 </td> </tr>
-<tr> <td title="Validity of the migrad call"> Valid Min. </td> <td title="Validity of parameters"> Valid Param. </td> <td title="Is EDM above goal EDM?"> Above EDM </td> <td colspan="2" title="Did last migrad call reach max call limit?"> Reached call limit </td> </tr>
-<tr> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> False </td> <td colspan="2" style="background-color:#92CCA6;"> False </td> </tr>
-<tr> <td title="Did Hesse fail?"> Hesse failed </td> <td title="Has covariance matrix"> Has cov. </td> <td title="Is covariance matrix accurate?"> Accurate </td> <td title="Is covariance matrix positive definite?"> Pos. def. </td> <td title="Was positive definiteness enforced by Minuit?"> Forced </td> </tr>
-<tr> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> False </td> </tr>
-</table>
-"""
-        % fmin.edm
+@pytest.fixture
+def fmin_good():
+    return FMin(
+        fval=1.23456e-10,
+        edm=1.23456e-10,
+        tolerance=0.1,
+        nfcn=10,
+        ncalls=20,
+        up=0.5,
+        is_valid=True,
+        has_valid_parameters=True,
+        has_accurate_covar=True,
+        has_posdef_covar=True,
+        has_made_posdef_covar=False,
+        hesse_failed=False,
+        has_covariance=True,
+        is_above_max_edm=False,
+        has_reached_call_limit=False,
+        has_parameters_at_limit=False,
     )
+
+
+@pytest.fixture
+def fmin_bad():
+    return FMin(
+        fval=nan,
+        edm=1.23456e-10,
+        tolerance=0,
+        nfcn=100000,
+        ncalls=200000,
+        up=0.5,
+        is_valid=False,
+        has_valid_parameters=False,
+        has_accurate_covar=False,
+        has_posdef_covar=False,
+        has_made_posdef_covar=True,
+        hesse_failed=True,
+        has_covariance=False,
+        is_above_max_edm=True,
+        has_reached_call_limit=True,
+        has_parameters_at_limit=True,
+    )
+
+
+def test_html_fmin_good(fmin_good):
+    # fmt: off
+    assert fmin_good._repr_html_() == """<table>
+    <tr>
+        <td colspan="2" style="text-align:center" title="Minimum value of function"> FCN = 1.235e-10 </td>
+        <td colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 10 (20 total) </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 0.0001) </td>
+        <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
+    </tr>
+    <tr>
+        <td style="text-align:center;background-color:#92CCA6;"> Valid Minimum </td>
+        <td style="text-align:center;background-color:#92CCA6;"> Valid Parameters </td>
+        <td colspan="3" style="text-align:center;background-color:#92CCA6;"> No Parameters at limit </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center;background-color:#92CCA6;"> Below EDM goal </td>
+        <td colspan="3" style="text-align:center;background-color:#92CCA6;"> Below call limit </td>
+    </tr>
+    <tr>
+        <td style="text-align:center;background-color:#92CCA6;"> Hesse ok </td>
+        <td style="text-align:center;background-color:#92CCA6;"> Has Covariance </td>
+        <td style="text-align:center;background-color:#92CCA6;" title="Is covariance matrix accurate?"> Accurate </td>
+        <td style="text-align:center;background-color:#92CCA6;" title="Is covariance matrix positive definite?"> Pos. def. </td>
+        <td style="text-align:center;background-color:#92CCA6;" title="Was positive definiteness enforced by Minuit?"> Not forced </td>
+    </tr>
+</table>"""
+    # fmt: on
+
+
+def test_html_fmin_bad(fmin_bad):
+    # fmt: off
+    assert fmin_bad._repr_html_() == """<table>
+    <tr>
+        <td colspan="2" style="text-align:center" title="Minimum value of function"> FCN = nan </td>
+        <td colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 100000 (200000 total) </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 1.19e-10) </td>
+        <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
+    </tr>
+    <tr>
+        <td style="text-align:center;background-color:#FF7878;"> INVALID Minimum </td>
+        <td style="text-align:center;background-color:#FF7878;"> INVALID Parameters </td>
+        <td colspan="3" style="text-align:center;background-color:#FFF79A;"> SOME Parameters at limit </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align:center;background-color:#FF7878;"> ABOVE EDM goal </td>
+        <td colspan="3" style="text-align:center;background-color:#FF7878;"> ABOVE call limit </td>
+    </tr>
+    <tr>
+        <td style="text-align:center;background-color:#FF7878;"> Hesse FAILED </td>
+        <td style="text-align:center;background-color:#FF7878;"> NO Covariance </td>
+        <td style="text-align:center;background-color:#FFF79A;" title="Is covariance matrix accurate?"> APPROXIMATE </td>
+        <td style="text-align:center;background-color:#FF7878;" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
+        <td style="text-align:center;background-color:#FF7878;" title="Was positive definiteness enforced by Minuit?"> FORCED </td>
+    </tr>
+</table>"""
+    # fmt: on
 
 
 def test_html_params(minuit):
-    assert (
-        r"""<table>
-<tr style="background-color:#F4F4F4;"> <td/> <th title="Variable name"> Name </th> <th title="Value of parameter"> Value </th> <th title="Hesse error"> Hesse Error </th> <th title="Minos lower error"> Minos Error- </th> <th title="Minos upper error"> Minos Error+ </th> <th title="Lower limit of the parameter"> Limit- </th> <th title="Upper limit of the parameter"> Limit+ </th> <th title="Is the parameter fixed in the fit"> Fixed </th> </tr>
-<tr style="background-color:#FFFFFF;"> <th> 0 </th> <td> x </td> <td> 0.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> </tr>
-<tr style="background-color:#F4F4F4;"> <th> 1 </th> <td> y </td> <td> 0.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> <td>  </td> </tr>
-</table>
-"""
-        == minuit.init_params._repr_html_()
-    )
+    # fmt: off
+    assert minuit.init_params._repr_html_() == """<table>
+    <tr style="background-color:#F4F4F4;">
+        <td></td>
+        <th title="Variable name"> Name </th>
+        <th title="Value of parameter"> Value </th>
+        <th title="Hesse error"> Hesse Error </th>
+        <th title="Minos lower error"> Minos Error- </th>
+        <th title="Minos upper error"> Minos Error+ </th>
+        <th title="Lower limit of the parameter"> Limit- </th>
+        <th title="Upper limit of the parameter"> Limit+ </th>
+        <th title="Is the parameter fixed in the fit"> Fixed </th>
+    </tr>
+    <tr style="background-color:#FFFFFF;">
+        <th> 0 </th>
+        <td> x </td>
+        <td> 0.0 </td>
+        <td> 0.1 </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+    </tr>
+    <tr style="background-color:#F4F4F4;">
+        <th> 1 </th>
+        <td> y </td>
+        <td> 0.0 </td>
+        <td> 0.1 </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+    </tr>
+</table>"""
 
-    assert (
-        """<table>
-<tr style="background-color:#F4F4F4;"> <td/> <th title="Variable name"> Name </th> <th title="Value of parameter"> Value </th> <th title="Hesse error"> Hesse Error </th> <th title="Minos lower error"> Minos Error- </th> <th title="Minos upper error"> Minos Error+ </th> <th title="Lower limit of the parameter"> Limit- </th> <th title="Upper limit of the parameter"> Limit+ </th> <th title="Is the parameter fixed in the fit"> Fixed </th> </tr>
-<tr style="background-color:#FFFFFF;"> <th> 0 </th> <td> x </td> <td> 2 </td> <td> 1 </td> <td> -1 </td> <td> 1 </td> <td>  </td> <td>  </td> <td>  </td> </tr>
-<tr style="background-color:#F4F4F4;"> <th> 1 </th> <td> y </td> <td> 1.0 </td> <td> 0.5 </td> <td> -0.5 </td> <td> 0.5 </td> <td>  </td> <td>  </td> <td>  </td> </tr>
-</table>
-"""
-        == minuit.params._repr_html_()
-    )
+    assert minuit.params._repr_html_() == """<table>
+    <tr style="background-color:#F4F4F4;">
+        <td></td>
+        <th title="Variable name"> Name </th>
+        <th title="Value of parameter"> Value </th>
+        <th title="Hesse error"> Hesse Error </th>
+        <th title="Minos lower error"> Minos Error- </th>
+        <th title="Minos upper error"> Minos Error+ </th>
+        <th title="Lower limit of the parameter"> Limit- </th>
+        <th title="Upper limit of the parameter"> Limit+ </th>
+        <th title="Is the parameter fixed in the fit"> Fixed </th>
+    </tr>
+    <tr style="background-color:#FFFFFF;">
+        <th> 0 </th>
+        <td> x </td>
+        <td> 2 </td>
+        <td> 1 </td>
+        <td> -1 </td>
+        <td> 1 </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+    </tr>
+    <tr style="background-color:#F4F4F4;">
+        <th> 1 </th>
+        <td> y </td>
+        <td> 1.0 </td>
+        <td> 0.5 </td>
+        <td> -0.5 </td>
+        <td> 0.5 </td>
+        <td>  </td>
+        <td>  </td>
+        <td>  </td>
+    </tr>
+</table>"""
+    # fmt: on
 
 
 def test_html_params_with_limits():
@@ -124,106 +280,161 @@ def test_html_params_with_limits():
         errordef=1,
         print_level=0,
     )
-    assert (
-        r"""<table>
-<tr style="background-color:#F4F4F4;"> <td/> <th title="Variable name"> Name </th> <th title="Value of parameter"> Value </th> <th title="Hesse error"> Hesse Error </th> <th title="Minos lower error"> Minos Error- </th> <th title="Minos upper error"> Minos Error+ </th> <th title="Lower limit of the parameter"> Limit- </th> <th title="Upper limit of the parameter"> Limit+ </th> <th title="Is the parameter fixed in the fit"> Fixed </th> </tr>
-<tr style="background-color:#FFFFFF;"> <th> 0 </th> <td> x </td> <td> 3.0 </td> <td> 0.2 </td> <td>  </td> <td>  </td> <td> 0 </td> <td>  </td> <td> yes </td> </tr>
-<tr style="background-color:#F4F4F4;"> <th> 1 </th> <td> y </td> <td> 5.0 </td> <td> 0.1 </td> <td>  </td> <td>  </td> <td> 0 </td> <td> 10 </td> <td>  </td> </tr>
-</table>
-"""
-        == m.init_params._repr_html_()
-    )
+    # fmt: off
+    assert m.init_params._repr_html_() == r"""<table>
+    <tr style="background-color:#F4F4F4;">
+        <td></td>
+        <th title="Variable name"> Name </th>
+        <th title="Value of parameter"> Value </th>
+        <th title="Hesse error"> Hesse Error </th>
+        <th title="Minos lower error"> Minos Error- </th>
+        <th title="Minos upper error"> Minos Error+ </th>
+        <th title="Lower limit of the parameter"> Limit- </th>
+        <th title="Upper limit of the parameter"> Limit+ </th>
+        <th title="Is the parameter fixed in the fit"> Fixed </th>
+    </tr>
+    <tr style="background-color:#FFFFFF;">
+        <th> 0 </th>
+        <td> x </td>
+        <td> 3.0 </td>
+        <td> 0.2 </td>
+        <td>  </td>
+        <td>  </td>
+        <td> 0 </td>
+        <td>  </td>
+        <td> yes </td>
+    </tr>
+    <tr style="background-color:#F4F4F4;">
+        <th> 1 </th>
+        <td> y </td>
+        <td> 5.0 </td>
+        <td> 0.1 </td>
+        <td>  </td>
+        <td>  </td>
+        <td> 0 </td>
+        <td> 10 </td>
+        <td>  </td>
+    </tr>
+</table>"""
+    # fmt: on
 
 
-def test_html_minos(minuit):
+def test_html_merrors(minuit):
     mes = minuit.merrors
-    assert (
-        mes._repr_html_()
-        == r"""<table>
-<tr> <td/> <th colspan="2" style="text-align:center" title="Parameter name"> x </th> <th colspan="2" style="text-align:center" title="Parameter name"> y </th> </tr>
-<tr> <th title="Lower and upper minos error of the parameter"> Error </th> <td> -1 </td> <td> 1 </td> <td> -0.5 </td> <td> 0.5 </td> </tr>
-<tr> <th title="Validity of lower/upper minos error"> Valid </th> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> <td style="background-color:#92CCA6;"> True </td> </tr>
-<tr> <th title="Did scan hit limit of any parameter?"> At Limit </th> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> </tr>
-<tr> <th title="Did scan hit function call limit?"> Max FCN </th> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> </tr>
-<tr> <th title="New minimum found when doing scan?"> New Min </th> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> <td style="background-color:#92CCA6;"> False </td> </tr>
-</table>
-"""
-    )
+    # fmt: off
+    assert mes._repr_html_() == r"""<table>
+    <tr>
+        <td></td>
+        <th colspan="2" style="text-align:center" title="Parameter name"> x </th>
+        <th colspan="2" style="text-align:center" title="Parameter name"> y </th>
+    </tr>
+    <tr>
+        <th title="Lower and upper minos error of the parameter"> Error </th>
+        <td> -1 </td>
+        <td> 1 </td>
+        <td> -0.5 </td>
+        <td> 0.5 </td>
+    </tr>
+    <tr>
+        <th title="Validity of lower/upper minos error"> Valid </th>
+        <td style="background-color:#92CCA6;"> True </td>
+        <td style="background-color:#92CCA6;"> True </td>
+        <td style="background-color:#92CCA6;"> True </td>
+        <td style="background-color:#92CCA6;"> True </td>
+    </tr>
+    <tr>
+        <th title="Did scan hit limit of any parameter?"> At Limit </th>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+    </tr>
+    <tr>
+        <th title="Did scan hit function call limit?"> Max FCN </th>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+    </tr>
+    <tr>
+        <th title="New minimum found when doing scan?"> New Min </th>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;"> False </td>
+    </tr>
+</table>"""
+    # fmt: on
 
 
 def test_html_matrix():
     matrix = Matrix(["x", "y"], ((1.0, -0.0), (-0.0, 0.25)))
-    assert (
-        matrix._repr_html_()
-        == r"""<table>
-<tr> <td/> <th> x </th> <th> y </th> </tr>
-<tr> <th> x </th> <td> 1.00 </td> <td style="background-color:rgb(250,250,250)"> -0.00 </td> </tr>
-<tr> <th> y </th> <td style="background-color:rgb(250,250,250)"> -0.00 </td> <td> 0.25 </td> </tr>
-</table>
+    # fmt: off
+    assert matrix._repr_html_() == r"""<table>
+    <tr>
+        <td></td>
+        <th> x </th>
+        <th> y </th>
+    </tr>
+    <tr>
+        <th> x </th>
+        <td> 1.00 </td>
+        <td style="background-color:rgb(250,250,250)"> -0.00 </td>
+    </tr>
+    <tr>
+        <th> y </th>
+        <td style="background-color:rgb(250,250,250)"> -0.00 </td>
+        <td> 0.25 </td>
+    </tr>
+</table>"""
+    # fmt: on
+
+
+def test_text_fmin_good(fmin_good):
+    # fmt: off
+    assert framed(fmin_good) == r"""
+┌──────────────────────────────────┬──────────────────────────────────────┐
+│ FCN = 1.235e-10                  │        Ncalls = 10 (20 total)        │
+│ EDM = 1.23e-10 (Goal: 0.0001)    │               up = 0.5               │
+├───────────────┬──────────────────┼──────────────────────────────────────┤
+│ Valid Minimum │ Valid Parameters │        No Parameters at limit        │
+├───────────────┴──────────────────┼──────────────────────────────────────┤
+│          Below EDM goal          │           Below call limit           │
+├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
+│   Hesse ok    │  Has Covariance  │ Accurate  │  Pos. def.  │ Not forced │
+└───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
 """
-    )
+    # fmt: on
 
 
-def test_text_fmin(minuit):
-    fmin = minuit.fmin
-    assert (
-        str(fmin)
-        == r"""------------------------------------------------------------------
-| FCN = 1                       |      Ncalls=32 (56 total)      |
-| EDM = %.3g (Goal: 2e-07)  |            up = 1.0            |
-------------------------------------------------------------------
-|  Valid Min.   | Valid Param.  | Above EDM | Reached call limit |
-------------------------------------------------------------------
-|     True      |     True      |   False   |       False        |
-------------------------------------------------------------------
-| Hesse failed  |   Has cov.    | Accurate  | Pos. def. | Forced |
-------------------------------------------------------------------
-|     False     |     True      |   True    |   True    | False  |
-------------------------------------------------------------------"""
-        % fmin.edm
-    )
-
-
-def test_text_fmin_tiny_tol():
-    m = Minuit(lambda x: x ** 2, pedantic=False)
-    m.tol = 1e-20
-    m.migrad()
-    fmin = m.fmin
-    assert (
-        str(fmin)
-        == r"""------------------------------------------------------------------
-| FCN = 0                       |      Ncalls=10 (10 total)      |
-| EDM = 0 (Goal: 1.19e-10)      |            up = 1.0            |
-------------------------------------------------------------------
-|  Valid Min.   | Valid Param.  | Above EDM | Reached call limit |
-------------------------------------------------------------------
-|     True      |     True      |   False   |       False        |
-------------------------------------------------------------------
-| Hesse failed  |   Has cov.    | Accurate  | Pos. def. | Forced |
-------------------------------------------------------------------
-|     False     |     True      |   True    |   True    | False  |
-------------------------------------------------------------------"""
-    )
+def test_text_fmin_bad(fmin_bad):
+    # fmt: off
+    assert framed(fmin_bad) == r"""
+┌──────────────────────────────────┬──────────────────────────────────────┐
+│ FCN = nan                        │    Ncalls = 100000 (200000 total)    │
+│ EDM = 1.23e-10 (Goal: 1.19e-10)  │               up = 0.5               │
+├───────────────┬──────────────────┼──────────────────────────────────────┤
+│INVALID Minimum│INVALID Parameters│       SOME Parameters at limit       │
+├───────────────┴──────────────────┼──────────────────────────────────────┤
+│          ABOVE EDM goal          │           ABOVE call limit           │
+├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
+│ Hesse FAILED  │  NO Covariance   │APPROXIMATE│NOT pos. def.│   FORCED   │
+└───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
+"""
+    # fmt: on
 
 
 def test_text_params(minuit):
-    assert r"""------------------------------------------------------------------------------------------
-|   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
-------------------------------------------------------------------------------------------
-| 0 | x    |    0.0    |    0.1    |            |            |         |         |       |
-| 1 | y    |    0.0    |    0.1    |            |            |         |         |       |
-------------------------------------------------------------------------------------------""" == str(
-        minuit.init_params
-    )
-
-    assert r"""------------------------------------------------------------------------------------------
-|   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
-------------------------------------------------------------------------------------------
-| 0 | x    |     2     |     1     |     -1     |     1      |         |         |       |
-| 1 | y    |    1.0    |    0.5    |    -0.5    |    0.5     |         |         |       |
-------------------------------------------------------------------------------------------""" == str(
-        minuit.params
-    )
+    # fmt: off
+    assert framed(minuit.params) == """
+┌───┬──────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
+│   │ Name │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
+├───┼──────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
+│ 0 │ x    │     2     │     1     │     -1     │     1      │         │         │       │
+│ 1 │ y    │    1.0    │    0.5    │    -0.5    │    0.5     │         │         │       │
+└───┴──────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
+"""
+    # fmt: on
 
 
 def test_text_params_with_limits():
@@ -238,54 +449,60 @@ def test_text_params_with_limits():
         limit_y=(0, 10),
         errordef=1,
     )
-    assert r"""------------------------------------------------------------------------------------------
-|   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
-------------------------------------------------------------------------------------------
-| 0 | x    |    3.0    |    0.2    |            |            |    0    |         |  yes  |
-| 1 | y    |    5.0    |    0.1    |            |            |    0    |   10    |       |
-------------------------------------------------------------------------------------------""" == str(
-        m.init_params
-    )
+    # fmt: off
+    assert framed(m.params) == """
+┌───┬──────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
+│   │ Name │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
+├───┼──────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
+│ 0 │ x    │    3.0    │    0.2    │            │            │    0    │         │  yes  │
+│ 1 │ y    │    5.0    │    0.1    │            │            │    0    │   10    │       │
+└───┴──────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
+"""
+    # fmt: on
 
 
-def test_text_minos(minuit):
-    assert (
-        str(minuit.minos())
-        == r"""------------------------------------------------------------
-|          |           x           |           y           |
-------------------------------------------------------------
-|  Error   |    -1     |     1     |   -0.5    |    0.5    |
-|  Valid   |   True    |   True    |   True    |   True    |
-| At Limit |   False   |   False   |   False   |   False   |
-| Max FCN  |   False   |   False   |   False   |   False   |
-| New Min  |   False   |   False   |   False   |   False   |
-------------------------------------------------------------"""
-    )
+def test_text_merrors(minuit):
+    # fmt: off
+    assert framed(minuit.minos()) == r"""
+┌──────────┬───────────────────────┬───────────────────────┐
+│          │           x           │           y           │
+├──────────┼───────────┬───────────┼───────────┬───────────┤
+│  Error   │    -1     │     1     │   -0.5    │    0.5    │
+│  Valid   │   True    │   True    │   True    │   True    │
+│ At Limit │   False   │   False   │   False   │   False   │
+│ Max FCN  │   False   │   False   │   False   │   False   │
+│ New Min  │   False   │   False   │   False   │   False   │
+└──────────┴───────────┴───────────┴───────────┴───────────┘
+"""
+    # fmt: on
 
 
 def test_text_matrix():
     matrix = Matrix(["x", "y"], ((1.0, -0.0), (-0.0, 0.25)))
-    assert r"""-------------------
-|   |     x     y |
--------------------
-| x |  1.00 -0.00 |
-| y | -0.00  0.25 |
--------------------""" == str(
-        matrix
-    )
+    # fmt: off
+    assert framed(matrix) == r"""
+┌───┬─────────────┐
+│   │     x     y │
+├───┼─────────────┤
+│ x │  1.00 -0.00 │
+│ y │ -0.00  0.25 │
+└───┴─────────────┘
+"""
+    # fmt: on
 
 
 def test_text_with_long_names():
 
     matrix = Matrix(["super-long-name", "x"], ((1.0, 0.1), (0.1, 1.0)))
-    assert r"""-----------------------------------------------------
-|                 | super-long-name               x |
------------------------------------------------------
-| super-long-name |             1.0             0.1 |
-|               x |             0.1             1.0 |
------------------------------------------------------""" == str(
-        matrix
-    )
+    # fmt: off
+    assert framed(matrix) == r"""
+┌─────────────────┬─────────────────────────────────┐
+│                 │ super-long-name               x │
+├─────────────────┼─────────────────────────────────┤
+│ super-long-name │             1.0             0.1 │
+│               x │             0.1             1.0 │
+└─────────────────┴─────────────────────────────────┘
+"""
 
     mps = Params(
         [
@@ -305,25 +522,28 @@ def test_text_with_long_names():
         ],
         None,
     )
-    assert r"""-----------------------------------------------------------------------------------------------------
-|   | Name            |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
------------------------------------------------------------------------------------------------------
-| 0 | super-long-name |     0     |     0     |            |            |         |         |       |
------------------------------------------------------------------------------------------------------""" == str(
-        mps
-    )
+    assert framed(mps) == r"""
+┌───┬─────────────────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
+│   │ Name            │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
+├───┼─────────────────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
+│ 0 │ super-long-name │     0     │     0     │            │            │         │         │       │
+└───┴─────────────────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
+"""
+    # fmt: on
 
 
 def test_console_frontend_with_difficult_values():
     matrix = Matrix(("x", "y"), ((-1.23456, 0), (0, 0)))
-    assert r"""---------------------
-|   |      x      y |
----------------------
-| x | -1.235  0.000 |
-| y |  0.000  0.000 |
----------------------""" == str(
-        matrix
-    )
+    # fmt: off
+    assert framed(matrix) == r"""
+┌───┬───────────────┐
+│   │      x      y │
+├───┼───────────────┤
+│ x │ -1.235  0.000 │
+│ y │  0.000  0.000 │
+└───┴───────────────┘
+"""
+    # fmt: on
 
     mps = Params(
         [
@@ -344,10 +564,12 @@ def test_console_frontend_with_difficult_values():
         None,
     )
 
-    assert r"""------------------------------------------------------------------------------------------
-|   | Name |   Value   | Hesse Err | Minos Err- | Minos Err+ | Limit-  | Limit+  | Fixed |
-------------------------------------------------------------------------------------------
-| 0 | x    |    -0     | 0.012e-9  |            |            |         |         | CONST |
-------------------------------------------------------------------------------------------""" == str(
-        mps
-    )
+    # fmt: off
+    assert framed(mps) == r"""
+┌───┬──────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
+│   │ Name │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
+├───┼──────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
+│ 0 │ x    │    -0     │ 0.012e-9  │            │            │         │         │ CONST │
+└───┴──────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
+"""
+    # fmt: on
