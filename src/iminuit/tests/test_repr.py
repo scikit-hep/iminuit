@@ -164,34 +164,24 @@ def test_html_fmin_bad(fmin_bad):
         <td colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 100000 (200000 total) </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center" title="Estimated distance to minimum and target threshold"> EDM = 1.23e-10 (Goal: 1.19e-10) </td>
-        <td colspan="3" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
+        <td colspan="2" style="text-align:center" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 1.19e-10) </td>
+        <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
     </tr>
     <tr>
-        <td title="Validity of the migrad call"> Valid Min. </td>
-        <td title="Validity of parameters"> Valid Param. </td>
-        <td title="Is EDM above goal EDM?"> Above EDM </td>
-        <td colspan="2" title="Did last migrad call reach max call limit?"> Reached call limit </td>
+        <td style="text-align:center;background-color:#FF7878;"> INVALID Minimum </td>
+        <td style="text-align:center;background-color:#FF7878;"> INVALID Parameters </td>
+        <td colspan="3" style="text-align:center;background-color:#FFF79A;"> SOME Parameters at limit </td>
     </tr>
     <tr>
-        <td style="background-color:#FF7878;"> False </td>
-        <td style="background-color:#FF7878;"> False </td>
-        <td style="background-color:#FF7878;"> True </td>
-        <td colspan="2" style="background-color:#FF7878;"> True </td>
+        <td colspan="2" style="text-align:center;background-color:#FF7878;"> ABOVE EDM goal </td>
+        <td colspan="3" style="text-align:center;background-color:#FF7878;"> ABOVE call limit </td>
     </tr>
     <tr>
-        <td title="Did Hesse fail?"> Hesse failed </td>
-        <td title="Has covariance matrix"> Has cov. </td>
-        <td title="Is covariance matrix accurate?"> Accurate </td>
-        <td title="Is covariance matrix positive definite?"> Pos. def. </td>
-        <td title="Was positive definiteness enforced by Minuit?"> Forced </td>
-    </tr>
-    <tr>
-        <td style="background-color:#FF7878;"> True </td>
-        <td style="background-color:#FF7878;"> False </td>
-        <td style="background-color:#FF7878;"> False </td>
-        <td style="background-color:#FF7878;"> False </td>
-        <td style="background-color:#FF7878;"> True </td>
+        <td style="text-align:center;background-color:#FF7878;"> Hesse FAILED </td>
+        <td style="text-align:center;background-color:#FF7878;"> NO Covariance </td>
+        <td style="text-align:center;background-color:#FF7878;" title="Is covariance matrix accurate?"> APPROXIMATE </td>
+        <td style="text-align:center;background-color:#FF7878;" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
+        <td style="text-align:center;background-color:#FF7878;" title="Was positive definiteness enforced by Minuit?"> FORCED </td>
     </tr>
 </table>"""
     # fmt: on

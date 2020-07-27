@@ -115,7 +115,7 @@ def fmin(fm):
                     style="text-align:center;" + good(fm.is_above_max_edm, False),
                 ),
                 td(
-                    f"{'Reached' if fm.has_reached_call_limit else 'Below'} call limit",
+                    f"{'ABOVE' if fm.has_reached_call_limit else 'Below'} call limit",
                     colspan=3,
                     style="text-align:center;" + good(fm.has_reached_call_limit, False),
                 ),
