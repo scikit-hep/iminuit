@@ -144,7 +144,8 @@ class FMin(
         "_FMin",
         "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters "
         "has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed "
-        "has_covariance is_above_max_edm has_reached_call_limit",
+        "has_covariance is_above_max_edm has_reached_call_limit "
+        "has_parameters_at_limit",
     )
 ):
     """Function minimum status object."""
