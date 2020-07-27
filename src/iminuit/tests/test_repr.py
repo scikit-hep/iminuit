@@ -346,7 +346,10 @@ def test_html_merrors(minuit):
     </tr>
     <tr>
         <th title="Lower and upper minos error of the parameter"> Error </th>
-        <td> -1 </td> <td> 1 </td> <td> -0.5 </td> <td> 0.5 </td>
+        <td> -1 </td>
+        <td> 1 </td>
+        <td> -0.5 </td>
+        <td> 0.5 </td>
     </tr>
     <tr>
         <th title="Validity of lower/upper minos error"> Valid </th>
@@ -355,7 +358,8 @@ def test_html_merrors(minuit):
         <td style="background-color:#92CCA6;"> True </td>
         <td style="background-color:#92CCA6;"> True </td>
     </tr>
-    <tr> <th title="Did scan hit limit of any parameter?"> At Limit </th>
+    <tr>
+        <th title="Did scan hit limit of any parameter?"> At Limit </th>
         <td style="background-color:#92CCA6;"> False </td>
         <td style="background-color:#92CCA6;"> False </td>
         <td style="background-color:#92CCA6;"> False </td>

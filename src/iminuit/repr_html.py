@@ -194,64 +194,36 @@ def params(mps):
 
 
 def merrors(mes):
+    header = [td()]
+    error = [th("Error", title="Lower and upper minos error of the parameter")]
+    valid = [th("Valid", title="Validity of lower/upper minos error")]
+    limit = [th("At Limit", title="Did scan hit limit of any parameter?")]
+    maxfcn = [th("Max FCN", title="Did scan hit function call limit?")]
+    newmin = [th("New Min", title="New minimum found when doing scan?")]
+    for me in mes:
+        header.append(
+            th(me.name, colspan=2, title="Parameter name", style="text-align:center",)
+        )
+        error += [td(x) for x in pdg_format(None, me.lower, me.upper)]
+        valid += [
+            td(str(x), style=good(x, True)) for x in (me.lower_valid, me.upper_valid)
+        ]
+        limit += [
+            td(str(x), style=good(x, False))
+            for x in (me.at_lower_limit, me.at_upper_limit)
+        ]
+        maxfcn += [
+            td(str(x), style=good(x, False))
+            for x in (me.at_lower_max_fcn, me.at_upper_max_fcn)
+        ]
+        newmin += [
+            td(str(x), style=good(x, False))
+            for x in (me.lower_new_min, me.upper_new_min)
+        ]
+
     return to_str(
         table(
-            tr(
-                "<td/>",
-                (
-                    th(
-                        me.name,
-                        colspan=2,
-                        title="Parameter name",
-                        style="text-align:center",
-                    )
-                    for me in mes
-                ),
-            ),
-            tr(
-                th("Error", title="Lower and upper minos error of the parameter"),
-                ((td(x) for x in pdg_format(None, me.lower, me.upper)) for me in mes),
-            ),
-            tr(
-                th("Valid", title="Validity of lower/upper minos error"),
-                (
-                    (
-                        td(str(x), style=good(x, True))
-                        for x in (me.lower_valid, me.upper_valid)
-                    )
-                    for me in mes
-                ),
-            ),
-            tr(
-                th("At Limit", title="Did scan hit limit of any parameter?"),
-                (
-                    (
-                        td(str(x), style=good(x, False))
-                        for x in (me.at_lower_limit, me.at_upper_limit)
-                    )
-                    for me in mes
-                ),
-            ),
-            tr(
-                th("Max FCN", title="Did scan hit function call limit?"),
-                (
-                    (
-                        td(str(x), style=good(x, False))
-                        for x in (me.at_lower_max_fcn, me.at_upper_max_fcn)
-                    )
-                    for me in mes
-                ),
-            ),
-            tr(
-                th("New Min", title="New minimum found when doing scan?"),
-                (
-                    (
-                        td(str(x), style=good(x, False))
-                        for x in (me.lower_new_min, me.upper_new_min)
-                    )
-                    for me in mes
-                ),
-            ),
+            tr(*header), tr(*error), tr(*valid), tr(*limit), tr(*maxfcn), tr(*newmin),
         )
     )
 
@@ -297,4 +269,4 @@ def matrix(m):
             cols.append(t)
         rows.append(tr(*cols))
 
-    return to_str(table(tr(td(), *(th(v) for v in m.names)), *rows))
+    return to_str(table(tr(td(), *[th(v) for v in m.names]), *rows))
