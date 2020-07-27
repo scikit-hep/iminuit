@@ -69,12 +69,13 @@ def fmin(fm):
                 td(
                     ff[0],
                     colspan=2,
+                    style="text-align:left",
                     title="Minimum value of function",
-                    style="text-align:center",
                 ),
                 td(
                     ff[1],
                     colspan=3,
+                    style="text-align:center",
                     title="No. of calls in last algorithm and total number of calls",
                 ),
             ),
@@ -82,7 +83,7 @@ def fmin(fm):
                 td(
                     ff[2],
                     colspan=2,
-                    style="text-align:center",
+                    style="text-align:left",
                     title="Estimated distance to minimum and goal",
                 ),
                 td(

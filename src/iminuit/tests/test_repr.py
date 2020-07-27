@@ -133,11 +133,11 @@ def test_html_fmin_good(fmin_good):
     # fmt: off
     assert fmin_good._repr_html_() == """<table>
     <tr>
-        <td colspan="2" style="text-align:center" title="Minimum value of function"> FCN = 1.235e-10 </td>
-        <td colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 10 (20 total) </td>
+        <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 1.235e-10 </td>
+        <td colspan="3" style="text-align:center" title="No. of calls in last algorithm and total number of calls"> Ncalls = 10 (20 total) </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 0.0001) </td>
+        <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 0.0001) </td>
         <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
     </tr>
     <tr>
@@ -164,11 +164,11 @@ def test_html_fmin_bad(fmin_bad):
     # fmt: off
     assert fmin_bad._repr_html_() == """<table>
     <tr>
-        <td colspan="2" style="text-align:center" title="Minimum value of function"> FCN = nan </td>
-        <td colspan="3" title="No. of calls in last algorithm and total number of calls"> Ncalls = 100000 (200000 total) </td>
+        <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = nan </td>
+        <td colspan="3" style="text-align:center" title="No. of calls in last algorithm and total number of calls"> Ncalls = 100000 (200000 total) </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 1.19e-10) </td>
+        <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 1.19e-10) </td>
         <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
     </tr>
     <tr>
