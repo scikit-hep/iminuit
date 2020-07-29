@@ -2,7 +2,7 @@ from iminuit.color import Gradient
 from iminuit.repr_text import pdg_format, matrix_format, fmin_fields
 
 good_style = "background-color:#92CCA6;"
-bad_style = "background-color:#FF7878;"
+bad_style = "background-color:#c15ef7;"
 warn_style = "background-color:#FFF79A;"
 backgrounds = ("background-color:#F4F4F4;", "background-color:#FFFFFF;")
 
