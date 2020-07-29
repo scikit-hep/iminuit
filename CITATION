@@ -1,15 +1,33 @@
 If you use iminuit for work/research presented in a publication, we would be happy if you mention us in the acknowledgments, like so:
 
-This research made use of the MINUIT algorithm\cite{1975CoPhC..10..343J} via the iminuit\cite{iminuit} Python interface.
+This research made use of the MINUIT algorithm\cite{1975CoPhC..10..343J} via the iminuit\cite{iminuit} Python library.
 
-Recommended BibTeX entries for the above citations are (you need to include the url package in your document, \usepackage{url}):
+You can get a BibTeX entry for the version that you used from Zenodo. Go to https://doi.org/10.5281/zenodo.3949207, select the appropriate version, and click on "BibTex" in the Export box on the bottom right. You will get an entry like this:
 
-@MISC{iminuit,
-  author = {iminuit team},
-  title = {iminuit -- A Python interface to Minuit},
-  howpublished = {\url{https://github.com/scikit-hep/iminuit}},
-  note = {Accessed: 2018-03-05}
+@software{iminuit,
+  author       = {Hans Dembinski and
+                  Piti Ongmongkolkul and
+                  Christoph Deil and
+                  David Menéndez Hurtado and
+                  Matthew Feickert and
+                  Henry Schreiner and
+                  Andrew and
+                  Chris Burr and
+                  Fabian Rost and
+                  Alex Pearce and
+                  Lukas Geiger and
+                  Bernhard M. Wiedemann and
+                  Omar  Zapata},
+  title        = {scikit-hep/iminuit: v1.4.9},
+  month        = jul,
+  year         = 2020,
+  publisher    = {Zenodo},
+  version      = {v1.4.9},
+  doi          = {10.5281/zenodo.3951328},
+  url          = {https://doi.org/10.5281/zenodo.3951328}
 }
+
+The recommended reference for the MINUIT algorithms is:
 
 @ARTICLE{1975CoPhC..10..343J,
    author = {{James}, F. and {Roos}, M.},
