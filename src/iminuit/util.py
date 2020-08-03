@@ -4,6 +4,7 @@ from collections import OrderedDict, namedtuple
 from . import repr_html
 from . import repr_text
 import warnings
+import inspect
 from ._deprecated import deprecated
 
 inf = float("infinity")
@@ -366,6 +367,17 @@ def arguments_from_call_funccode(f):
     return bool(args), args
 
 
+def arguments_from_inspect(f):
+    """Check inspect.signature for arguemnts"""
+    signature = inspect.signature(f)
+    ok = True
+    for name, par in signature.parameters.items():
+        # Variable number of arguments is not supported
+        if par.kind is inspect.Parameter.VAR_POSITIONAL: ok = False
+        if par.kind is inspect.Parameter.VAR_KEYWORD   : ok = False
+    return ok, list(signature.parameters)
+
+
 def describe(f, verbose=False):
     """Try to extract the function argument names."""
     # using funccode
@@ -401,6 +413,13 @@ def describe(f, verbose=False):
         return args
     if verbose:
         print("Failed to parse __doc__")
+
+    ok, args = arguments_from_inspect(f)
+    if ok:
+        return args
+    if verbose:
+        print("Failed to parse inspect.signature(f). Perhaps you are using"
+              " a variable number of arguments. This is not supported.")
 
     raise TypeError("Unable to obtain function signature")
 
