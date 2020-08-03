@@ -3,6 +3,7 @@ from math import ldexp
 import sys
 import pytest
 import platform
+from functools import wraps
 
 is_pypy = platform.python_implementation() == "PyPy"
 
@@ -114,3 +115,27 @@ def test_generic_functor_with_fake_func():
             return a + b
 
     assert describe(A(), True) == ["x", "y"]
+
+
+def test_decorated_function():
+    def dummy_decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            return f(*args, **kwargs)
+        return decorated
+
+    @dummy_decorator
+    def one_arg(x):
+        pass
+
+    @dummy_decorator
+    def many_arg(x, y, z, t):
+        pass
+
+    @dummy_decorator
+    def kw_only(x, *, y, z):
+        pass
+
+    assert describe( one_arg) == list("x")
+    assert describe(many_arg) == list("xyzt")
+    assert describe( kw_only) == list("xyz")
