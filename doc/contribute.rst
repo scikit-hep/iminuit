@@ -37,8 +37,8 @@ It is a good idea to develop your feature in a separate branch, so that your dev
 
 Now you are in a feature branch, commit your edits here.
 
-virtualenv
-++++++++++
+venv
+++++
 
 You have the source code now, but you also want to build and test. We recommend to make a dedicated build environment for `iminuit`, separate from the Python installation you use for other projects.
 
@@ -55,21 +55,14 @@ To delete the virtual environment just delete the folder `py3`.
 conda
 +++++
 
-Another way is to use `conda`_ environments and `environment-dev.yml`_
-to make the environment and install everything. You need to install a conda first, e.g. `miniconda`_:
+Another way is to use `conda`_ environments. You need to install a conda first, e.g. `miniconda`_, then do:
 
 .. code-block:: bash
 
-    conda env create -f environment-dev.yml
+    conda create -c conda-forge --name iminuit-dev --file requirements-dev.txt
     conda activate iminuit-dev
 
-If you ever need to update the environment, you can use:
-
-.. code-block:: bash
-
-    conda env update -f environment-dev.yml
-
-It's also easy to deactivate or delete it:
+To deactivate or delete the environment, do:
 
 .. code-block:: bash
 
@@ -132,7 +125,6 @@ To check your `iminuit` version number and install location:
 
 .. _conda: https://conda.io/
 .. _miniconda: https://conda.io/en/latest/miniconda.html
-.. _environment-dev.yml: https://github.com/scikit-hep/iminuit/blob/master/environment-dev.yml
 .. _requirements-dev.txt: https://github.com/scikit-hep/iminuit/blob/master/requirements-dev.txt
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/scikit-hep/iminuit
