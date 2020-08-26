@@ -172,20 +172,20 @@ def test_html_fmin_bad(fmin_bad):
         <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
     </tr>
     <tr>
-        <td style="text-align:center;background-color:#FF7878;"> INVALID Minimum </td>
-        <td style="text-align:center;background-color:#FF7878;"> INVALID Parameters </td>
+        <td style="text-align:center;background-color:#c15ef7;"> INVALID Minimum </td>
+        <td style="text-align:center;background-color:#c15ef7;"> INVALID Parameters </td>
         <td colspan="3" style="text-align:center;background-color:#FFF79A;"> SOME Parameters at limit </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center;background-color:#FF7878;"> ABOVE EDM goal </td>
-        <td colspan="3" style="text-align:center;background-color:#FF7878;"> ABOVE call limit </td>
+        <td colspan="2" style="text-align:center;background-color:#c15ef7;"> ABOVE EDM goal </td>
+        <td colspan="3" style="text-align:center;background-color:#c15ef7;"> ABOVE call limit </td>
     </tr>
     <tr>
-        <td style="text-align:center;background-color:#FF7878;"> Hesse FAILED </td>
-        <td style="text-align:center;background-color:#FF7878;"> NO Covariance </td>
+        <td style="text-align:center;background-color:#c15ef7;"> Hesse FAILED </td>
+        <td style="text-align:center;background-color:#c15ef7;"> NO Covariance </td>
         <td style="text-align:center;background-color:#FFF79A;" title="Is covariance matrix accurate?"> APPROXIMATE </td>
-        <td style="text-align:center;background-color:#FF7878;" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
-        <td style="text-align:center;background-color:#FF7878;" title="Was positive definiteness enforced by Minuit?"> FORCED </td>
+        <td style="text-align:center;background-color:#c15ef7;" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
+        <td style="text-align:center;background-color:#c15ef7;" title="Was positive definiteness enforced by Minuit?"> FORCED </td>
     </tr>
 </table>"""
     # fmt: on
