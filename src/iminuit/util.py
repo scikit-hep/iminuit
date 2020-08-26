@@ -373,8 +373,10 @@ def arguments_from_inspect(f):
     ok = True
     for name, par in signature.parameters.items():
         # Variable number of arguments is not supported
-        if par.kind is inspect.Parameter.VAR_POSITIONAL: ok = False
-        if par.kind is inspect.Parameter.VAR_KEYWORD   : ok = False
+        if par.kind is inspect.Parameter.VAR_POSITIONAL:
+            ok = False
+        if par.kind is inspect.Parameter.VAR_KEYWORD:
+            ok = False
     return ok, list(signature.parameters)
 
 
@@ -418,8 +420,10 @@ def describe(f, verbose=False):
     if ok:
         return args
     if verbose:
-        print("Failed to parse inspect.signature(f). Perhaps you are using"
-              " a variable number of arguments. This is not supported.")
+        print(
+            "Failed to parse inspect.signature(f). Perhaps you are using"
+            " a variable number of arguments. This is not supported."
+        )
 
     raise TypeError("Unable to obtain function signature")
 

@@ -122,6 +122,7 @@ def test_decorated_function():
         @wraps(f)
         def decorated(*args, **kwargs):
             return f(*args, **kwargs)
+
         return decorated
 
     @dummy_decorator
@@ -136,6 +137,6 @@ def test_decorated_function():
     def kw_only(x, *, y, z):
         pass
 
-    assert describe( one_arg) == list("x")
+    assert describe(one_arg) == list("x")
     assert describe(many_arg) == list("xyzt")
-    assert describe( kw_only) == list("xyz")
+    assert describe(kw_only) == list("xyz")
