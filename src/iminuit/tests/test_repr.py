@@ -141,20 +141,20 @@ def test_html_fmin_good(fmin_good):
         <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
     </tr>
     <tr>
-        <td style="text-align:center;background-color:#92CCA6;"> Valid Minimum </td>
-        <td style="text-align:center;background-color:#92CCA6;"> Valid Parameters </td>
-        <td colspan="3" style="text-align:center;background-color:#92CCA6;"> No Parameters at limit </td>
+        <td style="text-align:center;background-color:#92CCA6;color:#000;"> Valid Minimum </td>
+        <td style="text-align:center;background-color:#92CCA6;color:#000;"> Valid Parameters </td>
+        <td colspan="3" style="text-align:center;background-color:#92CCA6;color:#000;"> No Parameters at limit </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center;background-color:#92CCA6;"> Below EDM goal </td>
-        <td colspan="3" style="text-align:center;background-color:#92CCA6;"> Below call limit </td>
+        <td colspan="2" style="text-align:center;background-color:#92CCA6;color:#000;"> Below EDM goal </td>
+        <td colspan="3" style="text-align:center;background-color:#92CCA6;color:#000;"> Below call limit </td>
     </tr>
     <tr>
-        <td style="text-align:center;background-color:#92CCA6;"> Hesse ok </td>
-        <td style="text-align:center;background-color:#92CCA6;"> Has Covariance </td>
-        <td style="text-align:center;background-color:#92CCA6;" title="Is covariance matrix accurate?"> Accurate </td>
-        <td style="text-align:center;background-color:#92CCA6;" title="Is covariance matrix positive definite?"> Pos. def. </td>
-        <td style="text-align:center;background-color:#92CCA6;" title="Was positive definiteness enforced by Minuit?"> Not forced </td>
+        <td style="text-align:center;background-color:#92CCA6;color:#000;"> Hesse ok </td>
+        <td style="text-align:center;background-color:#92CCA6;color:#000;"> Has Covariance </td>
+        <td style="text-align:center;background-color:#92CCA6;color:#000;" title="Is covariance matrix accurate?"> Accurate </td>
+        <td style="text-align:center;background-color:#92CCA6;color:#000;" title="Is covariance matrix positive definite?"> Pos. def. </td>
+        <td style="text-align:center;background-color:#92CCA6;color:#000;" title="Was positive definiteness enforced by Minuit?"> Not forced </td>
     </tr>
 </table>"""
     # fmt: on
@@ -172,20 +172,20 @@ def test_html_fmin_bad(fmin_bad):
         <td colspan="3" style="text-align:center" title="Increase in FCN which corresponds to 1 standard deviation"> up = 0.5 </td>
     </tr>
     <tr>
-        <td style="text-align:center;background-color:#c15ef7;"> INVALID Minimum </td>
-        <td style="text-align:center;background-color:#c15ef7;"> INVALID Parameters </td>
-        <td colspan="3" style="text-align:center;background-color:#FFF79A;"> SOME Parameters at limit </td>
+        <td style="text-align:center;background-color:#c15ef7;color:#000;"> INVALID Minimum </td>
+        <td style="text-align:center;background-color:#c15ef7;color:#000;"> INVALID Parameters </td>
+        <td colspan="3" style="text-align:center;background-color:#FFF79A;color:#000;"> SOME Parameters at limit </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center;background-color:#c15ef7;"> ABOVE EDM goal </td>
-        <td colspan="3" style="text-align:center;background-color:#c15ef7;"> ABOVE call limit </td>
+        <td colspan="2" style="text-align:center;background-color:#c15ef7;color:#000;"> ABOVE EDM goal </td>
+        <td colspan="3" style="text-align:center;background-color:#c15ef7;color:#000;"> ABOVE call limit </td>
     </tr>
     <tr>
-        <td style="text-align:center;background-color:#c15ef7;"> Hesse FAILED </td>
-        <td style="text-align:center;background-color:#c15ef7;"> NO Covariance </td>
-        <td style="text-align:center;background-color:#FFF79A;" title="Is covariance matrix accurate?"> APPROXIMATE </td>
-        <td style="text-align:center;background-color:#c15ef7;" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
-        <td style="text-align:center;background-color:#c15ef7;" title="Was positive definiteness enforced by Minuit?"> FORCED </td>
+        <td style="text-align:center;background-color:#c15ef7;color:#000;"> Hesse FAILED </td>
+        <td style="text-align:center;background-color:#c15ef7;color:#000;"> NO Covariance </td>
+        <td style="text-align:center;background-color:#FFF79A;color:#000;" title="Is covariance matrix accurate?"> APPROXIMATE </td>
+        <td style="text-align:center;background-color:#c15ef7;color:#000;" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
+        <td style="text-align:center;background-color:#c15ef7;color:#000;" title="Was positive definiteness enforced by Minuit?"> FORCED </td>
     </tr>
 </table>"""
     # fmt: on
@@ -194,7 +194,7 @@ def test_html_fmin_bad(fmin_bad):
 def test_html_params(minuit):
     # fmt: off
     assert minuit.init_params._repr_html_() == """<table>
-    <tr style="background-color:#F4F4F4;">
+    <tr style="background-color:#F4F4F4;color:#000;">
         <td></td>
         <th title="Variable name"> Name </th>
         <th title="Value of parameter"> Value </th>
@@ -205,7 +205,7 @@ def test_html_params(minuit):
         <th title="Upper limit of the parameter"> Limit+ </th>
         <th title="Is the parameter fixed in the fit"> Fixed </th>
     </tr>
-    <tr style="background-color:#FFFFFF;">
+    <tr style="background-color:#FFFFFF;color:#000;">
         <th> 0 </th>
         <td> x </td>
         <td> 0.0 </td>
@@ -216,7 +216,7 @@ def test_html_params(minuit):
         <td>  </td>
         <td>  </td>
     </tr>
-    <tr style="background-color:#F4F4F4;">
+    <tr style="background-color:#F4F4F4;color:#000;">
         <th> 1 </th>
         <td> y </td>
         <td> 0.0 </td>
@@ -230,7 +230,7 @@ def test_html_params(minuit):
 </table>"""
 
     assert minuit.params._repr_html_() == """<table>
-    <tr style="background-color:#F4F4F4;">
+    <tr style="background-color:#F4F4F4;color:#000;">
         <td></td>
         <th title="Variable name"> Name </th>
         <th title="Value of parameter"> Value </th>
@@ -241,7 +241,7 @@ def test_html_params(minuit):
         <th title="Upper limit of the parameter"> Limit+ </th>
         <th title="Is the parameter fixed in the fit"> Fixed </th>
     </tr>
-    <tr style="background-color:#FFFFFF;">
+    <tr style="background-color:#FFFFFF;color:#000;">
         <th> 0 </th>
         <td> x </td>
         <td> 2 </td>
@@ -252,7 +252,7 @@ def test_html_params(minuit):
         <td>  </td>
         <td>  </td>
     </tr>
-    <tr style="background-color:#F4F4F4;">
+    <tr style="background-color:#F4F4F4;color:#000;">
         <th> 1 </th>
         <td> y </td>
         <td> 1.0 </td>
@@ -282,7 +282,7 @@ def test_html_params_with_limits():
     )
     # fmt: off
     assert m.init_params._repr_html_() == r"""<table>
-    <tr style="background-color:#F4F4F4;">
+    <tr style="background-color:#F4F4F4;color:#000;">
         <td></td>
         <th title="Variable name"> Name </th>
         <th title="Value of parameter"> Value </th>
@@ -293,7 +293,7 @@ def test_html_params_with_limits():
         <th title="Upper limit of the parameter"> Limit+ </th>
         <th title="Is the parameter fixed in the fit"> Fixed </th>
     </tr>
-    <tr style="background-color:#FFFFFF;">
+    <tr style="background-color:#FFFFFF;color:#000;">
         <th> 0 </th>
         <td> x </td>
         <td> 3.0 </td>
@@ -304,7 +304,7 @@ def test_html_params_with_limits():
         <td>  </td>
         <td> yes </td>
     </tr>
-    <tr style="background-color:#F4F4F4;">
+    <tr style="background-color:#F4F4F4;color:#000;">
         <th> 1 </th>
         <td> y </td>
         <td> 5.0 </td>
@@ -337,31 +337,31 @@ def test_html_merrors(minuit):
     </tr>
     <tr>
         <th title="Validity of lower/upper minos error"> Valid </th>
-        <td style="background-color:#92CCA6;"> True </td>
-        <td style="background-color:#92CCA6;"> True </td>
-        <td style="background-color:#92CCA6;"> True </td>
-        <td style="background-color:#92CCA6;"> True </td>
+        <td style="background-color:#92CCA6;color:#000;"> True </td>
+        <td style="background-color:#92CCA6;color:#000;"> True </td>
+        <td style="background-color:#92CCA6;color:#000;"> True </td>
+        <td style="background-color:#92CCA6;color:#000;"> True </td>
     </tr>
     <tr>
         <th title="Did scan hit limit of any parameter?"> At Limit </th>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
     </tr>
     <tr>
         <th title="Did scan hit function call limit?"> Max FCN </th>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
     </tr>
     <tr>
         <th title="New minimum found when doing scan?"> New Min </th>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
-        <td style="background-color:#92CCA6;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
+        <td style="background-color:#92CCA6;color:#000;"> False </td>
     </tr>
 </table>"""
     # fmt: on
