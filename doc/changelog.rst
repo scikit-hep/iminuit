@@ -5,6 +5,28 @@
 Changelog
 =========
 
+1.5.0 (September 17, 2020)
+---------------------------
+
+New features
+~~~~~~~~~~~~
+- New more compact function minimum display with warning about parameters at limit
+- Colours adjusted in HTML display to enhance contrast for people with color blindness
+- Allow subclasses to use Minuit.from_array_func (#467) [contributed by @kratsg]
+- Nicer tables on terminal thanks to unicode characters
+- Wrapped functions' parameters are now recognised by iminuit [contributed by Gonzalo]
+- Dark theme friendlier HTML style (#481) [based on patch by @l-althueser]
+
+Bug-Fixes
+~~~~~~~~~
+- Fixed reported EDM goal for really small tolerances
+- Minuit.np_merrors now works correctly when some parameters are fixed
+- Fixed HTML display of Minuit.matrix when some diagonal elements are zero
+
+Deprecated
+~~~~~~~~~~
+- Removed nsplit option from Minuit.migrad (#462)
+
 1.4.9 (July, 18, 2020)
 ----------------------
 
