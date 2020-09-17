@@ -1145,7 +1145,8 @@ cdef class Minuit:
     def np_merrors(self):
         """MINOS parameter errors in numpy array format.
 
-        Fixed parameters are included, the order follows :attr:`parameters`.
+        Fixed parameters are included (zeros are returned), the order follows
+        :attr:`parameters`.
 
         The format of the produced array follows matplotlib conventions, as
         in ``matplotlib.pyplot.errorbar``. The shape is (2, N) for N
@@ -1158,9 +1159,9 @@ cdef class Minuit:
             ``numpy.ndarray`` of shape (2, N).
         """
         # array format follows matplotlib conventions, see pyplot.errorbar
-        a = np.empty((2, self.narg), dtype=np.double)
-        for i in range(self.narg):
-            me = self.merrors[i]
+        a = np.zeros((2, self.narg))
+        for me in self.merrors.values():
+            i = self.var2pos[me.name]
             a[0, i] = -me.lower
             a[1, i] = me.upper
         return a

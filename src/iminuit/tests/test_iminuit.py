@@ -284,6 +284,11 @@ def test_from_array_func_2():
     assert_allclose(v, (1, 1), rtol=1e-2)
     c = m.np_covariance()
     assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)
+    m.minos()
+    assert len(m.merrors) == 1
+    assert m.merrors[0].lower == approx(-1, abs=1e-2)
+    assert m.merrors[0].name == "a"
+    assert_allclose(m.np_merrors(), ((1, 0), (1, 0)), rtol=1e-2)
 
 
 def test_from_array_func_with_broadcasting():
