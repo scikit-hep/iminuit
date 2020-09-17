@@ -12,7 +12,6 @@ How to make a release
   - Increase version number in iminuit/version.py
   - Update doc/changelog.rst
   - Check that all wheels are build (Azure should trigger)
-- Run `make integration` to do integration tests (if these fail, add tests to iminuit!)
 - Merge release branch to master
 - Create release on Github
   - This triggers an upload of the latest build artefacts to PyPI
