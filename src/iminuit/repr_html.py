@@ -1,10 +1,9 @@
 from iminuit.color import Gradient
 from iminuit.repr_text import pdg_format, matrix_format, fmin_fields
 
-good_style = "background-color:#92CCA6;"
-bad_style = "background-color:#c15ef7;"
-warn_style = "background-color:#FFF79A;"
-backgrounds = ("background-color:#F4F4F4;", "background-color:#FFFFFF;")
+good_style = "background-color:#92CCA6;color:black"
+bad_style = "background-color:#c15ef7;color:black"
+warn_style = "background-color:#FFF79A;color:black"
 
 
 def to_str(tag):
@@ -166,7 +165,6 @@ def params(mps):
                 td("%.3G" % mp.lower_limit if mp.lower_limit is not None else ""),
                 td("%.3G" % mp.upper_limit if mp.upper_limit is not None else ""),
                 td("yes" if mp.is_fixed else ("CONST" if mp.is_const else "")),
-                style=backgrounds[(i + 1) % 2],
             )
         )
 
@@ -183,7 +181,6 @@ def params(mps):
                 th("Limit-", title="Lower limit of the parameter"),
                 th("Limit+", title="Upper limit of the parameter"),
                 th("Fixed", title="Is the parameter fixed in the fit"),
-                style=backgrounds[0],
             ),
             # body
             *rows,
@@ -257,13 +254,20 @@ def matrix(m):
                     t = td("1.00")
                 else:
                     color = grad.rgb(val)
-                    t = td("%5.2f" % val, style="background-color:" + color)
+                    t = td(
+                        "%5.2f" % val,
+                        style="background-color:" + color + ";color:black",
+                    )
             else:
                 if i == j:
                     t = td(nums[n * i + j])
                 else:
-                    color = grad.rgb(val / (m[i][i] * m[j][j]) ** 0.5)
-                    t = td(nums[n * i + j], style="background-color:" + color)
+                    num = m[i][i] * m[j][j]
+                    color = grad.rgb(val / num ** 0.5 if num > 0 else 0)
+                    t = td(
+                        nums[n * i + j],
+                        style="background-color:" + color + ";color:black",
+                    )
             cols.append(t)
         rows.append(tr(*cols))
 
