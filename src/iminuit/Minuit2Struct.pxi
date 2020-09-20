@@ -15,7 +15,8 @@ cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls):
         e = mp.Error()
         l = mp.LowerLimit()
         u = mp.UpperLimit()
-        has_parameters_at_limit |= abs(v - l) < 0.5 * e
+        # the 0.5 error threshold is somewhat arbitrary
+        has_parameters_at_limit |= min(v - l, u - v) < 0.5 * e
 
     return FMin(cfmin.Fval(), cfmin.Edm(), tolerance, cfmin.NFcn(), ncalls,
          cfmin.Up(), cfmin.IsValid(), cfmin.HasValidParameters(),

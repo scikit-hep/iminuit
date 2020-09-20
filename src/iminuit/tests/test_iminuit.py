@@ -1125,8 +1125,6 @@ def test_bad_functions():
 
 
 def test_issue_424():
-    from iminuit import Minuit
-
     def lsq(x, y, z):
         return (x - 1) ** 2 + (y - 4) ** 2 / 2 + (z - 9) ** 2 / 3
 
@@ -1138,3 +1136,16 @@ def test_issue_424():
     m.hesse()
     assert m.fixed["x"] is True
     assert m.errors["x"] == 2
+
+
+@pytest.mark.parametrize("sign", (-1, 1))
+def test_parameter_at_limit(sign):
+    m = Minuit(lambda x : (x - sign * 1.2)**2, x=0, limit_x=(-1, 1), errordef=1)
+    m.migrad()
+    assert m.values["x"] == approx(sign * 1.0, abs=1e-3)
+    assert m.fmin.has_parameters_at_limit is True
+
+    m = Minuit(lambda x : (x - sign * 1.2)**2, x=0, errordef=1)
+    m.migrad()
+    assert m.values["x"] == approx(sign * 1.2, abs=1e-3)
+    assert m.fmin.has_parameters_at_limit is False
