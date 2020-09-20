@@ -5,6 +5,11 @@
 Changelog
 =========
 
+1.5.1 (September 20, 2020)
+---------------------------
+
+- Fixed mistake in "parameter at limit" warning, which did not report correctly if parameter was at the upper limit
+
 1.5.0 (September 17, 2020)
 ---------------------------
 
