@@ -100,7 +100,7 @@ def test_MError():
 
 
 def test_FMin():
-    keys = "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm has_reached_call_limit has_parameters_at_limit".split()  # noqa: E501
+    keys = "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm has_reached_call_limit has_parameters_at_limit ngrad ngrad_total".split()  # noqa: E501
     values = (
         0.2,
         1e-3,
@@ -118,6 +118,8 @@ def test_FMin():
         False,
         False,
         False,
+        3,
+        3
     )
 
     f = util.FMin(*values)
@@ -129,7 +131,7 @@ def test_FMin():
 
 
 def test_MigradResult():
-    fmin = util.FMin(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+    fmin = util.FMin(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
     params = util.Params([], None)
     mr = util.MigradResult(fmin, params)
     assert mr.fmin is fmin

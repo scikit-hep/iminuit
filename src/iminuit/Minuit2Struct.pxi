@@ -2,7 +2,7 @@
 """
 from iminuit.util import FMin, Param, MError
 
-cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls, ncalls_total):
+cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls, ncalls_total, ngrads, ngrads_total):
     has_parameters_at_limit = False
     cdef double v, e, l, u
     cdef int i
@@ -22,7 +22,7 @@ cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls, ncalls_total):
          cfmin.Up(), cfmin.IsValid(), cfmin.HasValidParameters(),
          cfmin.HasAccurateCovar(), cfmin.HasPosDefCovar(), cfmin.HasMadePosDefCovar(),
          cfmin.HesseFailed(), cfmin.HasCovariance(), cfmin.IsAboveMaxEdm(),
-         cfmin.HasReachedCallLimit(), has_parameters_at_limit)
+         cfmin.HasReachedCallLimit(), has_parameters_at_limit, ngrads, ngrads_total)
 
 
 cdef minuitparam2struct(MinuitParameter mp):

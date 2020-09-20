@@ -1213,7 +1213,7 @@ cdef class Minuit:
         """Current function minimum data object"""
         fmin = None
         if self.cfmin is not NULL:
-            fmin = cfmin2struct(self.cfmin, self.tol, self.ncalls, self.ncalls_total)
+            fmin = cfmin2struct(self.cfmin, self.tol, self.ncalls, self.ncalls_total, self.ngrads, self.ngrads_total)
         return fmin
 
     @property
