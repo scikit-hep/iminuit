@@ -2,7 +2,7 @@
 """
 from iminuit.util import FMin, Param, MError
 
-cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls):
+cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls, ncalls_total):
     has_parameters_at_limit = False
     cdef double v, e, l, u
     cdef int i
@@ -18,7 +18,7 @@ cdef cfmin2struct(FunctionMinimum* cfmin, tolerance, ncalls):
         # the 0.5 error threshold is somewhat arbitrary
         has_parameters_at_limit |= min(v - l, u - v) < 0.5 * e
 
-    return FMin(cfmin.Fval(), cfmin.Edm(), tolerance, cfmin.NFcn(), ncalls,
+    return FMin(cfmin.Fval(), cfmin.Edm(), tolerance, ncalls, ncalls_total,
          cfmin.Up(), cfmin.IsValid(), cfmin.HasValidParameters(),
          cfmin.HasAccurateCovar(), cfmin.HasPosDefCovar(), cfmin.HasMadePosDefCovar(),
          cfmin.HesseFailed(), cfmin.HasCovariance(), cfmin.IsAboveMaxEdm(),

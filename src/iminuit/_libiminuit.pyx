@@ -866,7 +866,14 @@ cdef class Minuit:
         ncalls_total_before = int(self.ncalls_total)
         ngrads_total_before = int(self.ngrads_total)
 
-        self.cfmin = call_mnapplication_wrapper(deref(minimizer), ncall, self.tol)
+        # Automatically call Migrad up to three times if minimum is not valid.
+        # This simple heuristic makes Migrad converge more often.
+        for _ in range(3):
+            self.cfmin = call_mnapplication_wrapper(deref(minimizer), ncall, self.tol)
+            if self.cfmin.IsValid() or self.cfmin.HasReachedCallLimit():
+                break
+
+        self.last_upst = self.cfmin.UserState()
 
         del minimizer
 
@@ -1190,7 +1197,7 @@ cdef class Minuit:
         """Current function minimum data object"""
         fmin = None
         if self.cfmin is not NULL:
-            fmin = cfmin2struct(self.cfmin, self.tol, self.ncalls_total)
+            fmin = cfmin2struct(self.cfmin, self.tol, self.ncalls, self.ncalls_total)
         return fmin
 
     @property

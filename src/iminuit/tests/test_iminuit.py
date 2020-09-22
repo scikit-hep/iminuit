@@ -1140,12 +1140,22 @@ def test_issue_424():
 
 @pytest.mark.parametrize("sign", (-1, 1))
 def test_parameter_at_limit(sign):
-    m = Minuit(lambda x : (x - sign * 1.2)**2, x=0, limit_x=(-1, 1), errordef=1)
+    m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0, limit_x=(-1, 1), errordef=1)
     m.migrad()
     assert m.values["x"] == approx(sign * 1.0, abs=1e-3)
     assert m.fmin.has_parameters_at_limit is True
 
-    m = Minuit(lambda x : (x - sign * 1.2)**2, x=0, errordef=1)
+    m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0, errordef=1)
     m.migrad()
     assert m.values["x"] == approx(sign * 1.2, abs=1e-3)
     assert m.fmin.has_parameters_at_limit is False
+
+
+def test_inaccurate_fcn():
+    def f(x):
+        return abs(x) ** 10 + 1e7
+
+    m = Minuit(f, x=2, errordef=1)
+    m.migrad()
+    assert m.valid
+    assert m.values["x"] == approx(0, abs=0.5)
