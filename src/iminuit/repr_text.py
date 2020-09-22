@@ -43,8 +43,10 @@ def matrix_format(*values):
 
 
 def goaledm(fm):
-    # taken from the source code, see VariableMeticBuilder::Minimum and
-    # ModularFunctionMinimizer::Minimize
+    # - taken from the source code, see VariableMeticBuilder::Minimum and
+    #   ModularFunctionMinimizer::Minimize
+    # - goal is used to detect convergence but violations by 10x are also accepted;
+    #   see VariableMetricBuilder.cxx:425
     mn_eps_2 = 4 * np.sqrt(np.finfo("float").eps)
     return 2e-3 * max(fm.tolerance * fm.up, mn_eps_2)
 
@@ -76,7 +78,7 @@ def fmin_fields(fm):
         ("Valid" if fm.is_valid else "INVALID") + " Minimum",
         ("Valid" if fm.has_valid_parameters else "INVALID") + " Parameters",
         ("SOME" if fm.has_parameters_at_limit else "No") + " Parameters at limit",
-        ("ABOVE" if fm.is_above_max_edm else "Below") + " EDM goal",
+        ("ABOVE" if fm.is_above_max_edm else "Below") + " EDM threshold (goal x 10)",
         ("ABOVE" if fm.has_reached_call_limit else "Below") + " call limit",
         "Hesse " + ("FAILED" if fm.hesse_failed else "ok"),
         ("Has" if fm.has_covariance else "NO") + " Covariance",
