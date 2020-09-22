@@ -146,7 +146,7 @@ def test_html_fmin_good(fmin_good):
         <td colspan="3" style="text-align:center;{good}"> No Parameters at limit </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center;{good}"> Below EDM goal </td>
+        <td colspan="2" style="text-align:center;{good}"> Below EDM threshold (goal x 10) </td>
         <td colspan="3" style="text-align:center;{good}"> Below call limit </td>
     </tr>
     <tr>
@@ -177,7 +177,7 @@ def test_html_fmin_bad(fmin_bad):
         <td colspan="3" style="text-align:center;{warn}"> SOME Parameters at limit </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:center;{bad}"> ABOVE EDM goal </td>
+        <td colspan="2" style="text-align:center;{bad}"> ABOVE EDM threshold (goal x 10) </td>
         <td colspan="3" style="text-align:center;{bad}"> ABOVE call limit </td>
     </tr>
     <tr>
@@ -399,7 +399,7 @@ def test_text_fmin_good(fmin_good):
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │ Valid Minimum │ Valid Parameters │        No Parameters at limit        │
 ├───────────────┴──────────────────┼──────────────────────────────────────┤
-│          Below EDM goal          │           Below call limit           │
+│ Below EDM threshold (goal x 10)  │           Below call limit           │
 ├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
 │   Hesse ok    │  Has Covariance  │ Accurate  │  Pos. def.  │ Not forced │
 └───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
@@ -416,7 +416,7 @@ def test_text_fmin_bad(fmin_bad):
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │INVALID Minimum│INVALID Parameters│       SOME Parameters at limit       │
 ├───────────────┴──────────────────┼──────────────────────────────────────┤
-│          ABOVE EDM goal          │           ABOVE call limit           │
+│ ABOVE EDM threshold (goal x 10)  │           ABOVE call limit           │
 ├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
 │ Hesse FAILED  │  NO Covariance   │APPROXIMATE│NOT pos. def.│   FORCED   │
 └───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
