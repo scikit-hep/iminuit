@@ -26,8 +26,8 @@ cdef extern from "IMinuitMixin.h":
         void resetNumCall()
 
 cdef extern from "Utils.h":
-    FunctionMinimum* call_mnapplication_wrapper(
-        MnApplication app, unsigned int i, double tol) except +
+    FunctionMinimum* make_function_minimum(
+        MnApplication* app, unsigned int i, double tol) except +
 
     cdef cppclass MinosErrorHolder:
         MinosErrorHolder()
