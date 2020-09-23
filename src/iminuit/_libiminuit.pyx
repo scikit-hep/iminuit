@@ -872,6 +872,8 @@ cdef class Minuit:
         for _ in range(5):
             if self.cfmin:
                 del self.cfmin
+                # self.cfmin must be always set to NULL after it was deleted,
+                # but here we are going to reset it in the next line anyway
             self.cfmin = call_mnapplication_wrapper(deref(minimizer), ncall, self.tol)
             if self.cfmin.IsValid() or self.cfmin.HasReachedCallLimit():
                 break
