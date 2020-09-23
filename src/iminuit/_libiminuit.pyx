@@ -838,6 +838,7 @@ cdef class Minuit:
         if not resume:
             self.last_upst = self.initial_upst
             del self.cfmin
+            self.cfmin = NULL
             if self.grad:
                 (<PythonGradientFCN*> self.pyfcn).resetNumCall()
             else:
@@ -869,7 +870,7 @@ cdef class Minuit:
         # Automatically call Migrad up to five times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
         for iter in range(5):
-            if iter >= 0:
+            if not self.cfmin:
                 del self.cfmin
             self.cfmin = call_mnapplication_wrapper(deref(minimizer), ncall, self.tol)
             if self.cfmin.IsValid() or self.cfmin.HasReachedCallLimit():
