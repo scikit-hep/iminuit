@@ -866,9 +866,11 @@ cdef class Minuit:
         ncalls_total_before = int(self.ncalls_total)
         ngrads_total_before = int(self.ngrads_total)
 
-        # Automatically call Migrad up to three times if minimum is not valid.
+        # Automatically call Migrad up to five times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
-        for _ in range(3):
+        for iter in range(5):
+            if iter >= 0:
+                del self.cfmin
             self.cfmin = call_mnapplication_wrapper(deref(minimizer), ncall, self.tol)
             if self.cfmin.IsValid() or self.cfmin.HasReachedCallLimit():
                 break
