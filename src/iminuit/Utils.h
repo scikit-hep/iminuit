@@ -32,9 +32,9 @@ inline std::string format(const char* fmt, ...){
 
 //mnapplication() returns stack allocated functionminimum but
 //cython doesn't like it since it has no default constructor
-inline ROOT::Minuit2::FunctionMinimum* call_mnapplication_wrapper(
-        ROOT::Minuit2::MnApplication& app, unsigned int ncall, double tol){
-    return new ROOT::Minuit2::FunctionMinimum(app(ncall, tol));
+inline ROOT::Minuit2::FunctionMinimum* make_function_minimum(
+        ROOT::Minuit2::MnApplication* app, unsigned int ncall, double tol){
+    return new ROOT::Minuit2::FunctionMinimum((*app)(ncall, tol));
 }
 
 struct MinosErrorHolder {
