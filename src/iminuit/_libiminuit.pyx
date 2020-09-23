@@ -870,7 +870,7 @@ cdef class Minuit:
         # Automatically call Migrad up to five times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
         for _ in range(5):
-            if not self.cfmin:
+            if self.cfmin:
                 del self.cfmin
             self.cfmin = call_mnapplication_wrapper(deref(minimizer), ncall, self.tol)
             if self.cfmin.IsValid() or self.cfmin.HasReachedCallLimit():
