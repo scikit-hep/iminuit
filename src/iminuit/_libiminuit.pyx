@@ -1078,7 +1078,7 @@ cdef class Minuit:
         """Error or correlation matrix in tuple or tuples format."""
         if not self.last_upst.HasCovariance():
             raise RuntimeError(
-                "Covariance is not valid. May be the last Hesse call failed?")
+                "Covariance is not valid. Maybe the last Hesse call failed?")
 
         cdef MnUserCovariance mncov = self.last_upst.Covariance()
 
@@ -1209,7 +1209,8 @@ cdef class Minuit:
         """Current function minimum data object"""
         fmin = None
         if self.cfmin is not NULL:
-            fmin = cfmin2struct(self.cfmin, self.tol, self._ncalls, self.ncalls_total, self._ngrads, self.ngrads_total)
+            fmin = cfmin2struct(self.cfmin, self.tol, self._ncalls, self.ncalls_total,
+                                self._ngrads, self.ngrads_total)
         return fmin
 
     @property
@@ -1683,65 +1684,4 @@ cdef class Minuit:
     # all the deprecated stuff goes through __getattr__, which is only called if
     # normal attribute access returns AttributeError
     def __getattr__(self, key):
-        def set_errordef(arg):
-            self.errordef = arg
-        def set_strategy(arg):
-            self.strategy = arg
-        def set_print_level(arg):
-            self.print_level = arg
-
-        deprecated = {
-            "edm": (False, "this_object.fmin.edm",
-              lambda self: self.fmin.edm if self.fmin else None),
-            "merrors_struct": (False, "this_object.merrors", lambda self: self.merrors),
-            "ncalls": (False, "this_object.fmin.nfcn",
-              lambda self: self.fmin.nfcn if self.fmin else 0),
-            "ngrads": (False, "this_object.fmin.ngrad",
-              lambda self: self.fmin.ngrad if self.fmin else 0),
-            "get_merrors": (True, "this_object.merrors", lambda: self.merrors),
-            "get_fmin": (True, "this_object.fmin", lambda: self.fmin),
-            "get_param_states": (True, "this_object.params", lambda: self.params),
-            "get_initial_param_states": (True, "this_object.init_params",
-              lambda: self.init_params),
-            "get_num_call_fcn": (True, "this_object.ncalls_total",
-              lambda: self.ncalls_total),
-            "get_num_call_grad": (True, "this_object.ngrads_total",
-              lambda: self.ngrads_total),
-            "is_fixed": (True, "this_object.fixed[arg]", lambda arg: self.fixed[arg]),
-            "migrad_ok": (True, "this_object.valid", lambda: self.valid),
-            "print_matrix": (True, "this_object.matrix()",
-              lambda: print(self.matrix(correlation=True, skip_fixed=True))),
-            "print_fmin": (True, "print(this_object.fmin)", lambda: print(self.fmin)),
-            "print_all_minos": (True, "print(this_object.merrors)",
-              lambda: print(self.merrors)),
-            "print_param": (True, "this_object.params", lambda: print(self.params)),
-            "print_initial_param": (True, "init_params",
-              lambda: print(self.init_params)),
-            "set_errordef": (True, "this_object.errordef = value", set_errordef),
-            "set_up": (True, "this_object.errordef = value", set_errordef),
-            "set_strategy": (True, "this_object.strategy = value", set_strategy),
-            "set_print_level": (True, "this_object.print_level = value",
-              set_print_level),
-            "list_of_fixed_param": (True,
-              "`[name for (name, fix) in this_object.fixed.items() if fix]`",
-              lambda: [name for (name, fix) in self.fixed.items() if fix]),
-            "list_of_vary_param": (True,
-              "`[name for (name, fix) in this_object.fixed.items() if not fix]`",
-              lambda: [name for (name, fix) in self.fixed.items() if not fix]),
-            "matrix_accurate": (True, "this_object.accurate", lambda: self.accurate),
-        }
-
-        if key in deprecated:
-            is_method, replacement, lambd = deprecated[key]
-            warn("`{0}` is deprecated: Use `{1}` instead".format(key, replacement),
-                 DeprecationWarning,
-                 stacklevel=2,
-            )
-
-            if is_method:
-                return lambd
-            else:
-                return lambd(self)
-
-        raise AttributeError("type object '{0}' has no attribute '{1}'"
-                             .format(self.__class__.__name__, key))
+        return _minuit_methods.deprecated(self, key)

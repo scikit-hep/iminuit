@@ -124,3 +124,110 @@ def check_extra_args(parameters, kwd):
                 )
                 % (k, parameters)
             )
+
+
+# place all deprecated attributes and methods of the Minuit object here
+def deprecated(self, key):
+    deprecated = {
+        "edm": (
+            False,
+            "this_object.fmin.edm",
+            lambda self: self.fmin.edm if self.fmin else None,
+        ),
+        "merrors_struct": (False, "this_object.merrors", lambda self: self.merrors),
+        "ncalls": (
+            False,
+            "this_object.fmin.nfcn",
+            lambda self: self.fmin.nfcn if self.fmin else 0,
+        ),
+        "ngrads": (
+            False,
+            "this_object.fmin.ngrad",
+            lambda self: self.fmin.ngrad if self.fmin else 0,
+        ),
+        "get_merrors": (True, "this_object.merrors", lambda: self.merrors),
+        "get_fmin": (True, "this_object.fmin", lambda: self.fmin),
+        "get_param_states": (True, "this_object.params", lambda: self.params),
+        "get_initial_param_states": (
+            True,
+            "this_object.init_params",
+            lambda: self.init_params,
+        ),
+        "get_num_call_fcn": (
+            True,
+            "this_object.ncalls_total",
+            lambda: self.ncalls_total,
+        ),
+        "get_num_call_grad": (
+            True,
+            "this_object.ngrads_total",
+            lambda: self.ngrads_total,
+        ),
+        "is_fixed": (True, "this_object.fixed[arg]", lambda arg: self.fixed[arg]),
+        "migrad_ok": (True, "this_object.valid", lambda: self.valid),
+        "print_matrix": (
+            True,
+            "print(this_object.matrix())",
+            lambda: print(self.matrix(correlation=True, skip_fixed=True)),
+        ),
+        "print_fmin": (True, "print(this_object.fmin)", lambda: print(self.fmin)),
+        "print_all_minos": (
+            True,
+            "print(this_object.merrors)",
+            lambda: print(self.merrors),
+        ),
+        "print_param": (True, "print(this_object.params)", lambda: print(self.params)),
+        "print_initial_param": (
+            True,
+            "print(this_object.init_params)",
+            lambda: print(self.init_params),
+        ),
+        "set_errordef": (
+            True,
+            "this_object.errordef = value",
+            lambda arg: setattr(self, "errordef", arg),
+        ),
+        "set_up": (
+            True,
+            "this_object.errordef = value",
+            lambda arg: setattr(self, "errordef", arg),
+        ),
+        "set_strategy": (
+            True,
+            "this_object.strategy = value",
+            lambda arg: setattr(self, "strategy", arg),
+        ),
+        "set_print_level": (
+            True,
+            "this_object.print_level = value",
+            lambda arg: setattr(self, "print_level", arg),
+        ),
+        "list_of_fixed_param": (
+            True,
+            "`[name for (name, fix) in this_object.fixed.items() if fix]`",
+            lambda: [name for (name, fix) in self.fixed.items() if fix],
+        ),
+        "list_of_vary_param": (
+            True,
+            "`[name for (name, fix) in this_object.fixed.items() if not fix]`",
+            lambda: [name for (name, fix) in self.fixed.items() if not fix],
+        ),
+        "matrix_accurate": (True, "this_object.accurate", lambda: self.accurate),
+    }
+
+    if key in deprecated:
+        is_method, replacement, lambd = deprecated[key]
+        warn(
+            "`{0}` is deprecated: Use `{1}` instead".format(key, replacement),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        if is_method:
+            return lambd
+        else:
+            return lambd(self)
+
+    raise AttributeError(
+        "type object '{0}' has no attribute '{1}'".format(self.__class__.__name__, key)
+    )
