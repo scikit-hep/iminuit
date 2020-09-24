@@ -795,7 +795,7 @@ cdef class Minuit:
         return cls(fcn, **kwds)
 
 
-    def migrad(self, ncall=None, resume=True, precision=None, **deprecated_kwargs):
+    def migrad(self, ncall=None, resume=True, precision=None, iterate=5, **deprecated_kwargs):
         """Run MIGRAD.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -814,7 +814,15 @@ cdef class Minuit:
               the previous minimiser attempt(True) or should start from the
               beginning(False). Default True.
 
-            * **precision**: override miniut own's internal precision.
+            * **precision**: override Minuit precision estimate for the cost function.
+              Default: None (= use epsilon of a C++ double). If the cost function has a
+              lower precision (e.g. of a C++ float), setting this to a lower value will
+              accelerate convergence and reduce the rate of unsuccessful convergence.
+
+            * **iterate**: automatically call Migrad up to N times if convergence
+              was not reached. Default: 5. This simple heuristic makes Migrad converge
+              more often even if the numerical precision of the cost function is low.
+              Setting this to 1 disables the feature.
 
         **Return:**
 
@@ -822,6 +830,9 @@ cdef class Minuit:
         """
         if ncall is None:
             ncall = 0 # tells C++ Minuit to use its internal heuristic
+
+        if iterate < 1:
+            raise ValueError("iterate must be at least 1")
 
         if "nsplit" in deprecated_kwargs:
             warn("`nsplit` keyword has been removed and is ignored",
@@ -869,7 +880,7 @@ cdef class Minuit:
 
         # Automatically call Migrad up to five times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
-        for _ in range(5):
+        for _ in range(iterate):
             if self.cfmin:
                 del self.cfmin
                 # self.cfmin must be always set to NULL after it was deleted,
