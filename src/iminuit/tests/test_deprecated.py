@@ -282,3 +282,15 @@ def test_FMin_ncalls():
             has_parameters_at_limit=False,
         )
         assert fmin.ncalls == 20
+
+
+def test_ncalls(minuit):
+    with pytest.warns(DeprecationWarning):
+        assert minuit.ncalls == minuit.fmin.nfcn
+        assert Minuit(lambda x: 0, pedantic=False).ncalls == 0
+
+
+def test_ngrads(minuit):
+    with pytest.warns(DeprecationWarning):
+        assert minuit.ngrads == minuit.fmin.ngrad
+        assert Minuit(lambda x: 0, pedantic=False).ngrads == 0

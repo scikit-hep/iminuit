@@ -530,7 +530,7 @@ def test_minos_single(grad):
 
     m.strategy = 0
     m.migrad()
-    assert m.ncalls < 15
+    assert m.fmin.nfcn < 15
 
 
 def test_minos_single_fixed():
@@ -841,23 +841,23 @@ def test_ncalls():
     m = Minuit(func, pedantic=False)
     m.migrad()
     assert m.ncalls_total == func.ncalls
-    assert m.ncalls == func.ncalls
+    assert m.fmin.nfcn == func.ncalls
     m.migrad()
     assert m.ncalls_total == func.ncalls
-    assert m.ncalls < func.ncalls
+    assert m.fmin.nfcn < func.ncalls
     func.ncalls = 0
     m.migrad(resume=False)
     assert m.ncalls_total == func.ncalls
-    assert m.ncalls == func.ncalls
+    assert m.fmin.nfcn == func.ncalls
 
-    ncalls_without_limit = m.ncalls
+    ncalls_without_limit = m.fmin.nfcn
     # check that ncall argument limits function calls in migrad
     # note1: Minuit only checks the ncall counter in units of one iteration
     # step, therefore the call counter is in general not equal to ncall.
     # note2: If you pass ncall=0, Minuit uses a heuristic value that depends
     # on the number of parameters.
     m.migrad(ncall=1, resume=False)
-    assert m.ncalls < ncalls_without_limit
+    assert m.fmin.nfcn < ncalls_without_limit
 
 
 def test_ngrads():
@@ -875,21 +875,21 @@ def test_ngrads():
     func = Func()
     m = Minuit(func, grad=func.grad, pedantic=False)
     m.migrad()
-    assert m.ngrads > 0
+    assert m.fmin.ngrad > 0
     assert m.ngrads_total == func.ngrads
-    assert m.ngrads == func.ngrads
+    assert m.fmin.ngrad == func.ngrads
     m.migrad()
-    assert m.ncalls > 0
+    assert m.fmin.nfcn > 0
     assert m.ngrads_total == func.ngrads
-    assert m.ngrads < func.ngrads
+    assert m.fmin.ngrad < func.ngrads
     func.ngrads = 0
     m.migrad(resume=False)
     assert m.ngrads_total == func.ngrads
-    assert m.ngrads == func.ngrads
+    assert m.fmin.ngrad == func.ngrads
 
     # HESSE ignores analytical gradient
     m.hesse()
-    assert m.ngrads == 0
+    assert m.fmin.ngrad == 0
     assert m.ngrads_total > 0
 
 

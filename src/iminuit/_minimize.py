@@ -115,7 +115,7 @@ def minimize(
         fun=m.fval,
         hess_inv=m.np_covariance() if m.valid else np.ones((n, n)),
         message=message,
-        nfev=m.ncalls,
-        njev=m.ngrads,
+        nfev=m.fmin.nfcn if m.fmin else 0,
+        njev=m.fmin.ngrad if m.fmin else 0,
         minuit=m,
     )
