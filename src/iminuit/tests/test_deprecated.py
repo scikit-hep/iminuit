@@ -257,3 +257,28 @@ def test_remove_var():
         d = util.remove_var(d, ["k", "m"])
     assert set(d.keys()) & set(dk.keys()) == set()
     assert set(d.keys()) & set(dm.keys()) == set()
+
+
+def test_FMin_ncalls():
+    with pytest.warns(DeprecationWarning):
+        fmin = util.FMin(
+            fval=0,
+            edm=0,
+            tolerance=0.1,
+            nfcn=10,
+            nfcn_total=20,
+            ngrad=3,
+            ngrad_total=3,
+            up=0.5,
+            is_valid=True,
+            has_valid_parameters=True,
+            has_accurate_covar=True,
+            has_posdef_covar=True,
+            has_made_posdef_covar=False,
+            hesse_failed=False,
+            has_covariance=True,
+            is_above_max_edm=False,
+            has_reached_call_limit=False,
+            has_parameters_at_limit=False,
+        )
+        assert fmin.ncalls == 20
