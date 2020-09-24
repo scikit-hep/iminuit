@@ -1151,11 +1151,12 @@ def test_parameter_at_limit(sign):
     assert m.fmin.has_parameters_at_limit is False
 
 
-def test_inaccurate_fcn():
+@pytest.mark.parametrize("iterate,valid", ((1, False), (5, True)))
+def test_inaccurate_fcn(iterate, valid):
     def f(x):
         return abs(x) ** 10 + 1e7
 
     m = Minuit(f, x=2, errordef=1)
-    m.migrad()
-    assert m.valid
-    assert m.values["x"] == approx(0, abs=0.5)
+    m.migrad(iterate=iterate)
+    print(m.fmin)
+    assert m.valid == valid
