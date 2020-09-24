@@ -1158,5 +1158,4 @@ def test_inaccurate_fcn(iterate, valid):
 
     m = Minuit(f, x=2, errordef=1)
     m.migrad(iterate=iterate)
-    print(m.fmin)
     assert m.valid == valid
