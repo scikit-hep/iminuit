@@ -495,7 +495,35 @@ def test_text_matrix():
     # fmt: on
 
 
-def test_text_with_long_names():
+def test_text_matrix_mini():
+    matrix = Matrix(["x"], ((1.0,),))
+    # fmt: off
+    assert framed(matrix) == r"""
+┌───┬───┐
+│   │ x │
+├───┼───┤
+│ x │ 1 │
+└───┴───┘
+"""
+    # fmt: on
+
+
+def test_text_matrix_large():
+    matrix = Matrix(["x", "y", "z"], ((1, 2, 3), (4, 5, 6), (7, 8, 9)))
+    # fmt: off
+    assert framed(matrix) == r"""
+┌───┬───────┐
+│   │ x y z │
+├───┼───────┤
+│ x │ 1 2 3 │
+│ y │ 4 5 6 │
+│ z │ 7 8 9 │
+└───┴───────┘
+"""
+    # fmt: on
+
+
+def test_text_matrix_with_long_names():
 
     matrix = Matrix(["super-long-name", "x"], ((1.0, 0.1), (0.1, 1.0)))
     # fmt: off

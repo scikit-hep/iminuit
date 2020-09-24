@@ -217,7 +217,7 @@ def matrix(m):
     h_names = [("{:>%is}" % row_width).format(x) for x in m.names]
     val_fmt = ("{:>%is}" % row_width).format
 
-    w = (first_row_width + 2, row_width + row_width + 3)
+    w = (first_row_width + 2, (row_width + 1) * len(m.names) + 1)
     l1 = format_line(w, "┌┬┐")
     l2 = format_line(w, "├┼┤")
     l3 = format_line(w, "└┴┘")
