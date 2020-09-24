@@ -75,7 +75,7 @@ def fmin(fm):
                     ff[1],
                     colspan=3,
                     style="text-align:center",
-                    title="No. of calls in last algorithm and total number of calls",
+                    title="No. of function evaluations in last call and total number",
                 ),
             ),
             tr(
@@ -89,7 +89,7 @@ def fmin(fm):
                     ff[3],
                     colspan=3,
                     style="text-align:center",
-                    title="Increase in FCN which corresponds to 1 standard deviation",
+                    title="No. of gradient evaluations in last call and total number",
                 ),
             ),
             tr(

@@ -143,10 +143,10 @@ class MError(
 class FMin(
     namedtuple(
         "_FMin",
-        "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters "
+        "fval edm tolerance nfcn nfcn_total up is_valid has_valid_parameters "
         "has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed "
         "has_covariance is_above_max_edm has_reached_call_limit "
-        "has_parameters_at_limit",
+        "has_parameters_at_limit ngrad ngrad_total",
     )
 ):
     """Function minimum status object."""
@@ -180,7 +180,17 @@ class FMin(
     def __getitem__(self, key):
         if isinstance(key, int):
             return super(FMin, self).__getitem__(key)
-        return self.__getattribute__(key)
+        return getattr(self, key)
+
+    def __getattr__(self, key):
+        if key == "ncalls":
+            warnings.warn(
+                "attribute `FMin.ncalls` is deprecated; use `FMin.nfcn_total`",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return self.nfcn_total
+        raise AttributeError("{} attribute does not exist".format(key))
 
     def __contains__(self, key):
         return key in self.keys()
