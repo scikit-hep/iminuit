@@ -5,8 +5,16 @@
 Changelog
 =========
 
+1.5.2 (September 24, 2020)
+--------------------------
+
+- Fixed regression of the convergence rate of Minuit.migrad for low precision cost
+  functions by restoring a heuristic that calls Migrad several times if convergence is
+  not reached on first try; made this heuristic configurable with `iterate` keyword
+- Clarify in FMin display how the EDM convergence criterion uses the EDM goal
+
 1.5.1 (September 20, 2020)
----------------------------
+--------------------------
 
 - Fixed mistake in "parameter at limit" warning, which did not report correctly if parameter was at the upper limit
 
