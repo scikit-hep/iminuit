@@ -190,7 +190,11 @@ class FMin(
                 stacklevel=2,
             )
             return self.nfcn_total
-        raise AttributeError("{} attribute does not exist".format(key))
+        raise AttributeError(
+            "type object '{0}' has no attribute '{1}'".format(
+                self.__class__.__name__, key
+            )
+        )
 
     def __contains__(self, key):
         return key in self.keys()

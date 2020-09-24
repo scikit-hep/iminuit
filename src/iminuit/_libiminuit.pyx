@@ -1,13 +1,13 @@
 # cython: embedsignature=True, c_string_type=str, c_string_encoding=ascii, language_level=2
 # distutils: language = c++
 """IPython Minuit class definition."""
+from __future__ import print_function
 from warnings import warn
 from libc.math cimport sqrt
 from libcpp.string cimport string
 from libcpp.cast cimport dynamic_cast
 from cython.operator cimport dereference as deref
 from iminuit import util as mutil
-from iminuit._deprecated import deprecated
 from iminuit.latex import LatexFactory
 from iminuit import _minuit_methods
 from collections import OrderedDict
@@ -319,6 +319,8 @@ cdef class Minuit:
     """
 
     cdef int _print_level
+    cdef int _ncalls
+    cdef int _ngrads
 
     @property
     def print_level(self):
@@ -392,12 +394,6 @@ cdef class Minuit:
 
     cdef readonly object merrors
     """MINOS errors."""
-
-    cdef readonly int ncalls
-    """Number of FCN call of last MIGRAD / MINOS / HESSE run."""
-
-    cdef readonly int ngrads
-    """Number of Gradient calls of last MIGRAD / MINOS / HESSE run."""
 
     @property
     def fitarg(self):
@@ -664,8 +660,8 @@ cdef class Minuit:
         self.last_upst = self.initial_upst
         self._init_args_values_errors_fixed()
         self.merrors = mutil.MErrors()
-        self.ncalls = 0
-        self.ngrads = 0
+        self._ncalls = 0
+        self._ngrads = 0
 
         self.cfmin = NULL
 
@@ -893,8 +889,8 @@ cdef class Minuit:
 
         del minimizer
 
-        self.ncalls = self.ncalls_total - ncalls_total_before
-        self.ngrads = self.ngrads_total - ngrads_total_before
+        self._ncalls = self.ncalls_total - ncalls_total_before
+        self._ngrads = self.ngrads_total - ngrads_total_before
 
         self.last_upst = self.cfmin.UserState()
 
@@ -974,8 +970,8 @@ cdef class Minuit:
 
         del hesse
 
-        self.ncalls = self.ncalls_total - ncalls_total_before
-        self.ngrads = self.ngrads_total - ngrads_total_before
+        self._ncalls = self.ncalls_total - ncalls_total_before
+        self._ngrads = self.ngrads_total - ngrads_total_before
 
         if not self.cfmin:
             # if cfmin does not exist and HESSE fails, we raise an exception
@@ -1071,8 +1067,8 @@ cdef class Minuit:
 
         del minos
 
-        self.ncalls = self.ncalls_total - ncalls_total_before
-        self.ngrads = self.ngrads_total - ngrads_total_before
+        self._ncalls = self.ncalls_total - ncalls_total_before
+        self._ngrads = self.ngrads_total - ngrads_total_before
 
         self.pyfcn.SetErrorDef(oldup)
         return self.merrors
@@ -1213,7 +1209,7 @@ cdef class Minuit:
         """Current function minimum data object"""
         fmin = None
         if self.cfmin is not NULL:
-            fmin = cfmin2struct(self.cfmin, self.tol, self.ncalls, self.ncalls_total, self.ngrads, self.ngrads_total)
+            fmin = cfmin2struct(self.cfmin, self.tol, self._ncalls, self.ncalls_total, self._ngrads, self.ngrads_total)
         return fmin
 
     @property
@@ -1684,101 +1680,68 @@ cdef class Minuit:
 
         return _minuit_methods.draw_contour(self, x, y, bins, bound)
 
-    @property
-    def edm(self):
-        warn(
-             ":attr:`edm` is deprecated: Use `this_object.fmin.edm` instead",
-             DeprecationWarning,
-             stacklevel=2,
-        )
-        fmin = self.fmin
-        return fmin.edm if fmin else None
+    # all the deprecated stuff goes through __getattr__, which is only called if
+    # normal attribute access returns AttributeError
+    def __getattr__(self, key):
+        def set_errordef(arg):
+            self.errordef = arg
+        def set_strategy(arg):
+            self.strategy = arg
+        def set_print_level(arg):
+            self.print_level = arg
 
-    @property
-    def merrors_struct(self):
-        warn(
-             ":attr:`merrors_struct` is deprecated: Use `this_object.merrors` instead",
-             DeprecationWarning,
-             stacklevel=2,
-        )
-        return self.merrors
+        deprecated = {
+            "edm": (False, "this_object.fmin.edm",
+              lambda self: self.fmin.edm if self.fmin else None),
+            "merrors_struct": (False, "this_object.merrors", lambda self: self.merrors),
+            "ncalls": (False, "this_object.fmin.nfcn",
+              lambda self: self.fmin.nfcn if self.fmin else 0),
+            "ngrads": (False, "this_object.fmin.ngrad",
+              lambda self: self.fmin.ngrad if self.fmin else 0),
+            "get_merrors": (True, "this_object.merrors", lambda: self.merrors),
+            "get_fmin": (True, "this_object.fmin", lambda: self.fmin),
+            "get_param_states": (True, "this_object.params", lambda: self.params),
+            "get_initial_param_states": (True, "this_object.init_params",
+              lambda: self.init_params),
+            "get_num_call_fcn": (True, "this_object.ncalls_total",
+              lambda: self.ncalls_total),
+            "get_num_call_grad": (True, "this_object.ngrads_total",
+              lambda: self.ngrads_total),
+            "is_fixed": (True, "this_object.fixed[arg]", lambda arg: self.fixed[arg]),
+            "migrad_ok": (True, "this_object.valid", lambda: self.valid),
+            "print_matrix": (True, "this_object.matrix()",
+              lambda: print(self.matrix(correlation=True, skip_fixed=True))),
+            "print_fmin": (True, "print(this_object.fmin)", lambda: print(self.fmin)),
+            "print_all_minos": (True, "print(this_object.merrors)",
+              lambda: print(self.merrors)),
+            "print_param": (True, "this_object.params", lambda: print(self.params)),
+            "print_initial_param": (True, "init_params",
+              lambda: print(self.init_params)),
+            "set_errordef": (True, "this_object.errordef = value", set_errordef),
+            "set_up": (True, "this_object.errordef = value", set_errordef),
+            "set_strategy": (True, "this_object.strategy = value", set_strategy),
+            "set_print_level": (True, "this_object.print_level = value",
+              set_print_level),
+            "list_of_fixed_param": (True,
+              "`[name for (name, fix) in this_object.fixed.items() if fix]`",
+              lambda: [name for (name, fix) in self.fixed.items() if fix]),
+            "list_of_vary_param": (True,
+              "`[name for (name, fix) in this_object.fixed.items() if not fix]`",
+              lambda: [name for (name, fix) in self.fixed.items() if not fix]),
+            "matrix_accurate": (True, "this_object.accurate", lambda: self.accurate),
+        }
 
-    @deprecated("use `this_object.merrors` instead")
-    def get_merrors(self):
-        return self.merrors
+        if key in deprecated:
+            is_method, replacement, lambd = deprecated[key]
+            warn("`{0}` is deprecated: Use `{1}` instead".format(key, replacement),
+                 DeprecationWarning,
+                 stacklevel=2,
+            )
 
-    @deprecated("use `this_object.fmin` instead")
-    def get_fmin(self):
-        return self.fmin
+            if is_method:
+                return lambd
+            else:
+                return lambd(self)
 
-    @deprecated("Use `this_object.params` instead")
-    def get_param_states(self):
-        return self.params
-
-    @deprecated("Use `this_object.init_params` instead")
-    def get_initial_param_states(self):
-        return self.init_params
-
-    @deprecated("Use `this_object.ncalls_total` instead")
-    def get_num_call_fcn(self):
-        return self.ncalls_total
-
-    @deprecated("Use `this_object.ngrads_total` instead")
-    def get_num_call_grad(self):
-        return self.ngrads_total
-
-    @deprecated("use `this_object.fixed` instead")
-    def is_fixed(self, vname):
-        return self.fixed[vname]
-
-    @deprecated("Use `this_object.valid` instead")
-    def migrad_ok(self):
-        return self.valid
-
-    @deprecated("use `print(this_object.matrix())` instead")
-    def print_matrix(self):
-        print(self.matrix(correlation=True, skip_fixed=True))
-
-    @deprecated("use `print(this_object.fmin)` instead")
-    def print_fmin(self):
-        print(self.fmin)
-
-    @deprecated("use `print(this_object.merrors)` instead")
-    def print_all_minos(self):
-        print(self.merrors)
-
-    @deprecated("use `print(this_object.params)` instead")
-    def print_param(self, **kwds):
-        print(self.params)
-
-    @deprecated("use `print(this_object.init_params)` instead")
-    def print_initial_param(self, **kwds):
-        print(self.get_initial_param_states())
-
-    @deprecated("use `this_object.errordef = value` instead")
-    def set_errordef(self, value):
-        self.errordef = value
-
-    @deprecated("use `this_object.errordef = value` instead")
-    def set_up(self, value):
-        self.errordef = value
-
-    @deprecated("use `this_object.strategy` instead")
-    def set_strategy(self, value):
-        self.strategy = value
-
-    @deprecated("use `this_object.print_level` instead")
-    def set_print_level(self, value):
-        self.print_level = value
-
-    @deprecated("use `[name for (name,fix) in this_object.fixed.items() if fix]`")
-    def list_of_fixed_param(self):
-        return [name for (name, is_fixed) in self.fixed.items() if is_fixed]
-
-    @deprecated("use `[name for (name,fix) in this_object.fixed.items() if not fix]`")
-    def list_of_vary_param(self):
-        return [name for (name, is_fixed) in self.fixed.items() if not is_fixed]
-
-    @deprecated("use `this_object.accurate`")
-    def matrix_accurate(self):
-        return self.accurate
+        raise AttributeError("type object '{0}' has no attribute '{1}'"
+                             .format(self.__class__.__name__, key))
