@@ -180,7 +180,17 @@ class FMin(
     def __getitem__(self, key):
         if isinstance(key, int):
             return super(FMin, self).__getitem__(key)
-        return self.__getattribute__(key)
+        return getattr(self, key)
+
+    def __getattr__(self, key):
+        if key == "ncalls":
+            warnings.warn(
+                "attribute `FMin.ncalls` is deprecated; use `FMin.nfcn_total`",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return self.nfcn_total
+        raise AttributeError("{} attribute does not exist".format(key))
 
     def __contains__(self, key):
         return key in self.keys()

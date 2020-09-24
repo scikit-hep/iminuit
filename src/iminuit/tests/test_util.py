@@ -100,7 +100,7 @@ def test_MError():
 
 
 def test_FMin():
-    keys = "fval edm tolerance nfcn ncalls up is_valid has_valid_parameters has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm has_reached_call_limit has_parameters_at_limit ngrad ngrad_total".split()  # noqa: E501
+    keys = "fval edm tolerance nfcn nfcn_total up is_valid has_valid_parameters has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed has_covariance is_above_max_edm has_reached_call_limit has_parameters_at_limit ngrad ngrad_total".split()  # noqa: E501
     values = (
         0.2,
         1e-3,
@@ -119,7 +119,7 @@ def test_FMin():
         False,
         False,
         3,
-        3
+        3,
     )
 
     f = util.FMin(*values)

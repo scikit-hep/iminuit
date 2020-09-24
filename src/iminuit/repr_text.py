@@ -72,9 +72,11 @@ def format_line(widths, edges):
 def fmin_fields(fm):
     return [
         "FCN = %.4g" % fm.fval,
-        "Nfcn = %i (%i total)" % (fm.nfcn, fm.ncalls),
+        "Nfcn = %i (%i total)" % (fm.nfcn, fm.nfcn_total),
         "EDM = %.3g (Goal: %.3g)" % (fm.edm, goaledm(fm)),
-        "Ngrad = %i (%i total)" % (fm.ngrad, fm.ngrad_total) if fm.ngrad_total > 0 else "",
+        "Ngrad = %i (%i total)" % (fm.ngrad, fm.ngrad_total)
+        if fm.ngrad_total > 0
+        else "",
         ("Valid" if fm.is_valid else "INVALID") + " Minimum",
         ("Valid" if fm.has_valid_parameters else "INVALID") + " Parameters",
         ("SOME" if fm.has_parameters_at_limit else "No") + " Parameters at limit",

@@ -92,7 +92,9 @@ def fmin_good():
         edm=1.23456e-10,
         tolerance=0.1,
         nfcn=10,
-        ncalls=20,
+        nfcn_total=20,
+        ngrad=3,
+        ngrad_total=3,
         up=0.5,
         is_valid=True,
         has_valid_parameters=True,
@@ -104,8 +106,6 @@ def fmin_good():
         is_above_max_edm=False,
         has_reached_call_limit=False,
         has_parameters_at_limit=False,
-        ngrad=3,
-        ngrad_total=3,
     )
 
 
@@ -116,7 +116,9 @@ def fmin_bad():
         edm=1.23456e-10,
         tolerance=0,
         nfcn=100000,
-        ncalls=200000,
+        nfcn_total=200000,
+        ngrad=100000,
+        ngrad_total=200000,
         up=0.5,
         is_valid=False,
         has_valid_parameters=False,
@@ -128,8 +130,6 @@ def fmin_bad():
         is_above_max_edm=True,
         has_reached_call_limit=True,
         has_parameters_at_limit=True,
-        ngrad=100000,
-        ngrad_total=200000,
     )
 
 
