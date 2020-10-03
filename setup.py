@@ -179,6 +179,7 @@ setup(
     packages=["iminuit", "iminuit.tests"],
     package_dir={"": "src"},
     ext_modules=extensions,
+    python_requires=">=3.5",
     install_requires=["numpy>=1.11.3"],
     classifiers=[
         "Programming Language :: Python",
