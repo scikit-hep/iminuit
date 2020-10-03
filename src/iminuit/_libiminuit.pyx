@@ -233,9 +233,12 @@ cdef class FixedView(BasicView):
 
 
 cdef class Minuit:
-    # error definition constants
+
     LEAST_SQUARES = 1.0
+    """Set `:attr:errordef` to this constant for a least-squares cost function."""
+
     LIKELIHOOD = 0.5
+    """Set `:attr:errordef` to this constant for a negative log-likelihood function."""
 
     # Standard stuff
 
