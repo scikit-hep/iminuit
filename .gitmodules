@@ -1,3 +1,6 @@
 [submodule "extern/Minuit2"]
 	path = extern/Minuit2
 	url = https://github.com/GooFit/Minuit2.git
+[submodule "extern/root"]
+	path = extern/root
+	url = https://github.com/root-project/root.git

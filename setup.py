@@ -115,20 +115,18 @@ except ImportError:
     numpy_header = []
 
 
-# Install missing Minuit2 submodule as needed
-if not os.listdir(join(cwd, "extern/Minuit2")):
+# Install missing ROOT submodule as needed
+if not os.listdir(join(cwd, "extern/root")):
     try:
         import subprocess as subp
 
-        print("Minuit2 submodule is missing, attempting download...")
+        print("ROOT is missing, attempting download...")
         subp.check_call(["git", "submodule", "update"])
     except subp.CalledProcessError:
-        raise SystemExit(
-            "Could not download Minuit2 submodule, run `git submodule update` manually"
-        )
+        raise SystemExit("Could not download ROOT, run `git submodule update` manually")
 
 minuit2_cxx = [
-    join(cwd, "extern/Minuit2/src", x) + ".cxx"
+    join(cwd, "extern/root/math/minuit2/src", x) + ".cxx"
     for x in open(join(cwd, "minuit2_cxx.lst"), "r").read().split("\n")
     if x
 ]
@@ -136,7 +134,7 @@ minuit2_cxx = [
 libiminuit = Extension(
     "iminuit._libiminuit",
     sources=sorted(glob(join(cwd, "src/iminuit/*" + ext)) + minuit2_cxx),
-    include_dirs=[join(cwd, "extern/Minuit2/inc")] + numpy_header,
+    include_dirs=[join(cwd, "extern/root/math/minuit2/inc")] + numpy_header,
     define_macros=[
         ("WARNINGMSG", "1"),
         ("ROOT_Math_VecTypes", "1"),
