@@ -33,9 +33,74 @@ list(APPEND CMAKE_PREFIX_PATH "${_tmp_sitepackages}")
 
 # Now we can find pybind11
 add_subdirectory(extern/pybind11)
-add_subdirectory(extern/root/math/minuit2)
 
-pybind11_add_module(_core MODULE src/main.cpp)
-target_link_libraries(_core PRIVATE Minuit2::Math)
+file(GLOB SOURCES_A "src/*.cpp")
+set(SOURCES_B
+  extern/root/math/minuit2/src/AnalyticalGradientCalculator.cxx
+  extern/root/math/minuit2/src/BasicMinimumError.cxx
+  extern/root/math/minuit2/src/BFGSErrorUpdator.cxx
+  extern/root/math/minuit2/src/DavidonErrorUpdator.cxx
+  extern/root/math/minuit2/src/HessianGradientCalculator.cxx
+  extern/root/math/minuit2/src/InitialGradientCalculator.cxx
+  extern/root/math/minuit2/src/LaEigenValues.cxx
+  extern/root/math/minuit2/src/LaInnerProduct.cxx
+  extern/root/math/minuit2/src/LaInverse.cxx
+  extern/root/math/minuit2/src/LaOuterProduct.cxx
+  extern/root/math/minuit2/src/LaSumOfElements.cxx
+  extern/root/math/minuit2/src/LaVtMVSimilarity.cxx
+  extern/root/math/minuit2/src/MPIProcess.cxx
+  extern/root/math/minuit2/src/MinimumBuilder.cxx
+  extern/root/math/minuit2/src/MnApplication.cxx
+  extern/root/math/minuit2/src/MnContours.cxx
+  extern/root/math/minuit2/src/MnCovarianceSqueeze.cxx
+  extern/root/math/minuit2/src/MnFcn.cxx
+  extern/root/math/minuit2/src/MnFunctionCross.cxx
+  extern/root/math/minuit2/src/MnGlobalCorrelationCoeff.cxx
+  extern/root/math/minuit2/src/MnHesse.cxx
+  extern/root/math/minuit2/src/MnLineSearch.cxx
+  extern/root/math/minuit2/src/MnMachinePrecision.cxx
+  extern/root/math/minuit2/src/MnMinos.cxx
+  extern/root/math/minuit2/src/MnParabolaFactory.cxx
+  extern/root/math/minuit2/src/MnPlot.cxx
+  extern/root/math/minuit2/src/MnPosDef.cxx
+  extern/root/math/minuit2/src/MnPrint.cxx
+  extern/root/math/minuit2/src/MnPrintImpl.cxx
+  extern/root/math/minuit2/src/MnSeedGenerator.cxx
+  extern/root/math/minuit2/src/MnStrategy.cxx
+  extern/root/math/minuit2/src/MnTiny.cxx
+  extern/root/math/minuit2/src/MnTraceObject.cxx
+  extern/root/math/minuit2/src/MnUserFcn.cxx
+  extern/root/math/minuit2/src/MnUserParameterState.cxx
+  extern/root/math/minuit2/src/MnUserParameters.cxx
+  extern/root/math/minuit2/src/MnUserTransformation.cxx
+  extern/root/math/minuit2/src/ModularFunctionMinimizer.cxx
+  extern/root/math/minuit2/src/NegativeG2LineSearch.cxx
+  extern/root/math/minuit2/src/Numerical2PGradientCalculator.cxx
+  extern/root/math/minuit2/src/SinParameterTransformation.cxx
+  extern/root/math/minuit2/src/SqrtLowParameterTransformation.cxx
+  extern/root/math/minuit2/src/SqrtUpParameterTransformation.cxx
+  extern/root/math/minuit2/src/VariableMetricBuilder.cxx
+  extern/root/math/minuit2/src/VariableMetricEDMEstimator.cxx
+  extern/root/math/minuit2/src/mnbins.cxx
+  extern/root/math/minuit2/src/mndasum.cxx
+  extern/root/math/minuit2/src/mndaxpy.cxx
+  extern/root/math/minuit2/src/mnddot.cxx
+  extern/root/math/minuit2/src/mndscal.cxx
+  extern/root/math/minuit2/src/mndspmv.cxx
+  extern/root/math/minuit2/src/mndspr.cxx
+  extern/root/math/minuit2/src/mnlsame.cxx
+  extern/root/math/minuit2/src/mnteigen.cxx
+  extern/root/math/minuit2/src/mntplot.cxx
+  extern/root/math/minuit2/src/mnvert.cxx
+  extern/root/math/minuit2/src/mnxerbla.cxx
+)
+
+set(SOURCES )
+
+pybind11_add_module(_core MODULE
+  ${SOURCES_A}
+  ${SOURCES_B}
+)
+target_include_directories(_core PRIVATE extern/root/math/minuit2/inc extern/root/math/mathcore/inc)
 
 install(TARGETS _core DESTINATION .)
