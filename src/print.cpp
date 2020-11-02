@@ -7,8 +7,8 @@ using namespace ROOT::Minuit2;
 void bind_print(py::module m) {
   py::class_<MnPrint>(m, "MnPrint")
 
-      .def_property_static("global_level", &MnPrint::GlobalLevel,
-                           &MnPrint::SetGlobalLevel)
+      .def_static("global_level", &MnPrint::GlobalLevel)
+      .def_static("set_global_level", &MnPrint::SetGlobalLevel)
 
       ;
 }
