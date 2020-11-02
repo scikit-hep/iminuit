@@ -2,9 +2,10 @@
 #define IMINUIT_UTILS_H
 
 #include <string>
-#include <stdio.h>
-#include <stdarg.h>
+#include <cstdio>
+#include <cstdarg>
 #include <algorithm>
+#include <memory>
 #include "Minuit2/MnApplication.h"
 #include "Minuit2/FunctionMinimum.h"
 #include "Minuit2/MinosError.h"
@@ -17,10 +18,10 @@ inline std::string format(const char* fmt, ...){
     char buffer[256];
     va_list vl;
     va_start(vl, fmt);
-    const int size = vsnprintf(buffer, 256, fmt, vl);
+    const int size = std::vsnprintf(buffer, 256, fmt, vl);
     if (256 <= size) { // resize string and try again
         char * buf = new char[size + 1];
-        vsprintf(buf, fmt, vl);
+        std::vsprintf(buf, fmt, vl);
         va_end(vl);
         std::string s(buf, buf + size);
         delete [] buf;
@@ -30,11 +31,17 @@ inline std::string format(const char* fmt, ...){
     return std::string(buffer, buffer + size);
 }
 
-//mnapplication() returns stack allocated functionminimum but
-//cython doesn't like it since it has no default constructor
-inline ROOT::Minuit2::FunctionMinimum* make_function_minimum(
-        ROOT::Minuit2::MnApplication* app, unsigned int ncall, double tol){
-    return new ROOT::Minuit2::FunctionMinimum((*app)(ncall, tol));
+// MnApplication() returns stack allocated FunctionMinimum but
+// cython doesn't like it since it has no default constructor,
+// so we have to go through a pointer :-(
+inline void get_function_minimum(
+        std::unique_ptr<ROOT::Minuit2::FunctionMinimum>& fmin,
+        std::unique_ptr<ROOT::Minuit2::MnApplication> app,
+        unsigned int ncall, double tol) {
+    if (!fmin)
+      fmin.reset(new ROOT::Minuit2::FunctionMinimum((*app)(ncall, tol)));
+    else
+      *fmin = (*app)(ncall, tol);
 }
 
 struct MinosErrorHolder {
