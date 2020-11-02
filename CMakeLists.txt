@@ -35,6 +35,7 @@ list(APPEND CMAKE_PREFIX_PATH "${_tmp_sitepackages}")
 add_subdirectory(extern/pybind11)
 add_subdirectory(extern/root/math/minuit2)
 
-pybind11_add_module(_cpp MODULE src/main.cpp)
+pybind11_add_module(_core MODULE src/main.cpp)
+target_link_libraries(_core PRIVATE Minuit2::Math)
 
-install(TARGETS _cpp DESTINATION .)
+install(TARGETS _core DESTINATION .)
