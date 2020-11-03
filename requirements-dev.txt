@@ -1,6 +1,5 @@
 numpy
 numba
-cython
 scipy
 matplotlib
 jupyter_client
