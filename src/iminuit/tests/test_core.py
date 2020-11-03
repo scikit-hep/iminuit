@@ -58,3 +58,31 @@ def test_grad():
     assert state[0].error == approx(1, abs=1e-3)
     assert f.nfcn > 0
     assert f.ngrad > 0
+
+
+def test_grad_np():
+    f = FCN(
+        lambda xy: 10 + xy[0] ** 2 + ((xy[1] - 1) / 2) ** 2,
+        lambda xy: [2 * xy[0], (xy[1] - 1)],
+        True,
+        1,
+    )
+    state = MnUserParameterState()
+    state.add("x", 5, 0.1)
+    state.add("😁", 3, 0.2, -5, 5)
+    assert len(state) == 2
+    str = MnStrategy(2)
+    migrad = MnMigrad(f, state, str)
+    fmin = migrad(0, 0.1)
+    state = fmin.state
+    assert len(state) == 2
+    assert state[0].number == 0
+    assert state[0].name == "x"
+    assert state[0].value == approx(0, abs=1e-2)
+    assert state[0].error == approx(1, abs=1e-2)
+    assert state[1].number == 1
+    assert state[1].name == "😁"
+    assert state[1].value == approx(1, abs=1e-2)
+    assert state[1].error == approx(2, abs=6e-2)
+    assert f.nfcn > 0
+    assert f.ngrad > 0
