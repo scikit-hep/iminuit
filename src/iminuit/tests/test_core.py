@@ -44,7 +44,7 @@ def test_fcn():
 
 def test_grad():
     # MnPrint.set_global_level(3)
-    f = FCN(lambda x: 10 + x ** 2, lambda x: 2 * x, False, 1)
+    f = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     str = MnStrategy(1)

@@ -2,8 +2,20 @@ cmake_minimum_required(VERSION 3.18)
 
 project(iminuit CXX)
 
-# Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
-# include(GNUInstallDirs)
+# Set a default build type if none was specified
+set(default_build_type "Release")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  set(default_build_type "Debug")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
 
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ version selection")  # or 11, 14, 17, 20
 set(CMAKE_CXX_STANDARD_REQUIRED ON)  # optional, ensure standard is supported
@@ -27,9 +39,10 @@ execute_process(
     "${Python_EXECUTABLE}" -c
     "import skbuild, os; print(os.path.dirname(os.path.dirname(skbuild.__file__)))"
   OUTPUT_VARIABLE _tmp_sitepackages
-  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
-  ECHO_ERROR_VARIABLE)
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_sitepackages}")
+
+message(STATUS "Detected site-packages: ${_tmp_sitepackages}")
 
 # Now we can find pybind11
 add_subdirectory(extern/pybind11)
