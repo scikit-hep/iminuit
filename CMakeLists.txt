@@ -114,6 +114,6 @@ pybind11_add_module(_core MODULE
   ${SOURCES_A}
   ${SOURCES_B}
 )
-target_include_directories(_core PRIVATE extern/root/math/minuit2/inc extern/root/math/mathcore/inc)
+target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 
 install(TARGETS _core DESTINATION .)
