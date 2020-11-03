@@ -5,10 +5,10 @@ from pytest import approx
 
 @pytest.fixture
 def debug():
-    prev = MnPrint.global_level()
-    MnPrint.set_global_level(3)
+    prev = MnPrint.global_level
+    MnPrint.global_level = 3
     yield
-    MnPrint.set_global_level(prev)
+    MnPrint.global_level = prev
 
 
 def test_fcn():
