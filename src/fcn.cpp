@@ -38,6 +38,8 @@ void bind_fcn(py::module m) {
   py::class_<FCN>(m, "FCN")
 
       .def(py::init<py::object, py::object, bool, double>())
+      .def("__call__", &FCN::operator())
+      .def("grad", &FCN::Gradient)
       .def_property("up", &FCN::Up, &FCN::SetUp)
       .def_readwrite("nfcn", &FCN::nfcn_)
       .def_readwrite("ngrad", &FCN::ngrad_)

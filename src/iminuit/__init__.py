@@ -18,8 +18,8 @@ Further information:
 
 __all__ = ["Minuit", "minimize", "describe", "__version__", "test"]
 
-# from ._minuit import Minuit
-# from ._minimize import minimize
+from ._minuit import Minuit
+from ._minimize import minimize
 from .util import describe
 from .version import __version__
 

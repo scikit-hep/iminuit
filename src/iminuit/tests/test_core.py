@@ -1,4 +1,4 @@
-from _core import FCN, MnUserParameterState, MnMigrad, MnStrategy, MnPrint
+from iminuit._core import FCN, MnUserParameterState, MnMigrad, MnStrategy, MnPrint
 import pytest
 from pytest import approx
 

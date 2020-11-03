@@ -21,4 +21,6 @@ void bind_strategy(py::module m) {
       .def_property("strategy", &MnStrategy::Strategy, set_strategy)
 
       ;
+
+  py::implicitly_convertible<unsigned, MnStrategy>();
 }
