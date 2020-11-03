@@ -13,6 +13,7 @@ void bind_userparameterstate(py::module);
 
 PYBIND11_MODULE(_core, m) {
   bind_application(m);
+  bind_fcn(m);
   bind_functionminimum(m);
   bind_migrad(m);
   bind_minuitparameter(m);

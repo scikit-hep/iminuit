@@ -8,7 +8,9 @@ using namespace ROOT::Minuit2;
 
 MnMigrad init(const FCN& fcn, const MnUserParameterState& state,
               const MnStrategy& str) {
-  if (fcn.grad_) return MnMigrad(static_cast<const FCNGradientBase&>(fcn), state, str);
+  if (fcn.grad_) {
+    return MnMigrad(static_cast<const FCNGradientBase&>(fcn), state, str);
+  }
   return MnMigrad(static_cast<const FCNBase&>(fcn), state, str);
 }
 

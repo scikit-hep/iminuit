@@ -8,7 +8,7 @@ using namespace ROOT::Minuit2;
 void bind_functionminimum(py::module m) {
   py::class_<FunctionMinimum>(m, "FunctionMinimum")
 
-      // .def_property_readonly("state", &MnApplication::State)
+      .def_property_readonly("state", &FunctionMinimum::UserState)
       // .def_property_readonly("parameters", &MnApplication::Parameters)
       // .def_property_readonly("covariance", &MnApplication::Covariance)
       // .def("add", py::overload_cast<cstr, double>(&MnApplication::Add))
