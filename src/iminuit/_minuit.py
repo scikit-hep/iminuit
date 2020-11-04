@@ -854,7 +854,7 @@ class Minuit:
         ncalls_total_before = self._fcn.nfcn
         ngrads_total_before = self._fcn.ngrad
 
-        # Automatically call Migrad up to five times if minimum is not valid.
+        # Automatically call Migrad up to `iterate` times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
         for _ in range(iterate):
             self._fmin = migrad(ncall, self.tol)

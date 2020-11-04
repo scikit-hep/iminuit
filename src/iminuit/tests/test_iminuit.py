@@ -834,11 +834,11 @@ def test_ncalls():
 
         def __call__(self, x):
             self.ncalls += 1
-            return x ** 2
+            return x ** 2 + x ** 4 + 10
 
     # check that counting is accurate
     func = Func()
-    m = Minuit(func, pedantic=False)
+    m = Minuit(func, x=3, errordef=1)
     m.migrad()
     assert m.ncalls_total == func.ncalls
     assert m.fmin.nfcn == func.ncalls
