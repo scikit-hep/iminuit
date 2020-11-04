@@ -12,6 +12,7 @@ void bind_minos(py::module);
 void bind_minuitparameter(py::module);
 void bind_print(py::module);
 void bind_strategy(py::module);
+void bind_usercovariance(py::module);
 void bind_userparameterstate(py::module);
 
 PYBIND11_MODULE(_core, m) {
@@ -25,5 +26,6 @@ PYBIND11_MODULE(_core, m) {
   bind_minuitparameter(m);
   bind_print(m);
   bind_strategy(m);
+  bind_usercovariance(m);
   bind_userparameterstate(m);
 }

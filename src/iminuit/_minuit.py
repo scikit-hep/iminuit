@@ -235,17 +235,11 @@ class FixedView(BasicView):
 
 
 class Minuit:
-    @property
-    @staticmethod
-    def LEAST_SQUARES():
-        """Set `:attr:errordef` to this constant for a least-squares cost function."""
-        return 1.0
+    LEAST_SQUARES = 1.0
+    """Set `:attr:errordef` to this constant for a least-squares cost function."""
 
-    @property
-    @staticmethod
-    def LIKELIHOOD():
-        """Set `:attr:errordef` to this constant for a negative log-likelihood function."""
-        return 0.5
+    LIKELIHOOD = 0.5
+    """Set `:attr:errordef` to this constant for a negative log-likelihood function."""
 
     @property
     def fcn(self):
@@ -260,7 +254,7 @@ class Minuit:
     @property
     def use_array_call(self):
         """Boolean. Whether to pass parameters as numpy array to cost function."""
-        return self._use_array_call
+        return self._fcn.use_array_call
 
     @property
     def pos2var(self):
@@ -295,6 +289,8 @@ class Minuit:
     @errordef.setter
     def errordef(self, value):
         self._fcn.up = value
+        if self._fmin:
+            self._fmin.up = value
 
     tol = 0.1
     """Tolerance for convergence.
@@ -453,15 +449,14 @@ class Minuit:
 
         .. seealso:: :meth:`matrix`
         """
-        free = self._free_parameters()
+        free = tuple(self._free_parameters())
         cov = self._last_state.covariance
         if self._last_state.has_covariance:
             return {
-                (v1, v2): cov.get(i, j)
+                (v1, v2): cov[i, j]
                 for i, v1 in enumerate(free)
                 for j, v2 in enumerate(free)
             }
-        return {}
 
     @property
     def gcc(self):
@@ -469,7 +464,7 @@ class Minuit:
         free = self._free_parameters()
         if self._last_state.has_globalcc:
             gcc = self._last_state.globalcc
-            if gcc.is_valid:
+            if gcc:
                 return {v: gcc[i] for i, v in enumerate(free)}
 
     _print_level = 0
@@ -651,12 +646,16 @@ class Minuit:
 
         self._fcn = FCN(fcn, grad, use_array_call, errordef)
 
-        self._init_state = self._init_parameter_state(kwds)
+        self._init_state = self._make_init_state(kwds)
         self._last_state = self._init_state
-        self._init_args_values_errors_fixed()
+
+        self.args = ArgsView(self)
+        self.values = ValueView(self)
+        self.errors = ErrorView(self)
+        self.fixed = FixedView(self)
         self.merrors = mutil.MErrors()
 
-    def _init_parameter_state(self, kwds):
+    def _make_init_state(self, kwds):
         state = MnUserParameterState()
         for i, x in enumerate(self.pos2var):
             lim = mutil._normalize_limit(kwds.get(f"limit_{x}", None))
@@ -668,7 +667,8 @@ class Minuit:
             else:
                 lb, ub = lim
                 if lb == ub:
-                    state.add(x, val)
+                    state.add(x, lb, err)
+                    state.fix(i)
                 elif lb == -np.inf and ub == np.inf:
                     state.add(x, val, err)
                 elif ub == np.inf:
@@ -682,12 +682,6 @@ class Minuit:
             if fix:
                 state.fix(i)
         return state
-
-    def _init_args_values_errors_fixed(self):
-        self.args = ArgsView(self)
-        self.values = ValueView(self)
-        self.errors = ErrorView(self)
-        self.fixed = FixedView(self)
 
     @classmethod
     def from_array_func(
@@ -856,7 +850,7 @@ class Minuit:
         # This simple heuristic makes Migrad converge more often.
         for _ in range(iterate):
             self._fmin = migrad(ncall, self.tol)
-            if self._fmin.is_valid or self._fmin.reached_call_limit:
+            if self._fmin.is_valid or self._fmin.has_reached_call_limit:
                 break
 
         self._last_state = self._fmin.state
@@ -966,7 +960,7 @@ class Minuit:
             all up to now computed errors, including the current request.
 
         """
-        if not self.cfmin:
+        if not self._fmin:
             raise RuntimeError(
                 "MINOS require function to be at the minimum." " Run MIGRAD first."
             )
@@ -995,7 +989,7 @@ class Minuit:
             raise RuntimeError(f"Unknown parameter {var}")
 
         ncalls_total_before = self._fcn.nfcn
-        ngrads_total_before = self._fcn.grad
+        ngrads_total_before = self._fcn.ngrad
 
         minos = MnMinos(self._fcn, self._fmin, self.strategy)
 
@@ -1009,7 +1003,7 @@ class Minuit:
                     )
                     return None
                 continue
-            mnerror = minos.Minos(self.var2pos[vname], ncall)
+            mnerror = minos(self.var2pos[vname], ncall, self.tol)
             self.merrors[vname] = minoserror2struct(vname, mnerror)
 
         self._ncalls = self._fcn.nfcn - ncalls_total_before
@@ -1021,7 +1015,7 @@ class Minuit:
 
     def matrix(self, correlation=False, skip_fixed=True):
         """Error or correlation matrix in tuple or tuples format."""
-        if not self._last_state.HasCovariance():
+        if not self._last_state.has_covariance:
             raise RuntimeError(
                 "Covariance is not valid. Maybe the last Hesse call failed?"
             )
@@ -1036,7 +1030,7 @@ class Minuit:
             ind = range(npar)
 
             def cov(i, j):
-                return mncov.get(i, j)
+                return mncov[i, j]
 
         else:
             ext2int = {}
@@ -1050,7 +1044,7 @@ class Minuit:
             def cov(i, j):
                 if i not in ext2int or j not in ext2int:
                     return 0.0
-                return mncov.get(ext2int[i], ext2int[j])
+                return mncov[ext2int[i], ext2int[j]]
 
         names = [k for (k, v) in self.fixed.items() if not (skip_fixed and v)]
         if correlation:
@@ -1242,13 +1236,13 @@ class Minuit:
         values = np.linspace(bound[0], bound[1], bins, dtype=np.double)
         results = np.empty(bins, dtype=np.double)
         status = np.empty(bins, dtype=np.bool)
-        state = self._last_state.copy()
+        state = MnUserParameterState(self._last_state)  # copy
         ipar = self.var2pos[vname]
         state.fix(ipar)
         for i, v in enumerate(values):
             state.set_value(ipar, v)
             migrad = MnMigrad(self._fcn, state, self.strategy)
-            fm = migrad(0, self.tolerance)
+            fm = migrad(0, self.tol)
             if not fm.is_valid:
                 warn(
                     "MIGRAD fails to converge for %s=%f" % (vname, v),
@@ -1338,7 +1332,7 @@ class Minuit:
         if len(deprecated_kwargs):
             raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
 
-        if subtract_min and not self.cfmin:
+        if subtract_min and not self._fmin:
             raise RuntimeError(
                 "Request for minimization "
                 "subtraction but no minimization has been done. "
@@ -1450,7 +1444,7 @@ class Minuit:
         if len(deprecated_kwargs):
             raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
 
-        if subtract_min and not self.cfmin:
+        if subtract_min and not self._fmin:
             raise RuntimeError(
                 "Request for minimization "
                 "subtraction but no minimization has been done. "
@@ -1607,7 +1601,7 @@ class Minuit:
         return _minuit_methods.draw_contour(self, x, y, bins, bound)
 
     def _free_parameters(self):
-        return (mp.name for mp in self._last_state if not mp.fixed)
+        return (mp.name for mp in self._last_state if not mp.is_fixed)
 
     def _normalize_bound(self, vname, bound):
         try:

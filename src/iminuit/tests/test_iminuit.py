@@ -242,14 +242,10 @@ def test_from_array_func_1():
         func7, (2, 1), error=(1, 1), errordef=Minuit.LEAST_SQUARES
     )
     assert m.fitarg == {
-        "x0": 2,
-        "x1": 1,
+        "x0": 2.0,
+        "x1": 1.0,
         "error_x0": 1.0,
         "error_x1": 1.0,
-        "fix_x0": False,
-        "fix_x1": False,
-        "limit_x0": None,
-        "limit_x1": None,
     }
     m.migrad()
     v = m.np_values()
@@ -270,14 +266,13 @@ def test_from_array_func_2():
         errordef=Minuit.LEAST_SQUARES,
     )
     assert m.fitarg == {
-        "a": 2,
-        "b": 1,
+        "a": 2.0,
+        "b": 1.0,
         "error_a": 0.5,
         "error_b": 0.5,
-        "fix_a": False,
         "fix_b": True,
-        "limit_a": (0, 2),
-        "limit_b": (0, 2),
+        "limit_a": (0.0, 2.0),
+        "limit_b": (0.0, 2.0),
     }
     m.migrad()
     v = m.np_values()
@@ -296,14 +291,12 @@ def test_from_array_func_with_broadcasting():
         func7, (1, 1), error=0.5, limit=(0, 2), errordef=Minuit.LEAST_SQUARES
     )
     assert m.fitarg == {
-        "x0": 1,
-        "x1": 1,
+        "x0": 1.0,
+        "x1": 1.0,
         "error_x0": 0.5,
         "error_x1": 0.5,
-        "fix_x0": False,
-        "fix_x1": False,
-        "limit_x0": (0, 2),
-        "limit_x1": (0, 2),
+        "limit_x0": (0.0, 2.0),
+        "limit_x1": (0.0, 2.0),
     }
     m.migrad()
     v = m.np_values()
@@ -419,14 +412,6 @@ def test_fix_param(grad):
 
     with pytest.raises(KeyError):
         m.fixed["a"]
-
-    with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("x") is True
-    with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("y") is False
-    with pytest.warns(DeprecationWarning):
-        with pytest.raises(KeyError):
-            m.is_fixed("a")
 
     # fix by setting limits
     m = Minuit(func0, y=10.0, limit_y=(10, 10), pedantic=False)

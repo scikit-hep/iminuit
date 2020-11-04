@@ -23,6 +23,7 @@ void bind_functionminimum(py::module m) {
       .def_property_readonly("is_above_max_edm", &FunctionMinimum::IsAboveMaxEdm)
       .def_property_readonly("has_reached_call_limit",
                              &FunctionMinimum::HasReachedCallLimit)
+      .def_property("up", &FunctionMinimum::Up, &FunctionMinimum::SetErrorDef)
 
       ;
 }

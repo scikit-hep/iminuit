@@ -20,10 +20,17 @@ auto iter(const MnUserParameterState& self) {
                            self.MinuitParameters().end());
 }
 
+py::object globalcc(const MnUserParameterState& self) {
+  auto gcc = self.GlobalCC();
+  if (gcc.IsValid()) return py::cast(gcc.GlobalCC());
+  return py::cast(nullptr);
+}
+
 void bind_userparameterstate(py::module m) {
   py::class_<MnUserParameterState>(m, "MnUserParameterState")
 
       .def(py::init<>())
+      .def(py::init<const MnUserParameterState&>())
 
       // .def_property_readonly("parameters", &MnUserParameterState::Parameters)
       // .def_property_readonly("covariance", &MnUserParameterState::Covariance)
@@ -50,7 +57,7 @@ void bind_userparameterstate(py::module m) {
       .def_property_readonly("fval", &MnUserParameterState::Fval)
       .def_property_readonly("edm", &MnUserParameterState::Edm)
       .def_property_readonly("covariance", &MnUserParameterState::Covariance)
-      .def_property_readonly("globalcc", &MnUserParameterState::GlobalCC)
+      .def_property_readonly("globalcc", globalcc)
       .def_property_readonly("is_valid", &MnUserParameterState::IsValid)
       .def_property_readonly("has_covariance", &MnUserParameterState::HasCovariance)
       .def_property_readonly("has_globalcc", &MnUserParameterState::HasGlobalCC)

@@ -42,6 +42,7 @@ void bind_fcn(py::module m) {
       .def("__call__", &FCN::operator())
       .def("grad", &FCN::Gradient)
       .def_property("up", &FCN::Up, &FCN::SetUp)
+      .def_readonly("use_array_call", &FCN::use_array_call_)
       .def_readwrite("nfcn", &FCN::nfcn_)
       .def_readwrite("ngrad", &FCN::ngrad_)
 
