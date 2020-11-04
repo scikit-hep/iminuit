@@ -11,6 +11,15 @@ def debug():
     MnPrint.global_level = prev
 
 
+def test_strategy():
+    assert MnStrategy().strategy == 1
+    assert MnStrategy(0).strategy == 0
+    assert MnStrategy(2).strategy == 2
+    s = MnStrategy()
+    s.strategy = 2
+    assert s.strategy == 2
+
+
 def test_fcn(debug):
     f = FCN(lambda x, y: 10 + x ** 2 + ((y - 1) / 2) ** 2, None, False, 1)
     state = MnUserParameterState()

@@ -17,6 +17,7 @@ void bind_strategy(py::module m) {
   // TODO add more interface to tune strategy
   py::class_<MnStrategy>(m, "MnStrategy")
 
+      .def(py::init<>())
       .def(py::init<unsigned>())
       .def_property("strategy", &MnStrategy::Strategy, set_strategy)
 

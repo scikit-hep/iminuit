@@ -300,7 +300,7 @@ class Minuit:
     to minimum*, as described in the `MINUIT paper`_.
     """
 
-    _strategy = MnStrategy(1)
+    _strategy = None
 
     @property
     def strategy(self):
@@ -651,6 +651,7 @@ class Minuit:
 
         self.throw_nan = throw_nan
         self.print_level = print_level
+        self._strategy = MnStrategy(1)
 
         self._fcn = FCN(fcn, grad, use_array_call, errordef)
 

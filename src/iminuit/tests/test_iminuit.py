@@ -945,7 +945,6 @@ def test_params():
 def test_latex_matrix():
     m = Minuit.from_array_func(Func8(), (0, 0), name=("x", "y"), pedantic=False)
     m.migrad()
-    m.hesse()
     # hotfix for ManyLinux 32Bit, where rounding changes result
     ref = (
         r"""%\usepackage[table]{xcolor} % include this for color
