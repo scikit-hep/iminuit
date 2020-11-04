@@ -75,7 +75,7 @@ def minimize(
     kwargs = {"print_level": 0, "errordef": 0.5}
     if options:
         if "disp" in options:
-            kwargs["print_level"] = 1
+            kwargs["print_level"] = 2
         if "maxiter" in options:
             warnings.warn("maxiter not supported, acts like maxfev instead")
             maxfev = options["maxiter"]

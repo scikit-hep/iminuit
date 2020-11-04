@@ -354,8 +354,14 @@ class Minuit:
             )
             MnPrint.global_level = level
 
-    throw_nan = False
-    """Boolean. Whether to raise runtime error if function evaluate to nan."""
+    @property
+    def throw_nan(self):
+        """Boolean. Whether to raise runtime error if function evaluate to nan."""
+        return self._fcn.throw_nan
+
+    @throw_nan.setter
+    def throw_nan(self, value):
+        self._fcn.throw_nan = value
 
     args = None
     """Parameter values in a list-like object.
@@ -649,11 +655,10 @@ class Minuit:
         if errordef is None:
             errordef = 1.0
 
-        self.throw_nan = throw_nan
         self.print_level = print_level
         self._strategy = MnStrategy(1)
 
-        self._fcn = FCN(fcn, grad, use_array_call, errordef)
+        self._fcn = FCN(fcn, grad, use_array_call, errordef, throw_nan)
 
         self._init_state = self._make_init_state(kwds)
         self._last_state = self._init_state
@@ -1461,9 +1466,14 @@ class Minuit:
 
         try:
             n = float(bound)
+            in_sigma = True
+        except TypeError:
+            in_sigma = False
+
+        if in_sigma:
             x_bound = self._normalize_bound(x, n)
             y_bound = self._normalize_bound(y, n)
-        except ValueError:
+        else:
             x_bound = self._normalize_bound(x, bound[0])
             y_bound = self._normalize_bound(y, bound[1])
 
@@ -1613,6 +1623,12 @@ class Minuit:
     def _normalize_bound(self, vname, bound):
         try:
             n = float(bound)
+            in_sigma = True
+        except TypeError:
+            in_sigma = False
+            pass
+
+        if in_sigma:
             if not self.accurate:
                 warn(
                     "Specified nsigma bound, but error matrix is not accurate",
@@ -1621,8 +1637,7 @@ class Minuit:
             start = self.values[vname]
             sigma = self.errors[vname]
             bound = (start - n * sigma, start + n * sigma)
-        except ValueError:
-            pass
+
         return bound
 
     # All deprecated stuff goes through __getattr__, which is only called if

@@ -1076,55 +1076,77 @@ def test_hesse_without_migrad():
         m.hesse()
 
 
-def test_bad_functions():
-    def throwing(x):
-        raise RuntimeError("user message")
+def throwing(x):
+    raise RuntimeError("user message")
 
-    def divide_by_zero(x):
-        return 1 / 0
 
-    def returning_nan(x):
-        return np.nan
+def divide_by_zero(x):
+    return 1 / 0
 
-    def returning_garbage(x):
-        return "foo"
 
-    for func, expected in (
-        (throwing, 'RuntimeError("user message")'),
-        (divide_by_zero, "ZeroDivisionError"),
-        (returning_nan, "result is NaN"),
-        (returning_garbage, "TypeError"),
-    ):
-        m = Minuit(func, x=1, pedantic=False, throw_nan=True)
-        with pytest.raises(RuntimeError) as excinfo:
-            m.migrad()
-        assert expected in excinfo.value.args[0]
+def returning_nan(x):
+    return np.nan
 
-    def returning_nan_array(x):
-        return np.array([1, np.nan])
 
-    def returning_garbage_array(x):
-        return np.array([1, "foo"])
+def returning_garbage(x):
+    return "foo"
 
-    def returning_noniterable(x):
-        return 0
 
-    for func, expected in (
-        (throwing, 'RuntimeError("user message")'),
-        (divide_by_zero, "ZeroDivisionError"),
-        (returning_nan_array, "result is NaN"),
-        (returning_garbage_array, "ValueError" if is_pypy else "TypeError"),
-        (returning_noniterable, "TypeError"),
-    ):
-        m = Minuit.from_array_func(
-            lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True
-        )
-        with pytest.raises(RuntimeError) as excinfo:
-            m.migrad()
-        if is_pypy and func is returning_garbage:
-            pass
-        else:
-            assert expected in excinfo.value.args[0]
+@pytest.mark.parametrize(
+    "func,expected",
+    [
+        (throwing, RuntimeError("user message")),
+        (divide_by_zero, ZeroDivisionError("division by zero")),
+        (returning_nan, RuntimeError("result is NaN")),
+        (
+            returning_garbage,
+            RuntimeError(
+                "Unable to cast Python instance of type <class 'str'> to C++ type"
+            ),
+        ),
+    ],
+)
+def test_bad_functions(func, expected):
+    m = Minuit(func, x=1, pedantic=False, throw_nan=True)
+    with pytest.raises(type(expected)) as excinfo:
+        m.migrad()
+    assert str(expected) in str(excinfo.value)
+
+
+def returning_nan_array(x):
+    return np.array([1, np.nan])
+
+
+def returning_garbage_array(x):
+    return np.array([1, "foo"])
+
+
+def returning_noniterable(x):
+    return 0
+
+
+@pytest.mark.parametrize(
+    "func,expected",
+    [
+        (throwing, RuntimeError("user message")),
+        (divide_by_zero, ZeroDivisionError("division by zero")),
+        (returning_nan_array, RuntimeError("result is NaN")),
+        (
+            returning_garbage_array,
+            RuntimeError(
+                "Unable to cast Python instance of type <class 'numpy.ndarray'> to C++ type"
+            ),
+        ),
+        (returning_noniterable, RuntimeError()),
+    ],
+)
+def test_bad_functions_np(func, expected):
+    m = Minuit.from_array_func(
+        lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True
+    )
+    with pytest.raises(type(expected)) as excinfo:
+        m.migrad()
+    assert str(expected) in str(excinfo.value)
 
 
 @pytest.mark.skip("FIXME")

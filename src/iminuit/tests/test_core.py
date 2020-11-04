@@ -21,7 +21,7 @@ def test_strategy():
 
 
 def test_fcn(debug):
-    f = FCN(lambda x, y: 10 + x ** 2 + ((y - 1) / 2) ** 2, None, False, 1)
+    f = FCN(lambda x, y: 10 + x ** 2 + ((y - 1) / 2) ** 2, None, False, 1, False)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     state.add("😁", 3, 0.2, -5, 5)
@@ -53,7 +53,7 @@ def test_fcn(debug):
 
 def test_grad():
     # MnPrint.set_global_level(3)
-    f = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1)
+    f = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1, False)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     migrad = MnMigrad(f, state, 1)
@@ -74,6 +74,7 @@ def test_grad_np():
         lambda xy: [2 * xy[0], (xy[1] - 1)],
         True,
         1,
+        False,
     )
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
