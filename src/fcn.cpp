@@ -35,7 +35,8 @@ std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
 }
 
 void bind_fcn(py::module m) {
-  py::class_<FCN>(m, "FCN")
+  py::class_<FCNBase>(m, "FCNBase");
+  py::class_<FCN, FCNBase>(m, "FCN")
 
       .def(py::init<py::object, py::object, bool, double>())
       .def("__call__", &FCN::operator())

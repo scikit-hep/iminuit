@@ -9,46 +9,20 @@ void bind_functionminimum(py::module m) {
   py::class_<FunctionMinimum>(m, "FunctionMinimum")
 
       .def_property_readonly("state", &FunctionMinimum::UserState)
-      // .def_property_readonly("parameters", &MnApplication::Parameters)
-      // .def_property_readonly("covariance", &MnApplication::Covariance)
-      // .def("add", py::overload_cast<cstr, double>(&MnApplication::Add))
-      // .def("add", py::overload_cast<cstr, double, double>(&MnApplication::Add))
-      // .def("add",
-      //      py::overload_cast<cstr, double, double, double,
-      //      double>(&MnApplication::Add))
-      // .def("fix", &MnApplication::Fix)
-      // .def("release", &MnApplication::Release)
-      // .def("set_value", py::overload_cast<unsigned,
-      // double>(&MnApplication::SetValue)) .def("set_error",
-      // py::overload_cast<unsigned, double>(&MnApplication::SetError))
-      // .def("set_error", py::overload_cast<unsigned,
-      // double>(&MnApplication::SetError))
+      .def_property_readonly("edm", &FunctionMinimum::Edm)
+      .def_property_readonly("fval", &FunctionMinimum::Fval)
+      .def_property_readonly("is_valid", &FunctionMinimum::IsValid)
+      .def_property_readonly("has_valid_parameters",
+                             &FunctionMinimum::HasValidParameters)
+      .def_property_readonly("has_accurate_covar", &FunctionMinimum::HasAccurateCovar)
+      .def_property_readonly("has_posdef_covar", &FunctionMinimum::HasPosDefCovar)
+      .def_property_readonly("has_made_posdef_covar",
+                             &FunctionMinimum::HasMadePosDefCovar)
+      .def_property_readonly("hesse_failed", &FunctionMinimum::HesseFailed)
+      .def_property_readonly("has_covariance", &FunctionMinimum::HasCovariance)
+      .def_property_readonly("is_above_max_edm", &FunctionMinimum::IsAboveMaxEdm)
+      .def_property_readonly("has_reached_call_limit",
+                             &FunctionMinimum::HasReachedCallLimit)
+
       ;
 }
-
-//
-// cdef extern from "Minuit2/FunctionMinimum.h":
-//     cdef cppclass FunctionMinimum:
-//         FunctionMinimum(FunctionMinimum)
-//         const MnUserParameterState& UserState()
-//         const MnUserCovariance& UserCovariance()
-//         # const_MinimumParameter parameters()
-//         # const_MinimumError error()
-//
-//         double Fval()
-//         double Edm()
-//         int NFcn()
-//
-//         double Up()
-//         bint HasValidParameters()
-//         bint IsValid()
-//         bint HasValidCovariance()
-//         bint HasAccurateCovar()
-//         bint HasPosDefCovar()
-//         bint HasMadePosDefCovar()
-//         bint HesseFailed()
-//         bint HasCovariance()
-//         bint HasReachedCallLimit()
-//         bint IsAboveMaxEdm()
-//
-//         void SetErrorDef(double up)

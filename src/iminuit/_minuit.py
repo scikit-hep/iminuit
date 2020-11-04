@@ -35,7 +35,7 @@ def minoserror2struct(name, m):
     )
 
 
-def fmin2struct(fmin, tolerance, ncalls, ncalls_total, ngrads, ngrads_total):
+def fmin2struct(fmin, up, tolerance, ncalls, ncalls_total, ngrads, ngrads_total):
     has_parameters_at_limit = False
     for mp in fmin.state:
         if not mp.has_limits:
@@ -53,7 +53,7 @@ def fmin2struct(fmin, tolerance, ncalls, ncalls_total, ngrads, ngrads_total):
         tolerance,
         ncalls,
         ncalls_total,
-        fmin.up,
+        up,
         fmin.is_valid,
         fmin.has_valid_parameters,
         fmin.has_accurate_covar,
@@ -168,7 +168,7 @@ class ArgsView:
         self._minuit = minuit
 
     def __len__(self):
-        return len(self._minuit.pos2var)
+        return len(self._minuit._pos2var)
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -179,7 +179,7 @@ class ArgsView:
             i += len(self)
         if i >= len(self):
             raise IndexError
-        return self._state[i].value
+        return self._minuit._last_state[i].value
 
     def __setitem__(self, key, value):
         if isinstance(key, slice):
@@ -290,13 +290,11 @@ class Minuit:
             Minuit(a_least_squares_function, errordef=Minuit.LEAST_SQUARES)
             Minuit(a_likelihood_function, errordef=Minuit.LIKELIHOOD)
         """
-        return self._wrapped_fcn.Up()
+        return self._fcn.up
 
     @errordef.setter
     def errordef(self, value):
-        self._wrapped_fcn.SetErrorDef(value)
-        if self.fmin:
-            self.fmin.SetErrorDef(value)
+        self._fcn.up = value
 
     tol = 0.1
     """Tolerance for convergence.
@@ -1160,6 +1158,7 @@ class Minuit:
         if self._fmin:
             return fmin2struct(
                 self._fmin,
+                self._fcn.up,
                 self.tol,
                 self._ncalls,
                 self.ncalls_total,
@@ -1625,7 +1624,8 @@ class Minuit:
             pass
         return bound
 
-    # all the deprecated stuff goes through __getattr__, which is only called if
-    # normal attribute access returns AttributeError
-    def __getattr__(self, key):
-        return _minuit_methods.deprecated(self, key)
+    # All deprecated stuff goes through __getattr__, which is only called if
+    # normal attribute access returns AttributeError.
+    # Warning: that this will hide AttributeErrors inside methods.
+    # def __getattr__(self, key):
+    #     return _minuit_methods.deprecated(self, key)
