@@ -5,7 +5,7 @@ import numpy as np
 
 def pedantic(self, parameters, kwds, errordef):
     def w(msg):
-        warn(msg, InitialParamWarning, stacklevel=3)
+        warn(msg, InitialParamWarning, stacklevel=4)
 
     for vn in parameters:
         if vn not in kwds and "limit_%s" % vn not in kwds:
