@@ -11,7 +11,7 @@ def debug():
     MnPrint.global_level = prev
 
 
-def test_fcn():
+def test_fcn(debug):
     f = FCN(lambda x, y: 10 + x ** 2 + ((y - 1) / 2) ** 2, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
@@ -25,8 +25,8 @@ def test_fcn():
     assert state[1].name == "😁"
     assert state[1].value == 3
     assert state[1].error == 0.2
-    str = MnStrategy(2)
-    migrad = MnMigrad(f, state, str)
+    migrad = MnMigrad(f, state, 1)
+    migrad.set_print_level(3)
     fmin = migrad(0, 0.1)
     state = fmin.state
     assert len(state) == 2
@@ -47,8 +47,7 @@ def test_grad():
     f = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
-    str = MnStrategy(1)
-    migrad = MnMigrad(f, state, str)
+    migrad = MnMigrad(f, state, 1)
     fmin = migrad(0, 0.1)
     state = fmin.state
     assert len(state) == 1

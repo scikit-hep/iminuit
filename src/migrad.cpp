@@ -8,10 +8,10 @@ using namespace ROOT::Minuit2;
 
 MnMigrad init(const FCN& fcn, const MnUserParameterState& state,
               const MnStrategy& str) {
-  if (fcn.grad_) {
-    return MnMigrad(static_cast<const FCNGradientBase&>(fcn), state, str);
+  if (fcn.grad_.is_none()) {
+    return MnMigrad(static_cast<const FCNBase&>(fcn), state, str);
   }
-  return MnMigrad(static_cast<const FCNBase&>(fcn), state, str);
+  return MnMigrad(static_cast<const FCNGradientBase&>(fcn), state, str);
 }
 
 void bind_migrad(py::module m) {
@@ -19,6 +19,10 @@ void bind_migrad(py::module m) {
 
       .def(py::init(&init))
       .def("__call__", &MnMigrad::operator())
+      .def("set_print_level",
+           [](MnMigrad& self, int lvl) {
+             return self.Minimizer().Builder().SetPrintLevel(lvl);
+           })
 
       ;
 }

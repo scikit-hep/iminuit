@@ -263,14 +263,14 @@ class Minuit:
         return self._use_array_call
 
     @property
-    def pos2var(self, i):
+    def pos2var(self):
         """Map variable position to name"""
-        return self._pos2var[i]
+        return self._pos2var
 
     @property
-    def var2pos(self, name):
+    def var2pos(self):
         """Map variable name to position"""
-        return self._var2pos[name]
+        return self._var2pos
 
     @property
     def errordef(self):
@@ -344,13 +344,13 @@ class Minuit:
         if level < 0:
             level = 0
         self._print_level = level
-        if level >= 3 or level < MnPrint.Level():
+        if level >= 3 or level < MnPrint.global_level:
             warn(
                 "Setting print_level >=3 has the side-effect of setting the level "
                 "globally for all Minuit instances",
                 mutil.IMinuitWarning,
             )
-            MnPrint.SetLevel(level)
+            MnPrint.global_level = level
 
     throw_nan = False
     """Boolean. Whether to raise runtime error if function evaluate to nan."""
@@ -666,23 +666,24 @@ class Minuit:
             err = kwds.get(f"error_{x}", mutil._guess_initial_step(val))
             fix = kwds.get(f"fix_{x}", False)
             if lim is None:
-                state.add(i, x, val, err)
+                state.add(x, val, err)
             else:
                 lb, ub = lim
                 if lb == ub:
-                    state.add(i, x, val)
+                    state.add(x, val)
                 elif lb == -np.inf and ub == np.inf:
-                    state.add(i, x, val, err)
+                    state.add(x, val, err)
                 elif ub == np.inf:
-                    state.add(i, x, val, err)
+                    state.add(x, val, err)
                     state.set_lower_limit(i, lb)
                 elif lb == -np.inf:
-                    state.add(i, x, val, err)
+                    state.add(x, val, err)
                     state.set_upper_limit(i, ub)
                 else:
-                    state.add(i, x, val, err, lb, ub)
+                    state.add(x, val, err, lb, ub)
             if fix:
                 state.fix(i)
+        return state
 
     def _init_args_values_errors_fixed(self):
         self.args = ArgsView(self)
@@ -845,9 +846,8 @@ class Minuit:
             self._fcn.nfcn = 0
             self._fcn.ngrad = 0
 
-        stra = MnStrategy(self.strategy)
-        migrad = MnMigrad(self._fcn, self._last_state, stra)
-        migrad.print_level = self.print_level
+        migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
+        migrad.set_print_level(self.print_level)
         if precision is not None:
             migrad.precision = precision
 

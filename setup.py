@@ -27,6 +27,8 @@ class CMakeBuild(build_ext):
             )
 
         if platform.system() == "Windows":
+            import re
+
             cmake_version = LooseVersion(
                 re.search(r"version\s*([\d.]+)", out.decode()).group(1)
             )
@@ -55,17 +57,14 @@ class CMakeBuild(build_ext):
                 cmake_args += ["-A", "x64"]
             build_args += ["--", "/m"]
         else:
+            njobs = self.parallel if self.parallel else 2
             cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
-            build_args += ["--", "-j2"]
+            build_args += ["--", f"-j{njobs}"]
 
-        env = os.environ.copy()
-        env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(
-            env.get("CXXFLAGS", ""), self.distribution.get_version()
-        )
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
         subprocess.check_call(
-            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env
+            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp, env=os.environ
         )
         subprocess.check_call(
             ["cmake", "--build", "."] + build_args, cwd=self.build_temp

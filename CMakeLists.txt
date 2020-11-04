@@ -17,12 +17,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "C++ version selection")  # or 11, 14, 17, 20
 set(CMAKE_CXX_STANDARD_REQUIRED ON)  # optional, ensure standard is supported
 set(CMAKE_CXX_EXTENSIONS OFF)  # optional, keep compiler extensionsn off
-
-set(Python_FIND_IMPLEMENTATIONS CPython PyPy)
-find_package(Python REQUIRED COMPONENTS Interpreter Development)
 
 # Now we can find pybind11
 add_subdirectory(extern/pybind11)
