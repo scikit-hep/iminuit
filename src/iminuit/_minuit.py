@@ -300,24 +300,32 @@ class Minuit:
     to minimum*, as described in the `MINUIT paper`_.
     """
 
-    strategy = 1
-    """Current minimization strategy.
+    _strategy = MnStrategy(1)
 
-    **0**: Fast. Does not check a user-provided gradient. Does not improve Hesse matrix
-    at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed for
-    good error estimates. If you pass a user-provided gradient to MINUIT,
-    convergence is **faster**.
+    @property
+    def strategy(self):
+        """Current minimization strategy.
 
-    **1**: Default. Checks user-provided gradient against numerical gradient. Checks and
-    usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
-    :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
-    MINUIT, convergence is **slower**.
+        **0**: Fast. Does not check a user-provided gradient. Does not improve Hesse matrix
+        at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed for
+        good error estimates. If you pass a user-provided gradient to MINUIT,
+        convergence is **faster**.
 
-    **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
-    minimization. The effect in benchmarks is a somewhat improved accuracy at the cost
-    of more function evaluations. A similar effect can be achieved by reducing the
-    tolerance attr:`tol` for convergence at any strategy level.
-    """
+        **1**: Default. Checks user-provided gradient against numerical gradient. Checks and
+        usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
+        :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
+        MINUIT, convergence is **slower**.
+
+        **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
+        minimization. The effect in benchmarks is a somewhat improved accuracy at the cost
+        of more function evaluations. A similar effect can be achieved by reducing the
+        tolerance attr:`tol` for convergence at any strategy level.
+        """
+        return self._strategy
+
+    @strategy.setter
+    def strategy(self, value):
+        self._strategy.strategy = value
 
     @property
     def print_level(self):
@@ -902,7 +910,6 @@ class Minuit:
         ncalls_total_before = self._fcn.nfcn
         ngrads_total_before = self._fcn.ngrad
 
-        # must be allocated with new to avoid random crashes
         hesse = MnHesse(self.strategy)
 
         if self._fmin and self._fmin.state == self._last_state:
@@ -1534,8 +1541,7 @@ class Minuit:
         oldup = self._fcn.up
         self._fcn.up = oldup * sigma * sigma
 
-        stra = MnStrategy(self.strategy)
-        mnc = MnContours(self._fcn, self._fmin, stra)
+        mnc = MnContours(self._fcn, self._fmin, self.strategy)
         mex, mey, ce = mnc(ix, iy, numpoints)
 
         self._fcn.up = oldup
