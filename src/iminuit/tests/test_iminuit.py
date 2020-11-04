@@ -945,8 +945,9 @@ def test_params():
 def test_latex_matrix():
     m = Minuit.from_array_func(Func8(), (0, 0), name=("x", "y"), pedantic=False)
     m.migrad()
+    m.hesse()
     # hotfix for ManyLinux 32Bit, where rounding changes result
-    assert str(m.latex_matrix()) in (
+    ref = (
         r"""%\usepackage[table]{xcolor} % include this for color
 %\usepackage{rotating} % include this for rotate header
 %\documentclass[xcolor=table]{beamer} % for beamer
@@ -972,6 +973,7 @@ y & \cellcolor[RGB]{250,175,175} 0.5 & \cellcolor[RGB]{250,100,100} 1\\
 \hline
 \end{tabular}""",
     )
+    assert str(m.latex_matrix()) in ref
 
 
 def test_non_analytical_function():
