@@ -7,6 +7,17 @@ from iminuit import Minuit
 from iminuit.util import Param, HesseFailedWarning
 from pytest import approx
 
+
+@pytest.fixture
+def debug():
+    from iminuit._core import MnPrint
+
+    prev = MnPrint.global_level
+    MnPrint.global_level = 3
+    yield
+    MnPrint.global_level = prev
+
+
 is_pypy = platform.python_implementation() == "PyPy"
 
 
