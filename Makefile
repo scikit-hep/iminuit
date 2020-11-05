@@ -1,7 +1,10 @@
 # Makefile with some convenient quick ways to do common things
 
-PROJECT = iminuit
-PYTHON ?= python
+ifeq ($(shell python -c 'import sys; print(sys.version_info.major)'), 3)
+	PYTHON = python
+else
+	PYTHON = python3
+endif
 
 default_target: build
 
@@ -38,7 +41,7 @@ cov: build
 doc: doc/_build/html/index.html
 
 flake8: build
-	@$(PYTHON) -m flake8 src/$(PROJECT)
+	@$(PYTHON) -m flake8 src/iminuit
 
 build/log: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cpp) $(wildcard extern/root/math/minuit2/inc/*.h)
 	$(PYTHON) setup.py build_ext --inplace -g -j8

@@ -19,6 +19,7 @@ add_subdirectory(extern/pybind11)
 
 file(GLOB SOURCES_A "src/*.cpp")
 set(SOURCES_B
+  src/MnPrintImpl.cxx
   extern/root/math/minuit2/src/AnalyticalGradientCalculator.cxx
   extern/root/math/minuit2/src/BasicMinimumError.cxx
   extern/root/math/minuit2/src/BFGSErrorUpdator.cxx
@@ -47,7 +48,6 @@ set(SOURCES_B
   extern/root/math/minuit2/src/MnPlot.cxx
   extern/root/math/minuit2/src/MnPosDef.cxx
   extern/root/math/minuit2/src/MnPrint.cxx
-  extern/root/math/minuit2/src/MnPrintImpl.cxx
   extern/root/math/minuit2/src/MnSeedGenerator.cxx
   extern/root/math/minuit2/src/MnStrategy.cxx
   extern/root/math/minuit2/src/MnTiny.cxx
