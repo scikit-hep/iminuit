@@ -42,8 +42,8 @@ def fmin2struct(fmin, up, tolerance, ncalls, ncalls_total, ngrads, ngrads_total)
             continue
         v = mp.value
         e = mp.error
-        lb = mp.lower_limit
-        ub = mp.upper_limit
+        lb = mp.lower_limit if mp.has_lower_limit else -np.inf
+        ub = mp.upper_limit if mp.has_upper_limit else np.inf
         # the 0.5 error threshold is somewhat arbitrary
         has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
 
