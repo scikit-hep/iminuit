@@ -1054,9 +1054,8 @@ def test_modify_param_state():
     assert_allclose(m.np_values(), [2, 5], atol=1e-4)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
     m.values["y"] = 6
+    m.hesse()
     assert_allclose(m.np_values(), [2, 6], atol=1e-4)
-    m.hesse()  # hesse ignores change in value if migrad was run before
-    assert_allclose(m.np_values(), [2, 5], atol=1e-4)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
 
 
@@ -1159,7 +1158,6 @@ def test_bad_functions_np(func, expected):
     assert str(expected) in str(excinfo.value)
 
 
-@pytest.mark.skip("FIXME")
 def test_issue_424():
     def lsq(x, y, z):
         return (x - 1) ** 2 + (y - 4) ** 2 / 2 + (z - 9) ** 2 / 3

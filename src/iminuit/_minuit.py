@@ -134,6 +134,7 @@ class BasicView:
         return self._get(i)
 
     def __setitem__(self, key, value):
+        self._minuit._copy_state_if_needed()
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             if hasattr(value, "__getitem__") and hasattr(value, "__len__"):
@@ -182,6 +183,7 @@ class ArgsView:
         return self._minuit._last_state[i].value
 
     def __setitem__(self, key, value):
+        self._minuit._copy_state_if_needed()
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             for i, v in zip(ind, value):
@@ -1639,6 +1641,12 @@ class Minuit:
             bound = (start - n * sigma, start + n * sigma)
 
         return bound
+
+    def _copy_state_if_needed(self):
+        if self._last_state == self._init_state or (
+            self._fmin and self._last_state == self._fmin.state
+        ):
+            self._last_state = MnUserParameterState(self._last_state)
 
     # All deprecated stuff goes through __getattr__, which is only called if
     # normal attribute access returns AttributeError.
