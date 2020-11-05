@@ -47,7 +47,8 @@ class CMakeBuild(build_ext):
         ]
 
         cfg = "Debug" if self.debug else "Release"
-        build_args = ["--config", cfg]
+        # build_args = ["--config", cfg]
+        build_args = []
 
         if platform.system() == "Windows":
             cmake_args += [
@@ -59,7 +60,7 @@ class CMakeBuild(build_ext):
         else:
             njobs = self.parallel if self.parallel else 2
             cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
-            build_args += ["--", f"-j{njobs}"]
+            build_args += ["--", "-j{}".format(njobs)]
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
