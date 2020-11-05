@@ -927,17 +927,17 @@ class Minuit:
             # so we cannot just update last _fmin
             self._last_state = hesse(self._fcn, self._last_state, ncall)
 
-        if not self._last_state.has_covariance:
-            warn(
-                "HESSE Failed. Covariance and GlobalCC will not be available",
-                mutil.HesseFailedWarning,
-            )
-
         self._ncalls = self.ncalls_total - ncalls_total_before
         self._ngrads = self.ngrads_total - ngrads_total_before
 
-        if not self._fmin and not self._last_state.has_covariance:
-            raise RuntimeError("HESSE Failed")
+        if self._last_state.has_covariance is False:
+            if not self._fmin:
+                raise RuntimeError("HESSE Failed")
+            else:
+                warn(
+                    "HESSE Failed. Covariance and GlobalCC will not be available",
+                    mutil.HesseFailedWarning,
+                )
 
         return self.params
 
@@ -1643,5 +1643,5 @@ class Minuit:
     # All deprecated stuff goes through __getattr__, which is only called if
     # normal attribute access returns AttributeError.
     # Warning: that this will hide AttributeErrors inside methods.
-    # def __getattr__(self, key):
-    #     return _minuit_methods.deprecated(self, key)
+    def __getattr__(self, key):
+        return _minuit_methods.deprecated(self, key)

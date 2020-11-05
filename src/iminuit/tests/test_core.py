@@ -1,10 +1,12 @@
-from iminuit._core import FCN, MnUserParameterState, MnMigrad, MnStrategy, MnPrint
-import pytest
+from iminuit._core import FCN, MnUserParameterState, MnMigrad, MnStrategy
 from pytest import approx
+import pytest
 
 
 @pytest.fixture
 def debug():
+    from iminuit._core import MnPrint
+
     prev = MnPrint.global_level
     MnPrint.global_level = 3
     yield
@@ -12,12 +14,19 @@ def debug():
 
 
 def test_strategy():
-    assert MnStrategy().strategy == 1
-    assert MnStrategy(0).strategy == 0
-    assert MnStrategy(2).strategy == 2
+    assert MnStrategy() == 1
+    assert MnStrategy(0) == 0
+    assert MnStrategy(2) == 2
     s = MnStrategy()
     s.strategy = 2
     assert s.strategy == 2
+    assert s != 1
+    assert s > 1
+    assert s < 3
+    assert s >= 2
+    assert s >= 1
+    assert s <= 2
+    assert s <= 3
 
 
 def test_fcn(debug):

@@ -29,7 +29,7 @@ clean:
 build: build/log
 
 test: build
-	$(PYTHON) -m pytest -vv --pdb --ignore src/iminuit/tests/test_deprecated.py
+	$(PYTHON) -m pytest
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
