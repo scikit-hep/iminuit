@@ -1012,7 +1012,6 @@ def test_non_invertible():
         m.matrix()
 
 
-@pytest.mark.skip("FIXME")
 def test_function_without_local_minimum():
     m = Minuit(lambda a: -a, pedantic=False)
     fmin, _ = m.migrad()
