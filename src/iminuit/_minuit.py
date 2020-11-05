@@ -873,10 +873,11 @@ class Minuit:
         self._ncalls = self._fcn.nfcn - ncalls_total_before
         self._ngrads = self._fcn.ngrad - ngrads_total_before
 
-        if self.print_level > 1:
-            print(self.fmin)
+        mr = mutil.MigradResult(self.fmin, self.params)
+        if self.print_level >= 2:
+            print(mr)
 
-        return mutil.MigradResult(self.fmin, self.params)
+        return mr
 
     def hesse(self, ncall=None, **deprecated_kwargs):
         """Run HESSE to compute parabolic errors.
