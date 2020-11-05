@@ -38,7 +38,7 @@ def minoserror2struct(name, m):
 def fmin2struct(fmin, up, tolerance, ncalls, ncalls_total, ngrads, ngrads_total):
     has_parameters_at_limit = False
     for mp in fmin.state:
-        if not mp.has_limits:
+        if mp.is_fixed or not mp.has_limits:
             continue
         v = mp.value
         e = mp.error
