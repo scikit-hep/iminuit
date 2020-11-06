@@ -4,10 +4,10 @@ from pathlib import Path
 import os
 import platform
 import subprocess
+import multiprocessing
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-from distutils.version import LooseVersion
 
 
 class CMakeExtension(Extension):
@@ -18,23 +18,6 @@ class CMakeExtension(Extension):
 
 class CMakeBuild(build_ext):
     def run(self):
-        try:
-            out = subprocess.check_output(["cmake", "--version"])
-        except OSError:
-            raise RuntimeError(
-                "CMake must be installed to build the following extensions: "
-                + ", ".join(e.name for e in self.extensions)
-            )
-
-        if platform.system() == "Windows":
-            import re
-
-            cmake_version = LooseVersion(
-                re.search(r"version\s*([\d.]+)", out.decode()).group(1)
-            )
-            if cmake_version < "3.1.0":
-                raise RuntimeError("CMake >= 3.1.0 is required on Windows")
-
         for ext in self.extensions:
             self.build_extension(ext)
 
@@ -42,25 +25,22 @@ class CMakeBuild(build_ext):
         extdir = Path(self.get_ext_fullpath(ext.name)).parent.absolute() / "iminuit"
         # required for auto-detection of auxiliary "native" libs
         cmake_args = [
-            "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + f"{extdir}/",
-            "-DPYTHON_EXECUTABLE=" + sys.executable,
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}/",
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
         ]
 
         cfg = "Debug" if self.debug else "Release"
-        # build_args = ["--config", cfg]
-        build_args = []
+        build_args = ["--config", cfg]
 
         if platform.system() == "Windows":
-            cmake_args += [
-                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
-            ]
+            cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
             if sys.maxsize > 2 ** 32:
                 cmake_args += ["-A", "x64"]
             build_args += ["--", "/m"]
         else:
-            njobs = self.parallel if self.parallel else 2
-            cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
-            build_args += ["--", "-j{}".format(njobs)]
+            njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
+            cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
+            build_args += ["--", f"-j{njobs}"]
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)

@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.10...3.17)
 
-project(iminuit CXX)
+project(iminuit LANGUAGES CXX)
 
 if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
   message(WARNING
@@ -83,5 +83,3 @@ pybind11_add_module(_core MODULE
   ${SOURCES_B}
 )
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
-
-install(TARGETS _core DESTINATION iminuit)
