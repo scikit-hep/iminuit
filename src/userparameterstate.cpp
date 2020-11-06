@@ -33,8 +33,6 @@ void bind_userparameterstate(py::module m) {
       .def(py::init<>())
       .def(py::init<const MnUserParameterState&>())
 
-      // .def_property_readonly("parameters", &MnUserParameterState::Parameters)
-      // .def_property_readonly("covariance", &MnUserParameterState::Covariance)
       .def("add",
            py::overload_cast<const std::string&, double>(&MnUserParameterState::Add))
       .def("add", py::overload_cast<const std::string&, double, double>(
@@ -68,14 +66,3 @@ void bind_userparameterstate(py::module m) {
 
       ;
 }
-
-// TODO implemenet equal comparison
-// # cdef states_equal(n, MnUserParameterStateConstPtr a, MnUserParameterStateConstPtr
-// b): #     result = False #     for i in range(n): #         result |=
-// a.Parameter(i).Value() != b.Parameter(i).Value() #         result |=
-// a.Parameter(i).Error() != b.Parameter(i).Error() #         result |=
-// a.Parameter(i).IsFixed() != b.Parameter(i).IsFixed() #         result |=
-// a.Parameter(i).HasLowerLimit() != b.Parameter(i).HasLowerLimit() #         result |=
-// a.Parameter(i).HasUpperLimit() != b.Parameter(i).HasUpperLimit() #         result |=
-// a.Parameter(i).LowerLimit() != b.Parameter(i).LowerLimit() #         result |=
-// a.Parameter(i).UpperLimit() != b.Parameter(i).UpperLimit() #     return result
