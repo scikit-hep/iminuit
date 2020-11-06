@@ -5,6 +5,7 @@ pylint
 flake8
 pydocstyle
 
+cython
 numpy
 numba
 scipy
