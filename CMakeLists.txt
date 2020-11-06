@@ -83,3 +83,8 @@ pybind11_add_module(_core MODULE
   ${SOURCES_B}
 )
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
+set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
+install(TARGET _core
+  LIBRARY DESTINATION iminuit
+  ARCHIVE DESTINATION iminuit)
