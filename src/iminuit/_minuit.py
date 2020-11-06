@@ -1509,7 +1509,7 @@ class Minuit:
         fixed, while the other parameters are minimised by MIGRAD.
 
         This scan produces a statistical confidence region with the `profile
-        likelihood method <https://en.wikipedia.org/wiki/Likelihood_function#Profile_likelihood>`_.
+        likelihood method <https://en.wikipedia.org/wiki/Likelihood_function>`_.
         The contour line represents the values of **x** and **y** where the
         function passes the threshold that corresponds to `sigma` standard
         deviations (note that 1 standard deviations in two dimensions has a
