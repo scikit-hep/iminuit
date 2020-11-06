@@ -1,11 +1,11 @@
-recursive-include src *.h *.cpp *.py
+recursive-include src *
 recursive-include extern/root/math/minuit2/inc *.h
 recursive-include extern/root/math/minuit2/src *.cxx
 recursive-include extern/pybind11/include *.h
 recursive-include extern/pybind11/pybind11 *.py
 include extern/pybind11/CMakeLists.txt
 include CITATION
-include CMakeLists.lst
+include CMakeLists.txt
 include CONTRIBUTING.md
 include LICENSE
 include pyproject.toml
