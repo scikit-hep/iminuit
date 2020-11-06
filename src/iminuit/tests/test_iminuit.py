@@ -1109,9 +1109,7 @@ def returning_garbage(x):
         (returning_nan, RuntimeError("result is NaN")),
         (
             returning_garbage,
-            RuntimeError(
-                "Unable to cast Python instance of type <class 'str'> to C++ type"
-            ),
+            RuntimeError("Unable to cast Python instance"),
         ),
     ],
 )
@@ -1142,9 +1140,7 @@ def returning_noniterable(x):
         (returning_nan_array, RuntimeError("result is NaN")),
         (
             returning_garbage_array,
-            RuntimeError(
-                "Unable to cast Python instance of type <class 'numpy.ndarray'> to C++ type"
-            ),
+            RuntimeError("Unable to cast Python instance"),
         ),
         (returning_noniterable, RuntimeError()),
     ],
