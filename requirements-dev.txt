@@ -1,4 +1,10 @@
+pre-commit
 cmake
+
+pylint
+flake8
+pydocstyle
+
 numpy
 numba
 scipy
@@ -14,7 +20,3 @@ ipykernel
 
 sphinx
 sphinx_rtd_theme
-
-pylint
-flake8
-pydocstyle
