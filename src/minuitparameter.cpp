@@ -3,13 +3,10 @@
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
-using cstr = const char*;
 
 void bind_minuitparameter(py::module m) {
   py::class_<MinuitParameter>(m, "MinuitParameter")
 
-      .def(py::init<>())
-      .def(py::init<unsigned, cstr, double>())
       .def_property_readonly("number", &MinuitParameter::Number)
       .def_property_readonly("name", &MinuitParameter::Name)
       .def_property_readonly("value", &MinuitParameter::Value)

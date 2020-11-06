@@ -7,7 +7,6 @@
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
-// using cstr = const char*;
 
 void bind_contours(py::module m) {
   py::class_<MnContours>(m, "MnContours")

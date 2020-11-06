@@ -3,7 +3,6 @@
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
-// using cstr = const char*;
 
 void bind_functionminimum(py::module m) {
   py::class_<FunctionMinimum>(m, "FunctionMinimum")

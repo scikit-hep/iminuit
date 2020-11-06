@@ -1,9 +1,11 @@
 #include "fcn.hpp"
 #include <Minuit2/FCNGradientBase.h>
+#include <Minuit2/MnPrint.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <cmath>
+#include <sstream>
 #include <vector>
 
 namespace py = pybind11;
@@ -23,29 +25,50 @@ double FCN::operator()(const std::vector<double>& x) const {
   ++nfcn_;
   if (use_array_call_) {
     py::array_t<double> a(static_cast<ssize_t>(x.size()), x.data());
-    return check_value(py::cast<double>(fcn_(a)));
+    return check_value(py::cast<double>(fcn_(a)), x);
   }
-  return check_value(py::cast<double>(fcn_(*py::cast(x))));
+  return check_value(py::cast<double>(fcn_(*py::cast(x))), x);
 }
 
 std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
   ++ngrad_;
   if (use_array_call_) {
     py::array_t<double> a(static_cast<ssize_t>(x.size()), x.data());
-    return check_vector(py::cast<std::vector<double>>(grad_(a)));
+    return check_vector(py::cast<std::vector<double>>(grad_(a)), x);
   }
-  return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))));
+  return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))), x);
 }
 
-double FCN::check_value(double r) const {
-  if (throw_nan_ && std::isnan(r)) throw std::runtime_error("result is NaN");
+std::string error_message(const std::vector<double>& x) {
+  std::ostringstream msg;
+  msg << "result is NaN for [ ";
+  for (auto&& xi : x) msg << xi << " ";
+  msg << "]";
+  return msg.str();
+}
+
+double FCN::check_value(double r, const std::vector<double>& x) const {
+  if (std::isnan(r)) {
+    if (throw_nan_)
+      throw std::runtime_error(error_message(x));
+    else {
+      MnPrint("FCN").Warn([&](std::ostream& os) { os << error_message(x); });
+    }
+  }
   return r;
 }
 
-std::vector<double> FCN::check_vector(std::vector<double> r) const {
-  if (throw_nan_)
-    for (auto&& x : r)
-      if (std::isnan(x)) throw std::runtime_error("result is NaN");
+std::vector<double> FCN::check_vector(std::vector<double> r,
+                                      const std::vector<double>& x) const {
+  bool has_nan = false;
+  for (auto&& ri : r) has_nan |= std::isnan(ri);
+  if (has_nan) {
+    if (throw_nan_)
+      throw std::runtime_error(error_message(x));
+    else {
+      MnPrint("FCN::Gradient").Warn([&](std::ostream& os) { os << error_message(x); });
+    }
+  }
   return r;
 }
 
