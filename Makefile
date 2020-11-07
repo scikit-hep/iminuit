@@ -1,7 +1,10 @@
 # Makefile with some convenient quick ways to do common things
 
-PROJECT = iminuit
-PYTHON ?= python3
+ifeq ($(shell python -c 'import sys; print(sys.version_info.major)'), 3)
+	PYTHON = python
+else
+	PYTHON = python3
+endif
 
 default_target: build
 
@@ -13,7 +16,7 @@ help:
 	@echo ''
 	@echo '     build            Build inplace (the default)'
 	@echo '     clean            Remove all generated files'
-	@echo '     test             Run tests'
+	@echo '     test             Run tests (excluding tutorials)'
 	@echo '     cov              Run tests and write coverage report'
 	@echo '     doc              Run Sphinx to generate HTML docs'
 	@echo ''
@@ -24,9 +27,9 @@ help:
 	@echo ''
 
 clean:
-	rm -rf build htmlcov doc/_build src/iminuit/_libiminuit.cpp src/iminuit/_libiminuit*.so tutorial/.ipynb_checkpoints iminuit.egg-info .pytest_cache src/iminuit/__pycache__ src/iminuit/tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist
+	rm -rf build htmlcov doc/_build src/iminuit/_core*.so tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache src/iminuit/__pycache__ src/iminuit/tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist
 
-build: src/iminuit/_libiminuit.so
+build: build/log
 
 test: build
 	$(PYTHON) -m pytest
@@ -37,13 +40,11 @@ cov: build
 
 doc: doc/_build/html/index.html
 
-flake8: build
-	@$(PYTHON) -m flake8 src/$(PROJECT)
+build/log: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cxx) $(wildcard extern/root/math/minuit2/inc/*.h) CMakeLists.txt setup.py cmake.py
+	$(PYTHON) setup.py build_ext --inplace -g
+	touch build/log
 
-src/iminuit/_libiminuit.so: $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi)
-	$(PYTHON) setup.py build_ext --inplace
-
-doc/_build/html/index.html: build $(wildcard src/iminuit/*.pyx src/iminuit/*.pxi src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
+doc/_build/html/index.html: build $(wildcard src/*.cpp src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
 	{ cd doc; make html; }
 
 ## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total

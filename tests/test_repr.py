@@ -19,10 +19,10 @@ def test_html_tag():
         return repr_html.to_str(tag(*args, **kwargs))
 
     # fmt: off
-    assert stag("foo", "bar", baz="hi", xyzzy="2") == '<foo baz="hi" xyzzy="2"> bar </foo>'
-    assert stag("foo") == """<foo></foo>"""
-    assert tag("foo", tag("bar", "baz")) == ["<foo>", ["<bar> baz </bar>"], "</foo>"]
-    assert stag("foo", tag("bar", "baz")) == """<foo>
+    assert stag('foo', 'bar', baz='hi', xyzzy='2') == '<foo baz="hi" xyzzy="2"> bar </foo>'
+    assert stag('foo') == """<foo></foo>"""
+    assert tag('foo', tag('bar', 'baz')) == ['<foo>', ['<bar> baz </bar>'], '</foo>']
+    assert stag('foo', tag('bar', 'baz')) == """<foo>
     <bar> baz </bar>
 </foo>"""
     # fmt: on
@@ -540,7 +540,7 @@ def test_text_matrix_with_long_names():
         [
             Param(
                 0,
-                "super-long-name",
+                'super-long-name',
                 0,
                 0,
                 False,
