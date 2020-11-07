@@ -88,14 +88,9 @@ def minuit():
 
 @pytest.fixture
 def fmin_good():
-    return Namespace(
+    fm = Namespace(
         fval=1.23456e-10,
         edm=1.23456e-10,
-        tolerance=0.1,
-        nfcn=10,
-        nfcn_total=20,
-        ngrad=3,
-        ngrad_total=3,
         up=0.5,
         is_valid=True,
         has_valid_parameters=True,
@@ -107,19 +102,17 @@ def fmin_good():
         is_above_max_edm=False,
         has_reached_call_limit=False,
         has_parameters_at_limit=False,
+        state=[],
     )
+    fcn = Namespace(nfcn=20, ngrad=6)
+    return FMin(fm, fcn, 10, 3, 0.1)
 
 
 @pytest.fixture
 def fmin_bad():
-    return Namespace(
+    fm = Namespace(
         fval=nan,
         edm=1.23456e-10,
-        tolerance=0,
-        nfcn=100000,
-        nfcn_total=200000,
-        ngrad=100000,
-        ngrad_total=200000,
         up=0.5,
         is_valid=False,
         has_valid_parameters=False,
@@ -131,19 +124,33 @@ def fmin_bad():
         is_above_max_edm=True,
         has_reached_call_limit=True,
         has_parameters_at_limit=True,
+        state=[
+            Namespace(
+                has_limits=True,
+                is_fixed=False,
+                value=0,
+                error=0.5,
+                lower_limit=0,
+                upper_limit=1,
+                has_lower_limit=True,
+                has_upper_limit=True,
+            )
+        ],
     )
+    fcn = Namespace(nfcn=200000, ngrad=200000)
+    return FMin(fm, fcn, 100000, 100000, 0.01)
 
 
 def test_html_fmin_good(fmin_good):
     # fmt: off
-    assert repr_html.fmin(fmin_good) == """<table>
+    assert fmin_good._repr_html_() == """<table>
     <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 1.235e-10 </td>
         <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 10 (20 total) </td>
     </tr>
     <tr>
         <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 0.0001) </td>
-        <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 3 (3 total) </td>
+        <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 3 (6 total) </td>
     </tr>
     <tr>
         <td style="text-align:center;{good}"> Valid Minimum </td>
@@ -167,13 +174,13 @@ def test_html_fmin_good(fmin_good):
 
 def test_html_fmin_bad(fmin_bad):
     # fmt: off
-    assert repr_html.fmin(fmin_bad) == """<table>
+    assert fmin_bad._repr_html_() == """<table>
     <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = nan </td>
         <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 100000 (200000 total) </td>
     </tr>
     <tr>
-        <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 1.19e-10) </td>
+        <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 1e-05) </td>
         <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 100000 (200000 total) </td>
     </tr>
     <tr>
@@ -397,10 +404,10 @@ def test_html_matrix():
 
 def test_text_fmin_good(fmin_good):
     # fmt: off
-    assert framed(repr_text.fmin(fmin_good)) == r"""
+    assert framed(fmin_good) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
 │ FCN = 1.235e-10                  │         Nfcn = 10 (20 total)         │
-│ EDM = 1.23e-10 (Goal: 0.0001)    │         Ngrad = 3 (3 total)          │
+│ EDM = 1.23e-10 (Goal: 0.0001)    │         Ngrad = 3 (6 total)          │
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │ Valid Minimum │ Valid Parameters │        No Parameters at limit        │
 ├───────────────┴──────────────────┼──────────────────────────────────────┤
@@ -414,10 +421,10 @@ def test_text_fmin_good(fmin_good):
 
 def test_text_fmin_bad(fmin_bad):
     # fmt: off
-    assert framed(repr_text.fmin(fmin_bad)) == r"""
+    assert framed(fmin_bad) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
 │ FCN = nan                        │     Nfcn = 100000 (200000 total)     │
-│ EDM = 1.23e-10 (Goal: 1.19e-10)  │    Ngrad = 100000 (200000 total)     │
+│ EDM = 1.23e-10 (Goal: 1e-05)     │    Ngrad = 100000 (200000 total)     │
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │INVALID Minimum│INVALID Parameters│       SOME Parameters at limit       │
 ├───────────────┴──────────────────┼──────────────────────────────────────┤

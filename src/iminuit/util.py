@@ -3,9 +3,6 @@ import re
 from collections import OrderedDict, namedtuple
 from . import repr_html
 from . import repr_text
-import warnings
-import inspect
-from ._core import MinosError as _MinosError
 
 inf = float("infinity")
 
@@ -20,9 +17,6 @@ class InitialParamWarning(IMinuitWarning):
 
 class HesseFailedWarning(IMinuitWarning):
     """HESSE failed warning."""
-
-
-warnings.simplefilter("always", InitialParamWarning, append=True)
 
 
 class Matrix(tuple):
@@ -49,44 +43,70 @@ class Matrix(tuple):
             p.text(str(self))
 
 
-class Param(
-    namedtuple(
-        "_Param",
-        "number name value error is_const is_fixed has_limits "
-        "has_lower_limit has_upper_limit lower_limit upper_limit",
-    )
-):
+class Param:
     """Data object for a single Parameter."""
 
-    __slots__ = ()
+    __slots__ = (
+        "number",
+        "name",
+        "value",
+        "error",
+        "is_const",
+        "is_fixed",
+        "has_limits",
+        "has_lower_limit",
+        "has_upper_limit",
+        "lower_limit",
+        "upper_limit",
+    )
 
-    def keys(self):
-        return self._fields
-
-    def values(self):
-        return tuple(self[i] for i in range(len(self)))
-
-    def items(self):
-        keys = self.keys()
-        values = self.values()
-        return tuple((keys[i], values[i]) for i in range(len(self)))
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return super(Param, self).__getitem__(key)
-        return self.__getattribute__(key)
-
-    def __contains__(self, key):
-        return key in self.keys()
-
-    def __iter__(self):
-        return iter(self.keys())
+    def __init__(
+        self,
+        number,
+        name,
+        value,
+        error,
+        is_const,
+        is_fixed,
+        has_limits,
+        has_lower_limit,
+        has_upper_limit,
+        lower_limit,
+        upper_limit,
+    ):
+        self.number = number
+        self.name = name
+        self.value = value
+        self.error = error
+        self.is_const = is_const
+        self.is_fixed = is_fixed
+        self.has_limits = has_limits
+        self.has_lower_limit = has_lower_limit
+        self.has_upper_limit = has_upper_limit
+        self.lower_limit = lower_limit
+        self.upper_limit = upper_limit
 
     def __str__(self):
         pairs = []
-        for (k, v) in self.items():
-            pairs.append("%s=%s" % (k, repr(v)))
+        for k in self.__slots__:
+            v = getattr(self, k)
+            pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
+
+    def __eq__(self, other):
+        return (
+            self.number == other.number
+            and self.name == other.name
+            and self.value == other.value
+            and self.error == other.error
+            and self.is_const == other.is_const
+            and self.is_fixed == other.is_fixed
+            and self.has_limits == other.has_limits
+            and self.has_lower_limit == other.has_lower_limit
+            and self.has_upper_limit == other.has_upper_limit
+            and self.lower_limit == other.lower_limit
+            and self.upper_limit == other.upper_limit
+        )
 
 
 class FMin:
@@ -139,10 +159,53 @@ class FMin:
     def ngrad_total(self):
         return self._fcn.ngrad
 
-    def __getattr__(self, key):
-        if key != "state":
-            return getattr(self._src, key)
-        raise AttributeError
+    @property
+    def edm(self):
+        return self._src.edm
+
+    @property
+    def fval(self):
+        return self._src.fval
+
+    @property
+    def is_valid(self):
+        return self._src.is_valid
+
+    @property
+    def has_valid_parameters(self):
+        return self._src.has_valid_parameters
+
+    @property
+    def has_accurate_covar(self):
+        return self._src.has_accurate_covar
+
+    @property
+    def has_posdef_covar(self):
+        return self._src.has_posdef_covar
+
+    @property
+    def has_made_posdef_covar(self):
+        return self._src.has_made_posdef_covar
+
+    @property
+    def hesse_failed(self):
+        return self._src.hesse_failed
+
+    @property
+    def has_covariance(self):
+        return self._src.has_covariance
+
+    @property
+    def is_above_max_edm(self):
+        return self._src.is_above_max_edm
+
+    @property
+    def has_reached_call_limit(self):
+        return self._src.has_reached_call_limit
+
+    @property
+    def up(self):
+        return self._src.up
 
 
 class Params(list):
@@ -167,14 +230,43 @@ class Params(list):
             p.text(str(self))
 
 
-class MError(_MinosError):
+class MError:
     """Minos result object."""
 
-    __slots__ = ("name",)
+    __slots__ = (
+        "number",
+        "name",
+        "lower",
+        "upper",
+        "is_valid",
+        "lower_valid",
+        "upper_valid",
+        "at_lower_limit",
+        "at_upper_limit",
+        "at_lower_max_fcn",
+        "at_upper_max_fcn",
+        "lower_new_min",
+        "upper_new_min",
+        "nfcn",
+        "min",
+    )
 
     def __init__(self, name, minos_error):
-        _MinosError.__init__(self, minos_error)
+        self.number = minos_error.number
         self.name = name
+        self.lower = minos_error.lower
+        self.upper = minos_error.upper
+        self.is_valid = minos_error.is_valid
+        self.lower_valid = minos_error.lower_valid
+        self.upper_valid = minos_error.upper_valid
+        self.at_lower_limit = minos_error.at_lower_limit
+        self.at_upper_limit = minos_error.at_upper_limit
+        self.at_lower_max_fcn = minos_error.at_lower_max_fcn
+        self.at_upper_max_fcn = minos_error.at_upper_max_fcn
+        self.lower_new_min = minos_error.lower_new_min
+        self.upper_new_min = minos_error.upper_new_min
+        self.nfcn = minos_error.nfcn
+        self.min = minos_error.min
 
     def _repr_html_(self):
         return repr_html.merrors([self])
@@ -326,6 +418,8 @@ def arguments_from_call_funccode(f):
 
 def arguments_from_inspect(f):
     """Check inspect.signature for arguemnts"""
+    import inspect
+
     signature = inspect.signature(f)
     ok = True
     for name, par in signature.parameters.items():
