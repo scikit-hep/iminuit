@@ -30,6 +30,7 @@ jobs:
     - run: cd doc; make
     - run: python -m pytest tutorial
     - run: python -m pytest --cov src/iminuit
+    - run: pwd
     - uses: AndreMiras/coveralls-python-action@develop
       with:
         debug: true
