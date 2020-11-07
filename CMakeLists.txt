@@ -80,12 +80,11 @@ set(SOURCES_B
     extern/root/math/minuit2/src/mnxerbla.cxx)
 
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
-if (MSVC)
-    # warning level 3
-    target_compile_options(_core PRIVATE /W3 /WX)
+if(MSVC)
+  # no warnings on windows
 else()
-    # lots of warnings
-    target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror)
+  # lots of warnings from clang and gcc
+  target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
