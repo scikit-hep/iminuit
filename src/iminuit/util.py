@@ -5,7 +5,7 @@ from . import repr_html
 from . import repr_text
 import warnings
 import inspect
-from ._deprecated import deprecated
+from ._core import MinosError as _MinosError
 
 inf = float("infinity")
 
@@ -89,66 +89,34 @@ class Param(
         return "Param(" + ", ".join(pairs) + ")"
 
 
-class MError(
-    namedtuple(
-        "_MError",
-        "name is_valid lower upper lower_valid upper_valid at_lower_limit "
-        "at_upper_limit at_lower_max_fcn at_upper_max_fcn lower_new_min "
-        "upper_new_min nfcn min",
-    )
-):
-    """Minos result object."""
-
-    __slots__ = ()
-
-    def _repr_html_(self):
-        return repr_html.merrors([self])
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return repr_text.merrors([self])
-
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
-            p.text("MError(...)")
-        else:
-            p.text(str(self))
-
-    def keys(self):
-        return self._fields
-
-    def values(self):
-        return tuple(self[i] for i in range(len(self)))
-
-    def items(self):
-        keys = self.keys()
-        values = self.values()
-        return tuple((keys[i], values[i]) for i in range(len(self)))
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return super(MError, self).__getitem__(key)
-        return self.__getattribute__(key)
-
-    def __contains__(self, key):
-        return key in self.keys()
-
-    def __iter__(self):
-        return iter(self.keys())
-
-
-class FMin(
-    namedtuple(
-        "_FMin",
-        "fval edm tolerance nfcn nfcn_total up is_valid has_valid_parameters "
-        "has_accurate_covar has_posdef_covar has_made_posdef_covar hesse_failed "
-        "has_covariance is_above_max_edm has_reached_call_limit "
-        "has_parameters_at_limit ngrad ngrad_total",
-    )
-):
+class FMin:
     """Function minimum status object."""
 
-    __slots__ = ()
+    __slots__ = (
+        "_src",
+        "_fcn",
+        "has_parameters_at_limit",
+        "nfcn",
+        "ngrad",
+        "tolerance",
+    )
+
+    def __init__(self, fmin, fcn, nfcn, ngrad, tol):
+        self._src = fmin
+        self._fcn = fcn
+        self.has_parameters_at_limit = False
+        for mp in fmin.state:
+            if mp.is_fixed or not mp.has_limits:
+                continue
+            v = mp.value
+            e = mp.error
+            lb = mp.lower_limit if mp.has_lower_limit else -inf
+            ub = mp.upper_limit if mp.has_upper_limit else inf
+            # the 0.5 error threshold is somewhat arbitrary
+            self.has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
+        self.nfcn = nfcn
+        self.ngrad = ngrad
+        self.tolerance = tol
 
     def __str__(self):
         """Return string suitable for terminal."""
@@ -163,41 +131,16 @@ class FMin(
         else:
             p.text(str(self))
 
-    def keys(self):
-        return self._fields
+    def nfcn_total(self):
+        return self._fcn.nfcn
 
-    def values(self):
-        return tuple(self[i] for i in range(len(self)))
-
-    def items(self):
-        keys = self.keys()
-        values = self.values()
-        return tuple((keys[i], values[i]) for i in range(len(self)))
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return super(FMin, self).__getitem__(key)
-        return getattr(self, key)
+    def ngrad_total(self):
+        return self._fcn.ngrad
 
     def __getattr__(self, key):
-        if key == "ncalls":
-            warnings.warn(
-                "attribute `FMin.ncalls` is deprecated; use `FMin.nfcn_total`",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            return self.nfcn_total
-        raise AttributeError(
-            "type object '{0}' has no attribute '{1}'".format(
-                self.__class__.__name__, key
-            )
-        )
-
-    def __contains__(self, key):
-        return key in self.keys()
-
-    def __iter__(self):
-        return iter(self.keys())
+        if key != "state":
+            return getattr(self._src, key)
+        raise AttributeError
 
 
 class Params(list):
@@ -222,8 +165,33 @@ class Params(list):
             p.text(str(self))
 
 
+class MError(_MinosError):
+    """Minos result object."""
+
+    __slots__ = ("name",)
+
+    def __init__(self, name, minos_error):
+        _MinosError.__init__(self, minos_error)
+        self.name = name
+
+    def _repr_html_(self):
+        return repr_html.merrors([self])
+
+    def __str__(self):
+        """Return string suitable for terminal."""
+        return repr_text.merrors([self])
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("MError(...)")
+        else:
+            p.text(str(self))
+
+
 class MErrors(OrderedDict):
     """Dict from parameter name to Minos result object."""
+
+    __slots__ = ()
 
     def _repr_html_(self):
         return repr_html.merrors(self.values())
@@ -239,44 +207,20 @@ class MErrors(OrderedDict):
             p.text(str(self))
 
     def __getitem__(self, key):
-        is_deprecated_call = False
         if isinstance(key, int):
-            if key >= len(self):
-                raise IndexError("index out of range")
             if key < 0:
                 key += len(self)
-            if key < 0:
+            if key < 0 or key >= len(self):
                 raise IndexError("index out of range")
-            for k in self.keys():
-                if key == 0:
-                    key = k
+            for i, k in enumerate(self):
+                if i == key:
                     break
-                key -= 1
-        else:
-            if not isinstance(key, str):
-                try:
-                    k, ul = key
-                    ul = int(ul)
-                    is_deprecated_call = True
-                    key = k
-                    warnings.warn(
-                        "`merrors[(name, +-1)]` is deprecated; use `merrors[name]`",
-                        DeprecationWarning,
-                        stacklevel=2,
-                    )
-                except (ValueError, TypeError):
-                    pass
-
-        v = super(MErrors, self).__getitem__(key)
-        if is_deprecated_call:
-            if ul not in (-1, 1):
-                raise ValueError("key must be (name, 1) or (name, -1)")
-            return v.lower if ul == -1 else v.upper
-        return v
+            key = k
+        return OrderedDict.__getitem__(self, key)
 
 
 # MigradResult used to be a tuple, so we don't add the dict interface
-class MigradResult(namedtuple("MigradResult", "fmin params")):
+class MigradResult(namedtuple("_MigradResult", "fmin params")):
     """Holds the Migrad result."""
 
     __slots__ = ()
@@ -474,71 +418,6 @@ def fitarg_rename(fitarg, ren):
     return ret
 
 
-@deprecated("no replacement")
-def true_param(p):
-    """Check if ``p`` is a parameter name, not a limit/error/fix attributes."""
-    return (
-        not p.startswith("limit_")
-        and not p.startswith("error_")
-        and not p.startswith("fix_")
-    )
-
-
-@deprecated("no replacement")
-def param_name(p):
-    """Extract parameter name from attributes.
-
-    Examples
-    --------
-    - ``fix_x`` -> ``x``
-    - ``error_x`` -> ``x``
-    - ``limit_x`` -> ``x``
-
-    """
-    prefix = ["limit_", "error_", "fix_"]
-    for prf in prefix:
-        if p.startswith(prf):
-            i = len(prf)
-            return p[i:]
-    return p
-
-
-@deprecated("no replacement")
-def extract_iv(b):
-    return dict((k, v) for k, v in b.items() if true_param(k))
-
-
-@deprecated("no replacement")
-def extract_limit(b):
-    return dict((k, v) for k, v in b.items() if k.startswith("limit_"))
-
-
-@deprecated("no replacement")
-def extract_error(b):
-    return dict((k, v) for k, v in b.items() if k.startswith("error_"))
-
-
-@deprecated("no replacement")
-def extract_fix(b):
-    return dict((k, v) for k, v in b.items() if k.startswith("fix_"))
-
-
-@deprecated("no replacement")
-def remove_var(b, exclude):
-    """Exclude variable in exclude list from b."""
-    return dict((k, v) for k, v in b.items() if param_name(k) not in exclude)
-
-
-def format_exception(etype, evalue, tb):
-    """Format an exception."""
-    # work around for https://bugs.python.org/issue17413
-    # the issue is not fixed in Python-3.7
-    import traceback
-
-    s = "".join(traceback.format_tb(tb))
-    return "%s: %s\n%s" % (etype.__name__, evalue, s)
-
-
 def _normalize_limit(lim):
     if lim is None:
         return None
@@ -565,24 +444,3 @@ def _guess_initial_value(lim):
 def _guess_initial_step(val):
     step = 1e-2 * val if val != 0 else 1e-1  # heuristic
     return step
-
-
-def _check_extra_args(parameters, kwd):
-    """Check keyword arguments to find unwanted/typo keyword arguments"""
-    fixed_param = {"fix_" + p for p in parameters}
-    limit_param = {"limit_" + p for p in parameters}
-    error_param = {"error_" + p for p in parameters}
-    for k in kwd:
-        if (
-            k not in parameters
-            and k not in fixed_param
-            and k not in limit_param
-            and k not in error_param
-        ):
-            raise RuntimeError(
-                (
-                    "Cannot understand keyword %s. May be a typo?\n"
-                    "The parameters are %r"
-                )
-                % (k, parameters)
-            )
