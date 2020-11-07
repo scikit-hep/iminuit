@@ -16,7 +16,7 @@ help:
 	@echo ''
 	@echo '     build            Build inplace (the default)'
 	@echo '     clean            Remove all generated files'
-	@echo '     test             Run tests'
+	@echo '     test             Run tests (excluding tutorials)'
 	@echo '     cov              Run tests and write coverage report'
 	@echo '     doc              Run Sphinx to generate HTML docs'
 	@echo ''
@@ -40,8 +40,8 @@ cov: build
 
 doc: doc/_build/html/index.html
 
-build/log: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cpp) $(wildcard extern/root/math/minuit2/inc/*.h)
-	$(PYTHON) setup.py build_ext --inplace -g -j8
+build/log: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cxx) $(wildcard extern/root/math/minuit2/inc/*.h) CMakeLists.txt setup.py cmake.py
+	$(PYTHON) setup.py build_ext --inplace -g
 	touch build/log
 
 doc/_build/html/index.html: build $(wildcard src/*.cpp src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)

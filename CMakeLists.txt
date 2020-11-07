@@ -22,7 +22,6 @@ add_subdirectory(extern/pybind11)
 
 file(GLOB SOURCES_A "src/*.cpp")
 set(SOURCES_B
-    src/MnPrintImpl.cxx
     extern/root/math/minuit2/src/AnalyticalGradientCalculator.cxx
     extern/root/math/minuit2/src/BasicMinimumError.cxx
     extern/root/math/minuit2/src/BFGSErrorUpdator.cxx
@@ -81,5 +80,12 @@ set(SOURCES_B
     extern/root/math/minuit2/src/mnxerbla.cxx)
 
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
+if (MSVC)
+    # warning level 4 and all warnings as errors
+    target_compile_options(_core PRIVATE /W4 /WX)
+else()
+    # lots of warnings and all warnings as errors
+    target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror)
+endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)

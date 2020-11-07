@@ -1,1 +1,0 @@
-"""IMinuit tests."""

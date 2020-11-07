@@ -17,9 +17,9 @@ FCN::FCN(py::object fcn, py::object grad, bool use_array_call, double up,
     , grad_{grad}
     , use_array_call_{use_array_call}
     , up_(up)
+    , throw_nan_{throw_nan}
     , nfcn_{0}
-    , ngrad_{0}
-    , throw_nan_{throw_nan} {}
+    , ngrad_{0} {}
 
 double FCN::operator()(const std::vector<double>& x) const {
   ++nfcn_;
