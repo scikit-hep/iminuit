@@ -27,10 +27,9 @@ jobs:
     - run: pre-commit run -a
     - run:
         python -m pip install -e . -v
-    - run: cd doc; make
+    - run: cd doc; make html
     - run: python -m pytest tutorial
-    - run: python -m pytest --cov iminuit
-    - run: pwd
+    - run: coverage -m pytest
     - uses: AndreMiras/coveralls-python-action@develop
       with:
         debug: true
