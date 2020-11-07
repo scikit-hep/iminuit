@@ -16,6 +16,7 @@ help:
 	@echo ''
 	@echo '     build            Build inplace (the default)'
 	@echo '     clean            Remove all generated files'
+	@echo '     check            Run pre-commit checks'
 	@echo '     test             Run tests (excluding tutorials)'
 	@echo '     cov              Run tests and write coverage report'
 	@echo '     doc              Run Sphinx to generate HTML docs'
@@ -31,8 +32,11 @@ clean:
 
 build: build/log
 
+check:
+	pre-commit run -a
+
 test: build
-	$(PYTHON) -m pytest
+	$(PYTHON) -m pytest -qvv --pdb
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
@@ -46,6 +50,8 @@ build/log: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cxx) 
 
 doc/_build/html/index.html: build $(wildcard src/*.cpp src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
 	{ cd doc; make html; }
+
+.PHONY: clean build check cov doc
 
 ## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
 # pylint: build
