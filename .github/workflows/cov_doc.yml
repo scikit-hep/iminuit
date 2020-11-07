@@ -29,7 +29,7 @@ jobs:
         python -m pip install -e .
     - run: cd doc; make html
     - run: python -m pytest tutorial
-    - run: coverage -m pytest
+    - run: coverage run -m pytest
     - uses: AndreMiras/coveralls-python-action@develop
       with:
         debug: true
