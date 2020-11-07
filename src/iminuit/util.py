@@ -131,9 +131,11 @@ class FMin:
         else:
             p.text(str(self))
 
+    @property
     def nfcn_total(self):
         return self._fcn.nfcn
 
+    @property
     def ngrad_total(self):
         return self._fcn.ngrad
 
