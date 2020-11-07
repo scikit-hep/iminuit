@@ -25,8 +25,7 @@ jobs:
         python -m pip install -r requirements-dev.txt
         python -m ipykernel install --user --name python3
     - run: pre-commit run -a
-    - run:
-        python -m pip install -e .
+    - run: python -m pip install -e .
     - run: cd doc; make html
     - run: python -m pytest tutorial
     - run: coverage run -m pytest
