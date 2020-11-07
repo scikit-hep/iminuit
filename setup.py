@@ -35,7 +35,7 @@ setup(
         "Source Code": "http://github.com/scikit-hep/iminuit",
     },
     license="MIT",
-    packages=["iminuit", "iminuit.tests"],
+    packages=["iminuit"],
     package_dir={"": "src"},
     version=version,
     python_requires=">=3.6",
