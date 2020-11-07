@@ -1,9 +1,8 @@
 [run]
-source = iminuit/*
+source = src/iminuit
+relative_files = True
 
 [report]
 exclude_lines =
     pragma: no cover
     warnings.warn
-omit =
-  iminuit/tests/*

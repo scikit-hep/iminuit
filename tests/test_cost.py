@@ -51,7 +51,14 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
         return n, n * norm(mu, sigma).pdf(x)
 
     cost = ExtendedUnbinnedNLL(x, scaled_pdf, verbose=verbose)
-    m = Minuit(cost, n=len(x), mu=0, sigma=1, limit_n=(0, None), limit_sigma=(0, None),)
+    m = Minuit(
+        cost,
+        n=len(x),
+        mu=0,
+        sigma=1,
+        limit_n=(0, None),
+        limit_sigma=(0, None),
+    )
     m.migrad()
     assert_allclose(m.args, mle, atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)

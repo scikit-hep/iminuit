@@ -32,7 +32,8 @@ def get_latest_successful_build():
 
 def get_artifacts(buildId):
     artifacts = get(
-        f"https://dev.azure.com/{organization}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=5.1"
+        f"https://dev.azure.com/{organization}/{project}/"
+        f"_apis/build/builds/{buildId}/artifacts?api-version=5.1"
     )
 
     for item in artifacts["value"]:

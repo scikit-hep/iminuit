@@ -5,7 +5,7 @@ import numpy as np
 
 def pedantic(self, parameters, kwds, errordef):
     def w(msg):
-        warn(msg, InitialParamWarning, stacklevel=3)
+        warn(msg, InitialParamWarning, stacklevel=4)
 
     for vn in parameters:
         if vn not in kwds and "limit_%s" % vn not in kwds:
@@ -22,15 +22,10 @@ def profile(self, vname, bins, bound, subtract_min):
     pos = self.var2pos[vname]
     n = val.shape[0]
     arg = list(self.args)
-    if self.use_array_call:
-        varg = np.array(arg, dtype=np.double)
-        for i in range(n):
-            varg[pos] = val[i]
-            result[i] = self.fcn(varg)
-    else:
-        for i in range(n):
-            arg[pos] = val[i]
-            result[i] = self.fcn(*arg)
+    varg = np.array(arg, dtype=np.double)
+    for i in range(n):
+        varg[pos] = val[i]
+        result[i] = self.fcn(varg)
     if subtract_min:
         result -= self.fval
     return val, result

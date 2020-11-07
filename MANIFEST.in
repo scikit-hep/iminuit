@@ -1,10 +1,14 @@
-recursive-include src/iminuit *.h *.cpp *.pyx *.pxi *.py
-recursive-include tutorial *.py *.ipynb *.pyx
+recursive-include src *
 recursive-include extern/root/math/minuit2/inc *.h
 recursive-include extern/root/math/minuit2/src *.cxx
-include *.py
-include README.rst
-include LICENSE
-include minuit2_cxx.lst
+recursive-include extern/pybind11/include *.h
+recursive-include extern/pybind11/pybind11 *.py
+include extern/pybind11/CMakeLists.txt
 include CITATION
+include CMakeLists.txt
 include CONTRIBUTING.md
+include LICENSE
+include pyproject.toml
+include README.rst
+include setup.cfg
+include setup.py
