@@ -943,12 +943,10 @@ def test_params():
     params = m.params
     for i, exp in enumerate(expected):
         p = params[i]
-        assert set(p._fields) == set(exp._fields)
-        for key in exp._fields:
-            if key in ("value", "error"):
-                assert_allclose(getattr(p, key), getattr(exp, key), rtol=1e-2)
-            else:
-                assert getattr(p, key) == getattr(exp, key)
+        assert p.number == exp.number
+        assert p.name == exp.name
+        assert p.value == approx(exp.value, rel=1e-2)
+        assert p.error == approx(exp.error, rel=1e-2)
 
 
 def test_latex_matrix():

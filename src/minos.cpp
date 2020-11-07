@@ -11,8 +11,7 @@ using namespace ROOT::Minuit2;
 void bind_minos(py::module m) {
   py::class_<MinosError>(m, "MinosError")
 
-      .def(py::init<const MinosError&>())
-      .def_property_readonly("index", &MinosError::Parameter)
+      .def_property_readonly("number", &MinosError::Parameter)
       .def_property_readonly("lower", &MinosError::Lower)
       .def_property_readonly("upper", &MinosError::Upper)
       .def_property_readonly("is_valid", &MinosError::IsValid)
