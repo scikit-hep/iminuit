@@ -540,3 +540,42 @@ def _guess_initial_value(lim):
 def _guess_initial_step(val):
     step = 1e-2 * val if val != 0 else 1e-1  # heuristic
     return step
+
+
+def _is_int(value):
+    return isinstance(value, int)
+
+
+def _get_params(mps, merrors):
+    return Params(
+        (
+            Param(
+                mp.number,
+                mp.name,
+                mp.value,
+                mp.error,
+                mp.is_const,
+                mp.is_fixed,
+                mp.has_limits,
+                mp.has_lower_limit,
+                mp.has_upper_limit,
+                mp.lower_limit if mp.has_lower_limit else None,
+                mp.upper_limit if mp.has_upper_limit else None,
+            )
+            for mp in mps
+        ),
+        merrors,
+    )
+
+
+class TemporaryUp:
+    def __init__(self, fcn, sigma):
+        self.saved = fcn.up
+        self.fcn = fcn
+        self.fcn.up = sigma ** 2
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.fcn.up = self.saved
