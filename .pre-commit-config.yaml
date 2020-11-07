@@ -24,7 +24,6 @@ repos:
   - id: check-symlinks
   - id: check-yaml
   - id: debug-statements
-  - id: double-quote-string-fixer
   - id: end-of-file-fixer
   - id: mixed-line-ending
   - id: requirements-txt-fixer
