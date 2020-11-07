@@ -16,6 +16,7 @@ help:
 	@echo ''
 	@echo '     build            Build inplace (the default)'
 	@echo '     clean            Remove all generated files'
+	@echo '     check            Run pre-commit checks'
 	@echo '     test             Run tests (excluding tutorials)'
 	@echo '     cov              Run tests and write coverage report'
 	@echo '     doc              Run Sphinx to generate HTML docs'
@@ -30,6 +31,9 @@ clean:
 	rm -rf build htmlcov doc/_build src/iminuit/_core*.so tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache src/iminuit/__pycache__ src/iminuit/tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist
 
 build: build/log
+
+check:
+	pre-commit run -a
 
 test: build
 	$(PYTHON) -m pytest -qvv --pdb
@@ -46,6 +50,8 @@ build/log: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cxx) 
 
 doc/_build/html/index.html: build $(wildcard src/*.cpp src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
 	{ cd doc; make html; }
+
+.PHONY: clean build check cov doc
 
 ## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
 # pylint: build
