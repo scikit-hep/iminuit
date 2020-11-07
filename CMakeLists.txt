@@ -81,10 +81,10 @@ set(SOURCES_B
 
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 if (MSVC)
-    # warning level 4 and all warnings as errors
-    target_compile_options(_core PRIVATE /W4 /WX)
+    # warning level 3
+    target_compile_options(_core PRIVATE /W3 /WX)
 else()
-    # lots of warnings and all warnings as errors
+    # lots of warnings
     target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
