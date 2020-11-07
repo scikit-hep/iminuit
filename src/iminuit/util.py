@@ -565,3 +565,24 @@ def _guess_initial_value(lim):
 def _guess_initial_step(val):
     step = 1e-2 * val if val != 0 else 1e-1  # heuristic
     return step
+
+
+def _check_extra_args(parameters, kwd):
+    """Check keyword arguments to find unwanted/typo keyword arguments"""
+    fixed_param = {"fix_" + p for p in parameters}
+    limit_param = {"limit_" + p for p in parameters}
+    error_param = {"error_" + p for p in parameters}
+    for k in kwd:
+        if (
+            k not in parameters
+            and k not in fixed_param
+            and k not in limit_param
+            and k not in error_param
+        ):
+            raise RuntimeError(
+                (
+                    "Cannot understand keyword %s. May be a typo?\n"
+                    "The parameters are %r"
+                )
+                % (k, parameters)
+            )
