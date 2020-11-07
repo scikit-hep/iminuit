@@ -1,5 +1,6 @@
 from iminuit import util
 import pytest
+from argparse import Namespace
 
 
 def test_fitarg_rename():
@@ -70,6 +71,19 @@ def test_Param():
         str(p)
         == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"  # noqa: E501
     )
+
+
+def test_MigradResult():
+    fmin = Namespace(fval=3)
+    params = util.Params([], None)
+    mr = util.MigradResult(fmin, params)
+    assert mr.fmin is fmin
+    assert mr[0] is fmin
+    assert mr.params is params
+    assert mr[1] is params
+    a, b = mr
+    assert a is fmin
+    assert b is params
 
 
 def test_normalize_limit():
