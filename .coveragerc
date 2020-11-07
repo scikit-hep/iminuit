@@ -1,9 +1,0 @@
-[run]
-source = iminuit/*
-
-[report]
-exclude_lines =
-    pragma: no cover
-    warnings.warn
-omit =
-  iminuit/tests/*
