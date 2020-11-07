@@ -152,7 +152,7 @@ for method, (m, ms) in zip(sorted(methods), markers):
         ncalls[i] = np.median(nc)
         max_devs[i] = np.median(md)
     plt.sca(ax[0])
-    p, = plt.plot(
+    (p,) = plt.plot(
         npars,
         ncalls / npars,
         ls=ls,

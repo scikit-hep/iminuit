@@ -4,8 +4,7 @@ __all__ = ["LatexTable"]
 
 
 class LatexTable:
-    """Latex table output.
-    """
+    """Latex table output."""
 
     float_format = "%10.5g"
     int_format = "%d"

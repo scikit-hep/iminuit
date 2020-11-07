@@ -16,25 +16,9 @@ Further information:
 * Docs: https://iminuit.readthedocs.io
 """
 
-__all__ = ["Minuit", "minimize", "describe", "__version__", "test"]
+__all__ = ["Minuit", "minimize", "describe", "__version__"]
 
-from ._libiminuit import Minuit
+from ._minuit import Minuit
 from ._minimize import minimize
 from .util import describe
 from .version import __version__
-
-
-def test(args=None):
-    """Execute the iminuit tests.
-
-    Requires pytest.
-
-    From the command line:
-
-        python -c 'import iminuit; iminuit.test()'
-    """
-    # http://pytest.org/latest/usage.html#calling-pytest-from-python-code
-    import pytest
-
-    args = ["-v", "--pyargs", "iminuit"]
-    pytest.main(args)

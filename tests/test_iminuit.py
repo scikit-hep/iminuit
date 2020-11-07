@@ -7,6 +7,17 @@ from iminuit import Minuit
 from iminuit.util import Param, HesseFailedWarning
 from pytest import approx
 
+
+@pytest.fixture
+def debug():
+    from iminuit._core import MnPrint
+
+    prev = MnPrint.global_level
+    MnPrint.global_level = 3
+    yield
+    MnPrint.global_level = prev
+
+
 is_pypy = platform.python_implementation() == "PyPy"
 
 
@@ -242,14 +253,10 @@ def test_from_array_func_1():
         func7, (2, 1), error=(1, 1), errordef=Minuit.LEAST_SQUARES
     )
     assert m.fitarg == {
-        "x0": 2,
-        "x1": 1,
+        "x0": 2.0,
+        "x1": 1.0,
         "error_x0": 1.0,
         "error_x1": 1.0,
-        "fix_x0": False,
-        "fix_x1": False,
-        "limit_x0": None,
-        "limit_x1": None,
     }
     m.migrad()
     v = m.np_values()
@@ -270,14 +277,13 @@ def test_from_array_func_2():
         errordef=Minuit.LEAST_SQUARES,
     )
     assert m.fitarg == {
-        "a": 2,
-        "b": 1,
+        "a": 2.0,
+        "b": 1.0,
         "error_a": 0.5,
         "error_b": 0.5,
-        "fix_a": False,
         "fix_b": True,
-        "limit_a": (0, 2),
-        "limit_b": (0, 2),
+        "limit_a": (0.0, 2.0),
+        "limit_b": (0.0, 2.0),
     }
     m.migrad()
     v = m.np_values()
@@ -296,14 +302,12 @@ def test_from_array_func_with_broadcasting():
         func7, (1, 1), error=0.5, limit=(0, 2), errordef=Minuit.LEAST_SQUARES
     )
     assert m.fitarg == {
-        "x0": 1,
-        "x1": 1,
+        "x0": 1.0,
+        "x1": 1.0,
         "error_x0": 0.5,
         "error_x1": 0.5,
-        "fix_x0": False,
-        "fix_x1": False,
-        "limit_x0": (0, 2),
-        "limit_x1": (0, 2),
+        "limit_x0": (0.0, 2.0),
+        "limit_x1": (0.0, 2.0),
     }
     m.migrad()
     v = m.np_values()
@@ -419,14 +423,6 @@ def test_fix_param(grad):
 
     with pytest.raises(KeyError):
         m.fixed["a"]
-
-    with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("x") is True
-    with pytest.warns(DeprecationWarning):
-        assert m.is_fixed("y") is False
-    with pytest.warns(DeprecationWarning):
-        with pytest.raises(KeyError):
-            m.is_fixed("a")
 
     # fix by setting limits
     m = Minuit(func0, y=10.0, limit_y=(10, 10), pedantic=False)
@@ -785,16 +781,31 @@ def test_chi2_fit():
 
 
 def test_likelihood():
-    # try:
-    #     from numpy.random import default_rng
-    #
-    #     rng = default_rng(seed=1)
-    #     data = rng.normal(1, 2, 100)
-    # except ImportError:
-    from numpy.random import randn, seed
+    # normal distributed
+    # fmt: off
+    z = np.array([-0.44712856, 1.2245077 , 0.40349164, 0.59357852, -1.09491185,
+                  0.16938243, 0.74055645, -0.9537006 , -0.26621851, 0.03261455,
+                  -1.37311732, 0.31515939, 0.84616065, -0.85951594, 0.35054598,
+                  -1.31228341, -0.03869551, -1.61577235, 1.12141771, 0.40890054,
+                  -0.02461696, -0.77516162, 1.27375593, 1.96710175, -1.85798186,
+                  1.23616403, 1.62765075, 0.3380117 , -1.19926803, 0.86334532,
+                  -0.1809203 , -0.60392063, -1.23005814, 0.5505375 , 0.79280687,
+                  -0.62353073, 0.52057634, -1.14434139, 0.80186103, 0.0465673 ,
+                  -0.18656977, -0.10174587, 0.86888616, 0.75041164, 0.52946532,
+                  0.13770121, 0.07782113, 0.61838026, 0.23249456, 0.68255141,
+                  -0.31011677, -2.43483776, 1.0388246 , 2.18697965, 0.44136444,
+                  -0.10015523, -0.13644474, -0.11905419, 0.01740941, -1.12201873,
+                  -0.51709446, -0.99702683, 0.24879916, -0.29664115, 0.49521132,
+                  -0.17470316, 0.98633519, 0.2135339 , 2.19069973, -1.89636092,
+                  -0.64691669, 0.90148689, 2.52832571, -0.24863478, 0.04366899,
+                  -0.22631424, 1.33145711, -0.28730786, 0.68006984, -0.3198016 ,
+                  -1.27255876, 0.31354772, 0.50318481, 1.29322588, -0.11044703,
+                  -0.61736206, 0.5627611 , 0.24073709, 0.28066508, -0.0731127 ,
+                  1.16033857, 0.36949272, 1.90465871, 1.1110567 , 0.6590498 ,
+                 -1.62743834, 0.60231928, 0.4202822 , 0.81095167, 1.04444209])
+    # fmt: on
 
-    seed(1)
-    data = 2 * randn(100) + 1
+    data = 2 * z + 1
 
     def nll(mu, sigma):
         z = (data - mu) / sigma
@@ -834,11 +845,11 @@ def test_ncalls():
 
         def __call__(self, x):
             self.ncalls += 1
-            return x ** 2
+            return x ** 2 + x ** 4 + 10
 
     # check that counting is accurate
     func = Func()
-    m = Minuit(func, pedantic=False)
+    m = Minuit(func, x=3, errordef=1)
     m.migrad()
     assert m.ncalls_total == func.ncalls
     assert m.fmin.nfcn == func.ncalls
@@ -946,7 +957,7 @@ def test_latex_matrix():
     m = Minuit.from_array_func(Func8(), (0, 0), name=("x", "y"), pedantic=False)
     m.migrad()
     # hotfix for ManyLinux 32Bit, where rounding changes result
-    assert str(m.latex_matrix()) in (
+    ref = (
         r"""%\usepackage[table]{xcolor} % include this for color
 %\usepackage{rotating} % include this for rotate header
 %\documentclass[xcolor=table]{beamer} % for beamer
@@ -972,6 +983,7 @@ y & \cellcolor[RGB]{250,175,175} 0.5 & \cellcolor[RGB]{250,100,100} 1\\
 \hline
 \end{tabular}""",
     )
+    assert str(m.latex_matrix()) in ref
 
 
 def test_non_analytical_function():
@@ -1042,7 +1054,7 @@ def test_modify_param_state():
     assert_allclose(m.np_values(), [2, 5], atol=1e-4)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
     m.values["y"] = 6
-    m.hesse()  # hesse ignores change in value if migrad was run before
+    m.hesse()
     assert_allclose(m.np_values(), [2, 6], atol=1e-4)
     assert_allclose(m.np_errors(), [2, 1], atol=1e-4)
 
@@ -1073,55 +1085,73 @@ def test_hesse_without_migrad():
         m.hesse()
 
 
-def test_bad_functions():
-    def throwing(x):
-        raise RuntimeError("user message")
+def throwing(x):
+    raise RuntimeError("user message")
 
-    def divide_by_zero(x):
-        return 1 / 0
 
-    def returning_nan(x):
-        return np.nan
+def divide_by_zero(x):
+    return 1 / 0
 
-    def returning_garbage(x):
-        return "foo"
 
-    for func, expected in (
-        (throwing, 'RuntimeError("user message")'),
-        (divide_by_zero, "ZeroDivisionError"),
-        (returning_nan, "result is NaN"),
-        (returning_garbage, "TypeError"),
-    ):
-        m = Minuit(func, x=1, pedantic=False, throw_nan=True)
-        with pytest.raises(RuntimeError) as excinfo:
-            m.migrad()
-        assert expected in excinfo.value.args[0]
+def returning_nan(x):
+    return np.nan
 
-    def returning_nan_array(x):
-        return np.array([1, np.nan])
 
-    def returning_garbage_array(x):
-        return np.array([1, "foo"])
+def returning_garbage(x):
+    return "foo"
 
-    def returning_noniterable(x):
-        return 0
 
-    for func, expected in (
-        (throwing, 'RuntimeError("user message")'),
-        (divide_by_zero, "ZeroDivisionError"),
-        (returning_nan_array, "result is NaN"),
-        (returning_garbage_array, "ValueError" if is_pypy else "TypeError"),
-        (returning_noniterable, "TypeError"),
-    ):
-        m = Minuit.from_array_func(
-            lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True
-        )
-        with pytest.raises(RuntimeError) as excinfo:
-            m.migrad()
-        if is_pypy and func is returning_garbage:
-            pass
-        else:
-            assert expected in excinfo.value.args[0]
+@pytest.mark.parametrize(
+    "func,expected",
+    [
+        (throwing, RuntimeError("user message")),
+        (divide_by_zero, ZeroDivisionError("division by zero")),
+        (returning_nan, RuntimeError("result is NaN")),
+        (
+            returning_garbage,
+            RuntimeError("Unable to cast Python instance"),
+        ),
+    ],
+)
+def test_bad_functions(func, expected):
+    m = Minuit(func, x=1, pedantic=False, throw_nan=True)
+    with pytest.raises(type(expected)) as excinfo:
+        m.migrad()
+    assert str(expected) in str(excinfo.value)
+
+
+def returning_nan_array(x):
+    return np.array([1, np.nan])
+
+
+def returning_garbage_array(x):
+    return np.array([1, "foo"])
+
+
+def returning_noniterable(x):
+    return 0
+
+
+@pytest.mark.parametrize(
+    "func,expected",
+    [
+        (throwing, RuntimeError("user message")),
+        (divide_by_zero, ZeroDivisionError("division by zero")),
+        (returning_nan_array, RuntimeError("result is NaN")),
+        (
+            returning_garbage_array,
+            RuntimeError("Unable to cast Python instance"),
+        ),
+        (returning_noniterable, RuntimeError()),
+    ],
+)
+def test_bad_functions_np(func, expected):
+    m = Minuit.from_array_func(
+        lambda x: 0, (1, 1), grad=func, pedantic=False, throw_nan=True
+    )
+    with pytest.raises(type(expected)) as excinfo:
+        m.migrad()
+    assert str(expected) in str(excinfo.value)
 
 
 def test_issue_424():
