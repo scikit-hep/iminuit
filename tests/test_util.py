@@ -50,27 +50,68 @@ def test_Matrix():
 
 
 def test_Param():
-    keys = "number name value error is_const is_fixed has_limits has_lower_limit has_upper_limit lower_limit upper_limit".split()  # noqa: E501
     values = 3, "foo", 1.2, 3.4, False, False, True, True, False, 42, None
     p = util.Param(*values)
 
+    assert p.number == 3
+    assert p.name == "foo"
+    assert p.value == 1.2
+    assert p.error == 3.4
+    assert p.is_const == False
+    assert p.is_fixed == False
+    assert p.has_limits == True
     assert p.has_lower_limit is True
     assert p.has_upper_limit is False
-    assert p["has_lower_limit"] is True
-    assert p["lower_limit"] == 42
-    assert p["upper_limit"] is None
-    assert "upper_limit" in p
-    assert "foo" not in p
-
-    assert list(p) == keys
-    assert p.keys() == tuple(keys)
-    assert p.values() == values
-    assert p.items() == tuple((k, v) for k, v in zip(keys, values))
+    assert p.lower_limit == 42
+    assert p.upper_limit is None
 
     assert (
         str(p)
         == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"  # noqa: E501
     )
+
+
+def test_FMin():
+    fm = Namespace(
+        fval=1.23456e-10,
+        edm=1.23456e-10,
+        up=0.5,
+        is_valid=True,
+        has_valid_parameters=True,
+        has_accurate_covar=True,
+        has_posdef_covar=True,
+        has_made_posdef_covar=False,
+        hesse_failed=False,
+        has_covariance=True,
+        is_above_max_edm=False,
+        has_reached_call_limit=False,
+        has_parameters_at_limit=False,
+        state=[],
+    )
+    fcn = Namespace(nfcn=20, ngrad=6)
+    fmin = util.FMin(fm, fcn, 10, 3, 0.1)
+    assert {x for x in dir(fmin) if not x.startswith("_")} == {
+        "edm",
+        "fval",
+        "nfcn",
+        "nfcn_total",
+        "ngrad",
+        "ngrad_total",
+        "up",
+        "is_valid",
+        "tolerance",
+        "has_accurate_covar",
+        "has_valid_parameters",
+        "has_posdef_covar",
+        "has_made_posdef_covar",
+        "hesse_failed",
+        "has_covariance",
+        "is_above_max_edm",
+        "has_reached_call_limit",
+        "has_parameters_at_limit",
+    }
+    assert fmin.edm == 1.23456e-10
+    assert fmin.has_parameters_at_limit == False
 
 
 def test_MigradResult():
