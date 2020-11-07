@@ -43,44 +43,70 @@ class Matrix(tuple):
             p.text(str(self))
 
 
-class Param(
-    namedtuple(
-        "_Param",
-        "number name value error is_const is_fixed has_limits "
-        "has_lower_limit has_upper_limit lower_limit upper_limit",
-    )
-):
+class Param:
     """Data object for a single Parameter."""
 
-    __slots__ = ()
+    __slots__ = (
+        "number",
+        "name",
+        "value",
+        "error",
+        "is_const",
+        "is_fixed",
+        "has_limits",
+        "has_lower_limit",
+        "has_upper_limit",
+        "lower_limit",
+        "upper_limit",
+    )
 
-    def keys(self):
-        return self._fields
-
-    def values(self):
-        return tuple(self[i] for i in range(len(self)))
-
-    def items(self):
-        keys = self.keys()
-        values = self.values()
-        return tuple((keys[i], values[i]) for i in range(len(self)))
-
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return super(Param, self).__getitem__(key)
-        return self.__getattribute__(key)
-
-    def __contains__(self, key):
-        return key in self.keys()
-
-    def __iter__(self):
-        return iter(self.keys())
+    def __init__(
+        self,
+        number,
+        name,
+        value,
+        error,
+        is_const,
+        is_fixed,
+        has_limits,
+        has_lower_limit,
+        has_upper_limit,
+        lower_limit,
+        upper_limit,
+    ):
+        self.number = number
+        self.name = name
+        self.value = value
+        self.error = error
+        self.is_const = is_const
+        self.is_fixed = is_fixed
+        self.has_limits = has_limits
+        self.has_lower_limit = has_lower_limit
+        self.has_upper_limit = has_upper_limit
+        self.lower_limit = lower_limit
+        self.upper_limit = upper_limit
 
     def __str__(self):
         pairs = []
-        for (k, v) in self.items():
-            pairs.append("%s=%s" % (k, repr(v)))
+        for k in self.__slots__:
+            v = getattr(self, k)
+            pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
+
+    def __eq__(self, other):
+        return (
+            self.number == other.number
+            and self.name == other.name
+            and self.value == other.value
+            and self.error == other.error
+            and self.is_const == other.is_const
+            and self.is_fixed == other.is_fixed
+            and self.has_limits == other.has_limits
+            and self.has_lower_limit == other.has_lower_limit
+            and self.has_upper_limit == other.has_upper_limit
+            and self.lower_limit == other.lower_limit
+            and self.upper_limit == other.upper_limit
+        )
 
 
 class FMin:
@@ -208,8 +234,8 @@ class MError:
     """Minos result object."""
 
     __slots__ = (
+        "number",
         "name",
-        "index",
         "lower",
         "upper",
         "is_valid",
@@ -226,8 +252,8 @@ class MError:
     )
 
     def __init__(self, name, minos_error):
+        self.number = minos_error.number
         self.name = name
-        self.index = minos_error.index
         self.lower = minos_error.lower
         self.upper = minos_error.upper
         self.is_valid = minos_error.is_valid
