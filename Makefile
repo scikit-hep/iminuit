@@ -40,9 +40,6 @@ cov: build
 
 doc: doc/_build/html/index.html
 
-flake8: build
-	@$(PYTHON) -m flake8 src/iminuit
-
 build/log: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cpp) $(wildcard extern/root/math/minuit2/inc/*.h)
 	$(PYTHON) setup.py build_ext --inplace -g -j8
 	touch build/log

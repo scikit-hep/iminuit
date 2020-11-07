@@ -11,7 +11,7 @@ steps:
     set DISTUTILS_USE_SDK=1
     python -m pip wheel . -w wheelhouse/
   displayName: 'Build wheel (Windows Python 2.7)'
-  condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['python.version'], '2.7')) 
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'), eq(variables['python.version'], '2.7'))
 
 - script: |
     python -m pip wheel . -w wheelhouse/
@@ -32,4 +32,4 @@ steps:
     python -m pip install delocate
     /Library/Frameworks/Python.framework/Versions/$(python.version)/bin/delocate-wheel dist/$(package_name)*.whl
   displayName: 'Delocate wheels'
-  condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin')) 
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))

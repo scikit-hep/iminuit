@@ -17,31 +17,31 @@ repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v3.2.0
   hooks:
-  - id: check-added-large-files
   - id: check-case-conflict
+  - id: check-docstring-first
+  - id: check-executables-have-shebangs
   - id: check-merge-conflict
   - id: check-symlinks
   - id: check-yaml
   - id: debug-statements
+  - id: double-quote-string-fixer
   - id: end-of-file-fixer
   - id: mixed-line-ending
   - id: requirements-txt-fixer
+  - id: sort-simple-yaml
   - id: trailing-whitespace
-  - id: fix-encoding-pragma
+    exclude: ^doc/_static/.*.svg
 
 # Black, the code formatter, natively supports pre-commit
 - repo: https://github.com/psf/black
   rev: 20.8b1
   hooks:
   - id: black
-    exclude: ^(docs)
 
-# Changes tabs to spaces
-- repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.9
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.8.4
   hooks:
-  - id: remove-tabs
-    exclude: ^(docs)
+  - id: flake8
 
 # CMake formatting
 - repo: https://github.com/cheshirekow/cmake-format-precommit

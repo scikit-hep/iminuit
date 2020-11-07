@@ -1,6 +1,6 @@
 ## Azure Wheel Helpers
 
-This repository holds a collection of wheel helpers designed by the [Scikit-HEP][] project to build Python Wheels on [Azure DevOps][]. This is designed for packages that require building; if you have a pure-Python project, producing a universal wheel is trivial without this helper collection. This collection assumes some standard paths and procedures, though *some* of them can be customized. 
+This repository holds a collection of wheel helpers designed by the [Scikit-HEP][] project to build Python Wheels on [Azure DevOps][]. This is designed for packages that require building; if you have a pure-Python project, producing a universal wheel is trivial without this helper collection. This collection assumes some standard paths and procedures, though *some* of them can be customized.
 
 ### Supported platforms and caveats
 
@@ -65,4 +65,3 @@ or <https://github.com/scikit-hep/azure-wheel-helpers> for details.
 [Azure DevOps]: https://dev.azure.com
 [iscinumpy/wheels]: https://iscinumpy.gitlab.io/post/azure-devops-python-wheels/
 [msvc2017]: https://www.microsoft.com/en-us/download/details.aspx?id=48145
-

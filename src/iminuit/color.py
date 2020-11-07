@@ -4,8 +4,7 @@ __all__ = ["Gradient"]
 
 
 class Gradient:
-    """Color gradient.
-    """
+    """Color gradient."""
 
     _steps = None
 

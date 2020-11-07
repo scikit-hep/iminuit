@@ -11,18 +11,15 @@ inf = float("infinity")
 
 
 class IMinuitWarning(RuntimeWarning):
-    """iminuit warning.
-    """
+    """iminuit warning."""
 
 
 class InitialParamWarning(IMinuitWarning):
-    """Initial parameter warning.
-    """
+    """Initial parameter warning."""
 
 
 class HesseFailedWarning(IMinuitWarning):
-    """HESSE failed warning.
-    """
+    """HESSE failed warning."""
 
 
 warnings.simplefilter("always", InitialParamWarning, append=True)

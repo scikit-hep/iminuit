@@ -93,7 +93,10 @@ def fmin(fm):
                 ),
             ),
             tr(
-                td(ff[4], style="text-align:center;" + good(fm.is_valid, True),),
+                td(
+                    ff[4],
+                    style="text-align:center;" + good(fm.is_valid, True),
+                ),
                 td(
                     ff[5],
                     style="text-align:center;" + good(fm.has_valid_parameters, True),
@@ -118,8 +121,14 @@ def fmin(fm):
                 ),
             ),
             tr(
-                td(ff[9], style="text-align:center;" + good(fm.hesse_failed, False),),
-                td(ff[10], style="text-align:center;" + good(fm.has_covariance, True),),
+                td(
+                    ff[9],
+                    style="text-align:center;" + good(fm.hesse_failed, False),
+                ),
+                td(
+                    ff[10],
+                    style="text-align:center;" + good(fm.has_covariance, True),
+                ),
                 td(
                     ff[11],
                     title="Is covariance matrix accurate?",
@@ -197,7 +206,12 @@ def merrors(mes):
     newmin = [th("New Min", title="New minimum found when doing scan?")]
     for me in mes:
         header.append(
-            th(me.name, colspan=2, title="Parameter name", style="text-align:center",)
+            th(
+                me.name,
+                colspan=2,
+                title="Parameter name",
+                style="text-align:center",
+            )
         )
         error += [td(x) for x in pdg_format(None, me.lower, me.upper)]
         valid += [
@@ -218,7 +232,12 @@ def merrors(mes):
 
     return to_str(
         table(
-            tr(*header), tr(*error), tr(*valid), tr(*limit), tr(*maxfcn), tr(*newmin),
+            tr(*header),
+            tr(*error),
+            tr(*valid),
+            tr(*limit),
+            tr(*maxfcn),
+            tr(*newmin),
         )
     )
 
