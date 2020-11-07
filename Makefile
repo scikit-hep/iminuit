@@ -20,8 +20,8 @@ cov: build
 
 doc: build/html/index.html
 
-build/html/index.html: build $(wildcard src/iminuit/*.py src/iminuit/**/*.py doc/*.rst)
-	{ cd doc; sphinx-build -W -a -E -b html -d ../build/doctrees . ../build/html; }
+build/html: build doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/*)
+	{ cd doc; sphinx-build -W -a -E -b html -d ../build/doctrees . ../build/html; touch ../build/html; }
 
 check:
 	pre-commit run -a
