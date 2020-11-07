@@ -32,7 +32,7 @@ clean:
 build: build/log
 
 test: build
-	$(PYTHON) -m pytest
+	$(PYTHON) -m pytest -qvv --pdb
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
