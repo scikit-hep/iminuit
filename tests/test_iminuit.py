@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param, HesseFailedWarning
+from iminuit.util import Param
 from pytest import approx
 
 
@@ -33,8 +33,8 @@ def test_pedantic_warning_message():
     assert len(w) == 2
     for i, msg in enumerate(
         (
-            "Parameter x does not have neither initial value nor limits.",
-            "errordef is not given, defaults to 1.",
+            "Parameter x has neither initial value nor limits",
+            "errordef not set, defaults to 1",
         )
     ):
         assert str(w[i].message) == msg
@@ -366,13 +366,11 @@ def test_no_resume():
 
 def test_typo():
     with pytest.raises(RuntimeError):
-        Minuit(func4, printlevel=0)
+        Minuit(lambda x: 0, y=1, pedantic=False)
     with pytest.raises(RuntimeError):
-        Minuit(lambda x: 0, y=1)
+        Minuit(lambda x: 0, error_y=1, pedantic=False)
     with pytest.raises(RuntimeError):
-        Minuit(lambda x: 0, error_y=1)
-    with pytest.raises(RuntimeError):
-        Minuit(lambda x: 0, limit_y=1)
+        Minuit(lambda x: 0, limit_y=1, pedantic=False)
 
 
 def test_initial_guesses():
@@ -1005,8 +1003,7 @@ def test_non_invertible():
     m.strategy = 0
     m.migrad()
     assert m.fmin.is_valid
-    with pytest.warns(HesseFailedWarning):
-        m.hesse()
+    m.hesse()
     assert not m.fmin.is_valid
     with pytest.raises(RuntimeError):
         m.matrix()

@@ -1,5 +1,3 @@
-from iminuit._deprecated import deprecated
-
 __all__ = ["Gradient"]
 
 
@@ -10,17 +8,6 @@ class Gradient:
 
     def __init__(self, *steps):
         self._steps = steps
-
-    @classmethod
-    @deprecated("use Gradient(...)(...)")
-    def color_for(
-        cls, v, min=0.0, max=1.0, startcolor=(163, 254, 186), stopcolor=(255, 118, 118)
-    ):  # pragma: no cover
-        bz = (v - min) / (max - min)
-        az = 1.0 - bz
-        a = startcolor
-        b = stopcolor
-        return (az * a[0] + bz * b[0], az * a[1] + bz * b[1], az * a[2] + bz * b[2])
 
     def __call__(self, v):
         st = self._steps

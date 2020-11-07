@@ -72,7 +72,7 @@ class Minuit:
     def errordef(self, value):
         self._fcn.up = value
         if self._fmin:
-            self._fmin.up = value
+            self._fmin._src.up = value
 
     tol = 0.1
     """Tolerance for convergence.
@@ -263,9 +263,7 @@ class Minuit:
             if gcc:
                 return {v: gcc[i] for i, v in enumerate(free)}
 
-    _print_level = 0
-    _ncalls = 0
-    _ngrads = 0
+    _print_level = 1
     _fmin = None
 
     def __init__(
@@ -332,9 +330,8 @@ class Minuit:
 
             - **errordef**: Optional. See :attr:`errordef` for details on
               this parameter. If set to `None` (the default), Minuit will try to call
-              `fcn.errordef` and `fcn.default_errordef()` (deprecated) to set the error
-              definition. If this fails, a warning is raised and use a value appropriate
-              for a least-squares function is used.
+              `fcn.errordef` to set the error definition. If this fails, a warning is
+              raised and use a value appropriate for a least-squares function is used.
 
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
@@ -391,18 +388,7 @@ class Minuit:
                     m = Minuit(f, x=1, error_x=0.5)
                     my_fitarg = m.fitarg
                     another_fit = Minuit(f, **my_fitarg)
-
         """
-
-        if name is None:
-            name = kwds.get("forced_parameters", None)
-            if name is not None:
-                warn(
-                    "Using keyword `forced_parameters` is deprecated. Use `name` instead",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                del kwds["forced_parameters"]
 
         if use_array_call and name is None:
             raise KeyError("`use_array_call=True` requires that `name` is set")
@@ -413,29 +399,25 @@ class Minuit:
         # parameter names and position
         self._pos2var = tuple(args)
         self._var2pos = {k: i for i, k in enumerate(args)}
-        check_extra_args(args, kwds)
+
+        if pedantic:
+            self._pedantic(args, kwds)
 
         if errordef is None:
             if hasattr(fcn, "errordef"):
                 errordef = fcn.errordef
-            elif hasattr(fcn, "default_errordef"):
-                warn(
-                    "Using .default_errordef() is deprecated. Use .errordef instead",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                errordef = fcn.default_errordef()
+            else:
+                if pedantic:
+                    warn(
+                        "errordef not set, defaults to 1",
+                        mutil.InitialParamWarning,
+                        stacklevel=2,
+                    )
+                errordef = 1.0
 
-        if errordef is not None:
-            errordef = float(errordef)
-            if errordef <= 0:
-                raise ValueError("errordef must be a positive number")
-
-        if pedantic:
-            self._pedantic(args, kwds, errordef)
-
-        if errordef is None:
-            errordef = 1.0
+        errordef = float(errordef)
+        if errordef <= 0:
+            raise ValueError(f"errordef={errordef} must be a positive number")
 
         self.print_level = print_level
         self._strategy = MnStrategy(1)
@@ -452,6 +434,24 @@ class Minuit:
         self.merrors = mutil.MErrors()
 
     def _make_init_state(self, kwds):
+        pars = self.parameters
+
+        # check kwds
+        fixed_param = {"fix_" + p for p in pars}
+        limit_param = {"limit_" + p for p in pars}
+        error_param = {"error_" + p for p in pars}
+        for k in kwds:
+            if (
+                k not in pars
+                and k not in fixed_param
+                and k not in limit_param
+                and k not in error_param
+            ):
+                raise RuntimeError(
+                    f"Cannot understand keyword {k}, maybe a typo? "
+                    f"Parameters are {pars}"
+                )
+
         state = MnUserParameterState()
         for i, x in enumerate(self.pos2var):
             lim = mutil._normalize_limit(kwds.get(f"limit_{x}", None))
@@ -573,9 +573,15 @@ class Minuit:
                 kwds["fix_" + name] = fix[i]
         return cls(fcn, **kwds)
 
-    def migrad(
-        self, ncall=None, resume=True, precision=None, iterate=5, **deprecated_kwargs
-    ):
+    def reset(self):
+        """Reset minimization state to initial state."""
+        self._last_state = self._init_state
+        self._fmin = None
+        self._fcn.nfcn = 0
+        self._fcn.ngrad = 0
+        self.merrors = mutil.MErrors()
+
+    def migrad(self, ncall=None, resume=True, precision=None, iterate=5):
         """Run MIGRAD.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -614,52 +620,41 @@ class Minuit:
         if iterate < 1:
             raise ValueError("iterate must be at least 1")
 
-        if "nsplit" in deprecated_kwargs:
-            warn(
-                "`nsplit` keyword has been removed and is ignored",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-            del deprecated_kwargs["nsplit"]
-
-        if deprecated_kwargs:
-            raise KeyError("keyword(s) not recognized: " + " ".join(deprecated_kwargs))
-
-        # construct new fcn and migrad if
-        # it's a clean state or resume=False
-
         if not resume:
-            self._last_state = self._init_state
-            self._fmin = None
-            self._fcn.nfcn = 0
-            self._fcn.ngrad = 0
+            self.reset()
 
         migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
         migrad.set_print_level(self.print_level)
         if precision is not None:
             migrad.precision = precision
 
-        ncalls_total_before = self._fcn.nfcn
-        ngrads_total_before = self._fcn.ngrad
+        nc = self._fcn.nfcn
+        ng = self._fcn.ngrad
 
         # Automatically call Migrad up to `iterate` times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
         for _ in range(iterate):
-            self._fmin = migrad(ncall, self.tol)
-            if self._fmin.is_valid or self._fmin.has_reached_call_limit:
+            fm = migrad(ncall, self.tol)
+            if fm.is_valid or fm.has_reached_call_limit:
                 break
 
-        self._last_state = self._fmin.state
-        self._ncalls = self._fcn.nfcn - ncalls_total_before
-        self._ngrads = self._fcn.ngrad - ngrads_total_before
+        self._last_state = fm.state
 
-        mr = mutil.MigradResult(self.fmin, self.params)
+        self._fmin = mutil.FMin(
+            fm,
+            self._fcn,
+            self._fcn.nfcn - nc,
+            self._fcn.ngrad - ng,
+            self.tol,
+        )
+
+        mr = mutil.MigradResult(self._fmin, self.params)
         if self.print_level >= 2:
             print(mr)
 
         return mr
 
-    def hesse(self, ncall=None, **deprecated_kwargs):
+    def hesse(self, ncall=None):
         """Run HESSE to compute parabolic errors.
 
         HESSE estimates the covariance matrix by inverting the matrix of
@@ -683,48 +678,34 @@ class Minuit:
             list of :ref:`minuit-param-struct`
         """
 
-        if "maxcall" in deprecated_kwargs:
-            warn(
-                "using `maxcall` keyword is deprecated, use `ncall` keyword instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            ncall = deprecated_kwargs.pop("maxcall")
-
-        if deprecated_kwargs:
-            raise KeyError("keyword(s) not recognized: " + " ".join(deprecated_kwargs))
-
         ncall = 0 if ncall is None else int(ncall)
 
-        ncalls_total_before = self._fcn.nfcn
-        ngrads_total_before = self._fcn.ngrad
+        nc = self._fcn.nfcn
+        ng = self._fcn.ngrad
 
         hesse = MnHesse(self.strategy)
 
-        if self._fmin and self._fmin.state == self._last_state:
+        fm = self._fmin._src if self._fmin else None
+        if fm and fm.state == self._last_state:
             # _last_state not modified, can update _fmin which is more efficient
-            hesse(self._fcn, self._fmin, ncall)
-            self._last_state = self._fmin.state
+            hesse(self._fcn, fm, ncall)
+            self._last_state = fm.state
         else:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin
             self._last_state = hesse(self._fcn, self._last_state, ncall)
 
-        self._ncalls = self.ncalls_total - ncalls_total_before
-        self._ngrads = self.ngrads_total - ngrads_total_before
+        if fm is not None:
+            self._fmin.nfcn = self._fcn.nfcn - nc
+            self._fmin.ngrad = self._fcn.ngrad - ng
 
         if self._last_state.has_covariance is False:
             if not self._fmin:
                 raise RuntimeError("HESSE Failed")
-            else:
-                warn(
-                    "HESSE Failed. Covariance and GlobalCC will not be available",
-                    mutil.HesseFailedWarning,
-                )
 
         return self.params
 
-    def minos(self, var=None, sigma=1.0, ncall=None, **deprecated_kwargs):
+    def minos(self, var=None, sigma=1.0, ncall=None):
         """Run MINOS to compute asymmetric confidence intervals.
 
         MINOS uses the profile likelihood method to compute (asymmetric)
@@ -761,17 +742,6 @@ class Minuit:
                 "MINOS require function to be at the minimum." " Run MIGRAD first."
             )
 
-        if "maxcall" in deprecated_kwargs:
-            warn(
-                "using `maxcall` keyword is deprecated, use `ncall` keyword instead",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            ncall = deprecated_kwargs.pop("maxcall")
-
-        if deprecated_kwargs:
-            raise KeyError("keyword(s) not recognized: " + " ".join(deprecated_kwargs))
-
         ncall = 0 if ncall is None else int(ncall)
 
         # FIXME there should be a guard for up
@@ -784,10 +754,10 @@ class Minuit:
         if var is not None and var not in self.pos2var:
             raise RuntimeError(f"Unknown parameter {var}")
 
-        ncalls_total_before = self._fcn.nfcn
-        ngrads_total_before = self._fcn.ngrad
+        nc = self._fcn.nfcn
+        ng = self._fcn.ngrad
 
-        minos = MnMinos(self._fcn, self._fmin, self.strategy)
+        minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
 
         vnames = self.pos2var if var is None else [var]
         for vname in vnames:
@@ -800,10 +770,10 @@ class Minuit:
                     return None
                 continue
             mnerror = minos(self.var2pos[vname], ncall, self.tol)
-            self.merrors[vname] = minoserror2struct(vname, mnerror)
+            self.merrors[vname] = mutil.MError(vname, mnerror)
 
-        self._ncalls = self._fcn.nfcn - ncalls_total_before
-        self._ngrads = self._fcn.ngrad - ngrads_total_before
+        self._fmin.nfcn = self._fcn.nfcn - nc
+        self._fmin.ngrad = self._fcn.ngrad - ng
 
         # FIXME should be done by a guard
         self._fcn.up = oldup
@@ -945,16 +915,7 @@ class Minuit:
     @property
     def fmin(self):
         """Current function minimum data object"""
-        if self._fmin:
-            return fmin2struct(
-                self._fmin,
-                self._fcn.up,
-                self.tol,
-                self._ncalls,
-                self.ncalls_total,
-                self._ngrads,
-                self.ngrads_total,
-            )
+        return self._fmin
 
     @property
     def fval(self):
@@ -962,8 +923,8 @@ class Minuit:
 
         .. seealso:: :meth:`fmin`
         """
-        fmin = self.fmin
-        return fmin.fval if fmin else None
+        fm = self._fmin
+        return fm.fval if fm else None
 
     @property
     def params(self):
@@ -1093,9 +1054,7 @@ class Minuit:
         x, y, s = self.mnprofile(vname, bins, bound, subtract_min)
         return self._draw_profile(vname, x, y, band, text)
 
-    def profile(
-        self, vname, bins=100, bound=2, subtract_min=False, **deprecated_kwargs
-    ):
+    def profile(self, vname, bins=100, bound=2, subtract_min=False):
         """Calculate cost function profile around specify range.
 
         **Arguments:**
@@ -1121,13 +1080,6 @@ class Minuit:
 
             :meth:`mnprofile`
         """
-        if "args" in deprecated_kwargs:
-            warn("The args keyword has been removed.", DeprecationWarning, stacklevel=2)
-            del deprecated_kwargs["args"]
-
-        if len(deprecated_kwargs):
-            raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
-
         if subtract_min and not self._fmin:
             raise RuntimeError(
                 "Request for minimization "
@@ -1156,7 +1108,6 @@ class Minuit:
         subtract_min=False,
         band=True,
         text=True,
-        **deprecated_kwargs,
     ):
         """A convenient wrapper for drawing profile using matplotlib.
 
@@ -1189,14 +1140,6 @@ class Minuit:
             :meth:`draw_mnprofile`
             :meth:`profile`
         """
-
-        if "args" in deprecated_kwargs:
-            warn("The args keyword has been removed.", DeprecationWarning, stacklevel=2)
-            del deprecated_kwargs["args"]
-
-        if len(deprecated_kwargs):
-            raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
-
         x, y = self.profile(vname, bins, bound, subtract_min)
         return self._draw_profile(vname, x, y, band, text)
 
@@ -1233,7 +1176,7 @@ class Minuit:
 
         return x, y
 
-    def contour(self, x, y, bins=50, bound=2, subtract_min=False, **deprecated_kwargs):
+    def contour(self, x, y, bins=50, bound=2, subtract_min=False):
         """2D contour scan.
 
         Return the contour of a function scan over **x** and **y**, while keeping
@@ -1274,14 +1217,6 @@ class Minuit:
             :meth:`mnprofile`
 
         """
-
-        if "args" in deprecated_kwargs:
-            warn("The args keyword has been removed.", DeprecationWarning, stacklevel=2)
-            del deprecated_kwargs["args"]
-
-        if len(deprecated_kwargs):
-            raise ValueError("Unrecognized keywords: " + " ".join(deprecated_kwargs))
-
         if subtract_min and not self._fmin:
             raise RuntimeError(
                 "Request for minimization "
@@ -1377,7 +1312,7 @@ class Minuit:
         oldup = self._fcn.up
         self._fcn.up = oldup * sigma * sigma
 
-        mnc = MnContours(self._fcn, self._fmin, self.strategy)
+        mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
         mex, mey, ce = mnc(ix, iy, numpoints)
 
         self._fcn.up = oldup
@@ -1424,7 +1359,7 @@ class Minuit:
 
         return cs
 
-    def draw_contour(self, x, y, bins=50, bound=2, **deprecated_kwargs):
+    def draw_contour(self, x, y, bins=50, bound=2):
         """Convenience wrapper for drawing contours.
 
         The arguments are the same as :meth:`contour`.
@@ -1438,24 +1373,6 @@ class Minuit:
             :meth:`draw_mncontour`
 
         """
-        if "show_sigma" in deprecated_kwargs:
-            warn(
-                "The show_sigma keyword has been removed due to potential confusion. "
-                "Use draw_mncontour to draw sigma contours.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            del deprecated_kwargs["show_sigma"]
-        if "args" in deprecated_kwargs:
-            warn(
-                "The args keyword is unused and has been removed.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            del deprecated_kwargs["args"]
-        if len(deprecated_kwargs):
-            raise ValueError("Invalid keyword(s): " + " ".join(deprecated_kwargs))
-
         from matplotlib import pyplot as plt
 
         vx, vy, vz = self.contour(x, y, bins, bound, subtract_min=True)
@@ -1495,134 +1412,18 @@ class Minuit:
 
     def _copy_state_if_needed(self):
         if self._last_state == self._init_state or (
-            self._fmin and self._last_state == self._fmin.state
+            self._fmin and self._last_state == self._fmin._src.state
         ):
             self._last_state = MnUserParameterState(self._last_state)
 
-    def _pedantic(self, parameters, kwds, errordef):
-        def w(msg):
-            warn(msg, mutil.InitialParamWarning, stacklevel=4)
-
+    def _pedantic(self, parameters, kwds):
         for vn in parameters:
             if vn not in kwds and "limit_%s" % vn not in kwds:
-                w("Parameter %s does not have neither initial value nor limits." % vn)
-
-        if errordef is None:
-            w("errordef is not given, defaults to 1.")
-
-    # All deprecated stuff goes through __getattr__, which is only called if
-    # normal attribute access returns AttributeError.
-    # Warning: that this will hide AttributeErrors inside methods.
-    def __getattr__(self, key):
-        deprecated = {
-            "edm": (
-                False,
-                "this_object.fmin.edm",
-                lambda self: self.fmin.edm if self.fmin else None,
-            ),
-            "merrors_struct": (False, "this_object.merrors", lambda self: self.merrors),
-            "ncalls": (
-                False,
-                "this_object.fmin.nfcn",
-                lambda self: self.fmin.nfcn if self.fmin else 0,
-            ),
-            "ngrads": (
-                False,
-                "this_object.fmin.ngrad",
-                lambda self: self.fmin.ngrad if self.fmin else 0,
-            ),
-            "get_merrors": (True, "this_object.merrors", lambda: self.merrors),
-            "get_fmin": (True, "this_object.fmin", lambda: self.fmin),
-            "get_param_states": (True, "this_object.params", lambda: self.params),
-            "get_initial_param_states": (
-                True,
-                "this_object.init_params",
-                lambda: self.init_params,
-            ),
-            "get_num_call_fcn": (
-                True,
-                "this_object.ncalls_total",
-                lambda: self.ncalls_total,
-            ),
-            "get_num_call_grad": (
-                True,
-                "this_object.ngrads_total",
-                lambda: self.ngrads_total,
-            ),
-            "is_fixed": (True, "this_object.fixed[arg]", lambda arg: self.fixed[arg]),
-            "migrad_ok": (True, "this_object.valid", lambda: self.valid),
-            "print_matrix": (
-                True,
-                "print(this_object.matrix())",
-                lambda: print(self.matrix(correlation=True, skip_fixed=True)),
-            ),
-            "print_fmin": (True, "print(this_object.fmin)", lambda: print(self.fmin)),
-            "print_all_minos": (
-                True,
-                "print(this_object.merrors)",
-                lambda: print(self.merrors),
-            ),
-            "print_param": (
-                True,
-                "print(this_object.params)",
-                lambda: print(self.params),
-            ),
-            "print_initial_param": (
-                True,
-                "print(this_object.init_params)",
-                lambda: print(self.init_params),
-            ),
-            "set_errordef": (
-                True,
-                "this_object.errordef = value",
-                lambda arg: setattr(self, "errordef", arg),
-            ),
-            "set_up": (
-                True,
-                "this_object.errordef = value",
-                lambda arg: setattr(self, "errordef", arg),
-            ),
-            "set_strategy": (
-                True,
-                "this_object.strategy = value",
-                lambda arg: setattr(self, "strategy", arg),
-            ),
-            "set_print_level": (
-                True,
-                "this_object.print_level = value",
-                lambda arg: setattr(self, "print_level", arg),
-            ),
-            "list_of_fixed_param": (
-                True,
-                "`[name for (name, fix) in this_object.fixed.items() if fix]`",
-                lambda: [name for (name, fix) in self.fixed.items() if fix],
-            ),
-            "list_of_vary_param": (
-                True,
-                "`[name for (name, fix) in this_object.fixed.items() if not fix]`",
-                lambda: [name for (name, fix) in self.fixed.items() if not fix],
-            ),
-            "matrix_accurate": (True, "this_object.accurate", lambda: self.accurate),
-        }
-
-        if key in deprecated:
-            is_method, replacement, lambd = deprecated[key]
-            warn(
-                "`{0}` is deprecated: Use `{1}` instead".format(key, replacement),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-            if is_method:
-                return lambd
-            else:
-                return lambd(self)
-
-        raise AttributeError(
-            "type object '{0}' has no attribute '{1}'".format(
-                self.__class__.__name__, key
-            )
-        )
+                warn(
+                    f"Parameter {vn} has neither initial value nor limits",
+                    mutil.InitialParamWarning,
+                    stacklevel=3,
+                )
 
 
 # Helper classes
@@ -1659,7 +1460,7 @@ class BasicView:
         i = key if is_int(key) else self._minuit.var2pos[key]
         if i < 0:
             i += len(self)
-        if i >= len(self):
+        if i < 0 or i >= len(self):
             raise IndexError
         return self._get(i)
 
@@ -1679,7 +1480,7 @@ class BasicView:
         i = key if is_int(key) else self._minuit.var2pos[key]
         if i < 0:
             i += len(self)
-        if i >= len(self):
+        if i < 0 or i >= len(self):
             raise IndexError
         self._set(i, value)
 
@@ -1708,7 +1509,7 @@ class ArgsView:
         i = key
         if i < 0:
             i += len(self)
-        if i >= len(self):
+        if i < 0 or i >= len(self):
             raise IndexError
         return self._minuit._last_state[i].value
 
@@ -1722,7 +1523,7 @@ class ArgsView:
             i = key
             if i < 0:
                 i += len(self)
-            if i >= len(self):
+            if i < 0 or i >= len(self):
                 raise IndexError
             self._minuit._last_state.set_value(i, value)
 
@@ -1766,59 +1567,6 @@ class FixedView(BasicView):
             self._minuit._last_state.release(i)
 
 
-def minoserror2struct(name, m):
-    return mutil.MError(
-        name,
-        m.is_valid,
-        m.lower,
-        m.upper,
-        m.lower_valid,
-        m.upper_valid,
-        m.at_lower_limit,
-        m.at_upper_limit,
-        m.at_lower_max_fcn,
-        m.at_upper_max_fcn,
-        m.lower_new_min,
-        m.upper_new_min,
-        m.nfcn,
-        m.min,
-    )
-
-
-def fmin2struct(fmin, up, tolerance, ncalls, ncalls_total, ngrads, ngrads_total):
-    has_parameters_at_limit = False
-    for mp in fmin.state:
-        if mp.is_fixed or not mp.has_limits:
-            continue
-        v = mp.value
-        e = mp.error
-        lb = mp.lower_limit if mp.has_lower_limit else -np.inf
-        ub = mp.upper_limit if mp.has_upper_limit else np.inf
-        # the 0.5 error threshold is somewhat arbitrary
-        has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
-
-    return mutil.FMin(
-        fmin.fval,
-        fmin.edm,
-        tolerance,
-        ncalls,
-        ncalls_total,
-        up,
-        fmin.is_valid,
-        fmin.has_valid_parameters,
-        fmin.has_accurate_covar,
-        fmin.has_posdef_covar,
-        fmin.has_made_posdef_covar,
-        fmin.hesse_failed,
-        fmin.has_covariance,
-        fmin.is_above_max_edm,
-        fmin.has_reached_call_limit,
-        has_parameters_at_limit,
-        ngrads,
-        ngrads_total,
-    )
-
-
 def get_params(mps, merrors):
     return mutil.Params(
         (
@@ -1843,24 +1591,3 @@ def get_params(mps, merrors):
 
 def is_int(value):
     return isinstance(value, int)
-
-
-def check_extra_args(parameters, kwd):
-    """Check keyword arguments to find unwanted/typo keyword arguments"""
-    fixed_param = {"fix_" + p for p in parameters}
-    limit_param = {"limit_" + p for p in parameters}
-    error_param = {"error_" + p for p in parameters}
-    for k in kwd:
-        if (
-            k not in parameters
-            and k not in fixed_param
-            and k not in limit_param
-            and k not in error_param
-        ):
-            raise RuntimeError(
-                (
-                    "Cannot understand keyword %s. May be a typo?\n"
-                    "The parameters are %r"
-                )
-                % (k, parameters)
-            )
