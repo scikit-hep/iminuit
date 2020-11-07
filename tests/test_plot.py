@@ -43,5 +43,3 @@ def test_drawcontour(minuit):
     minuit.draw_contour("x", "y")
     minuit.draw_contour("x", "x", bins=20, bound=2)
     minuit.draw_contour("x", "x", bins=20, bound=((-10, 10), (-10, 10)))
-    with pytest.warns(DeprecationWarning):
-        minuit.draw_contour("x", "y", show_sigma=True)

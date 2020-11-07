@@ -3,6 +3,7 @@ from iminuit import Minuit
 from iminuit.util import Params, Param, Matrix, FMin
 from iminuit import repr_html, repr_text
 import pytest
+from argparse import Namespace
 
 nan = float("nan")
 inf = float("infinity")
@@ -87,7 +88,7 @@ def minuit():
 
 @pytest.fixture
 def fmin_good():
-    return FMin(
+    return Namespace(
         fval=1.23456e-10,
         edm=1.23456e-10,
         tolerance=0.1,
@@ -111,7 +112,7 @@ def fmin_good():
 
 @pytest.fixture
 def fmin_bad():
-    return FMin(
+    return Namespace(
         fval=nan,
         edm=1.23456e-10,
         tolerance=0,
@@ -135,7 +136,7 @@ def fmin_bad():
 
 def test_html_fmin_good(fmin_good):
     # fmt: off
-    assert fmin_good._repr_html_() == """<table>
+    assert repr_html.fmin(fmin_good) == """<table>
     <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 1.235e-10 </td>
         <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 10 (20 total) </td>
@@ -166,7 +167,7 @@ def test_html_fmin_good(fmin_good):
 
 def test_html_fmin_bad(fmin_bad):
     # fmt: off
-    assert fmin_bad._repr_html_() == """<table>
+    assert repr_html.fmin(fmin_bad) == """<table>
     <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = nan </td>
         <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 100000 (200000 total) </td>
@@ -396,7 +397,7 @@ def test_html_matrix():
 
 def test_text_fmin_good(fmin_good):
     # fmt: off
-    assert framed(fmin_good) == r"""
+    assert framed(repr_text.fmin(fmin_good)) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
 │ FCN = 1.235e-10                  │         Nfcn = 10 (20 total)         │
 │ EDM = 1.23e-10 (Goal: 0.0001)    │         Ngrad = 3 (3 total)          │
@@ -413,7 +414,7 @@ def test_text_fmin_good(fmin_good):
 
 def test_text_fmin_bad(fmin_bad):
     # fmt: off
-    assert framed(fmin_bad) == r"""
+    assert framed(repr_text.fmin(fmin_bad)) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
 │ FCN = nan                        │     Nfcn = 100000 (200000 total)     │
 │ EDM = 1.23e-10 (Goal: 1.19e-10)  │    Ngrad = 100000 (200000 total)     │
