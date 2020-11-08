@@ -28,6 +28,7 @@ class CMakeBuild(build_ext):
         ]
 
         cfg = "Debug" if self.debug else "Release"
+        cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
         build_args = ["--config", cfg]
 
         if platform.system() == "Windows":
@@ -37,7 +38,6 @@ class CMakeBuild(build_ext):
             build_args += ["--", "/m"]
         else:
             njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
-            cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
             build_args += ["--", f"-j{njobs}"]
 
         print(f"cmake args: {cmake_args}")
