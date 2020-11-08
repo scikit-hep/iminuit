@@ -40,8 +40,8 @@ class CMakeBuild(build_ext):
             njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
             build_args += ["--", f"-j{njobs}"]
 
-        print(f"cmake args: {cmake_args}")
-        print(f"build args: {build_args}")
+        print(f"cmake args: {' '.join(cmake_args)}")
+        print(f"build args: {' '.join(build_args)}")
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
