@@ -7,7 +7,7 @@ on:
       - develop
 
 env:
-  # only build CPython-3.6 and later; must skip cp39 for now, no numpy wheels available 
+  # only build CPython-3.6 and later; must skip cp39 for now, no numpy wheels available
   CIBW_SKIP: cp27-* cp35-* pp27-* cp39-*
   CIBW_TEST_REQUIRES: pytest numpy
   CIBW_TEST_COMMAND: python -m pytest {package}/tests
