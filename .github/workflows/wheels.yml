@@ -11,6 +11,7 @@ env:
   CIBW_SKIP: cp27-* cp35-* pp27-*
   CIBW_TEST_COMMAND: python -m pytest
   CIBW_TEST_REQUIRES: pytest numpy
+  CIBW_BEFORE_TEST: python -m pip install wheelhouse/*
 
 jobs:
   wheels:
