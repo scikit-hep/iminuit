@@ -449,11 +449,11 @@ class Minuit:
         self._init_state = self._make_init_state(kwds)
         self._last_state = self._init_state
 
-        self.args = ArgsView(self)
-        self.values = ValueView(self)
-        self.errors = ErrorView(self)
-        self.fixed = FixedView(self)
-        self.merrors = mutil.MErrors()
+        self._args = ArgsView(self)
+        self._values = ValueView(self)
+        self._errors = ErrorView(self)
+        self._fixed = FixedView(self)
+        self._merrors = mutil.MErrors()
 
     def _make_init_state(self, kwds):
         pars = self.parameters
@@ -789,8 +789,8 @@ class Minuit:
                         )
                         return None
                     continue
-                mnerror = minos(self.var2pos[vname], ncall, self.tol)
-                self.merrors[vname] = mutil.MError(vname, mnerror)
+                me = minos(self._var2pos[vname], ncall, self.tol)
+                self._merrors[vname] = mutil.MError(vname, me)
 
         self._fmin.nfcn = self._fcn.nfcn - nc
         self._fmin.ngrad = self._fcn.ngrad - ng
@@ -906,7 +906,7 @@ class Minuit:
         # array format follows matplotlib conventions, see pyplot.errorbar
         a = np.zeros((2, self.narg))
         for me in self.merrors.values():
-            i = self.var2pos[me.name]
+            i = self._var2pos[me.name]
             a[0, i] = -me.lower
             a[1, i] = me.upper
         return a
@@ -1008,7 +1008,7 @@ class Minuit:
         status = np.empty(bins, dtype=np.bool)
 
         state = MnUserParameterState(self._last_state)  # copy
-        ipar = self.var2pos[vname]
+        ipar = self._var2pos[vname]
         state.fix(ipar)
         pr = MnPrint("Minuit.mnprofile", self.print_level)
         for i, v in enumerate(values):
@@ -1101,7 +1101,7 @@ class Minuit:
 
         bound = self._normalize_bound(vname, bound)
 
-        ipar = self.var2pos[vname]
+        ipar = self._var2pos[vname]
         scan = np.linspace(bound[0], bound[1], bins, dtype=np.double)
         result = np.empty(bins, dtype=np.double)
         values = self.np_values()
@@ -1252,8 +1252,8 @@ class Minuit:
         x_val = np.linspace(x_bound[0], x_bound[1], bins)
         y_val = np.linspace(y_bound[0], y_bound[1], bins)
 
-        x_pos = self.var2pos[x]
-        y_pos = self.var2pos[y]
+        x_pos = self._var2pos[x]
+        y_pos = self._var2pos[y]
 
         arg = list(self.args)
 
@@ -1313,8 +1313,8 @@ class Minuit:
         if not self._fmin:
             raise ValueError("Run MIGRAD first")
 
-        ix = self.var2pos[x]
-        iy = self.var2pos[y]
+        ix = self._var2pos[x]
+        iy = self._var2pos[y]
 
         vary = self._free_parameters()
         if x not in vary or y not in vary:
@@ -1464,7 +1464,7 @@ class BasicView:
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             return [self._get(i) for i in ind]
-        i = key if mutil._is_int(key) else self._minuit.var2pos[key]
+        i = key if mutil._is_int(key) else self._minuit._var2pos[key]
         if i < 0:
             i += len(self)
         if i < 0 or i >= len(self):
@@ -1484,7 +1484,7 @@ class BasicView:
                 for i in ind:
                     self._set(i, value)
             return
-        i = key if mutil._is_int(key) else self._minuit.var2pos[key]
+        i = key if mutil._is_int(key) else self._minuit._var2pos[key]
         if i < 0:
             i += len(self)
         if i < 0 or i >= len(self):
