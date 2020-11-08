@@ -7,7 +7,7 @@ cwd = Path(__file__).parent
 
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/guides/single-sourcing-package-version/?highlight=single%20sourcing
-with (cwd / "src/iminuit/version.py").open() as fp:
+with (cwd / "iminuit/version.py").open() as fp:
     version = {}
     exec(fp.read(), version)  # this loads __version__
     version = version["__version__"]
@@ -36,7 +36,7 @@ setup(
     },
     license="MIT",
     packages=["iminuit"],
-    package_dir={"": "src"},
+    install_requires=["numpy"],
     version=version,
     python_requires=">=3.6",
     ext_modules=[CMakeExtension("cmake_example")],

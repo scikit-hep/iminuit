@@ -16,18 +16,20 @@ test: build
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
-	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
+	$(PYTHON) -m pytest --cov iminuit --cov-report html
 
 doc: build/html/index.html
 
-build/html: build doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/*)
-	{ cd doc; sphinx-build -W -a -E -b html -d ../build/doctrees . ../build/html; touch ../build/html; }
+build/html/index.html: doc/conf.py $(wildcard iminuit/*.py doc/*.rst doc/_static/* doc/plots/*)
+	echo "WARNING: this requires iminuit to be installed, cannot be run with inplace build"
+	mkdir -p build/html
+	sphinx-build -W -a -E -b html -d build/doctrees doc build/html
 
 check:
 	pre-commit run -a
 
 clean:
-	rm -rf build htmlcov src/iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache src/iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
+	rm -rf build htmlcov iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
 
 .PHONY: clean check cov doc
 
