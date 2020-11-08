@@ -37,6 +37,7 @@ setup(
     license="MIT",
     packages=["iminuit"],
     package_dir={"": "src"},
+    install_requires=["numpy"],
     version=version,
     python_requires=">=3.6",
     ext_modules=[CMakeExtension("cmake_example")],
