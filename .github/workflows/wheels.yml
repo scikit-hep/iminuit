@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
     - master
+  release:
+    types: [published]
 
 env:
   CIBW_SKIP: cp27-* cp35-* pp*
@@ -62,3 +64,27 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: dist/*.tar.gz
+
+  upload:
+    needs: [wheels, sdist]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: dist
+
+    - name: Prerelease
+      if: "github.event.published && github.event.release.prerelease"
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{secrets.test_pypi_password}}
+        repository_url: https://test.pypi.org/legacy/
+
+    # - name: Release
+    #   if: "github.event.published && github.event.release.release"
+    #   uses: pypa/gh-action-pypi-publish@master
+    #   with:
+    #     user: __token__
+    #     password: ${{secrets.pypi_password}}
