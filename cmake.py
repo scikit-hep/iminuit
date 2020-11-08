@@ -32,19 +32,21 @@ class CMakeBuild(build_ext):
 
         if platform.system() == "Windows":
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
-            if sys.maxsize > 2 ** 32:
-                cmake_args += ["-A", "x64"]
-            import struct
-
-            print(f"On windows: sys.maxsize={sys.maxsize} {struct.calcsize('P') * 8}")
+            is_x86 = sys.maxsize > 2 ** 32
+            cmake_args += [
+                "-A",
+                "x64" if is_x86 else "86",
+                # "-G",
+                # "Visual Studio 16 2019",
+            ]
             build_args += ["--", "/m"]
         else:
             njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
             cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
             build_args += ["--", f"-j{njobs}"]
 
-        print("cmake args: {cmake_args}")
-        print("build args: {build_args}")
+        print(f"cmake args: {cmake_args}")
+        print(f"build args: {build_args}")
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
