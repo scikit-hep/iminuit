@@ -1,5 +1,5 @@
 [run]
-source = src/iminuit
+source = iminuit
 relative_files = True
 
 [report]

@@ -29,7 +29,7 @@ check:
 	pre-commit run -a
 
 clean:
-	rm -rf build htmlcov iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
+	rm -rf build htmlcov iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info iminuit.egg-info .pytest_cache iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
 
 .PHONY: clean check cov doc
 
