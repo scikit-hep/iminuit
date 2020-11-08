@@ -25,7 +25,7 @@ jobs:
         py: [cp36, cp37, cp38, cp39]
       fail-fast: false
     env:
-      CIBW_BUILD: ${{ matrix.py }}
+      CIBW_BUILD: ${{ matrix.py }}-*
     steps:
       - uses: actions/checkout@v2
         with:
@@ -77,7 +77,7 @@ jobs:
         path: dist
 
     - name: Prerelease
-      if: "github.event.published && github.event.release.prerelease"
+      if: "github.event.release.prerelease"
       uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
