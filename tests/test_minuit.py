@@ -407,8 +407,8 @@ def test_fix_param(grad):
     assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
-    assert m.fixed["x"] is False
-    assert m.fixed["y"] is True
+    assert not m.fixed["x"]
+    assert m.fixed["y"]
     m.fixed["x"] = True
     m.fixed["y"] = False
     assert m.narg == 2
@@ -435,7 +435,7 @@ def test_fix_param(grad):
     assert m.narg == 2
     assert m.nfit == 1
 
-    m.fixed[:] = True
+    m.fixed = True
     assert m.fixed.values() == [True, True]
     m.fixed[1:] = False
     assert m.fixed.values() == [True, False]
@@ -687,7 +687,7 @@ def test_values(minuit):
     expected = [2.0, 5.0]
     assert len(minuit.values) == 2
     assert_allclose(minuit.values.values(), expected, atol=5e-6)
-    minuit.values[:] = expected
+    minuit.values = expected
     assert minuit.values[:] == expected
     assert minuit.values[0] == 2
     assert minuit.values[1] == 5
@@ -697,12 +697,29 @@ def test_values(minuit):
     minuit.values[1:] = [3]
     assert minuit.values[:] == [2, 3]
     assert minuit.values[-1] == 3
-    minuit.values[:] = 7
+    minuit.values = 7
     assert minuit.values[:] == [7, 7]
     with pytest.raises(KeyError):
         minuit.values["z"]
     with pytest.raises(IndexError):
         minuit.values[3]
+
+
+def test_fmin():
+    m = Minuit(
+        lambda x, s: (x * s) ** 2, x=1, s=1, fix_s=True, errordef=1, print_level=0
+    )
+    m.migrad()
+    fm1 = m.fmin
+    assert fm1.is_valid
+
+    m.values["s"] = 0
+
+    m.migrad()
+    fm2 = m.fmin
+
+    assert fm1.is_valid
+    assert not fm2.is_valid
 
 
 def test_matrix(minuit):
