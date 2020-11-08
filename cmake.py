@@ -28,22 +28,25 @@ class CMakeBuild(build_ext):
         ]
 
         cfg = "Debug" if self.debug else "Release"
+        cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
         build_args = ["--config", cfg]
 
         if platform.system() == "Windows":
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
-            if sys.maxsize > 2 ** 32:
-                cmake_args += ["-A", "x64"]
+            is_x86 = sys.maxsize > 2 ** 32
+            cmake_args += ["-A", "x64" if is_x86 else "Win32"]
             build_args += ["--", "/m"]
         else:
             njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
-            cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
             build_args += ["--", f"-j{njobs}"]
+
+        print(f"cmake args: {cmake_args}")
+        print(f"build args: {build_args}")
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
         subprocess.check_call(
-            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp, env=os.environ
+            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
         )
         subprocess.check_call(
             ["cmake", "--build", "."] + build_args, cwd=self.build_temp
