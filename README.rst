@@ -12,10 +12,10 @@
    :target: https://pypi.org/project/iminuit
 .. image:: https://github.com/scikit-hep/iminuit/workflows/Github-Actions/badge.svg
    :target: https://github.com/scikit-hep/iminuit/actions
-.. image:: https://coveralls.io/repos/github/scikit-hep/iminuit/badge.svg?branch=pybind11
-   :target: https://coveralls.io/github/scikit-hep/iminuit?branch=pybind11
-.. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
-   :target: https://iminuit.readthedocs.io/en/develop/?badge=latest
+.. image:: https://coveralls.io/repos/github/scikit-hep/iminuit/badge.svg?branch=develop
+   :target: https://coveralls.io/github/scikit-hep/iminuit?branch=develop
+.. image:: https://readthedocs.org/projects/iminuit/badge/?version=stable
+   :target: https://iminuit.readthedocs.io/en/develop/?badge=stable
    :alt: Documentation Status
 .. image:: https://mybinder.org/badge_logo.svg
   :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/master?filepath=tutorial
