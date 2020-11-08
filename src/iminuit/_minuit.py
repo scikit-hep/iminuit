@@ -744,9 +744,6 @@ class Minuit:
 
         ncall = 0 if ncall is None else int(ncall)
 
-        # FIXME there should be a guard for up
-        oldup = self._fcn.up
-        self._fcn.up = oldup * sigma * sigma
         if not self._fmin.is_valid:
             raise RuntimeError(
                 ("Function minimum is not valid. Make sure " "MIGRAD converged first")
@@ -757,26 +754,25 @@ class Minuit:
         nc = self._fcn.nfcn
         ng = self._fcn.ngrad
 
-        minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
+        with mutil.TemporaryUp(self._fcn, sigma):
+            minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
 
-        vnames = self.pos2var if var is None else [var]
-        for vname in vnames:
-            if self.fixed[vname]:
-                if var is not None and var == vname:
-                    warn(
-                        f"Cannot scan parameter {var}, it is fixed",
-                        mutil.IMinuitWarning,
-                    )
-                    return None
-                continue
-            mnerror = minos(self.var2pos[vname], ncall, self.tol)
-            self.merrors[vname] = mutil.MError(vname, mnerror)
+            vnames = self.pos2var if var is None else [var]
+            for vname in vnames:
+                if self.fixed[vname]:
+                    if var is not None and var == vname:
+                        warn(
+                            f"Cannot scan parameter {var}, it is fixed",
+                            mutil.IMinuitWarning,
+                        )
+                        return None
+                    continue
+                mnerror = minos(self.var2pos[vname], ncall, self.tol)
+                self.merrors[vname] = mutil.MError(vname, mnerror)
 
         self._fmin.nfcn = self._fcn.nfcn - nc
         self._fmin.ngrad = self._fcn.ngrad - ng
 
-        # FIXME should be done by a guard
-        self._fcn.up = oldup
         return self.merrors
 
     def matrix(self, correlation=False, skip_fixed=True):
@@ -929,12 +925,12 @@ class Minuit:
     @property
     def params(self):
         """List of current parameter data objects"""
-        return get_params(self._last_state, self.merrors)
+        return mutil._get_params(self._last_state, self.merrors)
 
     @property
     def init_params(self):
         """List of current parameter data objects set to the initial fit state"""
-        return get_params(self._init_state, None)
+        return mutil._get_params(self._init_state, None)
 
     @property
     def ncalls_total(self):
@@ -1308,14 +1304,9 @@ class Minuit:
         if x not in vary or y not in vary:
             raise ValueError("mncontour has to be run on vary parameters.")
 
-        # FIXME this should be done with a guard
-        oldup = self._fcn.up
-        self._fcn.up = oldup * sigma * sigma
-
-        mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
-        mex, mey, ce = mnc(ix, iy, numpoints)
-
-        self._fcn.up = oldup
+        with mutil.TemporaryUp(self._fcn, sigma):
+            mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
+            mex, mey, ce = mnc(ix, iy, numpoints)
 
         return mex, mey, ce
 
@@ -1457,7 +1448,7 @@ class BasicView:
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             return [self._get(i) for i in ind]
-        i = key if is_int(key) else self._minuit.var2pos[key]
+        i = key if mutil._is_int(key) else self._minuit.var2pos[key]
         if i < 0:
             i += len(self)
         if i < 0 or i >= len(self):
@@ -1477,7 +1468,7 @@ class BasicView:
                 for i in ind:
                     self._set(i, value)
             return
-        i = key if is_int(key) else self._minuit.var2pos[key]
+        i = key if mutil._is_int(key) else self._minuit.var2pos[key]
         if i < 0:
             i += len(self)
         if i < 0 or i >= len(self):
@@ -1565,29 +1556,3 @@ class FixedView(BasicView):
             self._minuit._last_state.fix(i)
         else:
             self._minuit._last_state.release(i)
-
-
-def get_params(mps, merrors):
-    return mutil.Params(
-        (
-            mutil.Param(
-                mp.number,
-                mp.name,
-                mp.value,
-                mp.error,
-                mp.is_const,
-                mp.is_fixed,
-                mp.has_limits,
-                mp.has_lower_limit,
-                mp.has_upper_limit,
-                mp.lower_limit if mp.has_lower_limit else None,
-                mp.upper_limit if mp.has_upper_limit else None,
-            )
-            for mp in mps
-        ),
-        merrors,
-    )
-
-
-def is_int(value):
-    return isinstance(value, int)
