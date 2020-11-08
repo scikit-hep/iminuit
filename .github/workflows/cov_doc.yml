@@ -26,7 +26,7 @@ jobs:
         python -m ipykernel install --user --name python3
     - run: pre-commit run -a
     - run: python -m pip install -e .
-    - run: make doc
+    - run: make build/html
     - run: python -m pytest tutorial
     - run: coverage run -m pytest
     - uses: AndreMiras/coveralls-python-action@develop
