@@ -1,1 +1,1 @@
-Announce beta to: ctapipe, gammapy, treegp, zfit, veusz, flavio
+Announce beta to: ctapipe, gammapy, zfit, pyhf, veusz, flavio
