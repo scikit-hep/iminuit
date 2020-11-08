@@ -145,50 +145,72 @@ class Minuit:
     def throw_nan(self, value):
         self._fcn.throw_nan = value
 
-    args = None
-    """Parameter values in a list-like object.
+    @property
+    def args(self):
+        """Parameter values in a list-like view.
 
-    See :attr:`values` for details.
+        See :attr:`values` for details.
 
-    .. seealso:: :attr:`values`, :attr:`errors`, :attr:`fixed`
-    """
+        .. seealso:: :attr:`values`, :attr:`errors`, :attr:`fixed`
+        """
+        return self._args
 
-    values = None
-    """Parameter values in a dict-like object.
+    @property
+    def values(self):
+        """Parameter values in a dict-like object.
 
-    Use to read or write current parameter values based on the parameter index or the
-    parameter name as a string. If you change a parameter value and run :meth:`migrad`,
-    the minimization will start from that value, similar for :meth:`hesse` and
-    :meth:`minos`.
+        Use to read or write current parameter values based on the parameter index or the
+        parameter name as a string. If you change a parameter value and run :meth:`migrad`,
+        the minimization will start from that value, similar for :meth:`hesse` and
+        :meth:`minos`.
 
-    .. seealso:: :attr:`errors`, :attr:`fixed`
-    """
+        .. seealso:: :attr:`errors`, :attr:`fixed`
+        """
+        return self._values
 
-    errors = None
-    """Parameter parabolic errors in a dict-like object.
+    @values.setter
+    def values(self, args):
+        self._values[:] = args
 
-    Like :attr:`values`, but instead of reading or writing the values, you read or write
-    the errors (which double as step sizes for MINUITs numerical gradient estimation).
+    @property
+    def errors(self):
+        """Parameter parabolic errors in a dict-like object.
 
-    .. seealso:: :attr:`values`, :attr:`fixed`
-    """
+        Like :attr:`values`, but instead of reading or writing the values, you read or write
+        the errors (which double as step sizes for MINUITs numerical gradient estimation).
 
-    fixed = None
-    """Access fixation state of a parameter in a dict-like object.
+        .. seealso:: :attr:`values`, :attr:`fixed`
+        """
+        return self._errors
 
-    Use to read or write the fixation state of a parameter based on the parameter index
-    or the parameter name as a string. If you change the state and run :meth:`migrad`,
-    :meth:`hesse`, or :meth:`minos`, the new state is used.
+    @errors.setter
+    def errors(self, args):
+        self._errors[:] = args
 
-    In case of complex fits, it can help to fix some parameters first and only minimize
-    the function with respect to the other parameters, then release the fixed parameters
-    and minimize again starting from that state.
+    @property
+    def fixed(self):
+        """Access fixation state of a parameter in a dict-like object.
 
-    .. seealso:: :attr:`values`, :attr:`errors`
-    """
+        Use to read or write the fixation state of a parameter based on the parameter index
+        or the parameter name as a string. If you change the state and run :meth:`migrad`,
+        :meth:`hesse`, or :meth:`minos`, the new state is used.
 
-    merrors = None
-    """MINOS errors."""
+        In case of complex fits, it can help to fix some parameters first and only minimize
+        the function with respect to the other parameters, then release the fixed parameters
+        and minimize again starting from that state.
+
+        .. seealso:: :attr:`values`, :attr:`errors`
+        """
+        return self._fixed
+
+    @fixed.setter
+    def fixed(self, args):
+        self._fixed[:] = args
+
+    @property
+    def merrors(self):
+        """Minos error objects with full status information."""
+        return self._merrors
 
     @property
     def fitarg(self):
@@ -453,7 +475,7 @@ class Minuit:
                 )
 
         state = MnUserParameterState()
-        for i, x in enumerate(self.pos2var):
+        for i, x in enumerate(self._pos2var):
             lim = mutil._normalize_limit(kwds.get(f"limit_{x}", None))
             val = kwds.get(x, mutil._guess_initial_value(lim))
             err = kwds.get(f"error_{x}", mutil._guess_initial_step(val))
@@ -748,7 +770,7 @@ class Minuit:
             raise RuntimeError(
                 ("Function minimum is not valid. Make sure " "MIGRAD converged first")
             )
-        if var is not None and var not in self.pos2var:
+        if var is not None and var not in self._pos2var:
             raise RuntimeError(f"Unknown parameter {var}")
 
         nc = self._fcn.nfcn
@@ -757,7 +779,7 @@ class Minuit:
         with mutil.TemporaryUp(self._fcn, sigma):
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
 
-            vnames = self.pos2var if var is None else [var]
+            vnames = self._pos2var if var is None else [var]
             for vname in vnames:
                 if self.fixed[vname]:
                     if var is not None and var == vname:
@@ -915,7 +937,7 @@ class Minuit:
 
     @property
     def fval(self):
-        """Last evaluated FCN value
+        """Function minimum value.
 
         .. seealso:: :meth:`fmin`
         """
@@ -924,22 +946,22 @@ class Minuit:
 
     @property
     def params(self):
-        """List of current parameter data objects"""
+        """List of current parameter data objects."""
         return mutil._get_params(self._last_state, self.merrors)
 
     @property
     def init_params(self):
-        """List of current parameter data objects set to the initial fit state"""
+        """List of current parameter data objects set to the initial fit state."""
         return mutil._get_params(self._init_state, None)
 
     @property
     def ncalls_total(self):
-        """Total number of calls to FCN (not just the last operation)"""
+        """Total number of calls to FCN (not just the last operation)."""
         return self._fcn.nfcn
 
     @property
     def ngrads_total(self):
-        """Total number of calls to Gradient (not just the last operation)"""
+        """Total number of calls to Gradient (not just the last operation)."""
         return self._fcn.ngrad
 
     @property
@@ -951,12 +973,6 @@ class Minuit:
     def accurate(self):
         """Check if covariance (of the last MIGRAD run) is accurate."""
         return self._fmin and self._fmin.has_accurate_covar
-
-    # Various utility functions
-
-    def is_clean_state(self):
-        """Check if minuit is in a clean state, ie. no MIGRAD call"""
-        return not self._fmin
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate MINOS profile around the specified range.
@@ -982,7 +998,7 @@ class Minuit:
 
             bins(center point), value, MIGRAD results
         """
-        if vname not in self.pos2var:
+        if vname not in self._pos2var:
             raise ValueError("Unknown parameter %s" % vname)
 
         bound = self._normalize_bound(vname, bound)
@@ -1302,7 +1318,7 @@ class Minuit:
 
         vary = self._free_parameters()
         if x not in vary or y not in vary:
-            raise ValueError("mncontour has to be run on vary parameters.")
+            raise ValueError("mncontour cannot be run on fixed parameters.")
 
         with mutil.TemporaryUp(self._fcn, sigma):
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
@@ -1430,13 +1446,13 @@ class BasicView:
         self._minuit = minuit
 
     def __iter__(self):
-        return self._minuit.pos2var.__iter__()
+        return self._minuit._pos2var.__iter__()
 
     def __len__(self):
-        return len(self._minuit.pos2var)
+        return len(self._minuit._pos2var)
 
     def keys(self):
-        return self._minuit.pos2var
+        return self._minuit._pos2var
 
     def items(self):
         return [(name, self._get(k)) for (k, name) in enumerate(self)]

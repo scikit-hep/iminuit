@@ -109,8 +109,8 @@ class Param:
         )
 
 
-class FMin:
-    """Function minimum status object."""
+class FMinView:
+    """Function minimum view."""
 
     __slots__ = (
         "_src",
