@@ -52,10 +52,9 @@ jobs:
       - run: python -m pip install --upgrade pip wheel
       - run: python setup.py sdist
 
-      - name: Test sdist
-        run: |
-          python -m pip install dist/iminuit-* numpy pytest
-          python -m pytest
+      - run: python -m pip install dist/iminuit-*
+      - run: python -m pip install pytest
+      - run: python -m pytest
 
       - uses: actions/upload-artifact@v2
         with:
