@@ -40,6 +40,7 @@ setup(
     install_requires=["numpy"],
     version=version,
     python_requires=">=3.6",
+    zip_safe=False,
     ext_modules=[CMakeExtension("cmake_example")],
     cmdclass=dict(build_ext=CMakeBuild),
     classifiers=[
