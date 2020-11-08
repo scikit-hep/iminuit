@@ -9,7 +9,6 @@ on:
 env:
   # only build CPython-3.6 and later
   CIBW_SKIP: cp27-* cp35-* pp27-*
-  CIBW_BEFORE_TEST: python -m pip install {wheel}
   CIBW_TEST_REQUIRES: pytest numpy
   CIBW_TEST_COMMAND: python -m pytest {package}/tests
 
