@@ -52,9 +52,6 @@ def test_functor():
     assert describe(A(), True) == ["x", "y"]
 
 
-@pytest.mark.skipif(
-    sys.version_info >= (3, 7), reason="Not on Py 3.7; see Github issue 270"
-)
 def test_builtin_by_parsing_doc():
     assert describe(ldexp, True) == ["x", "i"]
 
