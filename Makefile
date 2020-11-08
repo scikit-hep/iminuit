@@ -21,7 +21,7 @@ cov: build
 doc: build/html/index.html
 
 build/html/index.html: doc/conf.py $(wildcard iminuit/*.py doc/*.rst doc/_static/* doc/plots/*)
-	echo "WARNING: this requires iminuit to be installed, cannot be run with inplace build"
+	$(PYTHON) -c "import iminuit" # requires iminuit to be installed
 	mkdir -p build/html
 	sphinx-build -W -a -E -b html -d build/doctrees doc build/html
 
