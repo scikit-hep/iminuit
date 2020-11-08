@@ -39,7 +39,6 @@ setup(
     package_dir={"": "src"},
     version=version,
     python_requires=">=3.6",
-    zip_safe=True,
     ext_modules=[CMakeExtension("cmake_example")],
     cmdclass=dict(build_ext=CMakeBuild),
     classifiers=[
