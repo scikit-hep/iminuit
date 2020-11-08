@@ -669,6 +669,20 @@ def minuit():
     return m
 
 
+def test_fcn():
+    m = Minuit(func0, pedantic=False)
+    v = m.fcn([2.0, 5.0])
+    assert v == func0(2.0, 5.0)
+
+
+def test_grad():
+    m = Minuit(func0, grad=func0_grad, pedantic=False)
+    v = m.fcn([2.0, 5.0])
+    g = m.grad([2.0, 5.0])
+    assert v == func0(2.0, 5.0)
+    assert g == func0_grad(2.0, 5.0)
+
+
 def test_args(minuit):
     expected = [2.0, 5.0]
     assert_allclose(minuit.args, expected, atol=5e-6)
