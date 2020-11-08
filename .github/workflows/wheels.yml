@@ -8,10 +8,8 @@ on:
 
 env:
   # only build CPython-3.6 and later
-  CIBW_BUILD: cp3?-*
-  CIBW_SKIP: cp35-*
-  CIBW_TEST_COMMAND: |
-    python -m pytest
+  CIBW_SKIP: cp27-* cp35-* pp27-*
+  CIBW_TEST_COMMAND: python -m pytest
 
 jobs:
   wheels:
