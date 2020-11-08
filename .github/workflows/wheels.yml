@@ -48,6 +48,11 @@ jobs:
       - name: Build sdist
         run: python setup.py sdist
 
+      - name: Test sdist
+        run: |
+          python -m pip install dist/iminuit-*
+          python -m pytest
+
       - uses: actions/upload-artifact@v2
         with:
           path: dist/*.tar.gz
