@@ -8,15 +8,10 @@ jobs:
   upload:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/download-artifact@v2
       with:
-        # latest minor release
-        python-version: "3.x"
-
-    - run: |
-        python3 -m pip install requests
-        python3 .ci/download_azure_artifacts.py
+        name: artifact
+        path: dist
 
     - name: Prerelease
       if: "github.event.release.prerelease"

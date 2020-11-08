@@ -1,10 +1,13 @@
-recursive-include src *
-recursive-include extern/root/math/minuit2/inc *.h
-recursive-include extern/root/math/minuit2/src *.cxx
-recursive-include extern/pybind11/include *.h
-recursive-include extern/pybind11/pybind11 *.py
+include src/*.cpp
+include src/*.hpp
+include src/iminuit/*.py
 include extern/pybind11/CMakeLists.txt
+include extern/pybind11/tools/*.cmake
+recursive-include extern/pybind11/include/pybind11 *.h
+include extern/root/math/minuit2/inc/Minuit2/*.h
+include extern/root/math/minuit2/src/*.cxx
 include CITATION
+include cmake.py
 include CMakeLists.txt
 include CONTRIBUTING.md
 include LICENSE
