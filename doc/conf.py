@@ -20,21 +20,9 @@
 # http://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
 # on_rtd is whether we are on readthedocs.org
 import os
-
-# import sys
-from pathlib import Path
+from iminuit.version import __version__ as version
 
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-
-# if not on_rtd:
-#     # Make sure local build of iminuit is found
-#     sys.path.insert(0, os.path.dirname(__file__) + "/../src")
-
-project_dir = Path(__file__).parent.parent
-with (project_dir / "src/iminuit/version.py").open() as fp:
-    version = {}
-    exec(fp.read(), version)  # this loads __version__
-    version = version["__version__"]
 
 
 # -- General configuration -----------------------------------------------------
