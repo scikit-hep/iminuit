@@ -34,16 +34,22 @@ class CMakeBuild(build_ext):
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
             if sys.maxsize > 2 ** 32:
                 cmake_args += ["-A", "x64"]
+            import struct
+
+            print(f"On windows: sys.maxsize={sys.maxsize} {struct.calcsize('P') * 8}")
             build_args += ["--", "/m"]
         else:
             njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
             cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
             build_args += ["--", f"-j{njobs}"]
 
+        print("cmake args: {cmake_args}")
+        print("build args: {build_args}")
+
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
         subprocess.check_call(
-            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp, env=os.environ
+            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
         )
         subprocess.check_call(
             ["cmake", "--build", "."] + build_args, cwd=self.build_temp
