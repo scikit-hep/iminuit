@@ -16,7 +16,7 @@ test: build
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
-	$(PYTHON) -m pytest --cov iminuit --cov-report html
+	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
 
 doc: build/html/index.html
 
@@ -29,7 +29,7 @@ check:
 	pre-commit run -a
 
 clean:
-	rm -rf build htmlcov iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
+	rm -rf build htmlcov src/iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache src/iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
 
 .PHONY: clean check cov doc
 

@@ -1,6 +1,6 @@
 include src/*.cpp
 include src/*.hpp
-include iminuit/*.py
+include src/iminuit/*.py
 include extern/pybind11/CMakeLists.txt
 include extern/pybind11/tools/*.cmake
 recursive-include extern/pybind11/include/pybind11 *.h
