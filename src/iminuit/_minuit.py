@@ -31,7 +31,7 @@ class Minuit:
     @property
     def grad(self):
         """Gradient function of the cost function."""
-        return self._grad
+        return self._fcn.grad
 
     @property
     def use_array_call(self):
