@@ -33,12 +33,7 @@ class CMakeBuild(build_ext):
         if platform.system() == "Windows":
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
             is_x86 = sys.maxsize > 2 ** 32
-            cmake_args += [
-                "-A",
-                "x64" if is_x86 else "86",
-                # "-G",
-                # "Visual Studio 16 2019",
-            ]
+            cmake_args += ["-A", "x64" if is_x86 else "Win32"]
             build_args += ["--", "/m"]
         else:
             njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
