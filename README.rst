@@ -31,7 +31,7 @@ but is most commonly used for likelihood fits of models to data,
 and to get model parameter error estimates from likelihood profile analysis.
 
 - Supported CPython versions: 3.6+
-- Supported PyPy versions: 3.5, 3.6
+- Supported PyPy versions: 3.6
 - Supported platforms: Linux, OSX and Windows.
 
 * PyPI: https://pypi.org/project/iminuit
