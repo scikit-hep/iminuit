@@ -10,6 +10,7 @@ env:
   # only build CPython-3.6 and later
   CIBW_SKIP: cp27-* cp35-* pp27-*
   CIBW_TEST_COMMAND: python -m pytest
+  CIBW_TEST_REQUIRES: pytest numpy
 
 jobs:
   wheels:
@@ -27,6 +28,7 @@ jobs:
         with:
           python-version: '3.7'
 
+      - run: python -m pip install --upgrade pip wheel
       - run: python -m pip install cibuildwheel==1.6.4
       - run: python -m cibuildwheel --output-dir wheelhouse
 
@@ -45,8 +47,8 @@ jobs:
         with:
           python-version: '3.7'
 
-      - name: Build sdist
-        run: python setup.py sdist
+      - run: python -m pip install --upgrade pip wheel
+      - run: python setup.py sdist
 
       - name: Test sdist
         run: |
