@@ -109,7 +109,7 @@ class Param:
         )
 
 
-class FMinView:
+class FMin:
     """Function minimum view."""
 
     __slots__ = (

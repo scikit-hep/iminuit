@@ -601,7 +601,7 @@ class Minuit:
         self._fmin = None
         self._fcn.nfcn = 0
         self._fcn.ngrad = 0
-        self.merrors = mutil.MErrors()
+        self._merrors = mutil.MErrors()
 
     def migrad(self, ncall=None, resume=True, precision=None, iterate=5):
         """Run MIGRAD.
