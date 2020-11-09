@@ -8,7 +8,7 @@ endif
 
 # default target
 build: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cxx) $(wildcard extern/root/math/minuit2/inc/*.h) CMakeLists.txt setup.py cmake.py
-	$(PYTHON) setup.py build_ext --inplace -g
+	$(PYTHON) setup.py develop
 	touch build
 
 test: build

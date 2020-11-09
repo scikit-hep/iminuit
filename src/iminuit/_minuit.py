@@ -289,7 +289,7 @@ class Minuit:
     def fval(self):
         """Function minimum value.
 
-        .. seealso:: :meth:`fmin`
+        .. seealso:: :attr:`fmin`
         """
         fm = self._fmin
         return fm.fval if fm else None
@@ -313,6 +313,16 @@ class Minuit:
     def accurate(self):
         """Check if covariance (of the last MIGRAD run) is accurate."""
         return self._fmin and self._fmin.has_accurate_covar
+
+    @property
+    def nfcn(self):
+        """Total number of function calls."""
+        return self._fcn.nfcn
+
+    @property
+    def ngrad(self):
+        """Total number of gradient calls."""
+        return self._fcn.ngrad
 
     def __init__(
         self,
@@ -677,9 +687,6 @@ class Minuit:
         if precision is not None:
             migrad.precision = precision
 
-        nc = self._fcn.nfcn
-        ng = self._fcn.ngrad
-
         # Automatically call Migrad up to `iterate` times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
         for _ in range(iterate):
@@ -691,9 +698,8 @@ class Minuit:
 
         self._fmin = mutil.FMin(
             fm,
-            self._fcn,
-            self._fcn.nfcn - nc,
-            self._fcn.ngrad - ng,
+            self._fcn.nfcn,
+            self._fcn.ngrad,
             self.tol,
         )
 
@@ -729,9 +735,6 @@ class Minuit:
 
         ncall = 0 if ncall is None else int(ncall)
 
-        nc = self._fcn.nfcn
-        ng = self._fcn.ngrad
-
         hesse = MnHesse(self.strategy)
 
         fm = self._fmin._src if self._fmin else None
@@ -739,14 +742,11 @@ class Minuit:
             # _last_state not modified, can update _fmin which is more efficient
             hesse(self._fcn, fm, ncall)
             self._last_state = fm.state
+            self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
         else:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin
             self._last_state = hesse(self._fcn, self._last_state, ncall)
-
-        if fm is not None:
-            self._fmin.nfcn = self._fcn.nfcn - nc
-            self._fmin.ngrad = self._fcn.ngrad - ng
 
         if self._last_state.has_covariance is False:
             if not self._fmin:
@@ -800,9 +800,6 @@ class Minuit:
         if var is not None and var not in self._pos2var:
             raise RuntimeError(f"Unknown parameter {var}")
 
-        nc = self._fcn.nfcn
-        ng = self._fcn.ngrad
-
         with mutil.TemporaryUp(self._fcn, sigma):
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
 
@@ -819,8 +816,8 @@ class Minuit:
                 me = minos(self._var2pos[vname], ncall, self.tol)
                 self._merrors[vname] = mutil.MError(vname, me)
 
-        self._fmin.nfcn = self._fcn.nfcn - nc
-        self._fmin.ngrad = self._fcn.ngrad - ng
+        self._fmin.nfcn = self._fcn.nfcn
+        self._fmin.ngrad = self._fcn.ngrad
 
         return self.merrors
 

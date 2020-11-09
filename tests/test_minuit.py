@@ -177,9 +177,8 @@ def func_test_helper(f, **kwds):
 def test_func0():  # check that providing gradient improves convergence
     m1 = func_test_helper(func0)
     m2 = func_test_helper(func0, grad=func0_grad)
-    assert m1.ngrads_total == 0
-    assert m2.ngrads_total > 0
-    assert m1.ncalls_total > m2.ngrads_total
+    assert m1.ngrad == 0
+    assert m2.ngrad > 0
 
 
 def test_lambda():
@@ -346,22 +345,22 @@ def test_view_repr():
 def test_no_resume():
     m = Minuit(func0, pedantic=False)
     m.migrad()
-    n = m.ncalls_total
+    n = m.nfcn
     m.migrad()
-    assert m.ncalls_total > n
+    assert m.nfcn > n
     m.migrad(resume=False)
-    assert m.ncalls_total == n
+    assert m.nfcn == n
 
     m = Minuit(func0, grad=func0_grad, pedantic=False)
     m.migrad()
-    n = m.ncalls_total
-    k = m.ngrads_total
+    n = m.nfcn
+    k = m.ngrad
     m.migrad()
-    assert m.ncalls_total > n
-    assert m.ngrads_total > k
+    assert m.nfcn > n
+    assert m.ngrad > k
     m.migrad(resume=False)
-    assert m.ncalls_total == n
-    assert m.ngrads_total == k
+    assert m.nfcn == n
+    assert m.ngrad == k
 
 
 def test_typo():
@@ -524,7 +523,7 @@ def test_minos_single(grad):
 
     m.strategy = 0
     m.migrad()
-    assert m.fmin.nfcn < 15
+    assert m.nfcn < 15
 
 
 def test_minos_single_fixed():
@@ -874,30 +873,25 @@ def test_ncalls():
 
         def __call__(self, x):
             self.ncalls += 1
-            return x ** 2 + x ** 4 + 10
+            return np.exp(x ** 2)
 
     # check that counting is accurate
     func = Func()
     m = Minuit(func, x=3, errordef=1)
     m.migrad()
-    assert m.ncalls_total == func.ncalls
-    assert m.fmin.nfcn == func.ncalls
-    m.migrad()
-    assert m.ncalls_total == func.ncalls
-    assert m.fmin.nfcn < func.ncalls
+    assert m.nfcn == func.ncalls
     func.ncalls = 0
     m.migrad(resume=False)
-    assert m.ncalls_total == func.ncalls
-    assert m.fmin.nfcn == func.ncalls
+    assert m.nfcn == func.ncalls
 
-    ncalls_without_limit = m.fmin.nfcn
+    ncalls_without_limit = m.nfcn
     # check that ncall argument limits function calls in migrad
     # note1: Minuit only checks the ncall counter in units of one iteration
     # step, therefore the call counter is in general not equal to ncall.
     # note2: If you pass ncall=0, Minuit uses a heuristic value that depends
     # on the number of parameters.
     m.migrad(ncall=1, resume=False)
-    assert m.fmin.nfcn < ncalls_without_limit
+    assert m.nfcn < ncalls_without_limit
 
 
 def test_ngrads():
@@ -915,22 +909,16 @@ def test_ngrads():
     func = Func()
     m = Minuit(func, grad=func.grad, pedantic=False)
     m.migrad()
-    assert m.fmin.ngrad > 0
-    assert m.ngrads_total == func.ngrads
-    assert m.fmin.ngrad == func.ngrads
-    m.migrad()
-    assert m.fmin.nfcn > 0
-    assert m.ngrads_total == func.ngrads
-    assert m.fmin.ngrad < func.ngrads
+    assert m.ngrad > 0
+    assert m.ngrad == func.ngrads
     func.ngrads = 0
     m.migrad(resume=False)
-    assert m.ngrads_total == func.ngrads
-    assert m.fmin.ngrad == func.ngrads
+    assert m.ngrad == func.ngrads
 
     # HESSE ignores analytical gradient
+    before = m.ngrad
     m.hesse()
-    assert m.fmin.ngrad == 0
-    assert m.ngrads_total > 0
+    assert m.ngrad == before
 
 
 def test_errordef():
