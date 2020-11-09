@@ -640,7 +640,7 @@ class Minuit:
         self._fcn.ngrad = 0
         self._merrors = mutil.MErrors()
 
-    def migrad(self, ncall=None, resume=True, precision=None, iterate=5):
+    def migrad(self, ncall=None, precision=None, iterate=5):
         """Run MIGRAD.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -654,10 +654,6 @@ class Minuit:
               (indicates to use MIGRAD's internal heuristic). Note: MIGRAD may slightly
               violate this limit, because it checks the condition only after a full
               iteration of the algorithm, which usually performs several function calls.
-
-            * **resume**: boolean indicating whether MIGRAD should resume from
-              the previous minimiser attempt(True) or should start from the
-              beginning(False). Default True.
 
             * **precision**: override Minuit precision estimate for the cost function.
               Default: None (= use epsilon of a C++ double). If the cost function has a
@@ -678,9 +674,6 @@ class Minuit:
 
         if iterate < 1:
             raise ValueError("iterate must be at least 1")
-
-        if not resume:
-            self.reset()
 
         migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
         migrad.set_print_level(self.print_level)
