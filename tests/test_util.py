@@ -88,15 +88,12 @@ def test_FMin():
         has_parameters_at_limit=False,
         state=[],
     )
-    fcn = Namespace(nfcn=20, ngrad=6)
-    fmin = util.FMin(fm, fcn, 10, 3, 0.1)
+    fmin = util.FMin(fm, 1, 2, 0.1)
     assert {x for x in dir(fmin) if not x.startswith("_")} == {
         "edm",
         "fval",
         "nfcn",
-        "nfcn_total",
         "ngrad",
-        "ngrad_total",
         "up",
         "is_valid",
         "tolerance",
