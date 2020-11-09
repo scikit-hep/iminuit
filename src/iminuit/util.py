@@ -114,16 +114,14 @@ class FMin:
 
     __slots__ = (
         "_src",
-        "_fcn",
         "has_parameters_at_limit",
         "nfcn",
         "ngrad",
         "tolerance",
     )
 
-    def __init__(self, fmin, fcn, nfcn, ngrad, tol):
+    def __init__(self, fmin, nfcn, ngrad, tol):
         self._src = fmin
-        self._fcn = fcn
         self.has_parameters_at_limit = False
         for mp in fmin.state:
             if mp.is_fixed or not mp.has_limits:
@@ -150,14 +148,6 @@ class FMin:
             p.text("FMin(...)")
         else:
             p.text(str(self))
-
-    @property
-    def nfcn_total(self):
-        return self._fcn.nfcn
-
-    @property
-    def ngrad_total(self):
-        return self._fcn.ngrad
 
     @property
     def edm(self):

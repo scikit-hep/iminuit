@@ -104,8 +104,7 @@ def fmin_good():
         has_parameters_at_limit=False,
         state=[],
     )
-    fcn = Namespace(nfcn=20, ngrad=6)
-    return FMin(fm, fcn, 10, 3, 0.1)
+    return FMin(fm, 10, 3, 0.1)
 
 
 @pytest.fixture
@@ -137,8 +136,7 @@ def fmin_bad():
             )
         ],
     )
-    fcn = Namespace(nfcn=200000, ngrad=200000)
-    return FMin(fm, fcn, 100000, 100000, 0.01)
+    return FMin(fm, 100000, 200000, 0.01)
 
 
 def test_html_fmin_good(fmin_good):
@@ -146,11 +144,11 @@ def test_html_fmin_good(fmin_good):
     assert fmin_good._repr_html_() == """<table>
     <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 1.235e-10 </td>
-        <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 10 (20 total) </td>
+        <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 10 </td>
     </tr>
     <tr>
         <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 0.0001) </td>
-        <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 3 (6 total) </td>
+        <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 3 </td>
     </tr>
     <tr>
         <td style="text-align:center;{good}"> Valid Minimum </td>
@@ -177,11 +175,11 @@ def test_html_fmin_bad(fmin_bad):
     assert fmin_bad._repr_html_() == """<table>
     <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = nan </td>
-        <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 100000 (200000 total) </td>
+        <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 100000 </td>
     </tr>
     <tr>
         <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 1.23e-10 (Goal: 1e-05) </td>
-        <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 100000 (200000 total) </td>
+        <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 200000 </td>
     </tr>
     <tr>
         <td style="text-align:center;{bad}"> INVALID Minimum </td>
@@ -406,8 +404,8 @@ def test_text_fmin_good(fmin_good):
     # fmt: off
     assert framed(fmin_good) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
-│ FCN = 1.235e-10                  │         Nfcn = 10 (20 total)         │
-│ EDM = 1.23e-10 (Goal: 0.0001)    │         Ngrad = 3 (6 total)          │
+│ FCN = 1.235e-10                  │              Nfcn = 10               │
+│ EDM = 1.23e-10 (Goal: 0.0001)    │              Ngrad = 3               │
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │ Valid Minimum │ Valid Parameters │        No Parameters at limit        │
 ├───────────────┴──────────────────┼──────────────────────────────────────┤
@@ -423,8 +421,8 @@ def test_text_fmin_bad(fmin_bad):
     # fmt: off
     assert framed(fmin_bad) == r"""
 ┌──────────────────────────────────┬──────────────────────────────────────┐
-│ FCN = nan                        │     Nfcn = 100000 (200000 total)     │
-│ EDM = 1.23e-10 (Goal: 1e-05)     │    Ngrad = 100000 (200000 total)     │
+│ FCN = nan                        │            Nfcn = 100000             │
+│ EDM = 1.23e-10 (Goal: 1e-05)     │            Ngrad = 200000            │
 ├───────────────┬──────────────────┼──────────────────────────────────────┤
 │INVALID Minimum│INVALID Parameters│       SOME Parameters at limit       │
 ├───────────────┴──────────────────┼──────────────────────────────────────┤
