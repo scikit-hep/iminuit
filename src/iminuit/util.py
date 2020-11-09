@@ -329,7 +329,7 @@ def arguments_from_docstring(doc):
     Docstring should be of the form ``min(iterable[, key=func])``.
 
     It can also parse cython docstring of the form
-    ``Minuit.migrad(self[, int ncall_me =10000, resume=True, int nsplit=1])``
+    ``Minuit.migrad(self[, int ncall_me =10000, foo=True, int bar=1])``
     """
     if doc is None:
         return False, []
