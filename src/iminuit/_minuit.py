@@ -117,16 +117,11 @@ class Minuit:
         - 1: print minimal debug messages to terminal
         - 2: print more debug messages to terminal
         - 3: print even more debug messages to terminal
-
-        Note: Setting the level to 3 has a global side effect on all current instances
-        of Minuit (this is an issue in C++ MINUIT2).
         """
         return self._print_level
 
     @print_level.setter
     def print_level(self, level):
-        if level < 0:
-            level = 0
         self._print_level = level
         if level >= 3 or level < MnPrint.global_level:
             warn(
@@ -248,7 +243,7 @@ class Minuit:
 
     @property
     def parameters(self):
-        """Parameter name tuple"""
+        """Tuple of parameter names, an alias for :attr:`pos2var`."""
         return self._pos2var
 
     @property
@@ -285,19 +280,50 @@ class Minuit:
             if gcc:
                 return {v: gcc[i] for i, v in enumerate(free)}
 
-    _print_level = 1
-    _fmin = None
+    @property
+    def fmin(self):
+        """Current function minimum data object"""
+        return self._fmin
+
+    @property
+    def fval(self):
+        """Function minimum value.
+
+        .. seealso:: :meth:`fmin`
+        """
+        fm = self._fmin
+        return fm.fval if fm else None
+
+    @property
+    def params(self):
+        """List of current parameter data objects."""
+        return mutil._get_params(self._last_state, self.merrors)
+
+    @property
+    def init_params(self):
+        """List of current parameter data objects set to the initial fit state."""
+        return mutil._get_params(self._init_state, None)
+
+    @property
+    def valid(self):
+        """Check if function minimum is valid."""
+        return self._fmin and self._fmin.is_valid
+
+    @property
+    def accurate(self):
+        """Check if covariance (of the last MIGRAD run) is accurate."""
+        return self._fmin and self._fmin.has_accurate_covar
 
     def __init__(
         self,
         fcn,
         grad=None,
-        errordef=None,
-        print_level=0,
         name=None,
         pedantic=True,
         throw_nan=False,
         use_array_call=False,
+        print_level=1,
+        errordef=None,
         **kwds,
     ):
         """
@@ -347,8 +373,8 @@ class Minuit:
             - **name**: sequence of strings. If set, this is used to detect
               parameter names instead of iminuit's function signature detection.
 
-            - **print_level**: set the print_level for this Minuit. 0 is quiet.
-              1 print out at the end of MIGRAD/HESSE/MINOS. 2 prints debug messages.
+            - **print_level**: Optional. Set the print_level for Minuit algorithms,
+              see :attr:`print_level` for details.
 
             - **errordef**: Optional. See :attr:`errordef` for details on
               this parameter. If set to `None` (the default), Minuit will try to call
@@ -446,6 +472,7 @@ class Minuit:
 
         self._fcn = FCN(fcn, grad, use_array_call, errordef, throw_nan)
 
+        self._fmin = None
         self._init_state = self._make_init_state(kwds)
         self._last_state = self._init_state
 
@@ -929,50 +956,6 @@ class Minuit:
     def latex_initial_param(self):
         """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
         return LatexFactory.build_param_table(self.init_params, {})
-
-    @property
-    def fmin(self):
-        """Current function minimum data object"""
-        return self._fmin
-
-    @property
-    def fval(self):
-        """Function minimum value.
-
-        .. seealso:: :meth:`fmin`
-        """
-        fm = self._fmin
-        return fm.fval if fm else None
-
-    @property
-    def params(self):
-        """List of current parameter data objects."""
-        return mutil._get_params(self._last_state, self.merrors)
-
-    @property
-    def init_params(self):
-        """List of current parameter data objects set to the initial fit state."""
-        return mutil._get_params(self._init_state, None)
-
-    @property
-    def ncalls_total(self):
-        """Total number of calls to FCN (not just the last operation)."""
-        return self._fcn.nfcn
-
-    @property
-    def ngrads_total(self):
-        """Total number of calls to Gradient (not just the last operation)."""
-        return self._fcn.ngrad
-
-    @property
-    def valid(self):
-        """Check if function minimum is valid."""
-        return self._fmin and self._fmin.is_valid
-
-    @property
-    def accurate(self):
-        """Check if covariance (of the last MIGRAD run) is accurate."""
-        return self._fmin and self._fmin.has_accurate_covar
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate MINOS profile around the specified range.
