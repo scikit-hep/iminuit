@@ -6,6 +6,7 @@ include extern/root/math/minuit2/src/*.cxx
 recursive-include extern/pybind11/include *.h
 include extern/pybind11/CMakeLists.txt
 include extern/pybind11/tools/*.cmake
+include extern/pybind11/LICENSE
 include CITATION
 include cmake.py
 include CMakeLists.txt
