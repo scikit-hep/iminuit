@@ -342,13 +342,14 @@ def test_view_repr():
     )
 
 
-def test_no_resume():
+def test_reset():
     m = Minuit(func0, pedantic=False)
     m.migrad()
     n = m.nfcn
     m.migrad()
     assert m.nfcn > n
-    m.migrad(resume=False)
+    m.reset()
+    m.migrad()
     assert m.nfcn == n
 
     m = Minuit(func0, grad=func0_grad, pedantic=False)
@@ -358,7 +359,8 @@ def test_no_resume():
     m.migrad()
     assert m.nfcn > n
     assert m.ngrad > k
-    m.migrad(resume=False)
+    m.reset()
+    m.migrad()
     assert m.nfcn == n
     assert m.ngrad == k
 
@@ -881,7 +883,8 @@ def test_ncalls():
     m.migrad()
     assert m.nfcn == func.ncalls
     func.ncalls = 0
-    m.migrad(resume=False)
+    m.reset()
+    m.migrad()
     assert m.nfcn == func.ncalls
 
     ncalls_without_limit = m.nfcn
@@ -890,7 +893,8 @@ def test_ncalls():
     # step, therefore the call counter is in general not equal to ncall.
     # note2: If you pass ncall=0, Minuit uses a heuristic value that depends
     # on the number of parameters.
-    m.migrad(ncall=1, resume=False)
+    m.reset()
+    m.migrad(ncall=1)
     assert m.nfcn < ncalls_without_limit
 
 
@@ -912,7 +916,8 @@ def test_ngrads():
     assert m.ngrad > 0
     assert m.ngrad == func.ngrads
     func.ngrads = 0
-    m.migrad(resume=False)
+    m.reset()
+    m.migrad()
     assert m.ngrad == func.ngrads
 
     # HESSE ignores analytical gradient
