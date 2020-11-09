@@ -4,3 +4,6 @@ requires = [
     "wheel",
     "cmake",
 ]
+
+[tool.nbqa.mutate]
+black = 1
