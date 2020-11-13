@@ -5,7 +5,6 @@ import subprocess
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 from pathlib import Path
-import multiprocessing
 
 
 class CMakeExtension(Extension):
@@ -37,7 +36,7 @@ class CMakeBuild(build_ext):
             cmake_args += ["-A", "x64" if is_x86 else "Win32"]
             build_args += ["--", "/m"]
         else:
-            njobs = self.parallel if self.parallel else multiprocessing.cpu_count()
+            njobs = self.parallel or os.cpu_count() or 1
             build_args += ["--", f"-j{njobs}"]
 
         print(f"cmake args: {' '.join(cmake_args)}")
