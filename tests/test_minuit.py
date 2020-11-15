@@ -942,39 +942,6 @@ def test_params():
         assert p.error == approx(exp.error, rel=1e-2)
 
 
-def test_latex_matrix():
-    m = Minuit.from_array_func(Func8(), (0, 0), name=("x", "y"), pedantic=False)
-    m.migrad()
-    # hotfix for ManyLinux 32Bit, where rounding changes result
-    ref = (
-        r"""%\usepackage[table]{xcolor} % include this for color
-%\usepackage{rotating} % include this for rotate header
-%\documentclass[xcolor=table]{beamer} % for beamer
-\begin{tabular}{|c|c|c|}
-\hline
-\rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
-\hline
-x & \cellcolor[RGB]{250,100,100} 1 & \cellcolor[RGB]{250,174,174} 0.5\\
-\hline
-y & \cellcolor[RGB]{250,174,174} 0.5 & \cellcolor[RGB]{250,100,100} 1\\
-\hline
-\end{tabular}""",
-        r"""%\usepackage[table]{xcolor} % include this for color
-%\usepackage{rotating} % include this for rotate header
-%\documentclass[xcolor=table]{beamer} % for beamer
-\begin{tabular}{|c|c|c|}
-\hline
-\rotatebox{90}{} & \rotatebox{90}{x} & \rotatebox{90}{y}\\
-\hline
-x & \cellcolor[RGB]{250,100,100} 1 & \cellcolor[RGB]{250,175,175} 0.5\\
-\hline
-y & \cellcolor[RGB]{250,175,175} 0.5 & \cellcolor[RGB]{250,100,100} 1\\
-\hline
-\end{tabular}""",
-    )
-    assert str(m.latex_matrix()) in ref
-
-
 def test_non_analytical_function():
     class Func:
         i = 0
