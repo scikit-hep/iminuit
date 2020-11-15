@@ -49,6 +49,11 @@ class Minuit:
         return self._var2pos
 
     @property
+    def parameters(self):
+        """Tuple of parameter names, an alias for :attr:`pos2var`."""
+        return self._pos2var
+
+    @property
     def errordef(self):
         """FCN increment above the minimum that corresponds to one standard deviation.
 
@@ -139,16 +144,6 @@ class Minuit:
     @throw_nan.setter
     def throw_nan(self, value):
         self._fcn.throw_nan = value
-
-    @property
-    def args(self):
-        """Parameter values in a list-like view.
-
-        See :attr:`values` for details.
-
-        .. seealso:: :attr:`values`, :attr:`errors`, :attr:`fixed`
-        """
-        return self._args
 
     @property
     def values(self):
@@ -242,11 +237,6 @@ class Minuit:
         return kwargs
 
     @property
-    def parameters(self):
-        """Tuple of parameter names, an alias for :attr:`pos2var`."""
-        return self._pos2var
-
-    @property
     def narg(self):
         """Number of parameters."""
         return len(self._init_state)
@@ -254,7 +244,7 @@ class Minuit:
     @property
     def nfit(self):
         """Number of fitted parameters (fixed parameters not counted)."""
-        return self.narg - sum(self.fixed.values())
+        return self.narg - sum(self.fixed)
 
     @property
     def covariance(self):
@@ -486,7 +476,6 @@ class Minuit:
         self._init_state = self._make_init_state(kwds)
         self._last_state = self._init_state
 
-        self._args = ArgsView(self)
         self._values = ValueView(self)
         self._errors = ErrorView(self)
         self._fixed = FixedView(self)
@@ -689,12 +678,7 @@ class Minuit:
 
         self._last_state = fm.state
 
-        self._fmin = mutil.FMin(
-            fm,
-            self._fcn.nfcn,
-            self._fcn.ngrad,
-            self.tol,
-        )
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 
         mr = mutil.MigradResult(self._fmin, self.params)
         if self.print_level >= 2:
@@ -847,7 +831,7 @@ class Minuit:
                     return 0.0
                 return mncov[ext2int[i], ext2int[j]]
 
-        names = [k for (k, v) in self.fixed.items() if not (skip_fixed and v)]
+        names = [x for x in self.parameters if not (skip_fixed and self.fixed[x])]
         if correlation:
 
             def cor(i, j):
@@ -888,7 +872,7 @@ class Minuit:
 
             ``numpy.ndarray`` of shape (N,).
         """
-        return np.array(self.args, dtype=np.double)
+        return np.array(self.values, dtype=np.double)
 
     def np_errors(self):
         """Hesse parameter errors in numpy array format.
@@ -1086,13 +1070,7 @@ class Minuit:
         return scan, result
 
     def draw_profile(
-        self,
-        vname,
-        bins=100,
-        bound=2,
-        subtract_min=False,
-        band=True,
-        text=True,
+        self, vname, bins=100, bound=2, subtract_min=False, band=True, text=True
     ):
         """A convenient wrapper for drawing profile using matplotlib.
 
@@ -1228,10 +1206,8 @@ class Minuit:
         x_pos = self._var2pos[x]
         y_pos = self._var2pos[y]
 
-        arg = list(self.args)
-
         result = np.empty((bins, bins), dtype=np.double)
-        varg = np.array(arg, dtype=np.double)
+        varg = self.np_values()
         for i, x in enumerate(x_val):
             varg[x_pos] = x
             for j, y in enumerate(y_val):
@@ -1408,7 +1384,7 @@ class Minuit:
 
 # Helper classes
 class BasicView:
-    """Dict-like view of parameter state.
+    """Array-like view of parameter state.
 
     Derived classes need to implement methods _set and _get to access
     specific properties of the parameter state."""
@@ -1419,19 +1395,11 @@ class BasicView:
         self._minuit = minuit
 
     def __iter__(self):
-        return self._minuit._pos2var.__iter__()
+        for i in range(len(self)):
+            yield self._get(i)
 
     def __len__(self):
-        return len(self._minuit._pos2var)
-
-    def keys(self):
-        return self._minuit._pos2var
-
-    def items(self):
-        return [(name, self._get(k)) for (k, name) in enumerate(self)]
-
-    def values(self):
-        return [self._get(k) for k in range(len(self))]
+        return self._minuit.narg
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -1448,7 +1416,7 @@ class BasicView:
         self._minuit._copy_state_if_needed()
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
-            if hasattr(value, "__getitem__") and hasattr(value, "__len__"):
+            if hasattr(value, "__len__"):
                 if len(value) != len(ind):
                     raise ValueError("length of argument does not match slice")
                 for i, v in zip(ind, value):
@@ -1464,53 +1432,13 @@ class BasicView:
             raise IndexError
         self._set(i, value)
 
+    def __eq__(self, other):
+        return len(self) == len(other) and all(x == y for x, y in zip(self, other))
+
     def __repr__(self):
         s = "<%s of Minuit at %x>" % (self.__class__.__name__, id(self._minuit))
-        for (k, v) in self.items():
+        for (k, v) in zip(self._minuit._pos2var, self):
             s += "\n  {0}: {1}".format(k, v)
-        return s
-
-
-class ArgsView:
-    """List-like view of parameter values."""
-
-    _minuit = None
-
-    def __init__(self, minuit):
-        self._minuit = minuit
-
-    def __len__(self):
-        return len(self._minuit._pos2var)
-
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            return [self._minuit._last_state[i].value for i in ind]
-        i = key
-        if i < 0:
-            i += len(self)
-        if i < 0 or i >= len(self):
-            raise IndexError
-        return self._minuit._last_state[i].value
-
-    def __setitem__(self, key, value):
-        self._minuit._copy_state_if_needed()
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            for i, v in zip(ind, value):
-                self._minuit._last_state.set_value(i, v)
-        else:
-            i = key
-            if i < 0:
-                i += len(self)
-            if i < 0 or i >= len(self):
-                raise IndexError
-            self._minuit._last_state.set_value(i, value)
-
-    def __repr__(self):
-        s = "<ArgsView of Minuit at %x>" % id(self._minuit)
-        for v in self:
-            s += "\n  {0}".format(v)
         return s
 
 

@@ -251,12 +251,7 @@ def test_from_array_func_1():
     m = Minuit.from_array_func(
         func7, (2, 1), error=(1, 1), errordef=Minuit.LEAST_SQUARES
     )
-    assert m.fitarg == {
-        "x0": 2.0,
-        "x1": 1.0,
-        "error_x0": 1.0,
-        "error_x1": 1.0,
-    }
+    assert m.fitarg == {"x0": 2.0, "x1": 1.0, "error_x0": 1.0, "error_x1": 1.0}
     m.migrad()
     v = m.np_values()
     assert_allclose(v, (1, 1), rtol=1e-2)
@@ -329,17 +324,6 @@ def test_view_repr():
             % mid
         ).strip()
     )
-    assert (
-        repr(m.args)
-        == (
-            """
-<ArgsView of Minuit at %x>
-  1.0
-  2.0
-"""
-            % mid
-        ).strip()
-    )
 
 
 def test_reset():
@@ -391,8 +375,8 @@ def test_fix_param(grad):
     assert m.nfit == 2
     m.migrad()
     m.minos()
-    assert_allclose(m.np_values(), (2, 5), rtol=1e-2)
-    assert_allclose(m.np_errors(), (2, 1))
+    assert_allclose(m.values, (2, 5), rtol=1e-2)
+    assert_allclose(m.errors, (2, 1))
     assert_allclose(m.matrix(), ((4, 0), (0, 1)), atol=1e-4)
     for b in (True, False):
         assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
@@ -402,9 +386,9 @@ def test_fix_param(grad):
     assert m.narg == 2
     assert m.nfit == 1
     m.migrad()
-    assert_allclose(m.np_values(), (2, 10), rtol=1e-2)
+    assert_allclose(m.values, (2, 10), rtol=1e-2)
     assert_allclose(m.fval, 35)
-    assert m.fixed.items() == [("x", False), ("y", True)]
+    assert m.fixed == [False, True]
     assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
 
@@ -416,7 +400,7 @@ def test_fix_param(grad):
     assert m.nfit == 1
     m.migrad()
     m.hesse()
-    assert_allclose(m.np_values(), (2, 5), rtol=1e-2)
+    assert_allclose(m.values, (2, 5), rtol=1e-2)
     assert_allclose(m.matrix(skip_fixed=True), [[1]], atol=1e-4)
     assert_allclose(m.matrix(skip_fixed=False), [[0, 0], [0, 1]], atol=1e-4)
 
@@ -437,9 +421,9 @@ def test_fix_param(grad):
     assert m.nfit == 1
 
     m.fixed = True
-    assert m.fixed.values() == [True, True]
+    assert m.fixed == [True, True]
     m.fixed[1:] = False
-    assert m.fixed.values() == [True, False]
+    assert m.fixed == [True, False]
     assert m.fixed[:1] == [True]
 
 
@@ -573,8 +557,8 @@ def test_fixing_long_variable_name(grad):
 
 def test_initial_value():
     m = Minuit(func0, pedantic=False, x=1.0, y=2.0, error_x=3.0)
-    assert_allclose(m.args[0], 1.0)
-    assert_allclose(m.args[1], 2.0)
+    assert_allclose(m.values[0], 1.0)
+    assert_allclose(m.values[1], 2.0)
     assert_allclose(m.values["x"], 1.0)
     assert_allclose(m.values["y"], 2.0)
     assert_allclose(m.errors["x"], 3.0)
@@ -684,26 +668,13 @@ def test_grad():
     assert g == func0_grad(2.0, 5.0)
 
 
-def test_args(minuit):
-    expected = [2.0, 5.0]
-    assert_allclose(minuit.args, expected, atol=5e-6)
-    minuit.args[:] = [1, 2]
-    assert_allclose(minuit.args, [1, 2])
-    assert_allclose(minuit.args[0], 1)
-    assert_allclose(minuit.args[-1], 2)
-    assert_allclose(minuit.args[1:], [2])
-    assert_allclose(minuit.args[:-1], [1])
-    minuit.args[:1] = [3]
-    assert_allclose(minuit.args, [3, 2])
-    assert_allclose(minuit.args[1:], [2])
-
-
 def test_values(minuit):
     expected = [2.0, 5.0]
     assert len(minuit.values) == 2
-    assert_allclose(minuit.values.values(), expected, atol=5e-6)
+    assert_allclose(minuit.values, expected, atol=5e-6)
     minuit.values = expected
-    assert minuit.values[:] == expected
+    assert minuit.values == expected
+    assert minuit.values[-1] == 5
     assert minuit.values[0] == 2
     assert minuit.values[1] == 5
     assert minuit.values["x"] == 2
@@ -858,9 +829,7 @@ def test_oneside():
     # Solution: x=2., y=5.
     m_limit.migrad()
     m_nolimit.migrad()
-    assert_allclose(
-        list(m_limit.values.values()), list(m_nolimit.values.values()), atol=5e-3
-    )
+    assert_allclose(m_limit.values, m_nolimit.values, atol=5e-3)
 
 
 def test_oneside_outside():
@@ -1081,12 +1050,9 @@ def test_modify_param_state():
 def test_view_lifetime():
     m = Minuit(func0, x=1, y=2, pedantic=False)
     val = m.values
-    arg = m.args
     del m
     val["x"] = 3  # should not segfault
     assert val["x"] == 3
-    arg[0] = 5  # should not segfault
-    assert arg[0] == 5
 
 
 def test_hesse_without_migrad():
@@ -1126,10 +1092,7 @@ def returning_garbage(x):
         (throwing, RuntimeError("user message")),
         (divide_by_zero, ZeroDivisionError("division by zero")),
         (returning_nan, RuntimeError("result is NaN")),
-        (
-            returning_garbage,
-            RuntimeError("Unable to cast Python instance"),
-        ),
+        (returning_garbage, RuntimeError("Unable to cast Python instance")),
     ],
 )
 def test_bad_functions(func, expected):
@@ -1157,10 +1120,7 @@ def returning_noniterable(x):
         (throwing, RuntimeError("user message")),
         (divide_by_zero, ZeroDivisionError("division by zero")),
         (returning_nan_array, RuntimeError("result is NaN")),
-        (
-            returning_garbage_array,
-            RuntimeError("Unable to cast Python instance"),
-        ),
+        (returning_garbage_array, RuntimeError("Unable to cast Python instance")),
         (returning_noniterable, RuntimeError()),
     ],
 )
