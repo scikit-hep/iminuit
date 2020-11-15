@@ -33,6 +33,18 @@ class Matrix(tuple):
         """Return string suitable for terminal."""
         return repr_text.matrix(self)
 
+    def to_table(self):
+        args = []
+        for mi in self:
+            for mj in mi:
+                args.append(mj)
+        nums = repr_text.matrix_format(*args)
+        tab = []
+        n = len(self)
+        for i, name in enumerate(self.names):
+            tab.append([name] + [nums[n * i + j] for j in range(n)])
+        return tab, self.names
+
     def _repr_html_(self):
         return repr_html.matrix(self)
 
@@ -208,6 +220,44 @@ class Params(list):
 
     def _repr_html_(self):
         return repr_html.params(self)
+
+    def to_table(self):
+        header = [
+            "pos",
+            "name",
+            "value",
+            "error",
+            "error-",
+            "error+",
+            "limit-",
+            "limit+",
+            "fixed",
+        ]
+        mes = self.merrors
+        tab = []
+        for i, mp in enumerate(self):
+            name = mp.name
+            row = [i, name]
+            if mes and name in mes:
+                me = mes[name]
+                val, err, mel, meu = repr_text.pdg_format(
+                    mp.value, mp.error, me.lower, me.upper
+                )
+            else:
+                val, err = repr_text.pdg_format(mp.value, mp.error)
+                mel = ""
+                meu = ""
+            row += [
+                val,
+                err,
+                mel,
+                meu,
+                f"{mp.lower_limit}" if mp.lower_limit is not None else "",
+                f"{mp.upper_limit}" if mp.upper_limit is not None else "",
+                "yes" if mp.is_fixed else "",
+            ]
+            tab.append(row)
+        return tab, header
 
     def __str__(self):
         """Return string suitable for terminal."""
