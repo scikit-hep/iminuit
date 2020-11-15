@@ -1,6 +1,5 @@
 from warnings import warn
 from . import util as mutil
-from .latex import LatexFactory
 from ._core import (
     FCN,
     MnContours,
@@ -847,11 +846,6 @@ class Minuit:
             ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
         return ret
 
-    def latex_matrix(self):
-        """Build :class:`LatexFactory` object with correlation matrix."""
-        matrix = self.matrix(correlation=True, skip_fixed=True)
-        return LatexFactory.build_matrix(matrix.names, matrix)
-
     def np_matrix(self, **kwds):
         """Covariance or correlation matrix in numpy array format.
 
@@ -927,14 +921,6 @@ class Minuit:
             ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
         """
         return self.np_matrix(correlation=False, skip_fixed=False)
-
-    def latex_param(self):
-        """build :class:`iminuit.latex.LatexTable` for current parameter"""
-        return LatexFactory.build_param_table(self.params, self.merrors)
-
-    def latex_initial_param(self):
-        """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
-        return LatexFactory.build_param_table(self.init_params, {})
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate MINOS profile around the specified range.
