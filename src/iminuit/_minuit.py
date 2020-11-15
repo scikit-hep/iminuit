@@ -79,6 +79,8 @@ class Minuit:
 
     @errordef.setter
     def errordef(self, value):
+        if value <= 0:
+            raise ValueError(f"errordef={value} must be a positive number")
         self._fcn.up = value
         if self._fmin:
             self._fmin._src.up = value
@@ -467,15 +469,9 @@ class Minuit:
                     )
                 errordef = 1.0
 
-        errordef = float(errordef)
-        if errordef <= 0:
-            raise ValueError(f"errordef={errordef} must be a positive number")
-
-        self.print_level = print_level
         self._strategy = MnStrategy(1)
 
-        self._fcn = FCN(fcn, grad, use_array_call, errordef, throw_nan)
-
+        self._fcn = FCN(fcn, grad, use_array_call, throw_nan)
         self._fmin = None
         self._init_state = self._make_init_state(kwds)
         self._last_state = self._init_state
@@ -484,6 +480,9 @@ class Minuit:
         self._errors = ErrorView(self)
         self._fixed = FixedView(self)
         self._merrors = mutil.MErrors()
+
+        self.print_level = print_level
+        self.errordef = float(errordef)
 
     def _make_init_state(self, kwds):
         pars = self.parameters

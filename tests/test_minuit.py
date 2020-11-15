@@ -171,6 +171,9 @@ def func_test_helper(f, **kwds):
     err = m.errors
     assert_allclose(err["x"], 2.0, rtol=1e-3)
     assert_allclose(err["y"], 1.0, rtol=1e-3)
+    m.errors = (1, 2)
+    assert_allclose(err["x"], 1.0, rtol=1e-3)
+    assert_allclose(err["y"], 2.0, rtol=1e-3)
     return m
 
 
@@ -224,12 +227,27 @@ def test_use_array_call():
         errordef=Minuit.LEAST_SQUARES,
         name=("a", "b"),
     )
+    assert m.use_array_call
     m.migrad()
     v = m.values
     assert_allclose((v["a"], v["b"]), (1, 1))
     m.hesse()
     c = m.covariance
     assert_allclose((c[("a", "a")], c[("b", "b")]), (1, 1))
+    with pytest.raises(KeyError):
+        Minuit(lambda x: 0, use_array_call=True, errordef=1)
+    with pytest.raises(RuntimeError):
+        Minuit.from_array_func(lambda x: 0, [1], error=[1, 2], errordef=1)
+    with pytest.raises(RuntimeError):
+        Minuit.from_array_func(lambda x: 0, [1], limit=[None, None], errordef=1)
+
+
+def test_parameters():
+    m = Minuit(lambda a, b: 0, a=1, b=1, errordef=1)
+    assert m.parameters == ("a", "b")
+    assert m.pos2var == ("a", "b")
+    assert m.var2pos["a"] == 0
+    assert m.var2pos["b"] == 1
 
 
 def test_covariance():
@@ -265,7 +283,7 @@ def test_from_array_func_2():
         (2, 1),
         grad=func7_grad,
         error=(0.5, 0.5),
-        limit=((0, 2), (0, 2)),
+        limit=((0, 2), (-np.inf, np.inf)),
         fix=(False, True),
         name=("a", "b"),
         errordef=Minuit.LEAST_SQUARES,
@@ -277,7 +295,6 @@ def test_from_array_func_2():
         "error_b": 0.5,
         "fix_b": True,
         "limit_a": (0.0, 2.0),
-        "limit_b": (0.0, 2.0),
     }
     m.migrad()
     v = m.np_values()
@@ -527,6 +544,8 @@ def test_minos_single_fixed_raising():
     m.migrad()
     with pytest.warns(RuntimeWarning):
         ret = m.minos("x")
+    assert m.fixed["x"]
+    m.minos()
     assert ret is None
 
 
@@ -541,6 +560,13 @@ def test_minos_single_nonsense_variable():
     m.migrad()
     with pytest.raises(RuntimeError):
         m.minos("nonsense")
+
+
+def test_minos_with_bad_fmin():
+    m = Minuit(lambda x: 0, pedantic=False)
+    m.migrad()
+    with pytest.raises(RuntimeError):
+        m.minos()
 
 
 @pytest.mark.parametrize("grad", (None, func5_grad))
@@ -599,9 +625,46 @@ def test_profile(grad):
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_mnprofile(grad):
     # FIXME: check the result
-    m = Minuit(func0, grad=grad, pedantic=False, x=1.0, y=2.0, error_x=3.0)
+    m = Minuit(func0, grad=grad, pedantic=False, x=1.0, y=2.0)
     m.migrad()
-    m.mnprofile("y")
+    if grad is None:
+        m.mnprofile("y", subtract_min=True)
+    with pytest.raises(ValueError):
+        m.mnprofile("foo")
+
+
+def test_mnprofile_subtract():
+    m = Minuit(func0, x=1.0, y=2.0, errordef=1)
+    m.migrad()
+    m.mnprofile("y", subtract_min=True)
+
+
+def test_profile_subtract():
+    m = Minuit(func0, x=1.0, y=2.0, errordef=1)
+    with pytest.raises(RuntimeError):
+        m.profile("y", subtract_min=True)
+    m.migrad()
+    m.profile("y", subtract_min=True)
+
+
+def test_contour_subtract():
+    m = Minuit(func0, x=1.0, y=2.0, errordef=1)
+    with pytest.raises(RuntimeError):
+        m.contour("x", "y", subtract_min=True)
+
+
+def test_mncontour_no_fmin():
+    m = Minuit(lambda x, y: 0, x=0, y=0, errordef=1)
+    with pytest.raises(ValueError):
+        m.mncontour("x", "y")
+
+
+def test_mncontour_with_fixed_var():
+    m = Minuit(lambda x, y: 0, x=0, y=0, errordef=1)
+    m.fixed["x"] = True
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.mncontour("x", "y")
 
 
 def test_mncontour_array_func():
@@ -689,6 +752,10 @@ def test_values(minuit):
         minuit.values["z"]
     with pytest.raises(IndexError):
         minuit.values[3]
+    with pytest.raises(IndexError):
+        minuit.values[-10] = 1
+    with pytest.raises(ValueError):
+        minuit.values[:] = [2]
 
 
 def test_fmin():
@@ -904,6 +971,8 @@ def test_errordef():
     m.errordef = 1
     m.hesse()
     assert_allclose(m.errors["x"], 1)
+    with pytest.raises(ValueError):
+        m.errordef = 0
 
 
 def test_params():
@@ -1063,10 +1132,20 @@ def returning_garbage(x):
     ],
 )
 def test_bad_functions(func, expected):
-    m = Minuit(func, x=1, pedantic=False, throw_nan=True)
+    m = Minuit(func, x=1, errordef=1, throw_nan=True)
     with pytest.raises(type(expected)) as excinfo:
         m.migrad()
     assert str(expected) in str(excinfo.value)
+
+
+def test_throw_nan():
+    m = Minuit(returning_nan, x=1, errordef=1)
+    assert not m.throw_nan
+    m.migrad()
+    m.throw_nan = True
+    with pytest.raises(RuntimeError):
+        m.migrad()
+    assert m.throw_nan
 
 
 def returning_nan_array(x):
@@ -1135,3 +1214,19 @@ def test_inaccurate_fcn(iterate, valid):
     m = Minuit(f, x=2, errordef=1)
     m.migrad(iterate=iterate)
     assert m.valid == valid
+
+
+def test_migrad_iterate():
+    m = Minuit(lambda x: 0, x=2, errordef=1)
+    with pytest.raises(ValueError):
+        m.migrad(iterate=0)
+
+
+def test_migrad_precision():
+    m = Minuit(lambda x: np.exp(x * x + 1), x=-1, errordef=1)
+    m.migrad(precision=0.1)
+    fm1 = m.fmin
+    m.reset()
+    m.migrad(precision=1e-9)
+    fm2 = m.fmin
+    assert fm2.edm < fm1.edm
