@@ -29,7 +29,7 @@ def test_ackleys():
     m.migrad()
 
     assert_allclose(m.fval, 0, atol=1e-6)
-    assert_allclose(m.args, [0, 0], atol=1e-6)
+    assert_allclose(m.values, [0, 0], atol=1e-6)
 
 
 def beale(x, y):
@@ -44,7 +44,7 @@ def test_beale():
     m.tol = 1e-4
     m.migrad()
     assert_allclose(m.fval, 0, atol=1e-6)
-    assert_allclose(m.args, [3, 0.5], atol=1e-3)
+    assert_allclose(m.values, [3, 0.5], atol=1e-3)
     assert m.fval < 1e-6
 
 
@@ -57,7 +57,7 @@ def test_matyas():
     m.tol = 1e-4
     m.migrad()
     assert_allclose(m.fval, 0, atol=1e-14)
-    assert_allclose(m.args, [0, 0], atol=1e-14)
+    assert_allclose(m.values, [0, 0], atol=1e-14)
 
 
 def test_matyas_oneside():
@@ -65,4 +65,4 @@ def test_matyas_oneside():
     m = Minuit(matyas, x=2 + 0.5, y=0.5, limit_x=(1, None), pedantic=False)
     m.tol = 1e-4
     m.migrad()
-    assert_allclose(m.args, [1, 0.923], atol=1e-3)
+    assert_allclose(m.values, [1, 0.923], atol=1e-3)
