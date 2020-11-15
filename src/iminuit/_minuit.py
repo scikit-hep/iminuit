@@ -48,6 +48,7 @@ class Minuit:
         """Map variable name to position"""
         return self._var2pos
 
+    @property
     def parameters(self):
         """Tuple of parameter names, an alias for :attr:`pos2var`."""
         return self._pos2var
