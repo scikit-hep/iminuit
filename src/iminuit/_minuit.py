@@ -1,6 +1,5 @@
 from warnings import warn
 from . import util as mutil
-from .latex import LatexFactory
 from ._core import (
     FCN,
     MnContours,
@@ -75,6 +74,8 @@ class Minuit:
 
     @errordef.setter
     def errordef(self, value):
+        if value <= 0:
+            raise ValueError(f"errordef={value} must be a positive number")
         self._fcn.up = value
         if self._fmin:
             self._fmin._src.up = value
@@ -463,15 +464,9 @@ class Minuit:
                     )
                 errordef = 1.0
 
-        errordef = float(errordef)
-        if errordef <= 0:
-            raise ValueError(f"errordef={errordef} must be a positive number")
-
-        self.print_level = print_level
         self._strategy = MnStrategy(1)
 
-        self._fcn = FCN(fcn, grad, use_array_call, errordef, throw_nan)
-
+        self._fcn = FCN(fcn, grad, use_array_call, throw_nan)
         self._fmin = None
         self._init_state = self._make_init_state(kwds)
         self._last_state = self._init_state
@@ -480,6 +475,9 @@ class Minuit:
         self._errors = ErrorView(self)
         self._fixed = FixedView(self)
         self._merrors = mutil.MErrors()
+
+        self.print_level = print_level
+        self.errordef = float(errordef)
 
     def _make_init_state(self, kwds):
         pars = self.parameters
@@ -842,11 +840,6 @@ class Minuit:
             ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
         return ret
 
-    def latex_matrix(self):
-        """Build :class:`LatexFactory` object with correlation matrix."""
-        matrix = self.matrix(correlation=True, skip_fixed=True)
-        return LatexFactory.build_matrix(matrix.names, matrix)
-
     def np_matrix(self, **kwds):
         """Covariance or correlation matrix in numpy array format.
 
@@ -922,14 +915,6 @@ class Minuit:
             ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
         """
         return self.np_matrix(correlation=False, skip_fixed=False)
-
-    def latex_param(self):
-        """build :class:`iminuit.latex.LatexTable` for current parameter"""
-        return LatexFactory.build_param_table(self.params, self.merrors)
-
-    def latex_initial_param(self):
-        """Build :class:`iminuit.latex.LatexTable` for initial parameter"""
-        return LatexFactory.build_param_table(self.init_params, {})
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate MINOS profile around the specified range.

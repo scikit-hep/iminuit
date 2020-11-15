@@ -11,12 +11,11 @@
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
-FCN::FCN(py::object fcn, py::object grad, bool use_array_call, double up,
-         bool throw_nan)
+FCN::FCN(py::object fcn, py::object grad, bool use_array_call, bool throw_nan)
     : fcn_{fcn}
     , grad_{grad}
     , use_array_call_{use_array_call}
-    , up_(up)
+    , up_(1.0)
     , throw_nan_{throw_nan}
     , nfcn_{0}
     , ngrad_{0} {}
@@ -76,7 +75,7 @@ void bind_fcn(py::module m) {
   py::class_<FCNBase>(m, "FCNBase");
   py::class_<FCN, FCNBase>(m, "FCN")
 
-      .def(py::init<py::object, py::object, bool, double, bool>())
+      .def(py::init<py::object, py::object, bool, bool>())
       .def("__call__", &FCN::operator())
       .def("grad", &FCN::Gradient)
       .def_property("up", &FCN::Up, &FCN::SetUp)
