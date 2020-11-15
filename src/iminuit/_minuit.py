@@ -53,11 +53,6 @@ class Minuit:
         return self._pos2var
 
     @property
-    def parameters(self):
-        """Tuple of parameter names, an alias for :attr:`pos2var`."""
-        return self._pos2var
-
-    @property
     def errordef(self):
         """FCN increment above the minimum that corresponds to one standard deviation.
 
