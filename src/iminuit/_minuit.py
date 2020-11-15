@@ -48,6 +48,10 @@ class Minuit:
         """Map variable name to position"""
         return self._var2pos
 
+    def parameters(self):
+        """Tuple of parameter names, an alias for :attr:`pos2var`."""
+        return self._pos2var
+
     @property
     def errordef(self):
         """FCN increment above the minimum that corresponds to one standard deviation.
@@ -230,11 +234,6 @@ class Minuit:
                     mp.upper_limit if has_upper else np.inf,
                 )
         return kwargs
-
-    @property
-    def parameters(self):
-        """Tuple of parameter names, an alias for :attr:`pos2var`."""
-        return self._pos2var
 
     @property
     def narg(self):
