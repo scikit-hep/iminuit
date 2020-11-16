@@ -392,17 +392,22 @@ class Minuit:
                 #initial value for x and y
                 m = Minuit(f, x=1, y=2)
         """
-        if name is None:
-            name = mutil.describe(fcn)
-
         array_call = False
-        if len(args):
-            if len(args) == 1 and hasattr(args[0], "__getitem__"):
-                array_call = True
-                args = args[0]
-            if name is None or len(args) > 1 and len(name) == 1:
-                name = "x"
-                name = tuple(f"{name}[{i}]" for i in range(len(args)))
+        if len(args) == 1 and hasattr(args[0], "__getitem__"):
+            array_call = True
+            args = args[0]
+
+        if name is None:
+            if len(args) == 0:
+                name = mutil.describe(fcn)
+            else:
+                try:
+                    name = mutil.describe(fcn)
+                except TypeError:
+                    pass
+
+                if name is None or len(name) != len(args):
+                    name = tuple(f"x[{i}]" for i in range(len(args)))
 
         # Maintain two dictionaries to easily convert between
         # parameter names and position

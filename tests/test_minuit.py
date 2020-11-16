@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param, InitialParamWarning, IMinuitWarning
+from iminuit.util import Param, IMinuitWarning, InitialParamWarning
 from pytest import approx
 
 
@@ -124,6 +124,8 @@ def func7_grad(x):  # test numpy support
 
 
 class Func8:
+    errordef = 1
+
     def __init__(self):
         sx = 2
         sy = 1
@@ -162,8 +164,10 @@ data_y = [
 data_x = list(range(len(data_y)))
 
 
-def func_test_helper(f, **kwds):
-    m = Minuit(f, **kwds)
+def func_test_helper(f, grad=None, errordef=None):
+    m = Minuit(f, x=0, y=0, grad=grad)
+    if errordef:
+        m.errordef = errordef
     m.migrad()
     val = m.values
     assert_allclose(val["x"], 2.0, rtol=1e-3)
@@ -189,7 +193,7 @@ def test_func0():  # check that providing gradient improves convergence
 
 
 def test_lambda():
-    func_test_helper(lambda x, y: func0(x, y))
+    func_test_helper(lambda x, y: func0(x, y), errordef=1)
 
 
 def test_Func1():
@@ -205,14 +209,24 @@ def test_no_signature():
         x, y = args
         return (x - 1) ** 2 + (y - 2) ** 2
 
+    no_signature.errordef = 1
+
     with pytest.raises(TypeError):
         Minuit(no_signature)
 
-    m = Minuit(no_signature, name=("x", "y"))
+    m = Minuit(no_signature, x=1, y=2, name=("x", "y"))
+    assert m.values == (1, 2)
     m.migrad()
     val = m.values
     assert_allclose((val["x"], val["y"], m.fval), (1, 2, 0), atol=1e-8)
     assert m.valid
+
+    m = Minuit(no_signature, 3, 4)
+    assert m.values == (3, 4)
+    assert m.parameters == ("x[0]", "x[1]")
+
+    with pytest.raises(TypeError):
+        Minuit(no_signature, x=1, y=2)
 
 
 def test_use_array_call():
@@ -245,7 +259,7 @@ def test_parameters():
 
 
 def test_covariance():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     assert m.covariance is None
     m.migrad()
     c = m.covariance
@@ -253,8 +267,9 @@ def test_covariance():
 
 
 def test_gcc():
-    m = Minuit(lambda x, y: (x - y) ** 2 + x ** 2)
+    m = Minuit(lambda x, y: (x - y) ** 2 + x ** 2, x=0, y=0)
     assert m.gcc is None
+    m.errordef = 1
     m.migrad()
     assert_allclose([m.gcc["x"], m.gcc["y"]], np.sqrt((0.5, 0.5)))
 
@@ -310,7 +325,7 @@ def test_view_repr():
 
 
 def test_reset():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     m.migrad()
     n = m.nfcn
     m.migrad()
@@ -319,7 +334,7 @@ def test_reset():
     m.migrad()
     assert m.nfcn == n
 
-    m = Minuit(func0, grad=func0_grad)
+    m = Minuit(func0, grad=func0_grad, x=0, y=0)
     m.migrad()
     n = m.nfcn
     k = m.ngrad
@@ -344,7 +359,8 @@ def test_typo():
 
 
 def test_initial_guesses():
-    m = Minuit(lambda x: 0)
+    with pytest.warns(InitialParamWarning):
+        m = Minuit(lambda x: 0)
     assert m.values["x"] == 0
     assert m.errors["x"] == 0.1
     m = Minuit(lambda x: 0, x=1)
@@ -415,7 +431,8 @@ def test_fix_param(grad):
 
 
 def test_fitarg():
-    m = Minuit(func4, y=10)
+    m = Minuit(func4, y=10, x=0, z=0)
+    m.errordef = 1
     m.fixed["y"] = True
     m.limits["x"] = (0, 20)
     fitarg = m.fitarg
@@ -441,7 +458,7 @@ def test_fitarg():
 @pytest.mark.parametrize("grad", (None, func0_grad))
 @pytest.mark.parametrize("sigma", (1, 4))
 def test_minos_all(grad, sigma):
-    m = Minuit(func0, grad=func0_grad)
+    m = Minuit(func0, grad=func0_grad, x=0, y=0)
     m.migrad()
     m.minos(sigma=sigma)
     assert m.merrors["x"].lower == approx(-sigma * 2)
@@ -460,7 +477,7 @@ def test_minos_all(grad, sigma):
 
 
 def test_minos_all_some_fix():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     m.fixed["x"] = True
     m.migrad()
     m.minos()
@@ -473,7 +490,7 @@ def test_minos_all_some_fix():
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_minos_single(grad):
-    m = Minuit(func0, grad=func0_grad)
+    m = Minuit(func0, grad=func0_grad, x=0, y=0)
 
     m.strategy = 0
     m.migrad()
@@ -481,7 +498,7 @@ def test_minos_single(grad):
 
 
 def test_minos_single_fixed():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     m.fixed["x"] = True
     m.migrad()
     m.minos("y")
@@ -492,7 +509,7 @@ def test_minos_single_fixed():
 
 
 def test_minos_single_fixed_raising():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     m.fixed["x"] = True
     m.migrad()
     with pytest.warns(RuntimeWarning):
@@ -503,20 +520,21 @@ def test_minos_single_fixed_raising():
 
 
 def test_minos_single_no_migrad():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     with pytest.raises(RuntimeError):
         m.minos("x")
 
 
 def test_minos_single_nonsense_variable():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     m.migrad()
     with pytest.raises(RuntimeError):
         m.minos("nonsense")
 
 
 def test_minos_with_bad_fmin():
-    m = Minuit(lambda x: 0)
+    m = Minuit(lambda x: 0, x=0)
+    m.errordef = 1
     m.migrad()
     with pytest.raises(RuntimeError):
         m.minos()
@@ -528,7 +546,10 @@ def test_fixing_long_variable_name(grad):
         func5,
         grad=grad,
         long_variable_name_really_long_why_does_it_has_to_be_this_long=2,
+        x=0,
+        z=0,
     )
+    m.errordef = 1
     m.fixed["long_variable_name_really_long_why_does_it_has_to_be_this_long"] = True
     m.migrad()
     assert_allclose(m.values, [1, 2, -1], atol=1e-3)
@@ -552,6 +573,9 @@ def test_initial_value():
     assert_allclose(m.values[1], 2.0)
     assert_allclose(m.values["x"], 1.0)
     assert_allclose(m.values["y"], 2.0)
+
+    with pytest.raises(RuntimeError):
+        Minuit(func0, 1, y=2)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -660,7 +684,7 @@ def test_mnprofile_array_func():
 
 
 def test_fmin_uninitialized(capsys):
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     assert m.fmin is None
     assert m.fval is None
 
@@ -671,13 +695,13 @@ def test_reverse_limit():
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
     with pytest.raises(ValueError):
-        m = Minuit(f)
+        m = Minuit(f, x=0, y=0, z=0)
         m.limits["x"] = (3.0, 2.0)
 
 
 @pytest.fixture
 def minuit():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     m.migrad()
     m.hesse()
     m.minos()
@@ -685,13 +709,13 @@ def minuit():
 
 
 def test_fcn():
-    m = Minuit(func0)
+    m = Minuit(func0, x=0, y=0)
     v = m.fcn([2.0, 5.0])
     assert v == func0(2.0, 5.0)
 
 
 def test_grad():
-    m = Minuit(func0, grad=func0_grad)
+    m = Minuit(func0, grad=func0_grad, x=0, y=0)
     v = m.fcn([2.0, 5.0])
     g = m.grad([2.0, 5.0])
     assert v == func0(2.0, 5.0)
@@ -809,7 +833,8 @@ def test_chi2_fit():
     def chi2(x, y):
         return (x - 1) ** 2 + ((y - 2) / 3) ** 2
 
-    m = Minuit(chi2)
+    m = Minuit(chi2, x=0, y=0)
+    m.errordef = 1
     m.migrad()
     assert_allclose(m.np_values(), (1, 2))
     assert_allclose(m.np_errors(), (1, 3))
@@ -915,6 +940,7 @@ def test_ncalls():
 
 def test_ngrads():
     class Func:
+        errordef = 1
         ngrads = 0
 
         def __call__(self, x):
@@ -926,7 +952,7 @@ def test_ngrads():
 
     # check that counting is accurate
     func = Func()
-    m = Minuit(func, grad=func.grad)
+    m = Minuit(func, 0, grad=func.grad)
     m.migrad()
     assert m.ngrad > 0
     assert m.ngrad == func.ngrads
@@ -942,7 +968,7 @@ def test_ngrads():
 
 
 def test_errordef():
-    m = Minuit(lambda x: x ** 2)
+    m = Minuit(lambda x: x ** 2, 0)
     m.errordef = 4
     assert m.errordef == 4
     m.migrad()
@@ -1002,20 +1028,22 @@ def test_params():
 
 def test_non_analytical_function():
     class Func:
+        errordef = 1
         i = 0
 
         def __call__(self, a):
             self.i += 1
             return self.i % 3
 
-    m = Minuit(Func())
+    m = Minuit(Func(), 0)
     fmin, _ = m.migrad()
     assert fmin.is_valid is False
     assert fmin.is_above_max_edm is True
 
 
 def test_non_invertible():
-    m = Minuit(lambda x, y: 0)
+    m = Minuit(lambda x, y: 0, 1, 2)
+    m.errordef = 1
     m.strategy = 0
     m.migrad()
     assert m.fmin.is_valid
@@ -1026,7 +1054,8 @@ def test_non_invertible():
 
 
 def test_function_without_local_minimum():
-    m = Minuit(lambda a: -a)
+    m = Minuit(lambda a: -a, 0)
+    m.errordef = 1
     fmin, _ = m.migrad()
     assert fmin.is_valid is False
     assert fmin.is_above_max_edm is True
@@ -1036,7 +1065,8 @@ def test_function_with_maximum():
     def func(a):
         return -(a ** 2)
 
-    m = Minuit(func)
+    m = Minuit(func, a=0)
+    m.errordef = 1
     fmin, _ = m.migrad()
     assert fmin.is_valid is False
 
@@ -1045,7 +1075,8 @@ def test_perfect_correlation():
     def func(a, b):
         return (a - b) ** 2
 
-    m = Minuit(func)
+    m = Minuit(func, a=1, b=2)
+    m.errordef = 1
     fmin, _ = m.migrad()
     assert fmin.is_valid is True
     assert fmin.has_accurate_covar is False
@@ -1093,7 +1124,8 @@ def test_hesse_without_migrad():
     assert m.errors["x"] == approx((1.0 / 14.0) ** 0.5, abs=1e-4)
     assert m.fmin is None
 
-    m = Minuit(lambda x: 0)
+    m = Minuit(lambda x: 0, 0)
+    m.errordef = 1
     with pytest.raises(RuntimeError):
         m.hesse()
 
