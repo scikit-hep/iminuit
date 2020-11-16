@@ -7,7 +7,7 @@ else
 endif
 
 # default target
-build: $(wildcard src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt setup.py cmake.py
+build: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
 	$(PYTHON) setup.py develop
 	touch build
 
