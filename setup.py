@@ -1,8 +1,12 @@
 from pathlib import Path
-from cmake import CMakeExtension, CMakeBuild
 from setuptools import setup
+import sys
 
 cwd = Path(__file__).parent
+
+sys.path.append(str(cwd))
+from cmake_ext import CMakeExtension, CMakeBuild  # noqa: E402
+
 
 # Getting the version number at this point is a bit tricky in Python:
 # https://packaging.python.org/guides/single-sourcing-package-version/?highlight=single%20sourcing
