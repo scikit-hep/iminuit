@@ -30,13 +30,13 @@ def tag(name, *args, **kwargs):
     head = "<" + name
     for k in sorted(kwargs):
         v = kwargs[k]
-        head += ' %s="%s"' % (k, v)
+        head += f' {k}="{v}"'
     head += ">"
     tail = "</%s>" % name
     if len(args) == 0:
         return [head + tail]
     if len(args) == 1 and isinstance(args[0], str):
-        return ["{0} {1} {2}".format(head, args[0], tail)]
+        return ["{} {} {}".format(head, args[0], tail)]
     return [head, *args, tail]
 
 
