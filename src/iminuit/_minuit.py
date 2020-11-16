@@ -134,6 +134,7 @@ class Minuit:
                 "Setting print_level >=3 has the side-effect of setting the level "
                 "globally for all Minuit instances",
                 mutil.IMinuitWarning,
+                stacklevel=2,
             )
             MnPrint.global_level = level
 

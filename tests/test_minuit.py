@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param, InitialParamWarning
+from iminuit.util import Param, InitialParamWarning, IMinuitWarning
 from pytest import approx
 
 
@@ -389,8 +389,7 @@ def test_initial_guesses():
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_fix_param(grad):
-    kwds = {"pedantic": False, "grad": grad}
-    m = Minuit(func0, **kwds)
+    m = Minuit(func0, grad=grad, x=0, y=0)
     assert m.narg == 2
     assert m.nfit == 2
     m.migrad()
@@ -402,7 +401,8 @@ def test_fix_param(grad):
         assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
 
     # now fix y = 10
-    m = Minuit(func0, y=10.0, fix_y=True, **kwds)
+    m = Minuit(func0, grad=grad, x=0, y=10.0)
+    m.fixed["y"] = True
     assert m.narg == 2
     assert m.nfit == 1
     m.migrad()
@@ -428,14 +428,14 @@ def test_fix_param(grad):
         m.fixed["a"]
 
     # fix by setting limits
-    m = Minuit(func0, y=10.0, pedantic=False)
+    m = Minuit(func0, x=0, y=10.0)
     m.limits["y"] = (10, 10)
     assert m.fixed["y"]
     assert m.narg == 2
     assert m.nfit == 1
 
     # initial value out of range is forced in range
-    m = Minuit(func0, y=20.0, pedantic=False)
+    m = Minuit(func0, x=0, y=20.0)
     m.limits["y"] = (10, 10)
     assert m.fixed["y"]
     assert m.values["y"] == 10
@@ -447,30 +447,6 @@ def test_fix_param(grad):
     m.fixed[1:] = False
     assert m.fixed == [True, False]
     assert m.fixed[:1] == [True]
-
-
-def test_fitarg_oneside():
-    m = Minuit(func4, y=10.0, pedantic=False)
-    m.fixed["y"] = True
-    m.limits["x"] = (None, 20.0)
-    fitarg = m.fitarg
-    assert_allclose(fitarg["y"], 10.0)
-    assert fitarg["fix_y"]
-    assert fitarg["limit_x"] == (-np.inf, 20)
-    m.migrad()
-
-    fitarg = m.fitarg
-
-    assert_allclose(fitarg["x"], 2.0, atol=1e-2)
-    assert_allclose(fitarg["y"], 10.0, atol=1e-2)
-    assert_allclose(fitarg["z"], 7.0, atol=1e-2)
-
-    assert "error_y" in fitarg
-    assert "error_x" in fitarg
-    assert "error_z" in fitarg
-
-    assert fitarg["fix_y"]
-    assert fitarg["limit_x"] == (-np.inf, 20)
 
 
 def test_fitarg():
@@ -902,20 +878,27 @@ def test_likelihood():
 
 
 def test_oneside():
-    m1 = Minuit(func0, x=0, y=0)
-    m1.limits["x"] = (None, 9)
-    m2 = Minuit(func0, x=0, y=0)
     # Solution: x=2., y=5.
-    m1.migrad()
-    m2.migrad()
-    assert_allclose(m1.values, m2.values, atol=7e-3)
+    m = Minuit(func0, x=0, y=0)
+    m.limits["x"] = (None, 9)
+    m.migrad()
+    assert_allclose(m.values, (2, 5), atol=7e-3)
+    m.values["x"] = 0
+    m.limits["x"] = (None, 1)
+    m.migrad()
+    assert_allclose(m.values, (1, 5), atol=1e-3)
+    m.values = (5, 0)
+    m.limits["x"] = (3, None)
+    m.migrad()
+    assert_allclose(m.values, (3, 5), atol=1e-3)
 
 
 def test_oneside_outside():
-    m = Minuit(func0, x=0, y=0)
+    m = Minuit(func0, x=5, y=0)
     m.limits["x"] = (None, 1)
-    m.migrad()
-    assert_allclose(m.values["x"], 1)
+    assert m.values["x"] == 1
+    m.limits["x"] = (2, None)
+    assert m.values["x"] == 2
 
 
 def test_ncalls():
@@ -986,6 +969,20 @@ def test_errordef():
     assert_allclose(m.errors["x"], 1)
     with pytest.raises(ValueError):
         m.errordef = 0
+
+
+def test_print_level_warning():
+    from iminuit._core import MnPrint
+
+    m = Minuit(lambda x: 0, x=0, errordef=1)
+    assert MnPrint.global_level == 0
+    with pytest.warns(IMinuitWarning):
+        # setting print_level to 3 enables debug warnings everywhere...
+        m.print_level = 3
+    assert MnPrint.global_level == 3
+    with pytest.warns(IMinuitWarning):
+        m.print_level = 0
+    assert MnPrint.global_level == 0
 
 
 def test_params():
