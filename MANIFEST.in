@@ -8,7 +8,7 @@ include extern/pybind11/CMakeLists.txt
 include extern/pybind11/tools/*.cmake
 include extern/pybind11/LICENSE
 include CITATION
-include cmake.py
+include cmake_ext.py
 include CMakeLists.txt
 include CONTRIBUTING.md
 include LICENSE
