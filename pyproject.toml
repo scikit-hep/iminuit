@@ -4,6 +4,7 @@ requires = [
     "wheel",
     "cmake",
 ]
+build-backend = "setuptools.build_meta"
 
 [tool.nbqa.mutate]
 black = 1
