@@ -30,7 +30,8 @@ def minimize(
 
       - *disp* (bool): Set to true to print convergence messages. Default: False.
       - *tol* (float): Tolerance for convergence. Default: None.
-      - *maxfev* (int): Maximum allowed number of iterations. Default: None.
+      - *maxfun* (int): Maximum allowed number of iterations. Default: None.
+      - *maxfev* (int): Deprecated alias for *maxfun*.
       - *eps* (sequence): Initial step size to numerical compute derivative.
         Minuit automatically refines this in subsequent iterations and is very
         insensitive to the initial choice. Default: 1.
@@ -45,7 +46,7 @@ def minimize(
       - minuit (object): Minuit object internally used to do the minimization.
         Use this to extract more information about the parameter errors.
     """
-    from scipy.optimize import OptimizeResult
+    from scipy.optimize import OptimizeResult, Bounds
 
     x0 = np.atleast_1d(x0)
 
@@ -69,6 +70,7 @@ def minimize(
         return f
 
     wrapped_fun = wrapped(fun, args, callback)
+    wrapped_fun.errordef = 0.5  # so that hesse is really second derivative
 
     if bool(jac):
         if jac is True:
@@ -80,24 +82,31 @@ def minimize(
 
     m = Minuit(wrapped_fun, x0, grad=wrapped_grad)
     if bounds is not None:
-        m.limits = bounds
-    m.errordef = 0.5
+        if isinstance(bounds, Bounds):
+            m.limits = [(a, b) for a, b in zip(bounds.lb, bounds.ub)]
+        else:
+            m.limits = bounds
     if tol:
         m.tol = tol
 
-    maxfev = 0
+    ncall = 0
     if options:
         if "disp" in options:
             m.print_level = 2
         if "maxiter" in options:
-            warnings.warn("maxiter not supported, acts like maxfev instead")
-            maxfev = options["maxiter"]
+            warnings.warn("maxiter not supported, acts like maxfun instead")
+            ncall = options["maxiter"]
         if "maxfev" in options:
-            maxfev = options["maxfev"]
+            warnings.warn(
+                "maxfev is deprecated, use maxfun instead", DeprecationWarning
+            )
+            ncall = options["maxfev"]
+        if "maxfun" in options:
+            ncall = options["maxfun"]
         if "eps" in options:
             m.errors = options["eps"]
 
-    m.migrad(ncall=maxfev)
+    m.migrad(ncall=ncall)
 
     message = "Optimization terminated successfully."
     if not m.valid:
