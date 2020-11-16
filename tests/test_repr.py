@@ -34,7 +34,7 @@ def test_html_tag():
 
 
 def ref(fn):
-    with open(Path(__file__).parent / f"{fn}.txt") as f:
+    with open(Path(__file__).parent / f"{fn}.txt", encoding="utf-8") as f:
         return f.read()[:-1]  # strip trailing newline
 
 
