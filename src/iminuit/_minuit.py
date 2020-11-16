@@ -134,6 +134,7 @@ class Minuit:
                 "Setting print_level >=3 has the side-effect of setting the level "
                 "globally for all Minuit instances",
                 mutil.IMinuitWarning,
+                stacklevel=2,
             )
             MnPrint.global_level = level
 
@@ -148,14 +149,14 @@ class Minuit:
 
     @property
     def values(self):
-        """Parameter values in a dict-like object.
+        """Parameter values in a array-like object.
 
         Use to read or write current parameter values based on the parameter index or the
         parameter name as a string. If you change a parameter value and run :meth:`migrad`,
         the minimization will start from that value, similar for :meth:`hesse` and
         :meth:`minos`.
 
-        .. seealso:: :attr:`errors`, :attr:`fixed`
+        .. seealso:: :attr:`errors`, :attr:`fixed`, :attr:`limits`
         """
         return self._values
 
@@ -165,12 +166,12 @@ class Minuit:
 
     @property
     def errors(self):
-        """Parameter parabolic errors in a dict-like object.
+        """Parameter parabolic errors in a array-like object.
 
         Like :attr:`values`, but instead of reading or writing the values, you read or write
         the errors (which double as step sizes for MINUITs numerical gradient estimation).
 
-        .. seealso:: :attr:`values`, :attr:`fixed`
+        .. seealso:: :attr:`values`, :attr:`fixed`, :attr:`limits`
         """
         return self._errors
 
@@ -180,7 +181,7 @@ class Minuit:
 
     @property
     def fixed(self):
-        """Access fixation state of a parameter in a dict-like object.
+        """Access fixation state of a parameter in a array-like object.
 
         Use to read or write the fixation state of a parameter based on the parameter index
         or the parameter name as a string. If you change the state and run :meth:`migrad`,
@@ -190,13 +191,34 @@ class Minuit:
         the function with respect to the other parameters, then release the fixed parameters
         and minimize again starting from that state.
 
-        .. seealso:: :attr:`values`, :attr:`errors`
+        .. seealso:: :attr:`values`, :attr:`errors`, :attr:`limits`
         """
         return self._fixed
 
     @fixed.setter
     def fixed(self, args):
         self._fixed[:] = args
+
+    @property
+    def limits(self):
+        """Access parameter limits in a array-like object.
+
+        Use to read or write the limits of a parameter based on the parameter index
+        or the parameter name as a string. If you change the limits and run :meth:`migrad`,
+        :meth:`hesse`, or :meth:`minos`, the new state is used.
+
+        In case of complex fits, it can help to limit some parameters first and then
+        remove the limits. Limits will bias the result only if the best fit value is
+        outside the limits, not if it is inside. Limits will affect the estimated
+        HESSE uncertainties if the parameter is close to a limit.
+
+        .. seealso:: :attr:`values`, :attr:`errors`, :attr:`fixed`
+        """
+        return self._limits
+
+    @limits.setter
+    def limits(self, args):
+        self._limits[:] = args
 
     @property
     def merrors(self):
@@ -474,6 +496,7 @@ class Minuit:
         self._values = ValueView(self)
         self._errors = ErrorView(self)
         self._fixed = FixedView(self)
+        self._limits = LimitView(self, 1)
         self._merrors = mutil.MErrors()
 
         self.print_level = print_level
@@ -509,7 +532,7 @@ class Minuit:
             else:
                 lb, ub = lim
                 if lb == ub:
-                    state.add(x, lb, err)
+                    state.add(x, lb, err, lb, ub)
                     state.fix(i)
                 elif lb == -np.inf and ub == np.inf:
                     state.add(x, val, err)
@@ -1352,9 +1375,15 @@ class Minuit:
         return bound
 
     def _copy_state_if_needed(self):
-        if self._last_state == self._init_state or (
-            self._fmin and self._last_state == self._fmin._src.state
-        ):
+        # If FunctionMinimum exists, _last_state may be a reference to its user state.
+        # The state is read-only in C++, but mutable in Python. To not violate
+        # invariants, we need to make a copy of the state when the user requests a
+        # modification. If a copy was already made (_last_state is already a copy),
+        # no further copy has to be made.
+        #
+        # If FunctionMinimum does not exist, we don't want to copy. We want to
+        # implicitly modify _init_state; _last_state is an alias for _init_state, then.
+        if self._fmin and self._last_state == self._fmin._src.state:
             self._last_state = MnUserParameterState(self._last_state)
 
     def _pedantic(self, parameters, kwds):
@@ -1375,9 +1404,11 @@ class BasicView:
     specific properties of the parameter state."""
 
     _minuit = None
+    _ndim = 0
 
-    def __init__(self, minuit):
+    def __init__(self, minuit, ndim=0):
         self._minuit = minuit
+        self._ndim = ndim
 
     def __iter__(self):
         for i in range(len(self)):
@@ -1401,21 +1432,21 @@ class BasicView:
         self._minuit._copy_state_if_needed()
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
-            if hasattr(value, "__len__"):
+            if np.ndim(value) == self._ndim:  # basic broadcasting
+                for i in ind:
+                    self._set(i, value)
+            else:
                 if len(value) != len(ind):
                     raise ValueError("length of argument does not match slice")
                 for i, v in zip(ind, value):
                     self._set(i, v)
-            else:  # basic broadcasting
-                for i in ind:
-                    self._set(i, value)
-            return
-        i = key if mutil._is_int(key) else self._minuit._var2pos[key]
-        if i < 0:
-            i += len(self)
-        if i < 0 or i >= len(self):
-            raise IndexError
-        self._set(i, value)
+        else:
+            i = key if mutil._is_int(key) else self._minuit._var2pos[key]
+            if i < 0:
+                i += len(self)
+            if i < 0 or i >= len(self):
+                raise IndexError
+            self._set(i, value)
 
     def __eq__(self, other):
         return len(self) == len(other) and all(x == y for x, y in zip(self, other))
@@ -1428,7 +1459,7 @@ class BasicView:
 
 
 class ValueView(BasicView):
-    """Dict-like view of parameter values."""
+    """Array-like view of parameter values."""
 
     def _get(self, i):
         return self._minuit._last_state[i].value
@@ -1438,7 +1469,7 @@ class ValueView(BasicView):
 
 
 class ErrorView(BasicView):
-    """Dict-like view of parameter errors."""
+    """Array-like view of parameter errors."""
 
     def _get(self, i):
         return self._minuit._last_state[i].error
@@ -1448,7 +1479,7 @@ class ErrorView(BasicView):
 
 
 class FixedView(BasicView):
-    """Dict-like view of whether parameters are fixed."""
+    """Array-like view of whether parameters are fixed."""
 
     def _get(self, i):
         return self._minuit._last_state[i].is_fixed
@@ -1458,3 +1489,41 @@ class FixedView(BasicView):
             self._minuit._last_state.fix(i)
         else:
             self._minuit._last_state.release(i)
+
+
+class LimitView(BasicView):
+    """Array-like view of parameter limits."""
+
+    def _get(self, i):
+        p = self._minuit._last_state[i]
+        return (
+            p.lower_limit if p.has_lower_limit else -np.inf,
+            p.upper_limit if p.has_upper_limit else np.inf,
+        )
+
+    def _set(self, i, args):
+        state = self._minuit._last_state
+        args = mutil._normalize_limit(args)
+        val = state[i].value
+        err = state[i].error
+        # changing limits is a cheap operation, start from clean state
+        state.remove_limits(i)
+        if args is None or args == (-np.inf, np.inf):
+            low, high = (-np.inf, np.inf)
+        else:
+            low, high = args
+            if low != -np.inf and high != np.inf:  # both must be set
+                state.set_limits(i, low, high)
+                if low == high:
+                    state.fix(i)
+            elif low != -np.inf:  # lower limit must be set
+                state.set_lower_limit(i, low)
+            else:  # lower limit must be set
+                state.set_upper_limit(i, high)
+        # bug in Minuit2: must set parameter value and error again after changing limits
+        if val < low:
+            val = low
+        elif val > high:
+            val = high
+        state.set_value(i, val)
+        state.set_error(i, err)
