@@ -218,19 +218,16 @@ def test_use_array_call():
         use_array_call=True,
         a=1,
         b=1,
-        error_a=1,
-        error_b=1,
-        limit_a=(0, inf),
-        limit_b=(0, inf),
-        fix_a=False,
-        fix_b=False,
         errordef=Minuit.LEAST_SQUARES,
         name=("a", "b"),
     )
+    m.fixed = False
+    m.errors = 1
+    m.limits = (0, inf)
     assert m.use_array_call
     m.migrad()
-    v = m.values
-    assert_allclose((v["a"], v["b"]), (1, 1))
+    assert m.parameters == ("a", "b")
+    assert_allclose(m.values, (1, 1))
     m.hesse()
     c = m.covariance
     assert_allclose((c[("a", "a")], c[("b", "b")]), (1, 1))
@@ -282,12 +279,12 @@ def test_from_array_func_2():
         func7,
         (2, 1),
         grad=func7_grad,
-        error=(0.5, 0.5),
-        limit=((0, 2), (-np.inf, np.inf)),
-        fix=(False, True),
         name=("a", "b"),
         errordef=Minuit.LEAST_SQUARES,
     )
+    m.fixed = (False, True)
+    m.errors = (0.5, 0.5)
+    m.limits = ((0, 2), (-np.inf, np.inf))
     assert m.fitarg == {
         "a": 2.0,
         "b": 1.0,
@@ -425,13 +422,15 @@ def test_fix_param(grad):
         m.fixed["a"]
 
     # fix by setting limits
-    m = Minuit(func0, y=10.0, limit_y=(10, 10), pedantic=False)
+    m = Minuit(func0, y=10.0, pedantic=False)
+    m.limits["y"] = (10, 10)
     assert m.fixed["y"]
     assert m.narg == 2
     assert m.nfit == 1
 
     # initial value out of range is forced in range
-    m = Minuit(func0, y=20.0, limit_y=(10, 10), pedantic=False)
+    m = Minuit(func0, y=20.0, pedantic=False)
+    m.limits["y"] = (10, 10)
     assert m.fixed["y"]
     assert m.values["y"] == 10
     assert m.narg == 2
