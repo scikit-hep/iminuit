@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param
+from iminuit.util import Param, InitialParamWarning
 from pytest import approx
 
 
@@ -58,6 +58,9 @@ def func0(x, y):
     return (x - 2.0) ** 2 / 4.0 + (y - 5.0) ** 2 + 10
 
 
+func0.errordef = 1
+
+
 def func0_grad(x, y):
     dfdx = (x - 2.0) / 2.0
     dfdy = 2.0 * (y - 5.0)
@@ -72,13 +75,13 @@ class Func1:
 
 
 class Func2:
+    errordef = 4
+
     def __init__(self):
         self.func_code = Func_Code(["x", "y"])
 
     def __call__(self, *arg):
         return func0(arg[0], arg[1]) * 4
-
-    errordef = 4
 
 
 def func4(x, y, z):
@@ -364,12 +367,15 @@ def test_reset():
 
 
 def test_typo():
-    with pytest.raises(RuntimeError):
-        Minuit(lambda x: 0, y=1, pedantic=False)
-    with pytest.raises(RuntimeError):
-        Minuit(lambda x: 0, error_y=1, pedantic=False)
-    with pytest.raises(RuntimeError):
-        Minuit(lambda x: 0, limit_y=1, pedantic=False)
+    with pytest.warns(InitialParamWarning):
+        with pytest.raises(RuntimeError):
+            Minuit(lambda x: 0, y=1, errordef=1)
+
+    m = Minuit(lambda x: 0, x=0, errordef=1)
+    with pytest.raises(KeyError):
+        m.errors["y"] = 1
+    with pytest.raises(KeyError):
+        m.limits["y"] = (0, 1)
 
 
 def test_initial_guesses():
@@ -444,7 +450,9 @@ def test_fix_param(grad):
 
 
 def test_fitarg_oneside():
-    m = Minuit(func4, y=10.0, fix_y=True, limit_x=(None, 20.0), pedantic=False)
+    m = Minuit(func4, y=10.0, pedantic=False)
+    m.fixed["y"] = True
+    m.limits["x"] = (None, 20.0)
     fitarg = m.fitarg
     assert_allclose(fitarg["y"], 10.0)
     assert fitarg["fix_y"]
@@ -466,7 +474,9 @@ def test_fitarg_oneside():
 
 
 def test_fitarg():
-    m = Minuit(func4, y=10, fix_y=True, limit_x=(0, 20), pedantic=False)
+    m = Minuit(func4, y=10, pedantic=False)
+    m.fixed["y"] = True
+    m.limits["x"] = (0, 20)
     fitarg = m.fitarg
     assert_allclose(fitarg["y"], 10)
     assert fitarg["fix_y"] is True
@@ -704,7 +714,8 @@ def test_reverse_limit():
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
     with pytest.raises(ValueError):
-        Minuit(f, limit_x=(3.0, 2.0), pedantic=False)
+        m = Minuit(f, pedantic=False)
+        m.limits["x"] = (3.0, 2.0)
 
 
 @pytest.fixture
@@ -879,7 +890,8 @@ def test_likelihood():
         logp = -0.5 * z ** 2 - np.log(sigma)
         return -np.sum(logp)
 
-    m = Minuit(nll, errordef=Minuit.LIKELIHOOD, limit_sigma=(0, None), pedantic=False)
+    m = Minuit(nll, mu=0, sigma=1, errordef=Minuit.LIKELIHOOD, pedantic=False)
+    m.limits["sigma"] = (0, None)
     m.migrad()
 
     mu = np.mean(data)
@@ -890,16 +902,18 @@ def test_likelihood():
 
 
 def test_oneside():
-    m_limit = Minuit(func0, limit_x=(None, 9), pedantic=False)
-    m_nolimit = Minuit(func0, pedantic=False)
+    m1 = Minuit(func0, x=0, y=0)
+    m1.limits["x"] = (None, 9)
+    m2 = Minuit(func0, x=0, y=0)
     # Solution: x=2., y=5.
-    m_limit.migrad()
-    m_nolimit.migrad()
-    assert_allclose(m_limit.values, m_nolimit.values, atol=5e-3)
+    m1.migrad()
+    m2.migrad()
+    assert_allclose(m1.values, m2.values, atol=7e-3)
 
 
 def test_oneside_outside():
-    m = Minuit(func0, limit_x=(None, 1), pedantic=False)
+    m = Minuit(func0, x=0, y=0)
+    m.limits["x"] = (None, 1)
     m.migrad()
     assert_allclose(m.values["x"], 1)
 
@@ -979,13 +993,12 @@ def test_params():
         func0,
         x=1,
         y=2,
-        error_x=3,
-        error_y=4,
-        fix_x=True,
-        limit_y=(None, 10),
-        pedantic=False,
         errordef=Minuit.LEAST_SQUARES,
     )
+    m.errors = (3, 4)
+    m.fixed["x"] = True
+    m.limits["y"] = (None, 10)
+
     # these are the initial param states
     expected = [
         Param(0, "x", 1.0, 3.0, False, True, False, False, False, None, None),
@@ -1194,7 +1207,8 @@ def test_issue_424():
 
 @pytest.mark.parametrize("sign", (-1, 1))
 def test_parameter_at_limit(sign):
-    m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0, limit_x=(-1, 1), errordef=1)
+    m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0, errordef=1)
+    m.limits["x"] = (-1, 1)
     m.migrad()
     assert m.values["x"] == approx(sign * 1.0, abs=1e-3)
     assert m.fmin.has_parameters_at_limit is True
@@ -1229,3 +1243,21 @@ def test_migrad_precision():
     m.migrad(precision=1e-9)
     fm2 = m.fmin
     assert fm2.edm < fm1.edm
+
+
+def test_old_init_interface():
+    m = Minuit(
+        lambda x, y, z, t: 0,
+        x=0,
+        y=0,
+        z=0,
+        t=0,
+        limit_x=(1, 1),
+        limit_y=(-np.inf, np.inf),
+        limit_z=(-1, None),
+        limit_t=(None, 1),
+        fix_y=True,
+        errordef=1,
+    )
+    assert m.limits == [(1, 1), (-np.inf, np.inf), (-1, np.inf), (-np.inf, 1)]
+    assert m.fixed == (True, True, False, False)

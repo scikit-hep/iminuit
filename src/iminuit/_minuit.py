@@ -531,7 +531,7 @@ class Minuit:
             else:
                 lb, ub = lim
                 if lb == ub:
-                    state.add(x, lb, err)
+                    state.add(x, lb, err, lb, ub)
                     state.fix(i)
                 elif lb == -np.inf and ub == np.inf:
                     state.add(x, val, err)
@@ -1374,9 +1374,15 @@ class Minuit:
         return bound
 
     def _copy_state_if_needed(self):
-        if self._last_state == self._init_state or (
-            self._fmin and self._last_state == self._fmin._src.state
-        ):
+        # If FunctionMinimum exists, _last_state may be a reference to its user state.
+        # The state is read-only in C++, but mutable in Python. To not violate
+        # invariants, we need to make a copy of the state when the user requests a
+        # modification. If a copy was already made (_last_state is already a copy),
+        # no further copy has to be made.
+        #
+        # If FunctionMinimum does not exist, we don't want to copy. We want to
+        # implicitly modify _init_state; _last_state is an alias for _init_state, then.
+        if self._fmin and self._last_state == self._fmin._src.state:
             self._last_state = MnUserParameterState(self._last_state)
 
     def _pedantic(self, parameters, kwds):
@@ -1512,7 +1518,7 @@ class LimitView(BasicView):
             elif low != -np.inf:  # lower limit must be set
                 state.set_lower_limit(i, low)
             else:  # lower limit must be set
-                state.set_highper_limit(i, high)
+                state.set_upper_limit(i, high)
         # bug in Minuit2: must set parameter value and error again after changing limits
         if val < low:
             val = low
