@@ -61,10 +61,3 @@ repos:
   - id: nbqa-pyupgrade
     additional_dependencies: [pyupgrade==2.7.4]
     args: ["--py36-plus"]
-
-# Keep Python syntax up to date
-- repo: https://github.com/asottile/pyupgrade
-  rev: v2.7.4
-  hooks:
-  - id: pyupgrade
-    args: ["--py36-plus"]
