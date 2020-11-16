@@ -211,8 +211,9 @@ def test_no_signature():
 
     no_signature.errordef = 1
 
-    with pytest.raises(TypeError):
-        Minuit(no_signature)
+    m = Minuit(no_signature, 3, 4)
+    assert m.values == (3, 4)
+    assert m.parameters == ("x[0]", "x[1]")
 
     m = Minuit(no_signature, x=1, y=2, name=("x", "y"))
     assert m.values == (1, 2)
@@ -221,9 +222,8 @@ def test_no_signature():
     assert_allclose((val["x"], val["y"], m.fval), (1, 2, 0), atol=1e-8)
     assert m.valid
 
-    m = Minuit(no_signature, 3, 4)
-    assert m.values == (3, 4)
-    assert m.parameters == ("x[0]", "x[1]")
+    with pytest.raises(TypeError):
+        Minuit(no_signature)
 
     with pytest.raises(TypeError):
         Minuit(no_signature, x=1, y=2)
@@ -514,9 +514,10 @@ def test_minos_single_fixed_raising():
     m.migrad()
     with pytest.warns(RuntimeWarning):
         ret = m.minos("x")
+    assert len(ret) == 0
     assert m.fixed["x"]
-    m.minos()
-    assert ret is None
+    assert len(m.minos()) == 1
+    assert "y" in m.merrors
 
 
 def test_minos_single_no_migrad():
