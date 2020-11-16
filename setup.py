@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from pathlib import Path
 from cmake import CMakeExtension, CMakeBuild
 from setuptools import setup
