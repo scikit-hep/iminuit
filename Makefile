@@ -12,7 +12,7 @@ build: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cxx) $(wi
 	touch build
 
 test: build
-	$(PYTHON) -m pytest -qvv -r a --ff --pdb
+	$(PYTHON) -m pytest -vv -r a --ff --pdb
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."

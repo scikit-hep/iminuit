@@ -4,6 +4,7 @@ from iminuit.util import Params, Param, Matrix, FMin
 from iminuit import repr_html, repr_text
 import pytest
 from argparse import Namespace
+from pathlib import Path
 
 nan = float("nan")
 inf = float("infinity")
@@ -11,6 +12,9 @@ inf = float("infinity")
 
 def f1(x, y):
     return (x - 2) ** 2 + (y - 1) ** 2 / 0.25 + 1
+
+
+f1.errordef = 1
 
 
 def test_html_tag():
@@ -29,8 +33,9 @@ def test_html_tag():
     # fmt: on
 
 
-def framed(s):
-    return "\n" + str(s) + "\n"
+def ref(fn):
+    with open(Path(__file__).parent / f"{fn}.txt") as f:
+        return f.read()[:-1]  # strip trailing newline
 
 
 def test_pdg_format():
@@ -78,7 +83,7 @@ def test_matrix_format():
 
 @pytest.fixture
 def minuit():
-    m = Minuit(f1, x=0, y=0, pedantic=False, print_level=0)
+    m = Minuit(f1, x=0, y=0)
     m.tol = 1e-4
     m.migrad()
     m.hesse()
@@ -278,18 +283,10 @@ def test_html_params(minuit):
 
 
 def test_html_params_with_limits():
-    m = Minuit(
-        f1,
-        x=3,
-        y=5,
-        fix_x=True,
-        error_x=0.2,
-        error_y=0.1,
-        limit_x=(0, None),
-        limit_y=(0, 10),
-        errordef=1,
-        print_level=0,
-    )
+    m = Minuit(f1, x=3, y=5)
+    m.fixed["x"] = True
+    m.errors = (0.2, 0.1)
+    m.limits = ((0, None), (0, 10))
     # fmt: off
     assert m.init_params._repr_html_() == r"""<table>
     <tr>
@@ -401,50 +398,15 @@ def test_html_matrix():
 
 
 def test_text_fmin_good(fmin_good):
-    # fmt: off
-    assert framed(fmin_good) == r"""
-┌──────────────────────────────────┬──────────────────────────────────────┐
-│ FCN = 1.235e-10                  │              Nfcn = 10               │
-│ EDM = 1.23e-10 (Goal: 0.0001)    │              Ngrad = 3               │
-├───────────────┬──────────────────┼──────────────────────────────────────┤
-│ Valid Minimum │ Valid Parameters │        No Parameters at limit        │
-├───────────────┴──────────────────┼──────────────────────────────────────┤
-│ Below EDM threshold (goal x 10)  │           Below call limit           │
-├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
-│   Hesse ok    │  Has Covariance  │ Accurate  │  Pos. def.  │ Not forced │
-└───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
-"""
-    # fmt: on
+    assert str(fmin_good) == ref("fmin_good")
 
 
 def test_text_fmin_bad(fmin_bad):
-    # fmt: off
-    assert framed(fmin_bad) == r"""
-┌──────────────────────────────────┬──────────────────────────────────────┐
-│ FCN = nan                        │            Nfcn = 100000             │
-│ EDM = 1.23e-10 (Goal: 1e-05)     │            Ngrad = 200000            │
-├───────────────┬──────────────────┼──────────────────────────────────────┤
-│INVALID Minimum│INVALID Parameters│       SOME Parameters at limit       │
-├───────────────┴──────────────────┼──────────────────────────────────────┤
-│ ABOVE EDM threshold (goal x 10)  │           ABOVE call limit           │
-├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
-│ Hesse FAILED  │  NO Covariance   │APPROXIMATE│NOT pos. def.│   FORCED   │
-└───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
-"""
-    # fmt: on
+    assert str(fmin_bad) == ref("fmin_bad")
 
 
 def test_text_params(minuit):
-    # fmt: off
-    assert framed(minuit.params) == """
-┌───┬──────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
-│   │ Name │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
-├───┼──────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
-│ 0 │ x    │     2     │     1     │     -1     │     1      │         │         │       │
-│ 1 │ y    │    1.0    │    0.5    │    -0.5    │    0.5     │         │         │       │
-└───┴──────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
-"""
-    # fmt: on
+    assert str(minuit.params) == ref("params")
 
 
 def test_text_params_with_limits():
@@ -452,101 +414,43 @@ def test_text_params_with_limits():
         f1,
         x=3,
         y=5,
-        fix_x=True,
-        error_x=0.2,
-        error_y=0.1,
-        limit_x=(0, None),
-        limit_y=(0, 10),
-        errordef=1,
     )
-    # fmt: off
-    assert framed(m.params) == """
-┌───┬──────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
-│   │ Name │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
-├───┼──────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
-│ 0 │ x    │    3.0    │    0.2    │            │            │    0    │         │  yes  │
-│ 1 │ y    │    5.0    │    0.1    │            │            │    0    │   10    │       │
-└───┴──────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
-"""
-    # fmt: on
+    m.fixed["x"] = True
+    m.errors = (0.2, 0.1)
+    m.limits = ((0, None), (0, 10))
+    assert str(m.params) == ref("params_with_limits")
 
 
 def test_text_merrors(minuit):
-    # fmt: off
-    assert framed(minuit.minos()) == r"""
-┌──────────┬───────────────────────┬───────────────────────┐
-│          │           x           │           y           │
-├──────────┼───────────┬───────────┼───────────┬───────────┤
-│  Error   │    -1     │     1     │   -0.5    │    0.5    │
-│  Valid   │   True    │   True    │   True    │   True    │
-│ At Limit │   False   │   False   │   False   │   False   │
-│ Max FCN  │   False   │   False   │   False   │   False   │
-│ New Min  │   False   │   False   │   False   │   False   │
-└──────────┴───────────┴───────────┴───────────┴───────────┘
-"""
-    # fmt: on
+    assert str(minuit.minos()) == ref("merrors")
 
 
 def test_text_matrix():
     matrix = Matrix(["x", "y"], ((1.0, -0.0), (-0.0, 0.25)))
-    # fmt: off
-    assert framed(matrix) == r"""
-┌───┬─────────────┐
-│   │     x     y │
-├───┼─────────────┤
-│ x │  1.00 -0.00 │
-│ y │ -0.00  0.25 │
-└───┴─────────────┘
-"""
-    # fmt: on
+    assert str(matrix) == ref("matrix")
 
 
 def test_text_matrix_mini():
     matrix = Matrix(["x"], ((1.0,),))
-    # fmt: off
-    assert framed(matrix) == r"""
-┌───┬───┐
-│   │ x │
-├───┼───┤
-│ x │ 1 │
-└───┴───┘
-"""
-    # fmt: on
+    assert str(matrix) == ref("matrix_mini")
 
 
 def test_text_matrix_large():
     matrix = Matrix(["x", "y", "z"], ((1, 2, 3), (4, 5, 6), (7, 8, 9)))
-    # fmt: off
-    assert framed(matrix) == r"""
-┌───┬───────┐
-│   │ x y z │
-├───┼───────┤
-│ x │ 1 2 3 │
-│ y │ 4 5 6 │
-│ z │ 7 8 9 │
-└───┴───────┘
-"""
-    # fmt: on
+    assert str(matrix) == ref("matrix_large")
 
 
 def test_text_matrix_with_long_names():
-
     matrix = Matrix(["super-long-name", "x"], ((1.0, 0.1), (0.1, 1.0)))
-    # fmt: off
-    assert framed(matrix) == r"""
-┌─────────────────┬─────────────────────────────────┐
-│                 │ super-long-name               x │
-├─────────────────┼─────────────────────────────────┤
-│ super-long-name │             1.0             0.1 │
-│               x │             0.1             1.0 │
-└─────────────────┴─────────────────────────────────┘
-"""
+    assert str(matrix) == ref("matrix_long_names")
 
+
+def test_text_params_with_long_names():
     mps = Params(
         [
             Param(
                 0,
-                'super-long-name',
+                "super-long-name",
                 0,
                 0,
                 False,
@@ -560,29 +464,15 @@ def test_text_matrix_with_long_names():
         ],
         None,
     )
-    assert framed(mps) == r"""
-┌───┬─────────────────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
-│   │ Name            │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
-├───┼─────────────────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
-│ 0 │ super-long-name │     0     │     0     │            │            │         │         │       │
-└───┴─────────────────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
-"""
-    # fmt: on
+    assert str(mps) == ref("params_long_names")
 
 
-def test_console_frontend_with_difficult_values():
+def test_text_matrix_difficult_values():
     matrix = Matrix(("x", "y"), ((-1.23456, 0), (0, 0)))
-    # fmt: off
-    assert framed(matrix) == r"""
-┌───┬───────────────┐
-│   │      x      y │
-├───┼───────────────┤
-│ x │ -1.235  0.000 │
-│ y │  0.000  0.000 │
-└───┴───────────────┘
-"""
-    # fmt: on
+    assert str(matrix) == ref("matrix_difficult_values")
 
+
+def test_text_params_difficult_values():
     mps = Params(
         [
             Param(
@@ -601,13 +491,4 @@ def test_console_frontend_with_difficult_values():
         ],
         None,
     )
-
-    # fmt: off
-    assert framed(mps) == r"""
-┌───┬──────┬───────────┬───────────┬────────────┬────────────┬─────────┬─────────┬───────┐
-│   │ Name │   Value   │ Hesse Err │ Minos Err- │ Minos Err+ │ Limit-  │ Limit+  │ Fixed │
-├───┼──────┼───────────┼───────────┼────────────┼────────────┼─────────┼─────────┼───────┤
-│ 0 │ x    │    -0     │ 0.012e-9  │            │            │         │         │ CONST │
-└───┴──────┴───────────┴───────────┴────────────┴────────────┴─────────┴─────────┴───────┘
-"""
-    # fmt: on
+    assert str(mps) == ref("params_difficult_values")

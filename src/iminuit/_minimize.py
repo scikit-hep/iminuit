@@ -70,20 +70,6 @@ def minimize(
 
     wrapped_fun = wrapped(fun, args, callback)
 
-    maxfev = 0
-    error = None
-    kwargs = {"print_level": 0, "errordef": 0.5}
-    if options:
-        if "disp" in options:
-            kwargs["print_level"] = 2
-        if "maxiter" in options:
-            warnings.warn("maxiter not supported, acts like maxfev instead")
-            maxfev = options["maxiter"]
-        if "maxfev" in options:
-            maxfev = options["maxfev"]
-        if "eps" in options:
-            error = options["eps"]
-
     if bool(jac):
         if jac is True:
             raise ValueError("jac=True is not supported, only jac=callable")
@@ -92,11 +78,25 @@ def minimize(
     else:
         wrapped_grad = None
 
-    m = Minuit.from_array_func(
-        wrapped_fun, x0, error=error, limit=bounds, grad=wrapped_grad, **kwargs
-    )
+    m = Minuit(wrapped_fun, x0, grad=wrapped_grad)
+    if bounds is not None:
+        m.limits = bounds
+    m.errordef = 0.5
     if tol:
         m.tol = tol
+
+    maxfev = 0
+    if options:
+        if "disp" in options:
+            m.print_level = 2
+        if "maxiter" in options:
+            warnings.warn("maxiter not supported, acts like maxfev instead")
+            maxfev = options["maxiter"]
+        if "maxfev" in options:
+            maxfev = options["maxfev"]
+        if "eps" in options:
+            m.errors = options["eps"]
+
     m.migrad(ncall=maxfev)
 
     message = "Optimization terminated successfully."
