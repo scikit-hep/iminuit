@@ -793,7 +793,7 @@ class Minuit:
 
         if not self._fmin.is_valid:
             raise RuntimeError(
-                ("Function minimum is not valid. Make sure " "MIGRAD converged first")
+                "Function minimum is not valid. Make sure " "MIGRAD converged first"
             )
         if var is not None and var not in self._pos2var:
             raise RuntimeError(f"Unknown parameter {var}")
@@ -1139,9 +1139,11 @@ class Minuit:
 
         if text:
             plt.title(
-                ("%s = %.3g" % (vname, v))
+                (f"{vname} = {v:.3g}")
                 if vmin is None
-                else ("%s = %.3g - %.3g + %.3g" % (vname, v, v - vmin, vmax - v)),
+                else (
+                    "{} = {:.3g} - {:.3g} + {:.3g}".format(vname, v, v - vmin, vmax - v)
+                ),
                 fontsize="large",
             )
 
@@ -1452,9 +1454,9 @@ class BasicView:
         return len(self) == len(other) and all(x == y for x, y in zip(self, other))
 
     def __repr__(self):
-        s = "<%s of Minuit at %x>" % (self.__class__.__name__, id(self._minuit))
+        s = "<{} of Minuit at {:x}>".format(self.__class__.__name__, id(self._minuit))
         for (k, v) in zip(self._minuit._pos2var, self):
-            s += "\n  {0}: {1}".format(k, v)
+            s += f"\n  {k}: {v}"
         return s
 
 

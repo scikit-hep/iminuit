@@ -1,14 +1,14 @@
 import warnings
 
 
-class deprecated(object):
+class deprecated:
     def __init__(self, reason):
         self._reason = reason
 
     def __call__(self, func):
         def decorated_func(*args, **kwargs):
             warnings.warn(
-                "{0} is deprecated: {1}".format(func.__name__, self._reason),
+                f"{func.__name__} is deprecated: {self._reason}",
                 category=DeprecationWarning,
                 stacklevel=2,
             )
