@@ -62,11 +62,6 @@ def test_tol():
     assert max(np.abs(r2.x - ref)) < max(np.abs(r1.x - ref))
 
 
-def test_bad_function():
-    r = minimize(lambda x: 0, 0)
-    assert r.success is False
-
-
 def test_disp(capsys):
     minimize(lambda x: x ** 2, 0)
     assert capsys.readouterr()[0] == ""
