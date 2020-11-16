@@ -439,7 +439,8 @@ class Minuit:
         if nargs:
             if kwds:
                 raise RuntimeError(
-                    f"positional arguments cannot be mixed with parameter keyword arguments {kwds}"
+                    f"positional arguments cannot be mixed with "
+                    f"parameter keyword arguments {kwds}"
                 )
             if nargs != self.narg:
                 raise RuntimeError(f"{nargs} values given for {self.narg} parameters")
