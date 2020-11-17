@@ -37,7 +37,8 @@ def test_UnbinnedNLL(unbinned, verbose):
         return norm(mu, sigma).pdf(x)
 
     cost = UnbinnedNLL(x, pdf, verbose=verbose)
-    m = Minuit(cost, mu=0, sigma=1, limit_sigma=(0, None))
+    m = Minuit(cost, mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
     m.migrad()
     assert_allclose(m.values, mle[1:], atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
@@ -51,7 +52,9 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
         return n, n * norm(mu, sigma).pdf(x)
 
     cost = ExtendedUnbinnedNLL(x, scaled_pdf, verbose=verbose)
-    m = Minuit(cost, n=len(x), mu=0, sigma=1, limit_n=(0, None), limit_sigma=(0, None))
+    m = Minuit(cost, n=len(x), mu=0, sigma=1)
+    m.limits["n"] = (0, None)
+    m.limits["sigma"] = (0, None)
     m.migrad()
     assert_allclose(m.values, mle, atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
@@ -65,7 +68,8 @@ def test_BinnedNLL(binned, verbose):
         return norm(mu, sigma).cdf(x)
 
     cost = BinnedNLL(nx, xe, cdf, verbose=verbose)
-    m = Minuit(cost, mu=0, sigma=1, limit_sigma=(0, None))
+    m = Minuit(cost, mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle[1:], rtol=0.15)
@@ -80,7 +84,9 @@ def test_ExtendedBinnedNLL(binned, verbose):
         return n * norm(mu, sigma).cdf(x)
 
     cost = ExtendedBinnedNLL(nx, xe, scaled_cdf, verbose=verbose)
-    m = Minuit(cost, n=mle[0], mu=0, sigma=1, limit_n=(0, None), limit_sigma=(0, None))
+    m = Minuit(cost, n=mle[0], mu=0, sigma=1)
+    m.limits["n"] = (0, None)
+    m.limits["sigma"] = (0, None)
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)

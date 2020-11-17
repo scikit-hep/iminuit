@@ -13,7 +13,7 @@ namespace py = pybind11;
    or by passing a single Numpy array, depending on the value of use_array_call_.
 */
 struct FCN : ROOT::Minuit2::FCNGradientBase {
-  FCN(py::object fcn, py::object grad, bool use_array_call, bool throw_nan);
+  FCN(py::object fcn, py::object grad, bool use_array_call, double up);
 
   double operator()(const std::vector<double>& x) const override;
   std::vector<double> Gradient(const std::vector<double>&) const override;
@@ -29,6 +29,6 @@ struct FCN : ROOT::Minuit2::FCNGradientBase {
   py::object fcn_, grad_;
   bool use_array_call_;
   double up_;
-  bool throw_nan_;
-  mutable unsigned nfcn_, ngrad_;
+  bool throw_nan_ = false;
+  mutable unsigned nfcn_ = 0, ngrad_ = 0;
 };

@@ -9,14 +9,10 @@ def framed(s):
 
 
 def test_params():
-    m = Minuit(
-        lambda x, y: x ** 2 + (y / 2) ** 2 + 1,
-        x=0,
-        y=0,
-        limit_y=(-1, 1),
-        fix_x=True,
-        errordef=1,
-    )
+    m = Minuit(lambda x, y: x ** 2 + (y / 2) ** 2 + 1, x=0, y=0)
+    m.errordef = 1
+    m.limits["y"] = (-1, 1)
+    m.fixed["x"] = True
     m.migrad()
     m.minos()
     assert (
@@ -31,7 +27,8 @@ def test_params():
 
 
 def test_matrix():
-    m = Minuit(lambda x, y: x ** 2 + (y / 2) ** 2 + 1, x=0, y=0, errordef=1)
+    m = Minuit(lambda x, y: x ** 2 + (y / 2) ** 2 + 1, x=0, y=0)
+    m.errordef = 1
     m.migrad()
     assert (
         framed(tab.tabulate(*m.matrix().to_table()))
