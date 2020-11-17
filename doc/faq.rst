@@ -13,8 +13,8 @@ Disclaimer: Read the excellent MINUIT2 user guide!
 Many technical questions are nicely covered by the user guide of MINUIT2,
 :download:`MINUIT User's guide <mnusersguide.pdf>`. We will frequently refer to it here.
 
-I don't understand :meth:`Minuit.hesse`, :meth:`Minuit.minos`, `errordef`; what do these do?
---------------------------------------------------------------------------------------------
+I don't understand :meth:`Minuit.hesse`, :meth:`Minuit.minos`, ``errordef``; what do these do?
+----------------------------------------------------------------------------------------------
 How do I interpret the parameter errors that iminuit produces?
 --------------------------------------------------------------
 How do I obtain a high-quality error matrix?
