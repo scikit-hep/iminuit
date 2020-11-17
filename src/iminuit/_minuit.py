@@ -17,14 +17,14 @@ __all__ = ["Minuit"]
 
 class Minuit:
     LEAST_SQUARES = 1.0
-    """Set `:attr:errordef` to this constant for a least-squares cost function."""
+    """Set :attr:`errordef` to this constant for a least-squares cost function."""
 
     LIKELIHOOD = 0.5
-    """Set `:attr:errordef` to this constant for a negative log-likelihood function."""
+    """Set :attr:`errordef` to this constant for a negative log-likelihood function."""
 
     @property
     def fcn(self):
-        """Cost function (usually a chi^2 or likelihood function)."""
+        """Cost function (usually a least-squares or likelihood function)."""
         return self._fcn
 
     @property
@@ -33,18 +33,13 @@ class Minuit:
         return self._fcn.grad
 
     @property
-    def use_array_call(self):
-        """Boolean. Whether to pass parameters as numpy array to cost function."""
-        return self._fcn.use_array_call
-
-    @property
     def pos2var(self):
-        """Map variable position to name"""
+        """Map variable index to name."""
         return self._pos2var
 
     @property
     def var2pos(self):
-        """Map variable name to position"""
+        """Map variable name to index."""
         return self._var2pos
 
     @property
@@ -59,16 +54,15 @@ class Minuit:
         Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
         function and 0.5 for negative log-likelihood function. See page 37 of
         http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called
-        ``UP`` in the MINUIT docs.
+        *UP* in the MINUIT docs.
 
         To make user code more readable, we provided two named constants::
 
-            from iminuit import Minuit
-            assert Minuit.LEAST_SQUARES == 1
-            assert Minuit.LIKELIHOOD == 0.5
+            m_lsq = Minuit(a_least_squares_function)
+            m_lsq.errordef = Minuit.LEAST_SQUARES  # == 1
 
-            Minuit(a_least_squares_function, errordef=Minuit.LEAST_SQUARES)
-            Minuit(a_likelihood_function, errordef=Minuit.LIKELIHOOD)
+            m_nll = Minuit(a_likelihood_function)
+            m_nll.errordef = Minuit.LIKELIHOOD     # == 0.5
         """
         return self._fcn.up
 
@@ -87,8 +81,6 @@ class Minuit:
     calculated as ``edm_max = 0.002 * tol * errordef`` and EDM is the *estimated distance
     to minimum*, as described in the `MINUIT paper`_.
     """
-
-    _strategy = None
 
     @property
     def strategy(self):
@@ -262,7 +254,7 @@ class Minuit:
     @property
     def narg(self):
         """Number of parameters."""
-        return len(self._init_state)
+        return len(self._pos2var)
 
     @property
     def nfit(self):
@@ -295,7 +287,7 @@ class Minuit:
 
     @property
     def fmin(self):
-        """Current function minimum data object"""
+        """Current function minimum."""
         return self._fmin
 
     @property
@@ -319,12 +311,12 @@ class Minuit:
 
     @property
     def valid(self):
-        """Check if function minimum is valid."""
+        """Whether the function minimum is valid."""
         return self._fmin and self._fmin.is_valid
 
     @property
     def accurate(self):
-        """Check if covariance (of the last MIGRAD run) is accurate."""
+        """Whether the covariance matrix produced by the last MIGRAD run is accurate."""
         return self._fmin and self._fmin.has_accurate_covar
 
     @property
@@ -340,157 +332,124 @@ class Minuit:
     def __init__(
         self,
         fcn,
+        *args,
         grad=None,
         name=None,
-        pedantic=True,
-        throw_nan=False,
-        use_array_call=False,
-        print_level=1,
-        errordef=None,
         **kwds,
     ):
         """
-        Construct minuit object from given *fcn*
+        Construct minuit object from given *fcn*.
 
-        **Arguments:**
+        **Accepted functions**
 
-            **fcn**, the function to be optimized, is the only required argument.
+            ``fcn``, the function to be optimized, is the only required argument.
 
             Two kinds of function signatures are understood.
 
             a) Parameters passed as positional arguments
 
-            The function has several positional arguments, one for each fit
-            parameter. Example::
+                The function has positional arguments, one for each fit
+                parameter. Example::
 
-                def func(a, b, c): ...
+                    def fcn(a, b, c): ...
 
-            The parameters a, b, c must accept a real number.
+                The parameters a, b, c must accept a real number.
 
-            iminuit automagically detects parameters names in this case.
-            More information about how the function signature is detected can
-            be found in :ref:`function-sig-label`
+                iminuit automatically detects the parameters names in this case.
+                More information about how the function signature is detected can
+                be found in :ref:`function-sig-label`.
 
             b) Parameters passed as Numpy array
 
-            The function has a single argument which is a Numpy array.
-            Example::
+                The function has a single argument which is a Numpy array.
+                Example::
 
-                def func(x): ...
+                    def fcn_np(x): ...
 
-            Pass the keyword `use_array_call=True` to use this signature. For
-            more information, see "Parameter Keyword Arguments" further down.
+                To use this form, starting values need to be passed to Minuit in form as
+                an array-like type, e.g. a numpy array, tuple or list. For more details,
+                see "Parameter Keyword Arguments" further down.
 
-            If you work with array parameters a lot, have a look at the static
-            initializer method :meth:`from_array_func`, which adds some
-            convenience and safety to this use case.
+        **Parameter initialization**
 
-        **Builtin Keyword Arguments:**
+            Initial values for the minimization can be set with positional arguments or
+            via keywords. This is best explained through an example::
 
-            - **throw_nan**: set fcn to raise RuntimeError when it
-              encounters *nan*. (Default False)
+                def fcn(x, y):
+                    return (x - 2) ** 2 + (y - 3) ** 2
 
-            - **pedantic**: warns about parameters that do not have initial
-              value or initial error/stepsize set.
+            The following ways of passing starting values are equivalent::
 
-            - **name**: sequence of strings. If set, this is used to detect
-              parameter names instead of iminuit's function signature detection.
+                Minuit(fcn, x=1, y=2)
+                Minuit(fcn, y=2, x=1) # order is irrelevant when keywords are used ...
+                Minuit(fcn, 1, 2)     # ... but here the order matters
 
-            - **print_level**: Optional. Set the print_level for Minuit algorithms,
-              see :attr:`print_level` for details.
+            Positional arguments can also be used if the function has no signature::
 
-            - **errordef**: Optional. See :attr:`errordef` for details on
-              this parameter. If set to `None` (the default), Minuit will try to call
-              `fcn.errordef` to set the error definition. If this fails, a warning is
-              raised and use a value appropriate for a least-squares function is used.
+                def fcn_no_sig(*args):
+                    # ...
 
+                Minuit(fcn_no_sig, 1, 2)
+
+            If the arguments are explicitly named with the ``name`` keyword described
+            further below, keywords can be used for initialization::
+
+                Minuit(fcn_no_sig, x=1, y=2, name=("x", "y"))  # this also works
+
+            If the function accepts a single Numpy array, then the initial values
+            must be passed as a single array-like object::
+
+                def fcn_np(x):
+                    return (x[0] - 2) ** 2 + (x[1] - 3) ** 2
+
+                Minuit(fcn_np, (1, 2))
+
+            Setting the values with keywords is not possible in this case. Minuit
+            deduces the number of parameters from the length of the initialization
+            sequence.
+
+        **Other keyword arguments**
             - **grad**: Optional. Provide a function that calculates the
               gradient analytically and returns an iterable object with one
               element for each dimension. If None is given MINUIT will
               calculate the gradient numerically. (Default None)
 
-            - **use_array_call**: Optional. Set this to true if your function
-              signature accepts a single numpy array of the parameters. You
-              need to also pass the `name` keyword then to
-              explicitly name the parameters.
-
-        **Parameter Keyword Arguments:**
-
-            iminuit allows user to set initial value, initial stepsize/error, limits of
-            parameters and whether the parameter should be fixed by passing keyword
-            arguments to Minuit.
-
-            This is best explained through examples::
-
-                def f(x, y):
-                    return (x-2)**2 + (y-3)**2
-
-            * Initial value (varname)::
-
-                #initial value for x and y
-                m = Minuit(f, x=1, y=2)
-
-            * Initial step size (fix_varname)::
-
-                #initial step size for x and y
-                m = Minuit(f, error_x=0.5, error_y=0.5)
-
-            * Limits (limit_varname=tuple)::
-
-                #limits x and y
-                m = Minuit(f, limit_x=(-10,10), limit_y=(-20,20))
-
-            * Fixing parameters::
-
-                #fix x but vary y
-                m = Minuit(f, fix_x=True)
-
-            .. note::
-
-                You can use dictionary expansion to programmatically change parameters.::
-
-                    kwargs = dict(x=1., error_x=0.5)
-                    m = Minuit(f, **kwargs)
-
-                You can also obtain fit arguments from Minuit object for later reuse.
-                *fitarg* will be automatically updated to the minimum value and the
-                corresponding error when you ran migrad/hesse.::
-
-                    m = Minuit(f, x=1, error_x=0.5)
-                    my_fitarg = m.fitarg
-                    another_fit = Minuit(f, **my_fitarg)
+            - **name**: sequence of strings. If set, this is used to detect
+              parameter names instead of iminuit's function signature detection.
         """
+        array_call = False
+        if len(args) == 1 and hasattr(args[0], "__getitem__"):
+            array_call = True
+            args = args[0]
 
-        if use_array_call and name is None:
-            raise KeyError("`use_array_call=True` requires that `name` is set")
-
-        args = mutil.describe(fcn) if name is None else name
-
-        # Maintain 2 dictionaries to easily convert between
-        # parameter names and position
-        self._pos2var = tuple(args)
-        self._var2pos = {k: i for i, k in enumerate(args)}
-
-        if pedantic:
-            self._pedantic(args, kwds)
-
-        if errordef is None:
-            if hasattr(fcn, "errordef"):
-                errordef = fcn.errordef
+        if name is None:
+            if len(args) == 0:
+                name = mutil.describe(fcn)
             else:
-                if pedantic:
-                    warn(
-                        "errordef not set, defaults to 1",
-                        mutil.InitialParamWarning,
-                        stacklevel=2,
-                    )
-                errordef = 1.0
+                try:
+                    name = mutil.describe(fcn)
+                except TypeError:
+                    pass
+
+                if name is None or len(name) != len(args):
+                    name = tuple(f"x[{i}]" for i in range(len(args)))
+
+        # Maintain two dictionaries to easily convert between
+        # parameter names and position
+        self._pos2var = tuple(name)
+        self._var2pos = {k: i for i, k in enumerate(name)}
+
+        if hasattr(fcn, "errordef"):
+            errordef = fcn.errordef
+        else:
+            errordef = 0
 
         self._strategy = MnStrategy(1)
+        self._print_level = 0
 
-        self._fcn = FCN(fcn, grad, use_array_call, throw_nan)
+        self._fcn = FCN(fcn, grad, array_call, errordef)
         self._fmin = None
-        self._init_state = self._make_init_state(kwds)
+        self._init_state = self._make_init_state(args, kwds)
         self._last_state = self._init_state
 
         self._values = ValueView(self)
@@ -499,148 +458,40 @@ class Minuit:
         self._limits = LimitView(self, 1)
         self._merrors = mutil.MErrors()
 
-        self.print_level = print_level
-        self.errordef = float(errordef)
-
-    def _make_init_state(self, kwds):
-        pars = self.parameters
-
+    def _make_init_state(self, args, kwds):
+        nargs = len(args)
         # check kwds
-        fixed_param = {"fix_" + p for p in pars}
-        limit_param = {"limit_" + p for p in pars}
-        error_param = {"error_" + p for p in pars}
-        for k in kwds:
-            if (
-                k not in pars
-                and k not in fixed_param
-                and k not in limit_param
-                and k not in error_param
-            ):
+        if nargs:
+            if kwds:
                 raise RuntimeError(
-                    f"Cannot understand keyword {k}, maybe a typo? "
-                    f"Parameters are {pars}"
+                    f"positional arguments cannot be mixed with "
+                    f"parameter keyword arguments {kwds}"
                 )
+            if nargs != self.narg:
+                raise RuntimeError(f"{nargs} values given for {self.narg} parameters")
+        else:
+            for kw in kwds:
+                if kw not in self.parameters:
+                    raise RuntimeError(
+                        f"{kw} is not one of the parameters {' '.join(self._pos2var)}"
+                    )
 
         state = MnUserParameterState()
         for i, x in enumerate(self._pos2var):
-            lim = mutil._normalize_limit(kwds.get(f"limit_{x}", None))
-            val = kwds.get(x, mutil._guess_initial_value(lim))
-            err = kwds.get(f"error_{x}", mutil._guess_initial_step(val))
-            fix = kwds.get(f"fix_{x}", False)
-            if lim is None:
-                state.add(x, val, err)
+            if nargs:
+                val = args[i]
             else:
-                lb, ub = lim
-                if lb == ub:
-                    state.add(x, lb, err, lb, ub)
-                    state.fix(i)
-                elif lb == -np.inf and ub == np.inf:
-                    state.add(x, val, err)
-                elif ub == np.inf:
-                    state.add(x, val, err)
-                    state.set_lower_limit(i, lb)
-                elif lb == -np.inf:
-                    state.add(x, val, err)
-                    state.set_upper_limit(i, ub)
-                else:
-                    state.add(x, val, err, lb, ub)
-            if fix:
-                state.fix(i)
+                if x not in kwds:
+                    warn(
+                        f"Parameter {x} has no initial value, using 0",
+                        mutil.InitialParamWarning,
+                        stacklevel=3,
+                    )
+
+                val = kwds.get(x, 0.0)
+            err = mutil._guess_initial_step(val)
+            state.add(x, val, err)
         return state
-
-    @classmethod
-    def from_array_func(
-        cls, fcn, start, error=None, limit=None, fix=None, name=None, **kwds
-    ):
-        """Construct Minuit object from given *fcn* and start sequence.
-
-        This is an alternative named constructor for the minuit object. It is
-        more convenient to use for functions that accept a numpy array.
-
-        **Arguments:**
-
-            **fcn**: The function to be optimized. Must accept a single
-            parameter that is a numpy array.
-
-                def func(x): ...
-
-            **start**: Sequence of numbers. Starting point for the
-            minimization.
-
-        **Keyword arguments:**
-
-            **error**: Optional sequence of numbers. Initial step sizes.
-            Scalars are automatically broadcasted to the length of the
-            start sequence.
-
-            **limit**: Optional sequence of limits that restrict the range in
-            which a parameter is varied by minuit. Limits can be set in
-            several ways. With inf = float("infinity") we get:
-
-            - No limit: None, (-inf, inf), (None, None)
-
-            - Lower limit: (x, None), (x, inf) [replace x with a number]
-
-            - Upper limit: (None, x), (-inf, x) [replace x with a number]
-
-            A single limit is automatically broadcasted to the length of the
-            start sequence.
-
-            **fix**: Optional sequence of boolean values. Whether to fix a
-            parameter to the starting value.
-
-            **name**: Optional sequence of parameter names. If names are not
-            specified, the parameters are called x0, ..., xN.
-
-            All other keywords are forwarded to :class:`Minuit`, see
-            its documentation.
-
-        **Example:**
-
-            A simple example function is passed to Minuit. It accept a numpy
-            array of the parameters. Initial starting values and error
-            estimates are given::
-
-                import numpy as np
-
-                def f(x):
-                    mu = (2, 3)
-                    return np.sum((x-mu)**2)
-
-                # error is automatically broadcasted to (0.5, 0.5)
-                m = Minuit.from_array_func(f, (2, 3),
-                                           error=0.5)
-
-        """
-        npar = len(start)
-        pnames = name if name is not None else [f"x{i}" for i in range(npar)]
-        kwds["name"] = pnames
-        kwds["use_array_call"] = True
-        if error is not None:
-            if np.isscalar(error):
-                error = np.ones(npar) * error
-            else:
-                if len(error) != npar:
-                    raise RuntimeError(
-                        "length of error sequence does " "not match start sequence"
-                    )
-        if limit is not None:
-            if len(limit) == 2 and np.isscalar(limit[0]) and np.isscalar(limit[1]):
-                limit = [limit for i in range(npar)]
-            else:
-                if len(limit) != npar:
-                    raise RuntimeError(
-                        "length of limit sequence does " "not match start sequence"
-                    )
-        for i, name in enumerate(pnames):
-            kwds[name] = start[i]
-            if error is not None:
-                kwds["error_" + name] = error[i]
-            if limit is not None:
-                kwds["limit_" + name] = limit[i]
-            if fix is not None:
-                kwds["fix_" + name] = fix[i]
-        return cls(fcn, **kwds)
 
     def reset(self):
         """Reset minimization state to initial state."""
@@ -685,6 +536,7 @@ class Minuit:
         if iterate < 1:
             raise ValueError("iterate must be at least 1")
 
+        _check_errordef(self._fcn)
         migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
         migrad.set_print_level(self.print_level)
         if precision is not None:
@@ -735,6 +587,7 @@ class Minuit:
 
         hesse = MnHesse(self.strategy)
 
+        _check_errordef(self._fcn)
         fm = self._fmin._src if self._fmin else None
         if fm and fm.state == self._last_state:
             # _last_state not modified, can update _fmin which is more efficient
@@ -752,7 +605,7 @@ class Minuit:
 
         return self.params
 
-    def minos(self, var=None, sigma=1.0, ncall=None):
+    def minos(self, *parameters, sigma=1.0, ncall=None):
         """Run MINOS to compute asymmetric confidence intervals.
 
         MINOS uses the profile likelihood method to compute (asymmetric)
@@ -770,10 +623,13 @@ class Minuit:
         parameters at each point. This is requires many more FCN evaluations
         than running HESSE.
 
-        **Arguments:**
+        **Positional arguments**
 
-            - **var**: optional variable name to compute the error for.
-              If var is not given, MINOS is run for every variable.
+            Names of parameters to generate Minos errors for. If no positional
+            arguments are given, MINOS is run for each parameter.
+
+        **Keyword arguments**
+
             - **sigma**: number of :math:`\\sigma` error. Default 1.0.
             - **ncall**: integer or None, limit the number of calls made by MINOS.
               Default: None (uses an internal heuristic by C++ MINUIT).
@@ -786,33 +642,37 @@ class Minuit:
         """
         if not self._fmin:
             raise RuntimeError(
-                "MINOS require function to be at the minimum." " Run MIGRAD first."
+                "MINOS require function to be at the minimum. Run MIGRAD first."
             )
 
         ncall = 0 if ncall is None else int(ncall)
 
         if not self._fmin.is_valid:
             raise RuntimeError(
-                "Function minimum is not valid. Make sure " "MIGRAD converged first"
+                "Function minimum is not valid. Make sure MIGRAD converged."
             )
-        if var is not None and var not in self._pos2var:
-            raise RuntimeError(f"Unknown parameter {var}")
 
+        if len(parameters) == 0:
+            pars = [par for par in self.parameters if not self.fixed[par]]
+        else:
+            pars = []
+            for par in parameters:
+                if par not in self._var2pos:
+                    raise RuntimeError(f"Unknown parameter {par}")
+                if self.fixed[par]:
+                    warn(
+                        f"Cannot scan over fixed parameter {par}",
+                        mutil.IMinuitWarning,
+                    )
+                else:
+                    pars.append(par)
+
+        _check_errordef(self._fcn)
         with mutil.TemporaryUp(self._fcn, sigma):
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
-
-            vnames = self._pos2var if var is None else [var]
-            for vname in vnames:
-                if self.fixed[vname]:
-                    if var is not None and var == vname:
-                        warn(
-                            f"Cannot scan parameter {var}, it is fixed",
-                            mutil.IMinuitWarning,
-                        )
-                        return None
-                    continue
-                me = minos(self._var2pos[vname], ncall, self.tol)
-                self._merrors[vname] = mutil.MError(vname, me)
+            for par in pars:
+                me = minos(self._var2pos[par], ncall, self.tol)
+                self._merrors[par] = mutil.MError(par, me)
 
         self._fmin.nfcn = self._fcn.nfcn
         self._fmin.ngrad = self._fcn.ngrad
@@ -976,6 +836,7 @@ class Minuit:
         ipar = self._var2pos[vname]
         state.fix(ipar)
         pr = MnPrint("Minuit.mnprofile", self.print_level)
+        _check_errordef(self._fcn)
         for i, v in enumerate(values):
             state.set_value(ipar, v)
             migrad = MnMigrad(self._fcn, state, self.strategy)
@@ -1279,6 +1140,7 @@ class Minuit:
         if x not in vary or y not in vary:
             raise ValueError("mncontour cannot be run on fixed parameters.")
 
+        _check_errordef(self._fcn)
         with mutil.TemporaryUp(self._fcn, sigma):
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             mex, mey, ce = mnc(ix, iy, numpoints)
@@ -1388,14 +1250,15 @@ class Minuit:
         if self._fmin and self._last_state == self._fmin._src.state:
             self._last_state = MnUserParameterState(self._last_state)
 
-    def _pedantic(self, parameters, kwds):
-        for vn in parameters:
-            if vn not in kwds and "limit_%s" % vn not in kwds:
-                warn(
-                    f"Parameter {vn} has neither initial value nor limits",
-                    mutil.InitialParamWarning,
-                    stacklevel=3,
-                )
+
+def _check_errordef(fcn):
+    if fcn.up == 0:
+        warn(
+            "errordef not set, defaults to 1",
+            mutil.InitialParamWarning,
+            stacklevel=3,
+        )
+        fcn.up = 1
 
 
 # Helper classes

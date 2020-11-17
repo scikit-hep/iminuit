@@ -211,7 +211,7 @@ class FMin:
 
 
 class Params(list):
-    """List of parameter data objects."""
+    """List-like holder of parameter data objects."""
 
     def __init__(self, seq, merrors):
         """Make Params from sequence of Param objects and MErrors object."""
@@ -323,7 +323,7 @@ class MError:
 
 
 class MErrors(OrderedDict):
-    """Dict from parameter name to Minos result object."""
+    """Dict-like map from parameter name to Minos result object."""
 
     __slots__ = ()
 

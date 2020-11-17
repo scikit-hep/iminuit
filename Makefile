@@ -7,23 +7,24 @@ else
 endif
 
 # default target
-build: $(wildcard src/*.cpp) $(wildcard extern/root/math/minuit2/src/*.cxx) $(wildcard extern/root/math/minuit2/inc/*.h) CMakeLists.txt setup.py cmake.py
+build: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
 	$(PYTHON) setup.py develop
 	touch build
 
 test: build
-	$(PYTHON) -m pytest -qvv -r a --ff --pdb
+	$(PYTHON) -m pytest -vv -r a --ff --pdb
 
 cov: build
 	@echo "Note: This only shows the coverage in pure Python."
 	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
 
-doc: build/html/index.html
+doc: build/html
 
-build/html/index.html: doc/conf.py $(wildcard iminuit/*.py doc/*.rst doc/_static/* doc/plots/*)
+build/html: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/*)
 	$(PYTHON) -c "import iminuit" # requires iminuit to be installed
 	mkdir -p build/html
 	sphinx-build -W -a -E -b html -d build/doctrees doc build/html
+	touch build/html
 
 check:
 	pre-commit run -a

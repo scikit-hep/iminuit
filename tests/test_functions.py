@@ -9,8 +9,9 @@ def rosenbrock(x, y):
 
 
 def test_rosenbrock():
-    m = Minuit(rosenbrock, x=0, y=0, pedantic=False)
+    m = Minuit(rosenbrock, x=0, y=0)
     m.tol = 1e-4
+    m.errordef = 1
     m.migrad()
     assert_allclose(m.fval, 0, atol=1e-6)
     assert_allclose(m.values["x"], 1.0, atol=1e-3)
@@ -24,8 +25,10 @@ def ackleys(x, y):
 
 
 def test_ackleys():
-    m = Minuit(ackleys, x=0.3, y=-0.2, error_x=1.7, error_y=1.7, pedantic=False)
+    m = Minuit(ackleys, x=0.3, y=-0.2)
+    # m.errors = 1.7
     m.tol = 1e-4
+    m.errordef = 1
     m.migrad()
 
     assert_allclose(m.fval, 0, atol=1e-6)
@@ -40,8 +43,9 @@ def beale(x, y):
 
 
 def test_beale():
-    m = Minuit(beale, x=0.5, y=0.25, pedantic=False)
+    m = Minuit(beale, x=0.5, y=0.25)
     m.tol = 1e-4
+    m.errordef = 1
     m.migrad()
     assert_allclose(m.fval, 0, atol=1e-6)
     assert_allclose(m.values, [3, 0.5], atol=1e-3)
@@ -53,8 +57,9 @@ def matyas(x, y):
 
 
 def test_matyas():
-    m = Minuit(matyas, x=0.5, y=0.5, pedantic=False)
+    m = Minuit(matyas, x=0.5, y=0.5)
     m.tol = 1e-4
+    m.errordef = 1
     m.migrad()
     assert_allclose(m.fval, 0, atol=1e-14)
     assert_allclose(m.values, [0, 0], atol=1e-14)
@@ -62,7 +67,9 @@ def test_matyas():
 
 def test_matyas_oneside():
     """One-sided limit when the minimum is in the forbidden region."""
-    m = Minuit(matyas, x=2 + 0.5, y=0.5, limit_x=(1, None), pedantic=False)
+    m = Minuit(matyas, x=2 + 0.5, y=0.5)
     m.tol = 1e-4
+    m.errordef = 1
+    m.limits["x"] = (1, None)
     m.migrad()
     assert_allclose(m.values, [1, 0.923], atol=1e-3)
