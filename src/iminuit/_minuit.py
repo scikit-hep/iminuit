@@ -218,40 +218,6 @@ class Minuit:
         return self._merrors
 
     @property
-    def fitarg(self):
-        """Current Minuit state in form of a dict.
-
-        * name -> value
-        * error_name -> error
-        * fix_name -> fix
-        * limit_name -> (lower_limit, upper_limit)
-
-        This is very useful when you want to save the fit parameters and
-        re-use them later. For example::
-
-            m = Minuit(f, x=1)
-            m.migrad()
-            fitarg = m.fitarg
-
-            m2 = Minuit(f, **fitarg)
-        """
-
-        kwargs = {}
-        for mp in self._last_state:
-            kwargs[mp.name] = mp.value
-            kwargs[f"error_{mp.name}"] = mp.error
-            if mp.is_fixed:
-                kwargs[f"fix_{mp.name}"] = mp.is_fixed
-            has_lower = mp.has_lower_limit
-            has_upper = mp.has_upper_limit
-            if has_lower or has_upper:
-                kwargs[f"limit_{mp.name}"] = (
-                    mp.lower_limit if has_lower else -np.inf,
-                    mp.upper_limit if has_upper else np.inf,
-                )
-        return kwargs
-
-    @property
     def narg(self):
         """Number of parameters."""
         return len(self._pos2var)

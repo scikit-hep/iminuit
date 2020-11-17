@@ -519,41 +519,6 @@ def describe(f, verbose=False):
     raise TypeError("Unable to obtain function signature")
 
 
-def fitarg_rename(fitarg, ren):
-    """Rename variable names in ``fitarg`` with rename function.
-
-    ::
-
-        #simple renaming
-        fitarg_rename({'x':1, 'limit_x':1, 'fix_x':1, 'error_x':1},
-            lambda pname: 'y' if pname=='x' else pname)
-        #{'y':1, 'limit_y':1, 'fix_y':1, 'error_y':1},
-
-        #prefixing
-        figarg_rename({'x':1, 'limit_x':1, 'fix_x':1, 'error_x':1},
-            lambda pname: 'prefix_'+pname)
-        #{'prefix_x':1, 'limit_prefix_x':1, 'fix_prefix_x':1, 'error_prefix_x':1}
-
-    """
-    if isinstance(ren, str):
-        s = ren
-        ren = lambda x: s + "_" + x  # noqa: E731
-
-    ret = {}
-    prefix = ["limit_", "fix_", "error_"]
-    for k, v in fitarg.items():
-        vn = k
-        pf = ""
-        for p in prefix:
-            if k.startswith(p):
-                i = len(p)
-                vn = k[i:]
-                pf = p
-        newvn = pf + ren(vn)
-        ret[newvn] = v
-    return ret
-
-
 def _normalize_limit(lim):
     if lim is None:
         return None
