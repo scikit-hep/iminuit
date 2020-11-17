@@ -1,4 +1,5 @@
 from warnings import warn
+from collections.abc import Iterable
 from . import util as mutil
 from ._core import (
     FCN,
@@ -268,12 +269,12 @@ class Minuit:
     @property
     def params(self):
         """List of current parameter data objects."""
-        return mutil._get_params(self._last_state, self.merrors)
+        return get_params(self._last_state, self.merrors)
 
     @property
     def init_params(self):
         """List of current parameter data objects set to the initial fit state."""
-        return mutil._get_params(self._init_state, None)
+        return get_params(self._init_state, None)
 
     @property
     def valid(self):
@@ -455,7 +456,7 @@ class Minuit:
                     )
 
                 val = kwds.get(x, 0.0)
-            err = mutil._guess_initial_step(val)
+            err = guess_initial_step(val)
             state.add(x, val, err)
         return state
 
@@ -634,7 +635,7 @@ class Minuit:
                     pars.append(par)
 
         _check_errordef(self._fcn)
-        with mutil.TemporaryUp(self._fcn, sigma):
+        with TemporaryUp(self._fcn, sigma):
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
             for par in pars:
                 me = minos(self._var2pos[par], ncall, self.tol)
@@ -1107,7 +1108,7 @@ class Minuit:
             raise ValueError("mncontour cannot be run on fixed parameters.")
 
         _check_errordef(self._fcn)
-        with mutil.TemporaryUp(self._fcn, sigma):
+        with TemporaryUp(self._fcn, sigma):
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             mex, mey, ce = mnc(ix, iy, numpoints)
 
@@ -1252,7 +1253,7 @@ class BasicView:
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             return [self._get(i) for i in ind]
-        i = key if mutil._is_int(key) else self._minuit._var2pos[key]
+        i = key if is_int(key) else self._minuit._var2pos[key]
         if i < 0:
             i += len(self)
         if i < 0 or i >= len(self):
@@ -1263,7 +1264,7 @@ class BasicView:
         self._minuit._copy_state_if_needed()
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
-            if np.ndim(value) == self._ndim:  # basic broadcasting
+            if ndim(value) == self._ndim:  # basic broadcasting
                 for i in ind:
                     self._set(i, value)
             else:
@@ -1272,7 +1273,7 @@ class BasicView:
                 for i, v in zip(ind, value):
                     self._set(i, v)
         else:
-            i = key if mutil._is_int(key) else self._minuit._var2pos[key]
+            i = key if is_int(key) else self._minuit._var2pos[key]
             if i < 0:
                 i += len(self)
             if i < 0 or i >= len(self):
@@ -1334,23 +1335,19 @@ class LimitView(BasicView):
 
     def _set(self, i, args):
         state = self._minuit._last_state
-        args = mutil._normalize_limit(args)
         val = state[i].value
         err = state[i].error
         # changing limits is a cheap operation, start from clean state
         state.remove_limits(i)
-        if args is None or args == (-np.inf, np.inf):
-            low, high = (-np.inf, np.inf)
-        else:
-            low, high = args
-            if low != -np.inf and high != np.inf:  # both must be set
-                state.set_limits(i, low, high)
-                if low == high:
-                    state.fix(i)
-            elif low != -np.inf:  # lower limit must be set
-                state.set_lower_limit(i, low)
-            else:  # lower limit must be set
-                state.set_upper_limit(i, high)
+        low, high = normalize_limit(args)
+        if low != -np.inf and high != np.inf:  # both must be set
+            state.set_limits(i, low, high)
+            if low == high:
+                state.fix(i)
+        elif low != -np.inf:  # lower limit must be set
+            state.set_lower_limit(i, low)
+        else:  # lower limit must be set
+            state.set_upper_limit(i, high)
         # bug in Minuit2: must set parameter value and error again after changing limits
         if val < low:
             val = low
@@ -1358,3 +1355,75 @@ class LimitView(BasicView):
             val = high
         state.set_value(i, val)
         state.set_error(i, err)
+
+
+def guess_initial_step(val):
+    return 1e-2 * val if val != 0 else 1e-1  # heuristic
+
+
+def is_int(value):
+    return isinstance(value, int)
+
+
+def is_iterable(obj):
+    return isinstance(obj, Iterable)
+
+
+def ndim(value):
+    nd = 0
+    while True:
+        if is_iterable(value):
+            nd += 1
+            for x in value:
+                if x is not None:
+                    value = x
+                    break
+    return nd
+
+
+def get_params(mps, merrors):
+    return Params(
+        (
+            Param(
+                mp.number,
+                mp.name,
+                mp.value,
+                mp.error,
+                mp.is_const,
+                mp.is_fixed,
+                mp.has_limits,
+                mp.has_lower_limit,
+                mp.has_upper_limit,
+                mp.lower_limit if mp.has_lower_limit else None,
+                mp.upper_limit if mp.has_upper_limit else None,
+            )
+            for mp in mps
+        ),
+        merrors,
+    )
+
+
+def normalize_limit(lim):
+    if lim is None:
+        return (-inf, inf)
+    lim = list(lim)
+    if lim[0] is None:
+        lim[0] = -inf
+    if lim[1] is None:
+        lim[1] = inf
+    if lim[0] > lim[1]:
+        raise ValueError("limit " + str(lim) + " is invalid")
+    return tuple(lim)
+
+
+class TemporaryUp:
+    def __init__(self, fcn, sigma):
+        self.saved = fcn.up
+        self.fcn = fcn
+        self.fcn.up = sigma ** 2
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.fcn.up = self.saved

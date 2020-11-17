@@ -1,8 +1,8 @@
 """iminuit utility functions and classes."""
 import re
 from collections import OrderedDict, namedtuple
-from . import repr_html
-from . import repr_text
+from . import _repr_html
+from . import _repr_text
 
 inf = float("infinity")
 
@@ -46,7 +46,7 @@ class Matrix(tuple):
         return tab, self.names
 
     def _repr_html_(self):
-        return repr_html.matrix(self)
+        return _repr_html.matrix(self)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -153,7 +153,7 @@ class FMin:
         return repr_text.fmin(self)
 
     def _repr_html_(self):
-        return repr_html.fmin(self)
+        return _repr_html.fmin(self)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -219,7 +219,7 @@ class Params(list):
         self.merrors = merrors
 
     def _repr_html_(self):
-        return repr_html.params(self)
+        return _repr_html.params(self)
 
     def to_table(self):
         header = [
@@ -309,7 +309,7 @@ class MError:
         self.min = minos_error.min
 
     def _repr_html_(self):
-        return repr_html.merrors([self])
+        return _repr_html.merrors([self])
 
     def __str__(self):
         """Return string suitable for terminal."""
@@ -328,7 +328,7 @@ class MErrors(OrderedDict):
     __slots__ = ()
 
     def _repr_html_(self):
-        return repr_html.merrors(self.values())
+        return _repr_html.merrors(self.values())
 
     def __str__(self):
         """Return string suitable for terminal."""
@@ -373,7 +373,71 @@ class MigradResult(namedtuple("_MigradResult", "fmin params")):
             p.text(str(self))
 
 
-def arguments_from_docstring(doc):
+def make_func_code(params):
+    """Make a func_code object to fake function signature.
+
+    You can make a funccode from describable object by::
+
+        make_func_code(["x", "y"])
+    """
+    return namedtuple("FuncCode", "co_varnames co_argcount")(params, len(params))
+
+
+def describe(f):
+    """Try to extract the function argument names."""
+    return (
+        _arguments_from_funccode(f)
+        or _arguments_from_call_funccode(f)
+        or _arguments_from_docstring(f.__call__.__doc__)
+        or _arguments_from_docstring(f.__doc__)
+        or _arguments_from_inspect(f)
+        or None
+    )
+
+
+def _fc_or_c(f):
+    if hasattr(f, "func_code"):
+        return f.func_code
+    if hasattr(f, "__code__"):
+        return f.__code__
+    # bound method and fake function will be None
+    return None
+
+
+def _arguments_from_funccode(f):
+    # Check f.funccode for arguments
+    fc = _fc_or_c(f)
+    if fc is None:
+        return None
+    nargs = fc.co_argcount
+    args = fc.co_varnames[:nargs]
+    if getattr(f, "__self__", None) is not None:
+        args = args[1:]
+    return list(args)
+
+
+def _arguments_from_call_funccode(f):
+    # Check f.__call__.func_code for arguments
+    fc = _fc_or_c(f.__call__)
+    nargs = fc.co_argcount
+    return list(fc.co_varnames[1:nargs])
+
+
+def _arguments_from_inspect(f):
+    # Check inspect.signature for arguemnts
+    import inspect
+
+    signature = inspect.signature(f)
+    for name, par in signature.parameters.items():
+        # Variable number of arguments is not supported
+        if par.kind is inspect.Parameter.VAR_POSITIONAL:
+            return None
+        if par.kind is inspect.Parameter.VAR_KEYWORD:
+            return None
+    return list(signature.parameters)
+
+
+def _arguments_from_docstring(doc):
     """Parse first line of docstring for argument name.
 
     Docstring should be of the form ``min(iterable[, key=func])``.
@@ -382,7 +446,7 @@ def arguments_from_docstring(doc):
     ``Minuit.migrad(self[, int ncall_me =10000, foo=True, int bar=1])``
     """
     if doc is None:
-        return False, []
+        return None
 
     doc = doc.lstrip()
 
@@ -395,7 +459,7 @@ def arguments_from_docstring(doc):
     # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
     if sig is None:
-        return False, []
+        return None
     # iterable[, key=func]' -> ['iterable[' ,' key=func]']
     sig = sig.groups()[0].split(",")
     ret = []
@@ -409,178 +473,8 @@ def arguments_from_docstring(doc):
         # re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         # ret += self.docstring_kwd_re.findall(s)
     ret = list(filter(lambda x: x != "", ret))
-    return bool(ret), ret
 
+    if ret[0] == "self":
+        ret = ret[1:]
 
-def _is_bound(f):
-    return getattr(f, "__self__", None) is not None
-
-
-def make_func_code(params):
-    """Make a func_code object to fake function signature.
-
-    You can make a funccode from describable object by::
-
-        make_func_code(["x", "y"])
-    """
-    return namedtuple("FuncCode", "co_varnames co_argcount")(params, len(params))
-
-
-def _fc_or_c(f):
-    if hasattr(f, "func_code"):
-        return f.func_code
-    if hasattr(f, "__code__"):
-        return f.__code__
-    return make_func_code([])
-
-
-def arguments_from_funccode(f):
-    """Check f.funccode for arguments."""
-    fc = _fc_or_c(f)
-    nargs = fc.co_argcount
-    # bound method and fake function will be None
-    if nargs == 0:
-        # Function has variable number of arguments
-        return False, []
-    args = fc.co_varnames[:nargs]
-    if _is_bound(f):
-        args = args[1:]
-    return bool(args), list(args)
-
-
-def arguments_from_call_funccode(f):
-    """Check f.__call__.func_code for arguments."""
-    fc = _fc_or_c(f.__call__)
-    nargs = fc.co_argcount
-    args = list(fc.co_varnames[1:nargs])
-    return bool(args), args
-
-
-def arguments_from_inspect(f):
-    """Check inspect.signature for arguemnts"""
-    import inspect
-
-    signature = inspect.signature(f)
-    ok = True
-    for name, par in signature.parameters.items():
-        # Variable number of arguments is not supported
-        if par.kind is inspect.Parameter.VAR_POSITIONAL:
-            ok = False
-        if par.kind is inspect.Parameter.VAR_KEYWORD:
-            ok = False
-    return ok, list(signature.parameters)
-
-
-def describe(f, verbose=False):
-    """Try to extract the function argument names."""
-    # using funccode
-    ok, args = arguments_from_funccode(f)
-    if ok:
-        return args
-    if verbose:
-        print("Failed to extract arguments from f.func_code/__code__")
-
-    # using __call__ funccode
-    ok, args = arguments_from_call_funccode(f)
-    if ok:
-        return args
-    if verbose:
-        print("Failed to extract arguments from f.__call__.func_code/__code__")
-
-    # now we are parsing __call__.__doc__
-    # we assume that __call__.__doc__ doesn't have self
-    # this is what cython gives
-    ok, args = arguments_from_docstring(f.__call__.__doc__)
-    if ok:
-        if args[0] == "self":
-            args = args[1:]
-        return args
-    if verbose:
-        print("Failed to parse __call__.__doc__")
-
-    # how about just __doc__
-    ok, args = arguments_from_docstring(f.__doc__)
-    if ok:
-        if args[0] == "self":
-            args = args[1:]
-        return args
-    if verbose:
-        print("Failed to parse __doc__")
-
-    ok, args = arguments_from_inspect(f)
-    if ok:
-        return args
-    if verbose:
-        print(
-            "Failed to parse inspect.signature(f). Perhaps you are using"
-            " a variable number of arguments. This is not supported."
-        )
-
-    raise TypeError("Unable to obtain function signature")
-
-
-def _normalize_limit(lim):
-    if lim is None:
-        return None
-    lim = list(lim)
-    if lim[0] is None:
-        lim[0] = -inf
-    if lim[1] is None:
-        lim[1] = inf
-    if lim[0] > lim[1]:
-        raise ValueError("limit " + str(lim) + " is invalid")
-    return tuple(lim)
-
-
-def _guess_initial_value(lim):
-    if lim is None:
-        return 0.0
-    if lim[1] == inf:
-        return lim[0] + 1.0
-    if lim[0] == -inf:
-        return lim[1] - 1.0
-    return 0.5 * (lim[0] + lim[1])
-
-
-def _guess_initial_step(val):
-    step = 1e-2 * val if val != 0 else 1e-1  # heuristic
-    return step
-
-
-def _is_int(value):
-    return isinstance(value, int)
-
-
-def _get_params(mps, merrors):
-    return Params(
-        (
-            Param(
-                mp.number,
-                mp.name,
-                mp.value,
-                mp.error,
-                mp.is_const,
-                mp.is_fixed,
-                mp.has_limits,
-                mp.has_lower_limit,
-                mp.has_upper_limit,
-                mp.lower_limit if mp.has_lower_limit else None,
-                mp.upper_limit if mp.has_upper_limit else None,
-            )
-            for mp in mps
-        ),
-        merrors,
-    )
-
-
-class TemporaryUp:
-    def __init__(self, fcn, sigma):
-        self.saved = fcn.up
-        self.fcn = fcn
-        self.fcn.up = sigma ** 2
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.fcn.up = self.saved
+    return ret

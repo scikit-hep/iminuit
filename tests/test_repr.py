@@ -1,7 +1,7 @@
 # flake8: noqa E501
 from iminuit import Minuit
 from iminuit.util import Params, Param, Matrix, FMin
-from iminuit import repr_html, repr_text
+from iminuit import _repr_html as repr_html, _repr_text as repr_text
 import pytest
 from argparse import Namespace
 from pathlib import Path

@@ -3,6 +3,48 @@ import pytest
 from argparse import Namespace
 
 
+def test_color_2():
+    g = Gradient((-1, 10, 10, 20), (2, 20, 20, 10))
+    assert g.rgb(-1) == "rgb(10,10,20)"
+    assert g.rgb(2) == "rgb(20,20,10)"
+    assert g.rgb(-1.00001) == "rgb(10,10,20)"
+    assert g.rgb(1.99999) == "rgb(20,20,10)"
+    assert g.rgb(0.5) == "rgb(15,15,15)"
+
+
+def test_color_3():
+    g = Gradient((-1, 50, 50, 250), (0, 100, 100, 100), (1, 250, 50, 50))
+    assert g.rgb(-1) == "rgb(50,50,250)"
+    assert g.rgb(-0.5) == "rgb(75,75,175)"
+    assert g.rgb(0) == "rgb(100,100,100)"
+    assert g.rgb(0.5) == "rgb(175,75,75)"
+    assert g.rgb(1) == "rgb(250,50,50)"
+
+
+def test_fitarg_rename():
+    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
+
+    def ren(x):
+        return "z_" + x
+
+    newfa = util.fitarg_rename(fitarg, ren)
+    assert "z_x" in newfa
+    assert "limit_z_x" in newfa
+    assert "error_z_x" in newfa
+    assert "fix_z_x" in newfa
+    assert len(newfa) == 4
+
+
+def test_fitarg_rename_strprefix():
+    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
+    newfa = util.fitarg_rename(fitarg, "z")
+    assert "z_x" in newfa
+    assert "limit_z_x" in newfa
+    assert "error_z_x" in newfa
+    assert "fix_z_x" in newfa
+    assert len(newfa) == 4
+
+
 def test_arguments_from_docstring():
     s = "f(x, y, z)"
     ok, a = util.arguments_from_docstring(s)
