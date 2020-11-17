@@ -3,30 +3,6 @@ import pytest
 from argparse import Namespace
 
 
-def test_fitarg_rename():
-    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
-
-    def ren(x):
-        return "z_" + x
-
-    newfa = util.fitarg_rename(fitarg, ren)
-    assert "z_x" in newfa
-    assert "limit_z_x" in newfa
-    assert "error_z_x" in newfa
-    assert "fix_z_x" in newfa
-    assert len(newfa) == 4
-
-
-def test_fitarg_rename_strprefix():
-    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
-    newfa = util.fitarg_rename(fitarg, "z")
-    assert "z_x" in newfa
-    assert "limit_z_x" in newfa
-    assert "error_z_x" in newfa
-    assert "fix_z_x" in newfa
-    assert len(newfa) == 4
-
-
 def test_arguments_from_docstring():
     s = "f(x, y, z)"
     ok, a = util.arguments_from_docstring(s)
