@@ -10,18 +10,18 @@ Note: iminuit is tested to work with PyPy3.5 and PyPy3.6, but we do not provide 
 Conda
 -----
 
-We provide binary packages for `conda` users via https://anaconda.org/conda-forge/iminuit:
+We provide binary packages for ``conda`` users via https://anaconda.org/conda-forge/iminuit:
 
 .. code-block:: bash
 
     $ conda install -c conda-forge iminuit
 
-`iminuit` only depends on `numpy`. The conda packages are semi-automatically maintained and usually quickly support the least Python version on all platforms.
+``iminuit`` only depends on ``numpy``. The conda packages are semi-automatically maintained and usually quickly support the least Python version on all platforms.
 
 pip
 ---
 
-To install the latest stable version from https://pypi.org/project/iminuit/ with `pip`:
+To install the latest stable version from https://pypi.org/project/iminuit/ with ``pip``:
 
 .. code-block:: bash
 
@@ -48,7 +48,7 @@ See :ref:`contribute`.
 Check installation
 ------------------
 
-To check your `iminuit` version number and install location::
+To check your ``iminuit`` version number and install location::
 
     $ python
     >>> import iminuit
@@ -57,7 +57,7 @@ To check your `iminuit` version number and install location::
     >>> iminuit.__version__
     # version number is printed
 
-Usually if `import iminuit` works, everything is OK. But in case you suspect that you have a broken `iminuit` installation, you can run the automated tests like this::
+Usually if ``import iminuit`` works, everything is OK. But in case you suspect that you have a broken ``iminuit`` installation, you can run the automated tests like this::
 
     $ pip install pytest
     $ python -c "import iminuit; iminuit.test()"
