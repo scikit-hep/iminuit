@@ -10,24 +10,22 @@ Reference
 
 Quick Summary
 -------------
-These methods and attributes you will use a lot:
+These methods and properties you will probably use a lot:
 
 .. autosummary::
     Minuit
-    Minuit.from_array_func
     Minuit.migrad
     Minuit.hesse
     Minuit.minos
     Minuit.values
+    Minuit.errors
+    Minuit.merrors
     Minuit.fixed
+    Minuit.limits
     Minuit.valid
     Minuit.accurate
     Minuit.fval
     Minuit.nfit
-    Minuit.np_values
-    Minuit.np_covariance
-    Minuit.np_errors
-    Minuit.np_merrors
     Minuit.mnprofile
     Minuit.draw_mnprofile
 

@@ -1,7 +1,7 @@
 import pytest
 from iminuit import minimize
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_equal
 
 opt = pytest.importorskip("scipy.optimize")
 
@@ -62,11 +62,6 @@ def test_tol():
     assert max(np.abs(r2.x - ref)) < max(np.abs(r1.x - ref))
 
 
-def test_bad_function():
-    r = minimize(lambda x: 0, 0)
-    assert r.success is False
-
-
 def test_disp(capsys):
     minimize(lambda x: x ** 2, 0)
     assert capsys.readouterr()[0] == ""
@@ -80,3 +75,57 @@ def test_hessinv():
     for i in range(3):
         href[i, i] = 0.5
     assert_allclose(r.hess_inv, href, atol=1e-8)
+
+
+def test_unsupported():
+    with pytest.raises(ValueError):
+        minimize(func, (1, 1, 1), constraints=[])
+    with pytest.raises(ValueError):
+        minimize(func, (1, 1, 1), jac=True)
+
+
+def test_call_limit():
+    ref = minimize(func, (1, 1, 1))
+    with pytest.warns(UserWarning):
+        r1 = minimize(func, (1, 1, 1), options={"maxiter": 1})
+    assert r1.nfev < ref.nfev
+    assert not r1.success
+    assert "Call limit" in r1.message
+
+    with pytest.warns(DeprecationWarning):
+        r2 = minimize(func, (1, 1, 1), options={"maxfev": 1})
+    assert not r2.success
+    assert r2.nfev == r1.nfev
+
+    r3 = minimize(func, (1, 1, 1), options={"maxfun": 1})
+    assert not r3.success
+    assert r3.nfev == r1.nfev
+
+
+def test_eps():
+    ref = minimize(func, (1, 1, 1))
+    r = minimize(func, (1, 1, 1), options={"eps": 1e-10})
+    assert np.any(ref.x != r.x)
+    assert_allclose(r.x, ref.x, atol=1e-9)
+
+
+def test_bad_function():
+    class Fcn:
+        n = 0
+
+        def __call__(self, x):
+            self.n += 1
+            return x ** 2 + 1e-4 * (self.n % 3)
+
+    r = minimize(Fcn(), [1], options={"maxfun": 100000000})
+    assert not r.success
+    assert "Estimated distance to minimum too large" in r.message
+
+
+def test_bounds():
+    r1 = minimize(func, (1.5, 1.7, 1.5), bounds=opt.Bounds((1, 1.5, 1), (2, 2, 2)))
+    assert r1.success
+    assert_allclose(r1.x, (1, 1.5, 2), atol=1e-2)
+    r2 = minimize(func, (1.5, 1.7, 1.5), bounds=((1, 2), (1.5, 2), (1, 2)))
+    assert r2.success
+    assert_equal(r1.x, r2.x)

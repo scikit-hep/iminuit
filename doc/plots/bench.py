@@ -10,6 +10,8 @@ mpl.rcParams.update(mpl.rcParamsDefault)
 
 
 class TrackingFcn:
+    errordef = 1
+
     def __init__(self, rng, npar):
         self.ncall = 0
         self.y = 5 * rng.standard_normal(npar)
@@ -39,9 +41,7 @@ class Runner:
                 key = f"Minuit2/strategy={stra}"
                 print(key, npar)
                 fcn.ncall = 0
-                m = Minuit.from_array_func(
-                    fcn, np.zeros(npar), pedantic=False, print_level=0
-                )
+                m = Minuit(fcn, np.zeros(npar))
                 m.strategy = stra
                 m.migrad()
                 max_dev = np.max(np.abs(m.np_values() - fcn.y))

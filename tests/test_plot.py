@@ -13,12 +13,16 @@ def f2(par):
     return f1(par[0], par[1])
 
 
+f1.errordef = 1
+f2.errordef = 1
+
+
 @pytest.fixture(params=("normal", "numpy"))
 def minuit(request):
     if request.param == "normal":
-        m = Minuit(f1, x=0, y=0, pedantic=False)
+        m = Minuit(f1, x=0, y=0)
     else:
-        m = Minuit.from_array_func(f2, (0, 0), name=("x", "y"), pedantic=False)
+        m = Minuit(f2, (0, 0), name=("x", "y"))
     m.migrad()
     return m
 
