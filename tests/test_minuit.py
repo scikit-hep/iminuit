@@ -430,31 +430,6 @@ def test_fix_param(grad):
     assert m.fixed[:1] == [True]
 
 
-def test_fitarg():
-    m = Minuit(func4, y=10, x=0, z=0)
-    m.errordef = 1
-    m.fixed["y"] = True
-    m.limits["x"] = (0, 20)
-    fitarg = m.fitarg
-    assert_allclose(fitarg["y"], 10)
-    assert fitarg["fix_y"] is True
-    assert fitarg["limit_x"] == (0, 20)
-    m.migrad()
-
-    fitarg = m.fitarg
-
-    assert_allclose(fitarg["y"], 10)
-    assert_allclose(fitarg["x"], 2, atol=1e-2)
-    assert_allclose(fitarg["z"], 7, atol=1e-2)
-
-    assert "error_y" in fitarg
-    assert "error_x" in fitarg
-    assert "error_z" in fitarg
-
-    assert fitarg["fix_y"] is True
-    assert fitarg["limit_x"] == (0, 20)
-
-
 @pytest.mark.parametrize("grad", (None, func0_grad))
 @pytest.mark.parametrize("sigma", (1, 4))
 def test_minos_all(grad, sigma):
