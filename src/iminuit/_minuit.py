@@ -1,5 +1,4 @@
 from warnings import warn
-from collections.abc import Iterable
 from . import util as mutil
 from ._core import (
     FCN,
@@ -269,12 +268,12 @@ class Minuit:
     @property
     def params(self):
         """List of current parameter data objects."""
-        return get_params(self._last_state, self.merrors)
+        return _get_params(self._last_state, self.merrors)
 
     @property
     def init_params(self):
         """List of current parameter data objects set to the initial fit state."""
-        return get_params(self._init_state, None)
+        return _get_params(self._init_state, None)
 
     @property
     def valid(self):
@@ -393,11 +392,7 @@ class Minuit:
             if len(args) == 0:
                 name = mutil.describe(fcn)
             else:
-                try:
-                    name = mutil.describe(fcn)
-                except TypeError:
-                    pass
-
+                name = mutil.describe(fcn)
                 if name is None or len(name) != len(args):
                     name = tuple(f"x[{i}]" for i in range(len(args)))
 
@@ -419,10 +414,10 @@ class Minuit:
         self._init_state = self._make_init_state(args, kwds)
         self._last_state = self._init_state
 
-        self._values = ValueView(self)
-        self._errors = ErrorView(self)
-        self._fixed = FixedView(self)
-        self._limits = LimitView(self, 1)
+        self._values = mutil.ValueView(self)
+        self._errors = mutil.ErrorView(self)
+        self._fixed = mutil.FixedView(self)
+        self._limits = mutil.LimitView(self, 1)
         self._merrors = mutil.MErrors()
 
     def _make_init_state(self, args, kwds):
@@ -456,7 +451,7 @@ class Minuit:
                     )
 
                 val = kwds.get(x, 0.0)
-            err = guess_initial_step(val)
+            err = mutil._guess_initial_step(val)
             state.add(x, val, err)
         return state
 
@@ -1228,163 +1223,10 @@ def _check_errordef(fcn):
         fcn.up = 1
 
 
-# Helper classes
-class BasicView:
-    """Array-like view of parameter state.
-
-    Derived classes need to implement methods _set and _get to access
-    specific properties of the parameter state."""
-
-    _minuit = None
-    _ndim = 0
-
-    def __init__(self, minuit, ndim=0):
-        self._minuit = minuit
-        self._ndim = ndim
-
-    def __iter__(self):
-        for i in range(len(self)):
-            yield self._get(i)
-
-    def __len__(self):
-        return self._minuit.narg
-
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            return [self._get(i) for i in ind]
-        i = key if is_int(key) else self._minuit._var2pos[key]
-        if i < 0:
-            i += len(self)
-        if i < 0 or i >= len(self):
-            raise IndexError
-        return self._get(i)
-
-    def __setitem__(self, key, value):
-        self._minuit._copy_state_if_needed()
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            if ndim(value) == self._ndim:  # basic broadcasting
-                for i in ind:
-                    self._set(i, value)
-            else:
-                if len(value) != len(ind):
-                    raise ValueError("length of argument does not match slice")
-                for i, v in zip(ind, value):
-                    self._set(i, v)
-        else:
-            i = key if is_int(key) else self._minuit._var2pos[key]
-            if i < 0:
-                i += len(self)
-            if i < 0 or i >= len(self):
-                raise IndexError
-            self._set(i, value)
-
-    def __eq__(self, other):
-        return len(self) == len(other) and all(x == y for x, y in zip(self, other))
-
-    def __repr__(self):
-        s = "<{} of Minuit at {:x}>".format(self.__class__.__name__, id(self._minuit))
-        for (k, v) in zip(self._minuit._pos2var, self):
-            s += f"\n  {k}: {v}"
-        return s
-
-
-class ValueView(BasicView):
-    """Array-like view of parameter values."""
-
-    def _get(self, i):
-        return self._minuit._last_state[i].value
-
-    def _set(self, i, value):
-        self._minuit._last_state.set_value(i, value)
-
-
-class ErrorView(BasicView):
-    """Array-like view of parameter errors."""
-
-    def _get(self, i):
-        return self._minuit._last_state[i].error
-
-    def _set(self, i, value):
-        self._minuit._last_state.set_error(i, value)
-
-
-class FixedView(BasicView):
-    """Array-like view of whether parameters are fixed."""
-
-    def _get(self, i):
-        return self._minuit._last_state[i].is_fixed
-
-    def _set(self, i, fix):
-        if fix:
-            self._minuit._last_state.fix(i)
-        else:
-            self._minuit._last_state.release(i)
-
-
-class LimitView(BasicView):
-    """Array-like view of parameter limits."""
-
-    def _get(self, i):
-        p = self._minuit._last_state[i]
-        return (
-            p.lower_limit if p.has_lower_limit else -np.inf,
-            p.upper_limit if p.has_upper_limit else np.inf,
-        )
-
-    def _set(self, i, args):
-        state = self._minuit._last_state
-        val = state[i].value
-        err = state[i].error
-        # changing limits is a cheap operation, start from clean state
-        state.remove_limits(i)
-        low, high = normalize_limit(args)
-        if low != -np.inf and high != np.inf:  # both must be set
-            state.set_limits(i, low, high)
-            if low == high:
-                state.fix(i)
-        elif low != -np.inf:  # lower limit must be set
-            state.set_lower_limit(i, low)
-        else:  # lower limit must be set
-            state.set_upper_limit(i, high)
-        # bug in Minuit2: must set parameter value and error again after changing limits
-        if val < low:
-            val = low
-        elif val > high:
-            val = high
-        state.set_value(i, val)
-        state.set_error(i, err)
-
-
-def guess_initial_step(val):
-    return 1e-2 * val if val != 0 else 1e-1  # heuristic
-
-
-def is_int(value):
-    return isinstance(value, int)
-
-
-def is_iterable(obj):
-    return isinstance(obj, Iterable)
-
-
-def ndim(value):
-    nd = 0
-    while True:
-        if is_iterable(value):
-            nd += 1
-            for x in value:
-                if x is not None:
-                    value = x
-                    break
-    return nd
-
-
-def get_params(mps, merrors):
-    return Params(
+def _get_params(mps, merrors):
+    return mutil.Params(
         (
-            Param(
+            mutil.Param(
                 mp.number,
                 mp.name,
                 mp.value,
@@ -1401,19 +1243,6 @@ def get_params(mps, merrors):
         ),
         merrors,
     )
-
-
-def normalize_limit(lim):
-    if lim is None:
-        return (-inf, inf)
-    lim = list(lim)
-    if lim[0] is None:
-        lim[0] = -inf
-    if lim[1] is None:
-        lim[1] = inf
-    if lim[0] > lim[1]:
-        raise ValueError("limit " + str(lim) + " is invalid")
-    return tuple(lim)
 
 
 class TemporaryUp:

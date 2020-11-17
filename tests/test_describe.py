@@ -1,4 +1,4 @@
-from iminuit.util import describe, make_func_code
+from iminuit.util import describe, make_func_code, _arguments_from_docstring
 from math import ldexp
 import pytest
 import platform
@@ -9,94 +9,68 @@ is_pypy = platform.python_implementation() == "PyPy"
 
 def test_function():
     def f(x, y):
-        # body is important
-        a = 1
-        b = 2
-        return a + b
+        pass
 
-    assert describe(f, True) == ["x", "y"]
+    assert describe(f) == ["x", "y"]
 
 
 def test_class_method():
     class A:
         def f(self, x, y):
-            # body is important
-            a = 1
-            b = 2
-            return a + b
+            pass
 
-    assert describe(A().f, True) == ["x", "y"]
+    assert describe(A().f) == ["x", "y"]
 
 
-# unbound method
 def test_class_unbound_method():
     class A:
         def f(self, x, y):
-            # body is important
-            a = 1
-            b = 2
-            return a + b
+            pass
 
-    assert describe(A.f, True) == ["self", "x", "y"]
+    assert describe(A.f) == ["self", "x", "y"]
 
 
 def test_functor():
     class A:
         def __call__(self, x, y):
-            # body is important
-            a = 1
-            b = 2
-            return a + b
+            pass
 
-    assert describe(A(), True) == ["x", "y"]
+    assert describe(A()) == ["x", "y"]
 
 
 def test_builtin_by_parsing_doc():
-    assert describe(ldexp, True) == ["x", "i"]
+    assert describe(ldexp) == ["x", "i"]
 
 
 def test_lambda():
-    assert describe(lambda a, b: 0, True) == ["a", "b"]
+    assert describe(lambda a, b: 0) == ["a", "b"]
 
 
 def test_generic_function():
     def f(*args):
-        # body is important
-        a = 1
-        b = 2
-        return a + b
+        pass
 
-    with pytest.raises(TypeError):
-        describe(f, True)
+    assert describe(f) is None
 
 
 def test_generic_lambda():
-    with pytest.raises(TypeError):
-        describe(lambda *args: 0, True)
+    assert describe(lambda *args: 0) is None
 
 
 def test_generic_class_method():
     class A:
         def f(self, *args):
-            # body is important
-            a = 1
-            b = 2
-            return a + b
+            pass
 
-    with pytest.raises(TypeError):
-        describe(A().f, True)
+    assert describe(A().f) is None
 
 
 def test_generic_functor():
     class A:
         def __call__(self, *args):
-            # body is important
-            a = 1
-            b = 2
-            return a + b
+            pass
 
-    with pytest.raises(TypeError):
-        describe(A(), True)
+    assert describe(A()) is None
 
 
 def test_generic_functor_with_fake_func():
@@ -105,12 +79,9 @@ def test_generic_functor_with_fake_func():
             self.func_code = make_func_code(["x", "y"])
 
         def __call__(self, *args):
-            # body is important
-            a = 1
-            b = 2
-            return a + b
+            pass
 
-    assert describe(A(), True) == ["x", "y"]
+    assert describe(A()) == ["x", "y"]
 
 
 def test_decorated_function():
@@ -136,3 +107,34 @@ def test_decorated_function():
     assert describe(one_arg) == list("x")
     assert describe(many_arg) == list("xyzt")
     assert describe(kw_only) == list("xyz")
+
+
+def test_ambiguous_1():
+    def f(x, *args):
+        pass
+
+    assert describe(f) is None
+
+
+def test_ambiguous_2():
+    def f(x, kw=None):
+        pass
+
+    assert describe(f) == ["x", "kw"]
+
+
+def test_ambiguous_3():
+    def f(x, **kw):
+        pass
+
+    assert describe(f) == ["x"]
+
+
+def test_arguments_from_docstring():
+    s = "f(x, y, z)"
+    args = _arguments_from_docstring(s)
+    assert args == ["x", "y", "z"]
+    # this is a hard one
+    s = "Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])"
+    args = _arguments_from_docstring(s)
+    assert args == ["ncall_me", "resume", "nsplit"]

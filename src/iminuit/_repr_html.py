@@ -5,7 +5,7 @@ bad_style = "background-color:#c15ef7;color:black"
 warn_style = "background-color:#FFF79A;color:black"
 
 
-class Gradient:
+class ColorGradient:
     """Color gradient."""
 
     _steps = None
@@ -288,7 +288,7 @@ def matrix(m):
                 args.append(mj)
         nums = matrix_format(*args)
 
-    grad = Gradient(
+    grad = ColorGradient(
         (-1.0, 120.0, 120.0, 250.0),
         (0.0, 250.0, 250.0, 250.0),
         (1.0, 250.0, 100.0, 100.0),

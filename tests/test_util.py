@@ -3,58 +3,15 @@ import pytest
 from argparse import Namespace
 
 
-def test_color_2():
-    g = Gradient((-1, 10, 10, 20), (2, 20, 20, 10))
-    assert g.rgb(-1) == "rgb(10,10,20)"
-    assert g.rgb(2) == "rgb(20,20,10)"
-    assert g.rgb(-1.00001) == "rgb(10,10,20)"
-    assert g.rgb(1.99999) == "rgb(20,20,10)"
-    assert g.rgb(0.5) == "rgb(15,15,15)"
-
-
-def test_color_3():
-    g = Gradient((-1, 50, 50, 250), (0, 100, 100, 100), (1, 250, 50, 50))
-    assert g.rgb(-1) == "rgb(50,50,250)"
-    assert g.rgb(-0.5) == "rgb(75,75,175)"
-    assert g.rgb(0) == "rgb(100,100,100)"
-    assert g.rgb(0.5) == "rgb(175,75,75)"
-    assert g.rgb(1) == "rgb(250,50,50)"
-
-
-def test_fitarg_rename():
-    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
-
-    def ren(x):
-        return "z_" + x
-
-    newfa = util.fitarg_rename(fitarg, ren)
-    assert "z_x" in newfa
-    assert "limit_z_x" in newfa
-    assert "error_z_x" in newfa
-    assert "fix_z_x" in newfa
-    assert len(newfa) == 4
-
-
-def test_fitarg_rename_strprefix():
-    fitarg = {"x": 1, "limit_x": (2, 3), "fix_x": True, "error_x": 10}
-    newfa = util.fitarg_rename(fitarg, "z")
-    assert "z_x" in newfa
-    assert "limit_z_x" in newfa
-    assert "error_z_x" in newfa
-    assert "fix_z_x" in newfa
-    assert len(newfa) == 4
-
-
-def test_arguments_from_docstring():
-    s = "f(x, y, z)"
-    ok, a = util.arguments_from_docstring(s)
-    assert ok
-    assert a == ["x", "y", "z"]
-    # this is a hard one
-    s = "Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])"
-    ok, a = util.arguments_from_docstring(s)
-    assert ok
-    assert a == ["ncall_me", "resume", "nsplit"]
+def test_ndim():
+    ndim = util._ndim
+    assert ndim(1) == 0
+    assert ndim([]) == 1
+    assert ndim([[]]) == 2
+    assert ndim(None) == 0
+    assert ndim((None, None)) == 1
+    assert ndim(((1, 2), None)) == 2
+    assert ndim((None, (1, 2))) == 2
 
 
 def test_Matrix():
@@ -143,19 +100,12 @@ def test_MigradResult():
 
 
 def test_normalize_limit():
-    assert util._normalize_limit(None) is None
+    assert util._normalize_limit(None) == (-util.inf, util.inf)
     assert util._normalize_limit((None, 2)) == (-util.inf, 2)
     assert util._normalize_limit((2, None)) == (2, util.inf)
     assert util._normalize_limit((None, None)) == (-util.inf, util.inf)
     with pytest.raises(ValueError):
         util._normalize_limit((3, 2))
-
-
-def test_guess_initial_value():
-    assert util._guess_initial_value(None) == 0
-    assert util._guess_initial_value((-util.inf, 0)) == -1
-    assert util._guess_initial_value((0, util.inf)) == 1
-    assert util._guess_initial_value((1.0, 2.0)) == 1.5
 
 
 def test_guess_initial_step():
