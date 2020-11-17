@@ -28,20 +28,27 @@ repos:
   - id: mixed-line-ending
   - id: requirements-txt-fixer
   - id: sort-simple-yaml
+  - id: file-contents-sorter
   - id: trailing-whitespace
     exclude: ^doc/_static/.*.svg
 
-# Black, the code formatter, natively supports pre-commit
+# Python linter (Flake8)
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.8.4
+  hooks:
+  - id: flake8
+
+# Python formatting
 - repo: https://github.com/psf/black
   rev: 20.8b1
   hooks:
   - id: black
 
-# Check for some common issues
-- repo: https://gitlab.com/pycqa/flake8
-  rev: 3.8.4
+# C++ formatting
+- repo: git://github.com/doublify/pre-commit-clang-format
+  rev: master
   hooks:
-  - id: flake8
+  - id: clang-format
 
 # CMake formatting
 - repo: https://github.com/cheshirekow/cmake-format-precommit

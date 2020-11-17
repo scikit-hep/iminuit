@@ -26,7 +26,7 @@ iminuit uses Minuit2 to minimise your functions, a battle-hardened code develope
 
 **Interactive convenience**
 
-iminuit extracts the parameter names from your function signature (or the docstring) and allows you access them by their name. For example, if your function is defined as ``func(alpha, beta)``, iminuit understands that your first parameter is `alpha` and the second `beta` and will use these names in status printouts (you can override this inspection if you like). It also produces pretty messages on the console and in Jupyter notebooks.
+iminuit extracts the parameter names from your function signature (or the docstring) and allows you access them by their name. For example, if your function is defined as ``func(alpha, beta)``, iminuit understands that your first parameter is ``alpha`` and the second ``beta`` and will use these names in status printouts (you can override this inspection if you like). It also produces pretty messages on the console and in Jupyter notebooks.
 
 **Support for Cython**
 

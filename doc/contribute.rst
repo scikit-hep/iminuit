@@ -22,7 +22,7 @@ Development setup
 git
 +++
 
-To hack on `iminuit`, start by cloning the repository from `Github`_:
+To hack on ``iminuit``, start by cloning the repository from `Github`_:
 
 .. code-block:: bash
 
@@ -40,9 +40,9 @@ Now you are in a feature branch, commit your edits here.
 venv
 ++++
 
-You have the source code now, but you also want to build and test. We recommend to make a dedicated build environment for `iminuit`, separate from the Python installation you use for other projects.
+You have the source code now, but you also want to build and test. We recommend to make a dedicated build environment for ``iminuit``, separate from the Python installation you use for other projects.
 
-One way is to use `Python virtual environments`_ and `pip` to install the development packages listed in `requirements-dev.txt`_
+One way is to use `Python virtual environments`_ and ``pip`` to install the development packages listed in `requirements-dev.txt`_
 
 .. code-block:: bash
 
@@ -50,7 +50,7 @@ One way is to use `Python virtual environments`_ and `pip` to install the develo
     source py3/bin/activate
     pip install -r requirements-dev.txt
 
-To delete the virtual environment just delete the folder `py3`.
+To delete the virtual environment just delete the folder ``py3``.
 
 conda
 +++++
@@ -78,7 +78,7 @@ To simplify hacking on OSX and Linux, we have a Makefile with common commands. T
 
    make help
 
-Build `iminuit` in-place:
+Build ``iminuit`` in-place:
 
 .. code-block:: bash
 
@@ -112,7 +112,7 @@ Build the docs:
 
 Maintainers that prepare a release, should follow the instructions in `doc/README.md`_
 
-To check your `iminuit` version number and install location:
+To check your ``iminuit`` version number and install location:
 
 .. code-block:: bash
 
