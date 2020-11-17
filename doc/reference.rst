@@ -7,7 +7,6 @@ Reference
 
 .. currentmodule:: iminuit
 
-
 Quick Summary
 -------------
 These methods and properties you will probably use a lot:
@@ -35,7 +34,6 @@ Minuit
 
 .. autoclass:: Minuit
     :members:
-    :undoc-members:
 
 Cost functions
 --------------
@@ -43,34 +41,29 @@ Cost functions
 .. automodule:: iminuit.cost
     :members:
 
+.. currentmodule:: iminuit
 
 minimize
 --------
 
-The :func:`iminuit.minimize` function provides the same interface as :func:`scipy.optimize.minimize`.
+The :func:`minimize` function provides the same interface as :func:`scipy.optimize.minimize`.
 If you are familiar with the latter, this allows you to use Minuit with a quick start.
-Eventually, you still may want to learn the interface of the :class:`iminuit.Minuit` class,
+Eventually, you still may want to learn the interface of the :class:`Minuit` class,
 as it provides more functionality if you are interested in parameter uncertainties.
 
-.. autofunction:: iminuit.minimize
-
+.. autofunction:: minimize
 
 Utility Functions
 -----------------
 
-.. currentmodule:: iminuit.util
+.. currentmodule:: util
 
-The module :mod:`iminuit.util` provides the :func:`describe` function and various function to manipulate
+The module :mod:`util` provides the :func:`describe` function and various function to manipulate
 fit arguments. Most of these functions (apart from describe) are for internal use. You should not rely
 on them in your code. We list the ones that are for the public.
 
 .. automodule:: iminuit.util
     :members:
-    :undoc-members:
-    :exclude-members: arguments_from_docstring, arguments_from_funccode,
-        arguments_from_call_funccode, true_param, param_name,
-        remove_var, format_exception, fitarg_rename
-
 
 Data objects
 ------------
@@ -84,9 +77,7 @@ iminuit uses various data objects as return values. This section lists them.
 Function Minimum Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Subclass of NamedTuple that stores information about the fit result. It is returned by
-:meth:`Minuit.get_fmin` and :meth:`Minuit.migrad`.
-It has the following attributes:
+A data object with extra information about the fit result. It has the attributes:
 
     * *fval*: Value of the cost function at the minimum.
 
@@ -94,7 +85,7 @@ It has the following attributes:
 
     * *nfcn*: Number of function call in last Migrad call
 
-    * *up*: Equal to the value of `errordef` when Migrad ran.
+    * *up*: Equal to the value of ``errordef`` when Migrad ran.
 
     * *is_valid*: Whether the function minimum is ok, defined as
 
@@ -132,8 +123,7 @@ It has the following attributes:
 Minos Data Object
 ~~~~~~~~~~~~~~~~~
 
-Subclass of NamedTuple which stores information about the Minos result. It is returned by :meth:`Minuit.minos`
-(as part of a dictionary from parameter name -> data object). You can get it also from :meth:`Minuit.merrors`. It has the following attributes:
+A data object with extra information about the Minos result. It has the attributes:
 
     * *lower*: lower error value
 
@@ -165,8 +155,7 @@ Subclass of NamedTuple which stores information about the Minos result. It is re
 Parameter Data Object
 ~~~~~~~~~~~~~~~~~~~~~
 
-Subclass of NamedTuple which stores the fit parameter state. It is returned by :meth:`Minuit.hesse` and as part of the :meth:`Minuit.migrad` result. You can access the latest parameter state by calling
-:meth:`Minuit.get_param_states`, and the initial state via :meth:`Minuit.get_initial_param_states`. It has the following attrubutes:
+A data object with information about a fitted parameter. It has the attributes:
 
     * *number*: parameter number
 
@@ -211,7 +200,7 @@ Function Signature Extraction Ordering
        Have these two attributes.
 
     2. Using ``f.__call__.func_code.co_varnames``, ``f.__call__.co_argcount``.
-       Minuit knows how to skip the `self` parameter. This allow you to do
+       Minuit knows how to skip the ``self`` parameter. This allow you to do
        things like encapsulate your data with in a fitting algorithm::
 
         class MyLeastSquares:
@@ -235,11 +224,12 @@ Function Signature Extraction Ordering
     This order is very similar to PyMinuit signature detection. Actually,
     it is a superset of PyMinuit signature detection.
     The difference is that it allows you to fake function
-    signature by having a func_code attribute in the object. This allows you
+    signature by having a ``func_code`` attribute in the object. This allows you
     to make a generic functor of your custom cost function. This is explained
     in the **Advanced Tutorial** in the docs.
 
 
     .. note::
 
-        If you are unsure what iminuit will parse your function signature, you can use :func:`describe` to check which argument names are detected.
+        If you are unsure what iminuit will parse your function signature, you can use
+        :func:`describe` to check which argument names are detected.
