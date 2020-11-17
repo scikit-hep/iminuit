@@ -1,6 +1,5 @@
 from iminuit.util import describe, make_func_code, _arguments_from_docstring
 from math import ldexp
-import pytest
 import platform
 from functools import wraps
 
