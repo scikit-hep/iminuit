@@ -1262,7 +1262,7 @@ class TemporaryUp:
     def __init__(self, fcn, sigma):
         self.saved = fcn.up
         self.fcn = fcn
-        self.fcn.up = sigma ** 2
+        self.fcn.up *= sigma ** 2
 
     def __enter__(self):
         pass
