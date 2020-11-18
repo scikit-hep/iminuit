@@ -173,6 +173,36 @@ def _normalize_limit(lim):
     return tuple(lim)
 
 
+class MatrixViewRow:
+    __slots__ = ("_cov", "_var2pos", "_ext2int", "_index")
+
+    def __init__(self, cov, var2pos, ext2int, index):
+        self._cov = cov
+        self._var2pos = var2pos
+        self._ext2int = ext2int
+        self._index = index
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        return len(self._var2pos)
+
+    def __getitem__(self, j):
+        cov = self._cov
+        var2pos = self._var2pos
+        ext2int = self._ext2int
+        i = self._index
+        if not isinstance(j, int):
+            j = var2pos[j]
+        if ext2int:
+            return cov[i, j]
+        else:
+            if i not in ext2int or j not in ext2int:
+                return 0.0
+            return cov[ext2int[i], ext2int[j]]
+
+
 class MatrixView:
     """Matrix view."""
 
@@ -180,6 +210,9 @@ class MatrixView:
 
     def __init__(self, minuit):
         self._minuit = minuit
+
+    def __iter__(self):
+        return self
 
     def __len__(self):
         return self._minuit.npar
@@ -189,27 +222,34 @@ class MatrixView:
         state = self._minuit._last_state
         cov = state.covariance
 
-        i, j = args
-        if not isinstance(i, int):
-            i = var2pos[i]
-            j = var2pos[j]
+        # When some parameters are fixed, cov is a sub-matrix. If skip-fixed
+        # is false, we need to expand the sub-matrix back into the full form.
+        # This requires a translation between sub-index und full-index.
 
-        if cov.nrow == len(state):
-            return cov[args]
-        else:
-            # When some parameters are fixed, cov is a sub-matrix. If skip-fixed
-            # is false, we need to expand the sub-matrix back into the full form.
-            # This requires a translation between sub-index und full-index.
-            ext2int = {}
+        ext2int = {}
+        if cov.nrow != len(state):
             k = 0
             for mp in state:
                 if not mp.is_fixed:
                     ext2int[mp.number] = k
                     k += 1
 
-            if i not in ext2int or j not in ext2int:
-                return 0.0
-            return cov[ext2int[i], ext2int[j]]
+        if isinstance(args, Iterable):
+            i, j = args
+            if not isinstance(i, int):
+                i = var2pos[i]
+                j = var2pos[j]
+            if ext2int:
+                return cov[i, j]
+            else:
+                if i not in ext2int or j not in ext2int:
+                    return 0.0
+                return cov[ext2int[i], ext2int[j]]
+
+        i = args
+        if not isinstance(i, int):
+            i = var2pos[i]
+        return MatrixViewRow(cov, var2pos, ext2int, i)
 
     def __str__(self):
         return _repr_text.matrix(self)
