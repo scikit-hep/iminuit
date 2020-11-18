@@ -38,7 +38,7 @@ class BasicView:
             yield self._get(i)
 
     def __len__(self):
-        return self._minuit.narg
+        return self._minuit.npar
 
     def __getitem__(self, key):
         if isinstance(key, slice):
