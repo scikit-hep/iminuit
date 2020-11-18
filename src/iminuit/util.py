@@ -625,8 +625,7 @@ def _arguments_from_func_code(obj):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(obj, "func_code"):
         fc = obj.func_code
-        nargs = fc.co_argcount
-        return fc.co_varnames[:nargs]
+        return fc.co_varnames[: fc.co_argcount]
 
 
 def _arguments_from_inspect(f):
@@ -641,9 +640,10 @@ def _arguments_from_inspect(f):
 
     args = []
     for name, par in signature.parameters.items():
-        # Variable number of arguments is not supported
+        # stop when variable number of arguments is encountered
         if par.kind is inspect.Parameter.VAR_POSITIONAL:
-            return None
+            break
+        # stop when keyword argument is encountered
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
         args.append(name)

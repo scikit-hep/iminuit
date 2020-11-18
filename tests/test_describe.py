@@ -112,7 +112,7 @@ def test_ambiguous_1():
     def f(x, *args):
         pass
 
-    assert describe(f) is None
+    assert describe(f) == ["x"]
 
 
 def test_ambiguous_2():
@@ -127,6 +127,14 @@ def test_ambiguous_3():
         pass
 
     assert describe(f) == ["x"]
+
+
+def test_ambiguous_4():
+    class A:
+        def __call__(self, x, **kw):
+            pass
+
+    assert describe(A()) == ["x"]
 
 
 def test_arguments_from_docstring():
