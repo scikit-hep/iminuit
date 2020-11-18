@@ -217,6 +217,126 @@ class Minuit:
         """Minos error objects with full status information."""
         return self._merrors
 
+    def matrix(self, correlation=False, skip_fixed=True):
+        """Error or correlation matrix in tuple or tuples format."""
+        if not self._last_state.has_covariance:
+            raise RuntimeError(
+                "Covariance is not valid. Maybe the last Hesse call failed?"
+            )
+
+        mncov = self._last_state.covariance
+
+        # When some parameters are fixed, mncov is a sub-matrix. If skip-fixed
+        # is false, we need to expand the sub-matrix back into the full form.
+        # This requires a translation between sub-index und full-index.
+        if skip_fixed:
+            npar = sum(not mp.is_fixed for mp in self._last_state)
+            ind = range(npar)
+
+            def cov(i, j):
+                return mncov[i, j]
+
+        else:
+            ext2int = {}
+            iint = 0
+            for mp in self._last_state:
+                if not mp.is_fixed:
+                    ext2int[mp.number] = iint
+                    iint += 1
+            ind = range(self.narg)
+
+            def cov(i, j):
+                if i not in ext2int or j not in ext2int:
+                    return 0.0
+                return mncov[ext2int[i], ext2int[j]]
+
+        names = [x for x in self.parameters if not (skip_fixed and self.fixed[x])]
+        if correlation:
+
+            def cor(i, j):
+                return cov(i, j) / ((cov(i, i) * cov(j, j)) ** 0.5 + 1e-100)
+
+            ret = mutil.Matrix(names, ((cor(i, j) for i in ind) for j in ind))
+        else:
+            ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
+        return ret
+
+    def np_matrix(self, **kwds):
+        """Covariance or correlation matrix in numpy array format.
+
+        Keyword arguments are forwarded to :meth:`matrix`.
+
+        The name of this function was chosen to be analogous to :meth:`matrix`,
+        it returns the same information in a different format. For
+        documentation on the arguments, please see :meth:`matrix`.
+
+        **Returns:**
+
+            2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
+        """
+        matrix = self.matrix(**kwds)
+        return np.array(matrix, dtype=np.double)
+
+    def np_values(self):
+        """Parameter values in numpy array format.
+
+        Fixed parameters are included, the order follows :attr:`parameters`.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (N,).
+        """
+        return np.array(self.values, dtype=np.double)
+
+    def np_errors(self):
+        """Hesse parameter errors in numpy array format.
+
+        Fixed parameters are included, the order follows :attr:`parameters`.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (N,).
+        """
+        a = np.empty(self.narg, dtype=np.double)
+        for i in range(self.narg):
+            a[i] = self.errors[i]
+        return a
+
+    def np_merrors(self):
+        """MINOS parameter errors in numpy array format.
+
+        Fixed parameters are included (zeros are returned), the order follows
+        :attr:`parameters`.
+
+        The format of the produced array follows matplotlib conventions, as
+        in ``matplotlib.pyplot.errorbar``. The shape is (2, N) for N
+        parameters. The first row represents the downward error as a positive
+        offset from the center. Likewise, the second row represents the
+        upward error as a positive offset from the center.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (2, N).
+        """
+        # array format follows matplotlib conventions, see pyplot.errorbar
+        a = np.zeros((2, self.narg))
+        for me in self.merrors.values():
+            i = self._var2pos[me.name]
+            a[0, i] = -me.lower
+            a[1, i] = me.upper
+        return a
+
+    def np_covariance(self):
+        """Covariance matrix in numpy array format.
+
+        Fixed parameters are included, the order follows :attr:`parameters`.
+
+        **Returns:**
+
+            ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
+        """
+        return self.np_matrix(correlation=False, skip_fixed=False)
+
     @property
     def npar(self):
         """Number of parameters."""
@@ -227,9 +347,10 @@ class Minuit:
         """Number of fitted parameters (fixed parameters not counted)."""
         return self.npar - sum(self.fixed)
 
-    @property
-    def covariance(self):
-        """Covariance matrix (dict (name1, name2) -> covariance).
+    def correlation(self, par1, par2):
+        """Returns the correlation of two parameters.
+
+
 
         .. seealso:: :meth:`matrix`
         """
@@ -653,126 +774,6 @@ class Minuit:
         self._fmin._ngrad = self._fcn.ngrad
 
         return self
-
-    def matrix(self, correlation=False, skip_fixed=True):
-        """Error or correlation matrix in tuple or tuples format."""
-        if not self._last_state.has_covariance:
-            raise RuntimeError(
-                "Covariance is not valid. Maybe the last Hesse call failed?"
-            )
-
-        mncov = self._last_state.covariance
-
-        # When some parameters are fixed, mncov is a sub-matrix. If skip-fixed
-        # is false, we need to expand the sub-matrix back into the full form.
-        # This requires a translation between sub-index und full-index.
-        if skip_fixed:
-            npar = sum(not mp.is_fixed for mp in self._last_state)
-            ind = range(npar)
-
-            def cov(i, j):
-                return mncov[i, j]
-
-        else:
-            ext2int = {}
-            iint = 0
-            for mp in self._last_state:
-                if not mp.is_fixed:
-                    ext2int[mp.number] = iint
-                    iint += 1
-            ind = range(self.npar)
-
-            def cov(i, j):
-                if i not in ext2int or j not in ext2int:
-                    return 0.0
-                return mncov[ext2int[i], ext2int[j]]
-
-        names = [x for x in self.parameters if not (skip_fixed and self.fixed[x])]
-        if correlation:
-
-            def cor(i, j):
-                return cov(i, j) / ((cov(i, i) * cov(j, j)) ** 0.5 + 1e-100)
-
-            ret = mutil.Matrix(names, ((cor(i, j) for i in ind) for j in ind))
-        else:
-            ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
-        return ret
-
-    def np_matrix(self, **kwds):
-        """Covariance or correlation matrix in numpy array format.
-
-        Keyword arguments are forwarded to :meth:`matrix`.
-
-        The name of this function was chosen to be analogous to :meth:`matrix`,
-        it returns the same information in a different format. For
-        documentation on the arguments, please see :meth:`matrix`.
-
-        **Returns:**
-
-            2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
-        """
-        matrix = self.matrix(**kwds)
-        return np.array(matrix, dtype=np.double)
-
-    def np_values(self):
-        """Parameter values in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,).
-        """
-        return np.array(self.values, dtype=np.double)
-
-    def np_errors(self):
-        """Hesse parameter errors in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,).
-        """
-        a = np.empty(self.npar, dtype=np.double)
-        for i in range(self.npar):
-            a[i] = self.errors[i]
-        return a
-
-    def np_merrors(self):
-        """MINOS parameter errors in numpy array format.
-
-        Fixed parameters are included (zeros are returned), the order follows
-        :attr:`parameters`.
-
-        The format of the produced array follows matplotlib conventions, as
-        in ``matplotlib.pyplot.errorbar``. The shape is (2, N) for N
-        parameters. The first row represents the downward error as a positive
-        offset from the center. Likewise, the second row represents the
-        upward error as a positive offset from the center.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (2, N).
-        """
-        # array format follows matplotlib conventions, see pyplot.errorbar
-        a = np.zeros((2, self.npar))
-        for me in self.merrors.values():
-            i = self._var2pos[me.name]
-            a[0, i] = -me.lower
-            a[1, i] = me.upper
-        return a
-
-    def np_covariance(self):
-        """Covariance matrix in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
-        """
-        return self.np_matrix(correlation=False, skip_fixed=False)
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate MINOS profile around the specified range.
