@@ -643,7 +643,8 @@ def describe(callable):
            f = lambda x, y: (x - 2) ** 2 + (y - 3) ** 2
 
        Users are encouraged to use this mechanism to provide signatures for objects that
-       otherwise would not have a detectable signature. The function :func:`make_func_code` can be used to generate an appropriate func_code object.
+       otherwise would not have a detectable signature. The function
+       :func:`make_func_code` can be used to generate an appropriate func_code object.
        An example where this is useful is shown in one of the tutorials.
 
     2. Using :func:`inspect.signature`. The :mod:`inspect` module has a powerful
