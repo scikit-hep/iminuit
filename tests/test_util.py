@@ -86,19 +86,6 @@ def test_FMin():
     assert fmin.has_parameters_at_limit == False
 
 
-def test_MigradResult():
-    fmin = Namespace(fval=3)
-    params = util.Params([], None)
-    mr = util.MigradResult(fmin, params)
-    assert mr.fmin is fmin
-    assert mr[0] is fmin
-    assert mr.params is params
-    assert mr[1] is params
-    a, b = mr
-    assert a is fmin
-    assert b is params
-
-
 def test_normalize_limit():
     assert util._normalize_limit(None) == (-util.inf, util.inf)
     assert util._normalize_limit((None, 2)) == (-util.inf, 2)

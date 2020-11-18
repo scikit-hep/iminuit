@@ -253,36 +253,51 @@ class Minuit:
 
     @property
     def fmin(self):
-        """Current function minimum."""
+        """Current function minimum.
+
+        .. seealso:: :class:`iminuit.util.FMin`
+        """
         return self._fmin
 
     @property
     def fval(self):
-        """Function minimum value.
+        """Function minimum value (alias for Minuit.fmin.fval).
 
-        .. seealso:: :attr:`fmin`
+        .. seealso:: :class:`iminuit.util.FMin`
         """
         fm = self._fmin
         return fm.fval if fm else None
 
     @property
     def params(self):
-        """List of current parameter data objects."""
+        """List of current parameter data objects.
+
+        .. seealso:: :class:`iminuit.util.Params`
+        """
         return _get_params(self._last_state, self.merrors)
 
     @property
     def init_params(self):
-        """List of current parameter data objects set to the initial fit state."""
+        """List of current parameter data objects set to the initial fit state.
+
+        .. seealso:: :class:`iminuit.util.Params`
+        """
         return _get_params(self._init_state, None)
 
     @property
     def valid(self):
-        """Whether the function minimum is valid."""
+        """Whether the function minimum is valid (alias for Minuit.fmin.is_valid).
+
+        .. seealso:: :class:`iminuit.util.FMin`
+        """
         return self._fmin and self._fmin.is_valid
 
     @property
     def accurate(self):
-        """Whether the covariance matrix produced by the last MIGRAD run is accurate."""
+        """Whether the covariance matrix is accurate (alias for Minuit.fmin.has_accurate_covar).
+
+        .. seealso:: :class:`iminuit.util.FMin`
+        """
         return self._fmin and self._fmin.has_accurate_covar
 
     @property
@@ -490,7 +505,7 @@ class Minuit:
 
         **Return:**
 
-            :ref:`function-minimum-sruct`, list of :ref:`minuit-param-struct`
+            self
         """
         if ncall is None:
             ncall = 0  # tells C++ Minuit to use its internal heuristic
@@ -515,11 +530,11 @@ class Minuit:
 
         self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 
-        mr = mutil.MigradResult(self._fmin, self.params)
         if self.print_level >= 2:
-            print(mr)
+            print(self.fmin)
+            print(self.params)
 
-        return mr
+        return self
 
     def hesse(self, ncall=None):
         """Run HESSE to compute parabolic errors.
@@ -542,7 +557,7 @@ class Minuit:
 
         **Returns:**
 
-            list of :ref:`minuit-param-struct`
+            self
         """
 
         ncall = 0 if ncall is None else int(ncall)
@@ -565,7 +580,7 @@ class Minuit:
             if not self._fmin:
                 raise RuntimeError("HESSE Failed")
 
-        return self.params
+        return self
 
     def minos(self, *parameters, sigma=1.0, ncall=None):
         """Run MINOS to compute asymmetric confidence intervals.
@@ -598,9 +613,7 @@ class Minuit:
 
         **Returns:**
 
-            Dictionary of varname to :ref:`minos-error-struct`, containing
-            all up to now computed errors, including the current request.
-
+            self
         """
         if not self._fmin:
             raise RuntimeError(
@@ -636,10 +649,10 @@ class Minuit:
                 me = minos(self._var2pos[par], ncall, self.tol)
                 self._merrors[par] = mutil.MError(par, me)
 
-        self._fmin.nfcn = self._fcn.nfcn
-        self._fmin.ngrad = self._fcn.ngrad
+        self._fmin._nfcn = self._fcn.nfcn
+        self._fmin._ngrad = self._fcn.ngrad
 
-        return self.merrors
+        return self
 
     def matrix(self, correlation=False, skip_fixed=True):
         """Error or correlation matrix in tuple or tuples format."""

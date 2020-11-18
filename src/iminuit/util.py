@@ -281,15 +281,15 @@ class FMin:
 
     __slots__ = (
         "_src",
-        "has_parameters_at_limit",
-        "nfcn",
-        "ngrad",
-        "tolerance",
+        "_has_parameters_at_limit",
+        "_nfcn",
+        "_ngrad",
+        "_tolerance",
     )
 
     def __init__(self, fmin, nfcn, ngrad, tol):
         self._src = fmin
-        self.has_parameters_at_limit = False
+        self._has_parameters_at_limit = False
         for mp in fmin.state:
             if mp.is_fixed or not mp.has_limits:
                 continue
@@ -298,10 +298,10 @@ class FMin:
             lb = mp.lower_limit if mp.has_lower_limit else -inf
             ub = mp.upper_limit if mp.has_upper_limit else inf
             # the 0.5 error threshold is somewhat arbitrary
-            self.has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
-        self.nfcn = nfcn
-        self.ngrad = ngrad
-        self.tolerance = tol
+            self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
+        self._nfcn = nfcn
+        self._ngrad = ngrad
+        self._tolerance = tol
 
     def __str__(self):
         """Return string suitable for terminal."""
@@ -318,50 +318,143 @@ class FMin:
 
     @property
     def edm(self):
+        """Estimated Distance to Minimum.
+
+        Minuit uses this criterion to determine whether the fit converged. It depends
+        on the gradient and the Hessian matrix. It measures how well the current
+        second order expansion around the function minimum describes the function, by
+        taking the difference between the predicted (based on gradient and Hessian)
+        function value at the minimum and the actual value.
+        """
         return self._src.edm
 
     @property
     def fval(self):
+        """Value of the cost function at the minimum."""
         return self._src.fval
 
     @property
+    def has_parameters_at_limit(self):
+        """Whether any bounded parameter was fitted close to a bound.
+
+        The estimated error for the affected parameters is usually off. May be an
+        indication to remove or loosen the limits on the affected parameter.
+        """
+        return self._has_parameters_at_limit
+
+    @property
+    def nfcn(self):
+        """Number of function calls so far."""
+        return self._nfcn
+
+    @property
+    def ngrad(self):
+        """Number of function gradient calls so far."""
+        return self._ngrad
+
+    @property
+    def tolerance(self):
+        """Equal to the tolerance value when Migrad ran."""
+        return self._tolerance
+
+    @property
     def is_valid(self):
+        """Whether Migrad converged successfully.
+
+        For it to return True, the following conditions need to be fulfilled:
+        - has_valid_parameters is True
+        - has_reached_call_limit is False
+        - is_above_max_edm is False
+
+        Note: The actual verdict is computed inside the Minuit2 C++ code, so we
+        cannot guarantee that is_valid is exactly equivalent to these conditions.
+        """
         return self._src.is_valid
 
     @property
     def has_valid_parameters(self):
+        """Whether parameters are valid.
+
+        For it to return True, the following conditions need to be fulfilled:
+        - has_reached_call_limit is False
+        - is_above_max_edm is False
+
+        Note: The actual verdict is computed inside the Minuit2 C++ code, so we
+        cannot guarantee that is_valid is exactly equivalent to these conditions.
+        """
         return self._src.has_valid_parameters
 
     @property
     def has_accurate_covar(self):
+        """Whether the covariance matrix is accurate.
+
+        While Migrad runs, it computes an approximation to the current Hessian
+        matrix. If the strategy is set to 0 or if the fit did not converge, the
+        inverse of this approximation is returned instead of the inverse of the
+        accurately computed Hessian matrix. This property returns False if the
+        approximation has been returned instead of an accurate matrix.
+        """
         return self._src.has_accurate_covar
 
     @property
     def has_posdef_covar(self):
+        """Whether the Hessian matrix is positive definite.
+
+        This must be the case if the extremum is a minimum. Otherwise it is a
+        maximum or a saddle point.
+
+        If the fit has converged, this should always be true. It may be false if the
+        fit did not converge or was stopped prematurely.
+        """
         return self._src.has_posdef_covar
 
     @property
     def has_made_posdef_covar(self):
+        """Whether the matrix was forced to be positive definite.
+
+        While Migrad runs, it computes an approximation to the current Hessian matrix.
+        It can happen that this approximation is not positive definite, but that is
+        required to compute the next Newton step. Migrad then adds an appropriate
+        diagonal matrix to enforce positive definiteness.
+
+        If the fit has converged, this should always be false. It may be true if the
+        fit did not converge or was stopped prematurely.
+        """
         return self._src.has_made_posdef_covar
 
     @property
     def hesse_failed(self):
+        """Whether the last call to Hesse failed."""
         return self._src.hesse_failed
 
     @property
     def has_covariance(self):
+        """Whether a covariance matrix was computed at all.
+
+        This is false if the Simplex minimization algorithm was used instead of
+        Migrad, in which no approximation to the Hessian is computed.
+        """
         return self._src.has_covariance
 
     @property
     def is_above_max_edm(self):
+        """Whether the EDM value is below the convergence threshold.
+
+        If this is true, the fit did not converge; otherwise this is false.
+        """
         return self._src.is_above_max_edm
 
     @property
     def has_reached_call_limit(self):
+        """Whether Migrad exceeded the allowed number of function calls.
+
+        If this is true, the fit was stopped before convergence was reached.
+        """
         return self._src.has_reached_call_limit
 
     @property
     def up(self):
+        """Equal to the value of ``Minuit.errordef`` when Migrad ran."""
         return self._src.up
 
 
@@ -506,26 +599,6 @@ class MErrors(OrderedDict):
                     break
             key = k
         return OrderedDict.__getitem__(self, key)
-
-
-# MigradResult used to be a tuple, so we don't add the dict interface
-class MigradResult(namedtuple("_MigradResult", "fmin params")):
-    """Holds the Migrad result."""
-
-    __slots__ = ()
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return str(self.fmin) + "\n" + str(self.params)
-
-    def _repr_html_(self):
-        return self.fmin._repr_html_() + self.params._repr_html_()
-
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
-            p.text("MigradResult(...)")
-        else:
-            p.text(str(self))
 
 
 def make_func_code(params):

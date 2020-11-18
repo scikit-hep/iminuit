@@ -440,7 +440,7 @@ def test_text_params_with_limits():
 
 
 def test_text_merrors(minuit):
-    assert str(minuit.minos()) == ref("merrors")
+    assert str(minuit.merrors) == ref("merrors")
 
 
 def test_text_matrix():

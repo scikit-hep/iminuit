@@ -488,10 +488,11 @@ def test_minos_single_fixed_raising():
     m.fixed["x"] = True
     m.migrad()
     with pytest.warns(RuntimeWarning):
-        ret = m.minos("x")
-    assert len(ret) == 0
+        m.minos("x")
+    assert len(m.merrors) == 0
     assert m.fixed["x"]
-    assert len(m.minos()) == 1
+    m.minos()
+    assert len(m.merrors) == 1
     assert "y" in m.merrors
 
 
@@ -560,8 +561,10 @@ def test_mncontour(grad, sigma):
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
     xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=sigma)
-    xminos_t = m.minos("x", sigma=sigma)["x"]
-    yminos_t = m.minos("y", sigma=sigma)["y"]
+    m.minos("x", "y", sigma=sigma)
+    m.minos("y", sigma=sigma)
+    xminos_t = m.merrors["x"]
+    yminos_t = m.merrors["y"]
     assert_allclose(xminos.upper, xminos_t.upper)
     assert_allclose(xminos.lower, xminos_t.lower)
     assert_allclose(yminos.upper, yminos_t.upper)
@@ -637,8 +640,9 @@ def test_mncontour_array_func():
     m = Minuit(Func8(), (0, 0), name=("x", "y"))
     m.migrad()
     xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=1)
-    xminos_t = m.minos("x", sigma=1)["x"]
-    yminos_t = m.minos("y", sigma=1)["y"]
+    m.minos("x", "y", sigma=1)
+    xminos_t = m.merrors["x"]
+    yminos_t = m.merrors["y"]
     assert_allclose(xminos.upper, xminos_t.upper)
     assert_allclose(xminos.lower, xminos_t.lower)
     assert_allclose(yminos.upper, yminos_t.upper)
@@ -1012,9 +1016,9 @@ def test_non_analytical_function():
             return self.i % 3
 
     m = Minuit(Func(), 0)
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is False
-    assert fmin.is_above_max_edm is True
+    m.migrad()
+    assert m.fmin.is_valid is False
+    assert m.fmin.is_above_max_edm is True
 
 
 def test_non_invertible():
@@ -1032,9 +1036,9 @@ def test_non_invertible():
 def test_function_without_local_minimum():
     m = Minuit(lambda a: -a, 0)
     m.errordef = 1
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is False
-    assert fmin.is_above_max_edm is True
+    m.migrad()
+    assert m.fmin.is_valid is False
+    assert m.fmin.is_above_max_edm is True
 
 
 def test_function_with_maximum():
@@ -1043,8 +1047,8 @@ def test_function_with_maximum():
 
     m = Minuit(func, a=0)
     m.errordef = 1
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is False
+    m.migrad()
+    assert m.fmin.is_valid is False
 
 
 def test_perfect_correlation():
@@ -1053,11 +1057,11 @@ def test_perfect_correlation():
 
     m = Minuit(func, a=1, b=2)
     m.errordef = 1
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is True
-    assert fmin.has_accurate_covar is False
-    assert fmin.has_posdef_covar is False
-    assert fmin.has_made_posdef_covar is True
+    m.migrad()
+    assert m.fmin.is_valid is True
+    assert m.fmin.has_accurate_covar is False
+    assert m.fmin.has_posdef_covar is False
+    assert m.fmin.has_made_posdef_covar is True
 
 
 def test_modify_param_state():
