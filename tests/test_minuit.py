@@ -371,7 +371,7 @@ def test_initial_guesses():
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_fix_param(grad):
     m = Minuit(func0, grad=grad, x=0, y=0)
-    assert m.narg == 2
+    assert m.npar == 2
     assert m.nfit == 2
     m.migrad()
     m.minos()
@@ -384,7 +384,7 @@ def test_fix_param(grad):
     # now fix y = 10
     m = Minuit(func0, grad=grad, x=0, y=10.0)
     m.fixed["y"] = True
-    assert m.narg == 2
+    assert m.npar == 2
     assert m.nfit == 1
     m.migrad()
     assert_allclose(m.values, (2, 10), rtol=1e-2)
@@ -397,7 +397,7 @@ def test_fix_param(grad):
     assert m.fixed["y"]
     m.fixed["x"] = True
     m.fixed["y"] = False
-    assert m.narg == 2
+    assert m.npar == 2
     assert m.nfit == 1
     m.migrad()
     m.hesse()
@@ -412,7 +412,7 @@ def test_fix_param(grad):
     m = Minuit(func0, x=0, y=10.0)
     m.limits["y"] = (10, 10)
     assert m.fixed["y"]
-    assert m.narg == 2
+    assert m.npar == 2
     assert m.nfit == 1
 
     # initial value out of range is forced in range
@@ -420,7 +420,7 @@ def test_fix_param(grad):
     m.limits["y"] = (10, 10)
     assert m.fixed["y"]
     assert m.values["y"] == 10
-    assert m.narg == 2
+    assert m.npar == 2
     assert m.nfit == 1
 
     m.fixed = True
