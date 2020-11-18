@@ -4,6 +4,7 @@ from collections import OrderedDict, namedtuple
 from collections.abc import Iterable
 from . import _repr_html
 from . import _repr_text
+import numpy as np
 
 inf = float("infinity")
 
@@ -173,102 +174,52 @@ def _normalize_limit(lim):
     return tuple(lim)
 
 
-class MatrixViewRow:
-    __slots__ = ("_cov", "_var2pos", "_ext2int", "_index")
+class Matrix(np.ndarray):
+    """Matrix."""
 
-    def __init__(self, cov, var2pos, ext2int, index):
-        self._cov = cov
-        self._var2pos = var2pos
-        self._ext2int = ext2int
-        self._index = index
+    __slots__ = ("_var2pos",)
 
-    def __iter__(self):
-        return self
+    def __new__(cls, var2pos):
+        npar = len(var2pos)
+        obj = super(Matrix, cls).__new__(cls, (npar, npar))
+        obj._var2pos = var2pos
+        return obj
 
-    def __len__(self):
-        return len(self._var2pos)
+    def __array_finalize__(self, obj):
+        if obj is None:
+            return
 
-    def __getitem__(self, j):
-        cov = self._cov
+        self._var2pos = getattr(obj, "_var2pos")
+
+    def __getitem__(self, key):
         var2pos = self._var2pos
-        ext2int = self._ext2int
-        i = self._index
-        if not isinstance(j, int):
-            j = var2pos[j]
-        if ext2int:
-            return cov[i, j]
-        else:
-            if i not in ext2int or j not in ext2int:
-                return 0.0
-            return cov[ext2int[i], ext2int[j]]
-
-
-class MatrixView:
-    """Matrix view."""
-
-    __slots__ = ("_minuit",)
-
-    def __init__(self, minuit):
-        self._minuit = minuit
-
-    def __iter__(self):
-        return self
-
-    def __len__(self):
-        return self._minuit.npar
-
-    def __getitem__(self, args):
-        var2pos = self._minuit._var2pos
-        state = self._minuit._last_state
-        cov = state.covariance
-
-        # When some parameters are fixed, cov is a sub-matrix. If skip-fixed
-        # is false, we need to expand the sub-matrix back into the full form.
-        # This requires a translation between sub-index und full-index.
-
-        ext2int = {}
-        if cov.nrow != len(state):
-            k = 0
-            for mp in state:
-                if not mp.is_fixed:
-                    ext2int[mp.number] = k
-                    k += 1
-
-        if isinstance(args, Iterable):
-            i, j = args
-            if not isinstance(i, int):
-                i = var2pos[i]
-                j = var2pos[j]
-            if ext2int:
-                return cov[i, j]
-            else:
-                if i not in ext2int or j not in ext2int:
-                    return 0.0
-                return cov[ext2int[i], ext2int[j]]
-
-        i = args
-        if not isinstance(i, int):
-            i = var2pos[i]
-        return MatrixViewRow(cov, var2pos, ext2int, i)
+        if isinstance(key, tuple):
+            if isinstance(key[0], str):
+                key = tuple(var2pos[x] for x in key)
+        elif isinstance(key, str):
+            key = var2pos[key]
+        return super().__getitem__(key)
 
     def __str__(self):
-        return _repr_text.matrix(self)
+        return _repr_text.matrix(self, tuple(self._var2pos))
 
     def to_table(self):
-        names = self._minuit._pos2var
-        args = []
-        for mi in self:
-            for mj in mi:
-                args.append(mj)
-        nums = _repr_text.matrix_format(*args)
+        names = tuple(self._var2pos)
+        nums = _repr_text.matrix_format(self.flatten())
         tab = []
         n = len(self)
         for i, name in enumerate(names):
             tab.append([name] + [nums[n * i + j] for j in range(n)])
         return tab, names
 
+    def correlation(self):
+        a = self.copy()
+        d = np.diag(a) ** 0.5
+        a /= np.outer(d, d) + 1e-100
+        return a
+
     def _repr_html_(self):
-        return _repr_html.matrix(self)
+        return _repr_html.matrix(self, tuple(self._var2pos))
 
     def _repr_pretty_(self, p, cycle):
         if cycle:

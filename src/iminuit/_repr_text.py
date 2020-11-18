@@ -27,21 +27,6 @@ def pdg_format(value, *errors):
     return strings
 
 
-def matrix_format(*values):
-    vs = np.array(values)
-    mv = np.max(np.abs(vs))
-    smv = "%.3g" % mv
-    try:
-        i = smv.index("e")
-        sexp = smv[i + 1 :]
-        exp = int(sexp)
-        vs /= 10 ** exp
-        s = [("%.3fe%i" % (v, exp) if np.isfinite(v) else str(v)) for v in vs]
-    except ValueError:
-        s = ["%.3f" % v for v in vs]
-    return _strip(s)
-
-
 def goaledm(fm):
     # - taken from the source code, see VariableMeticBuilder::Minimum and
     #   ModularFunctionMinimizer::Minimize
@@ -193,14 +178,9 @@ def merrors(mes):
     return "\n".join((l1, header, l2, error, valid, at_limit, max_fcn, new_min, l3))
 
 
-def matrix(m):
-    n = len(m)
-
-    args = []
-    for mi in m:
-        for mj in mi:
-            args.append(mj)
-    nums = matrix_format(*args)
+def matrix(arr, names):
+    n = len(arr)
+    nums = matrix_format(arr.flatten())
 
     def row_fmt(args):
         s = "│ " + args[0] + " │"
@@ -209,13 +189,13 @@ def matrix(m):
         s += " │"
         return s
 
-    first_row_width = max(len(v) for v in m.names)
+    first_row_width = max(len(v) for v in names)
     row_width = max(first_row_width, max(len(v) for v in nums))
-    v_names = [("{:>%is}" % first_row_width).format(x) for x in m.names]
-    h_names = [("{:>%is}" % row_width).format(x) for x in m.names]
+    v_names = [("{:>%is}" % first_row_width).format(x) for x in names]
+    h_names = [("{:>%is}" % row_width).format(x) for x in names]
     val_fmt = ("{:>%is}" % row_width).format
 
-    w = (first_row_width + 2, (row_width + 1) * len(m.names) + 1)
+    w = (first_row_width + 2, (row_width + 1) * len(names) + 1)
     l1 = format_line(w, "┌┬┐")
     l2 = format_line(w, "├┼┤")
     l3 = format_line(w, "└┴┘")
@@ -227,3 +207,17 @@ def matrix(m):
         lines.append(row_fmt([vn] + [val_fmt(nums[n * i + j]) for j in range(n)]))
     lines.append(l3)
     return "\n".join(lines)
+
+
+def matrix_format(values):
+    mv = np.max(np.abs(values))
+    smv = "%.3g" % mv
+    try:
+        i = smv.index("e")
+        sexp = smv[i + 1 :]
+        exp = int(sexp)
+        values /= 10 ** exp
+        s = [("%.3fe%i" % (v, exp) if np.isfinite(v) else str(v)) for v in values]
+    except ValueError:
+        s = ["%.3f" % v for v in values]
+    return _strip(s)

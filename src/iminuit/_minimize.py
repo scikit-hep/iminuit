@@ -122,7 +122,7 @@ def minimize(
         x=m.np_values(),
         success=m.valid,
         fun=m.fval,
-        hess_inv=m.np_covariance() if m.valid else np.ones((n, n)),
+        hess_inv=m.covariance if m.covariance is not None else np.ones((n, n)),
         message=message,
         nfev=m.nfcn,
         njev=m.ngrad,

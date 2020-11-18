@@ -220,8 +220,7 @@ class Minuit:
     @property
     def covariance(self):
         """Returns the covariance matrix."""
-        if self._last_state.has_covariance:
-            return mutil.MatrixView(self)
+        return self._covariance
 
     def np_values(self):
         """Parameter values in numpy array format.
@@ -243,10 +242,7 @@ class Minuit:
 
             ``numpy.ndarray`` of shape (N,).
         """
-        a = np.empty(self.narg, dtype=np.double)
-        for i in range(self.narg):
-            a[i] = self.errors[i]
-        return a
+        return np.array(self.errors, dtype=np.double)
 
     def np_merrors(self):
         """MINOS parameter errors in numpy array format.
@@ -265,29 +261,12 @@ class Minuit:
             ``numpy.ndarray`` of shape (2, N).
         """
         # array format follows matplotlib conventions, see pyplot.errorbar
-        a = np.zeros((2, self.narg))
+        a = np.zeros((2, self.npar))
         for me in self.merrors.values():
             i = self._var2pos[me.name]
             a[0, i] = -me.lower
             a[1, i] = me.upper
         return a
-
-    def np_covariance(self):
-        """Covariance matrix in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
-        """
-        n = self.npar
-        m = np.zeros((n, n))
-        cov = self.covariance
-        for i in range(n):
-            for j in range(i):
-                m[i, j] = cov[i, j]
-        return cov
 
     @property
     def npar(self):
@@ -482,15 +461,17 @@ class Minuit:
         self._print_level = 0
 
         self._fcn = FCN(fcn, grad, array_call, errordef)
+
         self._fmin = None
         self._init_state = self._make_init_state(args, kwds)
         self._last_state = self._init_state
+        self._merrors = mutil.MErrors()
+        self._covariance = None
 
         self._values = mutil.ValueView(self)
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
         self._limits = mutil.LimitView(self, 1)
-        self._merrors = mutil.MErrors()
 
     def _make_init_state(self, args, kwds):
         nargs = len(args)
@@ -534,6 +515,7 @@ class Minuit:
         self._fcn.nfcn = 0
         self._fcn.ngrad = 0
         self._merrors = mutil.MErrors()
+        self._covariance = None
 
     def migrad(self, ncall=None, precision=None, iterate=5):
         """Run MIGRAD.
@@ -584,8 +566,8 @@ class Minuit:
                 break
 
         self._last_state = fm.state
-
         self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+        self._make_covariance()
 
         if self.print_level >= 2:
             print(self.fmin)
@@ -636,6 +618,8 @@ class Minuit:
         if self._last_state.has_covariance is False:
             if not self._fmin:
                 raise RuntimeError("HESSE Failed")
+
+        self._make_covariance()
 
         return self
 
@@ -1161,6 +1145,31 @@ class Minuit:
         # implicitly modify _init_state; _last_state is an alias for _init_state, then.
         if self._fmin and self._last_state == self._fmin._src.state:
             self._last_state = MnUserParameterState(self._last_state)
+
+    def _make_covariance(self):
+        if self._last_state.has_covariance:
+            cov = self._last_state.covariance
+            m = mutil.Matrix(self._var2pos)
+            n = len(m)
+            if cov.nrow < self.npar:
+                ext2int = {}
+                k = 0
+                for mp in self._last_state:
+                    if not mp.is_fixed:
+                        ext2int[mp.number] = k
+                        k += 1
+                m.fill(0)
+                for e, i in ext2int.items():
+                    for f, j in ext2int.items():
+                        m[e, f] = cov[i, j]
+            else:
+                n = len(m)
+                for i in range(n):
+                    for j in range(n):
+                        m[i, j] = cov[i, j]
+            self._covariance = m
+        else:
+            self._covariance = None
 
 
 def _check_errordef(fcn):

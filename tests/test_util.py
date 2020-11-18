@@ -1,6 +1,8 @@
 from iminuit import util
 import pytest
 from argparse import Namespace
+import numpy as np
+from numpy.testing import assert_equal, assert_allclose
 
 
 def test_ndim():
@@ -15,13 +17,12 @@ def test_ndim():
 
 
 def test_Matrix():
-    x = util.Matrix(("a", "b"), [[1, 2], [3, 4]])
-    assert x[0] == (1, 2)
-    assert x[1] == (3, 4)
-    assert x == ((1, 2), (3, 4))
-    assert repr(x) == "((1, 2), (3, 4))"
-    with pytest.raises(TypeError):
-        x[0][0] = 1
+    x = util.Matrix({"a": 0, "b": 1})
+    x[:] = [[1, 1], [1, 4]]
+    assert_equal(x, ((1, 1), (1, 4)))
+    assert repr(x) == "Matrix([[1., 1.],\n        [1., 4.]])"
+    c = x.correlation()
+    assert_allclose(c, ((1.0, 0.5), (0.5, 1.0)))
 
 
 def test_Param():

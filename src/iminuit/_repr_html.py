@@ -1,3 +1,4 @@
+import numpy as np
 from ._repr_text import pdg_format, matrix_format, fmin_fields
 
 good_style = "background-color:#92CCA6;color:black"
@@ -273,20 +274,13 @@ def merrors(mes):
     )
 
 
-def matrix(m):
-    is_correlation = True
-    for i in range(len(m)):
-        if m[i][i] != 1.0:
-            is_correlation = False
-            break
+def matrix(arr, names):
+    n = len(names)
+
+    is_correlation = np.all(np.diag(arr) == 1.0)
 
     if not is_correlation:
-        n = len(m)
-        args = []
-        for mi in m:
-            for mj in mi:
-                args.append(mj)
-        nums = matrix_format(*args)
+        nums = matrix_format(arr.flatten())
 
     grad = ColorGradient(
         (-1.0, 120.0, 120.0, 250.0),
@@ -295,10 +289,10 @@ def matrix(m):
     )
 
     rows = []
-    for i, v in enumerate(m.names):
+    for i, v in enumerate(names):
         cols = [th(v)]
-        for j in range(len(m.names)):
-            val = m[i][j]
+        for j in range(len(names)):
+            val = arr[i, j]
             if is_correlation:
                 if i == j:
                     t = td("1.00")
@@ -312,7 +306,7 @@ def matrix(m):
                 if i == j:
                     t = td(nums[n * i + j])
                 else:
-                    num = m[i][i] * m[j][j]
+                    num = arr[i, i] * arr[j, j]
                     color = grad.rgb(val / num ** 0.5 if num > 0 else 0)
                     t = td(
                         nums[n * i + j],
@@ -321,4 +315,4 @@ def matrix(m):
             cols.append(t)
         rows.append(tr(*cols))
 
-    return to_str(table(tr(td(), *[th(v) for v in m.names]), *rows))
+    return to_str(table(tr(td(), *[th(v) for v in names]), *rows))
