@@ -488,10 +488,11 @@ def test_minos_single_fixed_raising():
     m.fixed["x"] = True
     m.migrad()
     with pytest.warns(RuntimeWarning):
-        ret = m.minos("x")
-    assert len(ret) == 0
+        m.minos("x")
+    assert len(m.merrors) == 0
     assert m.fixed["x"]
-    assert len(m.minos()) == 1
+    m.minos()
+    assert len(m.merrors) == 1
     assert "y" in m.merrors
 
 
@@ -560,8 +561,10 @@ def test_mncontour(grad, sigma):
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
     xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=sigma)
-    xminos_t = m.minos("x", sigma=sigma)["x"]
-    yminos_t = m.minos("y", sigma=sigma)["y"]
+    m.minos("x", "y", sigma=sigma)
+    m.minos("y", sigma=sigma)
+    xminos_t = m.merrors["x"]
+    yminos_t = m.merrors["y"]
     assert_allclose(xminos.upper, xminos_t.upper)
     assert_allclose(xminos.lower, xminos_t.lower)
     assert_allclose(yminos.upper, yminos_t.upper)
@@ -637,8 +640,9 @@ def test_mncontour_array_func():
     m = Minuit(Func8(), (0, 0), name=("x", "y"))
     m.migrad()
     xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=1)
-    xminos_t = m.minos("x", sigma=1)["x"]
-    yminos_t = m.minos("y", sigma=1)["y"]
+    m.minos("x", "y", sigma=1)
+    xminos_t = m.merrors["x"]
+    yminos_t = m.merrors["y"]
     assert_allclose(xminos.upper, xminos_t.upper)
     assert_allclose(xminos.lower, xminos_t.lower)
     assert_allclose(yminos.upper, yminos_t.upper)
@@ -1012,9 +1016,9 @@ def test_non_analytical_function():
             return self.i % 3
 
     m = Minuit(Func(), 0)
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is False
-    assert fmin.is_above_max_edm is True
+    m.migrad()
+    assert m.fmin.is_valid is False
+    assert m.fmin.is_above_max_edm is True
 
 
 def test_non_invertible():
@@ -1032,9 +1036,9 @@ def test_non_invertible():
 def test_function_without_local_minimum():
     m = Minuit(lambda a: -a, 0)
     m.errordef = 1
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is False
-    assert fmin.is_above_max_edm is True
+    m.migrad()
+    assert m.fmin.is_valid is False
+    assert m.fmin.is_above_max_edm is True
 
 
 def test_function_with_maximum():
@@ -1043,8 +1047,8 @@ def test_function_with_maximum():
 
     m = Minuit(func, a=0)
     m.errordef = 1
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is False
+    m.migrad()
+    assert m.fmin.is_valid is False
 
 
 def test_perfect_correlation():
@@ -1053,11 +1057,11 @@ def test_perfect_correlation():
 
     m = Minuit(func, a=1, b=2)
     m.errordef = 1
-    fmin, _ = m.migrad()
-    assert fmin.is_valid is True
-    assert fmin.has_accurate_covar is False
-    assert fmin.has_posdef_covar is False
-    assert fmin.has_made_posdef_covar is True
+    m.migrad()
+    assert m.fmin.is_valid is True
+    assert m.fmin.has_accurate_covar is False
+    assert m.fmin.has_posdef_covar is False
+    assert m.fmin.has_made_posdef_covar is True
 
 
 def test_modify_param_state():
@@ -1240,3 +1244,34 @@ def test_migrad_precision():
     m.migrad(precision=1e-9)
     fm2 = m.fmin
     assert fm2.edm < fm1.edm
+
+
+@pytest.mark.parametrize("sigma", (1, 2))
+@pytest.mark.parametrize("k", (10, 1000))
+@pytest.mark.parametrize("limit", (False, True))
+def test_merrors(sigma, k, limit):
+    opt = pytest.importorskip("scipy.optimize")
+
+    def nll(lambd):
+        return lambd - k * np.log(lambd)
+
+    # find location of min + up by hand
+    def crossing(x):
+        up = 0.5 * sigma ** 2
+        return nll(k + x) - (nll(k) + up)
+
+    bound = 1.5 * sigma * k ** 0.5
+    upper = opt.root_scalar(crossing, bracket=(0, bound)).root
+    lower = opt.root_scalar(crossing, bracket=(-bound, 0)).root
+
+    m = Minuit(nll, lambd=k)
+    m.limits["lambd"] = (0, None) if limit else None
+    m.errordef = Minuit.LIKELIHOOD
+    m.migrad()
+    assert m.valid
+    assert m.accurate
+    m.minos(sigma=sigma)
+    assert m.values["lambd"] == approx(k)
+    assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
+    assert m.merrors["lambd"].lower == approx(lower, abs=1e-4)
+    assert m.merrors["lambd"].upper == approx(upper, abs=1e-4)

@@ -1,9 +1,40 @@
-from iminuit.color import Gradient
-from iminuit.repr_text import pdg_format, matrix_format, fmin_fields
+from ._repr_text import pdg_format, matrix_format, fmin_fields
 
 good_style = "background-color:#92CCA6;color:black"
 bad_style = "background-color:#c15ef7;color:black"
 warn_style = "background-color:#FFF79A;color:black"
+
+
+class ColorGradient:
+    """Color gradient."""
+
+    _steps = None
+
+    def __init__(self, *steps):
+        self._steps = steps
+
+    def __call__(self, v):
+        st = self._steps
+        z = 0.0
+        if v < st[0][0]:
+            z = 0.0
+            i = 0
+        elif v >= st[-1][0]:
+            z = 1.0
+            i = -2
+        else:
+            i = 0
+            for i in range(len(st) - 1):
+                if st[i][0] <= v < st[i + 1][0]:
+                    break
+            z = (v - st[i][0]) / (st[i + 1][0] - st[i][0])
+        az = 1.0 - z
+        a = st[i]
+        b = st[i + 1]
+        return (az * a[1] + z * b[1], az * a[2] + z * b[2], az * a[3] + z * b[3])
+
+    def rgb(self, v):
+        return "rgb(%.0f,%.0f,%.0f)" % self(v)
 
 
 def to_str(tag):
@@ -257,7 +288,7 @@ def matrix(m):
                 args.append(mj)
         nums = matrix_format(*args)
 
-    grad = Gradient(
+    grad = ColorGradient(
         (-1.0, 120.0, 120.0, 250.0),
         (0.0, 250.0, 250.0, 250.0),
         (1.0, 250.0, 100.0, 100.0),
