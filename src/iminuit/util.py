@@ -1,8 +1,9 @@
 """iminuit utility functions and classes."""
 import re
 from collections import OrderedDict, namedtuple
-from . import repr_html
-from . import repr_text
+from collections.abc import Iterable
+from . import _repr_html
+from . import _repr_text
 
 inf = float("infinity")
 
@@ -19,6 +20,160 @@ class HesseFailedWarning(IMinuitWarning):
     """HESSE failed warning."""
 
 
+class BasicView:
+    """Array-like view of parameter state.
+
+    Derived classes need to implement methods _set and _get to access
+    specific properties of the parameter state."""
+
+    _minuit = None
+    _ndim = 0
+
+    def __init__(self, minuit, ndim=0):
+        self._minuit = minuit
+        self._ndim = ndim
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self._get(i)
+
+    def __len__(self):
+        return self._minuit.narg
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            ind = range(*key.indices(len(self)))
+            return [self._get(i) for i in ind]
+        i = key if isinstance(key, int) else self._minuit._var2pos[key]
+        if i < 0:
+            i += len(self)
+        if i < 0 or i >= len(self):
+            raise IndexError
+        return self._get(i)
+
+    def __setitem__(self, key, value):
+        self._minuit._copy_state_if_needed()
+        if isinstance(key, slice):
+            ind = range(*key.indices(len(self)))
+            if _ndim(value) == self._ndim:  # basic broadcasting
+                for i in ind:
+                    self._set(i, value)
+            else:
+                if len(value) != len(ind):
+                    raise ValueError("length of argument does not match slice")
+                for i, v in zip(ind, value):
+                    self._set(i, v)
+        else:
+            i = key if isinstance(key, int) else self._minuit._var2pos[key]
+            if i < 0:
+                i += len(self)
+            if i < 0 or i >= len(self):
+                raise IndexError
+            self._set(i, value)
+
+    def __eq__(self, other):
+        return len(self) == len(other) and all(x == y for x, y in zip(self, other))
+
+    def __repr__(self):
+        s = "<{} of Minuit at {:x}>".format(self.__class__.__name__, id(self._minuit))
+        for (k, v) in zip(self._minuit._pos2var, self):
+            s += f"\n  {k}: {v}"
+        return s
+
+
+def _ndim(obj):
+    nd = 0
+    while isinstance(obj, Iterable):
+        nd += 1
+        for x in obj:
+            if x is not None:
+                obj = x
+                break
+        else:
+            break
+    return nd
+
+
+class ValueView(BasicView):
+    """Array-like view of parameter values."""
+
+    def _get(self, i):
+        return self._minuit._last_state[i].value
+
+    def _set(self, i, value):
+        self._minuit._last_state.set_value(i, value)
+
+
+class ErrorView(BasicView):
+    """Array-like view of parameter errors."""
+
+    def _get(self, i):
+        return self._minuit._last_state[i].error
+
+    def _set(self, i, value):
+        self._minuit._last_state.set_error(i, value)
+
+
+class FixedView(BasicView):
+    """Array-like view of whether parameters are fixed."""
+
+    def _get(self, i):
+        return self._minuit._last_state[i].is_fixed
+
+    def _set(self, i, fix):
+        if fix:
+            self._minuit._last_state.fix(i)
+        else:
+            self._minuit._last_state.release(i)
+
+
+class LimitView(BasicView):
+    """Array-like view of parameter limits."""
+
+    def _get(self, i):
+        p = self._minuit._last_state[i]
+        return (
+            p.lower_limit if p.has_lower_limit else -inf,
+            p.upper_limit if p.has_upper_limit else inf,
+        )
+
+    def _set(self, i, args):
+        state = self._minuit._last_state
+        val = state[i].value
+        err = state[i].error
+        # changing limits is a cheap operation, start from clean state
+        state.remove_limits(i)
+        low, high = _normalize_limit(args)
+        if low != -inf and high != inf:  # both must be set
+            state.set_limits(i, low, high)
+            if low == high:
+                state.fix(i)
+        elif low != -inf:  # lower limit must be set
+            state.set_lower_limit(i, low)
+        elif high != inf:  # lower limit must be set
+            state.set_upper_limit(i, high)
+        # bug in Minuit2: must set parameter value and error again after changing limits
+        if val < low:
+            val = low
+        elif val > high:
+            val = high
+        state.set_value(i, val)
+        state.set_error(i, err)
+
+
+def _normalize_limit(lim):
+    if lim is None:
+        return (-inf, inf)
+    lim = list(lim)
+    if lim[0] is None:
+        lim[0] = -inf
+    if lim[1] is None:
+        lim[1] = inf
+    if lim[0] > lim[1]:
+        raise ValueError("limit " + str(lim) + " is invalid")
+    return tuple(lim)
+
+
 class Matrix(tuple):
     """Matrix data object (tuple of tuples)."""
 
@@ -31,14 +186,14 @@ class Matrix(tuple):
 
     def __str__(self):
         """Return string suitable for terminal."""
-        return repr_text.matrix(self)
+        return _repr_text.matrix(self)
 
     def to_table(self):
         args = []
         for mi in self:
             for mj in mi:
                 args.append(mj)
-        nums = repr_text.matrix_format(*args)
+        nums = _repr_text.matrix_format(*args)
         tab = []
         n = len(self)
         for i, name in enumerate(self.names):
@@ -46,7 +201,7 @@ class Matrix(tuple):
         return tab, self.names
 
     def _repr_html_(self):
-        return repr_html.matrix(self)
+        return _repr_html.matrix(self)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -126,15 +281,15 @@ class FMin:
 
     __slots__ = (
         "_src",
-        "has_parameters_at_limit",
-        "nfcn",
-        "ngrad",
-        "tolerance",
+        "_has_parameters_at_limit",
+        "_nfcn",
+        "_ngrad",
+        "_tolerance",
     )
 
     def __init__(self, fmin, nfcn, ngrad, tol):
         self._src = fmin
-        self.has_parameters_at_limit = False
+        self._has_parameters_at_limit = False
         for mp in fmin.state:
             if mp.is_fixed or not mp.has_limits:
                 continue
@@ -143,17 +298,17 @@ class FMin:
             lb = mp.lower_limit if mp.has_lower_limit else -inf
             ub = mp.upper_limit if mp.has_upper_limit else inf
             # the 0.5 error threshold is somewhat arbitrary
-            self.has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
-        self.nfcn = nfcn
-        self.ngrad = ngrad
-        self.tolerance = tol
+            self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
+        self._nfcn = nfcn
+        self._ngrad = ngrad
+        self._tolerance = tol
 
     def __str__(self):
         """Return string suitable for terminal."""
-        return repr_text.fmin(self)
+        return _repr_text.fmin(self)
 
     def _repr_html_(self):
-        return repr_html.fmin(self)
+        return _repr_html.fmin(self)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -163,50 +318,143 @@ class FMin:
 
     @property
     def edm(self):
+        """Estimated Distance to Minimum.
+
+        Minuit uses this criterion to determine whether the fit converged. It depends
+        on the gradient and the Hessian matrix. It measures how well the current
+        second order expansion around the function minimum describes the function, by
+        taking the difference between the predicted (based on gradient and Hessian)
+        function value at the minimum and the actual value.
+        """
         return self._src.edm
 
     @property
     def fval(self):
+        """Value of the cost function at the minimum."""
         return self._src.fval
 
     @property
+    def has_parameters_at_limit(self):
+        """Whether any bounded parameter was fitted close to a bound.
+
+        The estimated error for the affected parameters is usually off. May be an
+        indication to remove or loosen the limits on the affected parameter.
+        """
+        return self._has_parameters_at_limit
+
+    @property
+    def nfcn(self):
+        """Number of function calls so far."""
+        return self._nfcn
+
+    @property
+    def ngrad(self):
+        """Number of function gradient calls so far."""
+        return self._ngrad
+
+    @property
+    def tolerance(self):
+        """Equal to the tolerance value when Migrad ran."""
+        return self._tolerance
+
+    @property
     def is_valid(self):
+        """Whether Migrad converged successfully.
+
+        For it to return True, the following conditions need to be fulfilled:
+        - has_valid_parameters is True
+        - has_reached_call_limit is False
+        - is_above_max_edm is False
+
+        Note: The actual verdict is computed inside the Minuit2 C++ code, so we
+        cannot guarantee that is_valid is exactly equivalent to these conditions.
+        """
         return self._src.is_valid
 
     @property
     def has_valid_parameters(self):
+        """Whether parameters are valid.
+
+        For it to return True, the following conditions need to be fulfilled:
+        - has_reached_call_limit is False
+        - is_above_max_edm is False
+
+        Note: The actual verdict is computed inside the Minuit2 C++ code, so we
+        cannot guarantee that is_valid is exactly equivalent to these conditions.
+        """
         return self._src.has_valid_parameters
 
     @property
     def has_accurate_covar(self):
+        """Whether the covariance matrix is accurate.
+
+        While Migrad runs, it computes an approximation to the current Hessian
+        matrix. If the strategy is set to 0 or if the fit did not converge, the
+        inverse of this approximation is returned instead of the inverse of the
+        accurately computed Hessian matrix. This property returns False if the
+        approximation has been returned instead of an accurate matrix.
+        """
         return self._src.has_accurate_covar
 
     @property
     def has_posdef_covar(self):
+        """Whether the Hessian matrix is positive definite.
+
+        This must be the case if the extremum is a minimum. Otherwise it is a
+        maximum or a saddle point.
+
+        If the fit has converged, this should always be true. It may be false if the
+        fit did not converge or was stopped prematurely.
+        """
         return self._src.has_posdef_covar
 
     @property
     def has_made_posdef_covar(self):
+        """Whether the matrix was forced to be positive definite.
+
+        While Migrad runs, it computes an approximation to the current Hessian matrix.
+        It can happen that this approximation is not positive definite, but that is
+        required to compute the next Newton step. Migrad then adds an appropriate
+        diagonal matrix to enforce positive definiteness.
+
+        If the fit has converged, this should always be false. It may be true if the
+        fit did not converge or was stopped prematurely.
+        """
         return self._src.has_made_posdef_covar
 
     @property
     def hesse_failed(self):
+        """Whether the last call to Hesse failed."""
         return self._src.hesse_failed
 
     @property
     def has_covariance(self):
+        """Whether a covariance matrix was computed at all.
+
+        This is false if the Simplex minimization algorithm was used instead of
+        Migrad, in which no approximation to the Hessian is computed.
+        """
         return self._src.has_covariance
 
     @property
     def is_above_max_edm(self):
+        """Whether the EDM value is below the convergence threshold.
+
+        If this is true, the fit did not converge; otherwise this is false.
+        """
         return self._src.is_above_max_edm
 
     @property
     def has_reached_call_limit(self):
+        """Whether Migrad exceeded the allowed number of function calls.
+
+        If this is true, the fit was stopped before convergence was reached.
+        """
         return self._src.has_reached_call_limit
 
     @property
     def up(self):
+        """Equal to the value of ``Minuit.errordef`` when Migrad ran."""
         return self._src.up
 
 
@@ -219,7 +467,7 @@ class Params(list):
         self.merrors = merrors
 
     def _repr_html_(self):
-        return repr_html.params(self)
+        return _repr_html.params(self)
 
     def to_table(self):
         header = [
@@ -240,11 +488,11 @@ class Params(list):
             row = [i, name]
             if mes and name in mes:
                 me = mes[name]
-                val, err, mel, meu = repr_text.pdg_format(
+                val, err, mel, meu = _repr_text.pdg_format(
                     mp.value, mp.error, me.lower, me.upper
                 )
             else:
-                val, err = repr_text.pdg_format(mp.value, mp.error)
+                val, err = _repr_text.pdg_format(mp.value, mp.error)
                 mel = ""
                 meu = ""
             row += [
@@ -261,7 +509,7 @@ class Params(list):
 
     def __str__(self):
         """Return string suitable for terminal."""
-        return repr_text.params(self)
+        return _repr_text.params(self)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -309,11 +557,11 @@ class MError:
         self.min = minos_error.min
 
     def _repr_html_(self):
-        return repr_html.merrors([self])
+        return _repr_html.merrors([self])
 
     def __str__(self):
         """Return string suitable for terminal."""
-        return repr_text.merrors([self])
+        return _repr_text.merrors([self])
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -328,11 +576,11 @@ class MErrors(OrderedDict):
     __slots__ = ()
 
     def _repr_html_(self):
-        return repr_html.merrors(self.values())
+        return _repr_html.merrors(self.values())
 
     def __str__(self):
         """Return string suitable for terminal."""
-        return repr_text.merrors(self.values())
+        return _repr_text.merrors(self.values())
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
@@ -353,27 +601,56 @@ class MErrors(OrderedDict):
         return OrderedDict.__getitem__(self, key)
 
 
-# MigradResult used to be a tuple, so we don't add the dict interface
-class MigradResult(namedtuple("_MigradResult", "fmin params")):
-    """Holds the Migrad result."""
+def make_func_code(params):
+    """Make a func_code object to fake function signature.
 
-    __slots__ = ()
+    You can make a funccode from describable object by::
 
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return str(self.fmin) + "\n" + str(self.params)
-
-    def _repr_html_(self):
-        return self.fmin._repr_html_() + self.params._repr_html_()
-
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
-            p.text("MigradResult(...)")
-        else:
-            p.text(str(self))
+        make_func_code(["x", "y"])
+    """
+    return namedtuple("FuncCode", "co_varnames co_argcount")(params, len(params))
 
 
-def arguments_from_docstring(doc):
+def describe(callable):
+    """Try to extract the function argument names."""
+    return (
+        _arguments_from_func_code(callable)
+        or _arguments_from_inspect(callable)
+        or _arguments_from_docstring(callable.__call__.__doc__)
+        or _arguments_from_docstring(callable.__doc__)
+    )
+
+
+def _arguments_from_func_code(obj):
+    # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
+    if hasattr(obj, "func_code"):
+        fc = obj.func_code
+        return fc.co_varnames[: fc.co_argcount]
+
+
+def _arguments_from_inspect(f):
+    # Check inspect.signature for arguemnts
+    import inspect
+
+    try:
+        # fails for builtin on Windows and OSX in Python 3.6
+        signature = inspect.signature(f)
+    except ValueError:
+        return None
+
+    args = []
+    for name, par in signature.parameters.items():
+        # stop when variable number of arguments is encountered
+        if par.kind is inspect.Parameter.VAR_POSITIONAL:
+            break
+        # stop when keyword argument is encountered
+        if par.kind is inspect.Parameter.VAR_KEYWORD:
+            break
+        args.append(name)
+    return args
+
+
+def _arguments_from_docstring(doc):
     """Parse first line of docstring for argument name.
 
     Docstring should be of the form ``min(iterable[, key=func])``.
@@ -382,7 +659,7 @@ def arguments_from_docstring(doc):
     ``Minuit.migrad(self[, int ncall_me =10000, foo=True, int bar=1])``
     """
     if doc is None:
-        return False, []
+        return None
 
     doc = doc.lstrip()
 
@@ -395,7 +672,7 @@ def arguments_from_docstring(doc):
     # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
     if sig is None:
-        return False, []
+        return None
     # iterable[, key=func]' -> ['iterable[' ,' key=func]']
     sig = sig.groups()[0].split(",")
     ret = []
@@ -409,178 +686,12 @@ def arguments_from_docstring(doc):
         # re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         # ret += self.docstring_kwd_re.findall(s)
     ret = list(filter(lambda x: x != "", ret))
-    return bool(ret), ret
 
+    if ret[0] == "self":
+        ret = ret[1:]
 
-def _is_bound(f):
-    return getattr(f, "__self__", None) is not None
-
-
-def make_func_code(params):
-    """Make a func_code object to fake function signature.
-
-    You can make a funccode from describable object by::
-
-        make_func_code(["x", "y"])
-    """
-    return namedtuple("FuncCode", "co_varnames co_argcount")(params, len(params))
-
-
-def _fc_or_c(f):
-    if hasattr(f, "func_code"):
-        return f.func_code
-    if hasattr(f, "__code__"):
-        return f.__code__
-    return make_func_code([])
-
-
-def arguments_from_funccode(f):
-    """Check f.funccode for arguments."""
-    fc = _fc_or_c(f)
-    nargs = fc.co_argcount
-    # bound method and fake function will be None
-    if nargs == 0:
-        # Function has variable number of arguments
-        return False, []
-    args = fc.co_varnames[:nargs]
-    if _is_bound(f):
-        args = args[1:]
-    return bool(args), list(args)
-
-
-def arguments_from_call_funccode(f):
-    """Check f.__call__.func_code for arguments."""
-    fc = _fc_or_c(f.__call__)
-    nargs = fc.co_argcount
-    args = list(fc.co_varnames[1:nargs])
-    return bool(args), args
-
-
-def arguments_from_inspect(f):
-    """Check inspect.signature for arguemnts"""
-    import inspect
-
-    signature = inspect.signature(f)
-    ok = True
-    for name, par in signature.parameters.items():
-        # Variable number of arguments is not supported
-        if par.kind is inspect.Parameter.VAR_POSITIONAL:
-            ok = False
-        if par.kind is inspect.Parameter.VAR_KEYWORD:
-            ok = False
-    return ok, list(signature.parameters)
-
-
-def describe(f, verbose=False):
-    """Try to extract the function argument names."""
-    # using funccode
-    ok, args = arguments_from_funccode(f)
-    if ok:
-        return args
-    if verbose:
-        print("Failed to extract arguments from f.func_code/__code__")
-
-    # using __call__ funccode
-    ok, args = arguments_from_call_funccode(f)
-    if ok:
-        return args
-    if verbose:
-        print("Failed to extract arguments from f.__call__.func_code/__code__")
-
-    # now we are parsing __call__.__doc__
-    # we assume that __call__.__doc__ doesn't have self
-    # this is what cython gives
-    ok, args = arguments_from_docstring(f.__call__.__doc__)
-    if ok:
-        if args[0] == "self":
-            args = args[1:]
-        return args
-    if verbose:
-        print("Failed to parse __call__.__doc__")
-
-    # how about just __doc__
-    ok, args = arguments_from_docstring(f.__doc__)
-    if ok:
-        if args[0] == "self":
-            args = args[1:]
-        return args
-    if verbose:
-        print("Failed to parse __doc__")
-
-    ok, args = arguments_from_inspect(f)
-    if ok:
-        return args
-    if verbose:
-        print(
-            "Failed to parse inspect.signature(f). Perhaps you are using"
-            " a variable number of arguments. This is not supported."
-        )
-
-    raise TypeError("Unable to obtain function signature")
-
-
-def _normalize_limit(lim):
-    if lim is None:
-        return None
-    lim = list(lim)
-    if lim[0] is None:
-        lim[0] = -inf
-    if lim[1] is None:
-        lim[1] = inf
-    if lim[0] > lim[1]:
-        raise ValueError("limit " + str(lim) + " is invalid")
-    return tuple(lim)
-
-
-def _guess_initial_value(lim):
-    if lim is None:
-        return 0.0
-    if lim[1] == inf:
-        return lim[0] + 1.0
-    if lim[0] == -inf:
-        return lim[1] - 1.0
-    return 0.5 * (lim[0] + lim[1])
+    return ret
 
 
 def _guess_initial_step(val):
-    step = 1e-2 * val if val != 0 else 1e-1  # heuristic
-    return step
-
-
-def _is_int(value):
-    return isinstance(value, int)
-
-
-def _get_params(mps, merrors):
-    return Params(
-        (
-            Param(
-                mp.number,
-                mp.name,
-                mp.value,
-                mp.error,
-                mp.is_const,
-                mp.is_fixed,
-                mp.has_limits,
-                mp.has_lower_limit,
-                mp.has_upper_limit,
-                mp.lower_limit if mp.has_lower_limit else None,
-                mp.upper_limit if mp.has_upper_limit else None,
-            )
-            for mp in mps
-        ),
-        merrors,
-    )
-
-
-class TemporaryUp:
-    def __init__(self, fcn, sigma):
-        self.saved = fcn.up
-        self.fcn = fcn
-        self.fcn.up = sigma ** 2
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.fcn.up = self.saved
+    return 1e-2 * val if val != 0 else 1e-1  # heuristic

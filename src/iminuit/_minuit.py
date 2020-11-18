@@ -253,36 +253,51 @@ class Minuit:
 
     @property
     def fmin(self):
-        """Current function minimum."""
+        """Current function minimum.
+
+        .. seealso:: :class:`iminuit.util.FMin`
+        """
         return self._fmin
 
     @property
     def fval(self):
-        """Function minimum value.
+        """Function minimum value (alias for Minuit.fmin.fval).
 
-        .. seealso:: :attr:`fmin`
+        .. seealso:: :class:`iminuit.util.FMin`
         """
         fm = self._fmin
         return fm.fval if fm else None
 
     @property
     def params(self):
-        """List of current parameter data objects."""
-        return mutil._get_params(self._last_state, self.merrors)
+        """List of current parameter data objects.
+
+        .. seealso:: :class:`iminuit.util.Params`
+        """
+        return _get_params(self._last_state, self.merrors)
 
     @property
     def init_params(self):
-        """List of current parameter data objects set to the initial fit state."""
-        return mutil._get_params(self._init_state, None)
+        """List of current parameter data objects set to the initial fit state.
+
+        .. seealso:: :class:`iminuit.util.Params`
+        """
+        return _get_params(self._init_state, None)
 
     @property
     def valid(self):
-        """Whether the function minimum is valid."""
+        """Whether the function minimum is valid (alias for Minuit.fmin.is_valid).
+
+        .. seealso:: :class:`iminuit.util.FMin`
+        """
         return self._fmin and self._fmin.is_valid
 
     @property
     def accurate(self):
-        """Whether the covariance matrix produced by the last MIGRAD run is accurate."""
+        """Whether the covariance matrix is accurate (alias for Minuit.fmin.has_accurate_covar).
+
+        .. seealso:: :class:`iminuit.util.FMin`
+        """
         return self._fmin and self._fmin.has_accurate_covar
 
     @property
@@ -392,11 +407,7 @@ class Minuit:
             if len(args) == 0:
                 name = mutil.describe(fcn)
             else:
-                try:
-                    name = mutil.describe(fcn)
-                except TypeError:
-                    pass
-
+                name = mutil.describe(fcn)
                 if name is None or len(name) != len(args):
                     name = tuple(f"x[{i}]" for i in range(len(args)))
 
@@ -418,10 +429,10 @@ class Minuit:
         self._init_state = self._make_init_state(args, kwds)
         self._last_state = self._init_state
 
-        self._values = ValueView(self)
-        self._errors = ErrorView(self)
-        self._fixed = FixedView(self)
-        self._limits = LimitView(self, 1)
+        self._values = mutil.ValueView(self)
+        self._errors = mutil.ErrorView(self)
+        self._fixed = mutil.FixedView(self)
+        self._limits = mutil.LimitView(self, 1)
         self._merrors = mutil.MErrors()
 
     def _make_init_state(self, args, kwds):
@@ -494,7 +505,7 @@ class Minuit:
 
         **Return:**
 
-            :ref:`function-minimum-sruct`, list of :ref:`minuit-param-struct`
+            self
         """
         if ncall is None:
             ncall = 0  # tells C++ Minuit to use its internal heuristic
@@ -519,11 +530,11 @@ class Minuit:
 
         self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 
-        mr = mutil.MigradResult(self._fmin, self.params)
         if self.print_level >= 2:
-            print(mr)
+            print(self.fmin)
+            print(self.params)
 
-        return mr
+        return self
 
     def hesse(self, ncall=None):
         """Run HESSE to compute parabolic errors.
@@ -546,7 +557,7 @@ class Minuit:
 
         **Returns:**
 
-            list of :ref:`minuit-param-struct`
+            self
         """
 
         ncall = 0 if ncall is None else int(ncall)
@@ -569,7 +580,7 @@ class Minuit:
             if not self._fmin:
                 raise RuntimeError("HESSE Failed")
 
-        return self.params
+        return self
 
     def minos(self, *parameters, sigma=1.0, ncall=None):
         """Run MINOS to compute asymmetric confidence intervals.
@@ -602,9 +613,7 @@ class Minuit:
 
         **Returns:**
 
-            Dictionary of varname to :ref:`minos-error-struct`, containing
-            all up to now computed errors, including the current request.
-
+            self
         """
         if not self._fmin:
             raise RuntimeError(
@@ -634,16 +643,16 @@ class Minuit:
                     pars.append(par)
 
         _check_errordef(self._fcn)
-        with mutil.TemporaryUp(self._fcn, sigma):
+        with TemporaryUp(self._fcn, sigma):
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
             for par in pars:
                 me = minos(self._var2pos[par], ncall, self.tol)
                 self._merrors[par] = mutil.MError(par, me)
 
-        self._fmin.nfcn = self._fcn.nfcn
-        self._fmin.ngrad = self._fcn.ngrad
+        self._fmin._nfcn = self._fcn.nfcn
+        self._fmin._ngrad = self._fcn.ngrad
 
-        return self.merrors
+        return self
 
     def matrix(self, correlation=False, skip_fixed=True):
         """Error or correlation matrix in tuple or tuples format."""
@@ -1107,7 +1116,7 @@ class Minuit:
             raise ValueError("mncontour cannot be run on fixed parameters.")
 
         _check_errordef(self._fcn)
-        with mutil.TemporaryUp(self._fcn, sigma):
+        with TemporaryUp(self._fcn, sigma):
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             mex, mey, ce = mnc(ix, iy, numpoints)
 
@@ -1227,134 +1236,36 @@ def _check_errordef(fcn):
         fcn.up = 1
 
 
-# Helper classes
-class BasicView:
-    """Array-like view of parameter state.
-
-    Derived classes need to implement methods _set and _get to access
-    specific properties of the parameter state."""
-
-    _minuit = None
-    _ndim = 0
-
-    def __init__(self, minuit, ndim=0):
-        self._minuit = minuit
-        self._ndim = ndim
-
-    def __iter__(self):
-        for i in range(len(self)):
-            yield self._get(i)
-
-    def __len__(self):
-        return self._minuit.narg
-
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            return [self._get(i) for i in ind]
-        i = key if mutil._is_int(key) else self._minuit._var2pos[key]
-        if i < 0:
-            i += len(self)
-        if i < 0 or i >= len(self):
-            raise IndexError
-        return self._get(i)
-
-    def __setitem__(self, key, value):
-        self._minuit._copy_state_if_needed()
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            if np.ndim(value) == self._ndim:  # basic broadcasting
-                for i in ind:
-                    self._set(i, value)
-            else:
-                if len(value) != len(ind):
-                    raise ValueError("length of argument does not match slice")
-                for i, v in zip(ind, value):
-                    self._set(i, v)
-        else:
-            i = key if mutil._is_int(key) else self._minuit._var2pos[key]
-            if i < 0:
-                i += len(self)
-            if i < 0 or i >= len(self):
-                raise IndexError
-            self._set(i, value)
-
-    def __eq__(self, other):
-        return len(self) == len(other) and all(x == y for x, y in zip(self, other))
-
-    def __repr__(self):
-        s = "<{} of Minuit at {:x}>".format(self.__class__.__name__, id(self._minuit))
-        for (k, v) in zip(self._minuit._pos2var, self):
-            s += f"\n  {k}: {v}"
-        return s
+def _get_params(mps, merrors):
+    return mutil.Params(
+        (
+            mutil.Param(
+                mp.number,
+                mp.name,
+                mp.value,
+                mp.error,
+                mp.is_const,
+                mp.is_fixed,
+                mp.has_limits,
+                mp.has_lower_limit,
+                mp.has_upper_limit,
+                mp.lower_limit if mp.has_lower_limit else None,
+                mp.upper_limit if mp.has_upper_limit else None,
+            )
+            for mp in mps
+        ),
+        merrors,
+    )
 
 
-class ValueView(BasicView):
-    """Array-like view of parameter values."""
+class TemporaryUp:
+    def __init__(self, fcn, sigma):
+        self.saved = fcn.up
+        self.fcn = fcn
+        self.fcn.up *= sigma ** 2
 
-    def _get(self, i):
-        return self._minuit._last_state[i].value
+    def __enter__(self):
+        pass
 
-    def _set(self, i, value):
-        self._minuit._last_state.set_value(i, value)
-
-
-class ErrorView(BasicView):
-    """Array-like view of parameter errors."""
-
-    def _get(self, i):
-        return self._minuit._last_state[i].error
-
-    def _set(self, i, value):
-        self._minuit._last_state.set_error(i, value)
-
-
-class FixedView(BasicView):
-    """Array-like view of whether parameters are fixed."""
-
-    def _get(self, i):
-        return self._minuit._last_state[i].is_fixed
-
-    def _set(self, i, fix):
-        if fix:
-            self._minuit._last_state.fix(i)
-        else:
-            self._minuit._last_state.release(i)
-
-
-class LimitView(BasicView):
-    """Array-like view of parameter limits."""
-
-    def _get(self, i):
-        p = self._minuit._last_state[i]
-        return (
-            p.lower_limit if p.has_lower_limit else -np.inf,
-            p.upper_limit if p.has_upper_limit else np.inf,
-        )
-
-    def _set(self, i, args):
-        state = self._minuit._last_state
-        args = mutil._normalize_limit(args)
-        val = state[i].value
-        err = state[i].error
-        # changing limits is a cheap operation, start from clean state
-        state.remove_limits(i)
-        if args is None or args == (-np.inf, np.inf):
-            low, high = (-np.inf, np.inf)
-        else:
-            low, high = args
-            if low != -np.inf and high != np.inf:  # both must be set
-                state.set_limits(i, low, high)
-                if low == high:
-                    state.fix(i)
-            elif low != -np.inf:  # lower limit must be set
-                state.set_lower_limit(i, low)
-            else:  # lower limit must be set
-                state.set_upper_limit(i, high)
-        # bug in Minuit2: must set parameter value and error again after changing limits
-        if val < low:
-            val = low
-        elif val > high:
-            val = high
-        state.set_value(i, val)
-        state.set_error(i, err)
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.fcn.up = self.saved

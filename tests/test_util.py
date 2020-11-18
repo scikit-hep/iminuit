@@ -3,16 +3,15 @@ import pytest
 from argparse import Namespace
 
 
-def test_arguments_from_docstring():
-    s = "f(x, y, z)"
-    ok, a = util.arguments_from_docstring(s)
-    assert ok
-    assert a == ["x", "y", "z"]
-    # this is a hard one
-    s = "Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])"
-    ok, a = util.arguments_from_docstring(s)
-    assert ok
-    assert a == ["ncall_me", "resume", "nsplit"]
+def test_ndim():
+    ndim = util._ndim
+    assert ndim(1) == 0
+    assert ndim([]) == 1
+    assert ndim([[]]) == 2
+    assert ndim(None) == 0
+    assert ndim((None, None)) == 1
+    assert ndim(((1, 2), None)) == 2
+    assert ndim((None, (1, 2))) == 2
 
 
 def test_Matrix():
@@ -87,33 +86,13 @@ def test_FMin():
     assert fmin.has_parameters_at_limit == False
 
 
-def test_MigradResult():
-    fmin = Namespace(fval=3)
-    params = util.Params([], None)
-    mr = util.MigradResult(fmin, params)
-    assert mr.fmin is fmin
-    assert mr[0] is fmin
-    assert mr.params is params
-    assert mr[1] is params
-    a, b = mr
-    assert a is fmin
-    assert b is params
-
-
 def test_normalize_limit():
-    assert util._normalize_limit(None) is None
+    assert util._normalize_limit(None) == (-util.inf, util.inf)
     assert util._normalize_limit((None, 2)) == (-util.inf, 2)
     assert util._normalize_limit((2, None)) == (2, util.inf)
     assert util._normalize_limit((None, None)) == (-util.inf, util.inf)
     with pytest.raises(ValueError):
         util._normalize_limit((3, 2))
-
-
-def test_guess_initial_value():
-    assert util._guess_initial_value(None) == 0
-    assert util._guess_initial_value((-util.inf, 0)) == -1
-    assert util._guess_initial_value((0, util.inf)) == 1
-    assert util._guess_initial_value((1.0, 2.0)) == 1.5
 
 
 def test_guess_initial_step():
