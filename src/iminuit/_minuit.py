@@ -218,14 +218,14 @@ class Minuit:
         return self._merrors
 
     @property
-    def narg(self):
+    def npar(self):
         """Number of parameters."""
         return len(self._pos2var)
 
     @property
     def nfit(self):
         """Number of fitted parameters (fixed parameters not counted)."""
-        return self.narg - sum(self.fixed)
+        return self.npar - sum(self.fixed)
 
     @property
     def covariance(self):
@@ -444,8 +444,8 @@ class Minuit:
                     f"positional arguments cannot be mixed with "
                     f"parameter keyword arguments {kwds}"
                 )
-            if nargs != self.narg:
-                raise RuntimeError(f"{nargs} values given for {self.narg} parameters")
+            if nargs != self.npar:
+                raise RuntimeError(f"{nargs} values given for {self.npar} parameters")
         else:
             for kw in kwds:
                 if kw not in self.parameters:
@@ -680,7 +680,7 @@ class Minuit:
                 if not mp.is_fixed:
                     ext2int[mp.number] = iint
                     iint += 1
-            ind = range(self.narg)
+            ind = range(self.npar)
 
             def cov(i, j):
                 if i not in ext2int or j not in ext2int:
@@ -734,8 +734,8 @@ class Minuit:
 
             ``numpy.ndarray`` of shape (N,).
         """
-        a = np.empty(self.narg, dtype=np.double)
-        for i in range(self.narg):
+        a = np.empty(self.npar, dtype=np.double)
+        for i in range(self.npar):
             a[i] = self.errors[i]
         return a
 
@@ -756,7 +756,7 @@ class Minuit:
             ``numpy.ndarray`` of shape (2, N).
         """
         # array format follows matplotlib conventions, see pyplot.errorbar
-        a = np.zeros((2, self.narg))
+        a = np.zeros((2, self.npar))
         for me in self.merrors.values():
             i = self._var2pos[me.name]
             a[0, i] = -me.lower
