@@ -633,7 +633,12 @@ def _arguments_from_inspect(f):
     # Check inspect.signature for arguemnts
     import inspect
 
-    signature = inspect.signature(f)
+    try:
+        # fails for builtin on Windows and OSX in Python 3.6
+        signature = inspect.signature(f)
+    except ValueError:
+        return None
+
     args = []
     for name, par in signature.parameters.items():
         # Variable number of arguments is not supported
