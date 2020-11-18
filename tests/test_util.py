@@ -1,7 +1,6 @@
 from iminuit import util
 import pytest
 from argparse import Namespace
-import numpy as np
 from numpy.testing import assert_equal, assert_allclose
 
 
