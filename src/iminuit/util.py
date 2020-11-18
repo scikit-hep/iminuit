@@ -150,7 +150,7 @@ class LimitView(BasicView):
                 state.fix(i)
         elif low != -inf:  # lower limit must be set
             state.set_lower_limit(i, low)
-        else:  # lower limit must be set
+        elif high != inf:  # lower limit must be set
             state.set_upper_limit(i, high)
         # bug in Minuit2: must set parameter value and error again after changing limits
         if val < low:
