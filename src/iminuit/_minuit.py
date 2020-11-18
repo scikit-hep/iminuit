@@ -217,65 +217,11 @@ class Minuit:
         """Minos error objects with full status information."""
         return self._merrors
 
-    def matrix(self, correlation=False, skip_fixed=True):
-        """Error or correlation matrix in tuple or tuples format."""
-        if not self._last_state.has_covariance:
-            raise RuntimeError(
-                "Covariance is not valid. Maybe the last Hesse call failed?"
-            )
-
-        mncov = self._last_state.covariance
-
-        # When some parameters are fixed, mncov is a sub-matrix. If skip-fixed
-        # is false, we need to expand the sub-matrix back into the full form.
-        # This requires a translation between sub-index und full-index.
-        if skip_fixed:
-            npar = sum(not mp.is_fixed for mp in self._last_state)
-            ind = range(npar)
-
-            def cov(i, j):
-                return mncov[i, j]
-
-        else:
-            ext2int = {}
-            iint = 0
-            for mp in self._last_state:
-                if not mp.is_fixed:
-                    ext2int[mp.number] = iint
-                    iint += 1
-            ind = range(self.narg)
-
-            def cov(i, j):
-                if i not in ext2int or j not in ext2int:
-                    return 0.0
-                return mncov[ext2int[i], ext2int[j]]
-
-        names = [x for x in self.parameters if not (skip_fixed and self.fixed[x])]
-        if correlation:
-
-            def cor(i, j):
-                return cov(i, j) / ((cov(i, i) * cov(j, j)) ** 0.5 + 1e-100)
-
-            ret = mutil.Matrix(names, ((cor(i, j) for i in ind) for j in ind))
-        else:
-            ret = mutil.Matrix(names, ((cov(i, j) for i in ind) for j in ind))
-        return ret
-
-    def np_matrix(self, **kwds):
-        """Covariance or correlation matrix in numpy array format.
-
-        Keyword arguments are forwarded to :meth:`matrix`.
-
-        The name of this function was chosen to be analogous to :meth:`matrix`,
-        it returns the same information in a different format. For
-        documentation on the arguments, please see :meth:`matrix`.
-
-        **Returns:**
-
-            2D ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
-        """
-        matrix = self.matrix(**kwds)
-        return np.array(matrix, dtype=np.double)
+    @property
+    def covariance(self):
+        """Returns the covariance matrix."""
+        if self._last_state.has_covariance:
+            return mutil.MatrixView(self)
 
     def np_values(self):
         """Parameter values in numpy array format.
@@ -335,7 +281,13 @@ class Minuit:
 
             ``numpy.ndarray`` of shape (N,N) (not a ``numpy.matrix``).
         """
-        return self.np_matrix(correlation=False, skip_fixed=False)
+        n = self.npar
+        m = np.zeros((n, n))
+        cov = self.covariance
+        for i in range(n):
+            for j in range(i):
+                m[i, j] = cov[i, j]
+        return cov
 
     @property
     def npar(self):
@@ -346,22 +298,6 @@ class Minuit:
     def nfit(self):
         """Number of fitted parameters (fixed parameters not counted)."""
         return self.npar - sum(self.fixed)
-
-    def correlation(self, par1, par2):
-        """Returns the correlation of two parameters.
-
-
-
-        .. seealso:: :meth:`matrix`
-        """
-        free = tuple(self._free_parameters())
-        cov = self._last_state.covariance
-        if self._last_state.has_covariance:
-            return {
-                (v1, v2): cov[i, j]
-                for i, v1 in enumerate(free)
-                for j, v2 in enumerate(free)
-            }
 
     @property
     def gcc(self):

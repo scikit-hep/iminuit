@@ -1,6 +1,6 @@
 # flake8: noqa E501
 from iminuit import Minuit
-from iminuit.util import Params, Param, Matrix, FMin
+from iminuit.util import Params, Param, MatrixView, FMin
 from iminuit import _repr_html as repr_html, _repr_text as repr_text
 import pytest
 from argparse import Namespace
@@ -393,7 +393,13 @@ def test_html_merrors(minuit):
 
 
 def test_html_matrix():
-    matrix = Matrix(["x", "y"], ((1.0, -0.0), (-0.0, 0.25)))
+    state = [Namespace(number=0, is_fixed=False), Namespace(number=1, is_fixed=False)]
+    state.covariance = np.array(((1.0, -0.0), (-0.0, 0.25)))
+    state.covariance.nrow = 2
+
+    mock_minuit = Namespace(npar=2, _var2pos={"x": 0, "y": 1}, _last_state=state)
+
+    matrix = MatrixView(mock_minuit)
     # fmt: off
     assert matrix._repr_html_() == r"""<table>
     <tr>

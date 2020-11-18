@@ -26,8 +26,7 @@ class BasicView:
     Derived classes need to implement methods _set and _get to access
     specific properties of the parameter state."""
 
-    _minuit = None
-    _ndim = 0
+    __slots__ = ("_minuit", "_ndim")
 
     def __init__(self, minuit, ndim=0):
         self._minuit = minuit
@@ -174,21 +173,49 @@ def _normalize_limit(lim):
     return tuple(lim)
 
 
-class Matrix(tuple):
-    """Matrix data object (tuple of tuples)."""
+class MatrixView:
+    """Matrix view."""
 
-    __slots__ = ()
+    __slots__ = ("_minuit",)
 
-    def __new__(self, names, data):
-        """Create new matrix."""
-        self.names = names
-        return tuple.__new__(Matrix, (tuple(x) for x in data))
+    def __init__(self, minuit):
+        self._minuit = minuit
+
+    def __len__(self):
+        return self._minuit.npar
+
+    def __getitem__(self, args):
+        var2pos = self._minuit._var2pos
+        state = self._minuit._last_state
+        cov = state.covariance
+
+        i, j = args
+        if not isinstance(i, int):
+            i = var2pos[i]
+            j = var2pos[j]
+
+        if cov.nrow == len(state):
+            return cov[args]
+        else:
+            # When some parameters are fixed, cov is a sub-matrix. If skip-fixed
+            # is false, we need to expand the sub-matrix back into the full form.
+            # This requires a translation between sub-index und full-index.
+            ext2int = {}
+            k = 0
+            for mp in state:
+                if not mp.is_fixed:
+                    ext2int[mp.number] = k
+                    k += 1
+
+            if i not in ext2int or j not in ext2int:
+                return 0.0
+            return cov[ext2int[i], ext2int[j]]
 
     def __str__(self):
-        """Return string suitable for terminal."""
         return _repr_text.matrix(self)
 
     def to_table(self):
+        names = self._minuit._pos2var
         args = []
         for mi in self:
             for mj in mi:
@@ -196,9 +223,9 @@ class Matrix(tuple):
         nums = _repr_text.matrix_format(*args)
         tab = []
         n = len(self)
-        for i, name in enumerate(self.names):
+        for i, name in enumerate(names):
             tab.append([name] + [nums[n * i + j] for j in range(n)])
-        return tab, self.names
+        return tab, names
 
     def _repr_html_(self):
         return _repr_html.matrix(self)
