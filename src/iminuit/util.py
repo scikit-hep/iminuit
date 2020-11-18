@@ -630,7 +630,37 @@ def make_func_code(params):
 
 
 def describe(callable):
-    """Try to extract the function argument names."""
+    """Try to extract the function argument names.
+
+    **Function Signature Extraction Ordering**
+
+    1. Using ``obj.func_code``. If an objects has a ``func_code`` attribute, it is used
+       to detect the parameters. Examples::
+
+           def f(x, y):
+               return (x - 2) ** 2 + (y - 3) ** 2
+
+           f = lambda x, y: (x - 2) ** 2 + (y - 3) ** 2
+
+       Users are encouraged to use this mechanism to provide signatures for objects that
+       otherwise would not have a detectable signature. The function :func:`make_func_code` can be used to generate an appropriate func_code object.
+       An example where this is useful is shown in one of the tutorials.
+
+    2. Using :func:`inspect.signature`. The :mod:`inspect` module has a powerful
+       function to extract the signature of a Python callable, which works on most
+       callables, including Functors like this::
+
+        class MyLeastSquares:
+            def __init__(self, data_x, data_y, data_yerr):
+                # ...
+
+            def __call__(self, a, b):
+                # ...
+
+    3. Using the docstring. The docstring is parsed to detect the parameter names. This
+       obviously requires that a docstring is present and that it is following the Python
+       standard formatting for function signatures.
+    """
     return (
         _arguments_from_func_code(callable)
         or _arguments_from_inspect(callable)

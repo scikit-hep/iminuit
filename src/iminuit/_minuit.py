@@ -374,7 +374,7 @@ class Minuit:
 
                 iminuit automatically detects the parameters names in this case.
                 More information about how the function signature is detected can
-                be found in :ref:`function-sig-label`.
+                be found in :func:`iminuit.util.describe`.
 
             b) Parameters passed as Numpy array
 
