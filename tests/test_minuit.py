@@ -1244,3 +1244,34 @@ def test_migrad_precision():
     m.migrad(precision=1e-9)
     fm2 = m.fmin
     assert fm2.edm < fm1.edm
+
+
+@pytest.mark.parametrize("sigma", (1, 2))
+@pytest.mark.parametrize("k", (10, 1000))
+@pytest.mark.parametrize("limit", (False, True))
+def test_merrors(sigma, k, limit):
+    opt = pytest.importorskip("scipy.optimize")
+
+    def nll(lambd):
+        return lambd - k * np.log(lambd)
+
+    # find location of min + up by hand
+    def crossing(x):
+        up = 0.5 * sigma ** 2
+        return nll(k + x) - (nll(k) + up)
+
+    bound = 1.5 * sigma * k ** 0.5
+    upper = opt.root_scalar(crossing, bracket=(0, bound)).root
+    lower = opt.root_scalar(crossing, bracket=(-bound, 0)).root
+
+    m = Minuit(nll, lambd=k)
+    m.limits["lambd"] = (0, None) if limit else None
+    m.errordef = Minuit.LIKELIHOOD
+    m.migrad()
+    assert m.valid
+    assert m.accurate
+    m.minos(sigma=sigma)
+    assert m.values["lambd"] == approx(k)
+    assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
+    assert m.merrors["lambd"].lower == approx(lower, abs=1e-4)
+    assert m.merrors["lambd"].upper == approx(upper, abs=1e-4)
