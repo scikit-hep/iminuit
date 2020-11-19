@@ -5,6 +5,11 @@
 Changelog
 =========
 
+1.5.3 (November 19, 2020)
+--------------------------
+
+- Fixed a crash when throw_nan=True is used and the throw is triggered
+
 1.5.2 (September 24, 2020)
 --------------------------
 
