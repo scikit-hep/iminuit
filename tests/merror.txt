@@ -1,0 +1,9 @@
+┌──────────┬───────────────────────┐
+│          │           x           │
+├──────────┼───────────┬───────────┤
+│  Error   │    -1     │     1     │
+│  Valid   │   True    │   True    │
+│ At Limit │   False   │   False   │
+│ Max FCN  │   False   │   False   │
+│ New Min  │   False   │   False   │
+└──────────┴───────────┴───────────┘

@@ -350,6 +350,43 @@ def test_html_params_with_limits():
     # fmt: on
 
 
+def test_html_merror(minuit):
+    me = minuit.merrors[0]
+    # fmt: off
+    assert me._repr_html_() == r"""<table>
+    <tr>
+        <td></td>
+        <th colspan="2" style="text-align:center" title="Parameter name"> x </th>
+    </tr>
+    <tr>
+        <th title="Lower and upper minos error of the parameter"> Error </th>
+        <td> -1 </td>
+        <td> 1 </td>
+    </tr>
+    <tr>
+        <th title="Validity of lower/upper minos error"> Valid </th>
+        <td style="{good}"> True </td>
+        <td style="{good}"> True </td>
+    </tr>
+    <tr>
+        <th title="Did scan hit limit of any parameter?"> At Limit </th>
+        <td style="{good}"> False </td>
+        <td style="{good}"> False </td>
+    </tr>
+    <tr>
+        <th title="Did scan hit function call limit?"> Max FCN </th>
+        <td style="{good}"> False </td>
+        <td style="{good}"> False </td>
+    </tr>
+    <tr>
+        <th title="New minimum found when doing scan?"> New Min </th>
+        <td style="{good}"> False </td>
+        <td style="{good}"> False </td>
+    </tr>
+</table>""".format(good=_repr_html.good_style)
+    # fmt: on
+
+
 def test_html_merrors(minuit):
     mes = minuit.merrors
     # fmt: off
@@ -490,6 +527,10 @@ def test_text_params_with_limits():
     m.errors = (0.2, 0.1)
     m.limits = ((0, None), (0, 10))
     assert str(m.params) == ref("params_with_limits")
+
+
+def test_text_merror(minuit):
+    assert str(minuit.merrors["x"]) == ref("merror")
 
 
 def test_text_merrors(minuit):

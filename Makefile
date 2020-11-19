@@ -16,9 +16,12 @@ test: build/done
 
 cov: build/done
 	@echo "Note: This only shows the coverage in pure Python."
-	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
+	rm -rf htmlcov
+	$(PYTHON) -m pytest -x --ff --cov src/iminuit --cov-report html
+	xdg-open htmlcov/index.html
 
 doc: build/done build/html/done
+	xdg-open build/html/index.html
 
 build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/*)
 	$(PYTHON) -c "import iminuit" # requires iminuit to be installed
