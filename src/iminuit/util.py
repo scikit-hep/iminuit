@@ -1,9 +1,11 @@
 """iminuit utility functions and classes."""
+import inspect
 import re
 from collections import OrderedDict, namedtuple
 from collections.abc import Iterable
 from . import _repr_html
 from . import _repr_text
+import numpy as np
 
 inf = float("infinity")
 
@@ -26,8 +28,7 @@ class BasicView:
     Derived classes need to implement methods _set and _get to access
     specific properties of the parameter state."""
 
-    _minuit = None
-    _ndim = 0
+    __slots__ = ("_minuit", "_ndim")
 
     def __init__(self, minuit, ndim=0):
         self._minuit = minuit
@@ -174,106 +175,57 @@ def _normalize_limit(lim):
     return tuple(lim)
 
 
-class Matrix(tuple):
-    """Matrix data object (tuple of tuples)."""
+class Matrix(np.ndarray):
+    """Matrix."""
 
-    __slots__ = ()
+    __slots__ = ("_var2pos",)
 
-    def __new__(self, names, data):
-        """Create new matrix."""
-        self.names = names
-        return tuple.__new__(Matrix, (tuple(x) for x in data))
+    def __new__(cls, var2pos):
+        npar = len(var2pos)
+        obj = super(Matrix, cls).__new__(cls, (npar, npar))
+        obj._var2pos = var2pos
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None:
+            return
+
+        self._var2pos = getattr(obj, "_var2pos")
+
+    def __getitem__(self, key):
+        var2pos = self._var2pos
+        if isinstance(key, tuple):
+            key = tuple((k if isinstance(k, int) else var2pos[k]) for k in key)
+        elif isinstance(key, str):
+            key = var2pos[key]
+        return super().__getitem__(key)
 
     def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.matrix(self)
+        return _repr_text.matrix(self, tuple(self._var2pos))
 
     def to_table(self):
-        args = []
-        for mi in self:
-            for mj in mi:
-                args.append(mj)
-        nums = _repr_text.matrix_format(*args)
+        names = tuple(self._var2pos)
+        nums = _repr_text.matrix_format(self.flatten())
         tab = []
         n = len(self)
-        for i, name in enumerate(self.names):
+        for i, name in enumerate(names):
             tab.append([name] + [nums[n * i + j] for j in range(n)])
-        return tab, self.names
+        return tab, names
+
+    def correlation(self):
+        a = self.copy()
+        d = np.diag(a) ** 0.5
+        a /= np.outer(d, d) + 1e-100
+        return a
 
     def _repr_html_(self):
-        return _repr_html.matrix(self)
+        return _repr_html.matrix(self, tuple(self._var2pos))
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Matrix(...)")
         else:
             p.text(str(self))
-
-
-class Param:
-    """Data object for a single Parameter."""
-
-    __slots__ = (
-        "number",
-        "name",
-        "value",
-        "error",
-        "is_const",
-        "is_fixed",
-        "has_limits",
-        "has_lower_limit",
-        "has_upper_limit",
-        "lower_limit",
-        "upper_limit",
-    )
-
-    def __init__(
-        self,
-        number,
-        name,
-        value,
-        error,
-        is_const,
-        is_fixed,
-        has_limits,
-        has_lower_limit,
-        has_upper_limit,
-        lower_limit,
-        upper_limit,
-    ):
-        self.number = number
-        self.name = name
-        self.value = value
-        self.error = error
-        self.is_const = is_const
-        self.is_fixed = is_fixed
-        self.has_limits = has_limits
-        self.has_lower_limit = has_lower_limit
-        self.has_upper_limit = has_upper_limit
-        self.lower_limit = lower_limit
-        self.upper_limit = upper_limit
-
-    def __str__(self):
-        pairs = []
-        for k in self.__slots__:
-            v = getattr(self, k)
-            pairs.append(f"{k}={v!r}")
-        return "Param(" + ", ".join(pairs) + ")"
-
-    def __eq__(self, other):
-        return (
-            self.number == other.number
-            and self.name == other.name
-            and self.value == other.value
-            and self.error == other.error
-            and self.is_const == other.is_const
-            and self.is_fixed == other.is_fixed
-            and self.has_limits == other.has_limits
-            and self.has_lower_limit == other.has_lower_limit
-            and self.has_upper_limit == other.has_upper_limit
-            and self.lower_limit == other.lower_limit
-            and self.upper_limit == other.upper_limit
-        )
 
 
 class FMin:
@@ -458,6 +410,84 @@ class FMin:
         return self._src.up
 
 
+class Param:
+    """Data object for a single Parameter."""
+
+    __slots__ = (
+        "number",
+        "name",
+        "value",
+        "error",
+        "is_const",
+        "is_fixed",
+        "has_limits",
+        "has_lower_limit",
+        "has_upper_limit",
+        "lower_limit",
+        "upper_limit",
+    )
+
+    def __init__(
+        self,
+        number,
+        name,
+        value,
+        error,
+        is_const,
+        is_fixed,
+        has_limits,
+        has_lower_limit,
+        has_upper_limit,
+        lower_limit,
+        upper_limit,
+    ):
+        self.number = number
+        self.name = name
+        self.value = value
+        self.error = error
+        self.is_const = is_const
+        self.is_fixed = is_fixed
+        self.has_limits = has_limits
+        self.has_lower_limit = has_lower_limit
+        self.has_upper_limit = has_upper_limit
+        self.lower_limit = lower_limit
+        self.upper_limit = upper_limit
+
+    def __str__(self):
+        pairs = []
+        for k in self.__slots__:
+            v = getattr(self, k)
+            pairs.append(f"{k}={v!r}")
+        return "Param(" + ", ".join(pairs) + ")"
+
+    def __eq__(self, other):
+        return (
+            self.number == other.number
+            and self.name == other.name
+            and self.value == other.value
+            and self.error == other.error
+            and self.is_const == other.is_const
+            and self.is_fixed == other.is_fixed
+            and self.has_limits == other.has_limits
+            and self.has_lower_limit == other.has_lower_limit
+            and self.has_upper_limit == other.has_upper_limit
+            and self.lower_limit == other.lower_limit
+            and self.upper_limit == other.upper_limit
+        )
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("Param(...)")
+        else:
+            with p.group(6, "Param(", ")"):
+                for idx, k in enumerate(self.__slots__):
+                    if idx:
+                        p.text(",")
+                        p.breakable()
+                    p.text(f"{k}=")
+                    p.pretty(getattr(self, k))
+
+
 class Params(list):
     """List-like holder of parameter data objects."""
 
@@ -513,7 +543,7 @@ class Params(list):
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text("[...]")
+            p.text("Params(...)")
         else:
             p.text(str(self))
 
@@ -565,9 +595,14 @@ class MError:
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text("MError(...)")
+            p.text("<MError ...>")
         else:
-            p.text(str(self))
+            with p.group(4, "<MError ", ">"):
+                for idx, k in enumerate(self.__slots__):
+                    if idx:
+                        p.breakable()
+                    p.text(f"{k}=")
+                    p.pretty(getattr(self, k))
 
 
 class MErrors(OrderedDict):
@@ -584,9 +619,12 @@ class MErrors(OrderedDict):
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text("MErrors(...)")
+            p.text("<MErrors ...>")
         else:
-            p.text(str(self))
+            with p.group(8, "<MErrors ", ">"):
+                for x in self.values():
+                    p.pretty(x)
+                    p.breakable()
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -612,12 +650,60 @@ def make_func_code(params):
 
 
 def describe(callable):
-    """Try to extract the function argument names."""
+    """Attempt to extract the function argument names.
+
+    **Returns**
+
+    Returns a list of strings with the parameters names if successful. If unsuccessful,
+    it returns either an empty list or None
+
+    **Function signature extraction algorithm**
+
+    Parameter names are extracted with the following three methods, which are attempted
+    in order. The first to succeed determines the result.
+
+    1. Using ``obj.func_code``. If an objects has a ``func_code`` attribute, it is used
+       to detect the parameters. Examples::
+
+           def f(x, y):
+               return (x - 2) ** 2 + (y - 3) ** 2
+
+           f = lambda x, y: (x - 2) ** 2 + (y - 3) ** 2
+
+       Users are encouraged to use this mechanism to provide signatures for objects that
+       otherwise would not have a detectable signature. The function
+       :func:`make_func_code` can be used to generate an appropriate func_code object.
+       An example where this is useful is shown in one of the tutorials.
+
+    2. Using :func:`inspect.signature`. The :mod:`inspect` module provides a general
+       function to extract the signature of a Python callable. It works on most
+       callables, including Functors like this::
+
+        class MyLeastSquares:
+            def __call__(self, a, b):
+                # ...
+
+    3. Using the docstring. The docstring is textually parsed to detect the parameter
+       names. This requires that a docstring is present which follows the Python
+       standard formatting for function signatures.
+
+    **Handling of ambiguous cases**
+
+    How functions with positional and keyword argument are handled::
+
+        # describe returns [a, b];
+        # *args and **kwargs are ignored
+        def fcn(a, b, *args, **kwargs): ...
+
+        # describe returns [a, b, c];
+        # positional arguments with default values are detected
+        def fcn(a, b, c=1): ...
+
+    """
     return (
         _arguments_from_func_code(callable)
         or _arguments_from_inspect(callable)
-        or _arguments_from_docstring(callable.__call__.__doc__)
-        or _arguments_from_docstring(callable.__doc__)
+        or _arguments_from_docstring(callable)
     )
 
 
@@ -628,15 +714,12 @@ def _arguments_from_func_code(obj):
         return fc.co_varnames[: fc.co_argcount]
 
 
-def _arguments_from_inspect(f):
-    # Check inspect.signature for arguemnts
-    import inspect
-
+def _arguments_from_inspect(obj):
     try:
         # fails for builtin on Windows and OSX in Python 3.6
-        signature = inspect.signature(f)
-    except ValueError:
-        return None
+        signature = inspect.signature(obj)
+    except ValueError:  # pragma: no cover
+        return None  # pragma: no cover
 
     args = []
     for name, par in signature.parameters.items():
@@ -650,14 +733,9 @@ def _arguments_from_inspect(f):
     return args
 
 
-def _arguments_from_docstring(doc):
-    """Parse first line of docstring for argument name.
+def _arguments_from_docstring(obj):
+    doc = inspect.getdoc(obj)
 
-    Docstring should be of the form ``min(iterable[, key=func])``.
-
-    It can also parse cython docstring of the form
-    ``Minuit.migrad(self[, int ncall_me =10000, foo=True, int bar=1])``
-    """
     if doc is None:
         return None
 

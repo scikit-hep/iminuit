@@ -31,7 +31,7 @@ def test_matrix():
     m.errordef = 1
     m.migrad()
     assert (
-        framed(tab.tabulate(*m.matrix().to_table()))
+        framed(tab.tabulate(*m.covariance.to_table()))
         == """
       x    y
 --  ---  ---

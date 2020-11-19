@@ -15,8 +15,9 @@ test: build/done
 	$(PYTHON) -m pytest -vv -r a --ff --pdb
 
 cov: build/done
-	@echo "Note: This only shows the coverage in pure Python."
-	$(PYTHON) -m pytest --cov src/iminuit --cov-report html
+	# This only computes the coverage in pure Python.
+	rm -rf htmlcov
+	$(PYTHON) -m pytest -x --ff --cov src/iminuit --cov-report html
 
 doc: build/done build/html/done
 
@@ -32,7 +33,7 @@ check:
 clean:
 	rm -rf build htmlcov src/iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache src/iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
 
-.PHONY: clean check cov doc
+.PHONY: clean check cov doc test
 
 ## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
 # pylint: build
