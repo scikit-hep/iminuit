@@ -731,14 +731,13 @@ class Minuit:
         state = MnUserParameterState(self._last_state)  # copy
         ipar = self._var2pos[vname]
         state.fix(ipar)
-        pr = MnPrint("Minuit.mnprofile", self.print_level)
         _check_errordef(self._fcn)
         for i, v in enumerate(values):
             state.set_value(ipar, v)
             migrad = MnMigrad(self._fcn, state, self.strategy)
             fm = migrad(0, self.tol)
             if not fm.is_valid:
-                pr.warn(f"MIGRAD fails to converge for {vname}={v}")
+                warn(f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning)
             status[i] = fm.is_valid
             results[i] = fm.fval
         vmin = np.min(results)
@@ -884,10 +883,10 @@ class Minuit:
 
         vmin = None
         vmax = None
-        if (vname, 1) in self.merrors:
-            vmin = v + self.merrors[(vname, -1)]
-            vmax = v + self.merrors[(vname, 1)]
-        if vname in self.errors:
+        if vname in self.merrors:
+            vmin = v + self.merrors[vname].lower
+            vmax = v + self.merrors[vname].upper
+        else:
             vmin = v - self.errors[vname]
             vmax = v + self.errors[vname]
 

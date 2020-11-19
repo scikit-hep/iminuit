@@ -28,6 +28,7 @@ def minuit(request):
 
 
 def test_profile(minuit):
+    minuit.draw_profile("x")
     minuit.minos("x")
     minuit.draw_profile("x")
 

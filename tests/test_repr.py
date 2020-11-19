@@ -461,6 +461,51 @@ def test_html_matrix():
     # fmt: on
 
 
+def test_html_correlation_matrix():
+    m = Minuit(lambda x, y: x ** 2 + (x - y) ** 2, x=0, y=0)
+    m.errordef = 1
+    m.migrad()
+    matrix = m.covariance.correlation()
+    # fmt: off
+    assert matrix._repr_html_() == r"""<table>
+    <tr>
+        <td></td>
+        <th> x </th>
+        <th> y </th>
+    </tr>
+    <tr>
+        <th> x </th>
+        <td> 1.000 </td>
+        <td style="background-color:rgb(250,144,144);color:black"> 0.707 </td>
+    </tr>
+    <tr>
+        <th> y </th>
+        <td style="background-color:rgb(250,144,144);color:black"> 0.707 </td>
+        <td> 1.000 </td>
+    </tr>
+</table>"""
+    # fmt: on
+
+
+def test_html_minuit():
+    m = Minuit(lambda x, y: x ** 2 + 4 * y ** 2, x=0, y=0)
+    m.errordef = 1
+    assert m._repr_html_() == m.params._repr_html_()
+    m.migrad()
+    assert (
+        m._repr_html_()
+        == m.fmin._repr_html_() + m.params._repr_html_() + m.covariance._repr_html_()
+    )
+    m.minos()
+    assert (
+        m._repr_html_()
+        == m.fmin._repr_html_()
+        + m.params._repr_html_()
+        + m.merrors._repr_html_()
+        + m.covariance._repr_html_()
+    )
+
+
 def test_text_fmin_good(fmin_good):
     assert str(fmin_good) == ref("fmin_good")
 
@@ -567,3 +612,13 @@ def test_text_matrix_difficult_values():
     arr = np.array(((-1.23456, 0), (0, 0)))
     matrix = _repr_text.matrix(arr, {"x": 0, "y": 1})
     assert str(matrix) == ref("matrix_difficult_values")
+
+
+def test_text_minuit():
+    m = Minuit(lambda x, y: x ** 2 + 4 * y ** 2, x=0, y=0)
+    m.errordef = 1
+    assert str(m) == str(m.params)
+    m.migrad()
+    assert str(m) == str(m.fmin) + str(m.params) + str(m.covariance)
+    m.minos()
+    assert str(m) == str(m.fmin) + str(m.params) + str(m.merrors) + str(m.covariance)
