@@ -1,4 +1,4 @@
-from iminuit.util import describe, make_func_code, _arguments_from_docstring
+from iminuit.util import describe, make_func_code
 from math import ldexp
 import platform
 from functools import wraps
