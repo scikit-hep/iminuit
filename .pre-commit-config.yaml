@@ -12,8 +12,6 @@
 #
 # See https://github.com/pre-commit/pre-commit
 
-default_stages: [push]
-
 repos:
 # Standard hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
