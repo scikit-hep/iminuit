@@ -1171,6 +1171,30 @@ class Minuit:
         else:
             self._covariance = None
 
+    def _repr_html_(self):
+        return sum(
+            self._fmin._repr_html_() if self._fmin else "",
+            self._params._repr_html_(),
+            self._merrors._repr_html_() if self._merrors else "",
+            self._covariance._repr_html_() if self._covariance else "",
+        )
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("<Minuit ...>")
+        else:
+            with p.group(8, "<Minuit ", ">"):
+                if self._fmin:
+                    p.pretty(self._fmin)
+                    p.breakable()
+                p.pretty(self._params)
+                if self._merrors:
+                    p.breakable()
+                    p.pretty(self._merrors)
+                if self._covariance:
+                    p.breakable()
+                    p.pretty(self._covariance)
+
 
 def _check_errordef(fcn):
     if fcn.up == 0:
