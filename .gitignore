@@ -14,10 +14,10 @@ __pycache__
 *.pkl
 
 build
+dist
 _build
 _skbuild
 pip-wheel-metadata
-dist
 
 .DS_Store
 .idea
@@ -33,15 +33,10 @@ dist
 
 Untitled*.ipynb
 Untitled*.py
-_libiminuit.cpp
-
-!tutorial.html
-!tutorial.ipynb
 
 Pipfile
 iminuit.egg-info
 archive
-html
 env
 MANIFEST
 
