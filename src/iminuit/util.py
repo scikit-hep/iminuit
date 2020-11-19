@@ -703,8 +703,7 @@ def describe(callable):
     return (
         _arguments_from_func_code(callable)
         or _arguments_from_inspect(callable)
-        or _arguments_from_docstring(callable.__call__.__doc__)
-        or _arguments_from_docstring(callable.__doc__)
+        or _arguments_from_docstring(callable)
     )
 
 
@@ -715,10 +714,10 @@ def _arguments_from_func_code(obj):
         return fc.co_varnames[: fc.co_argcount]
 
 
-def _arguments_from_inspect(f):
+def _arguments_from_inspect(obj):
     try:
         # fails for builtin on Windows and OSX in Python 3.6
-        signature = inspect.signature(f)
+        signature = inspect.signature(obj)
     except ValueError:  # pragma: no cover
         return None  # pragma: no cover
 
@@ -734,7 +733,9 @@ def _arguments_from_inspect(f):
     return args
 
 
-def _arguments_from_docstring(doc):
+def _arguments_from_docstring(obj):
+    doc = inspect.getdoc(obj)
+
     if doc is None:
         return None
 
