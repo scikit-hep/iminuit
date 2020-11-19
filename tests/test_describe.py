@@ -159,13 +159,3 @@ def test_from_bad_docstring_2():
         pass
 
     assert describe(foo) is None
-
-
-# def test_arguments_from_docstring():
-#     s = "f(x, y, z)"
-#     args = _arguments_from_docstring(s)
-#     assert args == ["x", "y", "z"]
-#     # this is a hard one
-#     s = "Minuit.migrad( int ncall_me =10000, [resume=True, int nsplit=1])"
-#     args = _arguments_from_docstring(s)
-#     assert args == ["ncall_me", "resume", "nsplit"]
