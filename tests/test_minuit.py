@@ -263,7 +263,18 @@ def test_covariance():
     assert m.covariance is None
     m.migrad()
     c = m.covariance
-    assert_allclose((c[("x", "x")], c[("y", "y")]), (4, 1))
+    assert_allclose((c["x", "x"], c["y", "y"]), (4, 1))
+    assert_allclose((c[0, 0], c[1, 1]), (4, 1))
+
+    expected = [[4.0, 0.0], [0.0, 1.0]]
+    assert_allclose(c, expected, atol=1e-7)
+    assert isinstance(c, np.ndarray)
+    assert c.shape == (2, 2)
+
+    c = c.correlation()
+    expected = [[1.0, 0.0], [0.0, 1.0]]
+    assert_allclose(c, expected, atol=1e-7)
+    assert c["x", "x"] == approx(1.0)
 
 
 def test_gcc():
@@ -283,7 +294,7 @@ def test_array_func_1():
     assert m.errors == (1, 1)
     m.migrad()
     assert_allclose(m.values, (1, 1), rtol=1e-2)
-    c = m.np_covariance()
+    c = m.covariance
     assert_allclose(np.diag(c), (1, 1), rtol=1e-2)
 
 
@@ -299,7 +310,7 @@ def test_array_func_2():
     assert m.limits["a"] == (0, 2)
     m.migrad()
     assert_allclose(m.values, (1, 1), rtol=1e-2)
-    c = m.np_covariance()
+    c = m.covariance
     assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)
     m.minos()
     assert len(m.merrors) == 1
@@ -377,9 +388,7 @@ def test_fix_param(grad):
     m.minos()
     assert_allclose(m.values, (2, 5), rtol=1e-2)
     assert_allclose(m.errors, (2, 1))
-    assert_allclose(m.matrix(), ((4, 0), (0, 1)), atol=1e-4)
-    for b in (True, False):
-        assert_allclose(m.matrix(skip_fixed=b), [[4, 0], [0, 1]], atol=1e-4)
+    assert_allclose(m.covariance, ((4, 0), (0, 1)), atol=1e-4)
 
     # now fix y = 10
     m = Minuit(func0, grad=grad, x=0, y=10.0)
@@ -390,8 +399,7 @@ def test_fix_param(grad):
     assert_allclose(m.values, (2, 10), rtol=1e-2)
     assert_allclose(m.fval, 35)
     assert m.fixed == [False, True]
-    assert_allclose(m.matrix(skip_fixed=True), [[4]], atol=1e-4)
-    assert_allclose(m.matrix(skip_fixed=False), [[4, 0], [0, 0]], atol=1e-4)
+    assert_allclose(m.covariance, [[4, 0], [0, 0]], atol=1e-4)
 
     assert not m.fixed["x"]
     assert m.fixed["y"]
@@ -402,8 +410,7 @@ def test_fix_param(grad):
     m.migrad()
     m.hesse()
     assert_allclose(m.values, (2, 5), rtol=1e-2)
-    assert_allclose(m.matrix(skip_fixed=True), [[1]], atol=1e-4)
-    assert_allclose(m.matrix(skip_fixed=False), [[0, 0], [0, 1]], atol=1e-4)
+    assert_allclose(m.covariance, [[0, 0], [0, 1]], atol=1e-4)
 
     with pytest.raises(KeyError):
         m.fixed["a"]
@@ -459,8 +466,8 @@ def test_minos_all_some_fix():
     assert "x" not in m.merrors
     me = m.merrors["y"]
     assert me.name == "y"
-    assert me.lower == pytest.approx(-1)
-    assert me.upper == pytest.approx(1)
+    assert me.lower == approx(-1)
+    assert me.upper == approx(1)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -479,8 +486,8 @@ def test_minos_single_fixed():
     m.minos("y")
     me = m.merrors["y"]
     assert me.name == "y"
-    assert me.lower == pytest.approx(-1)
-    assert me.upper == pytest.approx(1)
+    assert me.lower == approx(-1)
+    assert me.upper == approx(1)
 
 
 def test_minos_single_fixed_raising():
@@ -746,34 +753,6 @@ def test_fmin():
     assert not fm2.is_valid
 
 
-def test_matrix(minuit):
-    actual = minuit.matrix()
-    expected = [[4.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-7)
-
-
-def test_matrix_correlation(minuit):
-    actual = minuit.matrix(correlation=True)
-    expected = [[1.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-8)
-
-
-def test_np_matrix(minuit):
-    actual = minuit.np_matrix()
-    expected = [[4.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-7)
-    assert isinstance(actual, np.ndarray)
-    assert actual.shape == (2, 2)
-
-
-def test_np_matrix_correlation(minuit):
-    actual = minuit.np_matrix(correlation=True)
-    expected = [[1.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-7)
-    assert isinstance(actual, np.ndarray)
-    assert actual.shape == (2, 2)
-
-
 def test_np_values(minuit):
     actual = minuit.np_values()
     expected = [2.0, 5.0]
@@ -797,14 +776,6 @@ def test_np_merrors(minuit):
     down_delta = (-2, -1)
     up_delta = (2, 1)
     assert_allclose(actual, (np.abs(down_delta), up_delta), atol=5e-6)
-    assert isinstance(actual, np.ndarray)
-    assert actual.shape == (2, 2)
-
-
-def test_np_covariance(minuit):
-    actual = minuit.np_covariance()
-    expected = [[4.0, 0.0], [0.0, 1.0]]
-    assert_allclose(actual, expected, atol=1e-7)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2, 2)
 
@@ -1029,8 +1000,7 @@ def test_non_invertible():
     assert m.fmin.is_valid
     m.hesse()
     assert not m.fmin.is_valid
-    with pytest.raises(RuntimeError):
-        m.matrix()
+    assert m.covariance is None
 
 
 def test_function_without_local_minimum():
