@@ -1172,28 +1172,32 @@ class Minuit:
             self._covariance = None
 
     def _repr_html_(self):
-        return sum(
-            self._fmin._repr_html_() if self._fmin else "",
-            self._params._repr_html_(),
-            self._merrors._repr_html_() if self._merrors else "",
-            self._covariance._repr_html_() if self._covariance else "",
-        )
+        s = ""
+        if self.fmin is not None:
+            s += self.fmin._repr_html_()
+        s += self.params._repr_html_()
+        if self.merrors:
+            s += self.merrors._repr_html_()
+        if self.covariance is not None:
+            s += self.covariance._repr_html_()
+        return s
+
+    def __str__(self):
+        s = ""
+        if self.fmin is not None:
+            s += str(self.fmin)
+        s += str(self.params)
+        if self.merrors:
+            s += str(self.merrors)
+        if self.covariance is not None:
+            s += str(self.covariance)
+        return s
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<Minuit ...>")
         else:
-            with p.group(8, "<Minuit ", ">"):
-                if self._fmin:
-                    p.pretty(self._fmin)
-                    p.breakable()
-                p.pretty(self._params)
-                if self._merrors:
-                    p.breakable()
-                    p.pretty(self._merrors)
-                if self._covariance:
-                    p.breakable()
-                    p.pretty(self._covariance)
+            p.text(str(self))
 
 
 def _check_errordef(fcn):

@@ -621,10 +621,7 @@ class MErrors(OrderedDict):
         if cycle:
             p.text("<MErrors ...>")
         else:
-            with p.group(8, "<MErrors ", ">"):
-                for x in self.values():
-                    p.pretty(x)
-                    p.breakable()
+            p.text(str(self))
 
     def __getitem__(self, key):
         if isinstance(key, int):
