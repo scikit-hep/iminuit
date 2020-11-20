@@ -1152,15 +1152,15 @@ class Minuit:
         return s
 
     def __str__(self):
-        s = ""
+        s = []
         if self.fmin is not None:
-            s += str(self.fmin)
-        s += str(self.params)
+            s.append(str(self.fmin))
+        s.append(str(self.params))
         if self.merrors:
-            s += str(self.merrors)
+            s.append(str(self.merrors))
         if self.covariance is not None:
-            s += str(self.covariance)
-        return s
+            s.append(str(self.covariance))
+        return "\n".join(s)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
