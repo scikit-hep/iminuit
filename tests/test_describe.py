@@ -49,11 +49,11 @@ def test_generic_function():
     def f(*args):
         pass
 
-    assert describe(f) is None
+    assert describe(f) == []
 
 
 def test_generic_lambda():
-    assert describe(lambda *args: 0) is None
+    assert describe(lambda *args: 0) == []
 
 
 def test_generic_class_method():
@@ -61,7 +61,7 @@ def test_generic_class_method():
         def f(self, *args):
             pass
 
-    assert describe(A().f) is None
+    assert describe(A().f) == []
 
 
 def test_generic_functor():
@@ -69,7 +69,7 @@ def test_generic_functor():
         def __call__(self, *args):
             pass
 
-    assert describe(A()) is None
+    assert describe(A()) == []
 
 
 def test_generic_functor_with_fake_func():
@@ -158,4 +158,4 @@ def test_from_bad_docstring_2():
         """foo is some function"""
         pass
 
-    assert describe(foo) is None
+    assert describe(foo) == []

@@ -14,10 +14,6 @@ class IMinuitWarning(RuntimeWarning):
     """iminuit warning."""
 
 
-class InitialParamWarning(IMinuitWarning):
-    """Initial parameter warning."""
-
-
 class HesseFailedWarning(IMinuitWarning):
     """HESSE failed warning."""
 
@@ -652,7 +648,7 @@ def describe(callable):
     **Returns**
 
     Returns a list of strings with the parameters names if successful. If unsuccessful,
-    it returns either an empty list or None
+    it returns an empty list.
 
     **Function signature extraction algorithm**
 
@@ -709,6 +705,7 @@ def _arguments_from_func_code(obj):
     if hasattr(obj, "func_code"):
         fc = obj.func_code
         return fc.co_varnames[: fc.co_argcount]
+    return []
 
 
 def _arguments_from_inspect(obj):
@@ -716,7 +713,7 @@ def _arguments_from_inspect(obj):
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
     except ValueError:  # pragma: no cover
-        return None  # pragma: no cover
+        return []  # pragma: no cover
 
     args = []
     for name, par in signature.parameters.items():
@@ -734,7 +731,7 @@ def _arguments_from_docstring(obj):
     doc = inspect.getdoc(obj)
 
     if doc is None:
-        return None
+        return []
 
     doc = doc.lstrip()
 
@@ -747,7 +744,7 @@ def _arguments_from_docstring(obj):
     # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
     if sig is None:
-        return None
+        return []
     # iterable[, key=func]' -> ['iterable[' ,' key=func]']
     sig = sig.groups()[0].split(",")
     ret = []

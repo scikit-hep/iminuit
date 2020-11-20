@@ -294,9 +294,15 @@ def matrix(arr, names):
             if i == j:
                 t = td(nums[n * i + j])
             else:
-                color = grad.rgb(val / (di * dj + 1e-100))
+                corr = val / (di * dj + 1e-100)
+                color = grad.rgb(corr)
                 t = td(
-                    nums[n * i + j],
+                    nums[n * i + j]
+                    + (
+                        f" <strong>({corr:.3f})</strong>"
+                        if abs(corr - val) > 1e-3
+                        else ""
+                    ),
                     style="background-color:" + color + ";color:black",
                 )
             cols.append(t)

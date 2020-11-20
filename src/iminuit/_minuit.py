@@ -11,6 +11,7 @@ from ._core import (
     MnUserParameterState,
 )
 import numpy as np
+from collections.abc import Iterable
 
 __all__ = ["Minuit"]
 
@@ -271,7 +272,7 @@ class Minuit:
     @property
     def npar(self):
         """Number of parameters."""
-        return len(self._pos2var)
+        return len(self._last_state)
 
     @property
     def nfit(self):
@@ -435,17 +436,21 @@ class Minuit:
               parameter names instead of iminuit's function signature detection.
         """
         array_call = False
-        if len(args) == 1 and hasattr(args[0], "__getitem__"):
+        if len(args) == 1 and isinstance(args[0], Iterable):
             array_call = True
             args = args[0]
 
         if name is None:
-            if len(args) == 0:
-                name = mutil.describe(fcn)
-            else:
-                name = mutil.describe(fcn)
-                if name is None or len(name) != len(args):
-                    name = tuple(f"x[{i}]" for i in range(len(args)))
+            name = mutil.describe(fcn)
+            if len(name) > 1:
+                array_call = False
+            if len(name) == 0 or (array_call and len(name) == 1):
+                name = tuple(f"x[{i}]" for i in range(len(args)))
+
+        if len(args) == 0 and len(kwds) == 0:
+            raise RuntimeError(
+                "starting values are required" + (f" for {name}" if name else "")
+            )
 
         # Maintain two dictionaries to easily convert between
         # parameter names and position
@@ -463,7 +468,7 @@ class Minuit:
         self._fcn = FCN(fcn, grad, array_call, errordef)
 
         self._fmin = None
-        self._init_state = self._make_init_state(args, kwds)
+        self._init_state = _make_init_state(self._pos2var, args, kwds)
         self._last_state = self._init_state
         self._merrors = mutil.MErrors()
         self._covariance = None
@@ -472,41 +477,6 @@ class Minuit:
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
         self._limits = mutil.LimitView(self, 1)
-
-    def _make_init_state(self, args, kwds):
-        nargs = len(args)
-        # check kwds
-        if nargs:
-            if kwds:
-                raise RuntimeError(
-                    f"positional arguments cannot be mixed with "
-                    f"parameter keyword arguments {kwds}"
-                )
-            if nargs != self.npar:
-                raise RuntimeError(f"{nargs} values given for {self.npar} parameters")
-        else:
-            for kw in kwds:
-                if kw not in self.parameters:
-                    raise RuntimeError(
-                        f"{kw} is not one of the parameters {' '.join(self._pos2var)}"
-                    )
-
-        state = MnUserParameterState()
-        for i, x in enumerate(self._pos2var):
-            if nargs:
-                val = args[i]
-            else:
-                if x not in kwds:
-                    warn(
-                        f"Parameter {x} has no initial value, using 0",
-                        mutil.InitialParamWarning,
-                        stacklevel=3,
-                    )
-
-                val = kwds.get(x, 0.0)
-            err = mutil._guess_initial_step(val)
-            state.add(x, val, err)
-        return state
 
     def reset(self):
         """Reset minimization state to initial state."""
@@ -1199,11 +1169,39 @@ class Minuit:
             p.text(str(self))
 
 
+def _make_init_state(pos2var, args, kwds):
+    nargs = len(args)
+    # check kwds
+    if nargs:
+        if kwds:
+            raise RuntimeError(
+                f"positional arguments cannot be mixed with "
+                f"parameter keyword arguments {kwds}"
+            )
+    else:
+        for kw in kwds:
+            if kw not in pos2var:
+                raise RuntimeError(
+                    f"{kw} is not one of the parameters {' '.join(pos2var)}"
+                )
+        nargs = len(kwds)
+
+    if len(pos2var) != nargs:
+        raise RuntimeError(f"{nargs} values given for {len(pos2var)} parameters")
+
+    state = MnUserParameterState()
+    for i, x in enumerate(pos2var):
+        val = kwds[x] if kwds else args[i]
+        err = mutil._guess_initial_step(val)
+        state.add(x, val, err)
+    return state
+
+
 def _check_errordef(fcn):
     if fcn.up == 0:
         warn(
             "errordef not set, defaults to 1",
-            mutil.InitialParamWarning,
+            mutil.IMinuitWarning,
             stacklevel=3,
         )
         fcn.up = 1

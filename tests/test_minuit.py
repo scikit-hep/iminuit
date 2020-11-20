@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param, IMinuitWarning, InitialParamWarning
+from iminuit.util import Param, IMinuitWarning
 from pytest import approx
 
 
@@ -23,24 +23,18 @@ is_pypy = platform.python_implementation() == "PyPy"
 
 def test_pedantic_warning_message():
     with warnings.catch_warnings(record=True) as w:
-        m = Minuit(lambda x: 0)  # MARKER
-        m.migrad()
+        m = Minuit(lambda x: 0, x=0)
+        m.migrad()  # MARKER
 
     with open(__file__) as f:
         for lineno, line in enumerate(f):
-            if ("Minuit(lambda x: 0)  # MARKER") in line:
+            if "m.migrad()  # MARKER" in line:
                 break
 
-    assert len(w) == 2
-    for i, msg in enumerate(
-        (
-            "Parameter x has no initial value, using 0",
-            "errordef not set, defaults to 1",
-        )
-    ):
-        assert str(w[i].message) == msg
-        assert w[i].filename == __file__
-        assert w[i].lineno == lineno + 1 + i
+    assert len(w) == 1
+    assert str(w[0].message) == "errordef not set, defaults to 1"
+    assert w[0].filename == __file__
+    assert w[0].lineno == lineno + 1
 
 
 def test_version():
@@ -222,10 +216,10 @@ def test_no_signature():
     assert_allclose((val["x"], val["y"], m.fval), (1, 2, 0), atol=1e-8)
     assert m.valid
 
-    with pytest.raises(TypeError):
-        Minuit(no_signature)
+    with pytest.raises(RuntimeError):
+        Minuit(no_signature, x=1)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(RuntimeError):
         Minuit(no_signature, x=1, y=2)
 
 
@@ -370,8 +364,7 @@ def test_typo():
 
 
 def test_initial_guesses():
-    with pytest.warns(InitialParamWarning):
-        m = Minuit(lambda x: 0)
+    m = Minuit(lambda x: 0, x=0)
     assert m.values["x"] == 0
     assert m.errors["x"] == 0.1
     m = Minuit(lambda x: 0, x=1)
@@ -560,6 +553,9 @@ def test_initial_value():
 
     with pytest.raises(RuntimeError):
         Minuit(func0, 1, y=2)
+
+    with pytest.raises(RuntimeError):
+        Minuit(func0)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
