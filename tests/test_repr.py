@@ -619,6 +619,8 @@ def test_text_minuit():
     m.errordef = 1
     assert str(m) == str(m.params)
     m.migrad()
-    assert str(m) == str(m.fmin) + str(m.params) + str(m.covariance)
+    assert str(m) == str(m.fmin) + "\n" + str(m.params) + "\n" + str(m.covariance)
     m.minos()
-    assert str(m) == str(m.fmin) + str(m.params) + str(m.merrors) + str(m.covariance)
+    assert str(m) == str(m.fmin) + "\n" + str(m.params) + "\n" + str(
+        m.merrors
+    ) + "\n" + str(m.covariance)

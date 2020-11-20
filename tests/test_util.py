@@ -121,13 +121,7 @@ def test_MError():
 
     pr = Printer()
     me._repr_pretty_(pr, False)
-    assert (
-        pr.data == "<MError number=1 name='x' lower=0.1 upper=0.2 "
-        "is_valid=True lower_valid=True upper_valid=True "
-        "at_lower_limit=False at_upper_limit=False "
-        "at_lower_max_fcn=False at_upper_max_fcn=False "
-        "lower_new_min=False upper_new_min=False nfcn=11 min=0.7>"
-    )
+    assert pr.data == str(me)
     pr = Printer()
     me._repr_pretty_(pr, True)
     assert pr.data == "<MError ...>"

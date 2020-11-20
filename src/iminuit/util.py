@@ -589,16 +589,20 @@ class MError:
         """Return string suitable for terminal."""
         return _repr_text.merrors([self])
 
+    def __repr__(self):
+        s = "<MError\n"
+        for idx, k in enumerate(self.__slots__):
+            v = getattr(self, k)
+            s += f"\t{k}={v!r}"
+            if idx % 4 == 0:
+                s += "\n"
+        s += ">"
+
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<MError ...>")
         else:
-            with p.group(4, "<MError ", ">"):
-                for idx, k in enumerate(self.__slots__):
-                    if idx:
-                        p.breakable()
-                    p.text(f"{k}=")
-                    p.pretty(getattr(self, k))
+            p.text(str(self))
 
 
 class MErrors(OrderedDict):
@@ -612,6 +616,9 @@ class MErrors(OrderedDict):
     def __str__(self):
         """Return string suitable for terminal."""
         return _repr_text.merrors(self.values())
+
+    def __repr__(self):
+        return "{" + ",\n".join(repr(x) for x in self) + "}"
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
