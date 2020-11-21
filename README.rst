@@ -24,7 +24,7 @@
 
 .. skip-marker-do-not-remove
 
-*iminuit* is a Jupyter-friendly Python frontend to the *MINUIT2* C++ library.
+*iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library.
 
 It can be used as a general robust function minimisation method,
 but is most commonly used for likelihood fits of models to data,
@@ -48,13 +48,15 @@ In a nutshell
 
     from iminuit import Minuit
 
-    def f(x, y, z):
+    def fcn(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
-    m = Minuit(f)
+    fcn.errordef = Minuit.LEAST_SQUARES
+
+    m = Minuit(fcn, x=0, y=0, z=0)
 
     m.migrad()  # run optimiser
-    print(m.values)  # {'x': 2,'y': 3,'z': 4}
+    print(m.values)  # x: 2, y: 3, z: 4
 
     m.hesse()   # run covariance estimator
-    print(m.errors)  # {'x': 1,'y': 1,'z': 1}
+    print(m.errors)  # x: 1, y: 1, z: 1
