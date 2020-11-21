@@ -1,6 +1,6 @@
 # flake8: noqa E501
 from iminuit import Minuit
-from iminuit.util import Params, Param, Matrix, FMin
+from iminuit.util import Params, Param, Matrix, FMin, MError
 from iminuit import _repr_html, _repr_text
 import pytest
 from argparse import Namespace
@@ -507,59 +507,55 @@ def test_html_minuit():
 
 
 def test_text_fmin_good(fmin_good):
-    assert str(fmin_good) == ref("fmin_good")
+    assert _repr_text.fmin(fmin_good) == ref("fmin_good")
 
 
 def test_text_fmin_bad(fmin_bad):
-    assert str(fmin_bad) == ref("fmin_bad")
+    assert _repr_text.fmin(fmin_bad) == ref("fmin_bad")
 
 
 def test_text_params(minuit):
-    assert str(minuit.params) == ref("params")
+    assert _repr_text.params(minuit.params) == ref("params")
 
 
 def test_text_params_with_long_names():
-    mps = Params(
-        [
-            Param(
-                0,
-                "super-long-name",
-                0,
-                0,
-                False,
-                False,
-                False,
-                False,
-                False,
-                None,
-                None,
-            )
-        ],
-        None,
-    )
-    assert str(mps) == ref("params_long_names")
+    mps = [
+        Param(
+            0,
+            "super-long-name",
+            0,
+            0,
+            None,
+            False,
+            False,
+            False,
+            False,
+            False,
+            None,
+            None,
+        )
+    ]
+    assert _repr_text.params(mps) == ref("params_long_names")
 
 
 def test_text_params_difficult_values():
-    mps = Params(
-        [
-            Param(
-                0,
-                "x",
-                -1.234567e-22,
-                1.234567e-11,
-                True,
-                False,
-                False,
-                False,
-                False,
-                None,
-                None,
-            )
-        ],
-        None,
-    )
-    assert str(mps) == ref("params_difficult_values")
+    mps = [
+        Param(
+            0,
+            "x",
+            -1.234567e-22,
+            1.234567e-11,
+            None,
+            True,
+            False,
+            False,
+            False,
+            False,
+            None,
+            None,
+        )
+    ]
+    assert _repr_text.params(mps) == ref("params_difficult_values")
 
 
 def test_text_params_with_limits():
@@ -571,47 +567,62 @@ def test_text_params_with_limits():
     m.fixed["x"] = True
     m.errors = (0.2, 0.1)
     m.limits = ((0, None), (0, 10))
-    assert str(m.params) == ref("params_with_limits")
+    assert _repr_text.params(m.params) == ref("params_with_limits")
 
 
-def test_text_merror(minuit):
-    assert str(minuit.merrors["x"]) == ref("merror")
+def test_text_merror():
+    me = MError(
+        0,
+        "x",
+        -1.0,
+        1.0,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        42,
+        0.123,
+    )
+    assert _repr_text.merrors({None: me}) == ref("merror")
 
 
 def test_text_merrors(minuit):
-    assert str(minuit.merrors) == ref("merrors")
+    assert _repr_text.merrors(minuit.merrors) == ref("merrors")
 
 
 def test_text_matrix():
-    m = Minuit(lambda x, y: x ** 2 + 4 * y ** 2, x=0, y=0)
-    m.errordef = 1
-    m.migrad()
-    matrix = m.covariance
-    assert str(matrix) == ref("matrix")
+    m = Matrix({"x": 0, "y": 1})
+    m[:] = ((1.0, -0.0), (-0.0, 0.25))
+    assert _repr_text.matrix(m) == ref("matrix")
 
 
 def test_text_matrix_mini():
-    arr = np.array([[1.0]])
-    matrix = _repr_text.matrix(arr, {"x": 0})
-    assert str(matrix) == ref("matrix_mini")
+    m = Matrix({"x": 0})
+    m[:] = [1.0]
+    assert _repr_text.matrix(m) == ref("matrix_mini")
 
 
 def test_text_matrix_large():
-    arr = np.array(((1, 2, 3), (4, 5, 6), (7, 8, 9)))
-    matrix = _repr_text.matrix(arr, {"x": 0, "y": 1, "z": 2})
-    assert str(matrix) == ref("matrix_large")
+    m = Matrix({"x": 0, "y": 1, "z": 2})
+    m[:] = ((1, 2, 3), (4, 5, 6), (7, 8, 9))
+    assert _repr_text.matrix(m) == ref("matrix_large")
 
 
 def test_text_matrix_with_long_names():
-    arr = np.array(((1.0, 0.1), (0.1, 1.0)))
-    matrix = _repr_text.matrix(arr, {"super-long-name": 0, "x": 1})
-    assert str(matrix) == ref("matrix_long_names")
+    m = Matrix({"super-long-name": 0, "x": 1})
+    m[:] = ((1.0, 0.1), (0.1, 1.0))
+    assert _repr_text.matrix(m) == ref("matrix_long_names")
 
 
 def test_text_matrix_difficult_values():
-    arr = np.array(((-1.23456, 0), (0, 0)))
-    matrix = _repr_text.matrix(arr, {"x": 0, "y": 1})
-    assert str(matrix) == ref("matrix_difficult_values")
+    m = Matrix({"x": 0, "y": 1})
+    m[:] = ((-1.23456, 0), (0, 0))
+    assert _repr_text.matrix(m) == ref("matrix_difficult_values")
 
 
 def test_text_minuit():

@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.util import Param, IMinuitWarning
 from pytest import approx
+from argparse import Namespace
 
 
 @pytest.fixture
@@ -311,22 +312,6 @@ def test_array_func_2():
     assert m.merrors[0].lower == approx(-1, abs=1e-2)
     assert m.merrors[0].name == "a"
     assert_allclose(m.np_merrors(), ((1, 0), (1, 0)), rtol=1e-2)
-
-
-def test_view_repr():
-    m = Minuit(func0, x=1, y=2)
-    mid = id(m)
-    assert (
-        repr(m.values)
-        == (
-            """
-<ValueView of Minuit at %x>
-  x: 1.0
-  y: 2.0
-"""
-            % mid
-        ).strip()
-    )
 
 
 def test_reset():
@@ -957,18 +942,19 @@ def test_params():
     m.limits["y"] = (None, 10)
 
     # these are the initial param states
-    expected = [
-        Param(0, "x", 1.0, 3.0, False, True, False, False, False, None, None),
-        Param(1, "y", 2.0, 4.0, False, False, True, False, True, None, 10),
-    ]
+    expected = (
+        Param(0, "x", 1.0, 3.0, None, False, True, False, False, False, None, None),
+        Param(1, "y", 2.0, 4.0, None, False, False, True, False, True, None, 10),
+    )
     assert m.params == expected
 
     m.migrad()
+    m.minos()
     assert m.init_params == expected
 
     expected = [
-        Param(0, "x", 1.0, 3.0, False, True, False, False, False, None, None),
-        Param(1, "y", 5.0, 1.0, False, False, True, False, True, None, 10),
+        Namespace(number=0, name="x", value=1.0, error=3.0, merror=(-3.0, 3.0)),
+        Namespace(number=1, name="y", value=5.0, error=1.0, merror=(-1.0, 1.0)),
     ]
 
     params = m.params
@@ -977,6 +963,7 @@ def test_params():
         assert p.number == exp.number
         assert p.name == exp.name
         assert p.value == approx(exp.value, rel=1e-2)
+        assert p.error == approx(exp.error, rel=1e-2)
         assert p.error == approx(exp.error, rel=1e-2)
 
 

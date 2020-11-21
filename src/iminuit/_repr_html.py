@@ -182,14 +182,12 @@ def fmin(fm):
 
 
 def params(mps):
-    mes = mps.merrors
-
     # body
     rows = []
     for i, mp in enumerate(mps):
-        if mes and mp.name in mes:
-            me = mes[mp.name]
-            v, e, mem, mep = pdg_format(mp.value, mp.error, me.lower, me.upper)
+        me = mp.merror
+        if me:
+            v, e, mem, mep = pdg_format(mp.value, mp.error, *me)
         else:
             v, e = pdg_format(mp.value, mp.error)
             mem = ""
@@ -229,6 +227,7 @@ def params(mps):
 
 
 def merrors(mes):
+    mes = mes.values()
     header = [td()]
     error = [th("Error", title="Lower and upper minos error of the parameter")]
     valid = [th("Valid", title="Validity of lower/upper minos error")]
@@ -273,7 +272,9 @@ def merrors(mes):
     )
 
 
-def matrix(arr, names):
+def matrix(arr):
+    names = tuple(arr._var2pos)
+
     n = len(names)
 
     nums = matrix_format(arr.flatten())

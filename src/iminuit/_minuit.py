@@ -311,7 +311,7 @@ class Minuit:
 
         .. seealso:: :class:`iminuit.util.Params`
         """
-        return _get_params(self._last_state, self.merrors)
+        return _get_params(self._last_state, self._merrors)
 
     @property
     def init_params(self):
@@ -319,7 +319,7 @@ class Minuit:
 
         .. seealso:: :class:`iminuit.util.Params`
         """
-        return _get_params(self._init_state, None)
+        return _get_params(self._init_state, {})
 
     @property
     def valid(self):
@@ -658,7 +658,23 @@ class Minuit:
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
             for par in pars:
                 me = minos(self._var2pos[par], ncall, self.tol)
-                self._merrors[par] = mutil.MError(par, me)
+                self._merrors[par] = mutil.MError(
+                    me.number,
+                    par,
+                    me.lower,
+                    me.upper,
+                    me.is_valid,
+                    me.lower_valid,
+                    me.upper_valid,
+                    me.at_lower_limit,
+                    me.at_upper_limit,
+                    me.at_lower_max_fcn,
+                    me.at_upper_max_fcn,
+                    me.lower_new_min,
+                    me.upper_new_min,
+                    me.nfcn,
+                    me.min,
+                )
 
         self._fmin._nfcn = self._fcn.nfcn
         self._fmin._ngrad = self._fcn.ngrad
@@ -1208,6 +1224,11 @@ def _check_errordef(fcn):
 
 
 def _get_params(mps, merrors):
+    def get_me(name):
+        if name in merrors:
+            me = merrors[name]
+            return me.lower, me.upper
+
     return mutil.Params(
         (
             mutil.Param(
@@ -1215,6 +1236,7 @@ def _get_params(mps, merrors):
                 mp.name,
                 mp.value,
                 mp.error,
+                get_me(mp.name),
                 mp.is_const,
                 mp.is_fixed,
                 mp.has_limits,
@@ -1225,7 +1247,6 @@ def _get_params(mps, merrors):
             )
             for mp in mps
         ),
-        merrors,
     )
 
 

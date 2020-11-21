@@ -72,9 +72,10 @@ class BasicView:
         return len(self) == len(other) and all(x == y for x, y in zip(self, other))
 
     def __repr__(self):
-        s = "<{} of Minuit at {:x}>".format(self.__class__.__name__, id(self._minuit))
+        s = f"<{self.__class__.__name__}"
         for (k, v) in zip(self._minuit._pos2var, self):
-            s += f"\n  {k}: {v}"
+            s += f" {k}={v}"
+        s += ">"
         return s
 
 
@@ -176,9 +177,15 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, var2pos):
-        npar = len(var2pos)
-        obj = super(Matrix, cls).__new__(cls, (npar, npar))
+    def __new__(cls, parameters):
+        if isinstance(parameters, dict):
+            var2pos = parameters
+        elif isinstance(parameters, tuple):
+            var2pos = {x: i for i, x in enumerate(parameters)}
+        else:
+            raise TypeError("parameters must be tuple or dict")
+        n = len(parameters)
+        obj = super(Matrix, cls).__new__(cls, (n, n))
         obj._var2pos = var2pos
         return obj
 
@@ -196,9 +203,6 @@ class Matrix(np.ndarray):
             key = var2pos[key]
         return super().__getitem__(key)
 
-    def __str__(self):
-        return _repr_text.matrix(self, tuple(self._var2pos))
-
     def to_table(self):
         names = tuple(self._var2pos)
         nums = _repr_text.matrix_format(self.flatten())
@@ -214,14 +218,21 @@ class Matrix(np.ndarray):
         a /= np.outer(d, d) + 1e-100
         return a
 
+    def __repr__(self):
+        s = " ".join(f"{k}={v}" for k, v in self._var2pos.items())
+        return f"<Matrix {s}\n" + super().__str__() + "\n>"
+
+    def __str__(self):
+        return repr(self)
+
     def _repr_html_(self):
-        return _repr_html.matrix(self, tuple(self._var2pos))
+        return _repr_html.matrix(self)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text("Matrix(...)")
+            p.text("<Matrix ...>")
         else:
-            p.text(str(self))
+            p.text(_repr_text.matrix(self))
 
 
 class FMin:
@@ -250,19 +261,6 @@ class FMin:
         self._nfcn = nfcn
         self._ngrad = ngrad
         self._tolerance = tol
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.fmin(self)
-
-    def _repr_html_(self):
-        return _repr_html.fmin(self)
-
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
-            p.text("FMin(...)")
-        else:
-            p.text(str(self))
 
     @property
     def edm(self):
@@ -405,6 +403,25 @@ class FMin:
         """Equal to the value of ``Minuit.errordef`` when Migrad ran."""
         return self._src.up
 
+    def __repr__(self):
+        s = "<FMin"
+        for key in sorted(dir(self)):
+            if key.startswith("_"):
+                continue
+            val = getattr(self, key)
+            s += f" {key}={val!r}"
+        s += ">"
+        return s
+
+    def _repr_html_(self):
+        return _repr_html.fmin(self)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("<FMin ...>")
+        else:
+            p.text(_repr_text.fmin(self))
+
 
 class Param:
     """Data object for a single Parameter."""
@@ -414,6 +431,7 @@ class Param:
         "name",
         "value",
         "error",
+        "merror",
         "is_const",
         "is_fixed",
         "has_limits",
@@ -423,74 +441,32 @@ class Param:
         "upper_limit",
     )
 
-    def __init__(
-        self,
-        number,
-        name,
-        value,
-        error,
-        is_const,
-        is_fixed,
-        has_limits,
-        has_lower_limit,
-        has_upper_limit,
-        lower_limit,
-        upper_limit,
-    ):
-        self.number = number
-        self.name = name
-        self.value = value
-        self.error = error
-        self.is_const = is_const
-        self.is_fixed = is_fixed
-        self.has_limits = has_limits
-        self.has_lower_limit = has_lower_limit
-        self.has_upper_limit = has_upper_limit
-        self.lower_limit = lower_limit
-        self.upper_limit = upper_limit
+    def __init__(self, *args):
+        assert len(args) == len(self.__slots__)
+        for k, arg in zip(self.__slots__, args):
+            setattr(self, k, arg)
 
-    def __str__(self):
+    def __eq__(self, other):
+        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+
+    def __repr__(self):
         pairs = []
         for k in self.__slots__:
             v = getattr(self, k)
             pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
 
-    def __eq__(self, other):
-        return (
-            self.number == other.number
-            and self.name == other.name
-            and self.value == other.value
-            and self.error == other.error
-            and self.is_const == other.is_const
-            and self.is_fixed == other.is_fixed
-            and self.has_limits == other.has_limits
-            and self.has_lower_limit == other.has_lower_limit
-            and self.has_upper_limit == other.has_upper_limit
-            and self.lower_limit == other.lower_limit
-            and self.upper_limit == other.upper_limit
-        )
-
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Param(...)")
         else:
-            with p.group(6, "Param(", ")"):
-                for idx, k in enumerate(self.__slots__):
-                    if idx:
-                        p.text(",")
-                        p.breakable()
-                    p.text(f"{k}=")
-                    p.pretty(getattr(self, k))
+            p.text(_repr_text.params([self]))
 
 
-class Params(list):
-    """List-like holder of parameter data objects."""
+class Params(tuple):
+    """Tuple-like holder of parameter data objects."""
 
-    def __init__(self, seq, merrors):
-        """Make Params from sequence of Param objects and MErrors object."""
-        list.__init__(self, seq)
-        self.merrors = merrors
+    __slots__ = ()
 
     def _repr_html_(self):
         return _repr_html.params(self)
@@ -507,16 +483,13 @@ class Params(list):
             "limit+",
             "fixed",
         ]
-        mes = self.merrors
         tab = []
         for i, mp in enumerate(self):
             name = mp.name
             row = [i, name]
-            if mes and name in mes:
-                me = mes[name]
-                val, err, mel, meu = _repr_text.pdg_format(
-                    mp.value, mp.error, me.lower, me.upper
-                )
+            me = mp.merror
+            if me:
+                val, err, mel, meu = _repr_text.pdg_format(mp.value, mp.error, *me)
             else:
                 val, err = _repr_text.pdg_format(mp.value, mp.error)
                 mel = ""
@@ -533,15 +506,11 @@ class Params(list):
             tab.append(row)
         return tab, header
 
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.params(self)
-
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Params(...)")
         else:
-            p.text(str(self))
+            p.text(_repr_text.params(self))
 
 
 class MError:
@@ -565,44 +534,30 @@ class MError:
         "min",
     )
 
-    def __init__(self, name, minos_error):
-        self.number = minos_error.number
-        self.name = name
-        self.lower = minos_error.lower
-        self.upper = minos_error.upper
-        self.is_valid = minos_error.is_valid
-        self.lower_valid = minos_error.lower_valid
-        self.upper_valid = minos_error.upper_valid
-        self.at_lower_limit = minos_error.at_lower_limit
-        self.at_upper_limit = minos_error.at_upper_limit
-        self.at_lower_max_fcn = minos_error.at_lower_max_fcn
-        self.at_upper_max_fcn = minos_error.at_upper_max_fcn
-        self.lower_new_min = minos_error.lower_new_min
-        self.upper_new_min = minos_error.upper_new_min
-        self.nfcn = minos_error.nfcn
-        self.min = minos_error.min
+    def __init__(self, *args):
+        assert len(args) == len(self.__slots__)
+        for k, arg in zip(self.__slots__, args):
+            setattr(self, k, arg)
 
-    def _repr_html_(self):
-        return _repr_html.merrors([self])
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.merrors([self])
+    def __eq__(self, other):
+        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
 
     def __repr__(self):
-        s = "<MError\n"
+        s = "<MError"
         for idx, k in enumerate(self.__slots__):
             v = getattr(self, k)
-            s += f"\t{k}={v!r}"
-            if idx % 4 == 0:
-                s += "\n"
+            s += f" {k}={v!r}"
         s += ">"
+        return s
+
+    def _repr_html_(self):
+        return _repr_html.merrors({None: self})
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<MError ...>")
         else:
-            p.text(str(self))
+            p.text(_repr_text.merrors({None: self}))
 
 
 class MErrors(OrderedDict):
@@ -611,20 +566,16 @@ class MErrors(OrderedDict):
     __slots__ = ()
 
     def _repr_html_(self):
-        return _repr_html.merrors(self.values())
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.merrors(self.values())
+        return _repr_html.merrors(self)
 
     def __repr__(self):
-        return "{" + ",\n".join(repr(x) for x in self) + "}"
+        return "<MErrors\n  " + ",\n  ".join(repr(x) for x in self.values()) + "\n>"
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<MErrors ...>")
         else:
-            p.text(str(self))
+            p.text(_repr_text.merrors(self))
 
     def __getitem__(self, key):
         if isinstance(key, int):
