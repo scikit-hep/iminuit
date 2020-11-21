@@ -59,7 +59,7 @@ def test_Matrix():
     m = util.Matrix(("a", "b"))
     m[:] = [[1, 1], [1, 4]]
     assert_equal(m, ((1, 1), (1, 4)))
-    assert repr(m) == "<Matrix a=0 b=1\n[[1. 1.]\n [1. 4.]]\n>"
+    assert repr(m) == "[[1. 1.]\n [1. 4.]]"
     c = m.correlation()
     assert_allclose(c, ((1.0, 0.5), (0.5, 1.0)))
     assert m["a", "b"] == 1.0
