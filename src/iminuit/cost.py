@@ -8,35 +8,35 @@ import numpy as np
 
 def _safe_log(x):
     # does not return NaN for x >= 0
-    log_const = 1e-323
-    return np.log(x + log_const)
+    log_const = 1e-323  # pragma: no cover
+    return np.log(x + log_const)  # pragma: no cover
 
 
 def _sum_log_x(x):
-    return np.sum(_safe_log(x))
+    return np.sum(_safe_log(x))  # pragma: no cover
 
 
 def _sum_n_log_mu(n, mu):
-    return np.sum(n * _safe_log(mu))
+    return np.sum(n * _safe_log(mu))  # pragma: no cover
 
 
 def _sum_log_poisson(n, mu):
-    return np.sum(mu - n * _safe_log(mu))
+    return np.sum(mu - n * _safe_log(mu))  # pragma: no cover
 
 
 def _z_squared(y, ye, ym):
-    z = y - ym
-    z /= ye
-    return z * z
+    z = y - ym  # pragma: no cover
+    z /= ye  # pragma: no cover
+    return z * z  # pragma: no cover
 
 
 def _sum_z_squared(y, ye, ym):
-    return np.sum(_z_squared(y, ye, ym))
+    return np.sum(_z_squared(y, ye, ym))  # pragma: no cover
 
 
 def _sum_z_squared_soft_l1(y, ye, ym):
-    z = _z_squared(y, ye, ym)
-    return np.sum(2 * (np.sqrt(1.0 + z) - 1.0))
+    z = _z_squared(y, ye, ym)  # pragma: no cover
+    return np.sum(2 * (np.sqrt(1.0 + z) - 1.0))  # pragma: no cover
 
 
 try:
@@ -54,8 +54,8 @@ try:
 
     del jit
     del nb
-except ImportError:
-    pass
+except ImportError:  # pragma: no cover
+    pass  # pragma: no cover
 
 
 class Cost:

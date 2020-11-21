@@ -153,6 +153,17 @@ def test_from_docstring_2():
     assert describe(Foo().bar) == ("ncall_me", "resume", "nsplit")
 
 
+def test_from_docstring_3():
+    assert describe(min) == ("iterable", "default", "key")
+
+
+def test_from_docstring_4():
+    def f(*args):
+        """f(a=(), b=[], *args, *[, foo=1])"""
+
+    assert describe(f) == ("a", "b")
+
+
 def test_from_bad_docstring_2():
     def foo(*args):
         """foo is some function"""

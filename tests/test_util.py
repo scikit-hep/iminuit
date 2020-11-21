@@ -75,6 +75,12 @@ def test_Matrix():
     m._repr_pretty_(p, True)
     assert p.data == "<Matrix ...>"
 
+    with pytest.raises(TypeError):
+        util.Matrix("ab")
+
+    with pytest.raises(TypeError):
+        util.Matrix(1)
+
 
 def test_Param():
     values = 3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
@@ -161,6 +167,42 @@ def test_MError():
         "upper_new_min=False nfcn=11 min=0.7>"
     )
     assert str(me) == repr(me)
+
+    assert me == util.MError(
+        1,
+        "x",
+        0.1,
+        0.2,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        11,
+        0.7,
+    )
+
+    assert me != util.MError(
+        1,
+        "x",
+        0.1,
+        0.2,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        11,
+        0.8,
+    )
 
 
 def test_MErrors():

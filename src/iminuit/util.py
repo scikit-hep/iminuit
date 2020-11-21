@@ -1,7 +1,7 @@
 """iminuit utility functions and classes."""
 import inspect
-import re
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
+from argparse import Namespace
 from collections.abc import Iterable
 from . import _repr_html
 from . import _repr_text
@@ -597,7 +597,7 @@ def make_func_code(params):
 
         make_func_code(["x", "y"])
     """
-    return namedtuple("FuncCode", "co_varnames co_argcount")(params, len(params))
+    return Namespace(co_varnames=params, co_argcount=len(params))
 
 
 def describe(callable):
@@ -670,8 +670,8 @@ def _arguments_from_inspect(obj):
     try:
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
-    except ValueError:  # pragma: no cover
-        return ()  # pragma: no cover
+    except ValueError:
+        return ()
 
     args = []
     for name, par in signature.parameters.items():
@@ -691,36 +691,62 @@ def _arguments_from_docstring(obj):
     if doc is None:
         return ()
 
-    doc = doc.lstrip()
+    # Examples of strings we want to parse:
+    #   min(iterable, *[, default=obj, key=func]) -> value
+    #   min(arg1, arg2, *args, *[, key=func]) -> value
+    #   Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])
 
-    # care only the firstline
-    # docstring can be long
-    line = doc.split("\n", 1)[0]  # get the firstline
-    if line.startswith("('...',)"):
-        line = doc.split("\n", 2)[1]  # get the second line
-    p = re.compile(r"^[\w|\s.]+\(([^)]*)\).*")
-    # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
-    sig = p.search(line)
-    if sig is None:
+    name = obj.__name__
+
+    token = name + "("
+    start = doc.find(token)
+    if start < 0:
         return ()
-    # iterable[, key=func]' -> ['iterable[' ,' key=func]']
-    sig = sig.groups()[0].split(",")
-    ret = []
-    for s in sig:
-        # get the last one after all space after =
-        # ex: int x= True
-        tmp = s.split("=")[0].split()[-1]
-        # clean up non _+alphanum character
-        tmp = "".join([x for x in tmp if x.isalnum() or x == "_"])
-        ret.append(tmp)
-        # re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
-        # ret += self.docstring_kwd_re.findall(s)
-    ret = tuple(filter(lambda x: x != "", ret))
+    start += len(token)
 
-    if ret[0] == "self":
-        ret = ret[1:]
+    nbrace = 1
+    for ich, ch in enumerate(doc[start:]):
+        if ch == "(":
+            nbrace += 1
+        elif ch == ")":
+            nbrace -= 1
+        if nbrace == 0:
+            break
+    items = [x.strip(" []") for x in doc[start : start + ich].split(",")]
 
-    return ret
+    if items[0] == "self":
+        items = items[1:]
+
+    #   "iterable", "*", "default=obj", "key=func"
+    #   "arg1", "arg2", "*args", "*", "key=func"
+    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
+
+    try:
+        i = items.index("*args")
+        items = items[:i]
+    except ValueError:
+        pass
+
+    #   "iterable", "*", "default=obj", "key=func"
+    #   "arg1", "arg2", "*", "key=func"
+    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
+
+    def extract(s):
+        a = s.find(" ")
+        b = s.find("=")
+        if a < 0:
+            a = 0
+        if b < 0:
+            b = len(s)
+        return s[a:b].strip()
+
+    items = [extract(x) for x in items if x != "*"]
+
+    #   "iterable", "default", "key"
+    #   "arg1", "arg2", "key"
+    #   "ncall_me", "resume", "nsplit"
+
+    return tuple(items)
 
 
 def _guess_initial_step(val):
