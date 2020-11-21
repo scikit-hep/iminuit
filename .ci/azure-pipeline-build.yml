@@ -32,6 +32,8 @@ jobs:
       displayName: Check manifest
     - script: python setup.py sdist
       displayName: Prepare sdist
+    - script: pip install dist/*
+      displayName: Check sdist
     - template: azure-wheel-helpers/azure-publish-dist.yml
 
 - job: ManyLinux

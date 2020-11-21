@@ -5,6 +5,11 @@
 Changelog
 =========
 
+1.5.4 (November 21, 2020)
+--------------------------
+
+- Fixed broken sdist package in 1.5.3
+
 1.5.3 (November 19, 2020)
 --------------------------
 
