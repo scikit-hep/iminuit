@@ -110,15 +110,7 @@ def func6(x, m, s, a):
     return a / ((x - m) ** 2 + s ** 2)
 
 
-def func7(x):  # test numpy support
-    return np.sum((x - 1) ** 2)
-
-
-def func7_grad(x):  # test numpy support
-    return 2 * (x - 1)
-
-
-class Func8:
+class Correlated:
     errordef = 1
 
     def __init__(self):
@@ -130,6 +122,14 @@ class Func8:
 
     def __call__(self, x):
         return np.dot(x.T, np.dot(self.cinv, x))
+
+
+def func_np(x):  # test numpy support
+    return np.sum((x - 1) ** 2)
+
+
+def func_np_grad(x):  # test numpy support
+    return 2 * (x - 1)
 
 
 data_y = [
@@ -208,7 +208,7 @@ def test_no_signature():
 
     m = Minuit(no_signature, 3, 4)
     assert m.values == (3, 4)
-    assert m.parameters == ("x[0]", "x[1]")
+    assert m.parameters == ("x0", "x1")
 
     m = Minuit(no_signature, x=1, y=2, name=("x", "y"))
     assert m.values == (1, 2)
@@ -227,7 +227,7 @@ def test_no_signature():
 def test_use_array_call():
     inf = float("infinity")
     m = Minuit(
-        func7,
+        func_np,
         (1, 1),
         name=("a", "b"),
     )
@@ -281,10 +281,10 @@ def test_gcc():
 
 
 def test_array_func_1():
-    m = Minuit(func7, (2, 1))
+    m = Minuit(func_np, (2, 1))
     m.errors = (1, 1)
     m.errordef = Minuit.LEAST_SQUARES
-    assert m.parameters == ("x[0]", "x[1]")
+    assert m.parameters == ("x0", "x1")
     assert m.values == (2, 1)
     assert m.errors == (1, 1)
     m.migrad()
@@ -294,7 +294,7 @@ def test_array_func_1():
 
 
 def test_array_func_2():
-    m = Minuit(func7, (2, 1), grad=func7_grad, name=("a", "b"))
+    m = Minuit(func_np, (2, 1), grad=func_np_grad, name=("a", "b"))
     m.errordef = Minuit.LEAST_SQUARES
     m.fixed = (False, True)
     m.errors = (0.5, 0.5)
@@ -312,6 +312,13 @@ def test_array_func_2():
     assert m.merrors[0].lower == approx(-1, abs=1e-2)
     assert m.merrors[0].name == "a"
     assert_allclose(m.np_merrors(), ((1, 0), (1, 0)), rtol=1e-2)
+
+
+def test_wrong_use_of_array_init():
+    m = Minuit(lambda a, b: a ** 2 + b ** 2, (1, 2))
+    m.errordef = Minuit.LEAST_SQUARES
+    with pytest.raises(TypeError):
+        m.migrad()
 
 
 def test_reset():
@@ -625,7 +632,7 @@ def test_mncontour_with_fixed_var():
 
 
 def test_mncontour_array_func():
-    m = Minuit(Func8(), (0, 0), name=("x", "y"))
+    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
     xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=1)
     m.minos("x", "y", sigma=1)
@@ -640,13 +647,13 @@ def test_mncontour_array_func():
 
 
 def test_profile_array_func():
-    m = Minuit(Func8(), (0, 0), name=("x", "y"))
+    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
     m.profile("y")
 
 
 def test_mnprofile_array_func():
-    m = Minuit(Func8(), (0, 0), name=("x", "y"))
+    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
     m.mnprofile("y")
 

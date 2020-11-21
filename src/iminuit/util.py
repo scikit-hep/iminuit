@@ -219,8 +219,7 @@ class Matrix(np.ndarray):
         return a
 
     def __repr__(self):
-        s = " ".join(f"{k}={v}" for k, v in self._var2pos.items())
-        return f"<Matrix {s}\n" + super().__str__() + "\n>"
+        return super().__str__()
 
     def __str__(self):
         return repr(self)
