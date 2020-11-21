@@ -1197,9 +1197,7 @@ def _make_init_state(pos2var, args, kwds):
     else:
         for kw in kwds:
             if kw not in pos2var:
-                raise RuntimeError(
-                    f"{kw} is not one of the parameters {' '.join(pos2var)}"
-                )
+                raise RuntimeError(f"{kw} is not one of the parameters {pos2var}")
         nargs = len(kwds)
 
     if len(pos2var) != nargs:

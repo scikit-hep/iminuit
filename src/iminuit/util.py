@@ -662,8 +662,8 @@ def _arguments_from_func_code(obj):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(obj, "func_code"):
         fc = obj.func_code
-        return fc.co_varnames[: fc.co_argcount]
-    return []
+        return tuple(fc.co_varnames[: fc.co_argcount])
+    return ()
 
 
 def _arguments_from_inspect(obj):
@@ -671,7 +671,7 @@ def _arguments_from_inspect(obj):
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
     except ValueError:  # pragma: no cover
-        return []  # pragma: no cover
+        return ()  # pragma: no cover
 
     args = []
     for name, par in signature.parameters.items():
@@ -682,14 +682,14 @@ def _arguments_from_inspect(obj):
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
         args.append(name)
-    return args
+    return tuple(args)
 
 
 def _arguments_from_docstring(obj):
     doc = inspect.getdoc(obj)
 
     if doc is None:
-        return []
+        return ()
 
     doc = doc.lstrip()
 
@@ -702,7 +702,7 @@ def _arguments_from_docstring(obj):
     # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
     sig = p.search(line)
     if sig is None:
-        return []
+        return ()
     # iterable[, key=func]' -> ['iterable[' ,' key=func]']
     sig = sig.groups()[0].split(",")
     ret = []
@@ -715,7 +715,7 @@ def _arguments_from_docstring(obj):
         ret.append(tmp)
         # re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
         # ret += self.docstring_kwd_re.findall(s)
-    ret = list(filter(lambda x: x != "", ret))
+    ret = tuple(filter(lambda x: x != "", ret))
 
     if ret[0] == "self":
         ret = ret[1:]
