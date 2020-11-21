@@ -13,7 +13,24 @@ Changelog
 1.5.3 (November 19, 2020)
 --------------------------
 
+Fixes
+~~~~~
 - Fixed a crash when throw_nan=True is used and the throw is triggered
+- Add python_requires (#496) by @henryiii
+- Fixed buggy display of text matrix if npar != 2 (#493)
+
+Other
+~~~~~
+- Switch extern Minuit2 repo to official root repo (#500), ROOT state: a5d880a434
+- Add ngrad and ngrad_total to FMin display, rename ncalls to nfcn_total (#489)
+- Use __getattr__ to hide deprecated interface from Python help() (#491)
+- Improvements to tutorials by @giammi56
+- Show number of gradient calls in FMin display (if nonzero) instead of errordef value
+
+Deprecated
+~~~~~~~~~~
+- Minuit.ncalls, use Minuit.nfcn instead
+- Minuit.ngrads, use Minuit.ngrad instead
 
 1.5.2 (September 24, 2020)
 --------------------------
