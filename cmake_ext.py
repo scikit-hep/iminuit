@@ -29,7 +29,7 @@ class CMakeBuild(build_ext):
         debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
         cfg = "Debug" if debug else "Release"
         cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
-        build_args = []
+        build_args = ["--config", cfg]  # needed by some generators, e.g. on Windows
 
         if platform.system() == "Windows":
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
