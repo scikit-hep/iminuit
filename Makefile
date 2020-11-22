@@ -8,7 +8,7 @@ endif
 
 # default target
 build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
-	$(PYTHON) setup.py develop
+	DEBUG=1 $(PYTHON) setup.py develop
 	touch build/done
 
 test: build/done
