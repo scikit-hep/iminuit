@@ -7,8 +7,10 @@ from ._core import (
     MnMigrad,
     MnMinos,
     MnPrint,
+    MnScan,
     MnStrategy,
     MnUserParameterState,
+    FunctionMinimum,
 )
 import numpy as np
 from collections.abc import Iterable
@@ -539,6 +541,61 @@ class Minuit:
         self._make_covariance()
 
         return self  # return self for method chaining and to autodisplay current state
+
+    def scan(self, ncall=None, method="hyper"):
+        if method == "mnscan":
+            return self._mnscan()
+        elif method == "hyper":
+            return self._hyper(ncall)
+        raise ValueError(f"method {method} not recognized")
+
+    def _mnscan(self):
+        # Does a 1D scan with 41 steps for each parameter in order. Fairly useless.
+
+        scan = MnScan(self._fcn, self._last_state, self.strategy)
+
+        fm = scan(0, 0)  # args are ignored
+
+        self._last_state = fm.state
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+
+        return self  # return self for method chaining and to autodisplay current state
+
+    def _hyper(self, ncall):
+        if ncall is None:
+            npar = self.nfit
+            ncall = int((200 + 100 * npar + 5 * npar * npar) ** (1 / npar))
+
+        x = np.empty(self.npar + 1)
+        x[self.npar] = np.inf
+
+        def scan(ipar):
+            if ipar == self.npar:
+                r = self.fcn(x[: self.npar])
+                if r < x[self.npar]:
+                    x[self.npar] = r
+                    self.values = x[: self.npar]
+                return
+            low, up = self.limits[ipar]
+            v = self.values[ipar]
+            e = self.errors[ipar]
+            if low == -np.inf:
+                low = v - 3 * e
+            if up == np.inf:
+                up = v + 3 * e
+            for xi in np.linspace(low, up, ncall):
+                x[ipar] = xi
+                scan(ipar + 1)
+
+        scan(0)
+
+        fm = FunctionMinimum(
+            self._fcn, self._last_state, x[self.npar], 0.0, ncall, self._fcn.up
+        )
+
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+
+        return self
 
     def hesse(self, ncall=None):
         """Run HESSE to compute parabolic errors.

@@ -1,4 +1,11 @@
-from iminuit._core import FCN, MnUserParameterState, MnMigrad, MnStrategy, MnScan
+from iminuit._core import (
+    FCN,
+    MnUserParameterState,
+    MnMigrad,
+    MnStrategy,
+    MnScan,
+    FunctionMinimum,
+)
 from pytest import approx
 import pytest
 
@@ -115,3 +122,12 @@ def test_scan(debug):
     state = fmin.state
     assert len(state) == 1
     assert state[0].value == approx(0, abs=1e-2)
+
+
+def test_FunctionMinimum():
+    fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
+    st = MnUserParameterState()
+    st.add("x", 2, 5)
+    fm = FunctionMinimum(fcn, st, 0.0, 0.0, 42)
+    assert fm.is_valid
+    assert fm.nfcn == 42

@@ -1,11 +1,36 @@
+#include <Minuit2/AnalyticalGradientCalculator.h>
 #include <Minuit2/FunctionMinimum.h>
+#include <Minuit2/MnStrategy.h>
+#include <Minuit2/MnUserFcn.h>
+#include <Minuit2/MnUserParameterState.h>
+#include <Minuit2/Numerical2PGradientCalculator.h>
+#include <Minuit2/SimplexSeedGenerator.h>
 #include <pybind11/pybind11.h>
+#include "fcn.hpp"
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
+FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval,
+                     double edm, int nfcn) {
+  SimplexSeedGenerator gen;
+  MnStrategy str;
+  MnUserFcn mfcn(fcn, st.Trafo());
+  std::vector<MinimumState> minstv(1, MinimumState(fval, edm, nfcn));
+  if (fcn.grad_.is_none()) {
+    Numerical2PGradientCalculator gc(mfcn, st.Trafo(), str);
+    MinimumSeed seed = gen(mfcn, gc, st, str);
+    return FunctionMinimum(seed, minstv, fcn.Up());
+  }
+  AnalyticalGradientCalculator gc(fcn, st.Trafo());
+  MinimumSeed seed = gen(mfcn, gc, st, str);
+  return FunctionMinimum(seed, minstv, fcn.Up());
+}
+
 void bind_functionminimum(py::module m) {
   py::class_<FunctionMinimum>(m, "FunctionMinimum")
+
+      .def(py::init(&init))
 
       .def_property_readonly("state", &FunctionMinimum::UserState)
       .def_property_readonly("edm", &FunctionMinimum::Edm)
