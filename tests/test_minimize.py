@@ -129,3 +129,13 @@ def test_bounds():
     r2 = minimize(func, (1.5, 1.7, 1.5), bounds=((1, 2), (1.5, 2), (1, 2)))
     assert r2.success
     assert_equal(r1.x, r2.x)
+
+
+def test_method_warn():
+    with pytest.warns(UserWarning):
+        minimize(func, (1.5, 1.7, 1.5), method="foo")
+
+
+def test_hess_warn():
+    with pytest.warns(UserWarning):
+        minimize(func, (1.5, 1.7, 1.5), hess=True)
