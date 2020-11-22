@@ -1242,19 +1242,3 @@ def test_merrors(sigma, k, limit):
     assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
     assert m.merrors["lambd"].lower == approx(lower, abs=1e-4)
     assert m.merrors["lambd"].upper == approx(upper, abs=1e-4)
-
-
-def test_pretty():
-    class Printer:
-        data = ""
-
-        def text(self, arg):
-            self.data += arg
-
-    m = Minuit(func0, x=0, y=0)
-    pr = Printer()
-    m._repr_pretty_(pr, False)
-    assert pr.data == str(m)
-    pr = Printer()
-    m._repr_pretty_(pr, True)
-    assert pr.data == "<Minuit ...>"

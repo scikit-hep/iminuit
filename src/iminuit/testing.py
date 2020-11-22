@@ -3,7 +3,6 @@ Common test functions for optimizers.
 
 Also see: https://en.wikipedia.org/wiki/Test_functions_for_optimization
 """
-from math import sqrt, exp, cos, pi, e
 
 
 def rosenbrock(x, y):
@@ -29,6 +28,8 @@ def ackley(x, y):
 
     https://en.wikipedia.org/wiki/Ackley_function
     """
+    from math import sqrt, exp, cos, pi, e
+
     term1 = -20 * exp(-0.2 * sqrt(0.5 * (x ** 2 + y ** 2)))
     term2 = -exp(0.5 * (cos(2 * pi * x) + cos(2 * pi * y)))
     return term1 + term2 + 20 + e
@@ -62,3 +63,17 @@ def matyas(x, y):
 
 
 matyas.errordef = 1
+
+
+def sphere_np(x):
+    """
+    Sphere function for variable number of arguments. Minimum: f(0, ..., 0) = 0.
+
+    https://en.wikipedia.org/wiki/Test_functions_for_optimization
+    """
+    import numpy as np
+
+    return np.sum(x ** 2)
+
+
+sphere_np.errordef = 1

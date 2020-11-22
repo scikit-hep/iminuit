@@ -484,6 +484,7 @@ class Minuit:
         self._fcn.ngrad = 0
         self._merrors = mutil.MErrors()
         self._covariance = None
+        return self  # return self for method chaining and to autodisplay current state
 
     def migrad(self, ncall=None, precision=None, iterate=5):
         """Run MIGRAD.
@@ -537,11 +538,7 @@ class Minuit:
         self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
         self._make_covariance()
 
-        if self.print_level >= 2:
-            print(self.fmin)
-            print(self.params)
-
-        return self
+        return self  # return self for method chaining and to autodisplay current state
 
     def hesse(self, ncall=None):
         """Run HESSE to compute parabolic errors.
@@ -589,7 +586,7 @@ class Minuit:
 
         self._make_covariance()
 
-        return self
+        return self  # return self for method chaining and to autodisplay current state
 
     def minos(self, *parameters, sigma=1.0, ncall=None):
         """Run MINOS to compute asymmetric confidence intervals.
@@ -677,7 +674,7 @@ class Minuit:
         self._fmin._nfcn = self._fcn.nfcn
         self._fmin._ngrad = self._fcn.ngrad
 
-        return self
+        return self  # return self for method chaining and to autodisplay current state
 
     def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
         """Calculate MINOS profile around the specified range.
@@ -1154,6 +1151,17 @@ class Minuit:
         else:
             self._covariance = None
 
+    def __repr__(self):
+        s = []
+        if self.fmin is not None:
+            s.append(repr(self.fmin))
+        s.append(repr(self.params))
+        if self.merrors:
+            s.append(repr(self.merrors))
+        if self.covariance is not None:
+            s.append(repr(self.covariance))
+        return "\n".join(s)
+
     def _repr_html_(self):
         s = ""
         if self.fmin is not None:
@@ -1165,22 +1173,20 @@ class Minuit:
             s += self.covariance._repr_html_()
         return s
 
-    def __str__(self):
-        s = []
-        if self.fmin is not None:
-            s.append(str(self.fmin))
-        s.append(str(self.params))
-        if self.merrors:
-            s.append(str(self.merrors))
-        if self.covariance is not None:
-            s.append(str(self.covariance))
-        return "\n".join(s)
-
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<Minuit ...>")
         else:
-            p.text(str(self))
+            if self.fmin is not None:
+                p.pretty(self.fmin)
+                p.breakable()
+            p.pretty(self.params)
+            if self.merrors:
+                p.breakable()
+                p.pretty(self.merrors)
+            if self.covariance is not None:
+                p.breakable()
+                p.pretty(self.covariance)
 
 
 def _make_init_state(pos2var, args, kwds):

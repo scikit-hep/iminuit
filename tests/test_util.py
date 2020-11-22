@@ -1,30 +1,7 @@
-from iminuit import util, _repr_text
+from iminuit import util
 import pytest
 from argparse import Namespace
 from numpy.testing import assert_equal, assert_allclose
-from contextlib import contextmanager
-
-
-class Printer:
-    data = ""
-
-    def text(self, arg):
-        self.data += arg
-
-    def pretty(self, arg):
-        if hasattr(arg, "_repr_pretty_"):
-            arg._repr_pretty_(self, False)
-        else:
-            self.data += repr(arg)
-
-    def breakable(self):
-        self.data += " "
-
-    @contextmanager
-    def group(self, n, start, stop):
-        self.data += start
-        yield
-        self.data += stop
 
 
 def test_ndim():
@@ -68,13 +45,6 @@ def test_Matrix():
     assert_equal(m["b"], (1, 4))
     assert str(m) == repr(m)
 
-    p = Printer()
-    m._repr_pretty_(p, False)
-    assert p.data == _repr_text.matrix(m)
-    p = Printer()
-    m._repr_pretty_(p, True)
-    assert p.data == "<Matrix ...>"
-
     with pytest.raises(TypeError):
         util.Matrix("ab")
 
@@ -106,13 +76,6 @@ def test_Param():
     )
     assert str(p) == repr(p)
 
-    pr = Printer()
-    p._repr_pretty_(pr, False)
-    assert pr.data == _repr_text.params([p])
-    pr = Printer()
-    p._repr_pretty_(pr, True)
-    assert pr.data == "Param(...)"
-
 
 def test_Params():
     p = util.Params(
@@ -122,13 +85,6 @@ def test_Params():
             )
         ]
     )
-
-    pr = Printer()
-    p._repr_pretty_(pr, False)
-    assert pr.data == _repr_text.params(p)
-    pr = Printer()
-    p._repr_pretty_(pr, True)
-    assert pr.data == "Params(...)"
 
     assert repr(p) == repr((p[0],))
     assert str(p) == repr(p)
@@ -152,13 +108,6 @@ def test_MError():
         11,
         0.7,
     )
-
-    pr = Printer()
-    me._repr_pretty_(pr, False)
-    assert pr.data == _repr_text.merrors({None: me})
-    pr = Printer()
-    me._repr_pretty_(pr, True)
-    assert pr.data == "<MError ...>"
 
     assert repr(me) == (
         "<MError number=1 name='x' lower=0.1 upper=0.2 is_valid=True lower_valid=True "
@@ -226,13 +175,6 @@ def test_MErrors():
         )
     )
 
-    pr = Printer()
-    mes._repr_pretty_(pr, False)
-    assert pr.data == _repr_text.merrors(mes)
-    pr = Printer()
-    mes._repr_pretty_(pr, True)
-    assert pr.data == "<MErrors ...>"
-
     assert repr(mes) == f"<MErrors\n  {mes['x']!r}\n>"
     assert str(mes) == repr(mes)
 
@@ -275,13 +217,6 @@ def test_FMin():
     }
     assert fmin.edm == 1.23456e-10
     assert fmin.has_parameters_at_limit == False
-
-    pr = Printer()
-    fmin._repr_pretty_(pr, False)
-    assert pr.data == _repr_text.fmin(fmin)
-    pr = Printer()
-    fmin._repr_pretty_(pr, True)
-    assert pr.data == "<FMin ...>"
 
     assert repr(fmin) == (
         "<FMin edm=1.23456e-10 fval=1.23456e-10 has_accurate_covar=True"
