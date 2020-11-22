@@ -1,4 +1,4 @@
-name: Cov&Doc
+name: Coverage
 
 on:
   pull_request:
@@ -27,10 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip wheel
         python -m pip install -r requirements-dev.txt
-        python -m ipykernel install --user --name python3
     - run: pre-commit run -a
     - run: python -m pip install -e .
-    - run: make doc
-    - run: python -m pytest tutorial
     - run: coverage run -m pytest
     - uses: AndreMiras/coveralls-python-action@develop
