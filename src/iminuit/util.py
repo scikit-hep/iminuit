@@ -143,9 +143,10 @@ class LimitView(BasicView):
         state.remove_limits(i)
         low, high = _normalize_limit(args)
         if low != -inf and high != inf:  # both must be set
-            state.set_limits(i, low, high)
             if low == high:
                 state.fix(i)
+            else:
+                state.set_limits(i, low, high)
         elif low != -inf:  # lower limit must be set
             state.set_lower_limit(i, low)
         elif high != inf:  # lower limit must be set

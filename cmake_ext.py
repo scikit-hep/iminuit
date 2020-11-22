@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=""):
-        Extension.__init__(self, name, sources=[])
+    def __init__(self, sourcedir=""):
+        Extension.__init__(self, "CMakeExtension", sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
 
@@ -26,9 +26,10 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
         ]
 
-        cfg = "Debug" if self.debug else "Release"
+        debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
+        cfg = "Debug" if debug else "Release"
         cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
-        build_args = ["--config", cfg]
+        build_args = []
 
         if platform.system() == "Windows":
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
