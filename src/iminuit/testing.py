@@ -15,6 +15,9 @@ def rosenbrock(x, y):
     return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
 
 
+rosenbrock.errordef = 1
+
+
 def rosenbrock_grad(x, y):
     """Gradient of Rosenbrock function."""
     return (-400 * x * (-(x ** 2) + y) + 2 * x - 2, -200 * x ** 2 + 200 * y)
@@ -31,6 +34,9 @@ def ackley(x, y):
     return term1 + term2 + 20 + e
 
 
+ackley.errordef = 1
+
+
 def beale(x, y):
     """
     Beale function. Minimum: f(3, 0.5) = 0.
@@ -43,6 +49,9 @@ def beale(x, y):
     return term1 * term1 + term2 * term2 + term3 * term3
 
 
+beale.errordef = 1
+
+
 def matyas(x, y):
     """
     Matyas function. Minimum: f(0, 0) = 0.
@@ -50,3 +59,6 @@ def matyas(x, y):
     https://en.wikipedia.org/wiki/Test_functions_for_optimization
     """
     return 0.26 * (x ** 2 + y ** 2) - 0.48 * x * y
+
+
+matyas.errordef = 1
