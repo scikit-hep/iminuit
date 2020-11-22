@@ -128,6 +128,8 @@ def test_FunctionMinimum():
     fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
     st = MnUserParameterState()
     st.add("x", 2, 5)
-    fm = FunctionMinimum(fcn, st, 0.0, 0.0, 42)
+    fm = FunctionMinimum(fcn, st, 0.1, 0.2, 42)
     assert fm.is_valid
-    assert fm.nfcn == 42
+    assert len(fm.state) == 1
+    assert fm.edm == 0.2
+    assert fm.fval == 0.1

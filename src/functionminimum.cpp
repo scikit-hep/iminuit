@@ -1,29 +1,44 @@
 #include <Minuit2/AnalyticalGradientCalculator.h>
 #include <Minuit2/FunctionMinimum.h>
+#include <Minuit2/MnSeedGenerator.h>
 #include <Minuit2/MnStrategy.h>
 #include <Minuit2/MnUserFcn.h>
 #include <Minuit2/MnUserParameterState.h>
 #include <Minuit2/Numerical2PGradientCalculator.h>
-#include <Minuit2/SimplexSeedGenerator.h>
 #include <pybind11/pybind11.h>
 #include "fcn.hpp"
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
-FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval,
-                     double edm, int nfcn) {
-  SimplexSeedGenerator gen;
+MinimumSeed make_seed(const FCN& fcn, const MnUserFcn& mfcn,
+                      const MnUserParameterState& st) {
   MnStrategy str;
-  MnUserFcn mfcn(fcn, st.Trafo());
-  std::vector<MinimumState> minstv(1, MinimumState(fval, edm, nfcn));
+  MnSeedGenerator gen;
   if (fcn.grad_.is_none()) {
     Numerical2PGradientCalculator gc(mfcn, st.Trafo(), str);
-    MinimumSeed seed = gen(mfcn, gc, st, str);
-    return FunctionMinimum(seed, minstv, fcn.Up());
+    return gen(mfcn, gc, st, str);
   }
   AnalyticalGradientCalculator gc(fcn, st.Trafo());
-  MinimumSeed seed = gen(mfcn, gc, st, str);
+  return gen(mfcn, gc, st, str);
+}
+
+FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval,
+                     int nfcn) {
+  MnUserFcn mfcn(fcn, st.Trafo());
+  MinimumSeed seed = make_seed(fcn, mfcn, st);
+
+  // MnUserParameterState upst(seed.State(), fcn.Up(), seed.Trafo());
+
+  const auto& x = seed.Parameters().Vec();
+  const auto n = seed.Trafo().VariableParameters();
+  MnAlgebraicVector dirin(n);
+  for (unsigned int i = 0; i < n; i++) {
+    dirin(i) = std::sqrt(2. * mfcn.Up() * seed.Error().InvHessian()(i, i));
+  }
+
+  MinimumParameters minp(x, dirin, fval);
+  std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), nfcn));
   return FunctionMinimum(seed, minstv, fcn.Up());
 }
 

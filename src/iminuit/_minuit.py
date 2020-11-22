@@ -542,63 +542,76 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scan(self, ncall=None, method="hyper"):
-        if method == "mnscan":
-            return self._mnscan()
-        elif method == "hyper":
-            return self._hyper(ncall)
-        raise ValueError(f"method {method} not recognized")
+    def scan(self, ncall=None):
+        """Runs a scan over a regular hypercube grid to find the best minimum.
 
-    def _mnscan(self):
-        # Does a 1D scan with 41 steps for each parameter in order. Fairly useless.
+        This implementation does a scan of the hypercube whose bounds are defined either
+        by the parameter limits if they are present or by Minuit.values +/- Minuit.errors.
+        Minuit.errors are initialized to very small values by default, too small for this
+        scan. So thez should be increased before running scan (or limits should be set).
+
+        **Arguments:**
+
+            * **ncall**: Approximate number of function calls to spend on the scan. The
+            actual number will be close to this. The scan uses ncall^(1/npar) steps per
+            dimension of the cube.
+
+        **Notes**
+
+        I originally wanted to use MnScan from C++ Minuit2, but MnScan is fairly broken.
+        It does a 1D scan with 41 steps for each parameter in sequence, so it is not
+        actually scanning the full hypercube. It first scans one parameter, then starts
+        the scan of the second parameter from the best value of the first and so on.
+
+        Other issues: One cannot configure the number of steps. A gradient and second
+        derivatives are computed for the starting values only to be discarded.
+
+        This implementation here does a full scan of the hypercube implemented in Python.
+        Returning a valid FunctionMinimum object was non-trivial, but it was implemented.
+        The Minuit2 C++ interface forces one to compute the gradient and second
+        derivatives in the process, but we use this to our advantage by computing updates
+        of the step sizes and to estimate the EDM value.
+        """
 
         scan = MnScan(self._fcn, self._last_state, self.strategy)
-
         fm = scan(0, 0)  # args are ignored
-
         self._last_state = fm.state
         self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 
-        return self  # return self for method chaining and to autodisplay current state
-
-    def _hyper(self, ncall):
         if ncall is None:
             npar = self.nfit
             ncall = int((200 + 100 * npar + 5 * npar * npar) ** (1 / npar))
 
         x = np.empty(self.npar + 1)
         x[self.npar] = np.inf
+        lims = list(self.limits)
+        for i, (low, up) in enumerate(lims):
+            v = self.values[i]
+            e = self.errors[i]
+            lims[i] = v - e if low == -np.inf else low, v + e if up == np.inf else up
 
-        def scan(ipar):
+        def run(ipar):
             if ipar == self.npar:
                 r = self.fcn(x[: self.npar])
                 if r < x[self.npar]:
                     x[self.npar] = r
                     self.values = x[: self.npar]
                 return
-            low, up = self.limits[ipar]
-            v = self.values[ipar]
-            e = self.errors[ipar]
-            if low == -np.inf:
-                low = v - 3 * e
-            if up == np.inf:
-                up = v + 3 * e
+            low, up = lims[ipar]
             for xi in np.linspace(low, up, ncall):
                 x[ipar] = xi
-                scan(ipar + 1)
+                run(ipar + 1)
 
-        scan(0)
+        run(0)
 
-        fm = FunctionMinimum(
-            self._fcn, self._last_state, x[self.npar], 0.0, ncall, self._fcn.up
-        )
-
+        fm = FunctionMinimum(self._fcn, self._last_state, x[self.npar], ncall)
+        self._last_state = fm.state
         self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 
-        return self
+        return self  # return self for method chaining and to autodisplay current state
 
     def hesse(self, ncall=None):
-        """Run HESSE to compute parabolic errors.
+        """Run HESSE algorithm to compute asymptotic errors.
 
         HESSE estimates the covariance matrix by inverting the matrix of
         `second derivatives (Hesse matrix) at the minimum
