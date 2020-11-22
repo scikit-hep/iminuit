@@ -1,4 +1,4 @@
-from iminuit import util
+from iminuit import util, _repr_text
 import pytest
 from argparse import Namespace
 from numpy.testing import assert_equal, assert_allclose
@@ -38,33 +38,59 @@ def test_ndim():
     assert ndim((None, (1, 2))) == 2
 
 
+def test_ValueView():
+    v = util.ValueView(
+        Namespace(
+            _var2pos={"x": 0, "y": 1},
+            _pos2var=("x", "y"),
+            npar=2,
+            _last_state=(
+                Namespace(value=1.0),
+                Namespace(value=2.02),
+            ),
+        )
+    )
+
+    assert repr(v) == "<ValueView x=1.0 y=2.02>"
+    assert str(v) == repr(v)
+
+
 def test_Matrix():
-    m = util.Matrix({"a": 0, "b": 1})
+    m = util.Matrix(("a", "b"))
     m[:] = [[1, 1], [1, 4]]
     assert_equal(m, ((1, 1), (1, 4)))
-    assert repr(m) == "Matrix([[1., 1.],\n        [1., 4.]])"
+    assert repr(m) == "[[1. 1.]\n [1. 4.]]"
     c = m.correlation()
     assert_allclose(c, ((1.0, 0.5), (0.5, 1.0)))
     assert m["a", "b"] == 1.0
     assert m["a", 1] == 1.0
     assert m[1, 1] == 4.0
     assert_equal(m["b"], (1, 4))
+    assert str(m) == repr(m)
+
     p = Printer()
     m._repr_pretty_(p, False)
-    assert p.data == str(m)
+    assert p.data == _repr_text.matrix(m)
     p = Printer()
     m._repr_pretty_(p, True)
-    assert p.data == "Matrix(...)"
+    assert p.data == "<Matrix ...>"
+
+    with pytest.raises(TypeError):
+        util.Matrix("ab")
+
+    with pytest.raises(TypeError):
+        util.Matrix(1)
 
 
 def test_Param():
-    values = 3, "foo", 1.2, 3.4, False, False, True, True, False, 42, None
+    values = 3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
     p = util.Param(*values)
 
     assert p.number == 3
     assert p.name == "foo"
     assert p.value == 1.2
     assert p.error == 3.4
+    assert p.merror is None
     assert p.is_const == False
     assert p.is_fixed == False
     assert p.has_limits == True
@@ -73,14 +99,16 @@ def test_Param():
     assert p.lower_limit == 42
     assert p.upper_limit is None
 
-    assert (
-        str(p)
-        == "Param(number=3, name='foo', value=1.2, error=3.4, is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, has_upper_limit=False, lower_limit=42, upper_limit=None)"  # noqa: E501
+    assert repr(p) == (
+        "Param(number=3, name='foo', value=1.2, error=3.4, merror=None, "
+        "is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, "
+        "has_upper_limit=False, lower_limit=42, upper_limit=None)"
     )
+    assert str(p) == repr(p)
 
     pr = Printer()
     p._repr_pretty_(pr, False)
-    assert pr.data == str(p)
+    assert pr.data == _repr_text.params([p])
     pr = Printer()
     p._repr_pretty_(pr, True)
     assert pr.data == "Param(...)"
@@ -88,84 +116,125 @@ def test_Param():
 
 def test_Params():
     p = util.Params(
-        [util.Param(3, "foo", 1.2, 3.4, False, False, True, True, False, 42, None)],
-        None,
+        [
+            util.Param(
+                3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
+            )
+        ]
     )
 
     pr = Printer()
     p._repr_pretty_(pr, False)
-    assert pr.data == str(p)
+    assert pr.data == _repr_text.params(p)
     pr = Printer()
     p._repr_pretty_(pr, True)
     assert pr.data == "Params(...)"
 
+    assert repr(p) == repr((p[0],))
+    assert str(p) == repr(p)
+
 
 def test_MError():
-    minos_error = Namespace(
-        number=1,
-        lower=0.1,
-        upper=0.2,
-        is_valid=True,
-        lower_valid=True,
-        upper_valid=True,
-        at_lower_limit=False,
-        at_upper_limit=False,
-        at_lower_max_fcn=False,
-        at_upper_max_fcn=False,
-        lower_new_min=False,
-        upper_new_min=False,
-        nfcn=11,
-        min=0.7,
+    me = util.MError(
+        1,
+        "x",
+        0.1,
+        0.2,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        11,
+        0.7,
     )
-    me = util.MError("x", minos_error)
 
     pr = Printer()
     me._repr_pretty_(pr, False)
-    assert (
-        pr.data == "<MError number=1 name='x' lower=0.1 upper=0.2 "
-        "is_valid=True lower_valid=True upper_valid=True "
-        "at_lower_limit=False at_upper_limit=False "
-        "at_lower_max_fcn=False at_upper_max_fcn=False "
-        "lower_new_min=False upper_new_min=False nfcn=11 min=0.7>"
-    )
+    assert pr.data == _repr_text.merrors({None: me})
     pr = Printer()
     me._repr_pretty_(pr, True)
     assert pr.data == "<MError ...>"
 
+    assert repr(me) == (
+        "<MError number=1 name='x' lower=0.1 upper=0.2 is_valid=True lower_valid=True "
+        "upper_valid=True at_lower_limit=False at_upper_limit=False "
+        "at_lower_max_fcn=False at_upper_max_fcn=False lower_new_min=False "
+        "upper_new_min=False nfcn=11 min=0.7>"
+    )
+    assert str(me) == repr(me)
+
+    assert me == util.MError(
+        1,
+        "x",
+        0.1,
+        0.2,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        11,
+        0.7,
+    )
+
+    assert me != util.MError(
+        1,
+        "x",
+        0.1,
+        0.2,
+        True,
+        True,
+        True,
+        False,
+        False,
+        False,
+        False,
+        False,
+        False,
+        11,
+        0.8,
+    )
+
 
 def test_MErrors():
-    minos_error = Namespace(
-        number=1,
-        lower=0.1,
-        upper=0.2,
-        is_valid=True,
-        lower_valid=True,
-        upper_valid=True,
-        at_lower_limit=False,
-        at_upper_limit=False,
-        at_lower_max_fcn=False,
-        at_upper_max_fcn=False,
-        lower_new_min=False,
-        upper_new_min=False,
-        nfcn=11,
-        min=0.7,
+    mes = util.MErrors(
+        x=util.MError(
+            1,
+            "x",
+            0.1,
+            0.2,
+            True,
+            True,
+            True,
+            False,
+            False,
+            False,
+            False,
+            False,
+            False,
+            11,
+            0.7,
+        )
     )
-    me = util.MError("x", minos_error)
-    mes = util.MErrors(x=me)
 
     pr = Printer()
     mes._repr_pretty_(pr, False)
-    assert (
-        pr.data == "<MErrors "
-        "<MError number=1 name='x' lower=0.1 upper=0.2 "
-        "is_valid=True lower_valid=True upper_valid=True "
-        "at_lower_limit=False at_upper_limit=False "
-        "at_lower_max_fcn=False at_upper_max_fcn=False "
-        "lower_new_min=False upper_new_min=False nfcn=11 min=0.7> >"
-    )
+    assert pr.data == _repr_text.merrors(mes)
     pr = Printer()
     mes._repr_pretty_(pr, True)
     assert pr.data == "<MErrors ...>"
+
+    assert repr(mes) == f"<MErrors\n  {mes['x']!r}\n>"
+    assert str(mes) == repr(mes)
 
 
 def test_FMin():
@@ -209,10 +278,19 @@ def test_FMin():
 
     pr = Printer()
     fmin._repr_pretty_(pr, False)
-    assert pr.data == str(fmin)
+    assert pr.data == _repr_text.fmin(fmin)
     pr = Printer()
     fmin._repr_pretty_(pr, True)
-    assert pr.data == "FMin(...)"
+    assert pr.data == "<FMin ...>"
+
+    assert repr(fmin) == (
+        "<FMin edm=1.23456e-10 fval=1.23456e-10 has_accurate_covar=True"
+        " has_covariance=True has_made_posdef_covar=False has_parameters_at_limit=False"
+        " has_posdef_covar=True has_reached_call_limit=False has_valid_parameters=True"
+        " hesse_failed=False is_above_max_edm=False is_valid=True"
+        " nfcn=1 ngrad=2 tolerance=0.1 up=0.5>"
+    )
+    assert str(fmin) == repr(fmin)
 
 
 def test_normalize_limit():

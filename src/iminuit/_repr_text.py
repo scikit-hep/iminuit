@@ -92,9 +92,9 @@ def fmin(fm):
 
 
 def params(mps):
-    vnames = [mp.name for mp in mps]
+    vnames = (mp.name for mp in mps)
     name_width = max([4] + [len(x) for x in vnames])
-    num_width = max(2, len("%i" % (len(vnames) - 1)))
+    num_width = max(2, len(f"{len(mps) - 1}"))
 
     ws = (-num_width - 1, -name_width - 2, 11, 11, 12, 12, 9, 9, 7)
     h = format_row(
@@ -113,11 +113,10 @@ def params(mps):
     l1 = format_line(ws, "┌" + "┬" * ni + "┐")
     l2 = format_line(ws, "├" + "┼" * ni + "┤")
     lines = [l1, h, l2]
-    mes = mps.merrors
     for i, mp in enumerate(mps):
-        if mes and mp.name in mes:
-            me = mes[mp.name]
-            val, err, mel, meu = pdg_format(mp.value, mp.error, me.lower, me.upper)
+        me = mp.merror
+        if me:
+            val, err, mel, meu = pdg_format(mp.value, mp.error, *me)
         else:
             val, err = pdg_format(mp.value, mp.error)
             mel = ""
@@ -142,6 +141,7 @@ def params(mps):
 
 
 def merrors(mes):
+    mes = mes.values()
     n = len(mes)
     ws = [10] + [23] * n
     l1 = format_line(ws, "┌" + "┬" * n + "┐")
@@ -178,7 +178,9 @@ def merrors(mes):
     return "\n".join((l1, header, l2, error, valid, at_limit, max_fcn, new_min, l3))
 
 
-def matrix(arr, names):
+def matrix(arr):
+    names = tuple(arr._var2pos)
+
     n = len(arr)
     nums = matrix_format(arr.flatten())
 

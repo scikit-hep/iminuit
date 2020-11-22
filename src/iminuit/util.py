@@ -1,7 +1,7 @@
 """iminuit utility functions and classes."""
 import inspect
-import re
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
+from argparse import Namespace
 from collections.abc import Iterable
 from . import _repr_html
 from . import _repr_text
@@ -12,10 +12,6 @@ inf = float("infinity")
 
 class IMinuitWarning(RuntimeWarning):
     """iminuit warning."""
-
-
-class InitialParamWarning(IMinuitWarning):
-    """Initial parameter warning."""
 
 
 class HesseFailedWarning(IMinuitWarning):
@@ -76,9 +72,10 @@ class BasicView:
         return len(self) == len(other) and all(x == y for x, y in zip(self, other))
 
     def __repr__(self):
-        s = "<{} of Minuit at {:x}>".format(self.__class__.__name__, id(self._minuit))
+        s = f"<{self.__class__.__name__}"
         for (k, v) in zip(self._minuit._pos2var, self):
-            s += f"\n  {k}: {v}"
+            s += f" {k}={v}"
+        s += ">"
         return s
 
 
@@ -180,9 +177,15 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, var2pos):
-        npar = len(var2pos)
-        obj = super(Matrix, cls).__new__(cls, (npar, npar))
+    def __new__(cls, parameters):
+        if isinstance(parameters, dict):
+            var2pos = parameters
+        elif isinstance(parameters, tuple):
+            var2pos = {x: i for i, x in enumerate(parameters)}
+        else:
+            raise TypeError("parameters must be tuple or dict")
+        n = len(parameters)
+        obj = super(Matrix, cls).__new__(cls, (n, n))
         obj._var2pos = var2pos
         return obj
 
@@ -200,9 +203,6 @@ class Matrix(np.ndarray):
             key = var2pos[key]
         return super().__getitem__(key)
 
-    def __str__(self):
-        return _repr_text.matrix(self, tuple(self._var2pos))
-
     def to_table(self):
         names = tuple(self._var2pos)
         nums = _repr_text.matrix_format(self.flatten())
@@ -218,14 +218,20 @@ class Matrix(np.ndarray):
         a /= np.outer(d, d) + 1e-100
         return a
 
+    def __repr__(self):
+        return super().__str__()
+
+    def __str__(self):
+        return repr(self)
+
     def _repr_html_(self):
-        return _repr_html.matrix(self, tuple(self._var2pos))
+        return _repr_html.matrix(self)
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
-            p.text("Matrix(...)")
+            p.text("<Matrix ...>")
         else:
-            p.text(str(self))
+            p.text(_repr_text.matrix(self))
 
 
 class FMin:
@@ -254,19 +260,6 @@ class FMin:
         self._nfcn = nfcn
         self._ngrad = ngrad
         self._tolerance = tol
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.fmin(self)
-
-    def _repr_html_(self):
-        return _repr_html.fmin(self)
-
-    def _repr_pretty_(self, p, cycle):
-        if cycle:
-            p.text("FMin(...)")
-        else:
-            p.text(str(self))
 
     @property
     def edm(self):
@@ -409,6 +402,25 @@ class FMin:
         """Equal to the value of ``Minuit.errordef`` when Migrad ran."""
         return self._src.up
 
+    def __repr__(self):
+        s = "<FMin"
+        for key in sorted(dir(self)):
+            if key.startswith("_"):
+                continue
+            val = getattr(self, key)
+            s += f" {key}={val!r}"
+        s += ">"
+        return s
+
+    def _repr_html_(self):
+        return _repr_html.fmin(self)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("<FMin ...>")
+        else:
+            p.text(_repr_text.fmin(self))
+
 
 class Param:
     """Data object for a single Parameter."""
@@ -418,6 +430,7 @@ class Param:
         "name",
         "value",
         "error",
+        "merror",
         "is_const",
         "is_fixed",
         "has_limits",
@@ -427,74 +440,32 @@ class Param:
         "upper_limit",
     )
 
-    def __init__(
-        self,
-        number,
-        name,
-        value,
-        error,
-        is_const,
-        is_fixed,
-        has_limits,
-        has_lower_limit,
-        has_upper_limit,
-        lower_limit,
-        upper_limit,
-    ):
-        self.number = number
-        self.name = name
-        self.value = value
-        self.error = error
-        self.is_const = is_const
-        self.is_fixed = is_fixed
-        self.has_limits = has_limits
-        self.has_lower_limit = has_lower_limit
-        self.has_upper_limit = has_upper_limit
-        self.lower_limit = lower_limit
-        self.upper_limit = upper_limit
+    def __init__(self, *args):
+        assert len(args) == len(self.__slots__)
+        for k, arg in zip(self.__slots__, args):
+            setattr(self, k, arg)
 
-    def __str__(self):
+    def __eq__(self, other):
+        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+
+    def __repr__(self):
         pairs = []
         for k in self.__slots__:
             v = getattr(self, k)
             pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
 
-    def __eq__(self, other):
-        return (
-            self.number == other.number
-            and self.name == other.name
-            and self.value == other.value
-            and self.error == other.error
-            and self.is_const == other.is_const
-            and self.is_fixed == other.is_fixed
-            and self.has_limits == other.has_limits
-            and self.has_lower_limit == other.has_lower_limit
-            and self.has_upper_limit == other.has_upper_limit
-            and self.lower_limit == other.lower_limit
-            and self.upper_limit == other.upper_limit
-        )
-
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Param(...)")
         else:
-            with p.group(6, "Param(", ")"):
-                for idx, k in enumerate(self.__slots__):
-                    if idx:
-                        p.text(",")
-                        p.breakable()
-                    p.text(f"{k}=")
-                    p.pretty(getattr(self, k))
+            p.text(_repr_text.params([self]))
 
 
-class Params(list):
-    """List-like holder of parameter data objects."""
+class Params(tuple):
+    """Tuple-like holder of parameter data objects."""
 
-    def __init__(self, seq, merrors):
-        """Make Params from sequence of Param objects and MErrors object."""
-        list.__init__(self, seq)
-        self.merrors = merrors
+    __slots__ = ()
 
     def _repr_html_(self):
         return _repr_html.params(self)
@@ -511,16 +482,13 @@ class Params(list):
             "limit+",
             "fixed",
         ]
-        mes = self.merrors
         tab = []
         for i, mp in enumerate(self):
             name = mp.name
             row = [i, name]
-            if mes and name in mes:
-                me = mes[name]
-                val, err, mel, meu = _repr_text.pdg_format(
-                    mp.value, mp.error, me.lower, me.upper
-                )
+            me = mp.merror
+            if me:
+                val, err, mel, meu = _repr_text.pdg_format(mp.value, mp.error, *me)
             else:
                 val, err = _repr_text.pdg_format(mp.value, mp.error)
                 mel = ""
@@ -537,15 +505,11 @@ class Params(list):
             tab.append(row)
         return tab, header
 
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.params(self)
-
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Params(...)")
         else:
-            p.text(str(self))
+            p.text(_repr_text.params(self))
 
 
 class MError:
@@ -569,40 +533,30 @@ class MError:
         "min",
     )
 
-    def __init__(self, name, minos_error):
-        self.number = minos_error.number
-        self.name = name
-        self.lower = minos_error.lower
-        self.upper = minos_error.upper
-        self.is_valid = minos_error.is_valid
-        self.lower_valid = minos_error.lower_valid
-        self.upper_valid = minos_error.upper_valid
-        self.at_lower_limit = minos_error.at_lower_limit
-        self.at_upper_limit = minos_error.at_upper_limit
-        self.at_lower_max_fcn = minos_error.at_lower_max_fcn
-        self.at_upper_max_fcn = minos_error.at_upper_max_fcn
-        self.lower_new_min = minos_error.lower_new_min
-        self.upper_new_min = minos_error.upper_new_min
-        self.nfcn = minos_error.nfcn
-        self.min = minos_error.min
+    def __init__(self, *args):
+        assert len(args) == len(self.__slots__)
+        for k, arg in zip(self.__slots__, args):
+            setattr(self, k, arg)
+
+    def __eq__(self, other):
+        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+
+    def __repr__(self):
+        s = "<MError"
+        for idx, k in enumerate(self.__slots__):
+            v = getattr(self, k)
+            s += f" {k}={v!r}"
+        s += ">"
+        return s
 
     def _repr_html_(self):
-        return _repr_html.merrors([self])
-
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.merrors([self])
+        return _repr_html.merrors({None: self})
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<MError ...>")
         else:
-            with p.group(4, "<MError ", ">"):
-                for idx, k in enumerate(self.__slots__):
-                    if idx:
-                        p.breakable()
-                    p.text(f"{k}=")
-                    p.pretty(getattr(self, k))
+            p.text(_repr_text.merrors({None: self}))
 
 
 class MErrors(OrderedDict):
@@ -611,20 +565,16 @@ class MErrors(OrderedDict):
     __slots__ = ()
 
     def _repr_html_(self):
-        return _repr_html.merrors(self.values())
+        return _repr_html.merrors(self)
 
-    def __str__(self):
-        """Return string suitable for terminal."""
-        return _repr_text.merrors(self.values())
+    def __repr__(self):
+        return "<MErrors\n  " + ",\n  ".join(repr(x) for x in self.values()) + "\n>"
 
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<MErrors ...>")
         else:
-            with p.group(8, "<MErrors ", ">"):
-                for x in self.values():
-                    p.pretty(x)
-                    p.breakable()
+            p.text(_repr_text.merrors(self))
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -646,7 +596,7 @@ def make_func_code(params):
 
         make_func_code(["x", "y"])
     """
-    return namedtuple("FuncCode", "co_varnames co_argcount")(params, len(params))
+    return Namespace(co_varnames=params, co_argcount=len(params))
 
 
 def describe(callable):
@@ -655,7 +605,7 @@ def describe(callable):
     **Returns**
 
     Returns a list of strings with the parameters names if successful. If unsuccessful,
-    it returns either an empty list or None
+    it returns an empty list.
 
     **Function signature extraction algorithm**
 
@@ -711,15 +661,16 @@ def _arguments_from_func_code(obj):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(obj, "func_code"):
         fc = obj.func_code
-        return fc.co_varnames[: fc.co_argcount]
+        return tuple(fc.co_varnames[: fc.co_argcount])
+    return ()
 
 
 def _arguments_from_inspect(obj):
     try:
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
-    except ValueError:  # pragma: no cover
-        return None  # pragma: no cover
+    except ValueError:
+        return ()
 
     args = []
     for name, par in signature.parameters.items():
@@ -730,45 +681,71 @@ def _arguments_from_inspect(obj):
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
         args.append(name)
-    return args
+    return tuple(args)
 
 
 def _arguments_from_docstring(obj):
     doc = inspect.getdoc(obj)
 
     if doc is None:
-        return None
+        return ()
 
-    doc = doc.lstrip()
+    # Examples of strings we want to parse:
+    #   min(iterable, *[, default=obj, key=func]) -> value
+    #   min(arg1, arg2, *args, *[, key=func]) -> value
+    #   Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])
 
-    # care only the firstline
-    # docstring can be long
-    line = doc.split("\n", 1)[0]  # get the firstline
-    if line.startswith("('...',)"):
-        line = doc.split("\n", 2)[1]  # get the second line
-    p = re.compile(r"^[\w|\s.]+\(([^)]*)\).*")
-    # 'min(iterable[, key=func])\n' -> 'iterable[, key=func]'
-    sig = p.search(line)
-    if sig is None:
-        return None
-    # iterable[, key=func]' -> ['iterable[' ,' key=func]']
-    sig = sig.groups()[0].split(",")
-    ret = []
-    for s in sig:
-        # get the last one after all space after =
-        # ex: int x= True
-        tmp = s.split("=")[0].split()[-1]
-        # clean up non _+alphanum character
-        tmp = "".join([x for x in tmp if x.isalnum() or x == "_"])
-        ret.append(tmp)
-        # re.compile(r'[\s|\[]*(\w+)(?:\s*=\s*.*)')
-        # ret += self.docstring_kwd_re.findall(s)
-    ret = list(filter(lambda x: x != "", ret))
+    name = obj.__name__
 
-    if ret[0] == "self":
-        ret = ret[1:]
+    token = name + "("
+    start = doc.find(token)
+    if start < 0:
+        return ()
+    start += len(token)
 
-    return ret
+    nbrace = 1
+    for ich, ch in enumerate(doc[start:]):
+        if ch == "(":
+            nbrace += 1
+        elif ch == ")":
+            nbrace -= 1
+        if nbrace == 0:
+            break
+    items = [x.strip(" []") for x in doc[start : start + ich].split(",")]
+
+    if items[0] == "self":
+        items = items[1:]
+
+    #   "iterable", "*", "default=obj", "key=func"
+    #   "arg1", "arg2", "*args", "*", "key=func"
+    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
+
+    try:
+        i = items.index("*args")
+        items = items[:i]
+    except ValueError:
+        pass
+
+    #   "iterable", "*", "default=obj", "key=func"
+    #   "arg1", "arg2", "*", "key=func"
+    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
+
+    def extract(s):
+        a = s.find(" ")
+        b = s.find("=")
+        if a < 0:
+            a = 0
+        if b < 0:
+            b = len(s)
+        return s[a:b].strip()
+
+    items = [extract(x) for x in items if x != "*"]
+
+    #   "iterable", "default", "key"
+    #   "arg1", "arg2", "key"
+    #   "ncall_me", "resume", "nsplit"
+
+    return tuple(items)
 
 
 def _guess_initial_step(val):

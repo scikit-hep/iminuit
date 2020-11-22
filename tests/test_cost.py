@@ -76,6 +76,11 @@ def test_BinnedNLL(binned, verbose):
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
 
+def test_BinnedNLL_bad_input():
+    with pytest.raises(ValueError):
+        BinnedNLL([1], [1], lambda x, a: 0)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -91,6 +96,11 @@ def test_ExtendedBinnedNLL(binned, verbose):
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+
+
+def test_ExtendedBinnedNLL_bad_input():
+    with pytest.raises(ValueError):
+        ExtendedBinnedNLL([1], [1], lambda x, a: 0)
 
 
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
@@ -115,6 +125,17 @@ def test_LeastSquares(loss, verbose):
         assert cost.loss != loss
     m.migrad()
     assert_allclose(m.values, (1, 2), rtol=0.02)
+
+
+def test_LeastSquares_bad_input():
+    with pytest.raises(ValueError):
+        LeastSquares([1, 2], [1], [1], lambda x, a: 0)
+
+    with pytest.raises(ValueError):
+        LeastSquares([1, 2], [1, 2], [1], lambda x, a: 0)
+
+    with pytest.raises(ValueError):
+        LeastSquares([1], [1], [1], lambda x, a: 0, loss="foo")
 
 
 def test_UnbinnedNLL_mask():

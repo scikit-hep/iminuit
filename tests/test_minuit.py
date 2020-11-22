@@ -4,8 +4,9 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param, IMinuitWarning, InitialParamWarning
+from iminuit.util import Param, IMinuitWarning
 from pytest import approx
+from argparse import Namespace
 
 
 @pytest.fixture
@@ -23,24 +24,18 @@ is_pypy = platform.python_implementation() == "PyPy"
 
 def test_pedantic_warning_message():
     with warnings.catch_warnings(record=True) as w:
-        m = Minuit(lambda x: 0)  # MARKER
-        m.migrad()
+        m = Minuit(lambda x: 0, x=0)
+        m.migrad()  # MARKER
 
     with open(__file__) as f:
         for lineno, line in enumerate(f):
-            if ("Minuit(lambda x: 0)  # MARKER") in line:
+            if "m.migrad()  # MARKER" in line:
                 break
 
-    assert len(w) == 2
-    for i, msg in enumerate(
-        (
-            "Parameter x has no initial value, using 0",
-            "errordef not set, defaults to 1",
-        )
-    ):
-        assert str(w[i].message) == msg
-        assert w[i].filename == __file__
-        assert w[i].lineno == lineno + 1 + i
+    assert len(w) == 1
+    assert str(w[0].message) == "errordef not set, defaults to 1"
+    assert w[0].filename == __file__
+    assert w[0].lineno == lineno + 1
 
 
 def test_version():
@@ -115,15 +110,7 @@ def func6(x, m, s, a):
     return a / ((x - m) ** 2 + s ** 2)
 
 
-def func7(x):  # test numpy support
-    return np.sum((x - 1) ** 2)
-
-
-def func7_grad(x):  # test numpy support
-    return 2 * (x - 1)
-
-
-class Func8:
+class Correlated:
     errordef = 1
 
     def __init__(self):
@@ -135,6 +122,14 @@ class Func8:
 
     def __call__(self, x):
         return np.dot(x.T, np.dot(self.cinv, x))
+
+
+def func_np(x):  # test numpy support
+    return np.sum((x - 1) ** 2)
+
+
+def func_np_grad(x):  # test numpy support
+    return 2 * (x - 1)
 
 
 data_y = [
@@ -213,7 +208,7 @@ def test_no_signature():
 
     m = Minuit(no_signature, 3, 4)
     assert m.values == (3, 4)
-    assert m.parameters == ("x[0]", "x[1]")
+    assert m.parameters == ("x0", "x1")
 
     m = Minuit(no_signature, x=1, y=2, name=("x", "y"))
     assert m.values == (1, 2)
@@ -222,17 +217,17 @@ def test_no_signature():
     assert_allclose((val["x"], val["y"], m.fval), (1, 2, 0), atol=1e-8)
     assert m.valid
 
-    with pytest.raises(TypeError):
-        Minuit(no_signature)
+    with pytest.raises(RuntimeError):
+        Minuit(no_signature, x=1)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(RuntimeError):
         Minuit(no_signature, x=1, y=2)
 
 
 def test_use_array_call():
     inf = float("infinity")
     m = Minuit(
-        func7,
+        func_np,
         (1, 1),
         name=("a", "b"),
     )
@@ -286,10 +281,10 @@ def test_gcc():
 
 
 def test_array_func_1():
-    m = Minuit(func7, (2, 1))
+    m = Minuit(func_np, (2, 1))
     m.errors = (1, 1)
     m.errordef = Minuit.LEAST_SQUARES
-    assert m.parameters == ("x[0]", "x[1]")
+    assert m.parameters == ("x0", "x1")
     assert m.values == (2, 1)
     assert m.errors == (1, 1)
     m.migrad()
@@ -299,7 +294,7 @@ def test_array_func_1():
 
 
 def test_array_func_2():
-    m = Minuit(func7, (2, 1), grad=func7_grad, name=("a", "b"))
+    m = Minuit(func_np, (2, 1), grad=func_np_grad, name=("a", "b"))
     m.errordef = Minuit.LEAST_SQUARES
     m.fixed = (False, True)
     m.errors = (0.5, 0.5)
@@ -319,20 +314,11 @@ def test_array_func_2():
     assert_allclose(m.np_merrors(), ((1, 0), (1, 0)), rtol=1e-2)
 
 
-def test_view_repr():
-    m = Minuit(func0, x=1, y=2)
-    mid = id(m)
-    assert (
-        repr(m.values)
-        == (
-            """
-<ValueView of Minuit at %x>
-  x: 1.0
-  y: 2.0
-"""
-            % mid
-        ).strip()
-    )
+def test_wrong_use_of_array_init():
+    m = Minuit(lambda a, b: a ** 2 + b ** 2, (1, 2))
+    m.errordef = Minuit.LEAST_SQUARES
+    with pytest.raises(TypeError):
+        m.migrad()
 
 
 def test_reset():
@@ -370,8 +356,7 @@ def test_typo():
 
 
 def test_initial_guesses():
-    with pytest.warns(InitialParamWarning):
-        m = Minuit(lambda x: 0)
+    m = Minuit(lambda x: 0, x=0)
     assert m.values["x"] == 0
     assert m.errors["x"] == 0.1
     m = Minuit(lambda x: 0, x=1)
@@ -561,6 +546,9 @@ def test_initial_value():
     with pytest.raises(RuntimeError):
         Minuit(func0, 1, y=2)
 
+    with pytest.raises(RuntimeError):
+        Minuit(func0)
+
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 @pytest.mark.parametrize("sigma", (1, 2))
@@ -644,7 +632,7 @@ def test_mncontour_with_fixed_var():
 
 
 def test_mncontour_array_func():
-    m = Minuit(Func8(), (0, 0), name=("x", "y"))
+    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
     xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=1)
     m.minos("x", "y", sigma=1)
@@ -659,15 +647,22 @@ def test_mncontour_array_func():
 
 
 def test_profile_array_func():
-    m = Minuit(Func8(), (0, 0), name=("x", "y"))
+    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
     m.profile("y")
 
 
 def test_mnprofile_array_func():
-    m = Minuit(Func8(), (0, 0), name=("x", "y"))
+    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
     m.mnprofile("y")
+
+
+def test_mnprofile_bad_func():
+    m = Minuit(lambda x, y: 0, 0, 0)
+    m.errordef = 1
+    with pytest.warns(IMinuitWarning):
+        m.mnprofile("x")
 
 
 def test_fmin_uninitialized(capsys):
@@ -954,18 +949,19 @@ def test_params():
     m.limits["y"] = (None, 10)
 
     # these are the initial param states
-    expected = [
-        Param(0, "x", 1.0, 3.0, False, True, False, False, False, None, None),
-        Param(1, "y", 2.0, 4.0, False, False, True, False, True, None, 10),
-    ]
+    expected = (
+        Param(0, "x", 1.0, 3.0, None, False, True, False, False, False, None, None),
+        Param(1, "y", 2.0, 4.0, None, False, False, True, False, True, None, 10),
+    )
     assert m.params == expected
 
     m.migrad()
+    m.minos()
     assert m.init_params == expected
 
     expected = [
-        Param(0, "x", 1.0, 3.0, False, True, False, False, False, None, None),
-        Param(1, "y", 5.0, 1.0, False, False, True, False, True, None, 10),
+        Namespace(number=0, name="x", value=1.0, error=3.0, merror=(-3.0, 3.0)),
+        Namespace(number=1, name="y", value=5.0, error=1.0, merror=(-1.0, 1.0)),
     ]
 
     params = m.params
@@ -974,6 +970,7 @@ def test_params():
         assert p.number == exp.number
         assert p.name == exp.name
         assert p.value == approx(exp.value, rel=1e-2)
+        assert p.error == approx(exp.error, rel=1e-2)
         assert p.error == approx(exp.error, rel=1e-2)
 
 
@@ -1245,3 +1242,19 @@ def test_merrors(sigma, k, limit):
     assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
     assert m.merrors["lambd"].lower == approx(lower, abs=1e-4)
     assert m.merrors["lambd"].upper == approx(upper, abs=1e-4)
+
+
+def test_pretty():
+    class Printer:
+        data = ""
+
+        def text(self, arg):
+            self.data += arg
+
+    m = Minuit(func0, x=0, y=0)
+    pr = Printer()
+    m._repr_pretty_(pr, False)
+    assert pr.data == str(m)
+    pr = Printer()
+    m._repr_pretty_(pr, True)
+    assert pr.data == "<Minuit ...>"

@@ -11,6 +11,7 @@ from ._core import (
     MnUserParameterState,
 )
 import numpy as np
+from collections.abc import Iterable
 
 __all__ = ["Minuit"]
 
@@ -271,7 +272,7 @@ class Minuit:
     @property
     def npar(self):
         """Number of parameters."""
-        return len(self._pos2var)
+        return len(self._last_state)
 
     @property
     def nfit(self):
@@ -310,7 +311,7 @@ class Minuit:
 
         .. seealso:: :class:`iminuit.util.Params`
         """
-        return _get_params(self._last_state, self.merrors)
+        return _get_params(self._last_state, self._merrors)
 
     @property
     def init_params(self):
@@ -318,7 +319,7 @@ class Minuit:
 
         .. seealso:: :class:`iminuit.util.Params`
         """
-        return _get_params(self._init_state, None)
+        return _get_params(self._init_state, {})
 
     @property
     def valid(self):
@@ -435,17 +436,19 @@ class Minuit:
               parameter names instead of iminuit's function signature detection.
         """
         array_call = False
-        if len(args) == 1 and hasattr(args[0], "__getitem__"):
+        if len(args) == 1 and isinstance(args[0], Iterable):
             array_call = True
             args = args[0]
 
         if name is None:
-            if len(args) == 0:
-                name = mutil.describe(fcn)
-            else:
-                name = mutil.describe(fcn)
-                if name is None or len(name) != len(args):
-                    name = tuple(f"x[{i}]" for i in range(len(args)))
+            name = mutil.describe(fcn)
+            if len(name) == 0 or (array_call and len(name) == 1):
+                name = tuple(f"x{i}" for i in range(len(args)))
+
+        if len(args) == 0 and len(kwds) == 0:
+            raise RuntimeError(
+                "starting values are required" + (f" for {name}" if name else "")
+            )
 
         # Maintain two dictionaries to easily convert between
         # parameter names and position
@@ -463,7 +466,7 @@ class Minuit:
         self._fcn = FCN(fcn, grad, array_call, errordef)
 
         self._fmin = None
-        self._init_state = self._make_init_state(args, kwds)
+        self._init_state = _make_init_state(self._pos2var, args, kwds)
         self._last_state = self._init_state
         self._merrors = mutil.MErrors()
         self._covariance = None
@@ -472,41 +475,6 @@ class Minuit:
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
         self._limits = mutil.LimitView(self, 1)
-
-    def _make_init_state(self, args, kwds):
-        nargs = len(args)
-        # check kwds
-        if nargs:
-            if kwds:
-                raise RuntimeError(
-                    f"positional arguments cannot be mixed with "
-                    f"parameter keyword arguments {kwds}"
-                )
-            if nargs != self.npar:
-                raise RuntimeError(f"{nargs} values given for {self.npar} parameters")
-        else:
-            for kw in kwds:
-                if kw not in self.parameters:
-                    raise RuntimeError(
-                        f"{kw} is not one of the parameters {' '.join(self._pos2var)}"
-                    )
-
-        state = MnUserParameterState()
-        for i, x in enumerate(self._pos2var):
-            if nargs:
-                val = args[i]
-            else:
-                if x not in kwds:
-                    warn(
-                        f"Parameter {x} has no initial value, using 0",
-                        mutil.InitialParamWarning,
-                        stacklevel=3,
-                    )
-
-                val = kwds.get(x, 0.0)
-            err = mutil._guess_initial_step(val)
-            state.add(x, val, err)
-        return state
 
     def reset(self):
         """Reset minimization state to initial state."""
@@ -688,7 +656,23 @@ class Minuit:
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
             for par in pars:
                 me = minos(self._var2pos[par], ncall, self.tol)
-                self._merrors[par] = mutil.MError(par, me)
+                self._merrors[par] = mutil.MError(
+                    me.number,
+                    par,
+                    me.lower,
+                    me.upper,
+                    me.is_valid,
+                    me.lower_valid,
+                    me.upper_valid,
+                    me.at_lower_limit,
+                    me.at_upper_limit,
+                    me.at_lower_max_fcn,
+                    me.at_upper_max_fcn,
+                    me.lower_new_min,
+                    me.upper_new_min,
+                    me.nfcn,
+                    me.min,
+                )
 
         self._fmin._nfcn = self._fcn.nfcn
         self._fmin._ngrad = self._fcn.ngrad
@@ -731,14 +715,13 @@ class Minuit:
         state = MnUserParameterState(self._last_state)  # copy
         ipar = self._var2pos[vname]
         state.fix(ipar)
-        pr = MnPrint("Minuit.mnprofile", self.print_level)
         _check_errordef(self._fcn)
         for i, v in enumerate(values):
             state.set_value(ipar, v)
             migrad = MnMigrad(self._fcn, state, self.strategy)
             fm = migrad(0, self.tol)
             if not fm.is_valid:
-                pr.warn(f"MIGRAD fails to converge for {vname}={v}")
+                warn(f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning)
             status[i] = fm.is_valid
             results[i] = fm.fval
         vmin = np.min(results)
@@ -884,10 +867,10 @@ class Minuit:
 
         vmin = None
         vmax = None
-        if (vname, 1) in self.merrors:
-            vmin = v + self.merrors[(vname, -1)]
-            vmax = v + self.merrors[(vname, 1)]
-        if vname in self.errors:
+        if vname in self.merrors:
+            vmin = v + self.merrors[vname].lower
+            vmax = v + self.merrors[vname].upper
+        else:
             vmin = v - self.errors[vname]
             vmax = v + self.errors[vname]
 
@@ -1171,18 +1154,77 @@ class Minuit:
         else:
             self._covariance = None
 
+    def _repr_html_(self):
+        s = ""
+        if self.fmin is not None:
+            s += self.fmin._repr_html_()
+        s += self.params._repr_html_()
+        if self.merrors:
+            s += self.merrors._repr_html_()
+        if self.covariance is not None:
+            s += self.covariance._repr_html_()
+        return s
+
+    def __str__(self):
+        s = []
+        if self.fmin is not None:
+            s.append(str(self.fmin))
+        s.append(str(self.params))
+        if self.merrors:
+            s.append(str(self.merrors))
+        if self.covariance is not None:
+            s.append(str(self.covariance))
+        return "\n".join(s)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text("<Minuit ...>")
+        else:
+            p.text(str(self))
+
+
+def _make_init_state(pos2var, args, kwds):
+    nargs = len(args)
+    # check kwds
+    if nargs:
+        if kwds:
+            raise RuntimeError(
+                f"positional arguments cannot be mixed with "
+                f"parameter keyword arguments {kwds}"
+            )
+    else:
+        for kw in kwds:
+            if kw not in pos2var:
+                raise RuntimeError(f"{kw} is not one of the parameters {pos2var}")
+        nargs = len(kwds)
+
+    if len(pos2var) != nargs:
+        raise RuntimeError(f"{nargs} values given for {len(pos2var)} parameters")
+
+    state = MnUserParameterState()
+    for i, x in enumerate(pos2var):
+        val = kwds[x] if kwds else args[i]
+        err = mutil._guess_initial_step(val)
+        state.add(x, val, err)
+    return state
+
 
 def _check_errordef(fcn):
     if fcn.up == 0:
         warn(
             "errordef not set, defaults to 1",
-            mutil.InitialParamWarning,
+            mutil.IMinuitWarning,
             stacklevel=3,
         )
         fcn.up = 1
 
 
 def _get_params(mps, merrors):
+    def get_me(name):
+        if name in merrors:
+            me = merrors[name]
+            return me.lower, me.upper
+
     return mutil.Params(
         (
             mutil.Param(
@@ -1190,6 +1232,7 @@ def _get_params(mps, merrors):
                 mp.name,
                 mp.value,
                 mp.error,
+                get_me(mp.name),
                 mp.is_const,
                 mp.is_fixed,
                 mp.has_limits,
@@ -1200,7 +1243,6 @@ def _get_params(mps, merrors):
             )
             for mp in mps
         ),
-        merrors,
     )
 
 

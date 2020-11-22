@@ -1,4 +1,3 @@
-import numpy as np
 from ._repr_text import pdg_format, matrix_format, fmin_fields
 
 good_style = "background-color:#92CCA6;color:black"
@@ -183,14 +182,12 @@ def fmin(fm):
 
 
 def params(mps):
-    mes = mps.merrors
-
     # body
     rows = []
     for i, mp in enumerate(mps):
-        if mes and mp.name in mes:
-            me = mes[mp.name]
-            v, e, mem, mep = pdg_format(mp.value, mp.error, me.lower, me.upper)
+        me = mp.merror
+        if me:
+            v, e, mem, mep = pdg_format(mp.value, mp.error, *me)
         else:
             v, e = pdg_format(mp.value, mp.error)
             mem = ""
@@ -230,6 +227,7 @@ def params(mps):
 
 
 def merrors(mes):
+    mes = mes.values()
     header = [td()]
     error = [th("Error", title="Lower and upper minos error of the parameter")]
     valid = [th("Valid", title="Validity of lower/upper minos error")]
@@ -274,13 +272,12 @@ def merrors(mes):
     )
 
 
-def matrix(arr, names):
+def matrix(arr):
+    names = tuple(arr._var2pos)
+
     n = len(names)
 
-    is_correlation = np.all(np.diag(arr) == 1.0)
-
-    if not is_correlation:
-        nums = matrix_format(arr.flatten())
+    nums = matrix_format(arr.flatten())
 
     grad = ColorGradient(
         (-1.0, 120.0, 120.0, 250.0),
@@ -291,27 +288,24 @@ def matrix(arr, names):
     rows = []
     for i, v in enumerate(names):
         cols = [th(v)]
+        di = arr[i, i] ** 0.5
         for j in range(len(names)):
             val = arr[i, j]
-            if is_correlation:
-                if i == j:
-                    t = td("1.00")
-                else:
-                    color = grad.rgb(val)
-                    t = td(
-                        "%5.2f" % val,
-                        style="background-color:" + color + ";color:black",
-                    )
+            dj = arr[j, j] ** 0.5
+            if i == j:
+                t = td(nums[n * i + j])
             else:
-                if i == j:
-                    t = td(nums[n * i + j])
-                else:
-                    num = arr[i, i] * arr[j, j]
-                    color = grad.rgb(val / num ** 0.5 if num > 0 else 0)
-                    t = td(
-                        nums[n * i + j],
-                        style="background-color:" + color + ";color:black",
-                    )
+                corr = val / (di * dj + 1e-100)
+                color = grad.rgb(corr)
+                t = td(
+                    nums[n * i + j]
+                    + (
+                        f" <strong>({corr:.3f})</strong>"
+                        if abs(corr - val) > 1e-3
+                        else ""
+                    ),
+                    style="background-color:" + color + ";color:black",
+                )
             cols.append(t)
         rows.append(tr(*cols))
 
