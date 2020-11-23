@@ -7,7 +7,6 @@ from ._core import (
     MnMigrad,
     MnMinos,
     MnPrint,
-    MnScan,
     MnStrategy,
     MnUserParameterState,
     FunctionMinimum,
@@ -548,39 +547,42 @@ class Minuit:
         This implementation does a scan of the hypercube whose bounds are defined either
         by the parameter limits if they are present or by Minuit.values +/- Minuit.errors.
         Minuit.errors are initialized to very small values by default, too small for this
-        scan. So thez should be increased before running scan (or limits should be set).
+        scan. They should be increased before running scan or limits should be set. The
+        scan evaluates the function exactly at the limit boundary, so the function should
+        be defined there.
 
         **Arguments:**
 
             * **ncall**: Approximate number of function calls to spend on the scan. The
             actual number will be close to this. The scan uses ncall^(1/npar) steps per
-            dimension of the cube.
+            dimension of the cube. If no value is given, a heuristic is used to set ncall.
 
         **Notes**
 
-        I originally wanted to use MnScan from C++ Minuit2, but MnScan is fairly broken.
+        Originally this was supposed to use MnScan from C++ Minuit2, but MnScan is broken.
         It does a 1D scan with 41 steps for each parameter in sequence, so it is not
         actually scanning the full hypercube. It first scans one parameter, then starts
         the scan of the second parameter from the best value of the first and so on.
-
         Other issues: One cannot configure the number of steps. A gradient and second
         derivatives are computed for the starting values only to be discarded.
 
-        This implementation here does a full scan of the hypercube implemented in Python.
-        Returning a valid FunctionMinimum object was non-trivial, but it was implemented.
-        The Minuit2 C++ interface forces one to compute the gradient and second
-        derivatives in the process, but we use this to our advantage by computing updates
-        of the step sizes and to estimate the EDM value.
+        This implementation here does a full scan of the hypercube in Python. Returning a
+        valid FunctionMinimum object was a major challenge, but endurance prevailed.
+        The Minuit2 C++ interface unfortunately forces one to compute the gradient and
+        second derivatives for the starting values, but we use this here to trick Minuit2
+        into computing updates of the step sizes and to estimate the EDM value.
         """
 
-        scan = MnScan(self._fcn, self._last_state, self.strategy)
-        fm = scan(0, 0)  # args are ignored
-        self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+        # Running MnScan would look like this:
+        # scan = MnScan(self._fcn, self._last_state, self.strategy)
+        # fm = scan(0, 0)  # args are ignored
+        # self._last_state = fm.state
+        # self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 
+        npar = self.nfit
         if ncall is None:
-            npar = self.nfit
-            ncall = int((200 + 100 * npar + 5 * npar * npar) ** (1 / npar))
+            ncall = 200 + 100 * npar + 5 * npar * npar
+        nstep = int(ncall ** (1 / npar))
 
         x = np.empty(self.npar + 1)
         x[self.npar] = np.inf
@@ -588,7 +590,13 @@ class Minuit:
         for i, (low, up) in enumerate(lims):
             v = self.values[i]
             e = self.errors[i]
-            lims[i] = v - e if low == -np.inf else low, v + e if up == np.inf else up
+            if self.fixed[i]:
+                lims[i] = v, v
+            else:
+                lims[i] = (
+                    v - e if low == -np.inf else low,
+                    v + e if up == np.inf else up,
+                )
 
         def run(ipar):
             if ipar == self.npar:
@@ -598,13 +606,18 @@ class Minuit:
                     self.values = x[: self.npar]
                 return
             low, up = lims[ipar]
-            for xi in np.linspace(low, up, ncall):
-                x[ipar] = xi
+            if low == up:
+                x[ipar] = low
                 run(ipar + 1)
+            else:
+                for xi in np.linspace(low, up, nstep):
+                    x[ipar] = xi
+                    run(ipar + 1)
 
         run(0)
 
-        fm = FunctionMinimum(self._fcn, self._last_state, x[self.npar], ncall)
+        _check_errordef(self._fcn)
+        fm = FunctionMinimum(self._fcn, self._last_state, x[self.npar], self.strategy)
         self._last_state = fm.state
         self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 

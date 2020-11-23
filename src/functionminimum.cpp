@@ -12,8 +12,7 @@ namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
 MinimumSeed make_seed(const FCN& fcn, const MnUserFcn& mfcn,
-                      const MnUserParameterState& st) {
-  MnStrategy str;
+                      const MnUserParameterState& st, const MnStrategy& str) {
   MnSeedGenerator gen;
   if (fcn.grad_.is_none()) {
     Numerical2PGradientCalculator gc(mfcn, st.Trafo(), str);
@@ -24,21 +23,20 @@ MinimumSeed make_seed(const FCN& fcn, const MnUserFcn& mfcn,
 }
 
 FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval,
-                     int nfcn) {
+                     const MnStrategy& str) {
   MnUserFcn mfcn(fcn, st.Trafo());
-  MinimumSeed seed = make_seed(fcn, mfcn, st);
+  MinimumSeed seed = make_seed(fcn, mfcn, st, str);
 
-  // MnUserParameterState upst(seed.State(), fcn.Up(), seed.Trafo());
-
-  const auto& x = seed.Parameters().Vec();
+  const auto& val = seed.Parameters().Vec();
   const auto n = seed.Trafo().VariableParameters();
-  MnAlgebraicVector dirin(n);
+
+  MnAlgebraicVector err(n);
   for (unsigned int i = 0; i < n; i++) {
-    dirin(i) = std::sqrt(2. * mfcn.Up() * seed.Error().InvHessian()(i, i));
+    err(i) = std::sqrt(2. * mfcn.Up() * seed.Error().InvHessian()(i, i));
   }
 
-  MinimumParameters minp(x, dirin, fval);
-  std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), nfcn));
+  MinimumParameters minp(val, err, fval);
+  std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), fcn.nfcn_));
   return FunctionMinimum(seed, minstv, fcn.Up());
 }
 

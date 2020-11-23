@@ -20,7 +20,7 @@ def debug():
     MnPrint.global_level = prev
 
 
-def test_strategy():
+def test_MnStrategy():
     assert MnStrategy() == 1
     assert MnStrategy(0) == 0
     assert MnStrategy(2) == 2
@@ -36,7 +36,7 @@ def test_strategy():
     assert s <= 3
 
 
-def test_fcn(debug):
+def test_FCN():
     f = FCN(lambda x, y: 10 + x ** 2 + ((y - 1) / 2) ** 2, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
@@ -67,7 +67,7 @@ def test_fcn(debug):
     assert f.ngrad == 0
 
 
-def test_grad():
+def test_FCN_with_grad():
     # MnPrint.set_global_level(3)
     f = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1)
     state = MnUserParameterState()
@@ -112,7 +112,7 @@ def test_grad_np():
     assert fcn.ngrad > 0
 
 
-def test_scan(debug):
+def test_MnScan():
     fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 2, 5)
@@ -128,8 +128,8 @@ def test_FunctionMinimum():
     fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
     st = MnUserParameterState()
     st.add("x", 2, 5)
-    fm = FunctionMinimum(fcn, st, 0.1, 0.2, 42)
+    str = MnStrategy(1)
+    fm = FunctionMinimum(fcn, st, 0.1, str)
     assert fm.is_valid
     assert len(fm.state) == 1
-    assert fm.edm == 0.2
     assert fm.fval == 0.1

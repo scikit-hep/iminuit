@@ -50,7 +50,7 @@ class Func_Code:
         self.co_argcount = len(varname)
 
 
-def func0(x, y):
+def func0(x, y):  # values = (2.0, 5.0), errors = (2.0, 1.0)
     return (x - 2.0) ** 2 / 4.0 + (y - 5.0) ** 2 + 10
 
 
@@ -1242,3 +1242,36 @@ def test_merrors(sigma, k, limit):
     assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
     assert m.merrors["lambd"].lower == approx(lower, abs=1e-4)
     assert m.merrors["lambd"].upper == approx(upper, abs=1e-4)
+
+
+@pytest.mark.parametrize("grad", (None, func0_grad))
+def test_scan(grad):
+    m = Minuit(func0, x=0, y=0, grad=grad)
+    m.errors[0] = 10
+    m.limits[1] = (-10, 10)
+    m.scan(ncall=200)
+    assert m.fmin.nfcn == approx(200, rel=0.1)
+    assert m.valid
+    assert_allclose(m.values, (2, 5), atol=0.6)
+    # Errors are not accurate if func0_grad is used. 2nd derivatives are automatically
+    # computed by Numerical2PGradientCalculator, but not by AnalyticalGradientCalculator
+    if grad is None:
+        assert_allclose(m.errors, (2, 1), atol=0.1)
+
+
+def test_scan_with_fixed_par():
+    m = Minuit(func0, x=3, y=0)
+    m.fixed["x"] = True
+    m.limits[1] = (-10, 10)
+    m.scan()
+    assert m.valid
+    assert_allclose(m.values, (3, 5), atol=0.1)
+    assert m.errors[1] == approx(1, abs=8e-3)
+
+    m = Minuit(func0, x=5, y=4)
+    m.fixed["y"] = True
+    m.limits[0] = (0, 10)
+    m.scan()
+    assert m.valid
+    assert_allclose(m.values, (2, 4), atol=0.1)
+    assert m.errors[0] == approx(2, abs=1e-1)
