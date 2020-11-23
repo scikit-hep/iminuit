@@ -585,10 +585,10 @@ class Minuit:
         # self._last_state = fm.state
         # self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
 
-        npar = self.nfit
+        n = self.nfit
         if ncall is None:
-            ncall = 200 + 100 * npar + 5 * npar * npar
-        nstep = int(ncall ** (1 / npar))
+            ncall = 200 + 100 * n + 5 * n * n
+        nstep = int(ncall ** (1 / n))
 
         x = np.empty(self.npar + 1)
         x[self.npar] = np.inf
