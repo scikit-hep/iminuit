@@ -1,4 +1,4 @@
-#include <Minuit2/FunctionMinimum.h>
+#include <Minuit2/FCNBase.h>
 #include <Minuit2/MnMigrad.h>
 #include <pybind11/pybind11.h>
 #include "fcn.hpp"
@@ -18,7 +18,6 @@ void bind_migrad(py::module m) {
   py::class_<MnMigrad, MnApplication>(m, "MnMigrad")
 
       .def(py::init(&init))
-      .def("__call__", &MnMigrad::operator())
       .def("set_print_level",
            [](MnMigrad& self, int lvl) {
              return self.Minimizer().Builder().SetPrintLevel(lvl);

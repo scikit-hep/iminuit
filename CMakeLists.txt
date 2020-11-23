@@ -9,8 +9,6 @@ if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
   )
 endif()
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
 set(CMAKE_CXX_STANDARD
     14
     CACHE STRING "C++ version selection") # or 11, 14, 17, 20
@@ -47,11 +45,13 @@ set(SOURCES_B
     extern/root/math/minuit2/src/MnMachinePrecision.cxx
     extern/root/math/minuit2/src/MnMinos.cxx
     extern/root/math/minuit2/src/MnParabolaFactory.cxx
+    extern/root/math/minuit2/src/MnParameterScan.cxx
     extern/root/math/minuit2/src/MnPlot.cxx
     extern/root/math/minuit2/src/MnPosDef.cxx
     extern/root/math/minuit2/src/MnPrint.cxx
     extern/root/math/minuit2/src/MnSeedGenerator.cxx
     extern/root/math/minuit2/src/MnStrategy.cxx
+    extern/root/math/minuit2/src/MnScan.cxx
     extern/root/math/minuit2/src/MnTiny.cxx
     extern/root/math/minuit2/src/MnTraceObject.cxx
     extern/root/math/minuit2/src/MnUserFcn.cxx
@@ -61,7 +61,11 @@ set(SOURCES_B
     extern/root/math/minuit2/src/ModularFunctionMinimizer.cxx
     extern/root/math/minuit2/src/NegativeG2LineSearch.cxx
     extern/root/math/minuit2/src/Numerical2PGradientCalculator.cxx
+    extern/root/math/minuit2/src/SimplexSeedGenerator.cxx
+    extern/root/math/minuit2/src/SimplexBuilder.cxx
+    extern/root/math/minuit2/src/SimplexParameters.cxx
     extern/root/math/minuit2/src/SinParameterTransformation.cxx
+    extern/root/math/minuit2/src/ScanBuilder.cxx
     extern/root/math/minuit2/src/SqrtLowParameterTransformation.cxx
     extern/root/math/minuit2/src/SqrtUpParameterTransformation.cxx
     extern/root/math/minuit2/src/VariableMetricBuilder.cxx
