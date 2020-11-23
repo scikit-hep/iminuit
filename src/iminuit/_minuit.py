@@ -542,10 +542,10 @@ class Minuit:
         return self  # return self for method chaining and to autodisplay current state
 
     def scan(self, ncall=None):
-        """Runs a scan over a regular hypercube grid to find the best minimum.
+        """Scan over a regular hypercube grid to find the best minimum.
 
-        This implementation does a scan of the hypercube whose bounds are defined either
-        by the parameter limits if they are present or by Minuit.values +/- Minuit.errors.
+        Scans the function on a regular hypercube grid, whose bounds are defined either
+        by parameter limits if present or by Minuit.values +/- Minuit.errors.
         Minuit.errors are initialized to very small values by default, too small for this
         scan. They should be increased before running scan or limits should be set. The
         scan evaluates the function exactly at the limit boundary, so the function should
@@ -554,8 +554,12 @@ class Minuit:
         **Arguments:**
 
             * **ncall**: Approximate number of function calls to spend on the scan. The
-            actual number will be close to this. The scan uses ncall^(1/npar) steps per
-            dimension of the cube. If no value is given, a heuristic is used to set ncall.
+              actual number will be close to this, the scan uses ncall^(1/npar) steps per
+              cube dimension. If no value is given, a heuristic is used to set ncall.
+
+        **Return:**
+
+            self
 
         **Notes**
 
@@ -567,10 +571,12 @@ class Minuit:
         derivatives are computed for the starting values only to be discarded.
 
         This implementation here does a full scan of the hypercube in Python. Returning a
-        valid FunctionMinimum object was a major challenge, but endurance prevailed.
-        The Minuit2 C++ interface unfortunately forces one to compute the gradient and
-        second derivatives for the starting values, but we use this here to trick Minuit2
-        into computing updates of the step sizes and to estimate the EDM value.
+        valid FunctionMinimum object was a major challenge, because C++ Minuit2 does not
+        allow one to initialize data objects with data, it forces one to go through
+        algorithm objects. Because of that design, the Minuit2 C++ interface forces one to
+        compute the gradient and second derivatives for the starting values, even though
+        these are not used in a scan. We turn a disadvantage into an advantage by tricking
+        Minuit2 into computing updates of the step sizes and to estimate the EDM value.
         """
 
         # Running MnScan would look like this:
