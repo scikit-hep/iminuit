@@ -932,6 +932,7 @@ def test_print_level_warning():
 
     m = Minuit(lambda x: 0, x=0)
     m.print_level = 0  # no warning
+    assert m.print_level == 0
     assert MnPrint.global_level == 0
     with pytest.warns(IMinuitWarning):
         # setting print_level changes printing everywhere...
