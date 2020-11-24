@@ -1282,6 +1282,42 @@ def test_scan_with_fixed_par():
     assert m.errors[0] == approx(2, abs=1e-1)
 
 
+@pytest.mark.parametrize("grad", (None, func0_grad))
+def test_simplex(grad):
+    m = Minuit(func0, x=0, y=0, grad=grad)
+    m.tol = 2e-4  # must decrease tolerance to get same accuracy as Migrad
+    m.simplex()
+    assert m.valid
+    assert_allclose(m.values, (2, 5), atol=5e-3)
+
+    m2 = Minuit(func0, x=0, y=0, grad=grad)
+    m2.simplex(precision=0.001)
+    assert m2.fval != m.fval
+
+    m3 = Minuit(func0, x=0, y=0, grad=grad)
+    m3.simplex(ncall=10)
+    assert 10 <= m3.fmin.nfcn < 15
+    assert m3.fval > m.fval
+
+
+def test_simplex_with_fixed_par_and_limits():
+    m = Minuit(func0, x=3, y=0)
+    m.tol = 2e-4  # must decrease tolerance to get same accuracy as Migrad
+    m.fixed["x"] = True
+    m.limits[1] = (-10, 10)
+    m.simplex()
+    assert m.valid
+    assert_allclose(m.values, (3, 5), atol=2e-3)
+
+    m = Minuit(func0, x=5, y=4)
+    m.tol = 2e-4  # must decrease tolerance to get same accuracy as Migrad
+    m.fixed["y"] = True
+    m.limits[0] = (0, 10)
+    m.simplex()
+    assert m.valid
+    assert_allclose(m.values, (2, 4), atol=3e-3)
+
+
 def test_tolerance():
     m = Minuit(func0, x=0, y=0)
     assert m.tol == 0.1

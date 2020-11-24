@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  check:
+  release_check:
     runs-on: ubuntu-latest
 
     steps:

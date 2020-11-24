@@ -243,10 +243,10 @@ class FMin:
         "_has_parameters_at_limit",
         "_nfcn",
         "_ngrad",
-        "_tolerance",
+        "_edm_goal",
     )
 
-    def __init__(self, fmin, nfcn, ngrad, tol):
+    def __init__(self, fmin, nfcn, ngrad, edm_goal):
         self._src = fmin
         self._has_parameters_at_limit = False
         for mp in fmin.state:
@@ -260,7 +260,7 @@ class FMin:
             self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
         self._nfcn = nfcn
         self._ngrad = ngrad
-        self._tolerance = tol
+        self._edm_goal = edm_goal
 
     @property
     def edm(self):
@@ -273,6 +273,12 @@ class FMin:
         function value at the minimum and the actual value.
         """
         return self._src.edm
+
+    @property
+    def edm_goal(self):
+        """EDM threshold value for stopping the minimization. The threshold is allowed
+        to be violated up to a factor of 10 in some situations."""
+        return self._edm_goal
 
     @property
     def fval(self):
@@ -297,11 +303,6 @@ class FMin:
     def ngrad(self):
         """Number of function gradient calls so far."""
         return self._ngrad
-
-    @property
-    def tolerance(self):
-        """Equal to the tolerance value when Migrad ran."""
-        return self._tolerance
 
     @property
     def is_valid(self):

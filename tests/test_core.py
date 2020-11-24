@@ -5,6 +5,7 @@ from iminuit._core import (
     MnStrategy,
     MnScan,
     FunctionMinimum,
+    MnSimplex,
 )
 from pytest import approx
 import pytest
@@ -122,6 +123,18 @@ def test_MnScan():
     state = fmin.state
     assert len(state) == 1
     assert state[0].value == approx(0, abs=1e-2)
+
+
+def test_MnSimplex():
+    fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
+    state = MnUserParameterState()
+    state.add("x", 2, 5)
+    simplex = MnSimplex(fcn, state, 1)
+    fmin = simplex(0, 0.1)
+    assert fmin.is_valid
+    state = fmin.state
+    assert len(state) == 1
+    assert state[0].value == approx(0, abs=5e-2)
 
 
 def test_FunctionMinimum():

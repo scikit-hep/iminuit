@@ -27,15 +27,6 @@ def pdg_format(value, *errors):
     return strings
 
 
-def goaledm(fm):
-    # - taken from the source code, see VariableMeticBuilder::Minimum and
-    #   ModularFunctionMinimizer::Minimize
-    # - goal is used to detect convergence but violations by 10x are also accepted;
-    #   see VariableMetricBuilder.cxx:425
-    mn_eps_2 = 4 * np.sqrt(np.finfo("float").eps)
-    return 2e-3 * max(fm.tolerance * fm.up, mn_eps_2)
-
-
 def format_row(widths, *args):
     return (
         "".join(
@@ -58,7 +49,7 @@ def fmin_fields(fm):
     return [
         f"FCN = {fm.fval:.4g}",
         f"Nfcn = {fm.nfcn}",
-        f"EDM = {fm.edm:.3g} (Goal: {goaledm(fm):.3g})",
+        f"EDM = {fm.edm:.3g} (Goal: {fm.edm_goal:.3g})",
         f"Ngrad = {fm.ngrad}" if fm.ngrad > 0 else "",
         f"{'Valid' if fm.is_valid else 'INVALID'} Minimum",
         f"{'Valid' if fm.has_valid_parameters else 'INVALID'} Parameters",
