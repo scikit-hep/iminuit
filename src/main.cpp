@@ -7,6 +7,7 @@ void bind_contours(py::module);
 void bind_fcn(py::module);
 void bind_functionminimum(py::module);
 void bind_hesse(py::module);
+void bind_machineprecision(py::module);
 void bind_migrad(py::module);
 void bind_minos(py::module);
 void bind_minuitparameter(py::module);
@@ -23,6 +24,7 @@ PYBIND11_MODULE(_core, m) {
   bind_fcn(m);
   bind_functionminimum(m);
   bind_hesse(m);
+  bind_machineprecision(m);
   bind_migrad(m);
   bind_minos(m);
   bind_minuitparameter(m);

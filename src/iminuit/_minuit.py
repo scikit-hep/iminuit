@@ -562,7 +562,15 @@ class Minuit:
                 break
 
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
+
+        # EDM goal
+        # - taken from the source code, see VariableMeticBuilder::Minimum and
+        #   ModularFunctionMinimizer::Minimize
+        # - goal is used to detect convergence but violations by 10x are also accepted;
+        #   see VariableMetricBuilder.cxx:425
+        edm_goal = 2e-3 * max(self._tolerance * fm.up, migrad.precision.eps2)
+
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, edm_goal)
         self._make_covariance()
 
         return self  # return self for method chaining and to autodisplay current state
@@ -613,7 +621,9 @@ class Minuit:
 
         fm = simplex(ncall, self._tolerance)
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
+
+        edm_goal = max(self._tolerance * fm.up, simplex.precision.eps2)
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, edm_goal)
 
         return self  # return self for method chaining and to autodisplay current state
 

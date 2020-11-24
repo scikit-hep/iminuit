@@ -199,12 +199,12 @@ def test_FMin():
     fmin = util.FMin(fm, 1, 2, 0.1)
     assert {x for x in dir(fmin) if not x.startswith("_")} == {
         "edm",
+        "edm_goal",
         "fval",
         "nfcn",
         "ngrad",
         "up",
         "is_valid",
-        "tolerance",
         "has_accurate_covar",
         "has_valid_parameters",
         "has_posdef_covar",
@@ -216,14 +216,15 @@ def test_FMin():
         "has_parameters_at_limit",
     }
     assert fmin.edm == 1.23456e-10
+    assert fmin.edm_goal == 0.1
     assert fmin.has_parameters_at_limit == False
 
     assert repr(fmin) == (
-        "<FMin edm=1.23456e-10 fval=1.23456e-10 has_accurate_covar=True"
+        "<FMin edm=1.23456e-10 edm_goal=0.1 fval=1.23456e-10 has_accurate_covar=True"
         " has_covariance=True has_made_posdef_covar=False has_parameters_at_limit=False"
         " has_posdef_covar=True has_reached_call_limit=False has_valid_parameters=True"
         " hesse_failed=False is_above_max_edm=False is_valid=True"
-        " nfcn=1 ngrad=2 tolerance=0.1 up=0.5>"
+        " nfcn=1 ngrad=2 up=0.5>"
     )
     assert str(fmin) == repr(fmin)
 

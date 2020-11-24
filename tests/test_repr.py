@@ -133,7 +133,7 @@ def fmin_good():
         has_parameters_at_limit=False,
         state=[],
     )
-    return FMin(fm, 10, 3, 0.1)
+    return FMin(fm, 10, 3, 1e-4)
 
 
 @pytest.fixture
@@ -165,7 +165,7 @@ def fmin_bad():
             )
         ],
     )
-    return FMin(fm, 100000, 200000, 0.01)
+    return FMin(fm, 100000, 200000, 1e-5)
 
 
 def test_html_fmin_good(fmin_good):
