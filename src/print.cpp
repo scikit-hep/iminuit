@@ -18,5 +18,9 @@ void bind_print(py::module m) {
           "global_level", [](py::object) { return MnPrint::GlobalLevel(); },
           [](py::object, int x) { MnPrint::SetGlobalLevel(x); })
 
+      .def("show_prefix_stack", &MnPrint::ShowPrefixStack)
+      .def("add_filter", &MnPrint::AddFilter)
+      .def("clear_filter", &MnPrint::ClearFilter)
+
       ;
 }
