@@ -562,6 +562,9 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
+    def simplex(self, ncall=None):
+        pass
+
     def scan(self, ncall=None):
         """Scan over a regular hypercube grid to find the best minimum.
 
