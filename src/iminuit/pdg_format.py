@@ -159,22 +159,22 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
 
 
 def _strip(items):
-    stripable = [(i, s) for (i, s) in enumerate(items) if s[-1] not in "nf"]
-    # check if first item has a ".", then all have "."
-    if stripable and "." in stripable[0][1]:
-        i = 0
+    # ignore inf and nan
+    mask = tuple(i for (i, s) in enumerate(items) if "." in s)
+    if mask:
         # strip common trailing "0"s
-        while True:
-            if all(x[1][-1 - i] == "0" for x in stripable):
+        first = items[mask[0]]
+        for i in range(len(first)):
+            if all(items[k][-1 - i] == "0" for k in mask):
                 i += 1
             else:
                 break
-        # strip common trailing "."
-        if all(x[1][-1 - i] == "." for x in stripable):
+        # maybe strip common trailing "." after stripping "0"s
+        if i > 0 and all(items[k][-1 - i] == "." for k in mask):
             i += 1
         if i > 0:
-            for (k, s) in stripable:
-                items[k] = s[:-i]
+            for k in mask:
+                items[k] = items[k][:-i]
     return items
 
 

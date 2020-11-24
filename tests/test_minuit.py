@@ -931,14 +931,13 @@ def test_print_level_warning():
     from iminuit._core import MnPrint
 
     m = Minuit(lambda x: 0, x=0)
+    m.print_level = 0  # no warning
+    assert m.print_level == 0
     assert MnPrint.global_level == 0
     with pytest.warns(IMinuitWarning):
-        # setting print_level to 3 enables debug warnings everywhere...
-        m.print_level = 3
-    assert MnPrint.global_level == 3
-    with pytest.warns(IMinuitWarning):
-        m.print_level = 0
-    assert MnPrint.global_level == 0
+        # setting print_level changes printing everywhere...
+        m.print_level = 1
+    assert MnPrint.global_level == 1
 
 
 def test_params():

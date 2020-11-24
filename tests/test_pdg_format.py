@@ -75,10 +75,12 @@ def test_unpacked_index():
 
 
 def test_strip():
+    assert _strip(["123", "20"]) == ["123", "20"]
+    assert _strip(["10", "20"]) == ["10", "20"]
     assert _strip(["0.10", "0.20", "0.30"]) == ["0.1", "0.2", "0.3"]
     assert _strip(["0.11", "0.20"]) == ["0.11", "0.20"]
-    assert _strip(["10", "20"]) == ["10", "20"]
     assert _strip(["10.0", "20.0"]) == ["10", "20"]
+    assert _strip(["1.200", "3.40"]) == ["1.20", "3.4"]
 
 
 def test_term_format():

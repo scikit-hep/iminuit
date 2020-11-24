@@ -14,6 +14,8 @@ from ._core import (
 import numpy as np
 from collections.abc import Iterable
 
+MnPrint.global_level = 0
+
 __all__ = ["Minuit"]
 
 
@@ -113,24 +115,23 @@ class Minuit:
     def print_level(self):
         """Current print level.
 
-        - 0: quiet
+        - 0: quiet (default)
         - 1: print minimal debug messages to terminal
         - 2: print more debug messages to terminal
         - 3: print even more debug messages to terminal
         """
-        return self._print_level
+        return MnPrint.global_level
 
     @print_level.setter
     def print_level(self, level):
-        self._print_level = level
-        if level >= 3 or level < MnPrint.global_level:
+        if level > 0:
             warn(
-                "Setting print_level >=3 has the side-effect of setting the level "
-                "globally for all Minuit instances",
+                "Setting print_level has the side-effect of setting the level "
+                "globally for all Minuit instances in the current Python session",
                 mutil.IMinuitWarning,
                 stacklevel=2,
             )
-            MnPrint.global_level = level
+        MnPrint.global_level = level
 
     @property
     def throw_nan(self):
@@ -462,7 +463,6 @@ class Minuit:
             errordef = 0
 
         self._strategy = MnStrategy(1)
-        self._print_level = 0
 
         self._fcn = FCN(fcn, grad, array_call, errordef)
 
@@ -524,7 +524,6 @@ class Minuit:
 
         _check_errordef(self._fcn)
         migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
-        migrad.set_print_level(self.print_level)
         if precision is not None:
             migrad.precision = precision
 
