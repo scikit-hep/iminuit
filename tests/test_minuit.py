@@ -1302,3 +1302,10 @@ def test_bad_tolerance():
 
     with pytest.raises(ValueError):
         m.tol = 0
+
+
+def test_issue_544():
+    m = Minuit(func0, x=0, y=0)
+    m.fixed = True
+    with pytest.warns(IMinuitWarning):
+        m.hesse()  # this used to cause a segfault
