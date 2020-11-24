@@ -676,6 +676,16 @@ class Minuit:
 
         ncall = 0 if ncall is None else int(ncall)
 
+        # Should be fixed upstream: workaround for segfault in MnHesse when all
+        # parameters are fixed
+        if self.nfit == 0:
+            warn(
+                "HESSE called with all parameters fixed",
+                mutil.IMinuitWarning,
+                stacklevel=2,
+            )
+            return self
+
         hesse = MnHesse(self.strategy)
 
         _check_errordef(self._fcn)
