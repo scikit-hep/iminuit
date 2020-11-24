@@ -51,7 +51,7 @@ class Func_Code:
 
 
 def func0(x, y):  # values = (2.0, 5.0), errors = (2.0, 1.0)
-    return (x - 2.0) ** 2 / 4.0 + (y - 5.0) ** 2 + 10
+    return (x - 2.0) ** 2 / 4.0 + np.exp((y - 5.0) ** 2) + 10
 
 
 func0.errordef = 1
@@ -165,9 +165,9 @@ def func_test_helper(f, grad=None, errordef=None):
         m.errordef = errordef
     m.migrad()
     val = m.values
-    assert_allclose(val["x"], 2.0, rtol=1e-3)
-    assert_allclose(val["y"], 5.0, rtol=1e-3)
-    assert_allclose(m.fval, 10.0 * m.errordef, rtol=1e-3)
+    assert_allclose(val["x"], 2.0, rtol=2e-3)
+    assert_allclose(val["y"], 5.0, rtol=2e-3)
+    assert_allclose(m.fval, 11.0 * m.errordef, rtol=1e-3)
     assert m.valid
     assert m.accurate
     m.hesse()
@@ -258,17 +258,17 @@ def test_covariance():
     assert m.covariance is None
     m.migrad()
     c = m.covariance
-    assert_allclose((c["x", "x"], c["y", "y"]), (4, 1))
-    assert_allclose((c[0, 0], c[1, 1]), (4, 1))
+    assert_allclose((c["x", "x"], c["y", "y"]), (4, 1), rtol=1e-4)
+    assert_allclose((c[0, 0], c[1, 1]), (4, 1), rtol=1e-4)
 
     expected = [[4.0, 0.0], [0.0, 1.0]]
-    assert_allclose(c, expected, atol=1e-7)
+    assert_allclose(c, expected, atol=1e-4)
     assert isinstance(c, np.ndarray)
     assert c.shape == (2, 2)
 
     c = c.correlation()
     expected = [[1.0, 0.0], [0.0, 1.0]]
-    assert_allclose(c, expected, atol=1e-7)
+    assert_allclose(c, expected, atol=1e-4)
     assert c["x", "x"] == approx(1.0)
 
 
@@ -371,8 +371,8 @@ def test_fix_param(grad):
     assert m.nfit == 2
     m.migrad()
     m.minos()
-    assert_allclose(m.values, (2, 5), rtol=1e-2)
-    assert_allclose(m.errors, (2, 1))
+    assert_allclose(m.values, (2, 5), rtol=2e-3)
+    assert_allclose(m.errors, (2, 1), rtol=1e-4)
     assert_allclose(m.covariance, ((4, 0), (0, 1)), atol=1e-4)
 
     # now fix y = 10
@@ -382,9 +382,9 @@ def test_fix_param(grad):
     assert m.nfit == 1
     m.migrad()
     assert_allclose(m.values, (2, 10), rtol=1e-2)
-    assert_allclose(m.fval, 35)
+    assert_allclose(m.fval, func0(2, 10))
     assert m.fixed == [False, True]
-    assert_allclose(m.covariance, [[4, 0], [0, 0]], atol=1e-4)
+    assert_allclose(m.covariance, [[4, 0], [0, 0]], atol=3e-4 if grad is None else 3e-2)
 
     assert not m.fixed["x"]
     assert m.fixed["y"]
@@ -423,17 +423,18 @@ def test_fix_param(grad):
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-@pytest.mark.parametrize("sigma", (1, 4))
-def test_minos_all(grad, sigma):
+@pytest.mark.parametrize("sigma,sref", ((1, (-0.83, 0.83)), (4, (-1.68, 1.68))))
+def test_minos_all(grad, sigma, sref):
     m = Minuit(func0, grad=func0_grad, x=0, y=0)
     m.migrad()
     m.minos(sigma=sigma)
-    assert m.merrors["x"].lower == approx(-sigma * 2)
-    assert m.merrors["x"].upper == approx(sigma * 2)
-    assert m.merrors["y"].upper == approx(sigma * 1)
-    assert m.merrors[0].lower == approx(-sigma * 2)
-    assert m.merrors[1].upper == approx(sigma * 1)
-    assert m.merrors[-1].upper == approx(sigma * 1)
+    assert m.merrors["x"].lower == approx(-sigma * 2, abs=1e-3)
+    assert m.merrors["x"].upper == approx(sigma * 2, abs=1e-3)
+    assert m.merrors["y"].lower == approx(sref[0], abs=1e-2)
+    assert m.merrors["y"].upper == approx(sref[1], abs=1e-2)
+    assert m.merrors[0].lower == m.merrors["x"].lower
+    assert m.merrors[1].upper == m.merrors["y"].upper
+    assert m.merrors[-1].upper == m.merrors["y"].upper
 
     with pytest.raises(KeyError):
         m.merrors["xy"]
@@ -451,8 +452,8 @@ def test_minos_all_some_fix():
     assert "x" not in m.merrors
     me = m.merrors["y"]
     assert me.name == "y"
-    assert me.lower == approx(-1)
-    assert me.upper == approx(1)
+    assert me.lower == approx(-0.83, abs=1e-2)
+    assert me.upper == approx(0.83, abs=1e-2)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -461,7 +462,11 @@ def test_minos_single(grad):
 
     m.strategy = 0
     m.migrad()
-    assert m.nfcn < 15
+    m.minos("x")
+    assert len(m.merrors) == 1
+    me = m.merrors["x"]
+    assert me.name == "x"
+    assert me.lower == approx(-2, abs=1e-3)
 
 
 def test_minos_single_fixed():
@@ -469,10 +474,10 @@ def test_minos_single_fixed():
     m.fixed["x"] = True
     m.migrad()
     m.minos("y")
+    assert len(m.merrors) == 1
     me = m.merrors["y"]
     assert me.name == "y"
-    assert me.lower == approx(-1)
-    assert me.upper == approx(1)
+    assert me.lower == approx(-0.83, abs=1e-2)
 
 
 def test_minos_single_fixed_raising():
@@ -707,7 +712,7 @@ def test_grad():
 def test_values(minuit):
     expected = [2.0, 5.0]
     assert len(minuit.values) == 2
-    assert_allclose(minuit.values, expected, atol=5e-6)
+    assert_allclose(minuit.values, expected, atol=4e-3)
     minuit.values = expected
     assert minuit.values == expected
     assert minuit.values[-1] == 5
@@ -751,7 +756,7 @@ def test_fmin():
 def test_np_values(minuit):
     actual = minuit.np_values()
     expected = [2.0, 5.0]
-    assert_allclose(actual, expected, atol=5e-6)
+    assert_allclose(actual, expected, atol=4e-3)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2,)
 
@@ -759,7 +764,7 @@ def test_np_values(minuit):
 def test_np_errors(minuit):
     actual = minuit.np_errors()
     expected = [2.0, 1.0]
-    assert_allclose(actual, expected, atol=1e-6)
+    assert_allclose(actual, expected, atol=3e-5)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2,)
 
@@ -768,9 +773,9 @@ def test_np_merrors(minuit):
     actual = minuit.np_merrors()
     # output format is [abs(down_delta), up_delta] following
     # the matplotlib convention in matplotlib.pyplot.errorbar
-    down_delta = (-2, -1)
-    up_delta = (2, 1)
-    assert_allclose(actual, (np.abs(down_delta), up_delta), atol=5e-6)
+    down_delta = (-2, -0.83)
+    up_delta = (2, 0.83)
+    assert_allclose(actual, (np.abs(down_delta), up_delta), atol=1e-2)
     assert isinstance(actual, np.ndarray)
     assert actual.shape == (2, 2)
 
@@ -835,7 +840,7 @@ def test_oneside():
     m = Minuit(func0, x=0, y=0)
     m.limits["x"] = (None, 9)
     m.migrad()
-    assert_allclose(m.values, (2, 5), atol=7e-3)
+    assert_allclose(m.values, (2, 5), atol=2e-2)
     m.values["x"] = 0
     m.limits["x"] = (None, 1)
     m.migrad()
@@ -843,7 +848,7 @@ def test_oneside():
     m.values = (5, 0)
     m.limits["x"] = (3, None)
     m.migrad()
-    assert_allclose(m.values, (3, 5), atol=1e-3)
+    assert_allclose(m.values, (3, 5), atol=4e-3)
 
 
 def test_oneside_outside():
@@ -938,6 +943,7 @@ def test_print_level_warning():
         # setting print_level changes printing everywhere...
         m.print_level = 1
     assert MnPrint.global_level == 1
+    MnPrint.global_level = 0
 
 
 def test_params():
@@ -1043,12 +1049,12 @@ def test_modify_param_state():
     assert_allclose(m.values, [1, 2], atol=1e-4)
     assert_allclose(m.errors, [1, 1], atol=1e-4)
     m.migrad()
-    assert_allclose(m.values, [2, 5], atol=1e-4)
-    assert_allclose(m.errors, [2, 1], atol=1e-4)
+    assert_allclose(m.values, [2, 5], atol=1e-3)
+    assert_allclose(m.errors, [2, 1], atol=1e-3)
     m.values["y"] = 6
     m.hesse()
-    assert_allclose(m.values, [2, 6], atol=1e-4)
-    assert_allclose(m.errors, [2, 1], atol=1e-4)
+    assert_allclose(m.values, [2, 6], atol=1e-3)
+    assert_allclose(m.errors, [2, 0.35], atol=1e-3)
 
 
 def test_view_lifetime():
@@ -1255,7 +1261,7 @@ def test_scan(grad):
     # Errors are not accurate if func0_grad is used. 2nd derivatives are automatically
     # computed by Numerical2PGradientCalculator, but not by AnalyticalGradientCalculator
     if grad is None:
-        assert_allclose(m.errors, (2, 1), atol=0.1)
+        assert_allclose(m.errors, (2, 0.8), atol=0.1)
 
 
 def test_scan_with_fixed_par():
@@ -1274,3 +1280,25 @@ def test_scan_with_fixed_par():
     assert m.valid
     assert_allclose(m.values, (2, 4), atol=0.1)
     assert m.errors[0] == approx(2, abs=1e-1)
+
+
+def test_tolerance():
+    m = Minuit(func0, x=0, y=0)
+    assert m.tol == 0.1
+    m.migrad()
+    assert m.valid
+    edm = m.fmin.edm
+    m.reset()
+    m.tol = 1e-6
+    m.migrad()
+    assert m.fmin.edm < edm
+
+
+def test_bad_tolerance():
+    m = Minuit(func0, x=0, y=0)
+
+    with pytest.raises(ValueError):
+        m.tol = -1
+
+    with pytest.raises(ValueError):
+        m.tol = 0
