@@ -17,7 +17,7 @@ test: build/done
 cov: build/done
 	# This only computes the coverage in pure Python.
 	rm -rf htmlcov
-	$(PYTHON) -m pytest -x --ff --cov src/iminuit --cov-report html
+	$(PYTHON) -m pytest -x --ff --cov src/iminuit --cov-report term-missing --cov-report html
 
 doc: build/done build/html/done
 

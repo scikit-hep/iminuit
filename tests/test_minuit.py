@@ -1290,6 +1290,15 @@ def test_simplex(grad):
     assert m.valid
     assert_allclose(m.values, (2, 5), atol=5e-3)
 
+    m2 = Minuit(func0, x=0, y=0, grad=grad)
+    m2.simplex(precision=0.001)
+    assert m2.fval != m.fval
+
+    m3 = Minuit(func0, x=0, y=0, grad=grad)
+    m3.simplex(ncall=10)
+    assert 10 <= m3.fmin.nfcn < 15
+    assert m3.fval > m.fval
+
 
 def test_simplex_with_fixed_par_and_limits():
     m = Minuit(func0, x=3, y=0)
