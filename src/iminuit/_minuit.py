@@ -7,6 +7,7 @@ from ._core import (
     MnMigrad,
     MnMinos,
     MnPrint,
+    MnSimplex,
     MnStrategy,
     MnUserParameterState,
     FunctionMinimum,
@@ -100,9 +101,13 @@ class Minuit:
     def tol(self):
         """Tolerance for convergence.
 
-        The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max`` is
-        calculated as ``edm_max = 0.002 * tol * errordef`` and EDM is the *estimated distance
-        to minimum*, as described in the `MINUIT paper`_.
+        The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max``
+        is calculated as ``edm_max = 0.002 * tol * errordef`` in case of the MIGRAD
+        algorithm and as ``edm_max = tol * errordef`` in case of the SIMPLEX algorithm.
+        EDM stands for *estimated distance to minimum*, which is described in the
+        `MINUIT paper`_. The EDM criterion is well suited for statistical cost functions,
+        since it stops the minimization when parameter improvements become small
+        compared to parameter uncertainties.
         """
         return self._tolerance
 
@@ -510,7 +515,7 @@ class Minuit:
         return self  # return self for method chaining and to autodisplay current state
 
     def migrad(self, ncall=None, precision=None, iterate=5):
-        """Run MIGRAD.
+        """Run MnMigrad from the Minuit2 library.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
         in 40+ years of almost exclusive usage in high-energy physics. How
@@ -519,12 +524,12 @@ class Minuit:
         **Arguments:**
 
             * **ncall**: integer or None, optional; (approximate)
-              maximum number of call before MIGRAD will stop trying. Default: None
-              (indicates to use MIGRAD's internal heuristic). Note: MIGRAD may slightly
-              violate this limit, because it checks the condition only after a full
-              iteration of the algorithm, which usually performs several function calls.
+              maximum number of calls before minimization will be aborted. Default: None
+              (indicates to use an internal heuristic). Note: The limit may be slightly
+              violated, because the condition is checked only after a full iteration of
+              the algorithm, which usually performs several function calls.
 
-            * **precision**: override Minuit precision estimate for the cost function.
+            * **precision**: override Minuit's precision estimate for the cost function.
               Default: None (= use epsilon of a C++ double). If the cost function has a
               lower precision (e.g. of a C++ float), setting this to a lower value will
               accelerate convergence and reduce the rate of unsuccessful convergence.
@@ -562,8 +567,55 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall=None):
-        pass
+    def simplex(self, ncall=None, precision=None):
+        """Run MnSimplex from the Minuit2 C++ library.
+
+        Uses a variant of the Nelder-Mead algorithm to find the minimum. It does not
+        make use of derivatives. The `Wikipedia has a good article on the method
+        <https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method>_`. The method usually
+        converges more slowly than MIGRAD, but may perform better in some special cases.
+        The Rosenbrock function is one of those. The SIMPLEX method does not have
+        quadratic convergerence near the minimum that MIGRAD offers, but it may better
+        at getting close to the minimum from an unsuitable starting point.
+
+        The convergence criterion for MnSimplex is also based on EDM, but the threshold
+        is much more lax than that of MIGRAD (see :attr:`Minuit.tol` for details).
+        This was made so that SIMPLEX stops early when getting near the minimum. The
+        idea is to switch to the more efficient MIGRAD algorithm to finish the
+        minimization. Early stopping can be avoided by setting Minuit.tol to an
+        accordingly smaller value, however.
+
+        **Arguments:**
+
+            * **ncall**: integer or None, optional; (approximate)
+              maximum number of calls before minimization will be aborted. Default: None
+              (indicates to use an internal heuristic). Note: The limit may be slightly
+              violated, because the condition is checked only after a full iteration of
+              the algorithm, which usually performs several function calls.
+
+            * **precision**: override Minuit's precision estimate for the cost function.
+              Default: None (= use epsilon of a C++ double). If the cost function has a
+              lower precision (e.g. of a C++ float), setting this to a lower value will
+              accelerate convergence and reduce the rate of unsuccessful convergence.
+
+        **Return:**
+
+            self
+        """
+
+        if ncall is None:
+            ncall = 0  # tells C++ Minuit to use its internal heuristic
+
+        _check_errordef(self._fcn)
+        simplex = MnSimplex(self._fcn, self._last_state, self.strategy)
+        if precision is not None:
+            simplex.precision = precision
+
+        fm = simplex(ncall, self._tolerance)
+        self._last_state = fm.state
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
+
+        return self  # return self for method chaining and to autodisplay current state
 
     def scan(self, ncall=None):
         """Scan over a regular hypercube grid to find the best minimum.
@@ -613,6 +665,10 @@ class Minuit:
         if ncall is None:
             ncall = 200 + 100 * n + 5 * n * n
         nstep = int(ncall ** (1 / n))
+
+        if self._last_state == self._init_state:
+            # avoid overriding initial state
+            self._last_state = MnUserParameterState(self._last_state)
 
         x = np.empty(self.npar + 1)
         x[self.npar] = np.inf
