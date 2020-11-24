@@ -189,8 +189,8 @@ def test_html_fmin_good(fmin_good):
         <td colspan="3" style="text-align:center;{good}"> Below call limit </td>
     </tr>
     <tr>
+        <td style="text-align:center;{good}"> Covariance </td>
         <td style="text-align:center;{good}"> Hesse ok </td>
-        <td style="text-align:center;{good}"> Has Covariance </td>
         <td style="text-align:center;{good}" title="Is covariance matrix accurate?"> Accurate </td>
         <td style="text-align:center;{good}" title="Is covariance matrix positive definite?"> Pos. def. </td>
         <td style="text-align:center;{good}" title="Was positive definiteness enforced by Minuit?"> Not forced </td>
@@ -220,8 +220,8 @@ def test_html_fmin_bad(fmin_bad):
         <td colspan="3" style="text-align:center;{bad}"> ABOVE call limit </td>
     </tr>
     <tr>
+        <td style="text-align:center;{warn}"> NO Covariance </td>
         <td style="text-align:center;{bad}"> Hesse FAILED </td>
-        <td style="text-align:center;{bad}"> NO Covariance </td>
         <td style="text-align:center;{warn}" title="Is covariance matrix accurate?"> APPROXIMATE </td>
         <td style="text-align:center;{bad}" title="Is covariance matrix positive definite?"> NOT pos. def. </td>
         <td style="text-align:center;{bad}" title="Was positive definiteness enforced by Minuit?"> FORCED </td>

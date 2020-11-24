@@ -154,11 +154,12 @@ def fmin(fm):
             tr(
                 td(
                     ff[9],
-                    style="text-align:center;" + good(fm.hesse_failed, False),
+                    style="text-align:center;"
+                    + good(fm.has_covariance, True, warn_style),
                 ),
                 td(
                     ff[10],
-                    style="text-align:center;" + good(fm.has_covariance, True),
+                    style="text-align:center;" + good(fm.hesse_failed, False),
                 ),
                 td(
                     ff[11],
