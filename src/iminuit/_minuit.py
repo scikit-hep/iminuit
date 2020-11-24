@@ -20,6 +20,24 @@ __all__ = ["Minuit"]
 
 
 class Minuit:
+
+    __slots__ = (
+        "_fcn",
+        "_strategy",
+        "_tolerance",
+        "_values",
+        "_errors",
+        "_merrors",
+        "_fixed",
+        "_limits",
+        "_fmin",
+        "_covariance",
+        "_var2pos",
+        "_pos2var",
+        "_init_state",
+        "_last_state",
+    )
+
     LEAST_SQUARES = 1.0
     """Set :attr:`errordef` to this constant for a least-squares cost function."""
 
@@ -78,13 +96,21 @@ class Minuit:
         if self._fmin:
             self._fmin._src.up = value
 
-    tol = 0.1
-    """Tolerance for convergence.
+    @property
+    def tol(self):
+        """Tolerance for convergence.
 
-    The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max`` is
-    calculated as ``edm_max = 0.002 * tol * errordef`` and EDM is the *estimated distance
-    to minimum*, as described in the `MINUIT paper`_.
-    """
+        The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max`` is
+        calculated as ``edm_max = 0.002 * tol * errordef`` and EDM is the *estimated distance
+        to minimum*, as described in the `MINUIT paper`_.
+        """
+        return self._tolerance
+
+    @tol.setter
+    def tol(self, value):
+        if value <= 0:
+            raise ValueError("tolerance must be positive")
+        self._tolerance = value
 
     @property
     def strategy(self):
@@ -462,20 +488,16 @@ class Minuit:
         else:
             errordef = 0
 
+        self._tolerance = 0.1
         self._strategy = MnStrategy(1)
-
         self._fcn = FCN(fcn, grad, array_call, errordef)
-
-        self._fmin = None
         self._init_state = _make_init_state(self._pos2var, args, kwds)
-        self._last_state = self._init_state
-        self._merrors = mutil.MErrors()
-        self._covariance = None
-
         self._values = mutil.ValueView(self)
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
         self._limits = mutil.LimitView(self, 1)
+
+        self.reset()
 
     def reset(self):
         """Reset minimization state to initial state."""
@@ -530,12 +552,12 @@ class Minuit:
         # Automatically call Migrad up to `iterate` times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
         for _ in range(iterate):
-            fm = migrad(ncall, self.tol)
+            fm = migrad(ncall, self._tolerance)
             if fm.is_valid or fm.has_reached_call_limit:
                 break
 
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
         self._make_covariance()
 
         return self  # return self for method chaining and to autodisplay current state
@@ -582,7 +604,7 @@ class Minuit:
         # scan = MnScan(self._fcn, self._last_state, self.strategy)
         # fm = scan(0, 0)  # args are ignored
         # self._last_state = fm.state
-        # self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+        # self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
 
         n = self.nfit
         if ncall is None:
@@ -624,7 +646,7 @@ class Minuit:
         _check_errordef(self._fcn)
         fm = FunctionMinimum(self._fcn, self._last_state, x[self.npar], self.strategy)
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -662,7 +684,9 @@ class Minuit:
             # _last_state not modified, can update _fmin which is more efficient
             hesse(self._fcn, fm, ncall)
             self._last_state = fm.state
-            self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self.tol)
+            self._fmin = mutil.FMin(
+                fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance
+            )
         else:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin
@@ -740,7 +764,7 @@ class Minuit:
         with TemporaryUp(self._fcn, sigma):
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
             for par in pars:
-                me = minos(self._var2pos[par], ncall, self.tol)
+                me = minos(self._var2pos[par], ncall, self._tolerance)
                 self._merrors[par] = mutil.MError(
                     me.number,
                     par,
@@ -804,7 +828,7 @@ class Minuit:
         for i, v in enumerate(values):
             state.set_value(ipar, v)
             migrad = MnMigrad(self._fcn, state, self.strategy)
-            fm = migrad(0, self.tol)
+            fm = migrad(0, self._tolerance)
             if not fm.is_valid:
                 warn(f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning)
             status[i] = fm.is_valid
