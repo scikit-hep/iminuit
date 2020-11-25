@@ -713,9 +713,12 @@ class Minuit:
         run(0)
 
         _check_errordef(self._fcn)
-        fm = FunctionMinimum(self._fcn, self._last_state, x[self.npar], self.strategy)
+        edm_goal = self._tolerance * self._fcn.up
+        fm = FunctionMinimum(
+            self._fcn, self._last_state, x[self.npar], self.strategy, edm_goal
+        )
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
+        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, edm_goal)
 
         return self  # return self for method chaining and to autodisplay current state
 
