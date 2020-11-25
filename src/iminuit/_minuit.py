@@ -313,15 +313,6 @@ class Minuit:
         return self.npar - sum(self.fixed)
 
     @property
-    def gcc(self):
-        """Global correlation coefficients (dict : name -> gcc)."""
-        free = self._free_parameters()
-        if self._last_state.has_globalcc:
-            gcc = self._last_state.globalcc
-            if gcc:
-                return {v: gcc[i] for i, v in enumerate(free)}
-
-    @property
     def fmin(self):
         """Current function minimum.
 
