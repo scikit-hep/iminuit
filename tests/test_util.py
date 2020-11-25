@@ -81,13 +81,20 @@ def test_Params():
     p = util.Params(
         [
             util.Param(
-                3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
-            )
+                0, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
+            ),
+            util.Param(
+                1, "bar", 3.4, 4.5, None, False, False, True, True, False, 42, None
+            ),
         ]
     )
 
-    assert repr(p) == repr((p[0],))
+    assert repr(p) == repr((p[0], p[1]))
     assert str(p) == repr(p)
+    assert p[0].number == 0
+    assert p[1].number == 1
+    assert p["foo"].number == 0
+    assert p["bar"].number == 1
 
 
 def test_MError():
