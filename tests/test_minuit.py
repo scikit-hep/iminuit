@@ -272,14 +272,6 @@ def test_covariance():
     assert c["x", "x"] == approx(1.0)
 
 
-def test_gcc():
-    m = Minuit(lambda x, y: (x - y) ** 2 + x ** 2, x=0, y=0)
-    assert m.gcc is None
-    m.errordef = 1
-    m.migrad()
-    assert_allclose([m.gcc["x"], m.gcc["y"]], np.sqrt((0.5, 0.5)))
-
-
 def test_array_func_1():
     m = Minuit(func_np, (2, 1))
     m.errors = (1, 1)
