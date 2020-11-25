@@ -6,5 +6,5 @@
 ├───────────────┴──────────────────┼──────────────────────────────────────┤
 │ ABOVE EDM threshold (goal x 10)  │           ABOVE call limit           │
 ├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
-│ Hesse FAILED  │  NO Covariance   │APPROXIMATE│NOT pos. def.│   FORCED   │
+│ NO Covariance │   Hesse FAILED   │APPROXIMATE│NOT pos. def.│   FORCED   │
 └───────────────┴──────────────────┴───────────┴─────────────┴────────────┘

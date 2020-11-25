@@ -23,7 +23,7 @@ MinimumSeed make_seed(const FCN& fcn, const MnUserFcn& mfcn,
 }
 
 FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval,
-                     const MnStrategy& str) {
+                     const MnStrategy& str, double edm_goal) {
   MnUserFcn mfcn(fcn, st.Trafo());
   MinimumSeed seed = make_seed(fcn, mfcn, st, str);
 
@@ -37,7 +37,8 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval
 
   MinimumParameters minp(val, err, fval);
   std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), fcn.nfcn_));
-  return FunctionMinimum(seed, minstv, fcn.Up());
+  if (minstv.back().Edm() < edm_goal) return FunctionMinimum(seed, minstv, fcn.Up());
+  return FunctionMinimum(seed, minstv, fcn.Up(), FunctionMinimum::MnAboveMaxEdm());
 }
 
 void bind_functionminimum(py::module m) {

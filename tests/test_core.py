@@ -140,9 +140,11 @@ def test_MnSimplex():
 def test_FunctionMinimum():
     fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
     st = MnUserParameterState()
-    st.add("x", 2, 5)
+    st.add("x", 0.01, 5)
     str = MnStrategy(1)
-    fm = FunctionMinimum(fcn, st, 0.1, str)
-    assert fm.is_valid
-    assert len(fm.state) == 1
-    assert fm.fval == 0.1
+    fm1 = FunctionMinimum(fcn, st, 0.1, str, 0.2)
+    assert fm1.is_valid
+    assert len(fm1.state) == 1
+    assert fm1.fval == 0.1
+    fm2 = FunctionMinimum(fcn, st, 0.1, str, 0)
+    assert not fm2.is_valid

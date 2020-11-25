@@ -1254,14 +1254,11 @@ def test_scan(grad):
     m = Minuit(func0, x=0, y=0, grad=grad)
     m.errors[0] = 10
     m.limits[1] = (-10, 10)
-    m.scan(ncall=200)
-    assert m.fmin.nfcn == approx(200, rel=0.1)
-    assert m.valid
-    assert_allclose(m.values, (2, 5), atol=0.6)
-    # Errors are not accurate if func0_grad is used. 2nd derivatives are automatically
-    # computed by Numerical2PGradientCalculator, but not by AnalyticalGradientCalculator
+    m.scan(ncall=99)
+    assert m.fmin.nfcn == approx(99, rel=0.2)
     if grad is None:
-        assert_allclose(m.errors, (2, 0.8), atol=0.1)
+        assert m.valid
+    assert_allclose(m.values, (2, 5), atol=0.6)
 
 
 def test_scan_with_fixed_par():

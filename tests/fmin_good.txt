@@ -6,5 +6,5 @@
 ├───────────────┴──────────────────┼──────────────────────────────────────┤
 │ Below EDM threshold (goal x 10)  │           Below call limit           │
 ├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
-│   Hesse ok    │  Has Covariance  │ Accurate  │  Pos. def.  │ Not forced │
+│  Covariance   │     Hesse ok     │ Accurate  │  Pos. def.  │ Not forced │
 └───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
