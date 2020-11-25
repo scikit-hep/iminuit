@@ -41,11 +41,7 @@ class BasicView:
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             return [self._get(i) for i in ind]
-        i = key if isinstance(key, int) else self._minuit._var2pos[key]
-        if i < 0:
-            i += len(self)
-        if i < 0 or i >= len(self):
-            raise IndexError
+        i = _key2index(self._minuit._var2pos, key)
         return self._get(i)
 
     def __setitem__(self, key, value):
@@ -61,11 +57,7 @@ class BasicView:
                 for i, v in zip(ind, value):
                     self._set(i, v)
         else:
-            i = key if isinstance(key, int) else self._minuit._var2pos[key]
-            if i < 0:
-                i += len(self)
-            if i < 0 or i >= len(self):
-                raise IndexError
+            i = _key2index(self._minuit._var2pos, key)
             self._set(i, value)
 
     def __eq__(self, other):
@@ -202,7 +194,7 @@ class Matrix(np.ndarray):
             key = tuple((k if isinstance(k, int) else var2pos[k]) for k in key)
         elif isinstance(key, str):
             key = var2pos[key]
-        return super().__getitem__(key)
+        return super(Matrix, self).__getitem__(key)
 
     def to_table(self):
         names = tuple(self._var2pos)
@@ -220,7 +212,7 @@ class Matrix(np.ndarray):
         return a
 
     def __repr__(self):
-        return super().__str__()
+        return super(Matrix, self).__str__()
 
     def __str__(self):
         return repr(self)
@@ -507,6 +499,14 @@ class Params(tuple):
             tab.append(row)
         return tab, header
 
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            for i, p in enumerate(self):
+                if p.name == key:
+                    break
+            key = i
+        return super(Params, self).__getitem__(key)
+
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Params(...)")
@@ -752,3 +752,15 @@ def _arguments_from_docstring(obj):
 
 def _guess_initial_step(val):
     return 1e-2 * val if val != 0 else 1e-1  # heuristic
+
+
+def _key2index(var2pos, key):
+    if isinstance(key, int):
+        i = key
+        if i < 0:
+            i += len(var2pos)
+        if i < 0 or i >= len(var2pos):
+            raise IndexError
+    else:
+        i = var2pos[key]
+    return i
