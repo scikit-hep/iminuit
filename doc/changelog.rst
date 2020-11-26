@@ -335,6 +335,7 @@ Interface
 - deprecated ``Minuit.set_errordef``, assign to ``Minuit.errordef`` instead
 - deprecated ``Minuit.set_print_level``, assign to ``Minuit.print_level`` instead
 - deprecated ``Minuit.print_fmin``, ``Minuit.print_matrix``, ``Minuit.print_param``, ``Minuit.print_initial_param``, ``Minuit.print_all_minos``; use ``print`` on the respective objects instead
+- added ``Minuit.nfit`` to get number of fitted parameters
 
 Implementation
 ~~~~~~~~~~~~~~
