@@ -36,14 +36,6 @@ Minuit
 .. autoclass:: Minuit
     :members:
 
-Cost functions
---------------
-
-.. automodule:: iminuit.cost
-    :members:
-
-.. currentmodule:: iminuit
-
 minimize
 --------
 
@@ -53,6 +45,12 @@ Eventually, you still may want to learn the interface of the :class:`Minuit` cla
 as it provides more functionality if you are interested in parameter uncertainties.
 
 .. autofunction:: minimize
+
+cost
+----
+
+.. automodule:: iminuit.cost
+    :members:
 
 Utility Functions
 -----------------
