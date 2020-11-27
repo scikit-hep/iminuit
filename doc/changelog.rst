@@ -100,6 +100,7 @@ Other changes
 - Logging messages from C++ Minuit2, which are produced when ``Minuit.print_level`` is set to 1 to 3 are now properly shown inside the notebook or the Python session instead of being printed to the terminal
 - Assigning to ``Minuit.print_level`` changes the logging threshold for all current and future ``Minuit`` instances in the current Python session, setting this to a value > 0 shows a corresponding warning
 - docstring parsing for ``iminuit.util.describe`` was rewritten; behavior of ``describe`` for corner cases of functions with positional and variable number of positional and keyword arguments are now well-defined
+- iminuit now has 100 % test coverage
 
 1.5.4 (November 21, 2020)
 --------------------------
