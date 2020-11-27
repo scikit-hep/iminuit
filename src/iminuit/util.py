@@ -166,7 +166,12 @@ def _normalize_limit(lim):
 
 
 class Matrix(np.ndarray):
-    """Matrix."""
+    """
+    Enhanced Numpy ndarray.
+
+    Works like a normal ndarray in computations, but also supports pretty printing in
+    ipython and Jupyter notebooks. Elements can be accessed via indices or parameter names.
+    """
 
     __slots__ = ("_var2pos",)
 
@@ -197,6 +202,19 @@ class Matrix(np.ndarray):
         return super(Matrix, self).__getitem__(key)
 
     def to_table(self):
+        """
+        Converts the matrix in tabular format that can be consumed by the external
+        `tabulate` module available on PyPI.
+
+        >>> import tabulate as tab
+        >>> from iminuit import Minuit
+        >>> m = Minuit(lambda x, y: x ** 2 + y ** 2, x=1, y=2).migrad()
+        >>> tab.tabulate(*m.covariance.to_table())
+              x    y
+        --  ---  ---
+        x     1   -0
+        y    -0    4
+        """
         names = tuple(self._var2pos)
         nums = _repr_text.matrix_format(self.flatten())
         tab = []
@@ -206,6 +224,12 @@ class Matrix(np.ndarray):
         return tab, names
 
     def correlation(self):
+        """
+        Computes and returns the correlation matrix.
+
+        If the matrix is already a correlation matrix, this effectively returns a copy
+        of the original matrix.
+        """
         a = self.copy()
         d = np.diag(a) ** 0.5
         a /= np.outer(d, d) + 1e-100
@@ -465,6 +489,21 @@ class Params(tuple):
         return _repr_html.params(self)
 
     def to_table(self):
+        """
+        Converts parameter data to tabular format that can be consumed by the external
+        `tabulate` module available on PyPI.
+
+        >>> import tabulate as tab
+        >>> from iminuit import Minuit
+        >>> m = Minuit(lambda x, y: x ** 2 + (y / 2) ** 2 + 1, x=0, y=0)
+        >>> m.fixed["x"] = True
+        >>> m.migrad().minos()
+        >>> tab.tabulate(*m.params.to_table())
+          pos  name      value    error  error-    error+    limit-    limit+    fixed
+        -----  ------  -------  -------  --------  --------  --------  --------  -------
+            0  x             0      0.1                                          yes
+            1  y             0      1.4  -1.0      1.0
+        """
         header = [
             "pos",
             "name",
