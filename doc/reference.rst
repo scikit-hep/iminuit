@@ -36,14 +36,6 @@ Minuit
 .. autoclass:: Minuit
     :members:
 
-Cost functions
---------------
-
-.. automodule:: iminuit.cost
-    :members:
-
-.. currentmodule:: iminuit
-
 minimize
 --------
 
@@ -54,14 +46,18 @@ as it provides more functionality if you are interested in parameter uncertainti
 
 .. autofunction:: minimize
 
-Utility Functions
------------------
+iminuit.cost
+------------
 
-.. currentmodule:: util
+.. automodule:: iminuit.cost
+    :members:
 
-The module :mod:`util` provides the :func:`describe` function and various function to manipulate
-fit arguments. Most of these functions (apart from describe) are for internal use. You should not rely
-on them in your code. We list the ones that are for the public.
+iminuit.util
+------------
+
+.. currentmodule:: iminuit.util
+
+The module provides data and utility classes used by :class:`iminuit.Minuit` and the :func:`describe` function.
 
 .. automodule:: iminuit.util
     :members:

@@ -3,6 +3,7 @@ py[0-9]*
 gammapy
 probfit
 iminuit-dev
+root-test
 
 __pycache__
 *.pyxbldc

@@ -75,9 +75,9 @@ class Minuit:
         """FCN increment above the minimum that corresponds to one standard deviation.
 
         Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
-        function and 0.5 for negative log-likelihood function. See page 37 of
-        http://hep.fi.infn.it/minuit.pdf. This parameter is sometimes called
-        *UP* in the MINUIT docs.
+        function and 0.5 for negative log-likelihood function. See section 1.5.1 on page 6
+        of the :download:`MINUIT2 User's Guide <mnusersguide.pdf>`. This parameter is
+        also called *UP* in MINUIT documents.
 
         To make user code more readable, we provided two named constants::
 
@@ -134,7 +134,7 @@ class Minuit:
         **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
         minimization. The effect in benchmarks is a somewhat improved accuracy at the cost
         of more function evaluations. A similar effect can be achieved by reducing the
-        tolerance attr:`tol` for convergence at any strategy level.
+        tolerance :attr:`tol` for convergence at any strategy level.
         """
         return self._strategy
 
@@ -248,12 +248,19 @@ class Minuit:
 
     @property
     def merrors(self):
-        """Minos error objects with full status information."""
+        """Returns a dict with data objects that contain the full status information
+        of the Minos run.
+
+        .. seealso:: :class:`iminuit.util.MError`, :class:`iminuit.util.MErrors`
+        """
         return self._merrors
 
     @property
     def covariance(self):
-        """Returns the covariance matrix."""
+        """Returns the covariance matrix.
+
+        .. seealso:: :class:`iminuit.util.Matrix`
+        """
         return self._covariance
 
     def np_values(self):
@@ -570,8 +577,8 @@ class Minuit:
         """Run MnSimplex from the Minuit2 C++ library.
 
         Uses a variant of the Nelder-Mead algorithm to find the minimum. It does not
-        make use of derivatives. The `Wikipedia has a good article on the method
-        <https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method>_`. The method usually
+        make use of derivatives. `The Wikipedia has a good article on the method
+        <https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method>`_. The method usually
         converges more slowly than MIGRAD, but may perform better in some special cases.
         The Rosenbrock function is one of those. The SIMPLEX method does not have
         quadratic convergerence near the minimum that MIGRAD offers, but it may better

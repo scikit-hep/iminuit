@@ -5,6 +5,103 @@
 Changelog
 =========
 
+2.0 (???, 2020)
+-----------------
+This is a breaking change for iminuit. Interface that was deprecated in 1.x has been removed. In addition, breaking changes were made to the interface to arrive at a clean minimal state that is easy to learn. Under the hood, Cython was replaced with pybind11 to generate the bindings to the C++ Minuit2 library. This simplified the code considerably (Cython is very bad at generating C++ bindings, while it is breeze with pybind11).
+
+Removed and changed interface (breaking changes)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- ``Minuit.__init__``
+  - Keywords ``error_*``, ``fix_*``, and ``limit_*`` were removed; assign to ``Minuit.errors``, ``Minuit.fixed``, and ``Minuit.limits`` to set initial step sizes, fix parameters, and set limits
+  - Keyword ``pedantic`` was removed; parameters must be initialized with values now or an error is raised
+  - Keyword ``errordef`` was removed; assign to ``Minuit.errordef`` to set the error definition of the cost function or better create an attribute called `errordef` on the cost function, Minuit uses this attribute if it exists
+  - Keyword ``throw_nan`` was removed; assign to ``Minuit.throw_nan`` instead
+  - Keyword ``print_level`` was removed; assign to ``Minuit.print_level`` instead
+  - Keyword ``use_array_call`` was removed; call type is inferred from starting values (if it is a sequence, the array call is used)
+  - Setting starting values with positional parameters is now allowed, e.g. ``Minuit(my_fcn, 1, 2)`` initializes the first two parameters to 1 and 2, respectively
+- ``Minuit.from_array_func`` was removed; use ``Minuit(some_numpy_function, starting_array)`` instead
+- ``Minuit.args`` was removed, use ``Minuit.values[:]`` to get the current parameter values as a tuple
+- ``Minuit.values``
+  - Now behaves like an array instead of like a dict, i.e. methods like ``keys()`` and ``items()`` are gone and ``for x in minuit.values`` iterates over the values and not the parameter names
+  - Item access via index and via parameter name is supported, e.g. ``minuit.values["a"]`` returns the value for parameter "a"
+  - Broadcasting is supported, e.g. ``minuit.values = 0`` sets all parameter values to 0
+  - Slicing is supported for setting and getting several parameter values at once
+- ``Minuit.errors``: see changes to ``Minuit.values``
+- ``Minuit.fixed``: see changes to ``Minuit.values``
+- ``Minuit.migrad``
+  - Keyword ``resume`` was removed; use ``Minuit.reset`` instead
+  - Return value is now ``self`` instead of ``self.fmin, self.params``
+- ``Minuit.hesse``
+  - Return value is now ``self`` instead of ``self.params``
+- ``Minuit.minos``
+  - Now accepts more than one positional arguments (which must be parameter names) and computes Minos errors for them
+  - Return value is now ``self`` instead of ``self.merrors``
+- ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (the Minuit object will become pickleable in the future)
+- ``Minuit.matrix`` was removed; see ``Minuit.covariance``
+- ``Minuit.covariance`` instead of a dict-like class is now an enhanced subclass of ndarray from numpy (iminuit.util.Matrix) with the features:
+  - Behaves like a normal ndarray as far as Numpy algorithms are concerned
+  - Rich display of the matrix in ipython and Jupyter notebook
+  - Element access via parameter names in addition to indices, e.g. Minuit.covariance["a", "b"] access the covariance of parameters "a" and "b"
+  - ``Minuit.covariance.correlation()`` computes the correlation matrix from the covariance matrix and returns it
+  - Always has full rank, number of rows and columns is equal to the number of parameters even when some are fixed; elements corresponding to fixed parameters are set to zero in the matrix
+- ``Minuit.gcc`` was removed for lack of a known use-case (please submit an issue if you need this, then it will come back)
+- ``Minuit.is_clean_state`` was removed; use ``Minuit.fmin is None`` instead
+- ``Minuit.latex_param`` was removed; LaTeX and other table formats can be produced by passing the output of ``minuit.params.to_table()`` to the external ``tabulate`` module available on PyPI
+- ``Minuit.latex_initial_param`` was removed; see ``Minuit.latex_param``
+- ``Minuit.latex_matrix`` was removed; LaTeX and other table formats can be produced by passing the output of ``minuit.covariance.to_table()`` to the external ``tabulate`` module available on PyPI
+- ``Minuit.ncalls_total`` was replaced with ``Minuit.nfcn``
+- ``Minuit.ngrads_total`` was replaced with ``Minuit.ngrad``
+- ``Minuit.np_covariance`` was removed; see ``Minuit.covariance``
+- ``Minuit.np_matrix`` was removed; see ``Minuit.covariance``
+- ``Minuit.use_array_call`` was removed, ``Minuit.fcn`` and ``Minuit.grad`` now always solely accept parameter values in form of a sequence, e.g. ``minuit.fcn((1, 2))``
+- ``util.FMin``
+  - Dict-interface was removed (methods like ``keys()``, ``items()`` are gone), it is now a data class with read-only attributes
+  - ``tolerenace`` attribute was replaced with ``edm_goal``, since the effect of ``tolerance`` varies for ``Minuit.migrad`` and ``Minuit.simplex``, ``edm_goal`` is the actual value of interest
+  - Property ``nfcn`` is the total number of function calls so far
+  - Property ``ngrad`` is the total number of gradient calls so far
+  - ``ngrad_total`` was removed and replaced by ``ngrad``
+  - ``nfcn_total`` was removed and replaced by ``nfcn``
+- ``util.MError``: Dict-interface was removed (see ``util.FMin``)
+- ``util.Param``: Dict-interface was removed (see ``util.FMin``)
+- ``util.Matrix`` is now a subclass of a Numpy ndarray instead of a tuple of tuples
+- ``util.InitialParamWarning`` was removed since it is no longer used
+- ``util.MigradResult`` was removed since it is no longer used
+- ``util.arguments_from_inspect`` was removed from the public interface, it lives on as a private function
+
+New features
+~~~~~~~~~~~~
+- ``Minuit``
+  - Is now a slot class, assigning to a non-existent attribute (e.g. because of a typo) now raises an error
+  - New method ``simplex`` to minimize the function with the Nelder-Mead method
+  - New method ``scan`` to minimize the function with a brute-force grid search (not recommended and infeasible for fits with more than a few free parameters)
+  - New method ``reset`` reverts to the initial parameter state
+  - Now pretty-prints in Jupyter notebooks and the ipython shell, showing the equivalent of ``Minuit.fmin``, ``Minuit.params``, ``Minuit.merrors``, ``Minuit.covariance``, depending on availability
+  - New property ``limits``, an array-like view of the current parameter limits; allows to query and set limits with behavior analog to ``values``, ``errors`` etc.; broadcasting is supported, e.g. ``minuit.limits = (0, 1)`` makes all parameters bounded between 0 and 1 and ``minuit.limits = None`` removes all limits
+- ``util.Param``
+  - New attribute ``merror``, which either returns a tuple of the lower and upper Minos error or None
+  - All attributes are now documented inline with docstrings which can be investigated with ``pydoc`` and ``help()`` in the REPL
+- ``util.Params``
+  - New method ``to_table``, which either returns a tuple of the lower and upper Minos error or None
+  - All attributes are now documented inline with docstrings which can be investigated with ``pydoc`` and ``help()`` in the REPL
+- ``util.FMin``
+  - New attribute ``ngrad`` which is the number of gradient calls so far
+  - New attribute ``has_parameters_at_limit`` which returns True if any parameter values is close to a limit
+  - All attributes are now documented inline with docstrings which can be investigated with ``pydoc`` and ``help()`` in the REPL
+
+Bug-fixes
+~~~~~~~~~
+- Calling ``Minuit.hesse`` when all parameters were fixed produced a segfault, now it raises an error instead
+- Any life-time/memory leak issues should be resolved now even when there is an exception during the minimization, as far as these originate from iminuit code and not from the underlying C++ Minuit2 library
+
+Other changes
+~~~~~~~~~~~~~
+- Several attributes were replaced with properties to avoid accidental overrides and to protect against assigning invalid input, e.g. ``Minuit.tol`` and ``Minuit.errordef`` only accept positive numbers
+- Documentation update and clean up
+- Logging messages from C++ Minuit2, which are produced when ``Minuit.print_level`` is set to 1 to 3 are now properly shown inside the notebook or the Python session instead of being printed to the terminal
+- Assigning to ``Minuit.print_level`` changes the logging threshold for all current and future ``Minuit`` instances in the current Python session, setting this to a value > 0 shows a corresponding warning
+- docstring parsing for ``iminuit.util.describe`` was rewritten; behavior of ``describe`` for corner cases of functions with positional and variable number of positional and keyword arguments are now well-defined
+- iminuit now has 100 % test coverage
+
 1.5.4 (November 21, 2020)
 --------------------------
 
@@ -54,7 +151,7 @@ New features
 - Colours adjusted in HTML display to enhance contrast for people with color blindness
 - Allow subclasses to use ``Minuit.from_array_func`` (#467) [contributed by @kratsg]
 - Nicer tables on terminal thanks to unicode characters
-- Wrapped functions' parameters are now recognised by iminuit [contributed by Gonzalo]
+- Wrapped functions' parameters are now correctly recognized [contributed by Gonzalo]
 - Dark theme friendlier HTML style (#481) [based on patch by @l-althueser]
 
 Bug-Fixes
