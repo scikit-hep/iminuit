@@ -203,8 +203,8 @@ class Matrix(np.ndarray):
 
     def to_table(self):
         """
-        Converts the matrix in tabular format that can be consumed by the external
-        `tabulate` module available on PyPI.
+        Converts the matrix to a tabular format consumable by the external
+        `tabulate <https://pypi.org/project/tabulate>`_ module.
 
         >>> import tabulate as tab
         >>> from iminuit import Minuit
@@ -325,9 +325,10 @@ class FMin:
         """Whether Migrad converged successfully.
 
         For it to return True, the following conditions need to be fulfilled:
-        - has_valid_parameters is True
-        - has_reached_call_limit is False
-        - is_above_max_edm is False
+
+          - has_valid_parameters is True
+          - has_reached_call_limit is False
+          - is_above_max_edm is False
 
         Note: The actual verdict is computed inside the Minuit2 C++ code, so we
         cannot guarantee that is_valid is exactly equivalent to these conditions.
@@ -339,8 +340,9 @@ class FMin:
         """Whether parameters are valid.
 
         For it to return True, the following conditions need to be fulfilled:
-        - has_reached_call_limit is False
-        - is_above_max_edm is False
+
+          - has_reached_call_limit is False
+          - is_above_max_edm is False
 
         Note: The actual verdict is computed inside the Minuit2 C++ code, so we
         cannot guarantee that is_valid is exactly equivalent to these conditions.
@@ -490,8 +492,8 @@ class Params(tuple):
 
     def to_table(self):
         """
-        Converts parameter data to tabular format that can be consumed by the external
-        `tabulate` module available on PyPI.
+        Converts parameter data to a tabular format consumable by the external
+        `tabulate <https://pypi.org/project/tabulate>`_ module.
 
         >>> import tabulate as tab
         >>> from iminuit import Minuit
@@ -554,7 +556,26 @@ class Params(tuple):
 
 
 class MError:
-    """Minos result object."""
+    """Minos data object.
+
+    **Attributes:**
+
+    - number: parameter index
+    - name: parameter name
+    - lower: lower error
+    - upper: upper error
+    - is_valid: whether Minos computation was successful
+    - lower_valid: whether downward scan was successful
+    - upper_valid: whether upward scan was successful
+    - at_lower_limit: whether scan reached lower limit
+    - at_upper_limit: whether scan reached upper limit
+    - at_lower_max_fcn: whether allowed number of function evaluations was exhausted
+    - at_upper_max_fcn: whether allowed number of function evaluations was exhausted
+    - lower_new_min: parameter value for new minimum, if one was found in downward scan
+    - upper_new_min: parameter value for new minimum, if one was found in upward scan
+    - nfcn: number of function calls
+    - min: function value at the new minimum
+    """
 
     __slots__ = (
         "number",

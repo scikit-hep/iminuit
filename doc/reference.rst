@@ -55,9 +55,9 @@ iminuit.cost
 iminuit.util
 ------------
 
-.. currentmodule:: util
+.. currentmodule:: iminuit.util
 
-The module :mod:`util` provides the :func:`describe` function and various data classes used by :class:`iminuit.Minuit`.
+The module provides data and utility classes used by :class:`iminuit.Minuit` and the :func:`describe` function.
 
 .. automodule:: iminuit.util
     :members:

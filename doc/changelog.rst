@@ -38,16 +38,17 @@ Removed and changed interface (breaking changes)
   - Return value is now ``self`` instead of ``self.merrors``
 - ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (the Minuit object will become pickleable in the future)
 - ``Minuit.matrix`` was removed; see ``Minuit.covariance``
-- ``Minuit.covariance`` is an enhanced subclass of ndarray from numpy (iminuit.util.Matrix) with the features:
+- ``Minuit.covariance`` instead of a dict-like class is now an enhanced subclass of ndarray from numpy (iminuit.util.Matrix) with the features:
   - Behaves like a normal ndarray as far as Numpy algorithms are concerned
   - Rich display of the matrix in ipython and Jupyter notebook
   - Element access via parameter names in addition to indices, e.g. Minuit.covariance["a", "b"] access the covariance of parameters "a" and "b"
   - ``Minuit.covariance.correlation()`` computes the correlation matrix from the covariance matrix and returns it
+  - Always has full rank, number of rows and columns is equal to the number of parameters even when some are fixed; elements corresponding to fixed parameters are set to zero in the matrix
 - ``Minuit.gcc`` was removed for lack of a known use-case (please submit an issue if you need this, then it will come back)
 - ``Minuit.is_clean_state`` was removed; use ``Minuit.fmin is None`` instead
-- ``Minuit.latex_param`` was removed; LaTeX and other table formats can be produced by passing the output of ``Minuit.params.to_table()`` to the external ``tabulate`` module available on PyPI
+- ``Minuit.latex_param`` was removed; LaTeX and other table formats can be produced by passing the output of ``minuit.params.to_table()`` to the external ``tabulate`` module available on PyPI
 - ``Minuit.latex_initial_param`` was removed; see ``Minuit.latex_param``
-- ``Minuit.latex_matrix`` was removed; see ``Minuit.latex_param``
+- ``Minuit.latex_matrix`` was removed; LaTeX and other table formats can be produced by passing the output of ``minuit.covariance.to_table()`` to the external ``tabulate`` module available on PyPI
 - ``Minuit.ncalls_total`` was replaced with ``Minuit.nfcn``
 - ``Minuit.ngrads_total`` was replaced with ``Minuit.ngrad``
 - ``Minuit.np_covariance`` was removed; see ``Minuit.covariance``
@@ -79,6 +80,9 @@ New features
 - ``util.Param``
   - New attribute ``merror``, which either returns a tuple of the lower and upper Minos error or None
   - All attributes are now documented inline with docstrings which can be investigated with ``pydoc`` and ``help()`` in the REPL
+- ``util.Params``
+  - New method ``to_table``, which either returns a tuple of the lower and upper Minos error or None
+  - All attributes are now documented inline with docstrings which can be investigated with ``pydoc`` and ``help()`` in the REPL
 - ``util.FMin``
   - New attribute ``ngrad`` which is the number of gradient calls so far
   - New attribute ``has_parameters_at_limit`` which returns True if any parameter values is close to a limit
@@ -91,10 +95,11 @@ Bug-fixes
 
 Other changes
 ~~~~~~~~~~~~~
-- Several attributes were replaced with properties to avoid accidental overrides
+- Several attributes were replaced with properties to avoid accidental overrides and to protect against assigning invalid input, e.g. ``Minuit.tol`` and ``Minuit.errordef`` only accept positive numbers
 - Documentation update and clean up
 - Logging messages from C++ Minuit2, which are produced when ``Minuit.print_level`` is set to 1 to 3 are now properly shown inside the notebook or the Python session instead of being printed to the terminal
 - Assigning to ``Minuit.print_level`` changes the logging threshold for all current and future ``Minuit`` instances in the current Python session, setting this to a value > 0 shows a corresponding warning
+- docstring parsing for ``iminuit.util.describe`` was rewritten; behavior of ``describe`` for corner cases of functions with positional and variable number of positional and keyword arguments are now well-defined
 
 1.5.4 (November 21, 2020)
 --------------------------
@@ -145,7 +150,7 @@ New features
 - Colours adjusted in HTML display to enhance contrast for people with color blindness
 - Allow subclasses to use ``Minuit.from_array_func`` (#467) [contributed by @kratsg]
 - Nicer tables on terminal thanks to unicode characters
-- Wrapped functions' parameters are now recognised by iminuit [contributed by Gonzalo]
+- Wrapped functions' parameters are now correctly recognized [contributed by Gonzalo]
 - Dark theme friendlier HTML style (#481) [based on patch by @l-althueser]
 
 Bug-Fixes
