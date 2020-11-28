@@ -2,6 +2,7 @@ from iminuit import util
 import pytest
 from argparse import Namespace
 from numpy.testing import assert_equal, assert_allclose
+import numpy as np
 
 
 def test_ndim():
@@ -44,6 +45,10 @@ def test_Matrix():
     assert m[1, 1] == 4.0
     assert_equal(m["b"], (1, 4))
     assert str(m) == repr(m)
+
+    m *= 2
+    assert_equal(m, ((2, 2), (2, 8)))
+    assert_allclose(np.dot(m, (1, 1)), (4, 10))
 
     with pytest.raises(TypeError):
         util.Matrix("ab")
