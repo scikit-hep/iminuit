@@ -418,9 +418,9 @@ class FMin:
         return self._src.has_reached_call_limit
 
     @property
-    def up(self):
+    def errordef(self):
         """Equal to the value of ``Minuit.errordef`` when Migrad ran."""
-        return self._src.up
+        return self._src.errordef
 
     def __repr__(self):
         s = "<FMin"
