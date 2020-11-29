@@ -1203,7 +1203,10 @@ def test_precision():
         return np.exp(x * x + 1)
 
     m = Minuit(fcn, x=-1)
+    assert m.precision is None
+
     m.precision = 0.1
+    assert m.precision == 0.1
     m.migrad()
     fm1 = m.fmin
     m.reset()
@@ -1211,6 +1214,9 @@ def test_precision():
     m.migrad()
     fm2 = m.fmin
     assert fm2.edm < fm1.edm
+
+    with pytest.raises(ValueError):
+        m.precision = -1.0
 
     fcn.precision = 0.1
     fm3 = Minuit(fcn, x=-1).migrad().fmin
@@ -1288,6 +1294,7 @@ def test_simplex(grad):
 
     m2 = Minuit(func0, x=0, y=0, grad=grad)
     m2.precision = 0.001
+    m2.simplex()
     assert m2.fval != m.fval
 
     m3 = Minuit(func0, x=0, y=0, grad=grad)
