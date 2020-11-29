@@ -88,6 +88,7 @@ New features
   - New method ``scan`` to minimise the function with a brute-force grid search (not recommended and infeasible for fits with more than a few free parameters)
   - New method ``reset`` reverts to the initial parameter state
   - New property ``limits``, an array-like view of the current parameter limits; allows to query and set limits with behavior analog to ``values``, ``errors`` etc.; broadcasting is supported, e.g. ``minuit.limits = (0, 1)`` makes all parameters bounded between 0 and 1, ``minuit.limits = None`` removes all limits
+  - New property ``precision`` to change the precision that Minuit assumes for internal calculations of derivatives
   - Now pretty-prints in Jupyter notebooks and the ipython shell, showing the equivalent of ``Minuit.fmin``, ``Minuit.params``, ``Minuit.merrors``, ``Minuit.covariance``, whatever is available
 
 - ``util.Param`` class
