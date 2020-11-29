@@ -5,6 +5,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <cmath>
+#include <cstdint>
 #include <sstream>
 #include <vector>
 
@@ -12,13 +13,26 @@ namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
 FCN::FCN(py::object fcn, py::object grad, bool array_call, double errordef)
-    : fcn_{fcn}, grad_{grad}, array_call_{array_call}, errordef_{errordef} {}
+    : fcn_{fcn}, grad_{grad}, array_call_{array_call}, errordef_{errordef} {
+  auto util = py::module_::import("iminuit.util");
+  auto address_of_cfunc = util.attr("_address_of_cfunc");
+  auto address = py::cast<std::uintptr_t>(address_of_cfunc(fcn_));
+  if (address) {
+    MnPrint("FCN").Debug("using cfunc");
+    cfcn_ = reinterpret_cast<cfcn_t>(address);
+    array_call_ = true;
+  }
+}
 
 double FCN::operator()(const std::vector<double>& x) const {
   ++nfcn_;
   if (array_call_) {
-    py::array_t<double> a(static_cast<ssize_t>(x.size()), x.data());
-    return check_value(py::cast<double>(fcn_(a)), x);
+    if (cfcn_) {
+      return cfcn_(x.size(), x.data());
+    } else {
+      py::array_t<double> a(static_cast<ssize_t>(x.size()), x.data());
+      return check_value(py::cast<double>(fcn_(a)), x);
+    }
   }
   return check_value(py::cast<double>(fcn_(*py::cast(x))), x);
 }
@@ -41,6 +55,13 @@ double FCN::Up() const {
     errordef_ = 1.0;
   }
   return errordef_;
+}
+
+void set_errordef(FCN& self, double value) {
+  if (value > 0) {
+    self.SetUp(value);
+  } else
+    throw std::invalid_argument("errordef must be a positive number");
 }
 
 std::string error_message(const std::vector<double>& x) {
@@ -74,13 +95,6 @@ std::vector<double> FCN::check_vector(std::vector<double> r,
     }
   }
   return r;
-}
-
-void set_errordef(FCN& self, double value) {
-  if (value > 0) {
-    self.SetUp(value);
-  } else
-    throw std::invalid_argument("errordef must be a positive number");
 }
 
 void bind_fcn(py::module m) {

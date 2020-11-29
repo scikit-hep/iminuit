@@ -824,3 +824,14 @@ def _key2index(var2pos, key):
     else:
         i = var2pos[key]
     return i
+
+
+def _address_of_cfunc(fcn):
+    from ctypes import c_void_p, c_double, c_uint32, POINTER, CFUNCTYPE, cast
+
+    c_sig = CFUNCTYPE(c_double, c_uint32, POINTER(c_double))
+
+    fcn = getattr(fcn, "ctypes", None)
+    if isinstance(fcn, c_sig):
+        return cast(fcn, c_void_p).value
+    return 0
