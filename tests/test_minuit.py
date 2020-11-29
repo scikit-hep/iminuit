@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
-from iminuit.util import Param, IMinuitWarning
+from iminuit.util import Param, IMinuitWarning, make_func_code
 from pytest import approx
 from argparse import Namespace
 
@@ -33,7 +33,7 @@ def test_pedantic_warning_message():
                 break
 
     assert len(w) == 1
-    assert str(w[0].message) == "errordef not set, defaults to 1"
+    assert "errordef not set, using 1" in str(w[0].message)
     assert w[0].filename == __file__
     assert w[0].lineno == lineno + 1
 
@@ -44,17 +44,14 @@ def test_version():
     assert iminuit.__version__
 
 
-class Func_Code:
-    def __init__(self, varname):
-        self.co_varnames = varname
-        self.co_argcount = len(varname)
+def lsq(func):
+    func.errordef = Minuit.LEAST_SQUARES
+    return func
 
 
+@lsq
 def func0(x, y):  # values = (2.0, 5.0), errors = (2.0, 1.0)
     return (x - 2.0) ** 2 / 4.0 + np.exp((y - 5.0) ** 2) + 10
-
-
-func0.errordef = 1
 
 
 def func0_grad(x, y):
@@ -74,12 +71,13 @@ class Func2:
     errordef = 4
 
     def __init__(self):
-        self.func_code = Func_Code(["x", "y"])
+        self.func_code = make_func_code(["x", "y"])
 
     def __call__(self, *arg):
         return func0(arg[0], arg[1]) * 4
 
 
+@lsq
 def func4(x, y, z):
     return 0.2 * (x - 2.0) ** 2 + 0.1 * (y - 5.0) ** 2 + 0.25 * (z - 7.0) ** 2 + 10
 
@@ -91,6 +89,7 @@ def func4_grad(x, y, z):
     return dfdx, dfdy, dfdz
 
 
+@lsq
 def func5(x, long_variable_name_really_long_why_does_it_has_to_be_this_long, z):
     return (
         (x - 1) ** 2
@@ -106,6 +105,7 @@ def func5_grad(x, long_variable_name_really_long_why_does_it_has_to_be_this_long
     return dfdx, dfdy, dfdz
 
 
+@lsq
 def func6(x, m, s, a):
     return a / ((x - m) ** 2 + s ** 2)
 
@@ -124,6 +124,7 @@ class Correlated:
         return np.dot(x.T, np.dot(self.cinv, x))
 
 
+@lsq
 def func_np(x):  # test numpy support
     return np.sum((x - 1) ** 2)
 
@@ -231,7 +232,6 @@ def test_use_array_call():
         (1, 1),
         name=("a", "b"),
     )
-    m.errordef = Minuit.LEAST_SQUARES
     m.fixed = False
     m.errors = 1
     m.limits = (0, inf)
@@ -275,7 +275,6 @@ def test_covariance():
 def test_array_func_1():
     m = Minuit(func_np, (2, 1))
     m.errors = (1, 1)
-    m.errordef = Minuit.LEAST_SQUARES
     assert m.parameters == ("x0", "x1")
     assert m.values == (2, 1)
     assert m.errors == (1, 1)
@@ -287,7 +286,6 @@ def test_array_func_1():
 
 def test_array_func_2():
     m = Minuit(func_np, (2, 1), grad=func_np_grad, name=("a", "b"))
-    m.errordef = Minuit.LEAST_SQUARES
     m.fixed = (False, True)
     m.errors = (0.5, 0.5)
     m.limits = ((0, 2), (-np.inf, np.inf))
@@ -851,24 +849,24 @@ def test_oneside_outside():
     assert m.values["x"] == 2
 
 
-def test_ncalls():
+def test_migrad_ncall():
     class Func:
-        ncalls = 0
+        nfcn = 0
         errordef = 1
 
         def __call__(self, x):
-            self.ncalls += 1
+            self.nfcn += 1
             return np.exp(x ** 2)
 
     # check that counting is accurate
-    func = Func()
-    m = Minuit(func, x=3)
+    fcn = Func()
+    m = Minuit(fcn, x=3)
     m.migrad()
-    assert m.nfcn == func.ncalls
-    func.ncalls = 0
+    assert m.nfcn == fcn.nfcn
+    fcn.nfcn = 0
     m.reset()
     m.migrad()
-    assert m.nfcn == func.ncalls
+    assert m.nfcn == fcn.nfcn
 
     ncalls_without_limit = m.nfcn
     # check that ncall argument limits function calls in migrad
@@ -881,28 +879,28 @@ def test_ncalls():
     assert m.nfcn < ncalls_without_limit
 
 
-def test_ngrads():
+def test_ngrad():
     class Func:
         errordef = 1
-        ngrads = 0
+        ngrad = 0
 
         def __call__(self, x):
             return x ** 2
 
         def grad(self, x):
-            self.ngrads += 1
+            self.ngrad += 1
             return [2 * x]
 
     # check that counting is accurate
-    func = Func()
-    m = Minuit(func, 0, grad=func.grad)
+    fcn = Func()
+    m = Minuit(fcn, 0)
     m.migrad()
     assert m.ngrad > 0
-    assert m.ngrad == func.ngrads
-    func.ngrads = 0
+    assert m.ngrad == fcn.ngrad
+    fcn.ngrad = 0
     m.reset()
     m.migrad()
-    assert m.ngrad == func.ngrads
+    assert m.ngrad == fcn.ngrad
 
     # HESSE ignores analytical gradient
     before = m.ngrad
@@ -1199,15 +1197,30 @@ def test_migrad_iterate():
         m.migrad(iterate=0)
 
 
-def test_migrad_precision():
-    m = Minuit(lambda x: np.exp(x * x + 1), x=-1)
-    m.errordef = 1
-    m.migrad(precision=0.1)
+def test_precision():
+    @lsq
+    def fcn(x):
+        return np.exp(x * x + 1)
+
+    m = Minuit(fcn, x=-1)
+    assert m.precision is None
+
+    m.precision = 0.1
+    assert m.precision == 0.1
+    m.migrad()
     fm1 = m.fmin
     m.reset()
-    m.migrad(precision=1e-9)
+    m.precision = 1e-9
+    m.migrad()
     fm2 = m.fmin
     assert fm2.edm < fm1.edm
+
+    with pytest.raises(ValueError):
+        m.precision = -1.0
+
+    fcn.precision = 0.1
+    fm3 = Minuit(fcn, x=-1).migrad().fmin
+    assert fm3.edm == fm1.edm
 
 
 @pytest.mark.parametrize("sigma", (1, 2))
@@ -1280,7 +1293,8 @@ def test_simplex(grad):
     assert_allclose(m.values, (2, 5), atol=5e-3)
 
     m2 = Minuit(func0, x=0, y=0, grad=grad)
-    m2.simplex(precision=0.001)
+    m2.precision = 0.001
+    m2.simplex()
     assert m2.fval != m.fval
 
     m3 = Minuit(func0, x=0, y=0, grad=grad)

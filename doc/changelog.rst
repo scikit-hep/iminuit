@@ -35,6 +35,7 @@ Removed and changed interface (breaking changes)
 - ``Minuit.migrad``
 
   - Keyword ``resume`` was removed; use ``Minuit.reset`` instead
+  - Keyword ``precision`` was removed; use ``Minuit.precision`` instead
   - Return value is now ``self`` instead of ``self.fmin, self.params``
 
 - ``Minuit.hesse``: Return value is now ``self`` instead of ``self.params``
@@ -70,9 +71,9 @@ Removed and changed interface (breaking changes)
   - Property ``ngrad`` is the total number of gradient calls so far
   - ``ngrad_total`` was removed and replaced by ``ngrad``
   - ``nfcn_total`` was removed and replaced by ``nfcn``
-
-- ``util.MError`` is now a data class, dict-like interface was removed (see ``util.FMin``)
-- ``util.Param`` is now a data class, dict-like interface was removed (see ``util.FMin``)
+  - ``up`` was removed and replaced by ``errordef``
+  - ``util.MError`` is now a data class, dict-like interface was removed (see ``util.FMin``)
+  - ``util.Param`` is now a data class, dict-like interface was removed (see ``util.FMin``)
 - ``util.Matrix`` is now a subclass of a Numpy ndarray instead of a tuple of tuples
 - ``util.InitialParamWarning`` was removed since it is no longer used
 - ``util.MigradResult`` was removed since it is no longer used
@@ -82,12 +83,13 @@ New features
 ~~~~~~~~~~~~
 - ``Minuit`` class
 
-  - Is now a slot class, assigning to a non-existent attribute (e.g. because of a typo) now raises an error
+  - Now a slot class, assigning to a non-existent attribute (e.g. because of a typo) now raises an error
   - New method ``simplex`` to minimise the function with the Nelder-Mead method
   - New method ``scan`` to minimise the function with a brute-force grid search (not recommended and infeasible for fits with more than a few free parameters)
   - New method ``reset`` reverts to the initial parameter state
-  - Now pretty-prints in Jupyter notebooks and the ipython shell, showing the equivalent of ``Minuit.fmin``, ``Minuit.params``, ``Minuit.merrors``, ``Minuit.covariance``, whatever is available
   - New property ``limits``, an array-like view of the current parameter limits; allows to query and set limits with behavior analog to ``values``, ``errors`` etc.; broadcasting is supported, e.g. ``minuit.limits = (0, 1)`` makes all parameters bounded between 0 and 1, ``minuit.limits = None`` removes all limits
+  - New property ``precision`` to change the precision that Minuit assumes for internal calculations of derivatives
+  - Now pretty-prints in Jupyter notebooks and the ipython shell, showing the equivalent of ``Minuit.fmin``, ``Minuit.params``, ``Minuit.merrors``, ``Minuit.covariance``, whatever is available
 
 - ``util.Param`` class
 

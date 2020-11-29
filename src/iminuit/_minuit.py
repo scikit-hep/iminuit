@@ -26,6 +26,7 @@ class Minuit:
         "_fcn",
         "_strategy",
         "_tolerance",
+        "_precision",
         "_values",
         "_errors",
         "_merrors",
@@ -53,7 +54,7 @@ class Minuit:
     @property
     def grad(self):
         """Gradient function of the cost function."""
-        return self._fcn.grad
+        return self._fcn._grad
 
     @property
     def pos2var(self):
@@ -87,15 +88,32 @@ class Minuit:
             m_nll = Minuit(a_likelihood_function)
             m_nll.errordef = Minuit.LIKELIHOOD     # == 0.5
         """
-        return self._fcn.up
+        return self._fcn._errordef
 
     @errordef.setter
     def errordef(self, value):
         if value <= 0:
             raise ValueError(f"errordef={value} must be a positive number")
-        self._fcn.up = value
+        self._fcn._errordef = value
         if self._fmin:
-            self._fmin._src.up = value
+            self._fmin._src.errordef = value
+
+    @property
+    def precision(self):
+        """Estimated precision of the cost function.
+
+        Default: None. If set to None, Minuit assumes the cost function is computed in
+        double precision. If the precision of the cost function is lower (because it
+        computes in single precision, for example) set this to some multiple of the
+        smallest relative change of a parameter that still changes the function.
+        """
+        return self._precision
+
+    @precision.setter
+    def precision(self, value):
+        if value is not None and not (value > 0):
+            raise ValueError("precision must be a positive number or None")
+        self._precision = value
 
     @property
     def tol(self):
@@ -167,11 +185,11 @@ class Minuit:
     @property
     def throw_nan(self):
         """Boolean. Whether to raise runtime error if function evaluate to nan."""
-        return self._fcn.throw_nan
+        return self._fcn._throw_nan
 
     @throw_nan.setter
     def throw_nan(self, value):
-        self._fcn.throw_nan = value
+        self._fcn._throw_nan = value
 
     @property
     def values(self):
@@ -371,12 +389,12 @@ class Minuit:
     @property
     def nfcn(self):
         """Total number of function calls."""
-        return self._fcn.nfcn
+        return self._fcn._nfcn
 
     @property
     def ngrad(self):
         """Total number of gradient calls."""
-        return self._fcn.ngrad
+        return self._fcn._ngrad
 
     def __init__(
         self,
@@ -478,7 +496,8 @@ class Minuit:
 
         if len(args) == 0 and len(kwds) == 0:
             raise RuntimeError(
-                "starting values are required" + (f" for {name}" if name else "")
+                "starting value(s) are required"
+                + (f" for {' '.join(name)}" if name else "")
             )
 
         # Maintain two dictionaries to easily convert between
@@ -486,33 +505,40 @@ class Minuit:
         self._pos2var = tuple(name)
         self._var2pos = {k: i for i, k in enumerate(name)}
 
-        if hasattr(fcn, "errordef"):
-            errordef = fcn.errordef
-        else:
-            errordef = 0
-
         self._tolerance = 0.1
         self._strategy = MnStrategy(1)
-        self._fcn = FCN(fcn, grad, array_call, errordef)
+        self._fcn = FCN(
+            fcn,
+            getattr(fcn, "grad", grad),
+            array_call,
+            getattr(fcn, "errordef", 0.0),
+        )
+
         self._init_state = _make_init_state(self._pos2var, args, kwds)
         self._values = mutil.ValueView(self)
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
         self._limits = mutil.LimitView(self, 1)
 
+        self.precision = getattr(fcn, "precision", None)
+
         self.reset()
 
     def reset(self):
-        """Reset minimization state to initial state."""
+        """Reset minimization state to initial state.
+
+        Leaves :attr:`strategy`, :attr:`precision`, :attr:`tol`, :attr:`errordef`,
+        :attr:`print_level` unchanged.
+        """
         self._last_state = self._init_state
         self._fmin = None
-        self._fcn.nfcn = 0
-        self._fcn.ngrad = 0
+        self._fcn._nfcn = 0
+        self._fcn._ngrad = 0
         self._merrors = mutil.MErrors()
         self._covariance = None
         return self  # return self for method chaining and to autodisplay current state
 
-    def migrad(self, ncall=None, precision=None, iterate=5):
+    def migrad(self, ncall=None, iterate=5):
         """Run MnMigrad from the Minuit2 library.
 
         MIGRAD is a robust minimisation algorithm which earned its reputation
@@ -526,11 +552,6 @@ class Minuit:
               (indicates to use an internal heuristic). Note: The limit may be slightly
               violated, because the condition is checked only after a full iteration of
               the algorithm, which usually performs several function calls.
-
-            * **precision**: override Minuit's precision estimate for the cost function.
-              Default: None (= use epsilon of a C++ double). If the cost function has a
-              lower precision (e.g. of a C++ float), setting this to a lower value will
-              accelerate convergence and reduce the rate of unsuccessful convergence.
 
             * **iterate**: automatically call Migrad up to N times if convergence
               was not reached. Default: 5. This simple heuristic makes Migrad converge
@@ -547,14 +568,14 @@ class Minuit:
         if iterate < 1:
             raise ValueError("iterate must be at least 1")
 
-        _check_errordef(self._fcn)
         migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
-        if precision is not None:
-            migrad.precision = precision
 
         # Automatically call Migrad up to `iterate` times if minimum is not valid.
         # This simple heuristic makes Migrad converge more often.
         for _ in range(iterate):
+            # workaround: precision must be set again after each call to MnMigrad
+            if self._precision is not None:
+                migrad.precision = self._precision
             fm = migrad(ncall, self._tolerance)
             if fm.is_valid or fm.has_reached_call_limit:
                 break
@@ -566,14 +587,14 @@ class Minuit:
         #   ModularFunctionMinimizer::Minimize
         # - goal is used to detect convergence but violations by 10x are also accepted;
         #   see VariableMetricBuilder.cxx:425
-        edm_goal = 2e-3 * max(self._tolerance * fm.up, migrad.precision.eps2)
+        edm_goal = 2e-3 * max(self._tolerance * fm.errordef, migrad.precision.eps2)
 
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, edm_goal)
+        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
         self._make_covariance()
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall=None, precision=None):
+    def simplex(self, ncall=None):
         """Run MnSimplex from the Minuit2 C++ library.
 
         Uses a variant of the Nelder-Mead algorithm to find the minimum. It does not
@@ -599,11 +620,6 @@ class Minuit:
               violated, because the condition is checked only after a full iteration of
               the algorithm, which usually performs several function calls.
 
-            * **precision**: override Minuit's precision estimate for the cost function.
-              Default: None (= use epsilon of a C++ double). If the cost function has a
-              lower precision (e.g. of a C++ float), setting this to a lower value will
-              accelerate convergence and reduce the rate of unsuccessful convergence.
-
         **Return:**
 
             self
@@ -612,16 +628,15 @@ class Minuit:
         if ncall is None:
             ncall = 0  # tells C++ Minuit to use its internal heuristic
 
-        _check_errordef(self._fcn)
         simplex = MnSimplex(self._fcn, self._last_state, self.strategy)
-        if precision is not None:
-            simplex.precision = precision
+        if self._precision is not None:
+            simplex.precision = self._precision
 
         fm = simplex(ncall, self._tolerance)
         self._last_state = fm.state
 
-        edm_goal = max(self._tolerance * fm.up, simplex.precision.eps2)
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, edm_goal)
+        edm_goal = max(self._tolerance * fm.errordef, simplex.precision.eps2)
+        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -710,13 +725,12 @@ class Minuit:
 
         run(0)
 
-        _check_errordef(self._fcn)
-        edm_goal = self._tolerance * self._fcn.up
+        edm_goal = self._tolerance * self._fcn._errordef
         fm = FunctionMinimum(
             self._fcn, self._last_state, x[self.npar], self.strategy, edm_goal
         )
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, edm_goal)
+        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -758,15 +772,12 @@ class Minuit:
 
         hesse = MnHesse(self.strategy)
 
-        _check_errordef(self._fcn)
         fm = self._fmin._src if self._fmin else None
         if fm and fm.state == self._last_state:
             # _last_state not modified, can update _fmin which is more efficient
             hesse(self._fcn, fm, ncall)
             self._last_state = fm.state
-            self._fmin = mutil.FMin(
-                fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance
-            )
+            self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self._tolerance)
         else:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin
@@ -840,8 +851,7 @@ class Minuit:
                 else:
                     pars.append(par)
 
-        _check_errordef(self._fcn)
-        with TemporaryUp(self._fcn, sigma):
+        with TemporaryErrordef(self._fcn, sigma):
             minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
             for par in pars:
                 me = minos(self._var2pos[par], ncall, self._tolerance)
@@ -863,8 +873,8 @@ class Minuit:
                     me.min,
                 )
 
-        self._fmin._nfcn = self._fcn.nfcn
-        self._fmin._ngrad = self._fcn.ngrad
+        self._fmin._nfcn = self.nfcn
+        self._fmin._ngrad = self.ngrad
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -904,7 +914,6 @@ class Minuit:
         state = MnUserParameterState(self._last_state)  # copy
         ipar = self._var2pos[vname]
         state.fix(ipar)
-        _check_errordef(self._fcn)
         for i, v in enumerate(values):
             state.set_value(ipar, v)
             migrad = MnMigrad(self._fcn, state, self.strategy)
@@ -1154,7 +1163,7 @@ class Minuit:
                 result[i, j] = self._fcn(varg)
 
         if subtract_min:
-            result -= self._fmin.fval
+            result -= self.fval
 
         return x_val, y_val, result
 
@@ -1208,8 +1217,7 @@ class Minuit:
         if x not in vary or y not in vary:
             raise ValueError("mncontour cannot be run on fixed parameters.")
 
-        _check_errordef(self._fcn)
-        with TemporaryUp(self._fcn, sigma):
+        with TemporaryErrordef(self._fcn, sigma):
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             mex, mey, ce = mnc(ix, iy, numpoints)
 
@@ -1393,11 +1401,15 @@ def _make_init_state(pos2var, args, kwds):
     else:
         for kw in kwds:
             if kw not in pos2var:
-                raise RuntimeError(f"{kw} is not one of the parameters {pos2var}")
+                raise RuntimeError(
+                    f"{kw} is not one of the parameters [{' '.join(pos2var)}]"
+                )
         nargs = len(kwds)
 
     if len(pos2var) != nargs:
-        raise RuntimeError(f"{nargs} values given for {len(pos2var)} parameters")
+        raise RuntimeError(
+            f"{nargs} values given for {len(pos2var)} function parameter(s)"
+        )
 
     state = MnUserParameterState()
     for i, x in enumerate(pos2var):
@@ -1405,16 +1417,6 @@ def _make_init_state(pos2var, args, kwds):
         err = mutil._guess_initial_step(val)
         state.add(x, val, err)
     return state
-
-
-def _check_errordef(fcn):
-    if fcn.up == 0:
-        warn(
-            "errordef not set, defaults to 1",
-            mutil.IMinuitWarning,
-            stacklevel=3,
-        )
-        fcn.up = 1
 
 
 def _get_params(mps, merrors):
@@ -1444,14 +1446,14 @@ def _get_params(mps, merrors):
     )
 
 
-class TemporaryUp:
+class TemporaryErrordef:
     def __init__(self, fcn, sigma):
-        self.saved = fcn.up
+        self.saved = fcn._errordef
         self.fcn = fcn
-        self.fcn.up *= sigma ** 2
+        self.fcn._errordef *= sigma ** 2
 
     def __enter__(self):
         pass
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.fcn.up = self.saved
+    def __exit__(self, *args):
+        self.fcn._errordef = self.saved
