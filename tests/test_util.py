@@ -254,3 +254,41 @@ def test_normalize_limit():
 def test_guess_initial_step():
     assert util._guess_initial_step(0) == 0.1
     assert util._guess_initial_step(1) == 0.01
+
+
+def test_address_of_cfunc():
+    nb = pytest.importorskip("numba")
+
+    nb_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
+
+    @nb.cfunc(nb_sig)
+    def fcn(n, x):
+        x = nb.carray(x, (n,))
+        r = 0.0
+        for i in range(n):
+            r += (x[i] - i) ** 2
+        return r
+
+    from ctypes import cast, c_void_p, CFUNCTYPE, POINTER, c_double, c_uint32
+
+    address = cast(fcn.ctypes, c_void_p).value
+    assert util._address_of_cfunc(fcn) == address
+
+    # let's see if we can call the function pointer, going full circle
+    c_sig = CFUNCTYPE(c_double, c_uint32, POINTER(c_double))
+    c_fcn = cast(address, c_sig)
+
+    v = np.array((1.0, 2.0))
+    assert c_fcn(2, v.ctypes.data_as(POINTER(c_double))) == 2.0
+
+
+def test_address_of_cfunc_bad_signature():
+    nb = pytest.importorskip("numba")
+
+    nb_sig = nb.types.double(nb.types.double, nb.types.CPointer(nb.types.double))
+
+    @nb.cfunc(nb_sig)
+    def fcn(y, x):
+        return 0
+
+    assert util._address_of_cfunc(fcn) == 0

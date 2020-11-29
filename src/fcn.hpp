@@ -29,6 +29,8 @@ struct FCN : ROOT::Minuit2::FCNGradientBase {
   py::object fcn_, grad_;
   bool array_call_;
   mutable double errordef_;
+  using cfcn_t = double (*)(std::uint32_t, const double*);
+  cfcn_t cfcn_ = nullptr;
   bool throw_nan_ = false;
   mutable unsigned nfcn_ = 0, ngrad_ = 0;
 };

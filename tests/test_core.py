@@ -86,6 +86,38 @@ def test_FCN_with_grad():
     assert fcn._ngrad > 0
 
 
+def test_FCN_with_cfunc():
+    nb = pytest.importorskip("numba")
+
+    c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
+
+    @nb.cfunc(c_sig)
+    def fcn(n, x):
+        x = nb.carray(x, (n,))
+        r = 0.0
+        for i in range(n):
+            r += (x[i] - i) ** 2
+        return r
+
+    fcn = FCN(fcn, None, True, 1)
+    state = MnUserParameterState()
+    state.add("x", 5, 0.1)
+    state.add("y", 5, 0.1)
+    migrad = MnMigrad(fcn, state, 1)
+    fmin = migrad(0, 0.1)
+    state = fmin.state
+    assert len(state) == 2
+    assert state[0].number == 0
+    assert state[0].name == "x"
+    assert state[0].value == approx(0, abs=1e-3)
+    assert state[0].error == approx(1, abs=1e-3)
+    assert state[1].number == 1
+    assert state[1].name == "y"
+    assert state[1].value == approx(1, abs=1e-3)
+    assert state[1].error == approx(1, abs=1e-3)
+    assert fcn._nfcn > 0
+
+
 def test_grad_np():
     fcn = FCN(
         lambda xy: 10 + xy[0] ** 2 + ((xy[1] - 1) / 2) ** 2,
