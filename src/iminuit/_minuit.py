@@ -491,8 +491,10 @@ class Minuit:
 
         if name is None:
             name = mutil.describe(fcn)
-            if len(name) == 0 or (array_call and len(name) == 1):
+            if array_call or len(name) == 0:
                 name = tuple(f"x{i}" for i in range(len(args)))
+            elif len(args) != len(name):
+                raise RuntimeError("foo")
 
         if len(args) == 0 and len(kwds) == 0:
             raise RuntimeError(

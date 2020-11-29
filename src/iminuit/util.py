@@ -712,6 +712,8 @@ def describe(callable):
         def fcn(a, b, c=1): ...
 
     """
+    if _address_of_cfunc(callable) != 0:
+        return ()
     return (
         _arguments_from_func_code(callable)
         or _arguments_from_inspect(callable)
