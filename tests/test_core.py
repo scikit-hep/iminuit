@@ -17,8 +17,10 @@ def debug():
 
     prev = MnPrint.global_level
     MnPrint.global_level = 3
+    MnPrint.show_prefix_stack(True)
     yield
     MnPrint.global_level = prev
+    MnPrint.show_prefix_stack(False)
 
 
 def test_MnStrategy():
@@ -69,7 +71,6 @@ def test_FCN():
 
 
 def test_FCN_with_grad():
-    # MnPrint.set_global_level(3)
     fcn = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
