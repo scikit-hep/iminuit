@@ -57,6 +57,13 @@ double FCN::Up() const {
   return errordef_;
 }
 
+void set_errordef(FCN& self, double value) {
+  if (value > 0) {
+    self.SetUp(value);
+  } else
+    throw std::invalid_argument("errordef must be a positive number");
+}
+
 std::string error_message(const std::vector<double>& x) {
   std::ostringstream msg;
   msg << "result is NaN for [ ";
@@ -88,13 +95,6 @@ std::vector<double> FCN::check_vector(std::vector<double> r,
     }
   }
   return r;
-}
-
-void set_errordef(FCN& self, double value) {
-  if (value > 0) {
-    self.SetUp(value);
-  } else
-    throw std::invalid_argument("errordef must be a positive number");
 }
 
 void bind_fcn(py::module m) {
