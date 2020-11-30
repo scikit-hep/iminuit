@@ -436,10 +436,8 @@ def test_html_merrors(minuit):
 
 
 def test_html_matrix():
-    m = Minuit(lambda x, y: x ** 2 + 4 * y ** 2, x=0, y=0)
-    m.errordef = 1
-    m.migrad()
-    matrix = m.covariance
+    matrix = Matrix(("x", "y"))
+    matrix[:] = ((1.0, 0.0), (0.0, 0.25))
     # fmt: off
     assert matrix._repr_html_() == r"""<table>
     <tr>
@@ -450,11 +448,11 @@ def test_html_matrix():
     <tr>
         <th> x </th>
         <td> 1.00 </td>
-        <td style="background-color:rgb(250,250,250);color:black"> -0.00 </td>
+        <td style="background-color:rgb(250,250,250);color:black"> 0.00 </td>
     </tr>
     <tr>
         <th> y </th>
-        <td style="background-color:rgb(250,250,250);color:black"> -0.00 </td>
+        <td style="background-color:rgb(250,250,250);color:black"> 0.00 </td>
         <td> 0.25 </td>
     </tr>
 </table>"""
@@ -462,10 +460,8 @@ def test_html_matrix():
 
 
 def test_html_correlation_matrix():
-    m = Minuit(lambda x, y: x ** 2 + (x - y) ** 2, x=0, y=0)
-    m.errordef = 1
-    m.migrad()
-    matrix = m.covariance.correlation()
+    matrix = Matrix(("x", "y"))
+    matrix[:] = ((1.0, 0.707), (0.707, 1.0))
     # fmt: off
     assert matrix._repr_html_() == r"""<table>
     <tr>
