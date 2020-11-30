@@ -535,8 +535,8 @@ def test_initial_value():
     m = Minuit(func0, (1.0, 2.0))
     assert_allclose(m.values[0], 1.0)
     assert_allclose(m.values[1], 2.0)
-    assert_allclose(m.values["x0"], 1.0)
-    assert_allclose(m.values["x1"], 2.0)
+    assert_allclose(m.values["x"], 1.0)
+    assert_allclose(m.values["y"], 2.0)
 
     with pytest.raises(RuntimeError):
         Minuit(func0, 1, y=2)
