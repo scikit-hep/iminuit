@@ -1348,3 +1348,22 @@ def test_issue_544():
     m.fixed = True
     with pytest.warns(IMinuitWarning):
         m.hesse()  # this used to cause a segfault
+
+
+def test_cfunc():
+    nb = pytest.importorskip("numba")
+
+    c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
+
+    @lsq
+    @nb.cfunc(c_sig)
+    def fcn(n, x):
+        x = nb.carray(x, (n,))
+        r = 0.0
+        for i in range(n):
+            r += (x[i] - i) ** 2
+        return r
+
+    m = Minuit(fcn, (1, 2, 3))
+    m.migrad()
+    assert_allclose(m.values, (0, 1, 2), atol=1e-8)
