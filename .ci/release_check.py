@@ -14,10 +14,11 @@ with open(changelog_fn) as f:
     assert version in f.read()
 
 # make sure that version itself was updated
-r = requests.get("https://pypi.org/pypi/iminuit/json")
-releases = r.json()["releases"]
+pypi_versions = []
+for prefix in ("pypi", "test.pypi"):
+    url = f"https://{prefix}.org/pypi/iminuit/json"
+    r = requests.get(url)
+    releases = r.json()["releases"]
+    pypi_versions += [parse_version(v) for v in releases]
 
-pypi_versions = [parse_version(v) for v in releases]
-this_version = parse_version(version)
-
-assert this_version not in pypi_versions
+assert parse_version(version) not in pypi_versions

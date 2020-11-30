@@ -5,8 +5,8 @@
 Changelog
 =========
 
-2.0 (???, 2020)
------------------
+2.0rc1 (???, 2020)
+------------------
 This is a breaking change for iminuit. Interface that was deprecated in 1.x has been removed. In addition, breaking changes were made to the interface to arrive at a clean minimal state that is easy to learn. Under the hood, Cython was replaced with pybind11 to generate the bindings to the C++ Minuit2 library. This simplified the code considerably (Cython is very bad at generating correct C++ bindings, while it is breeze with pybind11).
 
 Removed and changed interface (breaking changes)
