@@ -168,18 +168,14 @@ class Minuit:
         - 1: print minimal debug messages to terminal
         - 2: print more debug messages to terminal
         - 3: print even more debug messages to terminal
+
+        Warning: Setting print_level has the unwanted side-effect of setting the level
+        globally for all Minuit instances in the current Python session.
         """
         return MnPrint.global_level
 
     @print_level.setter
     def print_level(self, level):
-        if level > 0:
-            warn(
-                "Setting print_level has the side-effect of setting the level "
-                "globally for all Minuit instances in the current Python session",
-                mutil.IMinuitWarning,
-                stacklevel=2,
-            )
         MnPrint.global_level = level
 
     @property
