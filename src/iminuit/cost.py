@@ -17,13 +17,13 @@ def _sum_log_x(x):
 
 
 def _neg_sum_n_log_mu(n, mu):
-    # subtract log(n) to keep sum small, required to not loose accuracy in Minuit
-    return np.sum(n * _safe_log(n / mu))  # pragma: no cover
+    # subtract n log(n) to keep sum small, required to not loose accuracy in Minuit
+    return np.sum(n * _safe_log(n / (mu + 1e-323)))  # pragma: no cover
 
 
 def _sum_log_poisson(n, mu):
     # subtract n - n log(n) to keep sum small, required to not loose accuracy in Minuit
-    return np.sum(mu - n + n * _safe_log(n / mu))  # pragma: no cover
+    return np.sum(mu - n + n * _safe_log(n / (mu + 1e-323)))  # pragma: no cover
 
 
 def _z_squared(y, ye, ym):
