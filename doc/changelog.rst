@@ -7,7 +7,7 @@ Changelog
 
 2.0 (???, 2020)
 -----------------
-This is a breaking change for iminuit. Interface that was deprecated in 1.x has been removed. In addition, breaking changes were made to the interface to arrive at a clean minimal state that is easy to learn. Under the hood, Cython was replaced with pybind11 to generate the bindings to the C++ Minuit2 library. This simplified the code considerably (Cython is very bad at generating correct C++ bindings, while it is breeze with pybind11).
+This is a breaking change for iminuit. Interface that was deprecated in 1.x has been removed. In addition, breaking changes were made to the interface to arrive at a clean minimal state that is easy to learn and safe to use. Under the hood, Cython was replaced with pybind11 to generate the bindings to the C++ Minuit2 library. This simplified the code considerably (Cython is bad at generating correct C++ bindings, while it is a breeze with pybind11).
 
 Removed and changed interface (breaking changes)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,10 +41,10 @@ Removed and changed interface (breaking changes)
 - ``Minuit.hesse``: Return value is now ``self`` instead of ``self.params``
 - ``Minuit.minos``
 
-  - Now accepts more than one positional arguments (which must be parameter names) and computes Minos errors for them
+  - Now accepts more than one positional argument (which must be parameter names) and computes Minos errors for them
   - Return value is now ``self`` instead of ``self.merrors``
 
-- ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (the Minuit object will become pickleable in the future)
+- ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (the Minuit object will become copyable and pickleable in the future)
 - ``Minuit.matrix`` was removed; see ``Minuit.covariance``
 - ``Minuit.covariance`` instead of a dict-like class is now an enhanced subclass of numpy.ndarray (iminuit.util.Matrix) with the features:
 
@@ -63,7 +63,7 @@ Removed and changed interface (breaking changes)
 - ``Minuit.ngrads_total`` was replaced with ``Minuit.ngrad``
 - ``Minuit.np_covariance`` is now obsolete and was removed; see ``Minuit.covariance``
 - ``Minuit.np_matrix`` is now obsolete and was removed; see ``Minuit.covariance``
-- ``Minuit.use_array_call`` was removed, ``Minuit.fcn`` and ``Minuit.grad`` require parameter values in form of a sequence, e.g. ``minuit.fcn((1, 2))``
+- ``Minuit.use_array_call`` was removed, ``Minuit.fcn`` and ``Minuit.grad`` always require parameter values in form of sequences, e.g. ``minuit.fcn((1, 2))``
 - ``util.FMin`` is now a data class with read-only attributes, the dict-like interface was removed (methods like ``keys()``, ``items()`` are gone)
 
   - ``tolerance`` attribute was replaced with ``edm_goal``, since the effect of ``tolerance`` varies for ``Minuit.migrad`` and ``Minuit.simplex``, ``edm_goal`` is the actual value of interest
@@ -74,7 +74,7 @@ Removed and changed interface (breaking changes)
   - ``up`` was removed and replaced by ``errordef``
   - ``util.MError`` is now a data class, dict-like interface was removed (see ``util.FMin``)
   - ``util.Param`` is now a data class, dict-like interface was removed (see ``util.FMin``)
-- ``util.Matrix`` is now a subclass of a Numpy ndarray instead of a tuple of tuples
+- ``util.Matrix`` is now a subclass of a numpy.ndarray instead of a tuple of tuples
 - ``util.InitialParamWarning`` was removed since it is no longer used
 - ``util.MigradResult`` was removed since it is no longer used
 - ``util.arguments_from_inspect`` was removed from the public interface, it lives on as a private function
@@ -84,13 +84,14 @@ New features
 - ``Minuit`` class
 
   - Now a slot class, assigning to a non-existent attribute (e.g. because of a typo) now raises an error
+  - Parameter names in Unicode are now fully supported, e.g. ``def fcn(α, β): ...`` works
   - New method ``simplex`` to minimise the function with the Nelder-Mead method
   - New method ``scan`` to minimise the function with a brute-force grid search (not recommended and infeasible for fits with more than a few free parameters)
   - New method ``reset`` reverts to the initial parameter state
-  - New property ``limits``, an array-like view of the current parameter limits; allows to query and set limits with behavior analog to ``values``, ``errors`` etc.; broadcasting is supported, e.g. ``minuit.limits = (0, 1)`` makes all parameters bounded between 0 and 1, ``minuit.limits = None`` removes all limits
+  - New property ``limits``, an array-like view of the current parameter limits; allows to query and set limits with a behaviour analog to ``values``, ``errors`` etc.; broadcasting is supported, e.g. ``minuit.limits = (0, 1)`` makes all parameters bounded between 0 and 1 and ``minuit.limits = None`` removes all limits
   - New property ``precision`` to change the precision that Minuit assumes for internal calculations of derivatives
-  - Support for calling numba-compiled functions which release the GIL
-  - Now pretty-prints in Jupyter notebooks and the ipython shell, showing the equivalent of ``Minuit.fmin``, ``Minuit.params``, ``Minuit.merrors``, ``Minuit.covariance``, whatever is available
+  - Support for calling numba-compiled functions that release the GIL (slightly more efficient already today and may be used in the future to compute derivatives in parallel)
+  - Now pretty-prints itself in Jupyter notebooks and the ipython shell, showing the equivalent of ``Minuit.fmin``, ``Minuit.params``, ``Minuit.merrors``, ``Minuit.covariance``, whatever is available
 
 - ``util.Param`` class
 
@@ -100,7 +101,6 @@ New features
 - ``util.Params`` class
 
   - New method ``to_table``, which returns a format that can be consumed by the external ``tabulate`` Python module
-  - All attributes are now documented inline with docstrings which can be investigated with ``pydoc`` and ``help()`` in the REPL
 
 - ``util.FMin`` class
 
@@ -115,7 +115,7 @@ New features
 
 Bug-fixes
 ~~~~~~~~~
-- Calling ``Minuit.hesse`` when all parameters were fixed produced now raises an error instead of producing a segfault
+- Calling ``Minuit.hesse`` when all parameters were fixed now raises an error instead of producing a segfault
 - All life-time/memory leak issues in the iminuit interface code should be resolved now, even when there is an exception during the minimisation (there can still be errors in the underlying C++ Minuit2 library, which would have to be fixed upstream)
 
 Other changes
