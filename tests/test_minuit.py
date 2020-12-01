@@ -15,8 +15,10 @@ def debug():
 
     prev = MnPrint.global_level
     MnPrint.global_level = 3
+    MnPrint.show_prefix_stack(True)
     yield
     MnPrint.global_level = prev
+    MnPrint.show_prefix_stack(False)
 
 
 is_pypy = platform.python_implementation() == "PyPy"
@@ -922,16 +924,14 @@ def test_errordef():
         m.errordef = 0
 
 
-def test_print_level_warning():
+def test_print_level():
     from iminuit._core import MnPrint
 
     m = Minuit(lambda x: 0, x=0)
-    m.print_level = 0  # no warning
+    m.print_level = 0
     assert m.print_level == 0
     assert MnPrint.global_level == 0
-    with pytest.warns(IMinuitWarning):
-        # setting print_level changes printing everywhere...
-        m.print_level = 1
+    m.print_level = 1
     assert MnPrint.global_level == 1
     MnPrint.global_level = 0
 

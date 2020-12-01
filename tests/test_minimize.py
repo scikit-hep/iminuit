@@ -1,6 +1,5 @@
 import pytest
 from iminuit import minimize
-from iminuit.util import IMinuitWarning
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 
@@ -66,8 +65,7 @@ def test_tol():
 def test_disp(capsys):
     minimize(lambda x: x ** 2, 0)
     assert capsys.readouterr()[0] == ""
-    with pytest.warns(IMinuitWarning):
-        minimize(lambda x: x ** 2, 0, options={"disp": True})
+    minimize(lambda x: x ** 2, 0, options={"disp": True})
     assert capsys.readouterr()[0] != ""
 
 
