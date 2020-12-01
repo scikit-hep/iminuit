@@ -7,7 +7,7 @@ import numpy as np
 
 
 def _safe_log(x):
-    # does not return NaN for x >= 0
+    # does not return NaN for x == 0
     log_const = 1e-323  # pragma: no cover
     return np.log(x + log_const)  # pragma: no cover
 
@@ -16,12 +16,14 @@ def _sum_log_x(x):
     return np.sum(_safe_log(x))  # pragma: no cover
 
 
-def _sum_n_log_mu(n, mu):
-    return np.sum(n * _safe_log(mu))  # pragma: no cover
+def _neg_sum_n_log_mu(n, mu):
+    # subtract n log(n) to keep sum small, required to not loose accuracy in Minuit
+    return np.sum(n * _safe_log(n / (mu + 1e-323)))  # pragma: no cover
 
 
 def _sum_log_poisson(n, mu):
-    return np.sum(mu - n * _safe_log(mu))  # pragma: no cover
+    # subtract n - n log(n) to keep sum small, required to not loose accuracy in Minuit
+    return np.sum(mu - n + n * _safe_log(n / (mu + 1e-323)))  # pragma: no cover
 
 
 def _z_squared(y, ye, ym):
@@ -46,7 +48,7 @@ try:
 
     _safe_log = jit(_safe_log)
     _sum_log_x = jit(_sum_log_x)
-    _sum_n_log_mu = jit(_sum_n_log_mu)
+    _neg_sum_n_log_mu = jit(_neg_sum_n_log_mu)
     _sum_log_poisson = jit(_sum_log_poisson)
     _z_squared = jit(_z_squared)
     _sum_z_squared = jit(_sum_z_squared)
@@ -207,7 +209,7 @@ class BinnedNLL(Cost):
             prob = prob[ma]
         mu = np.sum(n) * prob
         # + np.sum(mu) can be skipped, it is effectively constant
-        r = -_sum_n_log_mu(n, mu)
+        r = _neg_sum_n_log_mu(n, mu)
         if self.verbose >= 1:
             print(args, "->", r)
         return r

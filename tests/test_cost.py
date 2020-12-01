@@ -14,6 +14,10 @@ stats = pytest.importorskip("scipy.stats")
 norm = stats.norm
 
 
+def expon_cdf(x, a):
+    return 1 - np.exp(-x / a)
+
+
 @pytest.fixture
 def unbinned():
     np.random.seed(1)
@@ -155,19 +159,20 @@ def test_ExtendedUnbinnedNLL_mask():
 
 
 def test_BinnedNLL_mask():
-    c = BinnedNLL([1, 1000, 2], [0, 1, 2, 3], lambda x, a: x + a)
 
-    assert c(2) == pytest.approx(-7000, rel=0.1)
+    c = BinnedNLL([5, 1000, 1], [0, 1, 2, 3], expon_cdf)
+
+    c_unmasked = c(1)
     c.mask = np.arange(3) != 1
-    assert c(2) == pytest.approx(-3, rel=0.1)
+    assert c(1) < c_unmasked
 
 
 def test_ExtendedBinnedNLL_mask():
-    c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], lambda x, a: a * x)
+    c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], expon_cdf)
 
-    assert c(2) == pytest.approx(-700, rel=0.1)
+    c_unmasked = c(2)
     c.mask = np.arange(3) != 1
-    assert c(2) == pytest.approx(2, rel=0.1)
+    assert c(2) < c_unmasked
 
 
 def test_LeastSquares_mask():
