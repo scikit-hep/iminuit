@@ -281,52 +281,6 @@ class Minuit:
         """
         return self._covariance
 
-    def np_values(self):
-        """Parameter values in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,).
-        """
-        return np.array(self.values, dtype=np.double)
-
-    def np_errors(self):
-        """Hesse parameter errors in numpy array format.
-
-        Fixed parameters are included, the order follows :attr:`parameters`.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (N,).
-        """
-        return np.array(self.errors, dtype=np.double)
-
-    def np_merrors(self):
-        """MINOS parameter errors in numpy array format.
-
-        Fixed parameters are included (zeros are returned), the order follows
-        :attr:`parameters`.
-
-        The format of the produced array follows matplotlib conventions, as
-        in ``matplotlib.pyplot.errorbar``. The shape is (2, N) for N
-        parameters. The first row represents the downward error as a positive
-        offset from the center. Likewise, the second row represents the
-        upward error as a positive offset from the center.
-
-        **Returns:**
-
-            ``numpy.ndarray`` of shape (2, N).
-        """
-        # array format follows matplotlib conventions, see pyplot.errorbar
-        a = np.zeros((2, self.npar))
-        for me in self.merrors.values():
-            i = self._var2pos[me.name]
-            a[0, i] = -me.lower
-            a[1, i] = me.upper
-        return a
-
     @property
     def npar(self):
         """Number of parameters."""
@@ -1007,7 +961,7 @@ class Minuit:
         ipar = self._var2pos[vname]
         scan = np.linspace(bound[0], bound[1], bins, dtype=np.double)
         result = np.empty(bins, dtype=np.double)
-        values = self.np_values()
+        values = np.array(self.values)
         for i, vi in enumerate(scan):
             values[ipar] = vi
             result[i] = self.fcn(values)
@@ -1155,7 +1109,7 @@ class Minuit:
         y_pos = self._var2pos[y]
 
         result = np.empty((bins, bins), dtype=np.double)
-        varg = self.np_values()
+        varg = np.array(self.values)
         for i, x in enumerate(x_val):
             varg[x_pos] = x
             for j, y in enumerate(y_val):

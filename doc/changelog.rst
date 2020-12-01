@@ -63,6 +63,9 @@ Removed and changed interface (breaking changes)
 - ``Minuit.ngrads_total`` was replaced with ``Minuit.ngrad``
 - ``Minuit.np_covariance`` is now obsolete and was removed; see ``Minuit.covariance``
 - ``Minuit.np_matrix`` is now obsolete and was removed; see ``Minuit.covariance``
+- ``Minuit.np_values`` was removed; use ``Minuit.values`` instead or ``np.array(m.values)``
+- ``Minuit.np_errors`` was removed; use ``Minuit.errors`` instead or ``np.array(m.errors)``
+- ``Minuit.np_merrors`` was removed; use ``Minuit.merrors`` or ``Minuit.params`` instead
 - ``Minuit.use_array_call`` was removed, ``Minuit.fcn`` and ``Minuit.grad`` always require parameter values in form of sequences, e.g. ``minuit.fcn((1, 2))``
 - ``util.FMin`` is now a data class with read-only attributes, the dict-like interface was removed (methods like ``keys()``, ``items()`` are gone)
 
