@@ -303,7 +303,6 @@ def test_array_func_2():
     assert len(m.merrors) == 1
     assert m.merrors[0].lower == approx(-1, abs=1e-2)
     assert m.merrors[0].name == "a"
-    assert_allclose(m.np_merrors(), ((1, 0), (1, 0)), rtol=1e-2)
 
 
 def test_wrong_use_of_array_init():
@@ -745,33 +744,6 @@ def test_fmin():
     assert not fm2.is_valid
 
 
-def test_np_values(minuit):
-    actual = minuit.np_values()
-    expected = [2.0, 5.0]
-    assert_allclose(actual, expected, atol=4e-3)
-    assert isinstance(actual, np.ndarray)
-    assert actual.shape == (2,)
-
-
-def test_np_errors(minuit):
-    actual = minuit.np_errors()
-    expected = [2.0, 1.0]
-    assert_allclose(actual, expected, atol=3e-5)
-    assert isinstance(actual, np.ndarray)
-    assert actual.shape == (2,)
-
-
-def test_np_merrors(minuit):
-    actual = minuit.np_merrors()
-    # output format is [abs(down_delta), up_delta] following
-    # the matplotlib convention in matplotlib.pyplot.errorbar
-    down_delta = (-2, -0.83)
-    up_delta = (2, 0.83)
-    assert_allclose(actual, (np.abs(down_delta), up_delta), atol=1e-2)
-    assert isinstance(actual, np.ndarray)
-    assert actual.shape == (2, 2)
-
-
 def test_chi2_fit():
     def chi2(x, y):
         return (x - 1) ** 2 + ((y - 2) / 3) ** 2
@@ -779,8 +751,8 @@ def test_chi2_fit():
     m = Minuit(chi2, x=0, y=0)
     m.errordef = 1
     m.migrad()
-    assert_allclose(m.np_values(), (1, 2))
-    assert_allclose(m.np_errors(), (1, 3))
+    assert_allclose(m.values, (1, 2))
+    assert_allclose(m.errors, (1, 3))
 
 
 def test_likelihood():
@@ -822,9 +794,9 @@ def test_likelihood():
 
     mu = np.mean(data)
     sigma = np.std(data)
-    assert_allclose(m.np_values(), (mu, sigma), rtol=5e-3)
+    assert_allclose(m.values, (mu, sigma), rtol=5e-3)
     s_mu = sigma / len(data) ** 0.5
-    assert_allclose(m.np_errors(), (s_mu, 0.12047), rtol=1e-1)
+    assert_allclose(m.errors, (s_mu, 0.12047), rtol=1e-1)
 
 
 def test_oneside():

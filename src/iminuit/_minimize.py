@@ -119,7 +119,7 @@ def minimize(
 
     n = len(x0)
     return OptimizeResult(
-        x=m.np_values(),
+        x=np.array(m.values),
         success=m.valid,
         fun=m.fval,
         hess_inv=m.covariance if m.covariance is not None else np.ones((n, n)),
