@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - 'doc/**'
       - '.ci/**'
-  push:
 
 jobs:
   cpython:
