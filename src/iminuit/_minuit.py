@@ -857,7 +857,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def mnprofile(self, vname, bins=30, bound=2, subtract_min=False):
+    def mnprofile(self, vname, *, size=30, bound=2, subtract_min=False):
         """Calculate MINOS profile around the specified range.
 
         Scans over **vname** and minimises FCN over the other parameters in each point.
@@ -866,7 +866,7 @@ class Minuit:
 
             * **vname** name of variable to scan
 
-            * **bins** number of scanning bins. Default 30.
+            * **size** number of scanning points. Default: 30.
 
             * **bound**
               If bound is tuple, (left, right) scanning bound.
@@ -886,9 +886,9 @@ class Minuit:
 
         bound = self._normalize_bound(vname, bound)
 
-        values = np.linspace(bound[0], bound[1], bins, dtype=np.double)
-        results = np.empty(bins, dtype=np.double)
-        status = np.empty(bins, dtype=np.bool)
+        values = np.linspace(bound[0], bound[1], size, dtype=np.double)
+        results = np.empty(size, dtype=np.double)
+        status = np.empty(size, dtype=np.bool)
 
         state = MnUserParameterState(self._last_state)  # copy
         ipar = self._var2pos[vname]
@@ -909,7 +909,7 @@ class Minuit:
         return values, results, status
 
     def draw_mnprofile(
-        self, vname, bins=30, bound=2, subtract_min=False, band=True, text=True
+        self, vname, *, size=30, bound=2, subtract_min=False, band=True, text=True
     ):
         """Draw MINOS profile in the specified range.
 
@@ -920,7 +920,7 @@ class Minuit:
 
             * **vname** variable name to scan
 
-            * **bins** number of scanning bin. Default 30.
+            * **size** number of scanning points. Default: 30.
 
             * **bound**
               If bound is tuple, (left, right) scanning bound.
@@ -945,17 +945,19 @@ class Minuit:
         .. plot:: plots/mnprofile.py
             :include-source:
         """
-        x, y, s = self.mnprofile(vname, bins, bound, subtract_min)
+        x, y, s = self.mnprofile(
+            vname, size=size, bound=bound, subtract_min=subtract_min
+        )
         return self._draw_profile(vname, x, y, band, text)
 
-    def profile(self, vname, bins=100, bound=2, subtract_min=False):
+    def profile(self, vname, *, size=100, bound=2, subtract_min=False):
         """Calculate cost function profile around specify range.
 
         **Arguments:**
 
             * **vname** variable name to scan
 
-            * **bins** number of scanning bin. Default 100.
+            * **size** number of scanning points. Default: 100.
 
             * **bound**
               If bound is tuple, (left, right) scanning bound.
@@ -984,8 +986,8 @@ class Minuit:
         bound = self._normalize_bound(vname, bound)
 
         ipar = self._var2pos[vname]
-        scan = np.linspace(bound[0], bound[1], bins, dtype=np.double)
-        result = np.empty(bins, dtype=np.double)
+        scan = np.linspace(bound[0], bound[1], size, dtype=np.double)
+        result = np.empty(size, dtype=np.double)
         values = np.array(self.values)
         for i, vi in enumerate(scan):
             values[ipar] = vi
@@ -995,7 +997,7 @@ class Minuit:
         return scan, result
 
     def draw_profile(
-        self, vname, bins=100, bound=2, subtract_min=False, band=True, text=True
+        self, vname, *, size=100, bound=2, subtract_min=False, band=True, text=True
     ):
         """A convenient wrapper for drawing profile using matplotlib.
 
@@ -1028,7 +1030,7 @@ class Minuit:
             :meth:`draw_mnprofile`
             :meth:`profile`
         """
-        x, y = self.profile(vname, bins, bound, subtract_min)
+        x, y = self.profile(vname, size=size, bound=bound, subtract_min=subtract_min)
         return self._draw_profile(vname, x, y, band, text)
 
     def _draw_profile(self, vname, x, y, band, text):
@@ -1066,7 +1068,7 @@ class Minuit:
 
         return x, y
 
-    def contour(self, x, y, bins=50, bound=2, subtract_min=False):
+    def contour(self, x, y, *, size=50, bound=2, subtract_min=False):
         """2D contour scan.
 
         Return the contour of a function scan over **x** and **y**, while keeping
@@ -1085,6 +1087,8 @@ class Minuit:
             - **x** variable name for X axis of scan
 
             - **y** variable name for Y axis of scan
+
+            * **size** number of scanning points. Default: 50.
 
             - **bound**
               If bound is 2x2 array, [[v1min,v1max],[v2min,v2max]].
@@ -1127,13 +1131,13 @@ class Minuit:
             x_bound = self._normalize_bound(x, bound[0])
             y_bound = self._normalize_bound(y, bound[1])
 
-        x_val = np.linspace(x_bound[0], x_bound[1], bins)
-        y_val = np.linspace(y_bound[0], y_bound[1], bins)
+        x_val = np.linspace(x_bound[0], x_bound[1], size)
+        y_val = np.linspace(y_bound[0], y_bound[1], size)
 
         x_pos = self._var2pos[x]
         y_pos = self._var2pos[y]
 
-        result = np.empty((bins, bins), dtype=np.double)
+        result = np.empty((size, size), dtype=np.double)
         varg = np.array(self.values)
         for i, x in enumerate(x_val):
             varg[x_pos] = x
@@ -1146,7 +1150,7 @@ class Minuit:
 
         return x_val, y_val, result
 
-    def mncontour(self, x, y, cl=None, size=100):
+    def mncontour(self, x, y, *, cl=None, size=100):
         """Two-dimensional MINOS contour scan.
 
         This scans over **x** and **y** and minimises all other free
@@ -1191,7 +1195,7 @@ class Minuit:
             try:
                 from scipy.stats import chi2
 
-                factor = chi2(2).ppf(cl)
+                factor = chi2(2).ppf(float(cl))
             except ImportError:
                 raise ImportError("setting cl requires scipy to be installed")
 
@@ -1211,7 +1215,7 @@ class Minuit:
 
         return np.array(ce)
 
-    def draw_mncontour(self, x, y, cl=None, size=100):
+    def draw_mncontour(self, x, y, *, cl=None, size=100):
         """Draw MINOS contour.
 
         **Arguments:**
@@ -1243,7 +1247,7 @@ class Minuit:
         c_val = []
         c_pts = []
         for cl in cls:
-            pts = self.mncontour(x, y, cl, size)
+            pts = self.mncontour(x, y, cl=cl, size=size)
             # close curve
             pts = list(pts)
             pts.append(pts[0])
@@ -1256,7 +1260,7 @@ class Minuit:
 
         return cs
 
-    def draw_contour(self, x, y, bins=50, bound=2):
+    def draw_contour(self, x, y, *, size=50, bound=2):
         """Convenience wrapper for drawing contours.
 
         The arguments are the same as :meth:`contour`.
@@ -1272,7 +1276,7 @@ class Minuit:
         """
         from matplotlib import pyplot as plt
 
-        vx, vy, vz = self.contour(x, y, bins, bound, subtract_min=True)
+        vx, vy, vz = self.contour(x, y, size=size, bound=bound, subtract_min=True)
 
         v = [self.errordef * (i + 1) for i in range(4)]
 

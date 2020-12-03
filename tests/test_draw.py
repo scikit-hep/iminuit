@@ -29,22 +29,17 @@ def minuit(request):
 
 def test_profile(minuit):
     minuit.draw_profile("x")
-    minuit.minos("x")
-    minuit.draw_profile("x")
 
 
 def test_mnprofile(minuit):
-    minuit.minos("x")
     minuit.draw_mnprofile("x")
 
 
 def test_mncontour(minuit):
-    minuit.minos()
     minuit.draw_mncontour("x", "y")
 
 
 def test_drawcontour(minuit):
-    minuit.minos()
     minuit.draw_contour("x", "y")
-    minuit.draw_contour("x", "x", bins=20, bound=2)
-    minuit.draw_contour("x", "x", bins=20, bound=((-10, 10), (-10, 10)))
+    minuit.draw_contour("x", "x", size=20, bound=2)
+    minuit.draw_contour("x", "x", size=20, bound=((-10, 10), (-10, 10)))

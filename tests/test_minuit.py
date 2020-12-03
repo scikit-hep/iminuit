@@ -580,17 +580,14 @@ def test_initial_value():
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-@pytest.mark.parametrize("cl", (None, 0.68, (0.68, 0.9)))
+@pytest.mark.parametrize("cl", (None, 0.68, 0.9))
 def test_mncontour(grad, cl):
     stats = pytest.importorskip("scipy.stats")
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    ctr = m.mncontour("x", "y", numpoints=30, cl=cl)
+    ctr = m.mncontour("x", "y", size=30, cl=cl)
 
-    if cl is None:
-        factor = 1.0
-    else:
-        factor = stats.chi2(2).ppf(cl)
+    factor = stats.chi2(2).ppf(0.68 if cl is None else cl)
     cl2 = stats.chi2(1).cdf(factor)
     assert len(ctr) == 30
     assert len(ctr[0]) == 2
@@ -671,18 +668,24 @@ def test_mncontour_with_fixed_var():
 
 
 def test_mncontour_array_func():
+    stats = pytest.importorskip("scipy.stats")
+
     m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
-    xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=1)
-    m.minos("x", "y", sigma=1)
-    xminos_t = m.merrors["x"]
-    yminos_t = m.merrors["y"]
-    assert_allclose(xminos.upper, xminos_t.upper)
-    assert_allclose(xminos.lower, xminos_t.lower)
-    assert_allclose(yminos.upper, yminos_t.upper)
-    assert_allclose(yminos.lower, yminos_t.lower)
+
+    cl = stats.chi2(2).cdf(1)
+    ctr = m.mncontour("x", "y", size=30, cl=cl)
     assert len(ctr) == 30
     assert len(ctr[0]) == 2
+
+    m.minos("x", "y")
+    x, y = m.values
+    xm = m.merrors["x"]
+    ym = m.merrors["y"]
+    cmin = np.min(ctr, axis=0)
+    cmax = np.max(ctr, axis=0)
+    assert_allclose((x + xm.lower, y + ym.lower), cmin)
+    assert_allclose((x + xm.upper, y + ym.upper), cmax)
 
 
 def test_profile_array_func():
