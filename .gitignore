@@ -1,9 +1,14 @@
-pypy*
-py[0-9]*
-gammapy
-probfit
-iminuit-dev
-root-test
+/pypy*
+/py[0-9]*
+/gammapy
+/probfit
+/iminuit-dev
+/root-*
+
+/build
+/dist
+/_build
+/_skbuild
 
 __pycache__
 *.pyxbldc
@@ -14,10 +19,6 @@ __pycache__
 *.o
 *.pkl
 
-build
-dist
-_build
-_skbuild
 pip-wheel-metadata
 
 .DS_Store
