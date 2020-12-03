@@ -414,28 +414,61 @@ def test_fix_param(grad):
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-@pytest.mark.parametrize("sigma,sref", ((1, (-0.83, 0.83)), (4, (-1.68, 1.68))))
-def test_minos_all(grad, sigma, sref):
-    m = Minuit(func0, grad=func0_grad, x=0, y=0)
+def test_minos(grad):
+    m = Minuit(func0, grad=grad, x=0, y=0)
     m.migrad()
-    m.minos(sigma=sigma)
-    assert m.merrors["x"].lower == approx(-sigma * 2, abs=1e-3)
-    assert m.merrors["x"].upper == approx(sigma * 2, abs=1e-3)
-    assert m.merrors["y"].lower == approx(sref[0], abs=1e-2)
-    assert m.merrors["y"].upper == approx(sref[1], abs=1e-2)
-    assert m.merrors[0].lower == m.merrors["x"].lower
-    assert m.merrors[1].upper == m.merrors["y"].upper
+    m.minos()
+    assert len(m.merrors) == 2
+    assert m.merrors["x"].lower == approx(-m.errors["x"], abs=4e-3)
+    assert m.merrors["x"].upper == approx(m.errors["x"], abs=4e-3)
+    assert m.merrors[1].lower == m.merrors["y"].lower
     assert m.merrors[-1].upper == m.merrors["y"].upper
+
+
+@pytest.mark.parametrize("cl", (0.68, 0.90))
+@pytest.mark.parametrize("k", (10, 1000))
+@pytest.mark.parametrize("limit", (False, True))
+def test_minos_cl(cl, k, limit):
+    opt = pytest.importorskip("scipy.optimize")
+    stats = pytest.importorskip("scipy.stats")
+
+    def nll(lambd):
+        return lambd - k * np.log(lambd)
+
+    # find location of min + up by hand
+    def crossing(x):
+        up = 0.5 * stats.chi2(1).ppf(cl)
+        return nll(k + x) - (nll(k) + up)
+
+    bound = 1.5 * (stats.chi2(1).ppf(cl) * k) ** 0.5
+    upper = opt.root_scalar(crossing, bracket=(0, bound)).root
+    lower = opt.root_scalar(crossing, bracket=(-bound, 0)).root
+
+    m = Minuit(nll, lambd=k)
+    m.limits["lambd"] = (0, None) if limit else None
+    m.errordef = Minuit.LIKELIHOOD
+    m.migrad()
+    assert m.valid
+    assert m.accurate
+    m.minos(cl=cl)
+    assert m.values["lambd"] == approx(k)
+    assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
+    assert m.merrors["lambd"].lower == approx(lower, rel=1e-3)
+    assert m.merrors["lambd"].upper == approx(upper, rel=1e-3)
+    assert m.merrors[0].lower == m.merrors["lambd"].lower
+    assert m.merrors[-1].upper == m.merrors["lambd"].upper
 
     with pytest.raises(KeyError):
         m.merrors["xy"]
     with pytest.raises(KeyError):
         m.merrors["z"]
     with pytest.raises(IndexError):
-        m.merrors[-3]
+        m.merrors[1]
+    with pytest.raises(IndexError):
+        m.merrors[-2]
 
 
-def test_minos_all_some_fix():
+def test_minos_some_fix():
     m = Minuit(func0, x=0, y=0)
     m.fixed["x"] = True
     m.migrad()
@@ -547,21 +580,31 @@ def test_initial_value():
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-@pytest.mark.parametrize("sigma", (1, 2))
-def test_mncontour(grad, sigma):
+@pytest.mark.parametrize("cl", (None, 0.68, (0.68, 0.9)))
+def test_mncontour(grad, cl):
+    stats = pytest.importorskip("scipy.stats")
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    xminos, yminos, ctr = m.mncontour("x", "y", numpoints=30, sigma=sigma)
-    m.minos("x", "y", sigma=sigma)
-    m.minos("y", sigma=sigma)
-    xminos_t = m.merrors["x"]
-    yminos_t = m.merrors["y"]
-    assert_allclose(xminos.upper, xminos_t.upper)
-    assert_allclose(xminos.lower, xminos_t.lower)
-    assert_allclose(yminos.upper, yminos_t.upper)
-    assert_allclose(yminos.lower, yminos_t.lower)
+    ctr = m.mncontour("x", "y", numpoints=30, cl=cl)
+
+    if cl is None:
+        factor = 1.0
+    else:
+        factor = stats.chi2(2).ppf(cl)
+    cl2 = stats.chi2(1).cdf(factor)
     assert len(ctr) == 30
     assert len(ctr[0]) == 2
+
+    m.minos("x", "y", cl=cl2)
+
+    xm = m.merrors["x"]
+    ym = m.merrors["y"]
+    cmin = np.min(ctr, axis=0)
+    cmax = np.max(ctr, axis=0)
+
+    x, y = m.values
+    assert_allclose((x + xm.lower, y + ym.lower), cmin)
+    assert_allclose((x + xm.upper, y + ym.upper), cmax)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -1193,37 +1236,6 @@ def test_precision():
     fcn.precision = 0.1
     fm3 = Minuit(fcn, x=-1).migrad().fmin
     assert fm3.edm == fm1.edm
-
-
-@pytest.mark.parametrize("sigma", (1, 2))
-@pytest.mark.parametrize("k", (10, 1000))
-@pytest.mark.parametrize("limit", (False, True))
-def test_merrors(sigma, k, limit):
-    opt = pytest.importorskip("scipy.optimize")
-
-    def nll(lambd):
-        return lambd - k * np.log(lambd)
-
-    # find location of min + up by hand
-    def crossing(x):
-        up = 0.5 * sigma ** 2
-        return nll(k + x) - (nll(k) + up)
-
-    bound = 1.5 * sigma * k ** 0.5
-    upper = opt.root_scalar(crossing, bracket=(0, bound)).root
-    lower = opt.root_scalar(crossing, bracket=(-bound, 0)).root
-
-    m = Minuit(nll, lambd=k)
-    m.limits["lambd"] = (0, None) if limit else None
-    m.errordef = Minuit.LIKELIHOOD
-    m.migrad()
-    assert m.valid
-    assert m.accurate
-    m.minos(sigma=sigma)
-    assert m.values["lambd"] == approx(k)
-    assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
-    assert m.merrors["lambd"].lower == approx(lower, abs=1e-4)
-    assert m.merrors["lambd"].upper == approx(upper, abs=1e-4)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
