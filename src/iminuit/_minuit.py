@@ -799,8 +799,8 @@ class Minuit:
         else:
             try:
                 from scipy.stats import chi2
-            except ImportError:
-                raise ImportError("setting cl requires scipy to be installed")
+            except ImportError:  # pragma: no cover
+                raise ImportError("setting cl requires scipy")  # pragma: no cover
             factor = chi2(1).ppf(cl)
 
         if not self._fmin:
@@ -1196,8 +1196,8 @@ class Minuit:
                 from scipy.stats import chi2
 
                 factor = chi2(2).ppf(float(cl))
-            except ImportError:
-                raise ImportError("setting cl requires scipy to be installed")
+            except ImportError:  # pragma: no cover
+                raise ImportError("setting cl requires scipy")  # pragma: no cover
 
         if not self._fmin:
             raise ValueError("Run MIGRAD first")

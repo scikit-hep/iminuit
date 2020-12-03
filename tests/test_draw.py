@@ -28,11 +28,15 @@ def minuit(request):
 
 
 def test_profile(minuit):
-    minuit.draw_profile("x")
+    minuit.draw_profile("x")  # plots with hesse errors
+    minuit.minos()
+    minuit.draw_profile("x")  # plots with minos errors
 
 
 def test_mnprofile(minuit):
-    minuit.draw_mnprofile("x")
+    minuit.draw_mnprofile("x")  # plots with hesse errors
+    minuit.minos()
+    minuit.draw_mnprofile("x")  # plots with minos errors
 
 
 def test_mncontour(minuit):
