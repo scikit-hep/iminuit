@@ -43,6 +43,29 @@ Removed and changed interface (breaking changes)
 
   - Now accepts more than one positional argument (which must be parameter names) and computes Minos errors for them
   - Return value is now ``self`` instead of ``self.merrors``
+  - ``sigma`` keyword replaced with ``cl`` to set confidence level
+
+- ``Minuit.mncontour`` and ``Minuit.draw_mncontour``
+
+  - ``sigma`` keyword replaced with ``cl`` to set confidence level
+  - ``numpoints`` keyword replaced with ``size``
+  - Keyword arguments are keyword-only
+  - ``Minuit.mncontour`` now returns only contour points, as a numpy array
+
+- ``Minuit.profile`` and ``Minuit.draw_profile``
+
+  - ``bins`` keyword replaced with ``size``
+  - Keyword arguments are keyword-only
+
+- ``Minuit.mnprofile`` and ``Minuit.draw_mnprofile``
+
+  - ``sigma`` keyword replaced with ``cl`` to set confidence level
+  - ``numpoints`` keyword replaced with ``size``
+  - Keyword arguments are keyword-only
+
+- ``Minuit.profile`` and ``Minuit.draw_profile``
+
+  - Keyword arguments are keyword-only
 
 - ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (the Minuit object will become copyable and pickleable in the future)
 - ``Minuit.matrix`` was removed; see ``Minuit.covariance``
