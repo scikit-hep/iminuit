@@ -273,13 +273,13 @@ class Minuit:
     def covariance(self):
         """Returns the covariance matrix.
 
-        The square-root of the diagonal elements of the covariance matrix correspond
-        to standard deviation for each parameter with 68 % coverage probability in the
+        The square-root of the diagonal elements of the covariance matrix correspond to
+        a standard deviation for each parameter with 68 % coverage probability in the
         asymptotic limit (large samples). To get k standard deviations, multiply the
         covariance matrix with k^2.
 
         The submatrix formed by two parameters describes an ellipse. The asymptotic
-        coverage probabilty of the ellipse is lower. It can be computed from the
+        coverage probabilty of the ellipse is lower than 68 %. It can be computed from the
         :math:`\\chi^2` distribution with 2 degrees of freedom. In general, to obtain a
         (hyper-)ellipsoid with coverage probability CL, one has to multiply the
         submatrix of the corresponding k parameters with a factor. For k = 1,2,3 and
@@ -289,7 +289,7 @@ class Minuit:
 
             chi2(1).ppf(0.99) # 6.63...
             chi2(2).ppf(0.99) # 9.21...
-            chi2(3).ppf(0.68) # 11.3...
+            chi2(3).ppf(0.99) # 11.3...
 
         .. seealso:: :class:`iminuit.util.Matrix`
         """
