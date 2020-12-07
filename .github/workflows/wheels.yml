@@ -76,6 +76,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload:
+    if: "github.event.release.release"
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
     steps:
@@ -84,17 +85,7 @@ jobs:
         name: artifact
         path: dist
 
-    - name: Prerelease
-      if: "github.event.release.prerelease"
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{secrets.test_pypi_password}}
-        repository_url: https://test.pypi.org/legacy/
-
-    - name: Release
-      if: "github.event.release.release"
-      uses: pypa/gh-action-pypi-publish@master
+    - uses: pypa/gh-action-pypi-publish@master
       with:
         user: __token__
         password: ${{secrets.pypi_password}}
