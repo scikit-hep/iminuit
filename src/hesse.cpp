@@ -13,13 +13,18 @@ void bind_hesse(py::module m) {
 
       .def(py::init<const MnStrategy&>())
       // pybind11 needs help to figure out the return value that's why we use lambdas
-      .def("__call__",
-           [](MnHesse& self, const FCNBase& fcn, const MnUserParameterState& state,
-              unsigned maxcalls) -> MnUserParameterState {
-             return self(fcn, state, maxcalls);
-           })
-      .def("__call__", [](MnHesse& self, const FCNBase& fcn, FunctionMinimum& fm,
-                          unsigned maxcalls) { self(fcn, fm, maxcalls); })
+      .def(
+          "__call__",
+          [](MnHesse& self, const FCNBase& fcn, const MnUserParameterState& state,
+             unsigned maxcalls) -> MnUserParameterState {
+            return self(fcn, state, maxcalls);
+          },
+          py::keep_alive<1, 2>())
+      .def(
+          "__call__",
+          [](MnHesse& self, const FCNBase& fcn, FunctionMinimum& fm,
+             unsigned maxcalls) { self(fcn, fm, maxcalls); },
+          py::keep_alive<1, 2>(), py::keep_alive<1, 3>())
 
       ;
 }

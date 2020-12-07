@@ -231,6 +231,9 @@ def test_FMin():
     assert fmin.edm_goal == 0.1
     assert fmin.has_parameters_at_limit == False
 
+    assert fmin == util.FMin(fm, 1, 2, 0.1)
+    assert fmin != util.FMin(fm, 1, 2, 0.3)
+
     assert repr(fmin) == (
         "<FMin edm=1.23456e-10 edm_goal=0.1 errordef=0.5 fval=1.23456e-10"
         " has_accurate_covar=True has_covariance=True has_made_posdef_covar=False"

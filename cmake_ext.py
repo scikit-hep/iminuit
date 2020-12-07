@@ -35,7 +35,7 @@ class CMakeBuild(build_ext):
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
             is_x86 = sys.maxsize > 2 ** 32
             cmake_args += ["-A", "x64" if is_x86 else "Win32"]
-            build_args += ["--", "/m"]
+            build_args += ["--", "/m:1"]
         else:
             njobs = self.parallel or os.cpu_count() or 1
             build_args += ["--", f"-j{njobs}"]

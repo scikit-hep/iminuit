@@ -17,7 +17,7 @@ MnMigrad init(const FCN& fcn, const MnUserParameterState& state,
 void bind_migrad(py::module m) {
   py::class_<MnMigrad, MnApplication>(m, "MnMigrad")
 
-      .def(py::init(&init))
+      .def(py::init(&init), py::keep_alive<1, 2>())
       .def("set_print_level",
            [](MnMigrad& self, int lvl) {
              return self.Minimizer().Builder().SetPrintLevel(lvl);
