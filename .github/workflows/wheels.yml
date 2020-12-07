@@ -4,9 +4,17 @@ on:
   push:
     branches:
     - beta-*
+    paths-ignore:
+      - 'doc/**'
+      - '.ci/**'
+      - '*.rst'
   pull_request:
     branches:
     - master
+    paths-ignore:
+      - 'doc/**'
+      - '.ci/**'
+      - '*.rst'
   release:
     types: [published]
 
