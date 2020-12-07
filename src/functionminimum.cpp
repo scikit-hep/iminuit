@@ -1,6 +1,12 @@
 #include <Minuit2/AnalyticalGradientCalculator.h>
+#include <Minuit2/FunctionGradient.h>
 #include <Minuit2/FunctionMinimum.h>
+#include <Minuit2/MinimumError.h>
+#include <Minuit2/MinimumParameters.h>
+#include <Minuit2/MinimumSeed.h>
 #include <Minuit2/MinimumState.h>
+#include <Minuit2/MinuitParameter.h>
+#include <Minuit2/MnMatrix.h>
 #include <Minuit2/MnSeedGenerator.h>
 #include <Minuit2/MnStrategy.h>
 #include <Minuit2/MnUserFcn.h>
@@ -10,6 +16,58 @@
 #include <pybind11/pybind11.h>
 #include "equal.hpp"
 #include "fcn.hpp"
+
+namespace ROOT {
+namespace Minuit2 {
+
+bool operator==(const MnUserTransformation& a, const MnUserTransformation& b) {
+  return a.Precision() == b.Precision() && a.Parameters() == b.Parameters();
+}
+
+bool operator==(const LAVector& a, const LAVector& b) {
+  return std::equal(a.Data(), a.Data() + a.size(), b.Data(), b.Data() + b.size());
+}
+
+bool operator==(const LASymMatrix& a, const LASymMatrix& b) {
+  return std::equal(a.Data(), a.Data() + a.size(), b.Data(), b.Data() + b.size());
+}
+
+bool operator==(const MinimumError& a, const MinimumError& b) {
+  return a.InvHessian() == b.InvHessian() && a.Dcovar() == b.Dcovar() &&
+         a.IsValid() == b.IsValid() && a.IsPosDef() == b.IsPosDef() &&
+         a.IsMadePosDef() == b.IsMadePosDef() && a.HesseFailed() == b.HesseFailed() &&
+         a.InvertFailed() == b.InvertFailed() && a.IsAvailable() == b.IsAvailable();
+}
+
+bool operator==(const FunctionGradient& a, const FunctionGradient& b) {
+  return a.Grad() == b.Grad() && a.G2() == b.G2() && a.Gstep() == b.Gstep() &&
+         a.IsValid() == b.IsValid() && a.IsAnalytical() == b.IsAnalytical();
+}
+
+bool operator==(const MinimumParameters& a, const MinimumParameters& b) {
+  return a.Vec() == b.Vec() && a.Dirin() == b.Dirin() && a.Fval() == b.Fval() &&
+         a.IsValid() == b.IsValid() && a.HasStepSize() == b.HasStepSize();
+}
+
+bool operator==(const MinimumState& a, const MinimumState& b) {
+  return a.Parameters() == b.Parameters() && a.Error() == b.Error() &&
+         a.Gradient() == b.Gradient() && a.Fval() == b.Fval() && a.Edm() == b.Edm() &&
+         a.NFcn() == b.NFcn();
+}
+
+bool operator==(const MinimumSeed& a, const MinimumSeed& b) {
+  return a.State() == b.State() && a.Trafo() == b.Trafo() && a.IsValid() == b.IsValid();
+}
+
+bool operator==(const FunctionMinimum& a, const FunctionMinimum& b) {
+  return a.Seed() == b.Seed() && a.Up() == b.Up() && a.States() == b.States() &&
+         a.IsAboveMaxEdm() == b.IsAboveMaxEdm() &&
+         a.HasReachedCallLimit() == b.HasReachedCallLimit() &&
+         a.UserState() == b.UserState();
+}
+
+} // namespace Minuit2
+} // namespace ROOT
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

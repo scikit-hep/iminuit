@@ -1,5 +1,16 @@
 #include <Minuit2/MnMachinePrecision.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+
+namespace ROOT {
+namespace Minuit2 {
+
+bool operator==(const MnMachinePrecision& a, const MnMachinePrecision& b) {
+  return a.Eps() == b.Eps() && a.Eps2() == b.Eps2();
+}
+
+} // namespace Minuit2
+} // namespace ROOT
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
@@ -9,6 +20,8 @@ void bind_machineprecision(py::module m) {
 
       .def_property("eps", &MnMachinePrecision::Eps, &MnMachinePrecision::SetPrecision)
       .def_property_readonly("eps2", &MnMachinePrecision::Eps2)
+
+      .def(py::self == py::self)
 
       ;
 }

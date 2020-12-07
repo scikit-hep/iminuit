@@ -3,6 +3,16 @@
 #include <pybind11/pybind11.h>
 #include "equal.hpp"
 
+namespace ROOT {
+namespace Minuit2 {
+
+bool operator==(const MnUserCovariance& a, const MnUserCovariance& b) {
+  return a.Nrow() == b.Nrow() && a.Data() == b.Data();
+}
+
+} // namespace Minuit2
+} // namespace ROOT
+
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 

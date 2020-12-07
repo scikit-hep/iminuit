@@ -1,7 +1,6 @@
 from iminuit._core import (
     FCN,
     MnUserParameterState,
-    MnUserTransformation,
     MnMigrad,
     MnStrategy,
     MnScan,
@@ -55,35 +54,33 @@ def fn_grad(x, y):
 
 def test_MnUserParameterState():
     st = MnUserParameterState()
-    st.add("a", 1, 0.2)
-    st.add("b", 3, 0.3, 1, 4)
+    st.add("x", 1, 0.2)
+    st.add("😁", 3, 0.3, 1, 4)
     assert len(st) == 2
     assert st[0].number == 0
     assert st[0].name == "x"
-    assert st[0].value == 5
-    assert st[0].error == 0.1
+    assert st[0].value == 1
+    assert st[0].error == 0.2
     assert st[1].number == 1
     assert st[1].name == "😁"
     assert st[1].value == 3
-    assert st[1].error == 0.2
+    assert st[1].error == 0.3
+    assert st[1].lower_limit == 1
+    assert st[1].upper_limit == 4
 
 
 def test_MnMigrad():
     fcn = FCN(fn, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
-    state.add("😁", 3, 0.2, -5, 5)
+    state.add("y", 3, 0.2, -5, 5)
     migrad = MnMigrad(fcn, state, 1)
     fmin = migrad(0, 0.1)
+    assert fmin.is_valid
     state = fmin.state
-    assert len(state) == 2
-    assert state[0].number == 0
-    assert state[0].name == "x"
-    assert state[0].value == approx(0, abs=1e-2)
-    assert state[0].error == approx(1, abs=1e-2)
-    assert state[1].number == 1
-    assert state[1].name == "😁"
-    assert state[1].value == approx(1, abs=1e-2)
+    assert state[0].value == approx(0, abs=5e-3)
+    assert state[0].error == approx(1, abs=5e-3)
+    assert state[1].value == approx(1, abs=5e-3)
     assert state[1].error == approx(2, abs=6e-2)
     assert fcn._nfcn > 0
     assert fcn._ngrad == 0
@@ -196,8 +193,3 @@ def test_FunctionMinimum():
     assert fm1.fval == 0.1
     fm2 = FunctionMinimum(fcn, st, 0.1, str, 0)
     assert not fm2.is_valid
-
-
-def test_MnUserTransformation():
-    tr = MnUserTransformation()
-    assert len(tr) == 0

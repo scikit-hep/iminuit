@@ -3,6 +3,21 @@
 #include <pybind11/pybind11.h>
 #include "equal.hpp"
 
+namespace ROOT {
+namespace Minuit2 {
+bool operator==(const MnStrategy& a, const MnStrategy& b) {
+  return a.Strategy() == b.Strategy() && a.GradientNCycles() == b.GradientNCycles() &&
+         a.GradientStepTolerance() == b.GradientStepTolerance() &&
+         a.GradientTolerance() == b.GradientTolerance() &&
+         a.HessianNCycles() == b.HessianNCycles() &&
+         a.HessianStepTolerance() == b.HessianStepTolerance() &&
+         a.HessianG2Tolerance() == b.HessianG2Tolerance() &&
+         a.HessianGradientNCycles() == b.HessianGradientNCycles() &&
+         a.StorageLevel() == b.StorageLevel();
+}
+} // namespace Minuit2
+} // namespace ROOT
+
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 

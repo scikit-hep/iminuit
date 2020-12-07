@@ -3,6 +3,22 @@
 #include <pybind11/pybind11.h>
 #include "equal.hpp"
 
+namespace ROOT {
+namespace Minuit2 {
+
+bool operator==(const MinuitParameter& a, const MinuitParameter& b) {
+  return a.Number() == b.Number() && a.GetName() == b.GetName() &&
+         a.Value() == b.Value() && a.Error() == b.Error() &&
+         a.IsConst() == b.IsConst() && a.IsFixed() == b.IsFixed() &&
+         a.HasLimits() == b.HasLimits() && a.HasLowerLimit() == b.HasLowerLimit() &&
+         a.HasUpperLimit() == b.HasUpperLimit() &&
+         nan_equal(a.LowerLimit(), b.LowerLimit()) &&
+         nan_equal(a.UpperLimit(), b.UpperLimit());
+}
+
+} // namespace Minuit2
+} // namespace ROOT
+
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 

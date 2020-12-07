@@ -4,6 +4,23 @@
 #include <pybind11/stl.h>
 #include "equal.hpp"
 
+namespace ROOT {
+namespace Minuit2 {
+
+bool operator==(const MnUserParameterState& a, const MnUserParameterState& b) {
+  return a.MinuitParameters() == b.MinuitParameters() && a.Fval() == b.Fval() &&
+         a.Covariance() == b.Covariance() &&
+         a.GlobalCC().GlobalCC() == b.GlobalCC().GlobalCC() &&
+         a.IntParameters() == b.IntParameters() &&
+         a.IntCovariance().Data() == b.IntCovariance().Data() &&
+         a.CovarianceStatus() == b.CovarianceStatus() && a.IsValid() == b.IsValid() &&
+         a.HasCovariance() == b.HasCovariance() && a.HasGlobalCC() == b.HasGlobalCC() &&
+         a.Fval() == b.Fval() && a.Edm() == b.Edm() && a.NFcn() == b.NFcn();
+}
+
+} // namespace Minuit2
+} // namespace ROOT
+
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
