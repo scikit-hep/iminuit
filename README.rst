@@ -66,6 +66,6 @@ Versions
 
 **The current 2.x series has introduced breaking interfaces changes with respect to the 1.x series.**
 
-All interface changes are documented in the `changelog`_ with recommendations how to upgrade. To keep existing scripts running, pin your major iminuit version to <2, i.e. `pip install iminuit<2` installs the 1.x series.
+All interface changes are documented in the `changelog`_ with recommendations how to upgrade. To keep existing scripts running, pin your major iminuit version to <2, i.e. ``pip install 'iminuit<2'`` installs the 1.x series.
 
 .. _changelog: https://iminuit.readthedocs.io/en/stable/changelog.html
