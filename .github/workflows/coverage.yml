@@ -6,7 +6,9 @@ on:
       - master
       - develop
     paths-ignore:
+      - 'doc/**'
       - '.ci/**'
+      - '*.rst'
   push:
     branches:
       - master
