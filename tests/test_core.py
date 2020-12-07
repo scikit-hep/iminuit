@@ -1,11 +1,14 @@
 from iminuit._core import (
     FCN,
     MnUserParameterState,
+    MnUserTransformation,
     MnMigrad,
     MnStrategy,
     MnScan,
     FunctionMinimum,
     MnSimplex,
+    MnPrint,
+    MnUserCovariance,
 )
 from pytest import approx
 import pytest
@@ -13,8 +16,6 @@ import pytest
 
 @pytest.fixture
 def debug():
-    from iminuit._core import MnPrint
-
     prev = MnPrint.global_level
     MnPrint.global_level = 3
     MnPrint.show_prefix_stack(True)
@@ -31,30 +32,48 @@ def test_MnStrategy():
     s.strategy = 2
     assert s.strategy == 2
     assert s != 1
-    assert s > 1
-    assert s < 3
-    assert s >= 2
-    assert s >= 1
-    assert s <= 2
-    assert s <= 3
+    assert not (s != 2)
 
 
-def test_FCN():
-    fcn = FCN(lambda x, y: 10 + x ** 2 + ((y - 1) / 2) ** 2, None, False, 1)
+def test_MnUserCovariance():
+    c = MnUserCovariance((1, 2, 3), 2)
+    assert c.nrow == 2
+
+    assert c[(0, 0)] == 1
+    assert c[(1, 0)] == 2
+    assert c[(0, 1)] == 2
+    assert c[(1, 1)] == 3
+
+
+def fn(x, y):
+    return 10 + x ** 2 + ((y - 1) / 2) ** 2
+
+
+def fn_grad(x, y):
+    return (2 * x, y - 1)
+
+
+def test_MnUserParameterState():
+    st = MnUserParameterState()
+    st.add("a", 1, 0.2)
+    st.add("b", 3, 0.3, 1, 4)
+    assert len(st) == 2
+    assert st[0].number == 0
+    assert st[0].name == "x"
+    assert st[0].value == 5
+    assert st[0].error == 0.1
+    assert st[1].number == 1
+    assert st[1].name == "😁"
+    assert st[1].value == 3
+    assert st[1].error == 0.2
+
+
+def test_MnMigrad():
+    fcn = FCN(fn, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     state.add("😁", 3, 0.2, -5, 5)
-    assert len(state) == 2
-    assert state[0].number == 0
-    assert state[0].name == "x"
-    assert state[0].value == 5
-    assert state[0].error == 0.1
-    assert state[1].number == 1
-    assert state[1].name == "😁"
-    assert state[1].value == 3
-    assert state[1].error == 0.2
     migrad = MnMigrad(fcn, state, 1)
-    migrad.set_print_level(3)
     fmin = migrad(0, 0.1)
     state = fmin.state
     assert len(state) == 2
@@ -70,7 +89,7 @@ def test_FCN():
     assert fcn._ngrad == 0
 
 
-def test_FCN_with_grad():
+def test_MnMigrad_grad():
     fcn = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
@@ -87,7 +106,7 @@ def test_FCN_with_grad():
 
 
 @pytest.mark.parametrize("npar", (1, 2, 3))
-def test_FCN_with_cfunc(npar):
+def test_MnMigrad_cfunc(npar):
     nb = pytest.importorskip("numba")
 
     c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
@@ -114,7 +133,7 @@ def test_FCN_with_cfunc(npar):
         assert p.error == approx(1, abs=1e-3)
 
 
-def test_grad_np():
+def test_MnMigrad_np():
     fcn = FCN(
         lambda xy: 10 + xy[0] ** 2 + ((xy[1] - 1) / 2) ** 2,
         lambda xy: [2 * xy[0], (xy[1] - 1)],
@@ -177,3 +196,8 @@ def test_FunctionMinimum():
     assert fm1.fval == 0.1
     fm2 = FunctionMinimum(fcn, st, 0.1, str, 0)
     assert not fm2.is_valid
+
+
+def test_MnUserTransformation():
+    tr = MnUserTransformation()
+    assert len(tr) == 0

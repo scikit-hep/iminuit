@@ -1,11 +1,14 @@
 #include <Minuit2/AnalyticalGradientCalculator.h>
 #include <Minuit2/FunctionMinimum.h>
+#include <Minuit2/MinimumState.h>
 #include <Minuit2/MnSeedGenerator.h>
 #include <Minuit2/MnStrategy.h>
 #include <Minuit2/MnUserFcn.h>
 #include <Minuit2/MnUserParameterState.h>
 #include <Minuit2/Numerical2PGradientCalculator.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include "equal.hpp"
 #include "fcn.hpp"
 
 namespace py = pybind11;
@@ -62,6 +65,8 @@ void bind_functionminimum(py::module m) {
       .def_property_readonly("has_reached_call_limit",
                              &FunctionMinimum::HasReachedCallLimit)
       .def_property("errordef", &FunctionMinimum::Up, &FunctionMinimum::SetErrorDef)
+
+      .def(py::self == py::self)
 
       ;
 }

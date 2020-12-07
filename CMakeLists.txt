@@ -85,7 +85,7 @@ set(SOURCES_B
 
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 if(MSVC)
-  # no warnings on windows
+  target_compile_options(_core PRIVATE /std:c++14 /Y-)
 else()
   # lots of warnings from clang and gcc
   target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror)

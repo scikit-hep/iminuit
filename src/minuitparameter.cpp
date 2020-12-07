@@ -1,5 +1,7 @@
 #include <Minuit2/MinuitParameter.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include "equal.hpp"
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
@@ -8,7 +10,7 @@ void bind_minuitparameter(py::module m) {
   py::class_<MinuitParameter>(m, "MinuitParameter")
 
       .def_property_readonly("number", &MinuitParameter::Number)
-      .def_property_readonly("name", &MinuitParameter::Name)
+      .def_property_readonly("name", &MinuitParameter::GetName)
       .def_property_readonly("value", &MinuitParameter::Value)
       .def_property_readonly("error", &MinuitParameter::Error)
       .def_property_readonly("is_const", &MinuitParameter::IsConst)
@@ -18,6 +20,8 @@ void bind_minuitparameter(py::module m) {
       .def_property_readonly("has_upper_limit", &MinuitParameter::HasUpperLimit)
       .def_property_readonly("lower_limit", &MinuitParameter::LowerLimit)
       .def_property_readonly("upper_limit", &MinuitParameter::UpperLimit)
+
+      .def(py::self == py::self)
 
       ;
 }

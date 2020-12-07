@@ -17,6 +17,7 @@ void bind_simplex(py::module);
 void bind_strategy(py::module);
 void bind_usercovariance(py::module);
 void bind_userparameterstate(py::module);
+void bind_usertransformation(py::module);
 
 PYBIND11_MODULE(_core, m) {
   bind_application(m);
@@ -34,4 +35,5 @@ PYBIND11_MODULE(_core, m) {
   bind_strategy(m);
   bind_usercovariance(m);
   bind_userparameterstate(m);
+  bind_usertransformation(m);
 }

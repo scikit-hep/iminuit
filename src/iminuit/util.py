@@ -422,6 +422,9 @@ class FMin:
         """Equal to the value of ``Minuit.errordef`` when Migrad ran."""
         return self._src.errordef
 
+    def __eq__(self, other):
+        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+
     def __repr__(self):
         s = "<FMin"
         for key in sorted(dir(self)):

@@ -1,6 +1,8 @@
 #include <Minuit2/MnUserParameterState.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include "equal.hpp"
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
@@ -21,8 +23,7 @@ auto iter(const MnUserParameterState& self) {
                            self.MinuitParameters().end());
 }
 
-py::object globalcc(const MnUserParameterState& self) {
-  auto gcc = self.GlobalCC();
+py::object globalcc2py(const MnGlobalCorrelationCoeff& gcc) {
   if (gcc.IsValid()) return py::cast(gcc.GlobalCC());
   return py::cast(nullptr);
 }
@@ -56,13 +57,15 @@ void bind_userparameterstate(py::module m) {
       .def_property_readonly("fval", &MnUserParameterState::Fval)
       .def_property_readonly("edm", &MnUserParameterState::Edm)
       .def_property_readonly("covariance", &MnUserParameterState::Covariance)
-      .def_property_readonly("globalcc", globalcc)
+      .def_property_readonly(
+          "globalcc",
+          [](const MnUserParameterState& self) { return globalcc2py(self.GlobalCC()); })
       .def_property_readonly("is_valid", &MnUserParameterState::IsValid)
       .def_property_readonly("has_covariance", &MnUserParameterState::HasCovariance)
-      .def_property_readonly("has_globalcc", &MnUserParameterState::HasGlobalCC)
       .def("__len__", size)
       .def("__getitem__", getitem)
       .def("__iter__", iter)
+      .def(py::self == py::self)
 
       ;
 }
