@@ -26,9 +26,9 @@
 
 *iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library.
 
-It can be used as a general robust function minimisation method,
-but is most commonly used for likelihood fits of models to data,
-and to get model parameter error estimates from likelihood profile analysis.
+It can be used as a general robust function minimisation method, but is most
+commonly used for likelihood fits of models to data, and to get model parameter
+error estimates from likelihood profile analysis.
 
 - Supported CPython versions: 3.6+
 - Supported PyPy versions: 3.6
@@ -60,3 +60,12 @@ In a nutshell
 
     m.hesse()   # run covariance estimator
     print(m.errors)  # x: 1, y: 1, z: 1
+
+Versions
+--------
+
+**The current 2.x series has introduced breaking interfaces changes with respect to the 1.x series.**
+
+All interface changes are documented in the `changelog`_ with recommendations how to upgrade. To keep existing scripts running, pin your major iminuit version to <2, i.e. `pip install iminuit<2` installs the 1.x series.
+
+.. _changelog: https://iminuit.readthedocs.io/en/stable/changelog.html
