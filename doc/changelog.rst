@@ -18,8 +18,8 @@ Removed and changed interface (breaking changes)
   - Keyword ``errordef`` was removed; assign to ``Minuit.errordef`` to set the error definition of the cost function or better create an attribute called ``errordef`` on the cost function, Minuit uses this attribute if it exists
   - Keyword ``throw_nan`` was removed; assign to ``Minuit.throw_nan`` instead
   - Keyword ``print_level`` was removed; assign to ``Minuit.print_level`` instead
-  - Keyword ``use_array_call`` was removed; call type is inferred from the initialisation value, if it is a sequence, the array call is used
   - Setting starting values with positional parameters is now allowed, e.g. ``Minuit(my_fcn, 1, 2)`` initialises the first parameters to 1 and the second to 2
+  - Keyword ``use_array_call`` was removed; call type is inferred from the initialisation value, if it is a sequence, the array call is used (see next item below)
 
 - ``Minuit.from_array_func`` was removed; use ``Minuit(some_numpy_function, starting_array)`` instead
 - ``Minuit.args`` was removed, use ``Minuit.values[:]`` to get the current parameter values as a tuple
@@ -43,35 +43,31 @@ Removed and changed interface (breaking changes)
 
   - Now accepts more than one positional argument (which must be parameter names) and computes Minos errors for them
   - Return value is now ``self`` instead of ``self.merrors``
-  - ``sigma`` keyword replaced with ``cl`` to set confidence level
+  - ``sigma`` keyword replaced with ``cl`` to set confidence level (requires scipy)
 
 - ``Minuit.mncontour`` and ``Minuit.draw_mncontour``
 
-  - ``sigma`` keyword replaced with ``cl`` to set confidence level
+  - ``sigma`` keyword replaced with ``cl`` to set confidence level (requires scipy)
   - ``numpoints`` keyword replaced with ``size``
   - Keyword arguments are keyword-only
-  - ``Minuit.mncontour`` now returns only contour points, as a numpy array
+  - Return value is reduced to just the contour points as a numpy array
+
+- ``Minuit.mnprofile`` and ``Minuit.draw_mnprofile``
+
+  - ``sigma`` keyword replaced with ``cl`` to set confidence level (requires scipy)
+  - ``numpoints`` keyword replaced with ``size``
+  - Keyword arguments are keyword-only
 
 - ``Minuit.profile`` and ``Minuit.draw_profile``
 
   - ``bins`` keyword replaced with ``size``
   - Keyword arguments are keyword-only
 
-- ``Minuit.mnprofile`` and ``Minuit.draw_mnprofile``
-
-  - ``sigma`` keyword replaced with ``cl`` to set confidence level
-  - ``numpoints`` keyword replaced with ``size``
-  - Keyword arguments are keyword-only
-
-- ``Minuit.profile`` and ``Minuit.draw_profile``
-
-  - Keyword arguments are keyword-only
-
-- ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (the Minuit object will become copyable and pickleable in the future)
+- ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (Minuit object may become copyable and pickleable in the future)
 - ``Minuit.matrix`` was removed; see ``Minuit.covariance``
 - ``Minuit.covariance`` instead of a dict-like class is now an enhanced subclass of numpy.ndarray (iminuit.util.Matrix) with the features:
 
-  - Behaves like a normal ndarray in numerical computations
+  - Behaves like a numpy.ndarray in numerical computations
   - Rich display of the matrix in ipython and Jupyter notebook
   - Element access via parameter names in addition to indices, e.g. Minuit.covariance["a", "b"] access the covariance of parameters "a" and "b"
   - ``Minuit.covariance.correlation()`` computes the correlation matrix from the covariance matrix and returns it
@@ -97,7 +93,7 @@ Removed and changed interface (breaking changes)
   - Property ``ngrad`` is the total number of gradient calls so far
   - ``ngrad_total`` was removed and replaced by ``ngrad``
   - ``nfcn_total`` was removed and replaced by ``nfcn``
-  - ``up`` was removed and replaced by ``errordef``
+  - ``up`` was removed and replaced by ``errordef`` (to have one consistent name)
   - ``util.MError`` is now a data class, dict-like interface was removed (see ``util.FMin``)
   - ``util.Param`` is now a data class, dict-like interface was removed (see ``util.FMin``)
 - ``util.Matrix`` is now a subclass of a numpy.ndarray instead of a tuple of tuples
@@ -109,7 +105,7 @@ New features
 ~~~~~~~~~~~~
 - ``Minuit`` class
 
-  - Now a slot class, assigning to a non-existent attribute (e.g. because of a typo) now raises an error
+  - Now a class with `__slots__`; assigning to a non-existent attribute (e.g. because of a typo) now raises an error
   - Parameter names in Unicode are now fully supported, e.g. ``def fcn(α, β): ...`` works
   - New method ``simplex`` to minimise the function with the Nelder-Mead method
   - New method ``scan`` to minimise the function with a brute-force grid search (not recommended and infeasible for fits with more than a few free parameters)
@@ -137,21 +133,21 @@ New features
 - ``util.Matrix`` class
 
   - New method ``to_table``, which returns a format that can be consumed by the external ``tabulate`` Python module
-  - New method ``correlation``, which computes and returns the correlation matrix (also ``util.Matrix``)
+  - New method ``correlation``, which computes and returns the correlation matrix (also a ``util.Matrix``)
 
 Bug-fixes
 ~~~~~~~~~
 - Calling ``Minuit.hesse`` when all parameters were fixed now raises an error instead of producing a segfault
-- All life-time/memory leak issues in the iminuit interface code should be resolved now, even when there is an exception during the minimisation (there can still be errors in the underlying C++ Minuit2 library, which would have to be fixed upstream)
+- Many life-time/memory leak issues in the iminuit interface code should be resolved now, even when there is an exception during the minimisation (there can still be errors in the underlying C++ Minuit2 library, which would have to be fixed upstream)
 
 Other changes
 ~~~~~~~~~~~~~
 - Several attributes were replaced with properties to avoid accidental overrides and to protect against assigning invalid input, e.g. ``Minuit.tol`` and ``Minuit.errordef`` only accept positive numbers
 - Documentation update and clean up
 - Logging messages from C++ Minuit2, which are produced when ``Minuit.print_level`` is set to 1 to 3 are now properly shown inside the notebook or the Python session instead of being printed to the terminal
-- Assigning to ``Minuit.print_level`` changes the logging threshold for all current and future ``Minuit`` instances in the current Python session, setting this to a value > 0 shows a corresponding warning
+- Assigning to ``Minuit.print_level`` changes the logging threshold for all current and future ``Minuit`` instances in the current Python session, this is not really desired but cannot be avoided since the C++ logger is a global variable
 - docstring parsing for ``iminuit.util.describe`` was rewritten; behaviour of ``describe`` for corner cases of functions with positional and variable number of positional and keyword arguments are now well-defined
-- iminuit now has 100 % test coverage
+- iminuit now has 100 % line coverage by unit tests
 
 1.5.4 (November 21, 2020)
 --------------------------
