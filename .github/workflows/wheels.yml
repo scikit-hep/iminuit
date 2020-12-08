@@ -76,7 +76,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload:
-    if: "github.event.release.release"
+    if: "github.event.release.published"
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
     steps:
