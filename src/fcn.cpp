@@ -3,11 +3,11 @@
 #include <Minuit2/MnPrint.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <cmath>
 #include <cstdint>
 #include <sstream>
 #include <vector>
+#include "type_caster.hpp"
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
