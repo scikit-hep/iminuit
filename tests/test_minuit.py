@@ -2,7 +2,7 @@ import warnings
 import platform
 import pytest
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
 from iminuit.util import Param, IMinuitWarning, make_func_code
 from pytest import approx
@@ -743,7 +743,7 @@ def test_grad():
     v = m.fcn([2.0, 5.0])
     g = m.grad([2.0, 5.0])
     assert v == func0(2.0, 5.0)
-    assert g == func0_grad(2.0, 5.0)
+    assert_equal(g, func0_grad(2.0, 5.0))
 
 
 def test_values(minuit):

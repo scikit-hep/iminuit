@@ -1,5 +1,6 @@
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
+#include <algorithm>
 #include <vector>
 
 namespace pybind11 {
@@ -29,19 +30,10 @@ struct type_caster<std::vector<Value>> {
 
 public:
   template <typename T>
-  static handle cast(T&& src, return_value_policy policy, handle parent) {
-    if (!std::is_lvalue_reference<T>::value)
-      policy = return_value_policy_override<Value>::policy(policy);
-    // TODO optimize by returning ndarray instead of list
-    list l(src.size());
-    size_t index = 0;
-    for (auto&& value : src) {
-      auto value_ = reinterpret_steal<object>(value_conv::cast(value, policy, parent));
-      if (!value_) return handle();
-      PyList_SET_ITEM(l.ptr(), (ssize_t)index++,
-                      value_.release().ptr()); // steals a reference
-    }
-    return l.release();
+  static handle cast(T&& src, return_value_policy, handle) {
+    array_t<Value> arr({static_cast<ssize_t>(src.size())});
+    std::copy(src.begin(), src.end(), arr.mutable_data());
+    return arr.release();
   }
 
   PYBIND11_TYPE_CASTER(vec_t, _("List[") + value_conv::name + _("]"));
