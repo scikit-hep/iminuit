@@ -44,7 +44,7 @@ setup(
     version=version,
     python_requires=">=3.6",
     zip_safe=False,
-    ext_modules=[CMakeExtension()],
+    ext_modules=[CMakeExtension("iminuit._core")],
     cmdclass=dict(build_ext=CMakeBuild),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
