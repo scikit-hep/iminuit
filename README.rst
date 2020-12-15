@@ -5,11 +5,15 @@
 |iminuit|
 =========
 
+.. skip-marker-do-not-remove
+
 .. image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
    :alt: Scikit-HEP project package
    :target: https://scikit-hep.org
-.. image:: https://img.shields.io/pypi/v/iminuit.svg
+.. image:: https://img.shields.io/pypi/v/goofit
    :target: https://pypi.org/project/iminuit
+.. image:: https://img.shields.io/conda/vn/conda-forge/iminuit.svg
+   :target: https://github.com/conda-forge/iminuit-feedstock
 .. image:: https://github.com/scikit-hep/iminuit/workflows/Github-Actions/badge.svg
    :target: https://github.com/scikit-hep/iminuit/actions
 .. image:: https://coveralls.io/repos/github/scikit-hep/iminuit/badge.svg?branch=develop
@@ -22,7 +26,6 @@
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
    :target: https://doi.org/10.5281/zenodo.3949207
 
-.. skip-marker-do-not-remove
 
 *iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library.
 
