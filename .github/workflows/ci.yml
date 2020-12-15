@@ -2,8 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches:
-      - develop
+    # ci.yml tests everything except master, master is tested by wheels.yml
+    branches-ignore:
+      - master
     paths-ignore:
       - 'doc/**'
       - '.ci/**'
