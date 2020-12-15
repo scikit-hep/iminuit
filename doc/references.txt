@@ -1,7 +1,8 @@
+.. _scipy: https://www.scipy.org/
+.. _scipy.optimize: https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html
 .. _numba: https://numba.pydata.org
 .. _jax: https://jax.readthedocs.io
 .. _nlopt: https://nlopt.readthedocs.io/en/latest
-.. _scipy.optimize: https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html
 .. _pyhf: https://github.com/diana-hep/pyhf
 .. _ctapipe: https://github.com/cta-observatory/ctapipe
 .. _lauztat: https://github.com/marinang/lauztat
@@ -24,3 +25,4 @@
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 .. _pytest: http://pytest.org
 .. _Estimated Distance to Minimum: http://en.wikipedia.org/wiki/Minimum_distance_estimation
+.. _zenodo: https://zenodo.org/record/4310361

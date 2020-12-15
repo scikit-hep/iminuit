@@ -9,8 +9,6 @@
   :start-after: skip-marker-do-not-remove
 
 .. toctree::
-    :maxdepth: 4
-    :hidden:
 
     about
     install
@@ -20,3 +18,4 @@
     faq
     changelog
     contribute
+    citation
