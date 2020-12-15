@@ -7,18 +7,14 @@ from pathlib import Path
 
 
 class CMakeExtension(Extension):
-    def __init__(self, sourcedir=""):
-        Extension.__init__(self, "CMakeExtension", sources=[])
+    def __init__(self, name, sourcedir=""):
+        Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
 
 class CMakeBuild(build_ext):
-    def run(self):
-        for ext in self.extensions:
-            self.build_extension(ext)
-
     def build_extension(self, ext):
-        extdir = Path(self.get_ext_fullpath(ext.name)).parent.absolute() / "iminuit"
+        extdir = Path(self.get_ext_fullpath(ext.name)).parent.absolute()
         # required for auto-detection of auxiliary "native" libs
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}/",
@@ -35,7 +31,7 @@ class CMakeBuild(build_ext):
         cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
         build_args = ["--config", cfg]  # needed by some generators, e.g. on Windows
 
-        if self.compiler and self.compiler.compiler_type == "msvc":
+        if self.compiler.compiler_type == "msvc":
             # CMake allows an arch-in-generator style for backward compatibility
             contains_arch = any(x in cmake_generator for x in ("ARM", "Win64"))
 
