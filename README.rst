@@ -8,7 +8,7 @@
 .. image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
    :alt: Scikit-HEP project package
    :target: https://scikit-hep.org
-.. image:: https://img.shields.io/pypi/v/iminuit
+.. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
 .. image:: https://img.shields.io/conda/vn/conda-forge/iminuit.svg
    :target: https://github.com/conda-forge/iminuit-feedstock
