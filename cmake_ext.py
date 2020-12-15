@@ -36,15 +36,13 @@ class CMakeBuild(build_ext):
         build_args = ["--config", cfg]  # needed by some generators, e.g. on Windows
 
         if self.compiler and self.compiler.compiler_type == "msvc":
-            single_config = any(x in cmake_generator for x in {"NMake", "Ninja"})
-
             # CMake allows an arch-in-generator style for backward compatibility
-            contains_arch = any(x in cmake_generator for x in {"ARM", "Win64"})
+            contains_arch = any(x in cmake_generator for x in ("ARM", "Win64"))
 
             # Specify the arch if using MSVC generator, but only if it doesn't
             # contain a backward-compatibility arch spec already in the
             # generator name.
-            if not single_config and not contains_arch:
+            if not contains_arch:
                 # Convert distutils Windows platform specifiers to CMake -A arguments
                 arch = {
                     "win32": "Win32",
@@ -54,12 +52,9 @@ class CMakeBuild(build_ext):
                 }[self.plat_name]
                 cmake_args += ["-A", arch]
 
-            # Multi-config generators have a different way to specify configs
-            if not single_config:
-                cmake_args += [
-                    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
-                ]
-                build_args += ["--config", cfg]
+            cmake_args += [
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
+            ]
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
