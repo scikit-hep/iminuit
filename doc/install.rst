@@ -5,7 +5,7 @@
 Installation
 ============
 
-Note: iminuit is tested to work with PyPy3.5 and PyPy3.6, but we do not provide binary packages for PyPy. PyPy users need to install the source package of ``iminuit``. This happens automatically when you install it via ``conda`` or ``pip``, but requires a working C++ compiler.
+Note: iminuit is tested to work with PyPy3.5 and PyPy3.6, but we do not provide binary packages for PyPy. PyPy users need to install the source package of iminuit. This happens automatically when you install it via ``conda`` or ``pip``, but requires a working C++ compiler.
 
 pip
 ---
@@ -50,7 +50,7 @@ See :ref:`contribute`.
 Check installation
 ------------------
 
-To check your ``iminuit`` version number and install location::
+To check your iminuit version number and install location::
 
     $ python
     >>> import iminuit
