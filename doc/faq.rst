@@ -13,10 +13,10 @@ Disclaimer: Read the excellent MINUIT2 user guide!
 Many technical questions are nicely covered by the user guide of MINUIT2,
 :download:`MINUIT User's guide <mnusersguide.pdf>`. We will frequently refer to it here.
 
-I don't understand :meth:`Minuit.hesse`, :meth:`Minuit.minos`, ``errordef``; what do these do?
-----------------------------------------------------------------------------------------------
-How do I interpret the parameter errors that iminuit produces?
---------------------------------------------------------------
+I don't understand :meth:`Minuit.hesse`, :meth:`Minuit.minos`, :attr:`Minuit.errordef`; what do these do?
+-----------------------------------------------------------------------------------------------------------
+How do I interpret the parameter errors?
+----------------------------------------
 How do I obtain a high-quality error matrix?
 --------------------------------------------
 What effect has setting limits on the parameter uncertainties?
@@ -24,18 +24,23 @@ What effect has setting limits on the parameter uncertainties?
 
 The MINUIT2 user's guide explains all about it, see pages 6-8 and 38-40.
 
+I want to cite iminuit in my paper. Help?
+------------------------------------------------
+
+We use the excellent Zenodo service to make each iminuit release citable. You can either cite iminuit as a software or you can cite the exact version that was used for your analysis. For more details, see :ref:`citation`.
+
 Can I have parameter limits that depend on each other (e.g. x^2 + y^2 < 3)?
 ---------------------------------------------------------------------------
 
-MINUIT was only designed to handle box constrains, meaning that the limits on the parameters are independent of each other and constant during the minimization. If you want limits that depend on each other, you have three options (all with caveats), which are listed in increasing order of difficulty:
+MINUIT was only designed to handle box constrains, meaning that the limits on the parameters are independent of each other and constant during the minimisation. If you want limits that depend on each other, you have three options (all with caveats), which are listed in increasing order of difficulty:
 
-1) Change the variables so that the limits become independent, such as going from x,y to r, phi for a circle. This is not always possible or desirable, of course.
+1) Change the variables so that the limits become independent. For example, transform from cartesian coordinates to polar coordinates for a circle. This is not always possible, of course.
 
-2) Use another minimizer to locate the minimum which supports complex boundaries. The `nlopt`_ library and `scipy.optimize`_ have such minimizers. Once the minimum is found and if it is not near the boundary, place box constraints around the minimum and run iminuit to get the uncertainties (make sure that the box constraints are not too tight around the minimum). Neither nlopt nor scipy can give you the uncertainties.
+2) Use another minimiser to locate the minimum which supports complex boundaries. The `nlopt`_ library and `scipy.optimize`_ have such minimisers. Once the minimum is found and if it is not near the boundary, place box constraints around the minimum and run iminuit to get the uncertainties (make sure that the box constraints are not too tight around the minimum). Neither `nlopt`_ nor `scipy`_ can give you the uncertainties.
 
 3) Artificially increase the negative log-likelihood in the forbidden region. This is not as easy as it sounds.
 
-The third method done properly is known as the `interior point or barrier method <https://en.wikipedia.org/wiki/Interior-point_method>`_. A glance at the Wikipedia article shows that one has to either run a series of minimizations with iminuit (and find a clever way of knowing when to stop) or implement this properly at the level of a Newton step, which would require changes to the complex and convoluted internals of MINUIT2.
+The third method done properly is known as the `interior point or barrier method <https://en.wikipedia.org/wiki/Interior-point_method>`_. A glance at the Wikipedia article shows that one has to either run a series of minimisations with iminuit (and find a clever way of knowing when to stop) or implement this properly at the level of a Newton step, which would require changes to the complex and convoluted internals of MINUIT2.
 
 Warning: you cannot just add a large value to the likelihood when the parameter boundary is violated. MIGRAD expects the likelihood function to be differential everywhere, because it uses the gradient of the likelihood to go downhill. The derivative at a discrete step is infinity and zero in the forbidden region. MIGRAD does not like this at all.
 
@@ -44,7 +49,7 @@ What happens when I change the strategy?
 
 See page 5 of the MINUIT2 user guide for a rough explanation what this does. Here is our detailed explanation, extracted from looking into the source code and doing benchmarks.
 
-* strategy = 0 is the fastest and the number of function calls required to minimize scales linearly with the number of fitted parameters. The Hesse matrix is not computed during the minimization (only an approximation that is continously updated). When the number of fitted parameters > 10, you should prefer this strategy.
+* strategy = 0 is the fastest and the number of function calls required to minimise scales linearly with the number of fitted parameters. The Hesse matrix is not computed during the minimisation (only an approximation that is continuously updated). When the number of fitted parameters > 10, you should prefer this strategy.
 * strategy = 1 (default) is medium in speed. The number of function calls required scales quadratically with the number of fitted parameters. The different scales comes from the fact that the Hesse matrix is explicitly computed in a Newton step, if Minuit detects significant correlations between parameters.
 * strategy = 2 has the same quadratic scaling as strategy 1 but is even slower. The Hesse matrix is always explicitly computed in each Newton step.
 
@@ -53,15 +58,15 @@ If you have a function that is everywhere analytical and the Hesse matrix varies
 How do I get Hesse errors for sigma=2, 3, ...?
 ----------------------------------------------
 
-For a least-squares function, you use `errordef = sigma ** 2` and for a negative log-likelihood function you use `errordef = 0.5 * sigma ** 2`.
+For a least-squares function, you use ``errordef = sigma ** 2`` and for a negative log-likelihood function you use ``errordef = 0.5 * sigma ** 2``.
 
 Why do extra messages appear in the terminal when I use `print_level=2` or larger?
 ------------------------------------------------------------------------------------
 
 A `print_level=2` or higher activates internal debug messages directly from C++ MINUIT, which we cannot capture and print nicely in a Jupyter notebook, sorry.
 
-Is it possible to stop iminuit by setting a tolerance for changes in the minimized function or the parameters?
---------------------------------------------------------------------------------------------------------------------
+Is it possible to stop iminuit by setting a tolerance for changes in the minimised function or the parameters?
+--------------------------------------------------------------------------------------------------------------------------
 
 No. MINUIT only uses the `Estimated Distance to Minimum`_ (EDM) stopping criterion. It stops, if the difference between the actual function value at the estimated minimum location and the estimated function value at that location, based on MINUIT's internal parabolic approximation of the function, is small. This criterion depends strongly on the numerically computed first and second derivatives. Therefore, problems with MINUIT's convergence are often related to numerical issues when the first and second derivatives are computed.
 
