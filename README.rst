@@ -10,6 +10,8 @@
    :target: https://scikit-hep.org
 .. image:: https://img.shields.io/pypi/v/iminuit.svg
    :target: https://pypi.org/project/iminuit
+.. image:: https://img.shields.io/conda/vn/conda-forge/iminuit.svg
+   :target: https://github.com/conda-forge/iminuit-feedstock
 .. image:: https://github.com/scikit-hep/iminuit/workflows/Github-Actions/badge.svg
    :target: https://github.com/scikit-hep/iminuit/actions
 .. image:: https://coveralls.io/repos/github/scikit-hep/iminuit/badge.svg?branch=develop
