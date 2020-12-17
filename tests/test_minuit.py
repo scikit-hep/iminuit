@@ -1418,6 +1418,7 @@ def test_pickle(grad):
     assert m2.fmin == m.fmin
     assert m2.params == m.params
     assert m2.merrors == m.merrors
+    assert_equal(m2.covariance, m.covariance)
 
     m2.migrad()
     m2.hesse()
