@@ -5,11 +5,12 @@
 Changelog
 =========
 
-2.1.0
-------------------------
+2.1.0 (December 17, 2020)
+-------------------------
 
 New features
 ~~~~~~~~~~~~
+- Experimental pickle support (please report any bugs)
 - More efficient internal conversion between Python objects and ``std::vector<double>``
 
 Bug-fixes
@@ -19,7 +20,7 @@ Bug-fixes
 
 Other
 ~~~~~
-- Unit tests are now included again in sdist package
+- Unit tests are included again in sdist package
 - ``Minuit.grad`` now returns ``numpy.ndarray`` instead of a ``list``
 - Fixes for ``conda`` builds on Windows platform with ``msvc``, by @henryiii
 - Updated and unified documentation on how to cite iminuit
