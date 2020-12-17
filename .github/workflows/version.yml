@@ -1,13 +1,10 @@
-name: Release check
+name: Version
 
 on:
   pull_request:
-    branches:
-      - develop
-      - master
 
 jobs:
-  release_check:
+  version:
     runs-on: ubuntu-latest
 
     steps:

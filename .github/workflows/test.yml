@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   pull_request:
@@ -11,13 +11,18 @@ on:
       - '*.rst'
 
 jobs:
-  cpython:
+  test:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
-        python-version: [ '3.6', '3.9' ]
+        include:
+          - os: windows-latest
+            python-version: 3.6
+          - os: macos-latest
+            python-version: 3.9
+          - os: ubuntu-latest
+            python-version: pypy-3.6
       fail-fast: false
     steps:
     - uses: actions/checkout@v2
@@ -27,21 +32,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - run: python -m pip install --upgrade pip wheel
-    - run: python -m pip install -e .
-    - run: python -m pip install pytest
-    - run: python -m pytest
-
-  pypy:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-    - uses: actions/setup-python@v2
-      with:
-        python-version: pypy3
-    - run: python -m pip install --upgrade pip wheel
-    - run: python -m pip install -e .
+    - run: python -m pip install .
     - run: python -m pip install pytest
     - run: python -m pytest
