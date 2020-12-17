@@ -2,7 +2,7 @@ name: Test
 
 on:
   pull_request:
-    # ci.yml tests everything except master, master is tested by wheels.yml
+    # test every branch except master, master is tested by wheels.yml
     branches-ignore:
       - master
     paths-ignore:
