@@ -580,7 +580,7 @@ def test_initial_value():
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-@pytest.mark.parametrize("cl", (None, 0.68, 0.9))
+@pytest.mark.parametrize("cl", (None, 0.5, 0.9))
 def test_mncontour(grad, cl):
     stats = pytest.importorskip("scipy.stats")
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
@@ -1354,3 +1354,40 @@ def test_cfunc():
     m = Minuit(fcn, (1, 2, 3))
     m.migrad()
     assert_allclose(m.values, (0, 1, 2), atol=1e-8)
+
+
+@pytest.mark.parametrize("cl", (0.5, None, 0.9))
+def test_confidence_level(cl):
+    stats = pytest.importorskip("scipy.stats")
+    mpath = pytest.importorskip("matplotlib.path")
+
+    cov = ((1.0, 0.5), (0.5, 4.0))
+    truth = (1.0, 2.0)
+    d = stats.multivariate_normal(truth, cov)
+
+    def nll(par):
+        return -np.log(d.pdf(par))
+
+    nll.errordef = 0.5
+
+    cl_ref = 0.68 if cl is None else cl
+
+    m = Minuit(nll, (0.0, 0.0))
+    m.migrad()
+
+    n = 10000
+    r = d.rvs(n, random_state=1)
+
+    # check that mncontour indeed contains fraction of random points equal to CL
+    pts = m.mncontour("x0", "x1", cl=cl)
+    p = mpath.Path(pts)
+    cl2 = np.sum(p.contains_points(r)) / n
+    assert cl2 == approx(cl_ref, abs=0.01)
+
+    # check that minos interval  indeed contains fraction of random points equal to CL
+    m.minos(cl=cl)
+    for ipar, (v, me) in enumerate(zip(m.values, m.merrors.values())):
+        a = v + me.lower
+        b = v + me.upper
+        cl2 = np.sum((a < r[:, ipar]) & (r[:, ipar] < b)) / n
+        assert cl2 == approx(cl_ref, abs=0.01)
