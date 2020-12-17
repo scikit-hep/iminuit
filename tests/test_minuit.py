@@ -1391,3 +1391,14 @@ def test_confidence_level(cl):
         b = v + me.upper
         cl2 = np.sum((a < r[:, ipar]) & (r[:, ipar] < b)) / n
         assert cl2 == approx(cl_ref, abs=0.01)
+
+
+def test_repr():
+    m = Minuit(func0, 0, 0)
+    assert repr(m) == f"{m.params!r}"
+
+    m.migrad()
+    assert repr(m) == f"{m.fmin!r}\n{m.params!r}\n{m.covariance!r}"
+
+    m.minos()
+    assert repr(m) == f"{m.fmin!r}\n{m.params!r}\n{m.merrors!r}\n{m.covariance!r}"

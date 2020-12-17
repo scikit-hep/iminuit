@@ -1364,6 +1364,17 @@ class Minuit:
             s.append(repr(self.covariance))
         return "\n".join(s)
 
+    def __str__(self):
+        s = []
+        if self.fmin is not None:
+            s.append(str(self.fmin))
+        s.append(str(self.params))
+        if self.merrors:
+            s.append(str(self.merrors))
+        if self.covariance is not None:
+            s.append(str(self.covariance))
+        return "\n".join(s)
+
     def _repr_html_(self):
         s = ""
         if self.fmin is not None:
@@ -1379,16 +1390,7 @@ class Minuit:
         if cycle:
             p.text("<Minuit ...>")
         else:
-            if self.fmin is not None:
-                p.pretty(self.fmin)
-                p.breakable()
-            p.pretty(self.params)
-            if self.merrors:
-                p.breakable()
-                p.pretty(self.merrors)
-            if self.covariance is not None:
-                p.breakable()
-                p.pretty(self.covariance)
+            p.text(str(self))
 
 
 def _make_init_state(pos2var, args, kwds):

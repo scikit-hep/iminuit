@@ -239,7 +239,7 @@ class Matrix(np.ndarray):
         return super(Matrix, self).__str__()
 
     def __str__(self):
-        return repr(self)
+        return _repr_text.matrix(self)
 
     def _repr_html_(self):
         return _repr_html.matrix(self)
@@ -248,7 +248,7 @@ class Matrix(np.ndarray):
         if cycle:
             p.text("<Matrix ...>")
         else:
-            p.text(_repr_text.matrix(self))
+            p.text(str(self))
 
 
 class FMin:
@@ -435,6 +435,9 @@ class FMin:
         s += ">"
         return s
 
+    def __str__(self):
+        return _repr_text.fmin(self)
+
     def _repr_html_(self):
         return _repr_html.fmin(self)
 
@@ -442,7 +445,7 @@ class FMin:
         if cycle:
             p.text("<FMin ...>")
         else:
-            p.text(_repr_text.fmin(self))
+            p.text(str(self))
 
 
 class Param:
@@ -478,11 +481,14 @@ class Param:
             pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
 
+    def __str__(self):
+        return _repr_text.params([self])
+
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Param(...)")
         else:
-            p.text(_repr_text.params([self]))
+            p.text(str(self))
 
 
 class Params(tuple):
@@ -551,11 +557,14 @@ class Params(tuple):
             key = i
         return super(Params, self).__getitem__(key)
 
+    def __str__(self):
+        return _repr_text.params(self)
+
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("Params(...)")
         else:
-            p.text(_repr_text.params(self))
+            p.text(str(self))
 
 
 class MError:
@@ -614,6 +623,9 @@ class MError:
         s += ">"
         return s
 
+    def __str__(self):
+        return _repr_text.merrors({None: self})
+
     def _repr_html_(self):
         return _repr_html.merrors({None: self})
 
@@ -621,7 +633,7 @@ class MError:
         if cycle:
             p.text("<MError ...>")
         else:
-            p.text(_repr_text.merrors({None: self}))
+            p.text(str(self))
 
 
 class MErrors(OrderedDict):
@@ -635,11 +647,14 @@ class MErrors(OrderedDict):
     def __repr__(self):
         return "<MErrors\n  " + ",\n  ".join(repr(x) for x in self.values()) + "\n>"
 
+    def __str__(self):
+        return _repr_text.merrors(self)
+
     def _repr_pretty_(self, p, cycle):
         if cycle:
             p.text("<MErrors ...>")
         else:
-            p.text(_repr_text.merrors(self))
+            p.text(str(self))
 
     def __getitem__(self, key):
         if isinstance(key, int):
