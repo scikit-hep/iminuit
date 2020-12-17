@@ -785,8 +785,10 @@ class Minuit:
         **Keyword arguments**
 
             - **cl**: confidence level for the error interval. Default: None, which
-              produces 68.3 % confidence intervals. Setting this to another value
-              requires the scipy module to be installed.
+              produces standard 68.3 % confidence intervals. Setting this to another
+              value requires the scipy module to be installed. Asymptotically, intervals
+              with confidence level cl obtained from repeated identical experiments
+              cover the true value with a probability equal to cl.
             - **ncall**: integer or None, limit the number of calls made by MINOS.
               Default: None (uses an internal heuristic by C++ MINUIT).
 
@@ -1173,11 +1175,14 @@ class Minuit:
 
             - **y** string variable name of the second parameter
 
-            - **cl** confidence level of the contour. Default: None, which computes a
+            - **cl** confidence level of the contour. Default: None, which produces a
               68 % contour. Setting this to another value requires the scipy module to
-              be installed.
+              be installed. Asymptotically, contours with confidence level cl obtained
+              from repeated identical experiments cover the true value with a
+              probability equal to cl.
 
-            - **size** number of points on the line to find. Default 100.
+            - **size** number of points on the contour to find. Default 100. Increasing
+              this makes the contour smoother, but requires more computation time.
 
         **Returns:**
 
