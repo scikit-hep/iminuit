@@ -1426,3 +1426,20 @@ def test_pickle(grad):
 
     assert m2.fmin.edm < m.fmin.edm
     assert m2.fmin.nfcn > m.fmin.nfcn
+
+
+def test_minos_new_min():
+    xref = [1.0]
+    m = Minuit(lsq(lambda x: (x - xref[0]) ** 2), x=0)
+    m.migrad()
+    assert m.values[0] == approx(xref[0], abs=1e-3)
+    m.minos()
+    assert m.merrors["x"].lower == approx(-1, abs=1e-2)
+    assert m.merrors["x"].upper == approx(1, abs=1e-2)
+    xref[0] = 1.1
+    m.minos()
+    # values are not updated...
+    assert m.values[0] == approx(1.0, abs=1e-3)  # should be 1.1
+    # ...but interval is correct
+    assert m.merrors["x"].lower == approx(-0.9, abs=1e-2)
+    assert m.merrors["x"].upper == approx(1.1, abs=1e-2)
