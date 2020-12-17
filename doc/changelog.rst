@@ -26,7 +26,6 @@ Other
   ``Minuit.fmin`` now returns the pretty text version again instead of the
   ``repr`` version
 - Update to pybind11 v2.6.1
--
 
 2.0.0 (December 7, 2020)
 ------------------------
