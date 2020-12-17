@@ -56,6 +56,27 @@ void bind_strategy(py::module m) {
 
       .def(py::self == py::self)
 
+      .def(py::pickle(
+          [](const MnStrategy& self) {
+            return py::make_tuple(
+                self.Strategy(), self.GradientNCycles(), self.GradientStepTolerance(),
+                self.GradientTolerance(), self.HessianNCycles(),
+                self.HessianStepTolerance(), self.HessianG2Tolerance(),
+                self.HessianGradientNCycles(), self.StorageLevel());
+          },
+          [](py::tuple tp) {
+            MnStrategy str(tp[0].cast<unsigned>());
+            str.SetGradientNCycles(tp[1].cast<unsigned>());
+            str.SetGradientStepTolerance(tp[2].cast<double>());
+            str.SetGradientTolerance(tp[3].cast<double>());
+            str.SetHessianNCycles(tp[4].cast<unsigned>());
+            str.SetHessianStepTolerance(tp[5].cast<double>());
+            str.SetHessianG2Tolerance(tp[6].cast<double>());
+            str.SetHessianGradientNCycles(tp[7].cast<unsigned>());
+            str.SetStorageLevel(tp[8].cast<unsigned>());
+            return str;
+          }))
+
       ;
 
   py::implicitly_convertible<unsigned, MnStrategy>();

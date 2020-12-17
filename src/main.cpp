@@ -9,6 +9,7 @@ void bind_functionminimum(py::module);
 void bind_hesse(py::module);
 void bind_machineprecision(py::module);
 void bind_migrad(py::module);
+void bind_minimumstate(py::module);
 void bind_minos(py::module);
 void bind_minuitparameter(py::module);
 void bind_print(py::module);
@@ -17,6 +18,7 @@ void bind_simplex(py::module);
 void bind_strategy(py::module);
 void bind_usercovariance(py::module);
 void bind_userparameterstate(py::module);
+void bind_usertransformation(py::module);
 
 PYBIND11_MODULE(_core, m) {
   bind_application(m);
@@ -26,6 +28,7 @@ PYBIND11_MODULE(_core, m) {
   bind_hesse(m);
   bind_machineprecision(m);
   bind_migrad(m);
+  bind_minimumstate(m);
   bind_minos(m);
   bind_minuitparameter(m);
   bind_print(m);
@@ -34,4 +37,5 @@ PYBIND11_MODULE(_core, m) {
   bind_strategy(m);
   bind_usercovariance(m);
   bind_userparameterstate(m);
+  bind_usertransformation(m);
 }

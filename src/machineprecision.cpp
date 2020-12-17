@@ -23,5 +23,13 @@ void bind_machineprecision(py::module m) {
 
       .def(py::self == py::self)
 
+      .def(py::pickle(
+          [](const MnMachinePrecision& self) { return py::make_tuple(self.Eps()); },
+          [](py::tuple tp) {
+            MnMachinePrecision p;
+            p.SetPrecision(tp[0].cast<double>());
+            return p;
+          }))
+
       ;
 }

@@ -1,6 +1,7 @@
 #include <Minuit2/MnUserParameterState.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include <type_traits>
 #include "equal.hpp"
 #include "type_caster.hpp"
 
@@ -45,6 +46,23 @@ py::object globalcc2py(const MnGlobalCorrelationCoeff& gcc) {
   return py::cast(nullptr);
 }
 
+MnGlobalCorrelationCoeff py2globalcc(py::object o) {
+  static_assert(std::is_standard_layout<MnGlobalCorrelationCoeff>(), "");
+
+  struct Layout {
+    std::vector<double> fGlobalCC;
+    bool fValid;
+  };
+
+  MnGlobalCorrelationCoeff c;
+  auto d = reinterpret_cast<Layout*>(&c);
+  if (!o.is_none()) {
+    d->fGlobalCC = o.cast<std::vector<double>>();
+    d->fValid = true;
+  }
+  return c;
+}
+
 void bind_userparameterstate(py::module m) {
   py::class_<MnUserParameterState>(m, "MnUserParameterState")
 
@@ -83,6 +101,59 @@ void bind_userparameterstate(py::module m) {
       .def("__getitem__", getitem)
       .def("__iter__", iter)
       .def(py::self == py::self)
+
+      .def(py::pickle(
+          [](const MnUserParameterState& self) {
+            return py::make_tuple(self.IsValid(), self.HasCovariance(),
+                                  self.HasGlobalCC(), self.CovarianceStatus(),
+                                  self.Fval(), self.Edm(), self.NFcn(), self.Trafo(),
+                                  self.Covariance(), globalcc2py(self.GlobalCC()),
+                                  self.IntParameters(), self.IntCovariance());
+          },
+          [](py::tuple tp) {
+            static_assert(std::is_standard_layout<MnUserParameterState>(), "");
+            static_assert(std::is_standard_layout<MnUserParameters>(), "");
+
+            if (tp.size() != 12) throw std::runtime_error("invalid state");
+
+            struct Layout {
+              bool fValid;
+              bool fCovarianceValid;
+              bool fGCCValid;
+              int fCovStatus; // covariance matrix status
+              double fFVal;
+              double fEDM;
+              unsigned int fNFcn;
+
+              MnUserParameters fParameters;
+              MnUserCovariance fCovariance;
+              MnGlobalCorrelationCoeff fGlobalCC;
+
+              std::vector<double> fIntParameters;
+              MnUserCovariance fIntCovariance;
+            };
+
+            MnUserParameterState st;
+
+            // evil workaround, will segfault or cause UB if source layout changes
+            auto d = reinterpret_cast<Layout*>(&st);
+
+            d->fValid = tp[0].cast<bool>();
+            d->fCovarianceValid = tp[1].cast<bool>();
+            d->fGCCValid = tp[2].cast<bool>();
+            d->fCovStatus = tp[3].cast<int>();
+            d->fFVal = tp[4].cast<double>();
+            d->fEDM = tp[5].cast<double>();
+            d->fNFcn = tp[6].cast<unsigned>();
+            reinterpret_cast<MnUserTransformation&>(d->fParameters) =
+                tp[7].cast<MnUserTransformation>();
+            d->fCovariance = tp[8].cast<MnUserCovariance>();
+            d->fGlobalCC = py2globalcc(tp[9]);
+            d->fIntParameters = tp[10].cast<std::vector<double>>();
+            d->fIntCovariance = tp[11].cast<MnUserCovariance>();
+
+            return st;
+          }))
 
       ;
 }
