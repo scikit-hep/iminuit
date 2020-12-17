@@ -189,16 +189,17 @@ class Matrix(np.ndarray):
 
     def __array_finalize__(self, obj):
         if obj is None:
-            return
-
-        self._var2pos = getattr(obj, "_var2pos")
+            self._var2pos = None
+        else:
+            self._var2pos = getattr(obj, "_var2pos", None)
 
     def __getitem__(self, key):
         var2pos = self._var2pos
-        if isinstance(key, tuple):
-            key = tuple((k if isinstance(k, int) else var2pos[k]) for k in key)
-        elif isinstance(key, str):
-            key = var2pos[key]
+        if var2pos is not None:
+            if isinstance(key, tuple):
+                key = tuple((k if isinstance(k, int) else var2pos[k]) for k in key)
+            elif isinstance(key, str):
+                key = var2pos[key]
         return super(Matrix, self).__getitem__(key)
 
     def to_table(self):
