@@ -16,15 +16,13 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: [ '3.6', '3.9', 'pypy-3.6' ]
-        exclude:
+        include:
           - os: windows-latest
-            python-version: [ '3.9', 'pypy-3.6' ]
+            python-version: 3.6
           - os: macos-latest
-            python-version: [ '3.6', 'pypy-3.6' ]
+            python-version: 3.9
           - os: ubuntu-latest
-            python-version: [ '3.6', '3.9' ]
+            python-version: pypy-3.6
       fail-fast: false
     steps:
     - uses: actions/checkout@v2
