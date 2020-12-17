@@ -5,6 +5,29 @@
 Changelog
 =========
 
+2.0.0-dev
+------------------------
+
+New features
+~~~~~~~~~~~~
+- More efficient internal conversion between Python objects and ``std::vector<double>``
+
+Bug-fixes
+~~~~~~~~~
+- User-supplied gradient functions that return a ``torch.Tensor`` now work again
+
+Other
+~~~~~
+- Unit tests are now included again in sdist package
+- ``Minuit.grad`` now returns ``numpy.ndarray`` instead of a ``list``
+- Fixes for ``conda`` builds on Windows platform with ``msvc``, by @henryiii
+- Updated and unified documentation on how to cite iminuit
+- ``print()`` applied to ``Minuit.params``, ``Minuit.merrors``, ``Minuit.covariance``,
+  ``Minuit.fmin`` now returns the pretty text version again instead of the
+  ``repr`` version
+- Update to pybind11 v2.6.1
+-
+
 2.0.0 (December 7, 2020)
 ------------------------
 
