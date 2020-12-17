@@ -15,6 +15,7 @@ New features
 Bug-fixes
 ~~~~~~~~~
 - User-supplied gradient functions that return a ``torch.Tensor`` now work again
+- Matrix display now shows numbers correctly even if entries differ in magnitude
 
 Other
 ~~~~~
