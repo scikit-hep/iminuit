@@ -1402,3 +1402,26 @@ def test_repr():
 
     m.minos()
     assert repr(m) == f"{m.fmin!r}\n{m.params!r}\n{m.merrors!r}\n{m.covariance!r}"
+
+
+@pytest.mark.parametrize("grad", (None, func0_grad))
+def test_pickle(grad):
+    import pickle
+
+    m = Minuit(func0, x=0, y=0, grad=grad)
+    m.migrad()
+    m.minos()
+
+    pkl = pickle.dumps(m)
+    m2 = pickle.loads(pkl)
+
+    assert m2.fmin == m.fmin
+    assert m2.params == m.params
+    assert m2.merrors == m.merrors
+
+    m2.migrad()
+    m2.hesse()
+    m2.minos()
+
+    assert m2.fmin.edm < m.fmin.edm
+    assert m2.fmin.nfcn > m.fmin.nfcn

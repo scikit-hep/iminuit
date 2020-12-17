@@ -112,5 +112,20 @@ void bind_fcn(py::module m) {
 
       .def("__call__", &FCN::operator())
 
+      .def(py::pickle(
+          [](const FCN& self) {
+            return py::make_tuple(self.fcn_, self.grad_, self.array_call_,
+                                  self.errordef_, self.throw_nan_, self.nfcn_,
+                                  self.ngrad_);
+          },
+          [](py::tuple tp) {
+            if (tp.size() != 7) throw std::runtime_error("invalid state");
+            FCN fcn{tp[0], tp[1], tp[2].cast<bool>(), tp[3].cast<double>()};
+            fcn.throw_nan_ = tp[4].cast<bool>();
+            fcn.nfcn_ = tp[5].cast<unsigned>();
+            fcn.ngrad_ = tp[6].cast<unsigned>();
+            return fcn;
+          }))
+
       ;
 }

@@ -37,5 +37,14 @@ void bind_usercovariance(py::module m) {
 
       .def(py::self == py::self)
 
+      .def(py::pickle(
+          [](const MnUserCovariance& self) {
+            return py::make_tuple(self.Data(), self.Nrow());
+          },
+          [](py::tuple tp) {
+            return MnUserCovariance(tp[0].cast<std::vector<double>>(),
+                                    tp[1].cast<double>());
+          }))
+
       ;
 }

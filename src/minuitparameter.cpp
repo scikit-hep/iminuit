@@ -39,5 +39,45 @@ void bind_minuitparameter(py::module m) {
 
       .def(py::self == py::self)
 
+      .def(py::pickle(
+          [](const MinuitParameter& self) {
+            return py::make_tuple(self.Number(), self.GetName(), self.Value(),
+                                  self.Error(), self.IsConst(), self.IsFixed(),
+                                  self.LowerLimit(), self.UpperLimit(),
+                                  self.HasLowerLimit(), self.HasUpperLimit());
+          },
+          [](py::tuple tp) {
+            static_assert(std::is_standard_layout<MinuitParameter>(), "");
+
+            if (tp.size() != 10) throw std::runtime_error("invalid state");
+
+            MinuitParameter p{tp[0].cast<unsigned>(), tp[1].cast<std::string>(),
+                              tp[2].cast<double>(), tp[3].cast<double>()};
+
+            struct Layout {
+              unsigned int fNum;
+              double fValue;
+              double fError;
+              bool fConst;
+              bool fFix;
+              double fLoLimit;
+              double fUpLimit;
+              bool fLoLimValid;
+              bool fUpLimValid;
+              std::string fName;
+            };
+
+            auto d = reinterpret_cast<Layout*>(&p);
+
+            d->fConst = tp[4].cast<bool>();
+            d->fFix = tp[5].cast<bool>();
+            d->fLoLimit = tp[6].cast<double>();
+            d->fUpLimit = tp[7].cast<double>();
+            d->fLoLimValid = tp[8].cast<bool>();
+            d->fUpLimValid = tp[9].cast<bool>();
+
+            return p;
+          }))
+
       ;
 }

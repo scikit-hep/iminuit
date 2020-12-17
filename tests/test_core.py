@@ -1,6 +1,7 @@
 from iminuit._core import (
     FCN,
     MnUserParameterState,
+    MnUserTransformation,
     MnMigrad,
     MnStrategy,
     MnScan,
@@ -8,9 +9,11 @@ from iminuit._core import (
     MnSimplex,
     MnPrint,
     MnUserCovariance,
+    MinimumState,
 )
 from pytest import approx
 import pytest
+import pickle
 
 
 @pytest.fixture
@@ -42,6 +45,13 @@ def test_MnUserCovariance():
     assert c[(1, 0)] == 2
     assert c[(0, 1)] == 2
     assert c[(1, 1)] == 3
+
+    pkl = pickle.dumps(c)
+    c2 = pickle.loads(pkl)
+    assert c2.nrow == 2
+    assert c2[(0, 0)] == 1
+    assert c2[(1, 1)] == 3
+    assert c2 == c
 
 
 def fn(x, y):
@@ -193,3 +203,52 @@ def test_FunctionMinimum():
     assert fm1.fval == 0.1
     fm2 = FunctionMinimum(fcn, st, 0.1, str, 0)
     assert not fm2.is_valid
+
+
+def test_MnUserTransformation_pickle():
+    tr = MnUserTransformation()
+
+    pkl = pickle.dumps(tr)
+    tr2 = pickle.loads(pkl)
+
+    assert len(tr2) == len(tr)
+
+
+def test_MinimumState_pickle():
+    st = MinimumState(3)
+
+    pkl = pickle.dumps(st)
+    st2 = pickle.loads(pkl)
+
+    assert st.vec == st2.vec
+    assert st.fval == st2.fval
+    assert st.edm == st2.edm
+    assert st.nfcn == st2.nfcn
+    assert st.is_valid == st2.is_valid
+    assert st.has_parameters == st2.has_parameters
+    assert st.has_covariance == st2.has_covariance
+
+
+def test_FunctionMinimum_pickle():
+    st = MnUserParameterState()
+    st.add("x", 1, 0.1)
+    st.add("y", 2, 0.1, 1, 3)
+    fm = FunctionMinimum(FCN(fn, None, False, 1), st, 123, 1, 0.1)
+
+    pkl = pickle.dumps(fm)
+    fm2 = pickle.loads(pkl)
+
+    assert len(fm.state) == len(fm2.state)
+    assert fm.state == fm2.state
+    assert fm.edm == fm2.edm
+    assert fm.fval == fm2.fval
+    assert fm.is_valid == fm2.is_valid
+    assert fm.has_valid_parameters == fm2.has_valid_parameters
+    assert fm.has_accurate_covar == fm2.has_accurate_covar
+    assert fm.has_posdef_covar == fm2.has_posdef_covar
+    assert fm.has_made_posdef_covar == fm2.has_made_posdef_covar
+    assert fm.hesse_failed == fm2.hesse_failed
+    assert fm.has_covariance == fm2.has_covariance
+    assert fm.is_above_max_edm == fm2.is_above_max_edm
+    assert fm.has_reached_call_limit == fm2.has_reached_call_limit
+    assert fm.errordef == fm2.errordef
