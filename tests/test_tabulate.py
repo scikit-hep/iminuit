@@ -33,9 +33,9 @@ def test_matrix():
     assert (
         framed(tab.tabulate(*m.covariance.to_table()))
         == """
-      x    y
---  ---  ---
-x     1   -0
-y    -0    4
+         x       y
+--  ------  ------
+x    1      -0.643
+y   -0.643   4
 """
     )
