@@ -44,7 +44,6 @@ def test_Matrix():
     assert m["a", 1] == 1.0
     assert m[1, 1] == 4.0
     assert_equal(m["b"], (1, 4))
-    assert str(m) == repr(m)
 
     m *= 2
     assert_equal(m, ((2, 2), (2, 8)))
@@ -79,7 +78,6 @@ def test_Param():
         "is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, "
         "has_upper_limit=False, lower_limit=42, upper_limit=None)"
     )
-    assert str(p) == repr(p)
 
 
 def test_Params():
@@ -95,7 +93,6 @@ def test_Params():
     )
 
     assert repr(p) == repr((p[0], p[1]))
-    assert str(p) == repr(p)
     assert p[0].number == 0
     assert p[1].number == 1
     assert p["foo"].number == 0
@@ -127,7 +124,6 @@ def test_MError():
         "at_lower_max_fcn=False at_upper_max_fcn=False lower_new_min=False "
         "upper_new_min=False nfcn=11 min=0.7>"
     )
-    assert str(me) == repr(me)
 
     assert me == util.MError(
         1,
@@ -188,7 +184,6 @@ def test_MErrors():
     )
 
     assert repr(mes) == f"<MErrors\n  {mes['x']!r}\n>"
-    assert str(mes) == repr(mes)
 
 
 def test_FMin():
@@ -242,7 +237,6 @@ def test_FMin():
         " hesse_failed=False is_above_max_edm=False is_valid=True"
         " nfcn=1 ngrad=2>"
     )
-    assert str(fmin) == repr(fmin)
 
 
 def test_normalize_limit():
