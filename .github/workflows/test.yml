@@ -1,4 +1,4 @@
-name: CI
+name: Test
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ on:
       - '*.rst'
 
 jobs:
-  cpython:
+  test:
     runs-on: ${{ matrix.os }}
 
     strategy:
