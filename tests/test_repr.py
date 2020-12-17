@@ -86,22 +86,22 @@ def test_matrix_format():
         return np.array(args)
 
     assert _repr_text.matrix_format(a(1e1, 2e2, -3e3, -4e4)) == [
-        "0.001e4",
-        "0.020e4",
-        "-0.300e4",
-        "-4.000e4",
+        "10",
+        "200",
+        "-3e+03",
+        "-4e+04",
     ]
     assert _repr_text.matrix_format(a(nan, 2e2, -nan, -4e4)) == [
         "nan",
         "200",
         "nan",
-        "-40000",
+        "-4e+04",
     ]
     assert _repr_text.matrix_format(a(inf, 2e2, -nan, -4e4)) == [
         "inf",
         "200",
         "nan",
-        "-40000",
+        "-4e+04",
     ]
 
 
@@ -447,12 +447,12 @@ def test_html_matrix():
     </tr>
     <tr>
         <th> x </th>
-        <td> 1.00 </td>
-        <td style="background-color:rgb(250,250,250);color:black"> 0.00 </td>
+        <td> 1 </td>
+        <td style="background-color:rgb(250,250,250);color:black"> 0 </td>
     </tr>
     <tr>
         <th> y </th>
-        <td style="background-color:rgb(250,250,250);color:black"> 0.00 </td>
+        <td style="background-color:rgb(250,250,250);color:black"> 0 </td>
         <td> 0.25 </td>
     </tr>
 </table>"""
@@ -471,13 +471,13 @@ def test_html_correlation_matrix():
     </tr>
     <tr>
         <th> x </th>
-        <td> 1.000 </td>
+        <td> 1 </td>
         <td style="background-color:rgb(250,144,144);color:black"> 0.707 </td>
     </tr>
     <tr>
         <th> y </th>
         <td style="background-color:rgb(250,144,144);color:black"> 0.707 </td>
-        <td> 1.000 </td>
+        <td> 1 </td>
     </tr>
 </table>"""
     # fmt: on

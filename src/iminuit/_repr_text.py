@@ -1,5 +1,4 @@
 from .pdg_format import _round, _strip
-import numpy as np
 import re
 
 
@@ -203,14 +202,5 @@ def matrix(arr):
 
 
 def matrix_format(values):
-    mv = np.max(np.abs(values))
-    smv = "%.3g" % mv
-    try:
-        i = smv.index("e")
-        sexp = smv[i + 1 :]
-        exp = int(sexp)
-        values /= 10 ** exp
-        s = [("%.3fe%i" % (v, exp) if np.isfinite(v) else str(v)) for v in values]
-    except ValueError:
-        s = ["%.3f" % v for v in values]
+    s = [f"{v:.3g}" % v for v in values]
     return _strip(s)
