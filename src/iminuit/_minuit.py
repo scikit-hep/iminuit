@@ -805,10 +805,11 @@ class Minuit:
             factor = chi2(1).ppf(cl)
 
         if not self._fmin:
-            # create a FunctionMinimum for MnMinos
+            # create a seed minimum for MnMinos
             fm = FunctionMinimum(
                 self._fcn, self._last_state, self._strategy, self._tolerance
             )
+            # running MnHesse on seed is necessary for MnMinos to work
             hesse = MnHesse(self.strategy)
             hesse(self._fcn, fm, ncall)
             self._last_state = fm.state
@@ -817,9 +818,7 @@ class Minuit:
             fm = self._fmin._src
 
         if not fm.is_valid:
-            raise RuntimeError(
-                "Function minimum is not valid. Make sure MIGRAD converged."
-            )
+            raise RuntimeError("Function minimum is not valid.")
 
         if len(parameters) == 0:
             pars = [par for par in self.parameters if not self.fixed[par]]
