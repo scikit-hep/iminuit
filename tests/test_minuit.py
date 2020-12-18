@@ -1461,10 +1461,14 @@ def test_minos_new_min():
     assert m.merrors["x"].upper == approx(1.1, abs=1e-2)
 
 
-@pytest.mark.parametrize("x", (0.9, 1.0, 1.1))
-def test_minos_without_migrad(x):
-    m = Minuit(lsq(lambda x: (x - 1) ** 2), x)
+def test_minos_without_migrad():
+    m = Minuit(lsq(lambda x, y: (x - 1) ** 2 + (y / 2) ** 2), 1.001, 0.001)
     m.minos()
     me = m.merrors["x"]
-    assert x + me.lower == approx(0, abs=5e-3)
-    assert x + me.upper == approx(2, abs=5e-3)
+    assert me.is_valid
+    assert me.lower == approx(-1, abs=5e-3)
+    assert me.upper == approx(1, abs=5e-3)
+    me = m.merrors["y"]
+    assert me.is_valid
+    assert me.lower == approx(-2, abs=5e-3)
+    assert me.upper == approx(2, abs=5e-3)
