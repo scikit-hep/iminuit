@@ -1408,24 +1408,40 @@ def test_repr():
 def test_pickle(grad):
     import pickle
 
-    m = Minuit(func0, x=0, y=0, grad=grad)
+    m = Minuit(func0, x=1, y=1, grad=grad)
+    m.fixed[1] = True
+    m.limits[0] = 0, 10
     m.migrad()
-    m.minos()
 
     pkl = pickle.dumps(m)
     m2 = pickle.loads(pkl)
 
-    assert m2.fmin == m.fmin
+    assert id(m2) != id(m)
+    # check correct linking of views
+    assert id(m2.values._minuit) == id(m2)
+    assert id(m2.errors._minuit) == id(m2)
+    assert id(m2.limits._minuit) == id(m2)
+    assert id(m2.fixed._minuit) == id(m2)
+
+    assert m2.init_params == m.init_params
     assert m2.params == m.params
-    assert m2.merrors == m.merrors
+    assert m2.fmin == m.fmin
     assert_equal(m2.covariance, m.covariance)
 
+    m.fixed = False
+    m2.fixed = False
+    m.migrad()
+    m.minos()
+
     m2.migrad()
-    m2.hesse()
     m2.minos()
 
-    assert m2.fmin.edm < m.fmin.edm
-    assert m2.fmin.nfcn > m.fmin.nfcn
+    assert m2.merrors == m.merrors
+
+    assert m2.fmin.fval == m.fmin.fval
+    assert m2.fmin.edm == m.fmin.edm
+    assert m2.fmin.nfcn == m.fmin.nfcn
+    assert m2.fmin.ngrad == m.fmin.ngrad
 
 
 def test_minos_new_min():
