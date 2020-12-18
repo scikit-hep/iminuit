@@ -793,6 +793,8 @@ class Minuit:
 
             self
         """
+        ncall = 0 if ncall is None else int(ncall)
+
         if cl is None:
             factor = 1.0
         else:
@@ -807,10 +809,12 @@ class Minuit:
             fm = FunctionMinimum(
                 self._fcn, self._last_state, self._strategy, self._tolerance
             )
+            hesse = MnHesse(self.strategy)
+            hesse(self._fcn, fm, ncall)
+            self._last_state = fm.state
+            self._make_covariance()
         else:
             fm = self._fmin._src
-
-        ncall = 0 if ncall is None else int(ncall)
 
         if not fm.is_valid:
             raise RuntimeError(
