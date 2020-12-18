@@ -10,6 +10,7 @@ Changelog
 
 New features
 ~~~~~~~~~~~~
+- Minuit object is now pickle-able and copy-able
 - More efficient internal conversion between Python objects and ``std::vector<double>``
 
 Bug-fixes
@@ -19,7 +20,7 @@ Bug-fixes
 
 Other
 ~~~~~
-- Unit tests are now included again in sdist package
+- Unit tests are included again in sdist package
 - ``Minuit.grad`` now returns ``numpy.ndarray`` instead of a ``list``
 - Fixes for ``conda`` builds on Windows platform with ``msvc``, by @henryiii
 - Updated and unified documentation on how to cite iminuit
