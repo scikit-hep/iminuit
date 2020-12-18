@@ -18,6 +18,8 @@ using namespace ROOT::Minuit2;
 void bind_machineprecision(py::module m) {
   py::class_<MnMachinePrecision>(m, "MnMachinePrecision")
 
+      .def(py::init<>())
+
       .def_property("eps", &MnMachinePrecision::Eps, &MnMachinePrecision::SetPrecision)
       .def_property_readonly("eps2", &MnMachinePrecision::Eps2)
 

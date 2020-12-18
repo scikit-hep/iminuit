@@ -4,6 +4,7 @@ from ._core import (
     FCN,
     MnContours,
     MnHesse,
+    MnMachinePrecision,
     MnMigrad,
     MnMinos,
     MnPrint,
@@ -550,13 +551,7 @@ class Minuit:
 
         self._last_state = fm.state
 
-        # EDM goal
-        # - taken from the source code, see VariableMeticBuilder::Minimum and
-        #   ModularFunctionMinimizer::Minimize
-        # - goal is used to detect convergence but violations by 10x are also accepted;
-        #   see VariableMetricBuilder.cxx:425
-        edm_goal = 2e-3 * max(self._tolerance * fm.errordef, migrad.precision.eps2)
-
+        edm_goal = self._migrad_edm_goal()
         self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
         self._make_covariance()
 
@@ -605,6 +600,8 @@ class Minuit:
 
         edm_goal = max(self._tolerance * fm.errordef, simplex.precision.eps2)
         self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
+        self._covariance = None
+        self._merrors = mutil.MErrors()
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -694,11 +691,11 @@ class Minuit:
         run(0)
 
         edm_goal = self._tolerance * self._fcn._errordef
-        fm = FunctionMinimum(
-            self._fcn, self._last_state, x[self.npar], self.strategy, edm_goal
-        )
+        fm = FunctionMinimum(self._fcn, self._last_state, self.strategy, edm_goal)
         self._last_state = fm.state
         self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
+        self._covariance = None
+        self._merrors = mutil.MErrors()
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -806,13 +803,16 @@ class Minuit:
             factor = chi2(1).ppf(cl)
 
         if not self._fmin:
-            raise RuntimeError(
-                "MINOS require function to be at the minimum. Run MIGRAD first."
+            # create a FunctionMinimum for MnMinos
+            fm = FunctionMinimum(
+                self._fcn, self._last_state, self._strategy, self._tolerance
             )
+        else:
+            fm = self._fmin._src
 
         ncall = 0 if ncall is None else int(ncall)
 
-        if not self._fmin.is_valid:
+        if not fm.is_valid:
             raise RuntimeError(
                 "Function minimum is not valid. Make sure MIGRAD converged."
             )
@@ -833,7 +833,7 @@ class Minuit:
                     pars.append(par)
 
         with TemporaryErrordef(self._fcn, factor):
-            minos = MnMinos(self._fcn, self._fmin._src, self.strategy)
+            minos = MnMinos(self._fcn, fm, self.strategy)
             for par in pars:
                 me = minos(self._var2pos[par], ncall, self._tolerance)
                 self._merrors[par] = mutil.MError(
@@ -854,8 +854,9 @@ class Minuit:
                     me.min,
                 )
 
-        self._fmin._nfcn = self.nfcn
-        self._fmin._ngrad = self.ngrad
+        if self._fmin:
+            self._fmin._nfcn = self.nfcn
+            self._fmin._ngrad = self.ngrad
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -1352,6 +1353,17 @@ class Minuit:
             self._covariance = m
         else:
             self._covariance = None
+
+    def _migrad_edm_goal(self):
+        pr = MnMachinePrecision()
+        if self.precision is not None:
+            pr.eps = self.precision
+        # EDM goal
+        # - taken from the source code, see VariableMeticBuilder::Minimum and
+        #   ModularFunctionMinimizer::Minimize
+        # - goal is used to detect convergence but violations by 10x are also accepted;
+        #   see VariableMetricBuilder.cxx:425
+        return 2e-3 * max(self.tol * self.errordef, pr.eps2)
 
     def __repr__(self):
         s = []

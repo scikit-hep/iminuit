@@ -18,7 +18,7 @@ using namespace ROOT::Minuit2;
 MinimumSeed make_seed(const FCN& fcn, const MnUserFcn& mfcn,
                       const MnUserParameterState& st, const MnStrategy& str);
 
-FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval,
+FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
                      const MnStrategy& str, double edm_goal);
 
 py::tuple fmin_getstate(const FunctionMinimum&);

@@ -26,7 +26,7 @@ MinimumSeed make_seed(const FCN& fcn, const MnUserFcn& mfcn,
   return gen(mfcn, gc, st, str);
 }
 
-FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval,
+FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
                      const MnStrategy& str, double edm_goal) {
   MnUserFcn mfcn(fcn, st.Trafo());
   MinimumSeed seed = make_seed(fcn, mfcn, st, str);
@@ -39,7 +39,7 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st, double fval
     err(i) = std::sqrt(2. * mfcn.Up() * seed.Error().InvHessian()(i, i));
   }
 
-  MinimumParameters minp(val, err, fval);
+  MinimumParameters minp(val, err, seed.Fval());
   std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), fcn.nfcn_));
   if (minstv.back().Edm() < edm_goal) return FunctionMinimum(seed, minstv, fcn.Up());
   return FunctionMinimum(seed, minstv, fcn.Up(), FunctionMinimum::MnAboveMaxEdm());

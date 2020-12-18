@@ -1459,3 +1459,12 @@ def test_minos_new_min():
     # ...but interval is correct
     assert m.merrors["x"].lower == approx(-0.9, abs=1e-2)
     assert m.merrors["x"].upper == approx(1.1, abs=1e-2)
+
+
+@pytest.mark.parametrize("x", (0.9, 1.0, 1.1))
+def test_minos_without_migrad(x):
+    m = Minuit(lsq(lambda x: (x - 1) ** 2), x)
+    m.minos()
+    me = m.merrors["x"]
+    assert x + me.lower == approx(0, abs=5e-3)
+    assert x + me.upper == approx(2, abs=5e-3)

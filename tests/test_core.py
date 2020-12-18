@@ -197,12 +197,37 @@ def test_FunctionMinimum():
     st = MnUserParameterState()
     st.add("x", 0.01, 5)
     str = MnStrategy(1)
-    fm1 = FunctionMinimum(fcn, st, 0.1, str, 0.2)
+    fm1 = FunctionMinimum(fcn, st, str, 0.2)
     assert fm1.is_valid
     assert len(fm1.state) == 1
-    assert fm1.fval == 0.1
-    fm2 = FunctionMinimum(fcn, st, 0.1, str, 0)
+    assert fm1.fval == 10.0001
+    fm2 = FunctionMinimum(fcn, st, str, 0)
     assert not fm2.is_valid
+
+
+def test_FunctionMinimum_pickle():
+    st = MnUserParameterState()
+    st.add("x", 1, 0.1)
+    st.add("y", 2, 0.1, 1, 3)
+    fm = FunctionMinimum(FCN(fn, None, False, 1), st, 1, 0.1)
+
+    pkl = pickle.dumps(fm)
+    fm2 = pickle.loads(pkl)
+
+    assert len(fm.state) == len(fm2.state)
+    assert fm.state == fm2.state
+    assert fm.edm == fm2.edm
+    assert fm.fval == fm2.fval
+    assert fm.is_valid == fm2.is_valid
+    assert fm.has_valid_parameters == fm2.has_valid_parameters
+    assert fm.has_accurate_covar == fm2.has_accurate_covar
+    assert fm.has_posdef_covar == fm2.has_posdef_covar
+    assert fm.has_made_posdef_covar == fm2.has_made_posdef_covar
+    assert fm.hesse_failed == fm2.hesse_failed
+    assert fm.has_covariance == fm2.has_covariance
+    assert fm.is_above_max_edm == fm2.is_above_max_edm
+    assert fm.has_reached_call_limit == fm2.has_reached_call_limit
+    assert fm.errordef == fm2.errordef
 
 
 def test_MnUserTransformation_pickle():
@@ -227,28 +252,3 @@ def test_MinimumState_pickle():
     assert st.is_valid == st2.is_valid
     assert st.has_parameters == st2.has_parameters
     assert st.has_covariance == st2.has_covariance
-
-
-def test_FunctionMinimum_pickle():
-    st = MnUserParameterState()
-    st.add("x", 1, 0.1)
-    st.add("y", 2, 0.1, 1, 3)
-    fm = FunctionMinimum(FCN(fn, None, False, 1), st, 123, 1, 0.1)
-
-    pkl = pickle.dumps(fm)
-    fm2 = pickle.loads(pkl)
-
-    assert len(fm.state) == len(fm2.state)
-    assert fm.state == fm2.state
-    assert fm.edm == fm2.edm
-    assert fm.fval == fm2.fval
-    assert fm.is_valid == fm2.is_valid
-    assert fm.has_valid_parameters == fm2.has_valid_parameters
-    assert fm.has_accurate_covar == fm2.has_accurate_covar
-    assert fm.has_posdef_covar == fm2.has_posdef_covar
-    assert fm.has_made_posdef_covar == fm2.has_made_posdef_covar
-    assert fm.hesse_failed == fm2.hesse_failed
-    assert fm.has_covariance == fm2.has_covariance
-    assert fm.is_above_max_edm == fm2.is_above_max_edm
-    assert fm.has_reached_call_limit == fm2.has_reached_call_limit
-    assert fm.errordef == fm2.errordef
