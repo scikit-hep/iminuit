@@ -12,6 +12,8 @@ New features
 ~~~~~~~~~~~~
 - Minuit object is now pickle-able and copy-able
 - More efficient internal conversion between Python objects and ``std::vector<double>``
+- ``Minuit.minos`` can now be called without calling ``Minuit.migrad`` first, which allows
+  one to use an external minimiser to find a minimum and then compute Minos errors for it
 
 Bug-fixes
 ~~~~~~~~~
