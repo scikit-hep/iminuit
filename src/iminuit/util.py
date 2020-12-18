@@ -120,6 +120,9 @@ class FixedView(BasicView):
 class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
+    def __init__(self, minuit):
+        super(LimitView, self).__init__(minuit, 1)
+
     def _get(self, i):
         p = self._minuit._last_state[i]
         return (

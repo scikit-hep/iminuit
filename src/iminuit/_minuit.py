@@ -486,7 +486,7 @@ class Minuit:
         self._values = mutil.ValueView(self)
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
-        self._limits = mutil.LimitView(self, 1)
+        self._limits = mutil.LimitView(self)
 
         self.precision = getattr(fcn, "precision", None)
 
