@@ -3,11 +3,13 @@ import numpy as np
 from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.cost import (
+    CostSum,
     UnbinnedNLL,
     BinnedNLL,
     ExtendedUnbinnedNLL,
     ExtendedBinnedNLL,
     LeastSquares,
+    NormalConstraint,
 )
 
 stats = pytest.importorskip("scipy.stats")
@@ -20,8 +22,8 @@ def expon_cdf(x, a):
 
 @pytest.fixture
 def unbinned():
-    np.random.seed(1)
-    x = np.random.randn(1000)
+    rng = np.random.default_rng(1)
+    x = rng.normal(size=1000)
     mle = (len(x), np.mean(x), np.std(x, ddof=1))
     return mle, x
 
@@ -180,3 +182,52 @@ def test_LeastSquares_mask():
     assert np.isnan(c(0)) == True
     c.mask = np.arange(3) != 1
     assert np.isnan(c(0)) == False
+
+
+def test_addable_cost_1():
+    def model1(x, a):
+        return a + x
+
+    def model2(x, b, a):
+        return a + b * x
+
+    lsq1 = LeastSquares(1, 2, 3, model1)
+    assert lsq1.func_code.co_varnames == ("a",)
+
+    lsq2 = LeastSquares(1, 3, 4, model2)
+    assert lsq2.func_code.co_varnames == ("b", "a")
+
+    lsq3 = lsq1 + lsq2
+    assert isinstance(lsq3, CostSum)
+    assert isinstance(lsq1, LeastSquares)
+    assert isinstance(lsq2, LeastSquares)
+    assert lsq3.func_code.co_varnames == ("a", "b")
+
+    assert lsq3(1, 2) == lsq1(1) + lsq2(2, 1)
+
+    m = Minuit(lsq3, a=0, b=0)
+    m.migrad()
+    assert m.parameters == ("a", "b")
+    assert_allclose(m.values, (1, 2))
+    assert_allclose(m.errors, (3, 5))
+    assert_allclose(m.covariance, ((9, -9), (-9, 25)), atol=1e-10)
+
+
+def test_NormalConstraint_1():
+    def model(x, a):
+        return a + x
+
+    lsq1 = LeastSquares(1, 2, 1, model)
+    lsq2 = lsq1 + NormalConstraint("a", 1, 1)
+    assert lsq1.func_code.co_varnames == ("a",)
+    assert lsq2.func_code.co_varnames == ("a",)
+
+    m = Minuit(lsq1, a=0)
+    m.migrad()
+    assert_allclose(m.values, (1,))
+    assert_allclose(m.errors, (1,))
+
+    m = Minuit(lsq2, a=0)
+    m.migrad()
+    assert_allclose(m.values, (1,))
+    assert_allclose(m.errors, (np.sqrt(0.5),))

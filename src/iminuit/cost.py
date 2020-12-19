@@ -65,34 +65,114 @@ class Cost:
 
     **Attributes**
 
-    mask : array-like or None
-        If not None, only values selected by the mask are considered. The mask acts on
-        the first dimension of a value array, i.e. values[mask]. Default is None.
     verbose : int
         Verbosity level. Default is 0.
     errordef : int
         Error definition constant used by Minuit. For internal use.
     """
 
-    mask = None
-    verbose = 0
+    __slots__ = "_func_code", "verbose"
 
     @property
     def errordef(self):
-        return self._errordef
+        return 1.0
 
-    def __init__(self, args, verbose, errordef):
-        self.func_code = make_func_code(args)
+    @property
+    def func_code(self):
+        return self._func_code
+
+    def __init__(self, args, verbose):
+        self._func_code = make_func_code(args)
         self.verbose = verbose
-        self._errordef = errordef
+
+    def __add__(lhs, rhs):
+        return CostSum(lhs, rhs)
+
+    def __call__(self, *args):
+        r = self._call(args)
+        if self.verbose >= 1:
+            print(args, "->", r)
+        return r
 
 
-class UnbinnedNLL(Cost):
+class MaskedCost(Cost):
+    """Common base class for cost functions.
+
+    **Attributes**
+
+    mask : array-like or None
+        If not None, only values selected by the mask are considered. The mask acts on
+        the first dimension of a value array, i.e. values[mask]. Default is None.
+    """
+
+    __slots__ = "_mask", "_masked"
+
+    def __init__(self, args, verbose):
+        super().__init__(args, verbose)
+        self.mask = None
+
+    @property
+    def mask(self):
+        return self._mask
+
+    @mask.setter
+    def mask(self, mask):
+        self._mask = mask
+        self._masked = self._make_masked()
+
+    def _make_masked(self):
+        return self.data if self._mask is None else self.data[self._mask]
+
+
+class CostSum(Cost):
+    __slots__ = "_items", "_maps"
+
+    def __init__(self, lhs, rhs):
+        args, self._maps = self._join_args((lhs, rhs))
+        self._items = [lhs, rhs]
+        super().__init__(args, max(lhs.verbose, rhs.verbose))
+
+    def _call(self, args):
+        r = 0.0
+        for c, m in zip(self._items, self._maps):
+            a = tuple(args[mi] for mi in m)
+            r += c._call(a)
+        return r
+
+    def _join_args(self, costs):
+        out_args = []
+        in_args = tuple(c._func_code.co_varnames for c in costs)
+        for args in in_args:
+            for arg in args:
+                if arg not in out_args:
+                    out_args.append(arg)
+        maps = []
+        for args in in_args:
+            pos = tuple(out_args.index(arg) for arg in args)
+            maps.append(pos)
+        return tuple(out_args), tuple(maps)
+
+
+class UnbinnedNLL(MaskedCost):
     """Unbinned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the original
     unbinned data is available.
     """
+
+    __slots__ = "_data", "_pdf"
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, value):
+        self._data[:] = value
+
+    @property
+    def pdf(self):
+        return self._pdf
 
     def __init__(self, data, pdf, verbose=0):
         """
@@ -111,24 +191,35 @@ class UnbinnedNLL(Cost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        self.data = np.atleast_1d(data)
-        self.pdf = pdf
-        Cost.__init__(self, describe(self.pdf)[1:], verbose, 0.5)
+        self._data = _norm(data)
+        self._pdf = pdf
+        super().__init__(describe(self._pdf)[1:], verbose)
 
-    def __call__(self, *args):
-        data = self.data if self.mask is None else self.data[self.mask]
-        r = -_sum_log_x(self.pdf(data, *args))
-        if self.verbose >= 1:
-            print(args, "->", r)
-        return r
+    def _call(self, args):
+        data = self._masked
+        return -2.0 * _sum_log_x(self._pdf(data, *args))
 
 
-class ExtendedUnbinnedNLL(Cost):
+class ExtendedUnbinnedNLL(MaskedCost):
     """Unbinned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the
     original unbinned data is available.
     """
+
+    __slots__ = "_data", "_scaled_pdf"
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, value):
+        self._data[:] = value
+
+    @property
+    def scaled_pdf(self):
+        return self._scaled_pdf
 
     def __init__(self, data, scaled_pdf, verbose=0):
         """
@@ -149,24 +240,43 @@ class ExtendedUnbinnedNLL(Cost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        self.data = np.atleast_1d(data)
-        self.scaled_pdf = scaled_pdf
-        Cost.__init__(self, describe(self.scaled_pdf)[1:], verbose, 0.5)
+        self._data = _norm(data)
+        self._scaled_pdf = scaled_pdf
+        super().__init__(describe(self._scaled_pdf)[1:], verbose)
 
-    def __call__(self, *args):
-        data = self.data if self.mask is None else self.data[self.mask]
-        ns, s = self.scaled_pdf(data, *args)
-        r = ns - _sum_log_x(s)
-        if self.verbose >= 1:
-            print(args, "->", r)
-        return r
+    def _call(self, args):
+        data = self._masked
+        ns, s = self._scaled_pdf(data, *args)
+        return 2.0 * (ns - _sum_log_x(s))
 
 
-class BinnedNLL(Cost):
+class BinnedNLL(MaskedCost):
     """Binned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
     """
+
+    __slots__ = "_n", "_xe", "_cdf"
+
+    @property
+    def n(self):
+        return self._n
+
+    @n.setter
+    def n(self, value):
+        self._n[:] = value
+
+    @property
+    def xe(self):
+        return self._xe
+
+    @xe.setter
+    def xe(self, value):
+        self.xe[:] = value
+
+    @property
+    def cdf(self):
+        return self._cdf
 
     def __init__(self, n, xe, cdf, verbose=0):
         """
@@ -188,39 +298,59 @@ class BinnedNLL(Cost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        n = np.atleast_1d(n)
-        xe = np.atleast_1d(xe)
+        n = _norm(n)
+        xe = _norm(xe)
 
         if np.any((np.array(n.shape) + 1) != xe.shape):
             raise ValueError("n and xe have incompatible shapes")
 
-        self.n = n
-        self.xe = xe
-        self.cdf = cdf
-        Cost.__init__(self, describe(self.cdf)[1:], verbose, 0.5)
+        self._n = n
+        self._xe = xe
+        self._cdf = cdf
+        super().__init__(describe(self._cdf)[1:], verbose)
 
-    def __call__(self, *args):
-        prob = np.diff(self.cdf(self.xe, *args))
-        ma = self.mask
-        if ma is None:
-            n = self.n
-        else:
-            n = self.n[ma]
+    def _call(self, args):
+        prob = np.diff(self._cdf(self._xe, *args))
+        n = self._masked
+        ma = self._mask
+        if ma is not None:
             prob = prob[ma]
         mu = np.sum(n) * prob
         # + np.sum(mu) can be skipped, it is effectively constant
-        r = _neg_sum_n_log_mu(n, mu)
-        if self.verbose >= 1:
-            print(args, "->", r)
-        return r
+        return 2.0 * _neg_sum_n_log_mu(n, mu)
+
+    def _make_masked(self):
+        return self._n if self._mask is None else self._n[self._mask]
 
 
-class ExtendedBinnedNLL(Cost):
+class ExtendedBinnedNLL(MaskedCost):
     """Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data
     is binned.
     """
+
+    __slots__ = "_n", "_xe", "_scaled_cdf"
+
+    @property
+    def n(self):
+        return self._n
+
+    @n.setter
+    def n(self, value):
+        self._n[:] = value
+
+    @property
+    def xe(self):
+        return self._xe
+
+    @xe.setter
+    def xe(self, value):
+        self.xe[:] = value
+
+    @property
+    def scaled_cdf(self):
+        return self._scaled_cdf
 
     def __init__(self, n, xe, scaled_cdf, verbose=0):
         """
@@ -242,39 +372,36 @@ class ExtendedBinnedNLL(Cost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        n = np.atleast_1d(n)
-        xe = np.atleast_1d(xe)
+        n = _norm(n)
+        xe = _norm(xe)
 
         if np.any((np.array(n.shape) + 1) != xe.shape):
             raise ValueError("n and xe have incompatible shapes")
 
-        self.n = n
-        self.xe = xe
-        self.scaled_cdf = scaled_cdf
-        Cost.__init__(self, describe(self.scaled_cdf)[1:], verbose, 0.5)
+        self._n = n
+        self._xe = xe
+        self._scaled_cdf = scaled_cdf
+        super().__init__(describe(self._scaled_cdf)[1:], verbose)
 
-    def __call__(self, *args):
-        mu = np.diff(self.scaled_cdf(self.xe, *args))
-        ma = self.mask
-        if ma is None:
-            n = self.n
-        else:
-            n = self.n[ma]
+    def _call(self, args):
+        mu = np.diff(self._scaled_cdf(self._xe, *args))
+        ma = self._mask
+        n = self._masked
+        if ma is not None:
             mu = mu[ma]
-        r = _sum_log_poisson(n, mu)
-        if self.verbose >= 1:
-            print(args, "->", r)
-        return r
+        return 2.0 * _sum_log_poisson(n, mu)
+
+    def _make_masked(self):
+        return self._n if self._mask is None else self._n[self._mask]
 
 
-class LeastSquares(Cost):
+class LeastSquares(MaskedCost):
     """Least-squares cost function (aka chisquare function).
 
     Use this if you have data of the form (x, y +/- yerror).
     """
 
-    _loss = None
-    _cost = None
+    __slots__ = "_loss", "_cost", "_x", "_y", "_yerror", "_model"
 
     def __init__(self, x, y, yerror, model, loss="linear", verbose=0):
         """
@@ -310,25 +437,48 @@ class LeastSquares(Cost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        x = np.atleast_1d(x)
-        y = np.atleast_1d(y)
+        x = _norm(x)
+        y = _norm(y)
+        yerror = np.asarray(yerror, dtype=float)
 
         if len(x) != len(y):
             raise ValueError("x and y must have same length")
 
-        if np.ndim(yerror) == 0:
+        if yerror.ndim == 0:
             yerror = yerror * np.ones_like(y)
-        else:
-            yerror = np.asarray(yerror)
-            if yerror.shape != y.shape:
-                raise ValueError("y and yerror must have same shape")
+        elif yerror.shape != y.shape:
+            raise ValueError("y and yerror must have same shape")
 
-        self.x = x
-        self.y = y
-        self.yerror = yerror
-        self.model = model
+        self._x = x
+        self._y = y
+        self._yerror = yerror
+        self._model = model
         self.loss = loss
-        Cost.__init__(self, describe(self.model)[1:], verbose, 1.0)
+        super().__init__(describe(self._model)[1:], verbose)
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        self._x[:] = value
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        self._y[:] = value
+
+    @property
+    def yerror(self):
+        return self._yerror
+
+    @yerror.setter
+    def yerror(self, value):
+        self._yerror[:] = value
 
     @property
     def loss(self):
@@ -346,18 +496,58 @@ class LeastSquares(Cost):
         else:
             raise ValueError("unknown loss type: " + loss)
 
-    def __call__(self, *args):
-        ma = self.mask
+    def _call(self, args):
+        x, y, yerror = self._masked
+        ym = self._model(x, *args)
+        return self._cost(y, yerror, ym)
+
+    def _make_masked(self):
+        ma = self._mask
         if ma is None:
-            x = self.x
-            y = self.y
-            yerror = self.yerror
+            return self._x, self._y, self._yerror
         else:
-            x = self.x[ma]
-            y = self.y[ma]
-            yerror = self.yerror[ma]
-        ym = self.model(x, *args)
-        r = self._cost(y, yerror, ym)
-        if self.verbose >= 1:
-            print(args, "->", r)
-        return r
+            return self._x[ma], self._y[ma], self._yerror[ma]
+
+
+class NormalConstraint(Cost):
+
+    __slots__ = "_value", "_cov", "_covinv"
+
+    def __init__(self, args, value, error):
+        if isinstance(args, str):
+            args = [args]
+        self._value = _norm(value)
+        self._cov = _norm(error)
+        self._covinv = _covinv(self._cov)
+        super().__init__(args, False)
+
+    @property
+    def covariance(self):
+        return self._cov
+
+    @covariance.setter
+    def covariance(self, value):
+        self._cov[:] = value
+        self._covinv = _covinv(self._cov)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value[:] = value
+
+    def _call(self, args):
+        delta = self._value - args
+        if self._covinv.ndim < 2:
+            return np.sum(delta ** 2 * self._covinv)
+        return np.einsum("i,ij,j", delta, self._covinv, delta)
+
+
+def _norm(value):
+    return np.atleast_1d(np.asarray(value, dtype=float))
+
+
+def _covinv(array):
+    return np.linalg.inv(array) if array.ndim == 2 else 1.0 / array
