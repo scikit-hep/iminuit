@@ -168,6 +168,9 @@ def test_UnbinnedNLL_properties():
     assert_equal(c.data, [2, 3])
     with pytest.raises(ValueError):
         c.data = [1, 2, 3]
+    assert c.verbose == 0
+    c.verbose = 1
+    assert c.verbose == 1
 
 
 def test_ExtendedUnbinnedNLL_mask():

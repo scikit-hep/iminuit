@@ -86,11 +86,11 @@ class Cost:
 
     @verbose.setter
     def verbose(self, value: int):
-        self._verbose = int(value)
+        self._verbose = value
 
-    def __init__(self, args, verbose):
+    def __init__(self, args: tuple, verbose: int):
         self._func_code = make_func_code(args)
-        self.verbose = verbose
+        self._verbose = verbose
 
     def __add__(self, rhs):
         return CostSum(self, rhs)
@@ -122,12 +122,11 @@ class MaskedCost(Cost):
 
     @mask.setter
     def mask(self, mask):
-        if mask is not None:
-            self._mask = np.asarray(mask)
+        self._mask = None if mask is None else np.asarray(mask)
         self._masked = self._make_masked()
 
     def _make_masked(self):
-        return self.data if self._mask is None else self.data[self._mask]
+        return self._data if self._mask is None else self._data[self._mask]
 
 
 class CostSum(Cost, Sequence):
@@ -151,14 +150,14 @@ class CostSum(Cost, Sequence):
     __slots__ = "_items", "_maps"
 
     def __init__(self, *items):
-        args, self._maps = self._join_args(items)
         self._items = []
         for item in items:
             if isinstance(item, CostSum):
                 self._items += item._items
             else:
                 self._items.append(item)
-        super().__init__(args, max(c.verbose for c in self))
+        args = self._update()
+        super().__init__(args, max(c.verbose for c in self._items))
 
     def _call(self, args):
         r = 0.0
@@ -167,18 +166,18 @@ class CostSum(Cost, Sequence):
             r += c._call(a)
         return r
 
-    def _join_args(self, costs):
+    def _update(self):
         out_args = []
-        in_args = tuple(c._func_code.co_varnames for c in costs)
+        in_args = tuple(c._func_code.co_varnames for c in self._items)
         for args in in_args:
             for arg in args:
                 if arg not in out_args:
                     out_args.append(arg)
-        maps = []
+        self._maps = []
         for args in in_args:
             pos = tuple(out_args.index(arg) for arg in args)
-            maps.append(pos)
-        return tuple(out_args), tuple(maps)
+            self._maps.append(pos)
+        return tuple(out_args)
 
     def __len__(self):
         return self._items.__len__()
