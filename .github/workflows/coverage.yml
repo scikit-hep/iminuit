@@ -2,9 +2,6 @@ name: Coverage
 
 on:
   pull_request:
-    branches:
-      - master
-      - develop
     paths-ignore:
       - 'doc/**'
       - '.ci/**'
@@ -13,6 +10,7 @@ on:
     branches:
       - master
       - develop
+      - beta/*
 
 jobs:
   coverage:
