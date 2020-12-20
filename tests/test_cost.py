@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
 from iminuit.cost import (
     CostSum,
@@ -147,10 +147,27 @@ def test_LeastSquares_bad_input():
 
 def test_UnbinnedNLL_mask():
     c = UnbinnedNLL([1, np.nan, 2], lambda x, a: x + a)
+    assert c.mask is None
 
     assert np.isnan(c(0)) == True
     c.mask = np.arange(3) != 1
+    assert_equal(c.mask, (True, False, True))
     assert np.isnan(c(0)) == False
+
+
+def test_UnbinnedNLL_properties():
+    def pdf(x, a, b):
+        return 0
+
+    c = UnbinnedNLL([1, 2], pdf)
+    assert c.pdf is pdf
+    with pytest.raises(AttributeError):
+        c.pdf = None
+    assert_equal(c.data, [1, 2])
+    c.data = [2, 3]
+    assert_equal(c.data, [2, 3])
+    with pytest.raises(ValueError):
+        c.data = [1, 2, 3]
 
 
 def test_ExtendedUnbinnedNLL_mask():
@@ -159,6 +176,16 @@ def test_ExtendedUnbinnedNLL_mask():
     assert np.isnan(c(0)) == True
     c.mask = np.arange(3) != 1
     assert np.isnan(c(0)) == False
+
+
+def test_ExtendedUnbinnedNLL_properties():
+    def pdf(x, a, b):
+        return 0
+
+    c = ExtendedUnbinnedNLL([1, 2], pdf)
+    assert c.scaled_pdf is pdf
+    with pytest.raises(AttributeError):
+        c.scaled_pdf = None
 
 
 def test_BinnedNLL_mask():
@@ -170,6 +197,26 @@ def test_BinnedNLL_mask():
     assert c(1) < c_unmasked
 
 
+def test_BinnedNLL_properties():
+    def cdf(x, a, b):
+        return 0
+
+    c = BinnedNLL([1], [1, 2], cdf)
+    assert c.cdf is cdf
+    with pytest.raises(AttributeError):
+        c.cdf = None
+    assert_equal(c.n, [1])
+    assert_equal(c.xe, [1, 2])
+    c.n = [2]
+    c.xe = [2, 3]
+    assert_equal(c.n, [2])
+    assert_equal(c.xe, [2, 3])
+    with pytest.raises(ValueError):
+        c.n = [1, 2]
+    with pytest.raises(ValueError):
+        c.xe = [1, 2, 3]
+
+
 def test_ExtendedBinnedNLL_mask():
     c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], expon_cdf)
 
@@ -178,11 +225,38 @@ def test_ExtendedBinnedNLL_mask():
     assert c(2) < c_unmasked
 
 
+def test_ExtendedBinnedNLL_properties():
+    def cdf(x, a):
+        return 0
+
+    c = ExtendedBinnedNLL([1], [1, 2], cdf)
+    assert c.scaled_cdf is cdf
+
+
 def test_LeastSquares_mask():
     c = LeastSquares([1, 2, 3], [3, np.nan, 4], [1, 1, 1], lambda x, a: x + a)
     assert np.isnan(c(0)) == True
     c.mask = np.arange(3) != 1
     assert np.isnan(c(0)) == False
+
+
+def test_LeastSquares_properties():
+    def model(x, a):
+        return a
+
+    c = LeastSquares(1, 2, 3, model)
+    assert_equal(c.x, [1])
+    assert_equal(c.y, [2])
+    assert_equal(c.yerror, [3])
+    assert c.model is model
+    with pytest.raises(AttributeError):
+        c.model = model
+    with pytest.raises(ValueError):
+        c.x = [1, 2]
+    with pytest.raises(ValueError):
+        c.y = [1, 2]
+    with pytest.raises(ValueError):
+        c.yerror = [1, 2]
 
 
 def test_addable_cost_1():
@@ -298,3 +372,13 @@ def test_NormalConstraint_2():
     assert_allclose(m.values, (1, 2), atol=1e-3)
     assert_allclose(m.errors, (sa, sb), rtol=1e-2)
     assert_allclose(m.covariance, cov, rtol=1e-2)
+
+
+def test_NormalConstraint_properties():
+    nc = NormalConstraint(("a", "b"), (1, 2), (3, 4))
+    assert_equal(nc.value, (1, 2))
+    assert_equal(nc.covariance, (9, 16))
+    nc.value = (2, 3)
+    nc.covariance = (1, 2)
+    assert_equal(nc.value, (2, 3))
+    assert_equal(nc.covariance, (1, 2))

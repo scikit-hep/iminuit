@@ -167,14 +167,8 @@ class CostSum(Cost, Sequence):
         return self._items.__getitem__(key)
 
 
-class UnbinnedNLL(MaskedCost):
-    """Unbinned negative log-likelihood.
-
-    Use this if only the shape of the fitted PDF is of interest and the original
-    unbinned data is available.
-    """
-
-    __slots__ = "_data", "_pdf"
+class UnbinnedBase(MaskedCost):
+    __slots__ = "_data", "_model"
 
     @property
     def data(self):
@@ -184,9 +178,24 @@ class UnbinnedNLL(MaskedCost):
     def data(self, value):
         self._data[:] = value
 
+    def __init__(self, data, model, verbose):
+        self._data = _norm(data)
+        self._model = model
+        super().__init__(describe(model)[1:], verbose)
+
+
+class UnbinnedNLL(UnbinnedBase):
+    """Unbinned negative log-likelihood.
+
+    Use this if only the shape of the fitted PDF is of interest and the original
+    unbinned data is available.
+    """
+
+    __slots__ = ()
+
     @property
     def pdf(self):
-        return self._pdf
+        return self._model
 
     def __init__(self, data, pdf, verbose=0):
         """
@@ -205,35 +214,25 @@ class UnbinnedNLL(MaskedCost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        self._data = _norm(data)
-        self._pdf = pdf
-        super().__init__(describe(self._pdf)[1:], verbose)
+        super().__init__(data, pdf, verbose)
 
     def _call(self, args):
         data = self._masked
-        return -2.0 * _sum_log_x(self._pdf(data, *args))
+        return -2.0 * _sum_log_x(self._model(data, *args))
 
 
-class ExtendedUnbinnedNLL(MaskedCost):
+class ExtendedUnbinnedNLL(UnbinnedBase):
     """Unbinned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the
     original unbinned data is available.
     """
 
-    __slots__ = "_data", "_scaled_pdf"
-
-    @property
-    def data(self):
-        return self._data
-
-    @data.setter
-    def data(self, value):
-        self._data[:] = value
+    __slots__ = ()
 
     @property
     def scaled_pdf(self):
-        return self._scaled_pdf
+        return self._model
 
     def __init__(self, data, scaled_pdf, verbose=0):
         """
@@ -254,23 +253,16 @@ class ExtendedUnbinnedNLL(MaskedCost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        self._data = _norm(data)
-        self._scaled_pdf = scaled_pdf
-        super().__init__(describe(self._scaled_pdf)[1:], verbose)
+        super().__init__(data, scaled_pdf, verbose)
 
     def _call(self, args):
         data = self._masked
-        ns, s = self._scaled_pdf(data, *args)
+        ns, s = self._model(data, *args)
         return 2.0 * (ns - _sum_log_x(s))
 
 
-class BinnedNLL(MaskedCost):
-    """Binned negative log-likelihood.
-
-    Use this if only the shape of the fitted PDF is of interest and the data is binned.
-    """
-
-    __slots__ = "_n", "_xe", "_cdf"
+class BinnedBase(MaskedCost):
+    __slots__ = "_n", "_xe", "_model"
 
     @property
     def n(self):
@@ -288,9 +280,28 @@ class BinnedNLL(MaskedCost):
     def xe(self, value):
         self.xe[:] = value
 
+    def __init__(self, n, xe, model, verbose):
+        self._n = _norm(n)
+        self._xe = _norm(xe)
+        self._model = model
+
+        if np.any((np.array(self._n.shape) + 1) != self._xe.shape):
+            raise ValueError("n and xe have incompatible shapes")
+
+        super().__init__(describe(model)[1:], verbose)
+
+
+class BinnedNLL(BinnedBase):
+    """Binned negative log-likelihood.
+
+    Use this if only the shape of the fitted PDF is of interest and the data is binned.
+    """
+
+    __slots__ = ()
+
     @property
     def cdf(self):
-        return self._cdf
+        return self._model
 
     def __init__(self, n, xe, cdf, verbose=0):
         """
@@ -312,19 +323,10 @@ class BinnedNLL(MaskedCost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        n = _norm(n)
-        xe = _norm(xe)
-
-        if np.any((np.array(n.shape) + 1) != xe.shape):
-            raise ValueError("n and xe have incompatible shapes")
-
-        self._n = n
-        self._xe = xe
-        self._cdf = cdf
-        super().__init__(describe(self._cdf)[1:], verbose)
+        super().__init__(n, xe, cdf, verbose)
 
     def _call(self, args):
-        prob = np.diff(self._cdf(self._xe, *args))
+        prob = np.diff(self._model(self._xe, *args))
         n = self._masked
         ma = self._mask
         if ma is not None:
@@ -337,34 +339,18 @@ class BinnedNLL(MaskedCost):
         return self._n if self._mask is None else self._n[self._mask]
 
 
-class ExtendedBinnedNLL(MaskedCost):
+class ExtendedBinnedNLL(BinnedBase):
     """Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data
     is binned.
     """
 
-    __slots__ = "_n", "_xe", "_scaled_cdf"
-
-    @property
-    def n(self):
-        return self._n
-
-    @n.setter
-    def n(self, value):
-        self._n[:] = value
-
-    @property
-    def xe(self):
-        return self._xe
-
-    @xe.setter
-    def xe(self, value):
-        self.xe[:] = value
+    __slots__ = ()
 
     @property
     def scaled_cdf(self):
-        return self._scaled_cdf
+        return self._model
 
     def __init__(self, n, xe, scaled_cdf, verbose=0):
         """
@@ -386,19 +372,10 @@ class ExtendedBinnedNLL(MaskedCost):
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
         """
-        n = _norm(n)
-        xe = _norm(xe)
-
-        if np.any((np.array(n.shape) + 1) != xe.shape):
-            raise ValueError("n and xe have incompatible shapes")
-
-        self._n = n
-        self._xe = xe
-        self._scaled_cdf = scaled_cdf
-        super().__init__(describe(self._scaled_cdf)[1:], verbose)
+        super().__init__(n, xe, scaled_cdf, verbose)
 
     def _call(self, args):
-        mu = np.diff(self._scaled_cdf(self._xe, *args))
+        mu = np.diff(self._model(self._xe, *args))
         ma = self._mask
         n = self._masked
         if ma is not None:
@@ -416,6 +393,50 @@ class LeastSquares(MaskedCost):
     """
 
     __slots__ = "_loss", "_cost", "_x", "_y", "_yerror", "_model"
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        self._x[:] = value
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        self._y[:] = value
+
+    @property
+    def yerror(self):
+        return self._yerror
+
+    @yerror.setter
+    def yerror(self, value):
+        self._yerror[:] = value
+
+    @property
+    def model(self):
+        return self._model
+
+    @property
+    def loss(self):
+        return self._loss
+
+    @loss.setter
+    def loss(self, loss):
+        self._loss = loss
+        if hasattr(loss, "__call__"):
+            self._cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
+        elif loss == "linear":
+            self._cost = _sum_z_squared
+        elif loss == "soft_l1":
+            self._cost = _sum_z_squared_soft_l1
+        else:
+            raise ValueError("unknown loss type: " + loss)
 
     def __init__(self, x, y, yerror, model, loss="linear", verbose=0):
         """
@@ -469,46 +490,6 @@ class LeastSquares(MaskedCost):
         self._model = model
         self.loss = loss
         super().__init__(describe(self._model)[1:], verbose)
-
-    @property
-    def x(self):
-        return self._x
-
-    @x.setter
-    def x(self, value):
-        self._x[:] = value
-
-    @property
-    def y(self):
-        return self._y
-
-    @y.setter
-    def y(self, value):
-        self._y[:] = value
-
-    @property
-    def yerror(self):
-        return self._yerror
-
-    @yerror.setter
-    def yerror(self, value):
-        self._yerror[:] = value
-
-    @property
-    def loss(self):
-        return self._loss
-
-    @loss.setter
-    def loss(self, loss):
-        self._loss = loss
-        if hasattr(loss, "__call__"):
-            self._cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
-        elif loss == "linear":
-            self._cost = _sum_z_squared
-        elif loss == "soft_l1":
-            self._cost = _sum_z_squared_soft_l1
-        else:
-            raise ValueError("unknown loss type: " + loss)
 
     def _call(self, args):
         x, y, yerror = self._masked
