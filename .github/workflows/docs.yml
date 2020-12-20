@@ -2,15 +2,11 @@ name: Docs
 
 on:
   pull_request:
-    branches:
-      - master
-      - develop
     paths-ignore:
       - '.ci/**'
   push:
     branches:
-      - master
-      - develop
+      - beta/*
 
 jobs:
   docs:

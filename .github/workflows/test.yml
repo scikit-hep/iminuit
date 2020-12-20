@@ -2,9 +2,6 @@ name: Test
 
 on:
   pull_request:
-    # test every branch except master, master is tested by wheels.yml
-    branches-ignore:
-      - master
     paths-ignore:
       - 'doc/**'
       - '.ci/**'
