@@ -699,10 +699,11 @@ def describe(callable):
     1. Using ``obj.func_code``. If an objects has a ``func_code`` attribute, it is used
        to detect the parameters. Examples::
 
-           def f(x, y):
+           def f(*args): # no signature
+               x, y = args
                return (x - 2) ** 2 + (y - 3) ** 2
 
-           f = lambda x, y: (x - 2) ** 2 + (y - 3) ** 2
+           f.func_code = make_func_code(("x", "y"))
 
        Users are encouraged to use this mechanism to provide signatures for objects that
        otherwise would not have a detectable signature. The function
