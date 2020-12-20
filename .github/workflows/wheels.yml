@@ -3,7 +3,7 @@ name: Wheels
 on:
   push:
     branches:
-    - beta-*
+    - beta/*
   pull_request:
     branches:
     - master
