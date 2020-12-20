@@ -5,8 +5,8 @@
 Changelog
 =========
 
-2.2.0.rc1
----------
+2.2.0 (December 20, 2020)
+-------------------------
 
 New features
 ~~~~~~~~~~~~
@@ -14,6 +14,10 @@ New features
   union of parameters that returns the sum of the results of the individual cost functions
 - iminuit.cost.NormalConstraint was added as a means to add soft constraints on a
   parameter, can also be used to set up a covariance matrix between several parameters
+
+Other
+~~~~~
+- Documentation improvements, started transition to numpydoc
 
 2.1.0 (December 18, 2020)
 -------------------------
