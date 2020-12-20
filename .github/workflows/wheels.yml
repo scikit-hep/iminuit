@@ -44,7 +44,7 @@ jobs:
           path: ./wheelhouse/*.whl
 
   sdist:
-    name: Build source distribution
+    name: Build source package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -68,7 +68,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload:
-    if: "github.event.release.published"
+    if: "github.event.release"
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
     steps:
