@@ -4,9 +4,6 @@ on:
   pull_request:
     paths-ignore:
       - '.ci/**'
-  push:
-    branches:
-      - beta/*
 
 jobs:
   docs:
