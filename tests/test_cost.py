@@ -11,6 +11,7 @@ from iminuit.cost import (
     LeastSquares,
     NormalConstraint,
 )
+from collections.abc import Sequence
 
 stats = pytest.importorskip("scipy.stats")
 norm = stats.norm
@@ -234,6 +235,20 @@ def test_addable_cost_1():
     lsq31212 += lsq1
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
     assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+
+
+def test_addable_cost_2():
+    ref = NormalConstraint("a", 1, 2), NormalConstraint(("b", "a"), (1, 1), (2, 2))
+    cs = ref[0] + ref[1]
+    assert isinstance(cs, Sequence)
+    assert len(cs) == 2
+    assert cs[0] is ref[0]
+    assert cs[1] is ref[1]
+    for c, r in zip(cs, ref):
+        assert c is r
+    assert cs.index(ref[0]) == 0
+    assert cs.index(ref[1]) == 1
+    assert cs.count(ref[0]) == 1
 
 
 def test_NormalConstraint_1():

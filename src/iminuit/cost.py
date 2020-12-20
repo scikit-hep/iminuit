@@ -4,6 +4,7 @@ Standard cost functions to minimize.
 
 from .util import describe, make_func_code
 import numpy as np
+from collections.abc import Sequence
 
 
 def _safe_log(x):
@@ -124,7 +125,7 @@ class MaskedCost(Cost):
         return self.data if self._mask is None else self.data[self._mask]
 
 
-class CostSum(Cost):
+class CostSum(Cost, Sequence):
     __slots__ = "_items", "_maps"
 
     def __init__(self, *items):
@@ -158,6 +159,12 @@ class CostSum(Cost):
             pos = tuple(out_args.index(arg) for arg in args)
             maps.append(pos)
         return tuple(out_args), tuple(maps)
+
+    def __len__(self):
+        return self._items.__len__()
+
+    def __getitem__(self, key):
+        return self._items.__getitem__(key)
 
 
 class UnbinnedNLL(MaskedCost):
