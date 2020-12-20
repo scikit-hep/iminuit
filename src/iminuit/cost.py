@@ -85,8 +85,8 @@ class Cost:
         self._func_code = make_func_code(args)
         self.verbose = verbose
 
-    def __add__(lhs, rhs):
-        return CostSum(lhs, rhs)
+    def __add__(self, rhs):
+        return CostSum(self, rhs)
 
     def __call__(self, *args):
         r = self._call(args)
@@ -127,10 +127,17 @@ class MaskedCost(Cost):
 class CostSum(Cost):
     __slots__ = "_items", "_maps"
 
-    def __init__(self, lhs, rhs):
-        args, self._maps = self._join_args((lhs, rhs))
-        self._items = [lhs, rhs]
-        super().__init__(args, max(lhs.verbose, rhs.verbose))
+    def __init__(self, *items):
+        tmp = []
+        for item in items:
+            if isinstance(item, CostSum):
+                tmp += item._items
+            else:
+                tmp.append(item)
+        items = tmp
+        args, self._maps = self._join_args(items)
+        self._items = list(items)
+        super().__init__(args, max(c.verbose for c in items))
 
     def _call(self, args):
         r = 0.0
@@ -518,6 +525,8 @@ class NormalConstraint(Cost):
             args = [args]
         self._value = _norm(value)
         self._cov = _norm(error)
+        if self._cov.ndim < 2:
+            self._cov **= 2
         self._covinv = _covinv(self._cov)
         super().__init__(args, False)
 

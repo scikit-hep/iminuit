@@ -191,43 +191,95 @@ def test_addable_cost_1():
     def model2(x, b, a):
         return a + b * x
 
+    def model3(x, c):
+        return c
+
     lsq1 = LeastSquares(1, 2, 3, model1)
     assert lsq1.func_code.co_varnames == ("a",)
 
     lsq2 = LeastSquares(1, 3, 4, model2)
     assert lsq2.func_code.co_varnames == ("b", "a")
 
-    lsq3 = lsq1 + lsq2
-    assert isinstance(lsq3, CostSum)
+    lsq3 = LeastSquares(1, 1, 1, model3)
+    assert lsq3.func_code.co_varnames == ("c",)
+
+    lsq12 = lsq1 + lsq2
+    assert lsq12._items == [lsq1, lsq2]
+    assert isinstance(lsq12, CostSum)
     assert isinstance(lsq1, LeastSquares)
     assert isinstance(lsq2, LeastSquares)
-    assert lsq3.func_code.co_varnames == ("a", "b")
+    assert lsq12.func_code.co_varnames == ("a", "b")
 
-    assert lsq3(1, 2) == lsq1(1) + lsq2(2, 1)
+    assert lsq12(1, 2) == lsq1(1) + lsq2(2, 1)
 
-    m = Minuit(lsq3, a=0, b=0)
+    m = Minuit(lsq12, a=0, b=0)
     m.migrad()
     assert m.parameters == ("a", "b")
     assert_allclose(m.values, (1, 2))
     assert_allclose(m.errors, (3, 5))
     assert_allclose(m.covariance, ((9, -9), (-9, 25)), atol=1e-10)
 
+    lsq121 = lsq12 + lsq1
+    assert lsq121._items == [lsq1, lsq2, lsq1]
+    assert lsq121.func_code.co_varnames == ("a", "b")
+
+    lsq312 = lsq3 + lsq12
+    assert lsq312._items == [lsq3, lsq1, lsq2]
+    assert lsq312.func_code.co_varnames == ("c", "a", "b")
+
+    lsq31212 = lsq312 + lsq12
+    assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2]
+    assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+
+    lsq31212 += lsq1
+    assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
+    assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+
 
 def test_NormalConstraint_1():
     def model(x, a):
-        return a + x
+        return a
 
-    lsq1 = LeastSquares(1, 2, 1, model)
-    lsq2 = lsq1 + NormalConstraint("a", 1, 1)
+    lsq1 = LeastSquares(0, 1, 1, model)
+    lsq2 = lsq1 + NormalConstraint("a", 1, 0.1)
     assert lsq1.func_code.co_varnames == ("a",)
     assert lsq2.func_code.co_varnames == ("a",)
 
-    m = Minuit(lsq1, a=0)
+    m = Minuit(lsq1, 0)
     m.migrad()
-    assert_allclose(m.values, (1,))
-    assert_allclose(m.errors, (1,))
+    assert_allclose(m.values, (1,), atol=1e-2)
+    assert_allclose(m.errors, (1,), rtol=1e-2)
 
-    m = Minuit(lsq2, a=0)
+    m = Minuit(lsq2, 0)
     m.migrad()
-    assert_allclose(m.values, (1,))
-    assert_allclose(m.errors, (np.sqrt(0.5),))
+    assert_allclose(m.values, (1,), atol=1e-2)
+    assert_allclose(m.errors, (0.1,), rtol=1e-2)
+
+
+def test_NormalConstraint_2():
+    lsq1 = NormalConstraint(("a", "b"), (1, 2), (2, 2))
+    lsq2 = lsq1 + NormalConstraint("b", 2, 0.1) + NormalConstraint("a", 1, 0.01)
+    sa = 0.1
+    sb = 0.02
+    rho = 0.5
+    cov = ((sa ** 2, rho * sa * sb), (rho * sa * sb, sb ** 2))
+    lsq3 = lsq1 + NormalConstraint(("a", "b"), (1, 2), cov)
+    assert lsq1.func_code.co_varnames == ("a", "b")
+    assert lsq2.func_code.co_varnames == ("a", "b")
+    assert lsq3.func_code.co_varnames == ("a", "b")
+
+    m = Minuit(lsq1, 0, 0)
+    m.migrad()
+    assert_allclose(m.values, (1, 2), atol=1e-3)
+    assert_allclose(m.errors, (2, 2), rtol=1e-3)
+
+    m = Minuit(lsq2, 0, 0)
+    m.migrad()
+    assert_allclose(m.values, (1, 2), atol=1e-3)
+    assert_allclose(m.errors, (0.01, 0.1), rtol=1e-2)
+
+    m = Minuit(lsq3, 0, 0)
+    m.migrad()
+    assert_allclose(m.values, (1, 2), atol=1e-3)
+    assert_allclose(m.errors, (sa, sb), rtol=1e-2)
+    assert_allclose(m.covariance, cov, rtol=1e-2)
