@@ -1,5 +1,10 @@
 """
 Standard cost functions to minimize.
+
+The cost functions defined here should be preferred over custom implementations. They
+have been optimized with knowledge about implementation details of Minuit to give the
+highest accucary and the most robust results. Furthermore, are accelerated with numba, if
+numba is available.
 """
 
 from .util import describe, make_func_code
@@ -45,7 +50,7 @@ def _sum_z_squared_soft_l1(y, ye, ym):
 try:
     import numba as nb
 
-    jit = nb.njit(nogil=True, parallel=True, cache=True)
+    jit = nb.njit(nogil=True, cache=True)
 
     _safe_log = jit(_safe_log)
     _sum_log_x = jit(_sum_log_x)
@@ -78,7 +83,8 @@ class Cost:
 
     @property
     def verbose(self):
-        """Verbosity level.
+        """
+        Verbosity level.
 
         Set this to 1 to print all function calls with input and output.
         """
@@ -89,13 +95,35 @@ class Cost:
         self._verbose = value
 
     def __init__(self, args: tuple, verbose: int):
+        """For internal use."""
         self._func_code = make_func_code(args)
         self._verbose = verbose
 
     def __add__(self, rhs):
+        """
+        Add two cost functions to form a combined cost function.
+
+        Returns
+        -------
+        CostSum
+        """
         return CostSum(self, rhs)
 
     def __call__(self, *args):
+        """
+        Evaluate the cost function.
+
+        If verbose >= 1, print arguments and result.
+
+        Parameters
+        ----------
+        *args : float
+            Parameter values.
+
+        Returns
+        -------
+        float
+        """
         r = self._call(args)
         if self.verbose >= 1:
             print(args, "->", r)
@@ -108,6 +136,7 @@ class MaskedCost(Cost):
     __slots__ = "_mask", "_masked"
 
     def __init__(self, args, verbose):
+        """For internal use."""
         super().__init__(args, verbose)
         self.mask = None
 
@@ -133,7 +162,7 @@ class CostSum(Cost, Sequence):
     """Sum of cost functions.
 
     Users do not need to create objects of this class themselves. They should just add
-    cost functions, for example:
+    cost functions, for example::
 
         nll = UnbinnedNLL(...)
         lsq = LeastSquares(...)
@@ -150,6 +179,13 @@ class CostSum(Cost, Sequence):
     __slots__ = "_items", "_maps"
 
     def __init__(self, *items):
+        """Initialize with cost functions.
+
+        Parameters
+        ----------
+        *items : Cost
+            Cost functions. May also be other CostSum functions.
+        """
         self._items = []
         for item in items:
             if isinstance(item, CostSum):
@@ -180,9 +216,11 @@ class CostSum(Cost, Sequence):
         return tuple(out_args)
 
     def __len__(self):
+        """Return number of constituent cost functions."""
         return self._items.__len__()
 
     def __getitem__(self, key):
+        """Get constituent cost function by index."""
         return self._items.__getitem__(key)
 
 
@@ -201,6 +239,7 @@ class UnbinnedCost(MaskedCost):
         self._data[:] = value
 
     def __init__(self, data, model, verbose):
+        """For internal use."""
         self._data = _norm(data)
         self._model = model
         super().__init__(describe(model)[1:], verbose)
@@ -217,25 +256,23 @@ class UnbinnedNLL(UnbinnedCost):
 
     @property
     def pdf(self):
-        """PDF that describes the data."""
+        """Get probability density model."""
         return self._model
 
     def __init__(self, data, pdf, verbose=0):
         """
-        **Parameters**
+        Initialize UnbinnedNLL with data and model.
 
-        data: array-like
+        Parameters
+        ----------
+        data : array-like
             Sample of observations.
-
-        pdf: callable
-            Probability density function of the form f(data, par0, par1, ..., parN),
-            where `data` is the data sample and par0, ... parN are model parameters.
-
-        verbose: int, optional
-            Verbosity level.
-
-            - 0: is no output (default)
-            - 1: print current args and negative log-likelihood value
+        pdf : callable
+            Probability density function of the form f(data, par0, [par1, ...]),
+            where `data` is the data sample and `parN` are model parameters.
+        verbose : int, optional
+            Verbosity level. 0: is no output (default).
+            1: print current args and negative log-likelihood value.
         """
         super().__init__(data, pdf, verbose)
 
@@ -255,26 +292,24 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
     @property
     def scaled_pdf(self):
-        """Density function that describes the data."""
+        """Get density model."""
         return self._model
 
     def __init__(self, data, scaled_pdf, verbose=0):
         """
-        **Parameters**
+        Initialize cost function with data and model.
 
-        data: array-like
+        Parameters
+        ----------
+        data : array-like
             Sample of observations.
-
-        scaled_pdf: callable
-            Density function of the form f(data, par0, par1, ..., parN), where `data` is
-            the data sample and par0, ... parN are model parameters. Must return a tuple
+        scaled_pdf : callable
+            Density function of the form f(data, par0, [par1, ...]), where `data` is
+            the data sample and `parN` are model parameters. Must return a tuple
             (<integral over f in data range>, <f evaluated at data points>).
-
-        verbose: int, optional
-            Verbosity level
-
-            - 0: is no output (default)
-            - 1: print current args and negative log-likelihood value
+        verbose : int, optional
+            Verbosity level. 0: is no output (default).
+            1: print current args and negative log-likelihood value.
         """
         super().__init__(data, scaled_pdf, verbose)
 
@@ -291,7 +326,7 @@ class BinnedCost(MaskedCost):
 
     @property
     def n(self):
-        """Counts per bin."""
+        """Get bin counts."""
         return self._n
 
     @n.setter
@@ -300,7 +335,7 @@ class BinnedCost(MaskedCost):
 
     @property
     def xe(self):
-        """Bin edges."""
+        """Get bin edges."""
         return self._xe
 
     @xe.setter
@@ -308,6 +343,7 @@ class BinnedCost(MaskedCost):
         self.xe[:] = value
 
     def __init__(self, n, xe, model, verbose):
+        """For internal use."""
         self._n = _norm(n)
         self._xe = _norm(xe)
         self._model = model
@@ -333,24 +369,21 @@ class BinnedNLL(BinnedCost):
 
     def __init__(self, n, xe, cdf, verbose=0):
         """
-        **Parameters**
+        Initialize cost function with data and model.
 
-        n: array-like
+        Parameters
+        ----------
+        n : array-like
             Histogram counts.
-
-        xe: array-like
+        xe : array-like
             Bin edge locations, must be len(n) + 1.
-
-        cdf: callable
+        cdf : callable
             Cumulative density function of the form f(xe, par0, par1, ..., parN),
             where `xe` is a bin edge and par0, ... parN are model parameters. Must be
             normalized to unity over the range (xe[0], xe[-1]).
-
-        verbose: int, optional
-            Verbosity level
-
-            - 0: is no output (default)
-            - 1: print current args and negative log-likelihood value
+        verbose : int, optional
+            Verbosity level. 0: is no output (default).
+            1: print current args and negative log-likelihood value.
         """
         super().__init__(n, xe, cdf, verbose)
 
@@ -379,27 +412,25 @@ class ExtendedBinnedNLL(BinnedCost):
 
     @property
     def scaled_cdf(self):
+        """Get integrated density model."""
         return self._model
 
     def __init__(self, n, xe, scaled_cdf, verbose=0):
         """
-        **Parameters**
+        Initialize cost function with data and model.
 
-        n: array-like
+        Parameters
+        ----------
+        n : array-like
             Histogram counts.
-
-        xe: array-like
+        xe : array-like
             Bin edge locations, must be len(n) + 1.
-
-        scaled_cdf: callable
-            Scaled Cumulative density function of the form f(xe, par0, par1, ..., parN),
-            where `xe` is a bin edge and par0, ... parN are model parameters.
-
-        verbose: int, optional
-            Verbosity level
-
-            - 0: is no output (default)
-            - 1: print current args and negative log-likelihood value
+        scaled_cdf : callable
+            Scaled Cumulative density function of the form f(xe, par0, [par1, ...]),
+            where `xe` is a bin edge and `parN` are model parameters.
+        verbose : int, optional
+            Verbosity level. 0: is no output (default).
+            1: print current args and negative log-likelihood value.
         """
         super().__init__(n, xe, scaled_cdf, verbose)
 
@@ -425,7 +456,7 @@ class LeastSquares(MaskedCost):
 
     @property
     def x(self):
-        """Explanatory variable."""
+        """Get explanatory variables."""
         return self._x
 
     @x.setter
@@ -434,7 +465,7 @@ class LeastSquares(MaskedCost):
 
     @property
     def y(self):
-        """Sample."""
+        """Get samples."""
         return self._y
 
     @y.setter
@@ -443,7 +474,7 @@ class LeastSquares(MaskedCost):
 
     @property
     def yerror(self):
-        """Expected uncertainty of sample."""
+        """Get sample uncertainties."""
         return self._yerror
 
     @yerror.setter
@@ -452,12 +483,12 @@ class LeastSquares(MaskedCost):
 
     @property
     def model(self):
-        """Model of the form y = f(x, par0, [par1, ...])."""
+        """Get model of the form y = f(x, par0, [par1, ...])."""
         return self._model
 
     @property
     def loss(self):
-        """Loss function. See LeastSquares.__init__ for details."""
+        """Get loss function."""
         return self._loss
 
     @loss.setter
@@ -474,37 +505,41 @@ class LeastSquares(MaskedCost):
 
     def __init__(self, x, y, yerror, model, loss="linear", verbose=0):
         """
-        **Parameters**
+        Initialize cost function with data and model.
 
-        x: array-like
+        Parameters
+        ----------
+        x : array-like
             Locations where the model is evaluated.
-
-        y: array-like
+        y : array-like
             Observed values. Must have the same length as `x`.
-
-        yerror: array-like or float
+        yerror : array-like or float
             Estimated uncertainty of observed values. Must have same shape as `y` or
             be a scalar, which is then broadcasted to same shape as `y`.
-
-        model: callable
-            Function of the form f(x, par0, par1, ..., parN) whose output is compared
-            to observed values, where `x` is the location and par0, ... parN are model
+        model : callable
+            Function of the form f(x, par0, [par1, ...]) whose output is compared
+            to observed values, where `x` is the location and `parN` are model
             parameters.
-
-        loss: str or callable, optional
+        loss : str or callable, optional
             The loss function can be modified to make the fit robust against outliers,
             see scipy.optimize.least_squares for details. Only "linear" (default) and
             "soft_l1" are currently implemented, but users can pass any loss function
             as this argument. It should be a monotonic, twice differentiable function,
             which accepts the squared residual and returns a modified squared residual.
+        verbose : int, optional
+            Verbosity level. 0: is no output (default).
+            1: print current args and negative log-likelihood value.
 
-            .. plot:: plots/loss.py
+        Notes
+        -----
+        Alternative loss functions make the fit more robust against outliers by weakening
+        the pull of outliers. The mechanical analog of a least-squares fit is a system
+        with attractive forces. The points pull the model towards them with a force whose
+        potential is given by :math:`rho(z)` for a squared-offset :math:`z`. The plot
+        shows the standard potential in comparison with the weaker soft-l1 potential, in
+        which outliers act with a constant force independent of their distance.
 
-        verbose: int, optional
-            Verbosity level
-
-            - 0: is no output (default)
-            - 1: print current args and negative log-likelihood value
+        .. plot:: plots/loss.py
         """
         x = _norm(x)
         y = _norm(y)
@@ -539,10 +574,47 @@ class LeastSquares(MaskedCost):
 
 
 class NormalConstraint(Cost):
+    """
+    Soft gaussian constraint on one or several parameters.
+
+    The Gaussian constraint acts like a pseudo-measurement of the parameter itself, based
+    on a (multi-variate) normal distribution. Gaussian constraints can be set for one or
+    several parameters at once (which is more efficient). When several parameter are
+    constrained, one can specify the full covariance matrix of the parameters.
+
+    Notes
+    -----
+    It is sometimes necessary to add a weak Gaussian constraint on a parameter to avoid
+    instabilities in the fit. A typical example in high-energy physics is the fit of a
+    signal peak above some background. The signal peak typically has an amplitude which is
+    of interest and shape parameters, which are usually nuisance parameters. If the peak
+    in the sample is close to zero, the shape parameters of the signal model become
+    unconstrained by the data and the fit becomes unstable. This can be avoided by adding
+    weak (large uncertainty) gaussian constraints on the shape parameters whose pull is
+    negligible if the peak amplitude is non-zero.
+
+    This class can also be used to approximately include external measurements of some
+    parameters, if the original cost function is not available or too costly to compute.
+    If the external measurement was performed in the asymptotic limit with a large sample,
+    a normal constraint is an accurate statistical representation of the external result.
+    """
 
     __slots__ = "_value", "_cov", "_covinv"
 
     def __init__(self, args, value, error):
+        """
+        Initialize the normal constraint with expected value(s) and error(s).
+
+        Parameters
+        ----------
+        args : str or sequence of str
+            Parameter name(s).
+        value : float or array-like
+            Expected value(s). Must have same length as `args`.
+        error : float or array-like
+            Expected error(s). If 1D, must have same length as `args`. If 2D, must be
+            the covariance matrix of the parameters.
+        """
         if isinstance(args, str):
             args = [args]
         self._value = _norm(value)
@@ -554,6 +626,11 @@ class NormalConstraint(Cost):
 
     @property
     def covariance(self):
+        """
+        Get expected covariance of parameters.
+
+        Can be 1D (diagonal of covariance matrix) or 2D (full covariance matrix).
+        """
         return self._cov
 
     @covariance.setter
@@ -563,6 +640,7 @@ class NormalConstraint(Cost):
 
     @property
     def value(self):
+        """Get expected parameter values."""
         return self._value
 
     @value.setter

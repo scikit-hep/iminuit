@@ -1,4 +1,4 @@
-"""iminuit utility functions and classes."""
+"""This module provides data and utility classes used by :class:`iminuit.Minuit`."""
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
@@ -11,7 +11,7 @@ inf = float("infinity")
 
 
 class IMinuitWarning(RuntimeWarning):
-    """iminuit warning."""
+    """Generic iminuit warning."""
 
 
 class HesseFailedWarning(IMinuitWarning):
@@ -19,25 +19,31 @@ class HesseFailedWarning(IMinuitWarning):
 
 
 class BasicView:
-    """Array-like view of parameter state.
+    """
+    Array-like view of parameter state.
 
     Derived classes need to implement methods _set and _get to access
-    specific properties of the parameter state."""
+    specific properties of the parameter state.
+    """
 
     __slots__ = ("_minuit", "_ndim")
 
     def __init__(self, minuit, ndim=0):
+        """Not to be initialized by users."""
         self._minuit = minuit
         self._ndim = ndim
 
     def __iter__(self):
+        """Get iterator over values."""
         for i in range(len(self)):
             yield self._get(i)
 
     def __len__(self):
+        """Get number of paramters."""
         return self._minuit.npar
 
     def __getitem__(self, key):
+        """Get value at key, which can be an index, a parameter name, or a slice."""
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             return [self._get(i) for i in ind]
@@ -45,6 +51,7 @@ class BasicView:
         return self._get(i)
 
     def __setitem__(self, key, value):
+        """Assign a new value at key, which can be an index, a parameter name, or a slice."""
         self._minuit._copy_state_if_needed()
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
@@ -61,9 +68,11 @@ class BasicView:
             self._set(i, value)
 
     def __eq__(self, other):
+        """Return true if all values are equal."""
         return len(self) == len(other) and all(x == y for x, y in zip(self, other))
 
     def __repr__(self):
+        """Get detailed text representation."""
         s = f"<{self.__class__.__name__}"
         for (k, v) in zip(self._minuit._pos2var, self):
             s += f" {k}={v}"
@@ -121,6 +130,7 @@ class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
     def __init__(self, minuit):
+        """Not to be initialized by users."""
         super(LimitView, self).__init__(minuit, 1)
 
     def _get(self, i):
@@ -179,6 +189,7 @@ class Matrix(np.ndarray):
     __slots__ = ("_var2pos",)
 
     def __new__(cls, parameters):
+        """Not to be initialized by users."""
         if isinstance(parameters, dict):
             var2pos = parameters
         elif isinstance(parameters, tuple):
@@ -191,12 +202,14 @@ class Matrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
+        """For internal use."""
         if obj is None:
             self._var2pos = None
         else:
             self._var2pos = getattr(obj, "_var2pos", None)
 
     def __getitem__(self, key):
+        """Get matrix element at key."""
         var2pos = self._var2pos
         if var2pos is not None:
             if isinstance(key, tuple):
@@ -207,9 +220,13 @@ class Matrix(np.ndarray):
 
     def to_table(self):
         """
-        Converts the matrix to a tabular format consumable by the external
+        Convert matrix to tabular format.
+
+        The output is consumable by the external
         `tabulate <https://pypi.org/project/tabulate>`_ module.
 
+        Examples
+        --------
         >>> import tabulate as tab
         >>> from iminuit import Minuit
         >>> m = Minuit(lambda x, y: x ** 2 + y ** 2, x=1, y=2).migrad()
@@ -229,7 +246,7 @@ class Matrix(np.ndarray):
 
     def correlation(self):
         """
-        Computes and returns the correlation matrix.
+        Compute and return correlation matrix.
 
         If the matrix is already a correlation matrix, this effectively returns a copy
         of the original matrix.
@@ -240,9 +257,11 @@ class Matrix(np.ndarray):
         return a
 
     def __repr__(self):
+        """Get detailed text representation."""
         return super(Matrix, self).__str__()
 
     def __str__(self):
+        """Get user-friendly text representation."""
         return _repr_text.matrix(self)
 
     def _repr_html_(self):
@@ -267,6 +286,7 @@ class FMin:
     )
 
     def __init__(self, fmin, nfcn, ngrad, edm_goal):
+        """Not to be initialized by users."""
         self._src = fmin
         self._has_parameters_at_limit = False
         for mp in fmin.state:
@@ -284,7 +304,8 @@ class FMin:
 
     @property
     def edm(self):
-        """Estimated Distance to Minimum.
+        """
+        Get Estimated Distance to Minimum.
 
         Minuit uses this criterion to determine whether the fit converged. It depends
         on the gradient and the Hessian matrix. It measures how well the current
@@ -296,18 +317,23 @@ class FMin:
 
     @property
     def edm_goal(self):
-        """EDM threshold value for stopping the minimization. The threshold is allowed
-        to be violated up to a factor of 10 in some situations."""
+        """
+        Get EDM threshold value for stopping the minimization.
+
+        The threshold is allowed
+        to be violated up to a factor of 10 in some situations.
+        """
         return self._edm_goal
 
     @property
     def fval(self):
-        """Value of the cost function at the minimum."""
+        """Get cost function value at the minimum."""
         return self._src.fval
 
     @property
     def has_parameters_at_limit(self):
-        """Whether any bounded parameter was fitted close to a bound.
+        """
+        Return whether any bounded parameter was fitted close to a bound.
 
         The estimated error for the affected parameters is usually off. May be an
         indication to remove or loosen the limits on the affected parameter.
@@ -316,17 +342,18 @@ class FMin:
 
     @property
     def nfcn(self):
-        """Number of function calls so far."""
+        """Get number of function calls so far."""
         return self._nfcn
 
     @property
     def ngrad(self):
-        """Number of function gradient calls so far."""
+        """Get number of function gradient calls so far."""
         return self._ngrad
 
     @property
     def is_valid(self):
-        """Whether Migrad converged successfully.
+        """
+        Return whether Migrad converged successfully.
 
         For it to return True, the following conditions need to be fulfilled:
 
@@ -341,7 +368,8 @@ class FMin:
 
     @property
     def has_valid_parameters(self):
-        """Whether parameters are valid.
+        """
+        Return whether parameters are valid.
 
         For it to return True, the following conditions need to be fulfilled:
 
@@ -355,7 +383,8 @@ class FMin:
 
     @property
     def has_accurate_covar(self):
-        """Whether the covariance matrix is accurate.
+        """
+        Return whether the covariance matrix is accurate.
 
         While Migrad runs, it computes an approximation to the current Hessian
         matrix. If the strategy is set to 0 or if the fit did not converge, the
@@ -367,19 +396,22 @@ class FMin:
 
     @property
     def has_posdef_covar(self):
-        """Whether the Hessian matrix is positive definite.
+        """
+        Return whether the Hessian matrix is positive definite.
 
         This must be the case if the extremum is a minimum. Otherwise it is a
         maximum or a saddle point.
 
         If the fit has converged, this should always be true. It may be false if the
-        fit did not converge or was stopped prematurely.
+        fit did not converge or was stopped prematurely. It may be triggered when some
+        parameters are perfectly correlated.
         """
         return self._src.has_posdef_covar
 
     @property
     def has_made_posdef_covar(self):
-        """Whether the matrix was forced to be positive definite.
+        """
+        Return whether the matrix was forced to be positive definite.
 
         While Migrad runs, it computes an approximation to the current Hessian matrix.
         It can happen that this approximation is not positive definite, but that is
@@ -393,12 +425,13 @@ class FMin:
 
     @property
     def hesse_failed(self):
-        """Whether the last call to Hesse failed."""
+        """Return whether the last call to Hesse failed."""
         return self._src.hesse_failed
 
     @property
     def has_covariance(self):
-        """Whether a covariance matrix was computed at all.
+        """
+        Return whether a covariance matrix was computed at all.
 
         This is false if the Simplex minimization algorithm was used instead of
         Migrad, in which no approximation to the Hessian is computed.
@@ -407,7 +440,8 @@ class FMin:
 
     @property
     def is_above_max_edm(self):
-        """Whether the EDM value is below the convergence threshold.
+        """
+        Return whether the EDM value is below the convergence threshold.
 
         If this is true, the fit did not converge; otherwise this is false.
         """
@@ -415,7 +449,8 @@ class FMin:
 
     @property
     def has_reached_call_limit(self):
-        """Whether Migrad exceeded the allowed number of function calls.
+        """
+        Return whether Migrad exceeded the allowed number of function calls.
 
         If this is true, the fit was stopped before convergence was reached.
         """
@@ -427,9 +462,11 @@ class FMin:
         return self._src.errordef
 
     def __eq__(self, other):
+        """Return True if all attributes are equal."""
         return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
 
     def __repr__(self):
+        """Get detailed text representation."""
         s = "<FMin"
         for key in sorted(dir(self)):
             if key.startswith("_"):
@@ -440,6 +477,7 @@ class FMin:
         return s
 
     def __str__(self):
+        """Get user-friendly text representation."""
         return _repr_text.fmin(self)
 
     def _repr_html_(self):
@@ -471,14 +509,17 @@ class Param:
     )
 
     def __init__(self, *args):
+        """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)
 
     def __eq__(self, other):
+        """Return True if all values are equal."""
         return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
 
     def __repr__(self):
+        """Get detailed text representation."""
         pairs = []
         for k in self.__slots__:
             v = getattr(self, k)
@@ -486,6 +527,7 @@ class Param:
         return "Param(" + ", ".join(pairs) + ")"
 
     def __str__(self):
+        """Get user-friendly text representation."""
         return _repr_text.params([self])
 
     def _repr_pretty_(self, p, cycle):
@@ -505,9 +547,13 @@ class Params(tuple):
 
     def to_table(self):
         """
-        Converts parameter data to a tabular format consumable by the external
+        Convert parameter data to a tabular format.
+
+        The output is consumable by the external
         `tabulate <https://pypi.org/project/tabulate>`_ module.
 
+        Examples
+        --------
         >>> import tabulate as tab
         >>> from iminuit import Minuit
         >>> m = Minuit(lambda x, y: x ** 2 + (y / 2) ** 2 + 1, x=0, y=0)
@@ -554,6 +600,7 @@ class Params(tuple):
         return tab, header
 
     def __getitem__(self, key):
+        """Get item at key, which can be an index or a parameter name."""
         if isinstance(key, str):
             for i, p in enumerate(self):
                 if p.name == key:
@@ -562,6 +609,7 @@ class Params(tuple):
         return super(Params, self).__getitem__(key)
 
     def __str__(self):
+        """Get user-friendly text representation."""
         return _repr_text.params(self)
 
     def _repr_pretty_(self, p, cycle):
@@ -574,23 +622,38 @@ class Params(tuple):
 class MError:
     """Minos data object.
 
-    **Attributes:**
-
-    - number: parameter index
-    - name: parameter name
-    - lower: lower error
-    - upper: upper error
-    - is_valid: whether Minos computation was successful
-    - lower_valid: whether downward scan was successful
-    - upper_valid: whether upward scan was successful
-    - at_lower_limit: whether scan reached lower limit
-    - at_upper_limit: whether scan reached upper limit
-    - at_lower_max_fcn: whether allowed number of function evaluations was exhausted
-    - at_upper_max_fcn: whether allowed number of function evaluations was exhausted
-    - lower_new_min: parameter value for new minimum, if one was found in downward scan
-    - upper_new_min: parameter value for new minimum, if one was found in upward scan
-    - nfcn: number of function calls
-    - min: function value at the new minimum
+    Attributes
+    ----------
+    number : int
+        Parameter index.
+    name : str
+        Parameter name.
+    lower : float
+        Lower error.
+    upper : float
+        Upper error.
+    is_valid : bool
+        Whether Minos computation was successful.
+    lower_valid : bool
+        Whether downward scan was successful.
+    upper_valid : bool
+        Whether upward scan was successful.
+    at_lower_limit : bool
+        Whether scan reached lower limit.
+    at_upper_limit : bool
+        Whether scan reached upper limit.
+    at_lower_max_fcn : bool
+        Whether allowed number of function evaluations was exhausted.
+    at_upper_max_fcn : bool
+        Whether allowed number of function evaluations was exhausted.
+    lower_new_min : float
+        Parameter value for new minimum, if one was found in downward scan.
+    upper_new_min : float
+        Parameter value for new minimum, if one was found in upward scan.
+    nfcn : int
+        Number of function calls.
+    min : float
+        Function value at the new minimum.
     """
 
     __slots__ = (
@@ -612,14 +675,17 @@ class MError:
     )
 
     def __init__(self, *args):
+        """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)
 
     def __eq__(self, other):
+        """Return True if all values are equal."""
         return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
 
     def __repr__(self):
+        """Get detailed text representation."""
         s = "<MError"
         for idx, k in enumerate(self.__slots__):
             v = getattr(self, k)
@@ -628,6 +694,7 @@ class MError:
         return s
 
     def __str__(self):
+        """Get user-friendly text representation."""
         return _repr_text.merrors({None: self})
 
     def _repr_html_(self):
@@ -649,9 +716,11 @@ class MErrors(OrderedDict):
         return _repr_html.merrors(self)
 
     def __repr__(self):
+        """Get detailed text representation."""
         return "<MErrors\n  " + ",\n  ".join(repr(x) for x in self.values()) + "\n>"
 
     def __str__(self):
+        """Get user-friendly text representation."""
         return _repr_text.merrors(self)
 
     def _repr_pretty_(self, p, cycle):
@@ -661,6 +730,7 @@ class MErrors(OrderedDict):
             p.text(str(self))
 
     def __getitem__(self, key):
+        """Get item at key, which can be an index or a parameter name."""
         if isinstance(key, int):
             if key < 0:
                 key += len(self)
@@ -674,7 +744,8 @@ class MErrors(OrderedDict):
 
 
 def make_func_code(params):
-    """Make a func_code object to fake function signature.
+    """
+    Make a func_code object to fake function signature.
 
     You can make a funccode from describable object by::
 
@@ -684,15 +755,22 @@ def make_func_code(params):
 
 
 def describe(callable):
-    """Attempt to extract the function argument names.
+    """
+    Attempt to extract the function argument names.
 
-    **Returns**
+    Parameters
+    ----------
+    callable : callable
+        Callable whose parameters should be extracted.
 
-    Returns a list of strings with the parameters names if successful. If unsuccessful,
-    it returns an empty list.
+    Returns
+    -------
+    tuple
+        Returns a tuple of strings with the parameters names if successful and an empty
+        tuple otherwise.
 
-    **Function signature extraction algorithm**
-
+    Notes
+    -----
     Parameter names are extracted with the following three methods, which are attempted
     in order. The first to succeed determines the result.
 
@@ -722,9 +800,8 @@ def describe(callable):
        names. This requires that a docstring is present which follows the Python
        standard formatting for function signatures.
 
-    **Handling of ambiguous cases**
-
-    How functions with positional and keyword argument are handled::
+    Ambiguous cases with positional and keyword argument are handled in the following
+    way::
 
         # describe returns [a, b];
         # *args and **kwargs are ignored
@@ -733,7 +810,6 @@ def describe(callable):
         # describe returns [a, b, c];
         # positional arguments with default values are detected
         def fcn(a, b, c=1): ...
-
     """
     if _address_of_cfunc(callable) != 0:
         return ()
