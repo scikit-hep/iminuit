@@ -15,15 +15,15 @@ with open(version_fn) as f:
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:
-    assert version in f.read()
+    assert version in f.read(), "changelog entry missing"
 
 # make sure that version is not already tagged
 tags = subp.check_output(["git", "tag"]).decode().strip().split("\n")
-assert version not in tags
+assert f"v{version}" not in tags, "tag exists"
 
 # make sure that version itself was updated
 r = requests.get("https://pypi.org/pypi/iminuit/json")
 releases = r.json()["releases"]
 pypi_versions = [parse_version(v) for v in releases]
 this_version = parse_version(version)
-assert this_version not in pypi_versions
+assert this_version not in pypi_versions, "pypi version exists"

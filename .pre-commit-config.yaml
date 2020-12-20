@@ -38,7 +38,7 @@ repos:
     name: version-check
     language: python
     additional_dependencies: [requests]
-    entry: python .ci/release_check.py
+    entry: python .ci/version_check.py
 
 # Python linter (Flake8)
 - repo: https://gitlab.com/pycqa/flake8

@@ -5,7 +5,7 @@
 Changelog
 =========
 
-2.2.0.rc1
+2.2.0.rc2
 ---------
 
 New features

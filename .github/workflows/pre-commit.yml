@@ -1,4 +1,4 @@
-name: Version
+name: pre-commit
 
 on:
   pull_request:
@@ -12,5 +12,6 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - run: python -m pip install requests
-    - run: python .ci/release_check.py
+    - run: python -m pip install --upgrade pip wheel
+    - run: python -m pip install pre-commit
+    - run: pre-commit run -a
