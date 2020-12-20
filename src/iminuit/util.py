@@ -1,4 +1,4 @@
-"""iminuit utility functions and classes."""
+"""This module provides data and utility classes used by :class:`iminuit.Minuit`."""
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
@@ -11,7 +11,7 @@ inf = float("infinity")
 
 
 class IMinuitWarning(RuntimeWarning):
-    """iminuit warning."""
+    """Generic iminuit warning."""
 
 
 class HesseFailedWarning(IMinuitWarning):
@@ -29,7 +29,7 @@ class BasicView:
     __slots__ = ("_minuit", "_ndim")
 
     def __init__(self, minuit, ndim=0):
-        """For internal use."""
+        """Not to be initialized by users."""
         self._minuit = minuit
         self._ndim = ndim
 
@@ -130,7 +130,7 @@ class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
     def __init__(self, minuit):
-        """For internal use."""
+        """Not to be initialized by users."""
         super(LimitView, self).__init__(minuit, 1)
 
     def _get(self, i):
@@ -189,7 +189,7 @@ class Matrix(np.ndarray):
     __slots__ = ("_var2pos",)
 
     def __new__(cls, parameters):
-        """For internal use."""
+        """Not to be initialized by users."""
         if isinstance(parameters, dict):
             var2pos = parameters
         elif isinstance(parameters, tuple):
@@ -286,7 +286,7 @@ class FMin:
     )
 
     def __init__(self, fmin, nfcn, ngrad, edm_goal):
-        """For internal use."""
+        """Not to be initialized by users."""
         self._src = fmin
         self._has_parameters_at_limit = False
         for mp in fmin.state:
@@ -327,13 +327,13 @@ class FMin:
 
     @property
     def fval(self):
-        """Value of the cost function at the minimum."""
+        """Get cost function value at the minimum."""
         return self._src.fval
 
     @property
     def has_parameters_at_limit(self):
         """
-        Whether any bounded parameter was fitted close to a bound.
+        Return whether any bounded parameter was fitted close to a bound.
 
         The estimated error for the affected parameters is usually off. May be an
         indication to remove or loosen the limits on the affected parameter.
@@ -509,7 +509,7 @@ class Param:
     )
 
     def __init__(self, *args):
-        """For internal use."""
+        """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)
@@ -622,23 +622,38 @@ class Params(tuple):
 class MError:
     """Minos data object.
 
-    **Attributes:**
-
-    - number: parameter index
-    - name: parameter name
-    - lower: lower error
-    - upper: upper error
-    - is_valid: whether Minos computation was successful
-    - lower_valid: whether downward scan was successful
-    - upper_valid: whether upward scan was successful
-    - at_lower_limit: whether scan reached lower limit
-    - at_upper_limit: whether scan reached upper limit
-    - at_lower_max_fcn: whether allowed number of function evaluations was exhausted
-    - at_upper_max_fcn: whether allowed number of function evaluations was exhausted
-    - lower_new_min: parameter value for new minimum, if one was found in downward scan
-    - upper_new_min: parameter value for new minimum, if one was found in upward scan
-    - nfcn: number of function calls
-    - min: function value at the new minimum
+    Attributes
+    ----------
+    number : int
+        Parameter index.
+    name : str
+        Parameter name.
+    lower : float
+        Lower error.
+    upper : float
+        Upper error.
+    is_valid : bool
+        Whether Minos computation was successful.
+    lower_valid : bool
+        Whether downward scan was successful.
+    upper_valid : bool
+        Whether upward scan was successful.
+    at_lower_limit : bool
+        Whether scan reached lower limit.
+    at_upper_limit : bool
+        Whether scan reached upper limit.
+    at_lower_max_fcn : bool
+        Whether allowed number of function evaluations was exhausted.
+    at_upper_max_fcn : bool
+        Whether allowed number of function evaluations was exhausted.
+    lower_new_min : float
+        Parameter value for new minimum, if one was found in downward scan.
+    upper_new_min : float
+        Parameter value for new minimum, if one was found in upward scan.
+    nfcn : int
+        Number of function calls.
+    min : float
+        Function value at the new minimum.
     """
 
     __slots__ = (
@@ -660,7 +675,7 @@ class MError:
     )
 
     def __init__(self, *args):
-        """For internal use."""
+        """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)

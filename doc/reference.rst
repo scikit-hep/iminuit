@@ -57,7 +57,5 @@ iminuit.util
 
 .. currentmodule:: iminuit.util
 
-The module provides data and utility classes used by :class:`iminuit.Minuit` and the :func:`describe` function.
-
 .. automodule:: iminuit.util
     :members:
