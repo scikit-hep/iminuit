@@ -62,25 +62,31 @@ except ImportError:  # pragma: no cover
 
 
 class Cost:
-    """Common base class for cost functions.
+    """Base class for all cost functions."""
 
-    **Attributes**
-
-    verbose : int
-        Verbosity level. Default is 0.
-    errordef : int
-        Error definition constant used by Minuit. For internal use.
-    """
-
-    __slots__ = "_func_code", "verbose"
+    __slots__ = "_func_code", "_verbose"
 
     @property
     def errordef(self):
+        """For internal use."""
         return 1.0
 
     @property
     def func_code(self):
+        """For internal use."""
         return self._func_code
+
+    @property
+    def verbose(self):
+        """Verbosity level.
+
+        Set this to 1 to print all function calls with input and output.
+        """
+        return self._verbose
+
+    @verbose.setter
+    def verbose(self, value: int):
+        self._verbose = int(value)
 
     def __init__(self, args, verbose):
         self._func_code = make_func_code(args)
@@ -97,14 +103,7 @@ class Cost:
 
 
 class MaskedCost(Cost):
-    """Common base class for cost functions.
-
-    **Attributes**
-
-    mask : array-like or None
-        If not None, only values selected by the mask are considered. The mask acts on
-        the first dimension of a value array, i.e. values[mask]. Default is None.
-    """
+    """Base class for cost functions that support data masking."""
 
     __slots__ = "_mask", "_masked"
 
@@ -114,11 +113,17 @@ class MaskedCost(Cost):
 
     @property
     def mask(self):
+        """Boolean array, array of indices, or None.
+
+        If not None, only values selected by the mask are considered. The mask acts on
+        the first dimension of a value array, i.e. values[mask]. Default is None.
+        """
         return self._mask
 
     @mask.setter
     def mask(self, mask):
-        self._mask = mask
+        if mask is not None:
+            self._mask = np.asarray(mask)
         self._masked = self._make_masked()
 
     def _make_masked(self):
@@ -126,19 +131,34 @@ class MaskedCost(Cost):
 
 
 class CostSum(Cost, Sequence):
+    """Sum of cost functions.
+
+    Users do not need to create objects of this class themselves. They should just add
+    cost functions, for example:
+
+        nll = UnbinnedNLL(...)
+        lsq = LeastSquares(...)
+        ncs = NormalConstraint(...)
+        csum = nll + lsq + ncs
+
+    CostSum is used to combine data from different experiments or to combine normal cost
+    functions with soft constraints (see NormalConstraint).
+
+    The parameters of CostSum are the union of all parameters of its constituents.
+    Supports the sequence protocol to access the constituents.
+    """
+
     __slots__ = "_items", "_maps"
 
     def __init__(self, *items):
-        tmp = []
+        args, self._maps = self._join_args(items)
+        self._items = []
         for item in items:
             if isinstance(item, CostSum):
-                tmp += item._items
+                self._items += item._items
             else:
-                tmp.append(item)
-        items = tmp
-        args, self._maps = self._join_args(items)
-        self._items = list(items)
-        super().__init__(args, max(c.verbose for c in items))
+                self._items.append(item)
+        super().__init__(args, max(c.verbose for c in self))
 
     def _call(self, args):
         r = 0.0
@@ -167,11 +187,14 @@ class CostSum(Cost, Sequence):
         return self._items.__getitem__(key)
 
 
-class UnbinnedBase(MaskedCost):
+class UnbinnedCost(MaskedCost):
+    """Base class for unbinned cost functions."""
+
     __slots__ = "_data", "_model"
 
     @property
     def data(self):
+        """Unbinned samples."""
         return self._data
 
     @data.setter
@@ -184,7 +207,7 @@ class UnbinnedBase(MaskedCost):
         super().__init__(describe(model)[1:], verbose)
 
 
-class UnbinnedNLL(UnbinnedBase):
+class UnbinnedNLL(UnbinnedCost):
     """Unbinned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the original
@@ -195,6 +218,7 @@ class UnbinnedNLL(UnbinnedBase):
 
     @property
     def pdf(self):
+        """PDF that describes the data."""
         return self._model
 
     def __init__(self, data, pdf, verbose=0):
@@ -209,7 +233,7 @@ class UnbinnedNLL(UnbinnedBase):
             where `data` is the data sample and par0, ... parN are model parameters.
 
         verbose: int, optional
-            Verbosity level
+            Verbosity level.
 
             - 0: is no output (default)
             - 1: print current args and negative log-likelihood value
@@ -221,7 +245,7 @@ class UnbinnedNLL(UnbinnedBase):
         return -2.0 * _sum_log_x(self._model(data, *args))
 
 
-class ExtendedUnbinnedNLL(UnbinnedBase):
+class ExtendedUnbinnedNLL(UnbinnedCost):
     """Unbinned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the
@@ -232,6 +256,7 @@ class ExtendedUnbinnedNLL(UnbinnedBase):
 
     @property
     def scaled_pdf(self):
+        """Density function that describes the data."""
         return self._model
 
     def __init__(self, data, scaled_pdf, verbose=0):
@@ -242,10 +267,9 @@ class ExtendedUnbinnedNLL(UnbinnedBase):
             Sample of observations.
 
         scaled_pdf: callable
-            Scaled probability density function of the form f(data, par0, par1, ...,
-            parN), where `data` is the data sample and par0, ... parN are model
-            parameters. Must return a tuple (<integral over f in data range>,
-            <f evaluated at data points>).
+            Density function of the form f(data, par0, par1, ..., parN), where `data` is
+            the data sample and par0, ... parN are model parameters. Must return a tuple
+            (<integral over f in data range>, <f evaluated at data points>).
 
         verbose: int, optional
             Verbosity level
@@ -261,11 +285,14 @@ class ExtendedUnbinnedNLL(UnbinnedBase):
         return 2.0 * (ns - _sum_log_x(s))
 
 
-class BinnedBase(MaskedCost):
+class BinnedCost(MaskedCost):
+    """Base class for binned cost functions."""
+
     __slots__ = "_n", "_xe", "_model"
 
     @property
     def n(self):
+        """Counts per bin."""
         return self._n
 
     @n.setter
@@ -274,6 +301,7 @@ class BinnedBase(MaskedCost):
 
     @property
     def xe(self):
+        """Bin edges."""
         return self._xe
 
     @xe.setter
@@ -291,7 +319,7 @@ class BinnedBase(MaskedCost):
         super().__init__(describe(model)[1:], verbose)
 
 
-class BinnedNLL(BinnedBase):
+class BinnedNLL(BinnedCost):
     """Binned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
@@ -301,6 +329,7 @@ class BinnedNLL(BinnedBase):
 
     @property
     def cdf(self):
+        """Cumulative density function."""
         return self._model
 
     def __init__(self, n, xe, cdf, verbose=0):
@@ -315,7 +344,8 @@ class BinnedNLL(BinnedBase):
 
         cdf: callable
             Cumulative density function of the form f(xe, par0, par1, ..., parN),
-            where `xe` is a bin edge and par0, ... parN are model parameters.
+            where `xe` is a bin edge and par0, ... parN are model parameters. Must be
+            normalized to unity over the range (xe[0], xe[-1]).
 
         verbose: int, optional
             Verbosity level
@@ -339,7 +369,7 @@ class BinnedNLL(BinnedBase):
         return self._n if self._mask is None else self._n[self._mask]
 
 
-class ExtendedBinnedNLL(BinnedBase):
+class ExtendedBinnedNLL(BinnedCost):
     """Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data
@@ -396,6 +426,7 @@ class LeastSquares(MaskedCost):
 
     @property
     def x(self):
+        """Explanatory variable."""
         return self._x
 
     @x.setter
@@ -404,6 +435,7 @@ class LeastSquares(MaskedCost):
 
     @property
     def y(self):
+        """Sample."""
         return self._y
 
     @y.setter
@@ -412,6 +444,7 @@ class LeastSquares(MaskedCost):
 
     @property
     def yerror(self):
+        """Expected uncertainty of sample."""
         return self._yerror
 
     @yerror.setter
@@ -420,10 +453,12 @@ class LeastSquares(MaskedCost):
 
     @property
     def model(self):
+        """Model of the form y = f(x, par0, [par1, ...])."""
         return self._model
 
     @property
     def loss(self):
+        """Loss function. See LeastSquares.__init__ for details."""
         return self._loss
 
     @loss.setter
