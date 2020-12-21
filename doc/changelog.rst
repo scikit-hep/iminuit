@@ -12,7 +12,7 @@ New features
 ~~~~~~~~~~~~
 - ``Minuit.profile``, ``Minuit.mnprofile``, ``Minuit.contour``, ``Minuit.draw_profile``,
   ``Minuit.draw_mnprofile``, and ``Minuit.draw_contour`` can now be called with
-  ``subtract_min=True`` even if ``Minuit.fmin` is None
+  ``subtract_min=True`` even if ``Minuit.fmin`` is None
 
 Other
 ~~~~~
