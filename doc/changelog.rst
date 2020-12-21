@@ -8,10 +8,19 @@ Changelog
 2.2.1.dev
 ---------
 
+New features
+~~~~~~~~~~~~
+- ``Minuit.profile``, ``Minuit.mnprofile``, ``Minuit.contour``, ``Minuit.draw_profile``,
+  ``Minuit.draw_mnprofile``, and ``Minuit.draw_contour`` can now be called with
+  ``subtract_min=True`` even if ``Minuit.fmin` is None
+
 Other
 ~~~~~
 - pydocstyle added to pre-commit checks
 - Documentation improvements, further transition to numpydoc
+- Added type hints to many interfaces (incomplete)
+- Renamed ``iminuit._minuit`` to ``iminuit.minuit``
+- Renamed ``iminuit._minimize`` to ``iminuit.minimize``
 
 2.2.0 (December 20, 2020)
 -------------------------
