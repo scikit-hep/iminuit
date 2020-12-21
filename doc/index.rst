@@ -9,6 +9,7 @@
   :start-after: skip-marker-do-not-remove
 
 .. toctree::
+    :hidden:
 
     about
     install
