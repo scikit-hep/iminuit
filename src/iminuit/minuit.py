@@ -1,3 +1,5 @@
+"""Minuit class."""
+
 from warnings import warn
 from . import util as mutil
 from ._core import (
@@ -15,6 +17,7 @@ from ._core import (
 )
 import numpy as np
 from collections.abc import Iterable
+from typing import Tuple, Dict, Callable, Sequence, Optional, Union
 
 MnPrint.global_level = 0
 
@@ -22,6 +25,7 @@ __all__ = ["Minuit"]
 
 
 class Minuit:
+    """Function minimizer and error computer."""
 
     __slots__ = (
         "_fcn",
@@ -48,37 +52,42 @@ class Minuit:
     """Set :attr:`errordef` to this constant for a negative log-likelihood function."""
 
     @property
-    def fcn(self):
-        """Cost function (usually a least-squares or likelihood function)."""
+    def fcn(self) -> Callable:
+        """Get cost function (usually a least-squares or likelihood function)."""
         return self._fcn
 
     @property
-    def grad(self):
-        """Gradient function of the cost function."""
+    def grad(self) -> Callable:
+        """Get gradient function of the cost function."""
         return self._fcn._grad
 
     @property
-    def pos2var(self):
+    def pos2var(self) -> Tuple[str]:
         """Map variable index to name."""
         return self._pos2var
 
     @property
-    def var2pos(self):
+    def var2pos(self) -> Dict[str, int]:
         """Map variable name to index."""
         return self._var2pos
 
     @property
-    def parameters(self):
-        """Tuple of parameter names, an alias for :attr:`pos2var`."""
+    def parameters(self) -> Tuple[str]:
+        """
+        Get tuple of parameter names.
+
+        This is an alias for :attr:`pos2var`.
+        """
         return self._pos2var
 
     @property
-    def errordef(self):
-        """FCN increment above the minimum that corresponds to one standard deviation.
+    def errordef(self) -> float:
+        """
+        Access FCN increment above the minimum that corresponds to one standard deviation.
 
         Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
-        function and 0.5 for negative log-likelihood function. See section 1.5.1 on page 6
-        of the :download:`MINUIT2 User's Guide <mnusersguide.pdf>`. This parameter is
+        function and 0.5 for a negative log-likelihood function. See section 1.5.1 on page
+        6 of the :download:`MINUIT2 User's Guide <mnusersguide.pdf>`. This parameter is
         also called *UP* in MINUIT documents.
 
         To make user code more readable, we provided two named constants::
@@ -92,7 +101,7 @@ class Minuit:
         return self._fcn._errordef
 
     @errordef.setter
-    def errordef(self, value):
+    def errordef(self, value: float):
         if value <= 0:
             raise ValueError(f"errordef={value} must be a positive number")
         self._fcn._errordef = value
@@ -100,8 +109,9 @@ class Minuit:
             self._fmin._src.errordef = value
 
     @property
-    def precision(self):
-        """Estimated precision of the cost function.
+    def precision(self) -> float:
+        """
+        Access estimated precision of the cost function.
 
         Default: None. If set to None, Minuit assumes the cost function is computed in
         double precision. If the precision of the cost function is lower (because it
@@ -111,19 +121,20 @@ class Minuit:
         return self._precision
 
     @precision.setter
-    def precision(self, value):
+    def precision(self, value: float):
         if value is not None and not (value > 0):
             raise ValueError("precision must be a positive number or None")
         self._precision = value
 
     @property
-    def tol(self):
-        """Tolerance for convergence.
+    def tol(self) -> float:
+        """
+        Access tolerance for convergence.
 
-        The main convergence criteria of MINUIT is ``edm < edm_max``, where ``edm_max``
-        is calculated as ``edm_max = 0.002 * tol * errordef`` in case of the MIGRAD
-        algorithm and as ``edm_max = tol * errordef`` in case of the SIMPLEX algorithm.
-        EDM stands for *estimated distance to minimum*, which is described in the
+        The main convergence criteria of MINUIT is `edm < edm_max`, where `edm_max`
+        is calculated as `edm_max = 0.002 * tol * errordef` in case of the MIGRAD
+        algorithm and as `edm_max = tol * errordef` in case of the SIMPLEX algorithm.
+        EDM stands for *Estimated Distance to Minimum*, which is described in the
         `MINUIT paper`_. The EDM criterion is well suited for statistical cost functions,
         since it stops the minimization when parameter improvements become small
         compared to parameter uncertainties.
@@ -131,73 +142,86 @@ class Minuit:
         return self._tolerance
 
     @tol.setter
-    def tol(self, value):
+    def tol(self, value: float):
         if value <= 0:
             raise ValueError("tolerance must be positive")
         self._tolerance = value
 
     @property
-    def strategy(self):
-        """Current minimization strategy.
+    def strategy(self) -> MnStrategy:
+        """
+        Access current minimization strategy.
 
-        **0**: Fast. Does not check a user-provided gradient. Does not improve Hesse matrix
-        at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed for
-        good error estimates. If you pass a user-provided gradient to MINUIT,
-        convergence is **faster**.
+        You can assign an integer:
 
-        **1**: Default. Checks user-provided gradient against numerical gradient. Checks and
-        usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
-        :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
-        MINUIT, convergence is **slower**.
-
-        **2**: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
-        minimization. The effect in benchmarks is a somewhat improved accuracy at the cost
-        of more function evaluations. A similar effect can be achieved by reducing the
-        tolerance :attr:`tol` for convergence at any strategy level.
+        - 0: Fast. Does not check a user-provided gradient. Does not improve Hesse matrix
+          at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed
+          for good error estimates. If you pass a user-provided gradient to MINUIT,
+          convergence is **faster**.
+        - 1: Default. Checks user-provided gradient against numerical gradient. Checks and
+          usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
+          :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
+          MINUIT, convergence is **slower**.
+        - 2: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
+          minimization. The effect in benchmarks is a somewhat improved accuracy at the
+          cost of more function evaluations. A similar effect can be achieved by reducing
+          the tolerance :attr:`tol` for convergence at any strategy level.
         """
         return self._strategy
 
     @strategy.setter
-    def strategy(self, value):
+    def strategy(self, value: int):
         self._strategy.strategy = value
 
     @property
-    def print_level(self):
-        """Current print level.
+    def print_level(self) -> int:
+        """
+        Access current print level.
+
+        You can assign an integer:
 
         - 0: quiet (default)
         - 1: print minimal debug messages to terminal
         - 2: print more debug messages to terminal
         - 3: print even more debug messages to terminal
 
-        Warning: Setting print_level has the unwanted side-effect of setting the level
+        Warnings
+        --------
+        Setting print_level has the unwanted side-effect of setting the level
         globally for all Minuit instances in the current Python session.
         """
         return MnPrint.global_level
 
     @print_level.setter
-    def print_level(self, level):
+    def print_level(self, level: int):
         MnPrint.global_level = level
 
     @property
-    def throw_nan(self):
-        """Boolean. Whether to raise runtime error if function evaluate to nan."""
+    def throw_nan(self) -> bool:
+        """
+        Access whether to raise runtime error if the function evaluates to NaN.
+
+        If you set this to True, an error is raised whenever the function evaluates
+        to NaN.
+        """
         return self._fcn._throw_nan
 
     @throw_nan.setter
-    def throw_nan(self, value):
+    def throw_nan(self, value: bool):
         self._fcn._throw_nan = value
 
     @property
-    def values(self):
-        """Parameter values in a array-like object.
+    def values(self) -> mutil.ValueView:
+        """Access parameter values via an array-like view.
 
         Use to read or write current parameter values based on the parameter index or the
         parameter name as a string. If you change a parameter value and run :meth:`migrad`,
         the minimization will start from that value, similar for :meth:`hesse` and
         :meth:`minos`.
 
-        .. seealso:: :attr:`errors`, :attr:`fixed`, :attr:`limits`
+        See Also
+        --------
+        errors, fixed, limits
         """
         return self._values
 
@@ -206,13 +230,15 @@ class Minuit:
         self._values[:] = args
 
     @property
-    def errors(self):
-        """Parameter parabolic errors in a array-like object.
+    def errors(self) -> mutil.ErrorView:
+        """Access parameter parabolic errors via an array-like view.
 
         Like :attr:`values`, but instead of reading or writing the values, you read or write
         the errors (which double as step sizes for MINUITs numerical gradient estimation).
 
-        .. seealso:: :attr:`values`, :attr:`fixed`, :attr:`limits`
+        See Also
+        --------
+        values, fixed, limits
         """
         return self._errors
 
@@ -221,8 +247,8 @@ class Minuit:
         self._errors[:] = args
 
     @property
-    def fixed(self):
-        """Access fixation state of a parameter in a array-like object.
+    def fixed(self) -> mutil.FixedView:
+        """Access whether parameters are fixed via an array-like view.
 
         Use to read or write the fixation state of a parameter based on the parameter index
         or the parameter name as a string. If you change the state and run :meth:`migrad`,
@@ -232,7 +258,9 @@ class Minuit:
         the function with respect to the other parameters, then release the fixed parameters
         and minimize again starting from that state.
 
-        .. seealso:: :attr:`values`, :attr:`errors`, :attr:`limits`
+        See Also
+        --------
+        values, errors, limits
         """
         return self._fixed
 
@@ -241,19 +269,23 @@ class Minuit:
         self._fixed[:] = args
 
     @property
-    def limits(self):
-        """Access parameter limits in a array-like object.
+    def limits(self) -> mutil.LimitView:
+        """Access parameter limits via a array-like view.
 
         Use to read or write the limits of a parameter based on the parameter index
         or the parameter name as a string. If you change the limits and run :meth:`migrad`,
         :meth:`hesse`, or :meth:`minos`, the new state is used.
 
-        In case of complex fits, it can help to limit some parameters first and then
-        remove the limits. Limits will bias the result only if the best fit value is
-        outside the limits, not if it is inside. Limits will affect the estimated
-        HESSE uncertainties if the parameter is close to a limit.
+        In case of complex fits, it can help to limit some parameters first, run Migrad,
+        then remove the limits and run Migrad again. Limits will bias the result only if
+        the best fit value is outside the limits, not if it is inside. Limits will affect
+        the estimated HESSE uncertainties if the parameter is close to a limit. They do
+        not affect the MINOS uncertainties, because those are invariant to
+        transformations and limits are implemented via a variable transformation.
 
-        .. seealso:: :attr:`values`, :attr:`errors`, :attr:`fixed`
+        See Also
+        --------
+        values, errors, fixed
         """
         return self._limits
 
@@ -262,17 +294,23 @@ class Minuit:
         self._limits[:] = args
 
     @property
-    def merrors(self):
-        """Returns a dict with data objects that contain the full status information
-        of the Minos run.
+    def merrors(self) -> mutil.MErrors:
+        """
+        Return a dict-like with Minos data objects.
 
-        .. seealso:: :class:`iminuit.util.MError`, :class:`iminuit.util.MErrors`
+        The Minos data objects contain the full status information of the Minos run.
+
+        See Also
+        --------
+        util.MError
+        util.MErrors
         """
         return self._merrors
 
     @property
-    def covariance(self):
-        """Returns the covariance matrix.
+    def covariance(self) -> mutil.Matrix:
+        r"""
+        Return covariance matrix.
 
         The square-root of the diagonal elements of the covariance matrix correspond to
         a standard deviation for each parameter with 68 % coverage probability in the
@@ -280,9 +318,9 @@ class Minuit:
         covariance matrix with k^2.
 
         The submatrix formed by two parameters describes an ellipse. The asymptotic
-        coverage probabilty of the ellipse is lower than 68 %. It can be computed from the
-        :math:`\\chi^2` distribution with 2 degrees of freedom. In general, to obtain a
-        (hyper-)ellipsoid with coverage probability CL, one has to multiply the
+        coverage probabilty of the standard ellipse is lower than 68 %. It can be computed
+        from the :math:`\chi^2` distribution with 2 degrees of freedom. In general, to
+        obtain a (hyper-)ellipsoid with coverage probability CL, one has to multiply the
         submatrix of the corresponding k parameters with a factor. For k = 1,2,3 and
         CL = 0.99 ::
 
@@ -292,166 +330,215 @@ class Minuit:
             chi2(2).ppf(0.99) # 9.21...
             chi2(3).ppf(0.99) # 11.3...
 
-        .. seealso:: :class:`iminuit.util.Matrix`
+        See Also
+        --------
+        util.Matrix
         """
         return self._covariance
 
     @property
-    def npar(self):
-        """Number of parameters."""
+    def npar(self) -> int:
+        """Get number of parameters."""
         return len(self._last_state)
 
     @property
-    def nfit(self):
-        """Number of fitted parameters (fixed parameters not counted)."""
+    def nfit(self) -> int:
+        """Get number of fitted parameters (fixed parameters not counted)."""
         return self.npar - sum(self.fixed)
 
     @property
-    def fmin(self):
-        """Current function minimum.
+    def fmin(self) -> mutil.FMin:
+        """
+        Get function minimum data object.
 
-        .. seealso:: :class:`iminuit.util.FMin`
+        See Also
+        --------
+        util.FMin
         """
         return self._fmin
 
     @property
-    def fval(self):
-        """Function minimum value (alias for Minuit.fmin.fval).
+    def fval(self) -> float:
+        """
+        Get function value at minimum.
 
-        .. seealso:: :class:`iminuit.util.FMin`
+        This is an alias for :attr:`iminuit.util.FMin.fval`.
+
+        See Also
+        --------
+        util.FMin
         """
         fm = self._fmin
         return fm.fval if fm else None
 
     @property
-    def params(self):
-        """List of current parameter data objects.
+    def params(self) -> mutil.Params:
+        """
+        Get list of current parameter data objects.
 
-        .. seealso:: :class:`iminuit.util.Params`
+        See Also
+        --------
+        init_params, util.Params
         """
         return _get_params(self._last_state, self._merrors)
 
     @property
-    def init_params(self):
-        """List of current parameter data objects set to the initial fit state.
+    def init_params(self) -> mutil.Params:
+        """
+        Get list of current parameter data objects set to the initial fit state.
 
-        .. seealso:: :class:`iminuit.util.Params`
+        See Also
+        --------
+        params, util.Params
         """
         return _get_params(self._init_state, {})
 
     @property
-    def valid(self):
-        """Whether the function minimum is valid (alias for Minuit.fmin.is_valid).
+    def valid(self) -> bool:
+        """
+        Return True if the function minimum is valid.
 
-        .. seealso:: :class:`iminuit.util.FMin`
+        This is an alias for :attr:`iminuit.util.FMin.is_valid`.
+
+        See Also
+        --------
+        util.FMin
         """
         return self._fmin and self._fmin.is_valid
 
     @property
-    def accurate(self):
-        """Whether the covariance matrix is accurate (alias for Minuit.fmin.has_accurate_covar).
+    def accurate(self) -> bool:
+        """
+        Return True if the covariance matrix is accurate.
 
-        .. seealso:: :class:`iminuit.util.FMin`
+        This is an alias for :attr:`iminuit.util.FMin.has_accurate_covar`.
+
+        See Also
+        --------
+        util.FMin
         """
         return self._fmin and self._fmin.has_accurate_covar
 
     @property
-    def nfcn(self):
-        """Total number of function calls."""
+    def nfcn(self) -> int:
+        """Get total number of function calls."""
         return self._fcn._nfcn
 
     @property
-    def ngrad(self):
-        """Total number of gradient calls."""
+    def ngrad(self) -> int:
+        """Get total number of gradient calls."""
         return self._fcn._ngrad
 
     def __init__(
         self,
-        fcn,
-        *args,
-        grad=None,
-        name=None,
+        fcn: Callable,
+        *args: Union[float, Sequence[float]],
+        grad: Optional[Callable] = None,
+        name: Optional[Sequence[str]] = None,
         **kwds,
     ):
         """
-        Construct minuit object from given *fcn*.
+        Initialize Minuit object.
 
-        **Accepted functions**
+        This does not start the minimization or perform any other work yet. Algorithms
+        are started by calling the corresponding methods.
 
-            ``fcn``, the function to be optimized, is the only required argument.
+        Parameters
+        ----------
+        fcn :
+            Function to minimize. See notes for details on what kind of functions are
+            accepted.
+        *args :
+            Starting values for the minimization as positional arguments.
+            See notes for details on how to set starting values.
+        grad :
+            Function that calculates the gradient and returns an iterable object with one
+            entry for each parameter, which is the derivative for that parameter.
+            If None (default), Minuit will calculate the gradient numerically.
+        name :
+            If it is set, it overrides iminuit's function signature detection.
+        **kwds :
+            Starting values for the minimization as keyword arguments.
+            See notes for details on how to set starting values.
 
-            Two kinds of function signatures are understood.
+        Notes
+        -----
+        *Accepted callables*
 
-            a) Parameters passed as positional arguments
+        Minuit reads the function signature of `fcn` to detect the number and names of the
+        function parameters. Two kinds of function signatures are understood.
 
-                The function has positional arguments, one for each fit
-                parameter. Example::
+        a) Function with positional arguments.
 
-                    def fcn(a, b, c): ...
+            The function has positional arguments, one for each fit
+            parameter. Example::
 
-                The parameters a, b, c must accept a real number.
+                def fcn(a, b, c): ...
 
-                iminuit automatically detects the parameters names in this case.
-                More information about how the function signature is detected can
-                be found in :func:`iminuit.util.describe`.
+            The parameters a, b, c must accept a real number.
 
-            b) Parameters passed as Numpy array
+            iminuit automatically detects the parameters names in this case.
+            More information about how the function signature is detected can
+            be found in :func:`iminuit.util.describe`.
 
-                The function has a single argument which is a Numpy array.
-                Example::
+        b) Function with arguments passed as a single Numpy array.
 
-                    def fcn_np(x): ...
+            The function has a single argument which is a Numpy array.
+            Example::
 
-                To use this form, starting values need to be passed to Minuit in form as
-                an array-like type, e.g. a numpy array, tuple or list. For more details,
-                see "Parameter Keyword Arguments" further down.
+                def fcn_np(x): ...
 
-        **Parameter initialization**
+            To use this form, starting values need to be passed to Minuit in form as
+            an array-like type, e.g. a numpy array, tuple or list. For more details,
+            see "Parameter Keyword Arguments" further down.
 
-            Initial values for the minimization can be set with positional arguments or
-            via keywords. This is best explained through an example::
+        In some cases, the detection fails, for example for a function like this::
 
-                def fcn(x, y):
-                    return (x - 2) ** 2 + (y - 3) ** 2
+                def difficult_fcn(*args): ...
 
-            The following ways of passing starting values are equivalent::
+        To use such a function, set `name`.
 
-                Minuit(fcn, x=1, y=2)
-                Minuit(fcn, y=2, x=1) # order is irrelevant when keywords are used ...
-                Minuit(fcn, 1, 2)     # ... but here the order matters
+        *Parameter initialization*
 
-            Positional arguments can also be used if the function has no signature::
+        Initial values for the minimization can be set with positional arguments or
+        via keywords. This is best explained through an example::
 
-                def fcn_no_sig(*args):
-                    # ...
+            def fcn(x, y):
+                return (x - 2) ** 2 + (y - 3) ** 2
 
-                Minuit(fcn_no_sig, 1, 2)
+        The following ways of passing starting values are equivalent::
 
-            If the arguments are explicitly named with the ``name`` keyword described
-            further below, keywords can be used for initialization::
+            Minuit(fcn, x=1, y=2)
+            Minuit(fcn, y=2, x=1) # order is irrelevant when keywords are used ...
+            Minuit(fcn, 1, 2)     # ... but here the order matters
 
-                Minuit(fcn_no_sig, x=1, y=2, name=("x", "y"))  # this also works
+        Positional arguments can also be used if the function has no signature::
 
-            If the function accepts a single Numpy array, then the initial values
-            must be passed as a single array-like object::
+            def fcn_no_sig(*args):
+                # ...
 
-                def fcn_np(x):
-                    return (x[0] - 2) ** 2 + (x[1] - 3) ** 2
+            Minuit(fcn_no_sig, 1, 2)
 
-                Minuit(fcn_np, (1, 2))
+        If the arguments are explicitly named with the `name` keyword described
+        further below, keywords can be used for initialization::
 
-            Setting the values with keywords is not possible in this case. Minuit
-            deduces the number of parameters from the length of the initialization
-            sequence.
+            Minuit(fcn_no_sig, x=1, y=2, name=("x", "y"))  # this also works
 
-        **Other keyword arguments**
-            - **grad**: Optional. Provide a function that calculates the
-              gradient analytically and returns an iterable object with one
-              element for each dimension. If None is given MINUIT will
-              calculate the gradient numerically. (Default None)
+        If the function accepts a single Numpy array, then the initial values
+        must be passed as a single array-like object::
 
-            - **name**: sequence of strings. If set, this is used to detect
-              parameter names instead of iminuit's function signature detection.
+            def fcn_np(x):
+                return (x[0] - 2) ** 2 + (x[1] - 3) ** 2
+
+            Minuit(fcn_np, (1, 2))
+
+        Setting the values with keywords is not possible in this case. Minuit
+        deduces the number of parameters from the length of the initialization
+        sequence.
+
+        See Also
+        --------
+        migrad, hesse, minos, scan, simplex
         """
         array_call = False
         if len(args) == 1 and isinstance(args[0], Iterable):
@@ -494,7 +581,8 @@ class Minuit:
         self.reset()
 
     def reset(self):
-        """Reset minimization state to initial state.
+        """
+        Reset minimization state to initial state.
 
         Leaves :attr:`strategy`, :attr:`precision`, :attr:`tol`, :attr:`errordef`,
         :attr:`print_level` unchanged.
@@ -507,29 +595,33 @@ class Minuit:
         self._covariance = None
         return self  # return self for method chaining and to autodisplay current state
 
-    def migrad(self, ncall=None, iterate=5):
-        """Run MnMigrad from the Minuit2 library.
+    def migrad(self, ncall: Optional[int] = None, iterate: int = 5):
+        """
+        Run Migrad minimization.
 
-        MIGRAD is a robust minimisation algorithm which earned its reputation
-        in 40+ years of almost exclusive usage in high-energy physics. How
-        MIGRAD works is described in the `MINUIT paper`_.
+        Migrad from the Minuit2 library is a robust minimisation algorithm which earned
+        its reputation in 40+ years of almost exclusive usage in high-energy physics. How
+        Migrad works is described in the `Minuit paper`_. It uses first and approximate
+        second derivatives to achieve quadratic convergence near the minimum.
 
-        **Arguments:**
+        Parameters
+        ----------
+        ncall :
+            Approximate maximum number of calls before minimization will be aborted.
+            If set to None, use the adaptive heuristic from the Minuit2 library
+            (Default: None). Note: The limit may be slightly violated, because the
+            condition is checked only after a full iteration of the algorithm, which
+            usually performs several function calls.
 
-            * **ncall**: integer or None, optional; (approximate)
-              maximum number of calls before minimization will be aborted. Default: None
-              (indicates to use an internal heuristic). Note: The limit may be slightly
-              violated, because the condition is checked only after a full iteration of
-              the algorithm, which usually performs several function calls.
+        iterate :
+            Automatically call Migrad up to N times if convergence was not reached
+            (Default: 5). This simple heuristic makes Migrad converge more often even if
+            the numerical precision of the cost function is low. Setting this to 1
+            disables the feature.
 
-            * **iterate**: automatically call Migrad up to N times if convergence
-              was not reached. Default: 5. This simple heuristic makes Migrad converge
-              more often even if the numerical precision of the cost function is low.
-              Setting this to 1 disables the feature.
-
-        **Return:**
-
-            self
+        See Also
+        --------
+        simplex, scan
         """
         if ncall is None:
             ncall = 0  # tells C++ Minuit to use its internal heuristic
@@ -557,37 +649,40 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall=None):
-        """Run MnSimplex from the Minuit2 C++ library.
+    def simplex(self, ncall: Optional[int] = None):
+        """
+        Run Simplex minimization.
 
-        Uses a variant of the Nelder-Mead algorithm to find the minimum. It does not
-        make use of derivatives. `The Wikipedia has a good article on the method
-        <https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method>`_. The method usually
-        converges more slowly than MIGRAD, but may perform better in some special cases.
-        The Rosenbrock function is one of those. The SIMPLEX method does not have
-        quadratic convergerence near the minimum that MIGRAD offers, but it may better
-        at getting close to the minimum from an unsuitable starting point.
+        Simplex from the Minuit2 C++ library is a variant of the Nelder-Mead algorithm to
+        find the minimum of a function. It does not make use of derivatives.
+        `The Wikipedia has a good article on the Nelder-Mead method
+        <https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method>`_.
 
-        The convergence criterion for MnSimplex is also based on EDM, but the threshold
-        is much more lax than that of MIGRAD (see :attr:`Minuit.tol` for details).
-        This was made so that SIMPLEX stops early when getting near the minimum. The
-        idea is to switch to the more efficient MIGRAD algorithm to finish the
+        Parameters
+        ----------
+        ncall :
+            Approximate maximum number of calls before minimization will be aborted.
+            If set to None, use the adaptive heuristic from the Minuit2 library
+            (Default: None). Note: The limit may be slightly violated, because the
+            condition is checked only after a full iteration of the algorithm, which
+            usually performs several function calls.
+
+        Notes
+        -----
+        The Simplex method usually converges more slowly than Migrad, but performs better
+        in certain cases, the Rosenbrock function is a notable example. Unlike Migrad, the
+        Simplex method does not have quadratic convergence near the minimum, so it is a
+        good approach to run Migrad after Simplex to obtain an accurate solution in fewer
+        steps. Simplex may also be useful to get close to the minimum from an unsuitable
+        starting point.
+
+        The convergence criterion for Simplex is also based on EDM, but the threshold
+        is much more lax than that of Migrad (see :attr:`Minuit.tol` for details).
+        This was made so that Simplex stops early when getting near the minimum, to give
+        the user a chance to switch to the more efficient Migrad algorithm to finish the
         minimization. Early stopping can be avoided by setting Minuit.tol to an
         accordingly smaller value, however.
-
-        **Arguments:**
-
-            * **ncall**: integer or None, optional; (approximate)
-              maximum number of calls before minimization will be aborted. Default: None
-              (indicates to use an internal heuristic). Note: The limit may be slightly
-              violated, because the condition is checked only after a full iteration of
-              the algorithm, which usually performs several function calls.
-
-        **Return:**
-
-            self
         """
-
         if ncall is None:
             ncall = 0  # tells C++ Minuit to use its internal heuristic
 
@@ -605,8 +700,9 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scan(self, ncall=None):
-        """Scan over a regular hypercube grid to find the best minimum.
+    def scan(self, ncall: Optional[int] = None):
+        """
+        Brute-force minimization.
 
         Scans the function on a regular hypercube grid, whose bounds are defined either
         by parameter limits if present or by Minuit.values +/- Minuit.errors.
@@ -615,18 +711,15 @@ class Minuit:
         scan evaluates the function exactly at the limit boundary, so the function should
         be defined there.
 
-        **Arguments:**
+        Parameters
+        ----------
+        ncall :
+            Approximate number of function calls to spend on the scan. The
+            actual number will be close to this, the scan uses ncall^(1/npar) steps per
+            cube dimension. If no value is given, a heuristic is used to set ncall.
 
-            * **ncall**: Approximate number of function calls to spend on the scan. The
-              actual number will be close to this, the scan uses ncall^(1/npar) steps per
-              cube dimension. If no value is given, a heuristic is used to set ncall.
-
-        **Return:**
-
-            self
-
-        **Notes**
-
+        Notes
+        -----
         Originally this was supposed to use MnScan from C++ Minuit2, but MnScan is broken.
         It does a 1D scan with 41 steps for each parameter in sequence, so it is not
         actually scanning the full hypercube. It first scans one parameter, then starts
@@ -642,7 +735,6 @@ class Minuit:
         these are not used in a scan. We turn a disadvantage into an advantage by tricking
         Minuit2 into computing updates of the step sizes and to estimate the EDM value.
         """
-
         # Running MnScan would look like this:
         # scan = MnScan(self._fcn, self._last_state, self.strategy)
         # fm = scan(0, 0)  # args are ignored
@@ -699,30 +791,30 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def hesse(self, ncall=None):
-        """Run HESSE algorithm to compute asymptotic errors.
+    def hesse(self, ncall: Optional[int] = None):
+        r"""
+        Run HESSE algorithm to compute asymptotic errors.
 
         HESSE estimates the covariance matrix by inverting the matrix of
         `second derivatives (Hesse matrix) at the minimum
-        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This covariance
-        matrix is valid if your :math:`\\chi^2` or likelihood profile looks
-        like a hyperparabola around the the minimum. This is usually the case,
-        especially when you fit many observations (in the limit of infinite
-        samples this is always the case). If you want to know how your
-        parameters are correlated, you also need to use HESSE.
+        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This covariance matrix is valid
+        if your :math:`\chi^2` or likelihood profile looks like a hyperparabola around
+        the minimum. Asymptotically (large samples) this is always the case, but in small
+        samples the uncertainty estimate is approximate. If you want to know how your
+        parameters are correlated, you also need to use this. The MINOS algorithm is
+        another way to estimate parameter uncertainties, see :meth:`minos`.
 
-        Also see :meth:`minos`, which computes the uncertainties in a
-        different way.
+        Parameters
+        ----------
+        ncall :
+            Approximate upper limit for the number of calls made by the HESSE algorithm.
+            If set to None, use the adaptive heuristic from the Minuit2 library
+            (Default: None).
 
-        **Arguments:**
-            - **ncall**: integer or None, limit the number of calls made by MINOS.
-              Default: None (uses an internal heuristic by C++ MINUIT).
-
-        **Returns:**
-
-            self
+        See Also
+        --------
+        minos
         """
-
         ncall = 0 if ncall is None else int(ncall)
 
         # Should be fixed upstream: workaround for segfault in MnHesse when all
@@ -756,42 +848,46 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def minos(self, *parameters, cl=None, ncall=None):
-        """Run MINOS to compute asymmetric confidence intervals.
+    def minos(
+        self, *parameters: str, cl: Optional[float] = None, ncall: Optional[int] = None
+    ):
+        """
+        Run Minos algorithm to compute confidence intervals.
 
-        MINOS uses the profile likelihood method to compute (asymmetric)
-        confidence intervals. It scans the negative log-likelihood or
-        (equivalently) the least-squares cost function around the minimum
-        to construct an asymmetric confidence interval. This interval may
-        be more reasonable when a parameter is close to one of its
-        parameter limits. As a rule-of-thumb: when the confidence intervals
-        computed with HESSE and MINOS differ strongly, the MINOS intervals
-        are to be preferred. Otherwise, HESSE intervals are preferred.
+        The Minos algorithm uses the profile likelihood method to compute (generally
+        asymmetric) confidence intervals. It scans the negative log-likelihood or
+        (equivalently) the least-squares cost function around the minimum to construct a
+        confidence interval.
 
-        Running MINOS is computationally expensive when there are many
-        fit parameters. Effectively, it scans over *var* in small steps
-        and runs MIGRAD to minimise the FCN with respect to all other free
-        parameters at each point. This is requires many more FCN evaluations
-        than running HESSE.
+        Notes
+        -----
+        Asymptotically (large samples), the Minos interval has a coverage probability
+        equal to the given confidence level. The coverage probability is the probility for
+        the interval to contain the true value in repeated identical experiments.
 
-        **Positional arguments**
+        The interval is invariant to transformations and thus not distorted by parameter
+        limits, unless the limits intersect with the confidence interval. As a
+        rule-of-thumb: when the confidence intervals computed with the Hesse and Minos
+        algorithms differ strongly, the Minos intervals are preferred. Otherwise, Hesse
+        intervals are preferred.
 
+        Running Minos is computationally expensive when there are many fit parameters.
+        Effectively, it scans over one parameter in small steps and runs a full
+        minimisation for all other parameters of the cost function for each scan point.
+        This requires many more function evaluations than running the Hesse algorithm.
+
+        Parameters
+        ----------
+        *parameters :
             Names of parameters to generate Minos errors for. If no positional
-            arguments are given, MINOS is run for each parameter.
-
-        **Keyword arguments**
-
-            - **cl**: confidence level for the error interval. Default: None, which
-              produces standard 68.3 % confidence intervals. Setting this to another
-              value requires the scipy module to be installed. Asymptotically, intervals
-              with confidence level cl obtained from repeated identical experiments
-              cover the true value with a probability equal to cl.
-            - **ncall**: integer or None, limit the number of calls made by MINOS.
-              Default: None (uses an internal heuristic by C++ MINUIT).
-
-        **Returns:**
-
-            self
+            arguments are given, Minos is run for each parameter.
+        cl :
+            Confidence level for the confidence interval. If None, a standard 68.3 %
+            confidence interval is produced (Default: None). Setting this to another
+            value requires the scipy module to be installed.
+        ncall :
+            Limit the number of calls made by Minos. If None, an adaptive internal
+            heuristic of the Minuit2 library is used (Default: None).
         """
         ncall = 0 if ncall is None else int(ncall)
 
@@ -863,29 +959,36 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def mnprofile(self, vname, *, size=30, bound=2, subtract_min=False):
-        """Calculate MINOS profile around the specified range.
+    def mnprofile(
+        self,
+        vname: str,
+        *,
+        size: int = 30,
+        bound: Union[int, Sequence[int]] = 2,
+        subtract_min: bool = False,
+    ):
+        r"""
+        Get Minos profile over a specified interval.
 
-        Scans over **vname** and minimises FCN over the other parameters in each point.
+        Scans over one parameter and minimises the function with respect to all other
+        parameters for each scan point.
 
-        **Arguments:**
+        Parameters
+        ----------
+        vname :
+            Name of parameter to scan.
+        size :
+            Number of scanning points (Default: 30).
+        bound :
+            If bound is tuple, (left, right) scanning bound. If bound is a number, it
+            specifies how many :math:`\sigma` symmetrically from minimum (minimum +/-
+            bound * :math:`\sigma`) (Default: 2).
+        subtract_min :
+            Subtract minimum from return values (Default: False).
 
-            * **vname** name of variable to scan
-
-            * **size** number of scanning points. Default: 30.
-
-            * **bound**
-              If bound is tuple, (left, right) scanning bound.
-              If bound is a number, it specifies how many :math:`\\sigma`
-              symmetrically from minimum (minimum+- bound* :math:`\\sigma`).
-              Default 2
-
-            * **subtract_min** subtract_minimum off from return value. This
-              makes it easy to label confidence interval. Default False.
-
-        **Returns:**
-
-            bins(center point), value, MIGRAD results
+        Returns
+        -------
+        bins(center point), value, MIGRAD results
         """
         if vname not in self._pos2var:
             raise ValueError("Unknown parameter %s" % vname)
@@ -915,80 +1018,82 @@ class Minuit:
         return values, results, status
 
     def draw_mnprofile(
-        self, vname, *, size=30, bound=2, subtract_min=False, band=True, text=True
+        self,
+        vname: str,
+        *,
+        size: int = 30,
+        bound: Union[int, Sequence[Sequence[int]]] = 2,
+        subtract_min: bool = False,
+        band: bool = True,
+        text: bool = True,
     ):
-        """Draw MINOS profile in the specified range.
+        r"""
+        Draw Minos profile over a specified interval (requires matplotlib).
 
-        It is obtained by finding MIGRAD results with **vname** fixed
-        at various places within **bound**.
+        See :meth:`mnprofile` for details and shared arguments. The following arguments
+        are accepted.
 
-        **Arguments:**
+        Parameters
+        ----------
+        band :
+            If true, show a band to indicate the Hesse error interval (Default: True).
 
-            * **vname** variable name to scan
+        text :
+            If true, show text a title with the function value and the Hesse error
+            (Default: True).
 
-            * **size** number of scanning points. Default: 30.
-
-            * **bound**
-              If bound is tuple, (left, right) scanning bound.
-              If bound is a number, it specifies how many :math:`\\sigma`
-              symmetrically from minimum (minimum+- bound* :math:`\\sigma`).
-              Default 2.
-
-            * **subtract_min** subtract_minimum off from return value. This
-              makes it easy to label confidence interval. Default False.
-
-            * **band** show green band to indicate the increase of fcn by
-              *errordef*. Default True.
-
-            * **text** show text for the location where the fcn is increased
-              by *errordef*. This is less accurate than :meth:`minos`.
-              Default True.
-
-        **Returns:**
-
-            bins(center point), value, migrad results
+        Returns
+        -------
+        bins(center point), value, migrad results
 
         .. plot:: plots/mnprofile.py
             :include-source:
+
+        See Also
+        --------
+        mnprofile, profile, draw_profile
         """
         x, y, s = self.mnprofile(
             vname, size=size, bound=bound, subtract_min=subtract_min
         )
         return self._draw_profile(vname, x, y, band, text)
 
-    def profile(self, vname, *, size=100, bound=2, subtract_min=False):
-        """Calculate cost function profile around specify range.
+    def profile(
+        self,
+        vname: str,
+        *,
+        size: int = 100,
+        bound: Union[int, Tuple[int, int]] = 2,
+        subtract_min: bool = False,
+    ):
+        r"""
+        Calculate 1D cost function profile over a range.
 
-        **Arguments:**
+        A 1D scan of the cost function around the minimum, useful to inspect the
+        minimum. For a fit with several free parameters this is not the same as the Minos
+        profile computed by :meth:`mncontour`.
 
-            * **vname** variable name to scan
+        Parameters
+        ----------
+        vname :
+            Parameter to scan over.
+        size :
+            Number of scanning points (Default: 100).
+        bound :
+            If bound is tuple, (left, right) scanning bound.
+            If bound is a number, it specifies an interval of N :math:`\sigma`
+            symmetrically around the minimum (Default: 2).
+        subtract_min :
+            If true, subtract offset so that smallest value is zero (Default: False).
 
-            * **size** number of scanning points. Default: 100.
+        Returns
+        -------
+        bins(center point), value
 
-            * **bound**
-              If bound is tuple, (left, right) scanning bound.
-              If bound is a number, it specifies how many :math:`\\sigma`
-              symmetrically from minimum (minimum+- bound* :math:`\\sigma`).
-              Default: 2.
-
-            * **subtract_min** subtract_minimum off from return value. This
-              makes it easy to label confidence interval. Default False.
-
-        **Returns:**
-
-            bins(center point), value
-
-        .. seealso::
-
-            :meth:`mnprofile`
+        See Also
+        --------
+        mnprofile
         """
-        if subtract_min and not self._fmin:
-            raise RuntimeError(
-                "Request for minimization "
-                "subtraction but no minimization has been done. "
-                "Run MIGRAD first."
-            )
-
         bound = self._normalize_bound(vname, bound)
 
         ipar = self._var2pos[vname]
@@ -999,42 +1104,37 @@ class Minuit:
             values[ipar] = vi
             result[i] = self.fcn(values)
         if subtract_min:
-            result -= self.fval
+            result -= np.min(result)
         return scan, result
 
     def draw_profile(
-        self, vname, *, size=100, bound=2, subtract_min=False, band=True, text=True
+        self,
+        vname: str,
+        *,
+        size: int = 100,
+        bound: Union[int, Tuple[int, int]] = 2,
+        subtract_min: bool = False,
+        band: bool = True,
+        text: bool = True,
     ):
-        """A convenient wrapper for drawing profile using matplotlib.
+        """
+        Draw 1D cost function profile over a range (requires matplotlib).
 
-        A 1D scan of the cost function around the minimum, useful to inspect the
-        minimum and the FCN around the minimum for defects.
+        See :meth:`profile` for details and shared arguments. The following additional
+        arguments are accepted.
 
-        For a fit with several free parameters this is not the same as the MINOS
-        profile computed by :meth:`draw_mncontour`. Use :meth:`mnprofile` or
-        :meth:`draw_mnprofile` to compute confidence intervals.
+        Parameters
+        ----------
+        band :
+            If true, show a band to indicate the Hesse error interval (Default: True).
 
-        If a function minimum was found in a previous MIGRAD call, a vertical line
-        indicates the parameter value. An optional band indicates the uncertainty
-        interval of the parameter computed by HESSE or MINOS.
+        text :
+            If true, show text a title with the function value and the Hesse error
+            (Default: True).
 
-        **Arguments:**
-
-            In addition to argument listed on :meth:`profile`. draw_profile
-            take these addition argument:
-
-            * **band** show green band to indicate the increase of fcn by
-              *errordef*. Note again that this is NOT minos error in general.
-              Default True.
-
-            * **text** show text for the location where the fcn is increased
-              by *errordef*. This is less accurate than :meth:`minos`
-              Note again that this is NOT minos error in general. Default True.
-
-        .. seealso::
-            :meth:`mnprofile`
-            :meth:`draw_mnprofile`
-            :meth:`profile`
+        See Also
+        --------
+        profile, mnprofile, draw_mnprofile
         """
         x, y = self.profile(vname, size=size, bound=bound, subtract_min=subtract_min)
         return self._draw_profile(vname, x, y, band, text)
@@ -1074,48 +1174,54 @@ class Minuit:
 
         return x, y
 
-    def contour(self, x, y, *, size=50, bound=2, subtract_min=False):
-        """2D contour scan.
+    def contour(
+        self,
+        x: str,
+        y: str,
+        *,
+        size: int = 50,
+        bound: Union[int, Sequence[Sequence[int]]] = 2,
+        subtract_min: bool = False,
+    ):
+        r"""
+        Get a 2D contour of the function around the minimum.
 
-        Return the contour of a function scan over **x** and **y**, while keeping
-        all other parameters fixed.
-
-        The related :meth:`mncontour` works differently: for new pair of **x** and **y**
-        in the scan, it minimises the function with the respect to the other parameters.
+        It computes the contour via a function scan over two parameters, while keeping
+        all other parameters fixed. The related :meth:`mncontour` works differently: for
+        each pair of parameter values in the scan, it minimises the function with the
+        respect to all other parameters.
 
         This method is useful to inspect the function near the minimum to detect issues
-        (the contours should look smooth). Use :meth:`mncontour` to create confidence
-        regions for the parameters. If the fit has only two free parameters, you can
-        use this instead of :meth:`mncontour`.
+        (the contours should look smooth). It is not a confidence region unless the
+        function only has two parameters. Use :meth:`mncontour` to compute confidence
+        regions.
 
-        **Arguments:**
+        Parameters
+        ----------
+        x :
+            Variable name for X axis of scan.
+        y :
+            Variable name for Y axis of scan.
+        size :
+            Number of scanning points (Default: 50).
+        bound :
+            If bound is 2x2 array, [[v1min,v1max],[v2min,v2max]].
+            If bound is a number, it specifies how many :math:`\sigma`
+            symmetrically from minimum (minimum+- bound*:math:`\sigma`).
+            (Default: 2).
+        subtract_min :
+            Subtract minimum from return values (Default: False).
 
-            - **x** variable name for X axis of scan
+        Returns
+        -------
+        x_bins, y_bins, values
 
-            - **y** variable name for Y axis of scan
+        values[y, x] <-- this choice is so that you can pass it
+        to through matplotlib contour().
 
-            * **size** number of scanning points. Default: 50.
-
-            - **bound**
-              If bound is 2x2 array, [[v1min,v1max],[v2min,v2max]].
-              If bound is a number, it specifies how many :math:`\\sigma`
-              symmetrically from minimum (minimum+- bound*:math:`\\sigma`).
-              Default: 2.
-
-            - **subtract_min** Subtract minimum off from return values. Default False.
-
-        **Returns:**
-
-            x_bins, y_bins, values
-
-            values[y, x] <-- this choice is so that you can pass it
-            to through matplotlib contour()
-
-        .. seealso::
-
-            :meth:`mncontour`
-            :meth:`mnprofile`
-
+        See Also
+        --------
+        mncontour, mnprofile
         """
         if subtract_min and not self._fmin:
             raise RuntimeError(
@@ -1156,47 +1262,72 @@ class Minuit:
 
         return x_val, y_val, result
 
-    def mncontour(self, x, y, *, cl=None, size=100):
-        """Two-dimensional MINOS contour scan.
+    def draw_contour(
+        self,
+        x: str,
+        y: str,
+        *,
+        size: int = 50,
+        bound: Union[int, Sequence[Sequence[int]]] = 2,
+    ):
+        """
+        Draw 2D contour around minimum (required matplotlib).
 
-        This scans over **x** and **y** and minimises all other free
-        parameters in each scan point. This works as if **x** and **y** are
-        fixed, while the other parameters are minimised by MIGRAD.
+        See :meth:`contour` for details on parameters and interpretation. Please also read
+        the docs of :meth:`mncontour` to understand the difference between the two.
 
-        This scan produces a statistical confidence region with the `profile
-        likelihood method <https://en.wikipedia.org/wiki/Likelihood_function>`_.
-        The contour line represents the values of **x** and **y** where the
-        function passes the threshold that corresponds to `sigma` standard
-        deviations (note that 1 standard deviations in two dimensions has a
-        smaller coverage probability than 68 %).
+        See Also
+        --------
+        contour, mncontour, draw_mncontour
+        """
+        from matplotlib import pyplot as plt
 
-        The calculation is expensive since it has to run MIGRAD at various
-        points.
+        vx, vy, vz = self.contour(x, y, size=size, bound=bound, subtract_min=True)
 
-        **Arguments:**
+        v = [self.errordef * (i + 1) for i in range(4)]
 
-            - **x** string variable name of the first parameter
+        CS = plt.contour(vx, vy, vz, v)
+        plt.clabel(CS, v)
+        plt.xlabel(x)
+        plt.ylabel(y)
+        plt.axhline(self.values[y], color="k", ls="--")
+        plt.axvline(self.values[x], color="k", ls="--")
+        return vx, vy, vz
 
-            - **y** string variable name of the second parameter
+    def mncontour(self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100):
+        """
+        Get 2D MINOS confidence region.
 
-            - **cl** confidence level of the contour. Default: None, which produces a
-              68 % contour. Setting this to another value requires the scipy module to
-              be installed. Asymptotically, contours with confidence level cl obtained
-              from repeated identical experiments cover the true value with a
-              probability equal to cl.
+        This scans over two parameters and minimises all other free parameters for each
+        scan point. This scan produces a statistical confidence region according to the
+        `profile likelihood method <https://en.wikipedia.org/wiki/Likelihood_function>`_
+        with a confidence level `cl`, which is asymptotically equal to the coverage
+        probability of the confidence region.
 
-            - **size** number of points on the contour to find. Default 100. Increasing
-              this makes the contour smoother, but requires more computation time.
+        The calculation is expensive since a numerical minimisation has to be performed
+        at various points.
 
-        **Returns:**
+        Parameters
+        ----------
+        x :
+            Variable name of the first parameter.
+        y :
+            Variable name of the second parameter.
+        cl :
+            Confidence level of the contour. If None, a standard 68 % contour is computed
+            (Default: None). Setting this to another value requires the scipy module to
+            be installed.
+        size :
+            Number of points on the contour to find. Default 100. Increasing this makes
+            the contour smoother, but requires more computation time.
 
-            contour line, a numpy array of the form [[x1,y1]...[xn,yn]]
+        Returns
+        -------
+        contour line, a numpy array of the form [[x1,y1]...[xn,yn]]
 
-        .. seealso::
-
-            :meth:`contour`
-            :meth:`mnprofile`
-
+        See Also
+        --------
+        contour, mnprofile
         """
         if cl is None:
             factor = 2.27886856637673  # chi2(2).ppf(0.68)
@@ -1224,29 +1355,20 @@ class Minuit:
 
         return np.array(ce)
 
-    def draw_mncontour(self, x, y, *, cl=None, size=100):
-        """Draw MINOS contour.
+    def draw_mncontour(
+        self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
+    ):
+        """
+        Draw 2D Minos confidence region (requires matplotlib).
 
-        **Arguments:**
-
-            - **x**, **y** parameter name
-
-            - **cl** confidence level of the contour. Default: None, which computes a
-              68 % contour. Setting this to another value requires the scipy module to
-              be installed. Passing a sequence of confidence levels is also allowed.
-
-            - **size** number of points to calculate for each contour. Default: 100.
-
-        **Returns:**
-
-            contour
-
-        .. seealso::
-
-            :meth:`mncontour`
+        See :meth:`mncontour` for details on parameters and interpretation.
 
         .. plot:: plots/mncontour.py
             :include-source:
+
+        See Also
+        --------
+        mncontour
         """
         from matplotlib import pyplot as plt
         from matplotlib.contour import ContourSet
@@ -1268,34 +1390,6 @@ class Minuit:
         plt.ylabel(y)
 
         return cs
-
-    def draw_contour(self, x, y, *, size=50, bound=2):
-        """Convenience wrapper for drawing contours.
-
-        The arguments are the same as :meth:`contour`.
-
-        Please read the docs of :meth:`contour` and :meth:`mncontour` to understand the
-        difference between the two.
-
-        .. seealso::
-
-            :meth:`contour`
-            :meth:`draw_mncontour`
-
-        """
-        from matplotlib import pyplot as plt
-
-        vx, vy, vz = self.contour(x, y, size=size, bound=bound, subtract_min=True)
-
-        v = [self.errordef * (i + 1) for i in range(4)]
-
-        CS = plt.contour(vx, vy, vz, v)
-        plt.clabel(CS, v)
-        plt.xlabel(x)
-        plt.ylabel(y)
-        plt.axhline(self.values[y], color="k", ls="--")
-        plt.axvline(self.values[x], color="k", ls="--")
-        return vx, vy, vz
 
     def _free_parameters(self):
         return (mp.name for mp in self._last_state if not mp.is_fixed)
@@ -1369,6 +1463,7 @@ class Minuit:
         return 2e-3 * max(self.tol * self.errordef, pr.eps2)
 
     def __repr__(self):
+        """Get detailed text representation."""
         s = []
         if self.fmin is not None:
             s.append(repr(self.fmin))
@@ -1380,6 +1475,7 @@ class Minuit:
         return "\n".join(s)
 
     def __str__(self):
+        """Get user-friendly text representation."""
         s = []
         if self.fmin is not None:
             s.append(str(self.fmin))

@@ -24,7 +24,7 @@ Further information:
 
 __all__ = ["Minuit", "minimize", "describe", "__version__"]
 
-from ._minuit import Minuit
-from ._minimize import minimize
+from .minuit import Minuit
+from .minimize import minimize
 from .util import describe
 from .version import __version__

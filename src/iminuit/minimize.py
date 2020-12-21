@@ -1,4 +1,6 @@
-from ._minuit import Minuit
+"""Scipy interface for Minuit."""
+
+from .minuit import Minuit
 import warnings
 import numpy as np
 
@@ -17,7 +19,8 @@ def minimize(
     callback=None,
     options=None,
 ):
-    """An interface to MIGRAD using the ``scipy.optimize.minimize`` API.
+    """
+    Interface to MIGRAD using the ``scipy.optimize.minimize`` API.
 
     For a general description of the arguments, see ``scipy.optimize.minimize``.
 
