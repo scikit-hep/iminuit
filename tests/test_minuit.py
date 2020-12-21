@@ -639,16 +639,14 @@ def test_mnprofile_subtract():
 
 def test_profile_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
-    with pytest.raises(RuntimeError):
-        m.profile("y", subtract_min=True)
     m.migrad()
     m.profile("y", subtract_min=True)
 
 
 def test_contour_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
-    with pytest.raises(RuntimeError):
-        m.contour("x", "y", subtract_min=True)
+    m.migrad()
+    m.contour("x", "y", subtract_min=True)
 
 
 def test_mncontour_no_fmin():

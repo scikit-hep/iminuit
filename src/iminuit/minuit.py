@@ -1231,13 +1231,6 @@ class Minuit:
         --------
         mncontour, mnprofile
         """
-        if subtract_min and not self._fmin:
-            raise RuntimeError(
-                "Request for minimization "
-                "subtraction but no minimization has been done. "
-                "Run MIGRAD first."
-            )
-
         try:
             n = float(bound)
             in_sigma = True
@@ -1259,14 +1252,14 @@ class Minuit:
 
         z = np.empty((size, size), dtype=np.double)
         values = np.array(self.values)
-        for i, x in enumerate(x):
-            values[ipar] = x
-            for j, y in enumerate(y):
-                values[jpar] = y
+        for i, xi in enumerate(x):
+            values[ipar] = xi
+            for j, yi in enumerate(y):
+                values[jpar] = yi
                 z[i, j] = self._fcn(values)
 
         if subtract_min:
-            z -= self.z
+            z -= np.min(z)
 
         return x, y, z
 
