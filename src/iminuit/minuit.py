@@ -966,7 +966,7 @@ class Minuit:
         size: int = 30,
         bound: Union[int, Sequence[int]] = 2,
         subtract_min: bool = False,
-    ):
+    ) -> Tuple[Sequence[float], Sequence[float], Sequence[bool]]:
         r"""
         Get Minos profile over a specified interval.
 
@@ -988,34 +988,38 @@ class Minuit:
 
         Returns
         -------
-        bins(center point), value, MIGRAD results
+        locations : array of float
+            Parameter values where the profile was computed.
+        fvals: array of float
+            Profile values.
+        status: array of bool
+            Whether minimisation in each point succeeded or not.
         """
         if vname not in self._pos2var:
             raise ValueError("Unknown parameter %s" % vname)
 
         bound = self._normalize_bound(vname, bound)
 
-        values = np.linspace(bound[0], bound[1], size, dtype=np.double)
-        results = np.empty(size, dtype=np.double)
+        x = np.linspace(bound[0], bound[1], size, dtype=np.double)
+        y = np.empty(size, dtype=np.double)
         status = np.empty(size, dtype=np.bool)
 
         state = MnUserParameterState(self._last_state)  # copy
         ipar = self._var2pos[vname]
         state.fix(ipar)
-        for i, v in enumerate(values):
+        for i, v in enumerate(x):
             state.set_value(ipar, v)
             migrad = MnMigrad(self._fcn, state, self.strategy)
             fm = migrad(0, self._tolerance)
             if not fm.is_valid:
                 warn(f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning)
             status[i] = fm.is_valid
-            results[i] = fm.fval
-        vmin = np.min(results)
+            y[i] = fm.fval
 
         if subtract_min:
-            results -= vmin
+            y -= np.min(y)
 
-        return values, results, status
+        return x, y, status
 
     def draw_mnprofile(
         self,
@@ -1026,7 +1030,7 @@ class Minuit:
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ):
+    ) -> Tuple[Sequence[float], Sequence[float]]:
         r"""
         Draw Minos profile over a specified interval (requires matplotlib).
 
@@ -1042,10 +1046,8 @@ class Minuit:
             If true, show text a title with the function value and the Hesse error
             (Default: True).
 
-        Returns
-        -------
-        bins(center point), value, migrad results
-
+        Examples
+        --------
         .. plot:: plots/mnprofile.py
             :include-source:
 
@@ -1053,7 +1055,7 @@ class Minuit:
         --------
         mnprofile, profile, draw_profile
         """
-        x, y, s = self.mnprofile(
+        x, y, _ = self.mnprofile(
             vname, size=size, bound=bound, subtract_min=subtract_min
         )
         return self._draw_profile(vname, x, y, band, text)
@@ -1065,7 +1067,7 @@ class Minuit:
         size: int = 100,
         bound: Union[int, Tuple[int, int]] = 2,
         subtract_min: bool = False,
-    ):
+    ) -> Tuple[Sequence[float], Sequence[float]]:
         r"""
         Calculate 1D cost function profile over a range.
 
@@ -1088,7 +1090,10 @@ class Minuit:
 
         Returns
         -------
-        bins(center point), value
+        x : array of float
+            Parameter values.
+        y : array of float
+            Function values.
 
         See Also
         --------
@@ -1097,15 +1102,17 @@ class Minuit:
         bound = self._normalize_bound(vname, bound)
 
         ipar = self._var2pos[vname]
-        scan = np.linspace(bound[0], bound[1], size, dtype=np.double)
-        result = np.empty(size, dtype=np.double)
+        x = np.linspace(bound[0], bound[1], size, dtype=np.double)
+        y = np.empty(size, dtype=np.double)
         values = np.array(self.values)
-        for i, vi in enumerate(scan):
+        for i, vi in enumerate(x):
             values[ipar] = vi
-            result[i] = self.fcn(values)
+            y[i] = self.fcn(values)
+
         if subtract_min:
-            result -= np.min(result)
-        return scan, result
+            y -= np.min(y)
+
+        return x, y
 
     def draw_profile(
         self,
@@ -1116,7 +1123,7 @@ class Minuit:
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ):
+    ) -> Tuple[Sequence[float], Sequence[float]]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
 
@@ -1140,7 +1147,6 @@ class Minuit:
         return self._draw_profile(vname, x, y, band, text)
 
     def _draw_profile(self, vname, x, y, band, text):
-
         from matplotlib import pyplot as plt
 
         plt.plot(x, y)
@@ -1182,7 +1188,7 @@ class Minuit:
         size: int = 50,
         bound: Union[int, Sequence[Sequence[int]]] = 2,
         subtract_min: bool = False,
-    ):
+    ) -> Tuple[Sequence[float], Sequence[float], Sequence[Sequence[float]]]:
         r"""
         Get a 2D contour of the function around the minimum.
 
@@ -1199,9 +1205,9 @@ class Minuit:
         Parameters
         ----------
         x :
-            Variable name for X axis of scan.
+            First parameter for scan.
         y :
-            Variable name for Y axis of scan.
+            Second parameter for scan.
         size :
             Number of scanning points (Default: 50).
         bound :
@@ -1214,10 +1220,12 @@ class Minuit:
 
         Returns
         -------
-        x_bins, y_bins, values
-
-        values[y, x] <-- this choice is so that you can pass it
-        to through matplotlib contour().
+        x : array of float
+            Parameter values of first parameter.
+        y : array of float
+            Parameter values of second parameter.
+        fval : 2D array of float
+            Function values.
 
         See Also
         --------
@@ -1237,30 +1245,30 @@ class Minuit:
             in_sigma = False
 
         if in_sigma:
-            x_bound = self._normalize_bound(x, n)
-            y_bound = self._normalize_bound(y, n)
+            xrange = self._normalize_bound(x, n)
+            yrange = self._normalize_bound(y, n)
         else:
-            x_bound = self._normalize_bound(x, bound[0])
-            y_bound = self._normalize_bound(y, bound[1])
+            xrange = self._normalize_bound(x, bound[0])
+            yrange = self._normalize_bound(y, bound[1])
 
-        x_val = np.linspace(x_bound[0], x_bound[1], size)
-        y_val = np.linspace(y_bound[0], y_bound[1], size)
+        ipar = self._var2pos[x]
+        jpar = self._var2pos[y]
 
-        x_pos = self._var2pos[x]
-        y_pos = self._var2pos[y]
+        x = np.linspace(xrange[0], xrange[1], size)
+        y = np.linspace(yrange[0], yrange[1], size)
 
-        result = np.empty((size, size), dtype=np.double)
-        varg = np.array(self.values)
-        for i, x in enumerate(x_val):
-            varg[x_pos] = x
-            for j, y in enumerate(y_val):
-                varg[y_pos] = y
-                result[i, j] = self._fcn(varg)
+        z = np.empty((size, size), dtype=np.double)
+        values = np.array(self.values)
+        for i, x in enumerate(x):
+            values[ipar] = x
+            for j, y in enumerate(y):
+                values[jpar] = y
+                z[i, j] = self._fcn(values)
 
         if subtract_min:
-            result -= self.fval
+            z -= self.z
 
-        return x_val, y_val, result
+        return x, y, z
 
     def draw_contour(
         self,
@@ -1269,7 +1277,7 @@ class Minuit:
         *,
         size: int = 50,
         bound: Union[int, Sequence[Sequence[int]]] = 2,
-    ):
+    ) -> Tuple[Sequence[float], Sequence[float], Sequence[Sequence[float]]]:
         """
         Draw 2D contour around minimum (required matplotlib).
 
@@ -1294,7 +1302,9 @@ class Minuit:
         plt.axvline(self.values[x], color="k", ls="--")
         return vx, vy, vz
 
-    def mncontour(self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100):
+    def mncontour(
+        self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
+    ) -> Sequence[Sequence[float]]:
         """
         Get 2D MINOS confidence region.
 
@@ -1323,7 +1333,8 @@ class Minuit:
 
         Returns
         -------
-        contour line, a numpy array of the form [[x1,y1]...[xn,yn]]
+        points : array of float (N x 2)
+            Contour points of the form [[x1, y1]...[xn, yn]].
 
         See Also
         --------
@@ -1357,12 +1368,14 @@ class Minuit:
 
     def draw_mncontour(
         self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
-    ):
+    ) -> Sequence[Sequence[float]]:
         """
         Draw 2D Minos confidence region (requires matplotlib).
 
         See :meth:`mncontour` for details on parameters and interpretation.
 
+        Examples
+        --------
         .. plot:: plots/mncontour.py
             :include-source:
 
