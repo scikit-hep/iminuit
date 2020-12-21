@@ -5,6 +5,14 @@
 Changelog
 =========
 
+2.2.1.dev
+---------
+
+Other
+~~~~~
+- pydocstyle added to pre-commit checks
+- Documentation improvements, further transition to numpydoc
+
 2.2.0 (December 20, 2020)
 -------------------------
 
