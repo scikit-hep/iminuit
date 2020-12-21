@@ -9,7 +9,7 @@ on:
       - beta/*
 
 jobs:
-  version:
+  precommit:
     runs-on: ubuntu-latest
 
     steps:
