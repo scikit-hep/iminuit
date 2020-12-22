@@ -13,7 +13,7 @@ from cmake_ext import CMakeExtension, CMakeBuild  # noqa: E402
 with (cwd / "src/iminuit/version.py").open() as fp:
     version = {}
     exec(fp.read(), version)  # this loads __version__
-    version = version["__version__"]
+    version = version["iminuit_version"]
 
 
 with (cwd / "README.rst").open() as fp:

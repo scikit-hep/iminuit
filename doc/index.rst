@@ -8,6 +8,8 @@
 .. include:: ../README.rst
   :start-after: skip-marker-do-not-remove
 
+**These docs are for iminuit version:** |release|
+
 .. toctree::
     :hidden:
 
