@@ -328,6 +328,19 @@ def test_addable_cost_2():
     assert cs.count(ref[0]) == 1
 
 
+def test_addable_cost_3():
+    def line_np(x, par):
+        return par[0] + par[1] * x
+
+    lsq = LeastSquares([1, 2, 3], [3, 4, 5], 1, line_np)
+    con = NormalConstraint("par", (1, 1), (1, 1))
+    cs = sum([lsq, con])
+    assert cs((1, 1)) == pytest.approx(3)
+
+    cs = 1.5 + lsq + con
+    assert cs((1, 1)) == pytest.approx(4.5)
+
+
 def test_NormalConstraint_1():
     def model(x, a):
         return a

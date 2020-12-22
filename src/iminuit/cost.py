@@ -3,8 +3,8 @@ Standard cost functions to minimize.
 
 The cost functions defined here should be preferred over custom implementations. They
 have been optimized with knowledge about implementation details of Minuit to give the
-highest accucary and the most robust results. Furthermore, are accelerated with numba, if
-numba is available.
+highest accucary and the most robust results. They are partially accelerated with numba,
+if numba is available.
 """
 
 from .util import describe, make_func_code
@@ -85,7 +85,7 @@ class Cost:
     @property
     def verbose(self):
         """
-        Verbosity level.
+        Access verbosity level.
 
         Set this to 1 to print all function calls with input and output.
         """
@@ -110,6 +110,16 @@ class Cost:
         """
         return CostSum(self, rhs)
 
+    def __radd__(self, lhs):
+        """
+        Add two cost functions to form a combined cost function.
+
+        Returns
+        -------
+        CostSum
+        """
+        return CostSum(lhs, self)
+
     def __call__(self, *args):
         """
         Evaluate the cost function.
@@ -129,6 +139,20 @@ class Cost:
         if self.verbose >= 1:
             print(args, "->", r)
         return r
+
+
+class Constant(Cost):
+    """Cost function that represents a constant."""
+
+    __slots__ = "value"
+
+    def __init__(self, value: float):
+        """Initialize constant with a value."""
+        self.value = value
+        super().__init__((), False)
+
+    def _call(self, args):
+        return self.value
 
 
 class MaskedCost(Cost):
@@ -174,7 +198,21 @@ class CostSum(Cost, Sequence):
     functions with soft constraints (see NormalConstraint).
 
     The parameters of CostSum are the union of all parameters of its constituents.
+
     Supports the sequence protocol to access the constituents.
+
+    Warnings
+    --------
+    CostSum does not work very well with cost functions that accept arrays, because the
+    function signature does not allow one to determine how many parameters are accepted
+    by the function and which parameters overlap between different cost functions.
+
+    CostSum works with cost functions that accept arrays only under the condition that
+    all cost functions accept the very same array parameter:
+
+    1) All array must have the same name in all constituent cost functions.
+    2) All arrays must have the same length.
+    3) The positions in each array must correspond to the same model parameters.
     """
 
     __slots__ = "_items", "_maps"
@@ -191,6 +229,9 @@ class CostSum(Cost, Sequence):
         for item in items:
             if isinstance(item, CostSum):
                 self._items += item._items
+            elif isinstance(item, (int, float)):
+                if item != 0:
+                    self._items.append(Constant(item))
             else:
                 self._items.append(item)
         args = self._update()
@@ -327,7 +368,7 @@ class BinnedCost(MaskedCost):
 
     @property
     def n(self):
-        """Get bin counts."""
+        """Access bin counts."""
         return self._n
 
     @n.setter
@@ -336,7 +377,7 @@ class BinnedCost(MaskedCost):
 
     @property
     def xe(self):
-        """Get bin edges."""
+        """Access bin edges."""
         return self._xe
 
     @xe.setter
@@ -365,7 +406,7 @@ class BinnedNLL(BinnedCost):
 
     @property
     def cdf(self):
-        """Cumulative density function."""
+        """Get cumulative density function."""
         return self._model
 
     def __init__(self, n, xe, cdf, verbose=0):
