@@ -3,6 +3,7 @@ import requests
 from pkg_resources import parse_version
 import subprocess as subp
 from pathlib import PurePath
+import re
 
 project_dir = PurePath(__file__).parent.parent
 version_fn = project_dir / "src/iminuit/version.py"
@@ -18,10 +19,16 @@ with open(version_fn) as f:
 git_submodule = subp.check_output(
     ["git", "submodule", "status"], cwd=project_dir
 ).decode()
-submodule_root_version = git_submodule[git_submodule.index("extern/root") + 13 : -2]
-assert (
-    root_version == submodule_root_version
-), f"ROOT version does not match: {root_version} != {submodule_root_version}"
+for item in git_submodule.strip().split("\n"):
+    parts = item.split()
+    if PurePath(parts[1]) != PurePath("extern") / "root":
+        continue
+    this_root_version = parts[2][1:-1]  # strip braces
+    # skip this check if history of checkout is limited and latest tag unknown
+    if re.match("v[0-9]-[0-9]+-[0-9]+", this_root_version):
+        assert (
+            root_version == this_root_version
+        ), f"ROOT version does not match: {root_version} != {this_root_version}"
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:
