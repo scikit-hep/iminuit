@@ -1,9 +1,31 @@
-.. include:: references.txt
+.. include:: bibliography.txt
 
 .. _changelog:
 
 Changelog
 =========
+
+2.2.1.dev
+---------
+
+New features
+~~~~~~~~~~~~
+- ``Minuit.profile``, ``Minuit.mnprofile``, ``Minuit.contour``, ``Minuit.draw_profile``,
+  ``Minuit.draw_mnprofile``, and ``Minuit.draw_contour`` can now be called with
+  ``subtract_min=True`` even if ``Minuit.fmin`` is None
+- ``iminuit.__version__`` now also displays the corresponding ROOT version of the C++
+  Minuit2 library
+
+Other
+~~~~~
+- pydocstyle added to pre-commit checks
+- Documentation improvements
+  - Further transition to numpydoc
+  - Clarified that iminuit is based on ROOT code
+  - List full iminuit version including ROOT version in docs
+- Added type hints to many interfaces (incomplete)
+- Renamed ``iminuit._minuit`` to ``iminuit.minuit``, making the module public
+- Renamed ``iminuit._minimize`` to ``iminuit.minimize``, making the module public
 
 2.2.0 (December 20, 2020)
 -------------------------

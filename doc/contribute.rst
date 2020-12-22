@@ -1,4 +1,4 @@
-.. include:: references.txt
+.. include:: bibliography.txt
 
 .. _contribute:
 

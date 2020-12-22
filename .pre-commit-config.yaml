@@ -52,6 +52,13 @@ repos:
   hooks:
   - id: black
 
+# Python docstring formatting
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 5.1.1
+  hooks:
+  - id: pydocstyle
+    files: src/iminuit/[^_].*\.py
+
 # C++ formatting
 - repo: git://github.com/doublify/pre-commit-clang-format
   rev: master

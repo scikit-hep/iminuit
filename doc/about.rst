@@ -1,4 +1,4 @@
-.. include:: references.txt
+.. include:: bibliography.txt
 
 .. _about:
 
@@ -8,7 +8,7 @@ About
 What is iminuit?
 ----------------
 
-iminuit is the fast interactive IPython-friendly minimiser based on `Minuit2`_ in ROOT-6.12.06.
+iminuit is the fast interactive IPython-friendly minimiser based on `Minuit2`_ C++ library maintained by CERN's ROOT team. The corresponding version of the C++ code is listed after the '+' in the iminuit version string: |release|.
 
 For a hands-on introduction, see the :ref:`tutorials`.
 
@@ -81,6 +81,7 @@ Contributors
 ~~~~~~~~~~~~
 
 * Jim Pivarski (@jpivarski)
+* Henry Schreiner (@henryiii)
 * David Men\'endez Hurtado (@Dapid)
 * Chris Burr (@chrisburr)
 * Andrew ZP Smith (@energynumbers)

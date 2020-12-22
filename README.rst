@@ -20,13 +20,13 @@
    :target: https://iminuit.readthedocs.io/en/latest
    :alt: Documentation Status
 .. image:: https://mybinder.org/badge_logo.svg
-  :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/master?filepath=tutorial
+   :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/master?filepath=tutorial
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
    :target: https://doi.org/10.5281/zenodo.3949207
 
 .. skip-marker-do-not-remove
 
-*iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library.
+*iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
 
 It can be used as a general robust function minimisation method, but is most
 commonly used for likelihood fits of models to data, and to get model parameter

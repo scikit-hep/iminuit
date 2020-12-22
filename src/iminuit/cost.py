@@ -10,6 +10,7 @@ numba is available.
 from .util import describe, make_func_code
 import numpy as np
 from collections.abc import Sequence
+from typing import Tuple
 
 
 def _safe_log(x):
@@ -94,7 +95,7 @@ class Cost:
     def verbose(self, value: int):
         self._verbose = value
 
-    def __init__(self, args: tuple, verbose: int):
+    def __init__(self, args: Tuple[float], verbose: int):
         """For internal use."""
         self._func_code = make_func_code(args)
         self._verbose = verbose

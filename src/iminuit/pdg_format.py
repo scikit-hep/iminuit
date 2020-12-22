@@ -21,8 +21,7 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
-PDG formatting of numbers with uncertainties
-============================================
+PDG formatting of numbers with uncertainties.
 
 The PDG uses a special rounding rule for quantities with uncertainties. The description
 quoted from M. Tanabashi et al. (Particle Data Group), Phys. Rev. D 98, 030001 (2018),
@@ -60,7 +59,7 @@ latex = (
 
 
 def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp=None):
-    r"""Rounds and formats a value with uncertainties using PDG rules.
+    r"""Return formatted value with uncertainties according to PDG rules.
 
     Examples
     --------

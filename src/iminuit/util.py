@@ -1,4 +1,4 @@
-"""This module provides data and utility classes used by :class:`iminuit.Minuit`."""
+"""Data classes and utilities used by :class:`iminuit.Minuit`."""
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
