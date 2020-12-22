@@ -3,6 +3,7 @@ import pytest
 from argparse import Namespace
 from numpy.testing import assert_equal, assert_allclose
 import numpy as np
+from iminuit._core import MnUserParameterState
 
 
 def test_ndim():
@@ -17,20 +18,34 @@ def test_ndim():
 
 
 def test_ValueView():
+    state = MnUserParameterState()
+    state.add("x", 1.0, 0.1)
+    state.add("y", 2.2, 0.1)
+    state.add("z", 3.3, 0.1)
+
     v = util.ValueView(
         Namespace(
-            _var2pos={"x": 0, "y": 1},
-            _pos2var=("x", "y"),
-            npar=2,
-            _last_state=(
-                Namespace(value=1.0),
-                Namespace(value=2.02),
-            ),
+            _var2pos={"x": 0, "y": 1, "z": 2},
+            _pos2var=("x", "y", "z"),
+            npar=3,
+            _last_state=state,
+            _copy_state_if_needed=lambda: None,
         )
     )
 
-    assert repr(v) == "<ValueView x=1.0 y=2.02>"
+    assert repr(v) == "<ValueView x=1.0 y=2.2 z=3.3>"
     assert str(v) == repr(v)
+
+    v[:] = (1, 2, 3)
+    assert_equal(v, (1, 2, 3))
+    v[1:] = 4
+    assert_equal(v, (1, 4, 4))
+    v["y"] = 2
+    assert_equal(v, (1, 2, 4))
+    v["y":] = 3
+    assert_equal(v, (1, 3, 3))
+    v[:"z"] = 2
+    assert_equal(v, (2, 2, 3))
 
 
 def test_Matrix():

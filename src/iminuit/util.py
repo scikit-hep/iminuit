@@ -44,15 +44,16 @@ class BasicView:
 
     def __getitem__(self, key):
         """Get value at key, which can be an index, a parameter name, or a slice."""
+        key = _key2index(self._minuit._var2pos, key)
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             return [self._get(i) for i in ind]
-        i = _key2index(self._minuit._var2pos, key)
-        return self._get(i)
+        return self._get(key)
 
     def __setitem__(self, key, value):
         """Assign a new value at key, which can be an index, a parameter name, or a slice."""
         self._minuit._copy_state_if_needed()
+        key = _key2index(self._minuit._var2pos, key)
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             if _ndim(value) == self._ndim:  # basic broadcasting
@@ -64,8 +65,7 @@ class BasicView:
                 for i, v in zip(ind, value):
                     self._set(i, v)
         else:
-            i = _key2index(self._minuit._var2pos, key)
-            self._set(i, value)
+            self._set(key, value)
 
     def __eq__(self, other):
         """Return true if all values are equal."""
@@ -916,6 +916,11 @@ def _guess_initial_step(val):
 
 
 def _key2index(var2pos, key):
+    if isinstance(key, slice):
+        sl = key
+        start = _key2index(var2pos, sl.start) if sl.start is not None else None
+        stop = _key2index(var2pos, sl.stop) if sl.stop is not None else None
+        return slice(start, stop, sl.step)
     if isinstance(key, int):
         i = key
         if i < 0:
