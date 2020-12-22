@@ -23,12 +23,16 @@ for item in git_submodule.strip().split("\n"):
     parts = item.split()
     if PurePath(parts[1]) != PurePath("extern") / "root":
         continue
+    # skip this check if submodules are not checked out
+    if len(parts) == 2:
+        continue
     this_root_version = parts[2][1:-1]  # strip braces
     # skip this check if history of checkout is limited and latest tag unknown
-    if re.match("v[0-9]-[0-9]+-[0-9]+", this_root_version):
-        assert (
-            root_version == this_root_version
-        ), f"ROOT version does not match: {root_version} != {this_root_version}"
+    if not re.match("v[0-9]-[0-9]+-[0-9]+", this_root_version):
+        continue
+    assert (
+        root_version == this_root_version
+    ), f"ROOT version does not match: {root_version} != {this_root_version}"
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:
