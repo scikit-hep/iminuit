@@ -10,20 +10,30 @@ changelog_fn = project_dir / "doc/changelog.rst"
 
 with open(version_fn) as f:
     version = {}
-    exec(f.read(), version)  # this loads __version__
-    version = version["__version__"]
+    exec(f.read(), version)
+    iminuit_version = version["iminuit_version"]
+    root_version = version["root_version"]
+
+# check that root version is up-to-date
+git_submodule = subp.check_output(
+    ["git", "submodule", "status"], cwd=project_dir
+).decode()
+submodule_root_version = git_submodule[git_submodule.index("extern/root") + 13 : -2]
+assert (
+    root_version == submodule_root_version
+), f"ROOT version does not match: {root_version} != {submodule_root_version}"
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:
-    assert version in f.read(), "changelog entry missing"
+    assert iminuit_version in f.read(), "changelog entry missing"
 
 # make sure that version is not already tagged
 tags = subp.check_output(["git", "tag"]).decode().strip().split("\n")
-assert f"v{version}" not in tags, "tag exists"
+assert f"v{iminuit_version}" not in tags, "tag exists"
 
 # make sure that version itself was updated
-r = requests.get("https://pypi.org/pypi/iminuit/json")
-releases = r.json()["releases"]
-pypi_versions = [parse_version(v) for v in releases]
-this_version = parse_version(version)
-assert this_version not in pypi_versions, "pypi version exists"
+pypi_versions = [
+    parse_version(v)
+    for v in requests.get("https://pypi.org/pypi/iminuit/json").json()["releases"]
+]
+assert parse_version(iminuit_version) not in pypi_versions, "pypi version exists"

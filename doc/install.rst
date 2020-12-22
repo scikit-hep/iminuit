@@ -1,4 +1,4 @@
-.. include:: references.txt
+.. include:: bibliography.txt
 
 .. _install:
 
@@ -46,17 +46,3 @@ For contributors/developers
 +++++++++++++++++++++++++++
 
 See :ref:`contribute`.
-
-Check installation
-------------------
-
-To check your iminuit version number and install location::
-
-    $ python
-    >>> import iminuit
-    >>> iminuit
-    # install location is printed
-    >>> iminuit.__version__
-    # version number is printed
-
-Usually if ``import iminuit`` works, everything is OK.

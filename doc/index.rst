@@ -1,4 +1,4 @@
-.. include:: references.txt
+.. include:: bibliography.txt
 
 .. |iminuit| image:: _static/iminuit_logo.svg
 
