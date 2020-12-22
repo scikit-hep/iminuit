@@ -5,20 +5,21 @@
 Changelog
 =========
 
-2.2.1.dev
----------
+2.2.1 (December 22, 2020)
+-------------------------
 
 New features
 ~~~~~~~~~~~~
 - ``Minuit.profile``, ``Minuit.mnprofile``, ``Minuit.contour``, ``Minuit.draw_profile``,
   ``Minuit.draw_mnprofile``, and ``Minuit.draw_contour`` can now be called with
   ``subtract_min=True`` even if ``Minuit.fmin`` is None
-- ``iminuit.__version__`` now also displays the corresponding ROOT version of the C++
-  Minuit2 library
+- ``iminuit.__version__`` now also displays the ROOT version of the C++ Minuit2 library
+- Support for adding constant numbers to cost functions, this allows you to write
+  ``sum(cost1, cost2, ...)`` and may be useful to subtract a constant bias from the
+  cost
 
 Other
 ~~~~~
-- pydocstyle added to pre-commit checks
 - Documentation improvements
   - Further transition to numpydoc
   - Clarified that iminuit is based on ROOT code
@@ -26,6 +27,7 @@ Other
 - Added type hints to many interfaces (incomplete)
 - Renamed ``iminuit._minuit`` to ``iminuit.minuit``, making the module public
 - Renamed ``iminuit._minimize`` to ``iminuit.minimize``, making the module public
+- pydocstyle added to pre-commit checks
 
 2.2.0 (December 20, 2020)
 -------------------------
