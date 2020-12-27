@@ -830,11 +830,12 @@ class Minuit:
         hesse = MnHesse(self.strategy)
 
         fm = self._fmin._src if self._fmin else None
-        if fm and fm.state == self._last_state:
-            # _last_state not modified, can update _fmin which is more efficient
+        if fm and fm.state is self._last_state:
+            # fmin exists and _last_state not modified,
+            # can update _fmin which is more efficient
             hesse(self._fcn, fm, ncall)
             self._last_state = fm.state
-            self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self._tolerance)
+            self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self._fmin.edm_goal)
         else:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin

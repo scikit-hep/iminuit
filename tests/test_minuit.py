@@ -1088,6 +1088,14 @@ def test_hesse_without_migrad():
         m.hesse()
 
 
+def test_edm_goal():
+    m = Minuit(func0, x=0, y=0)
+    m.migrad()
+    assert m.fmin.edm_goal == approx(0.0002)
+    m.hesse()
+    assert m.fmin.edm_goal == approx(0.0002)
+
+
 def throwing(x):
     raise RuntimeError("user message")
 

@@ -5,11 +5,19 @@
 Changelog
 =========
 
+2.2.1.dev
+---------
+
+Minor improvements
+~~~~~~~~~~~~~~~~~~
+- ``FMin.edm_goal`` now remains unchanged if ``Minuit.hesse`` is run after
+  ``Minuit.migrad``
+
 2.2.1 (December 22, 2020)
 -------------------------
 
-New features
-~~~~~~~~~~~~
+Minor improvements
+~~~~~~~~~~~~~~~~~~
 - ``Minuit.profile``, ``Minuit.mnprofile``, ``Minuit.contour``, ``Minuit.draw_profile``,
   ``Minuit.draw_mnprofile``, and ``Minuit.draw_contour`` can now be called with
   ``subtract_min=True`` even if ``Minuit.fmin`` is None
