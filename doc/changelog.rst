@@ -10,6 +10,14 @@ Changelog
 
 Minor improvements
 ~~~~~~~~~~~~~~~~~~
+
+New features
+~~~~~~~~~~~~
+- ``iminuit.cost.BinnedNLL`` and  ``iminuit.cost.ExtendedBinnedNLL`` now support
+  weighted binned data
+
+Bug-fixes
+~~~~~~~~~
 - ``FMin.edm_goal`` now remains unchanged if ``Minuit.hesse`` is run after
   ``Minuit.migrad``
 
