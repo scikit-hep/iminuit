@@ -83,9 +83,38 @@ def test_BinnedNLL(binned, verbose):
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
 
-def test_BinnedNLL_bad_input():
+def test_weighted_BinnedNLL():
+    def cdf(x, a):
+        return 1 - np.exp(-a * x)
+
+    xe = np.array([0, 1, 10])
+    p = np.diff(cdf(xe, 1))
+    n = p * 1000
+    m1 = Minuit(BinnedNLL(n, xe, cdf), 1)
+    m1.migrad()
+    assert m1.values[0] == pytest.approx(1, rel=1e-2)
+
+    w = np.transpose((n, 4 * n))
+    m2 = Minuit(BinnedNLL(w, xe, cdf), 1)
+    m2.migrad()
+    assert m2.values[0] == pytest.approx(1, rel=1e-2)
+
+    assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+
+def test_BinnedNLL_bad_input_1():
     with pytest.raises(ValueError):
         BinnedNLL([1], [1], lambda x, a: 0)
+
+
+def test_BinnedNLL_bad_input_2():
+    with pytest.raises(ValueError):
+        BinnedNLL([[[1]]], [1], lambda x, a: 0)
+
+
+def test_BinnedNLL_bad_input_3():
+    with pytest.raises(ValueError):
+        BinnedNLL([[1, 2, 3]], [1], lambda x, a: 0)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -103,6 +132,24 @@ def test_ExtendedBinnedNLL(binned, verbose):
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+
+
+def test_weighted_ExtendedBinnedNLL():
+    def cdf(x, a, b):
+        return b * (1 - np.exp(-a * x))
+
+    xe = np.array([0, 1, 10])
+    n = np.diff(cdf(xe, 1, 100))
+    m1 = Minuit(ExtendedBinnedNLL(n, xe, cdf), 1, 100)
+    m1.migrad()
+    assert_allclose(m1.values, (1, 100), rtol=1e-2)
+
+    w = np.transpose((n, 4 * n))
+    m2 = Minuit(ExtendedBinnedNLL(w, xe, cdf), 1, 100)
+    m2.migrad()
+    assert_allclose(m2.values, (1, 100), rtol=1e-2)
+
+    assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
 
 
 def test_ExtendedBinnedNLL_bad_input():

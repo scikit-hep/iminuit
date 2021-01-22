@@ -23,14 +23,33 @@ def _sum_log_x(x):
     return np.sum(_safe_log(x))  # pragma: no cover
 
 
-def _neg_sum_n_log_mu(n, mu):
+def _spd_transform(n, mu):
+    # Scaled Poisson distribution from Bohm and Zech, NIMA 748 (2014) 1-6
+    v, var = np.transpose(n)  # pragma: no cover
+    s = v / var  # pragma: no cover
+    return v * s, mu * s  # pragma: no cover
+
+
+def _log_poisson_part(n, mu):
+    return n * _safe_log(n / (mu + 1e-323))  # pragma: no cover
+
+
+def _sum_log_poisson_part(n, mu):
     # subtract n log(n) to keep sum small, required to not loose accuracy in Minuit
-    return np.sum(n * _safe_log(n / (mu + 1e-323)))  # pragma: no cover
+    if n.ndim == 2:  # pragma: no cover
+        n2, mu2 = _spd_transform(n, mu)  # pragma: no cover
+    else:  # pragma: no cover
+        n2, mu2 = n, mu  # pragma: no cover
+    return np.sum(_log_poisson_part(n2, mu2))  # pragma: no cover
 
 
 def _sum_log_poisson(n, mu):
     # subtract n - n log(n) to keep sum small, required to not loose accuracy in Minuit
-    return np.sum(mu - n + n * _safe_log(n / (mu + 1e-323)))  # pragma: no cover
+    if n.ndim == 2:  # pragma: no cover
+        n2, mu2 = _spd_transform(n, mu)  # pragma: no cover
+    else:  # pragma: no cover
+        n2, mu2 = n, mu  # pragma: no cover
+    return np.sum(mu2 - n2 + _log_poisson_part(n2, mu2))  # pragma: no cover
 
 
 def _z_squared(y, ye, ym):
@@ -55,7 +74,9 @@ try:
 
     _safe_log = jit(_safe_log)
     _sum_log_x = jit(_sum_log_x)
-    _neg_sum_n_log_mu = jit(_neg_sum_n_log_mu)
+    _spd_transform = jit(_spd_transform)
+    _log_poisson_part = jit(_log_poisson_part)
+    _sum_log_poisson_part = jit(_sum_log_poisson_part)
     _sum_log_poisson = jit(_sum_log_poisson)
     _z_squared = jit(_z_squared)
     _sum_z_squared = jit(_sum_z_squared)
@@ -390,7 +411,13 @@ class BinnedCost(MaskedCost):
         self._xe = _norm(xe)
         self._model = model
 
-        if np.any((np.array(self._n.shape) + 1) != self._xe.shape):
+        if self._n.ndim > 2:
+            raise ValueError("n must be at most 2-dimensional")
+
+        if self._n.ndim == 2 and self._n.shape[1] != 2:
+            raise ValueError("n must shape (N x 2) if 2-dimensional")
+
+        if np.any((np.array(self._n.shape[0]) + 1) != self._xe.shape):
             raise ValueError("n and xe have incompatible shapes")
 
         super().__init__(describe(model)[1:], verbose)
@@ -416,7 +443,8 @@ class BinnedNLL(BinnedCost):
         Parameters
         ----------
         n : array-like
-            Histogram counts.
+            Histogram counts. If this is an array N x 2, it is interpreted as pairs of
+            sum of weights and sum of weights squared.
         xe : array-like
             Bin edge locations, must be len(n) + 1.
         cdf : callable
@@ -437,7 +465,7 @@ class BinnedNLL(BinnedCost):
             prob = prob[ma]
         mu = np.sum(n) * prob
         # + np.sum(mu) can be skipped, it is effectively constant
-        return 2.0 * _neg_sum_n_log_mu(n, mu)
+        return 2.0 * _sum_log_poisson_part(n, mu)
 
     def _make_masked(self):
         return self._n if self._mask is None else self._n[self._mask]
@@ -464,7 +492,8 @@ class ExtendedBinnedNLL(BinnedCost):
         Parameters
         ----------
         n : array-like
-            Histogram counts.
+            Histogram counts. If this is an array N x 2, it is interpreted as pairs of
+            sum of weights and sum of weights squared.
         xe : array-like
             Bin edge locations, must be len(n) + 1.
         scaled_cdf : callable
