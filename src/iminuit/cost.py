@@ -26,7 +26,7 @@ def _sum_log_x(x):
 def _spd_transform(n, mu):
     # Scaled Poisson distribution from Bohm and Zech, NIMA 748 (2014) 1-6
     v, var = np.transpose(n)  # pragma: no cover
-    s = v / var  # pragma: no cover
+    s = v / (var + 1e-323)  # pragma: no cover
     return v * s, mu * s  # pragma: no cover
 
 
