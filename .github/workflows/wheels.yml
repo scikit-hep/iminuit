@@ -23,8 +23,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         py: [cp36, cp37, cp38, cp39]
       fail-fast: false
-      env:
-        CIBW_BUILD: ${{ matrix.py }}-*
+    env:
+      CIBW_BUILD: ${{ matrix.py }}-*
     steps:
       - uses: actions/checkout@v2
         with:
