@@ -1,7 +1,7 @@
 name: Wheels
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: 
   push:
     branches:
     - beta/*
