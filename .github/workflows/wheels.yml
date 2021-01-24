@@ -13,7 +13,6 @@ env:
   CIBW_BEFORE_BUILD: "python -m pip install numpy --only-binary=:all:"
   CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: python -m pytest {package}/tests
-  CIBW_BUILD: ${{ matrix.py }}-*
 
 jobs:
   wheels:
@@ -24,7 +23,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
         py: [cp36, cp37, cp38, cp39]
       fail-fast: false
-
+      env:
+        CIBW_BUILD: ${{ matrix.py }}-*
     steps:
       - uses: actions/checkout@v2
         with:
