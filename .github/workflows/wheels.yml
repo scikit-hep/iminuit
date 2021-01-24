@@ -13,6 +13,7 @@ env:
   CIBW_BEFORE_BUILD: "python -m pip install numpy --only-binary=:all:"
   CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: python -m pytest {package}/tests
+  CIBW_BUILD: ${{ matrix.py }}-*
 
 jobs:
   wheels:
@@ -30,8 +31,6 @@ jobs:
           submodules: true
 
       - uses: joerick/cibuildwheel@v1.8.0
-        env:
-          CIBW_BUILD: ${{ matrix.py }}-*
 
       - uses: actions/upload-artifact@v2
         with:
