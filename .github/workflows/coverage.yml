@@ -11,6 +11,10 @@ on:
       - master
       - develop
       - beta/*
+    paths-ignore:
+      - 'doc/**'
+      - '.ci/**'
+      - '*.rst'
 
 jobs:
   coverage:

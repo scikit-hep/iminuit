@@ -4,8 +4,11 @@ on:
   workflow_dispatch:
   push:
     branches:
-    - beta/*
-    - master
+      - beta/*
+      - master
+    paths-ignore:
+      - 'doc/**'
+      - '*.rst'
   release:
     types: [published]
 
