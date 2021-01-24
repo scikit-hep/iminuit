@@ -18,6 +18,10 @@ Bug-fixes
 - ``FMin.edm_goal`` now remains unchanged if ``Minuit.hesse`` is run after
   ``Minuit.migrad``
 
+Other
+~~~~~
+- Update cibuildwheels to 1.8.0, contributed by @henryiii
+
 2.2.1 (December 22, 2020)
 -------------------------
 
