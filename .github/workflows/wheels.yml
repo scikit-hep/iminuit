@@ -10,7 +10,7 @@ on:
     types: [published]
 
 env:
-  CIBW_ENVIRONMENT: "PIP_ONLY_BINARY=:all:"
+  CIBW_BEFORE_BUILD: "python -m pip install numpy --only-binary=:all:"
   CIBW_TEST_REQUIRES: pytest
   CIBW_TEST_COMMAND: python -m pytest {package}/tests
 
