@@ -7,9 +7,9 @@
 # - Increase MAINTENANCE when fixing bugs without adding features
 # - During development, add suffix .devN with N >= 0
 # - For release candidates, add suffix .rcN with N >= 0
-iminuit_version = "2.3.0"
+iminuit_version = "2.3.0.dev0"
 
 # We list the corresponding ROOT version of the C++ Minuit2 library here
-root_version = "v6-23-01-RF-binSampling-267-g2ef12408ee"
+root_version = "v6-23-01-RF-binSampling-470-ged929c4202"
 
 version = f"{iminuit_version}+ROOT-{root_version}"

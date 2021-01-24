@@ -17,6 +17,8 @@ How to make a release
   - If there are problems with the wheels, create a beta/<release-version> branch and
     commit fixes there, once the problem is fixed, squash-merge the branch to master
 - Create release on Github
+  - tag: vX.Y.Z
+  - title: vX.Y.Z
   - Message: [See changelog on RTD](https://iminuit.readthedocs.io/en/stable/changelog.html)
 - This triggers an upload of the latest build artefacts to PyPI
   - If this fails unexpectedly, download the artefact from the actions page and upload

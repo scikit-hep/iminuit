@@ -5,6 +5,13 @@
 Changelog
 =========
 
+2.3.0.dev0
+----------
+
+Other
+~~~~~
+- Update C++ Minuit2 code
+
 2.3.0 (January 24, 2021)
 ------------------------
 
