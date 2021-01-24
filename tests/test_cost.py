@@ -10,6 +10,8 @@ from iminuit.cost import (
     ExtendedBinnedNLL,
     LeastSquares,
     NormalConstraint,
+    _log_poisson_part,
+    _spd_transform,
 )
 from collections.abc import Sequence
 
@@ -33,6 +35,7 @@ def unbinned():
 def binned(unbinned):
     mle, x = unbinned
     nx, xe = np.histogram(x, bins=50, range=(-3, 3))
+    assert np.sum(nx == 0) > 0
     return mle, nx, xe
 
 
@@ -445,3 +448,21 @@ def test_NormalConstraint_properties():
     nc.covariance = (1, 2)
     assert_equal(nc.value, (2, 3))
     assert_equal(nc.covariance, (1, 2))
+
+
+def test_spd_transform():
+    n = np.array([(0.0, 0.0)])
+    assert_allclose(_spd_transform(n, 0), [[0], [0]])
+    assert_allclose(_spd_transform(n, 1), [[0], [0]])
+    n = np.array([(0.0, 1.0)])
+    assert_allclose(_spd_transform(n, 0), [[0], [0]])
+    assert_allclose(_spd_transform(n, 1), [[0], [0]])
+
+
+def test_log_poisson_part():
+    assert _log_poisson_part(0, 0) == 0
+    assert _log_poisson_part(0, 1) == 0
+    assert _log_poisson_part(1, 0) == np.inf
+    n = np.array([(0.0, 0.0)])
+    assert_allclose(_log_poisson_part(n, 0), 0)
+    assert_allclose(_log_poisson_part(n, 1), 0)
