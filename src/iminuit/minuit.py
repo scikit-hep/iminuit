@@ -129,15 +129,27 @@ class Minuit:
     @property
     def tol(self) -> float:
         """
-        Access tolerance for convergence.
+        Access tolerance for convergence with the EDM criterion.
 
-        The main convergence criteria of MINUIT is `edm < edm_max`, where `edm_max`
-        is calculated as `edm_max = 0.002 * tol * errordef` in case of the MIGRAD
-        algorithm and as `edm_max = tol * errordef` in case of the SIMPLEX algorithm.
-        EDM stands for *Estimated Distance to Minimum*, which is described in the
-        `MINUIT paper`_. The EDM criterion is well suited for statistical cost functions,
+        Minuit detects converge with the EDM criterion. EDM stands for *Estimated
+        Distance to Minimum*, it is mathematically described in the `MINUIT paper`_.
+        The EDM criterion is well suited for statistical cost functions,
         since it stops the minimization when parameter improvements become small
         compared to parameter uncertainties.
+
+        The convergence is detected when `edm < edm_max`, where `edm_max` is calculated
+        as
+
+            * Migrad: edm_max = 0.002 * tol * errordef
+            * Simplex: edm_max = tol * errordef
+
+        Users can set `tol` (default: 0.1) to a different value to speed up convergence
+        at the cost of a larger error on the fitted parameters and possibly invalid
+        estimates for parameter uncertainties.
+
+        Under some circumstances, Migrad is allowed to violate edm_max by a factor of
+        10. Users should not try to detect convergence by comparing edm with edm_max,
+        but query :attr:`iminuit.util.FMin.is_above_max_edm`.
         """
         return self._tolerance
 
