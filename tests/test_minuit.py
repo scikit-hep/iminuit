@@ -58,7 +58,7 @@ def func0(x, y):  # values = (2.0, 5.0), errors = (2.0, 1.0)
 
 def func0_grad(x, y):
     dfdx = (x - 2.0) / 2.0
-    dfdy = 2.0 * (y - 5.0)
+    dfdy = 2.0 * (y - 5.0) * np.exp((y - 5.0) ** 2)
     return [dfdx, dfdy]
 
 
@@ -490,7 +490,8 @@ def test_minos_single(grad):
     assert len(m.merrors) == 1
     me = m.merrors["x"]
     assert me.name == "x"
-    assert me.lower == approx(-2, abs=1e-3)
+    assert me.lower == approx(-2, rel=2e-3)
+    assert me.upper == approx(2, rel=2e-3)
 
 
 def test_minos_single_fixed():
@@ -911,7 +912,7 @@ def test_ngrad():
 
     # check that counting is accurate
     fcn = Func()
-    m = Minuit(fcn, 0)
+    m = Minuit(fcn, 1)
     m.migrad()
     assert m.ngrad > 0
     assert m.ngrad == fcn.ngrad
@@ -1164,7 +1165,7 @@ def returning_noniterable(x):
     ],
 )
 def test_bad_functions_np(func, expected):
-    m = Minuit(lambda x: 0, (1, 1), grad=func)
+    m = Minuit(lambda x: np.dot(x, x), (1, 1), grad=func)
     m.errordef = 1
     m.throw_nan = True
     with pytest.raises(type(expected)) as excinfo:

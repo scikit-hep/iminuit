@@ -5,12 +5,14 @@
 Changelog
 =========
 
-2.3.0.dev0
-----------
+2.3.1
+-----
 
 Other
 ~~~~~
-- Update C++ Minuit2 code
+- Upgrade Minuit2 C++ code in ROOT to latest master; contains an improvement of the seed
+  when using an analytical gradient
+- Documentation improvements
 
 2.3.0 (January 24, 2021)
 ------------------------
