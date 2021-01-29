@@ -320,8 +320,7 @@ class FMin:
         """
         Get EDM threshold value for stopping the minimization.
 
-        The threshold is allowed
-        to be violated up to a factor of 10 in some situations.
+        The threshold is allowed to be violated by a factor of 10 in some situations.
         """
         return self._edm_goal
 
@@ -357,9 +356,9 @@ class FMin:
 
         For it to return True, the following conditions need to be fulfilled:
 
-          - has_valid_parameters is True
-          - has_reached_call_limit is False
-          - is_above_max_edm is False
+          - :attr:`has_valid_parameters` is True
+          - :attr:`has_reached_call_limit` is False
+          - :attr:`is_above_max_edm` is False
 
         Note: The actual verdict is computed inside the Minuit2 C++ code, so we
         cannot guarantee that is_valid is exactly equivalent to these conditions.
@@ -373,8 +372,8 @@ class FMin:
 
         For it to return True, the following conditions need to be fulfilled:
 
-          - has_reached_call_limit is False
-          - is_above_max_edm is False
+          - :attr:`has_reached_call_limit` is False
+          - :attr:`is_above_max_edm` is False
 
         Note: The actual verdict is computed inside the Minuit2 C++ code, so we
         cannot guarantee that is_valid is exactly equivalent to these conditions.
@@ -390,7 +389,8 @@ class FMin:
         matrix. If the strategy is set to 0 or if the fit did not converge, the
         inverse of this approximation is returned instead of the inverse of the
         accurately computed Hessian matrix. This property returns False if the
-        approximation has been returned instead of an accurate matrix.
+        approximation has been returned instead of an accurate matrix computed by
+        the Hesse method.
         """
         return self._src.has_accurate_covar
 
@@ -399,12 +399,26 @@ class FMin:
         """
         Return whether the Hessian matrix is positive definite.
 
-        This must be the case if the extremum is a minimum. Otherwise it is a
-        maximum or a saddle point.
+        This must be the case if the extremum is a minimum, otherwise it is a saddle
+        point. If it returns False, the fitted result may be correct, but the reported
+        uncertainties are false. This may affect some parameters or all of them.
+        Possible causes:
 
-        If the fit has converged, this should always be true. It may be false if the
-        fit did not converge or was stopped prematurely. It may be triggered when some
-        parameters are perfectly correlated.
+            * Model contains redundanted parameters that are 100% correlated. Fix:
+              remove the parameters that are 100% correlated.
+            * Cost function is not computed in double precision. Fix: try adjusting
+              :attr:`iminuit.Minuit.precision` or change the cost function to compute
+              in double precision.
+            * Cost function is not analytical near the minimum. Fix: change the cost
+              function to something analytical. Functions are not analytical if:
+
+                * It does computations based on (pseudo)random numbers.
+                * It contains vertical steps, for example from code like this::
+
+                      if cond:
+                          return value1
+                      else:
+                          return value2
         """
         return self._src.has_posdef_covar
 
@@ -418,8 +432,9 @@ class FMin:
         required to compute the next Newton step. Migrad then adds an appropriate
         diagonal matrix to enforce positive definiteness.
 
-        If the fit has converged, this should always be false. It may be true if the
-        fit did not converge or was stopped prematurely.
+        If the fit has converged successfully, this should always return False. If
+        Minuit forced the matrix to be positive definite, the parameter uncertainties
+        are false, see :attr:`has_posdef_covar` for more details.
         """
         return self._src.has_made_posdef_covar
 
@@ -443,7 +458,7 @@ class FMin:
         """
         Return whether the EDM value is below the convergence threshold.
 
-        If this is true, the fit did not converge; otherwise this is false.
+        Returns True, if the fit did not converge; otherwise returns False.
         """
         return self._src.is_above_max_edm
 
@@ -452,13 +467,14 @@ class FMin:
         """
         Return whether Migrad exceeded the allowed number of function calls.
 
-        If this is true, the fit was stopped before convergence was reached.
+        Returns True true, the fit was stopped before convergence was reached;
+        otherwise returns False.
         """
         return self._src.has_reached_call_limit
 
     @property
     def errordef(self):
-        """Equal to the value of ``Minuit.errordef`` when Migrad ran."""
+        """Equal to the value of :attr:`iminuit.Minuit.errordef` when Migrad ran."""
         return self._src.errordef
 
     def __eq__(self, other):
