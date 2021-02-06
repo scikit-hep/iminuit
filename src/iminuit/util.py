@@ -874,7 +874,12 @@ def _arguments_from_docstring(obj):
     #   min(arg1, arg2, *args, *[, key=func]) -> value
     #   Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])
 
-    name = obj.__name__
+    try:
+        name = obj.__name__
+    except AttributeError:
+        # See Issue #608
+        # https://github.com/scikit-hep/iminuit/issues/608
+        return ()
 
     token = name + "("
     start = doc.find(token)
