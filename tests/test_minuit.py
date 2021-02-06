@@ -221,8 +221,7 @@ def test_no_signature():
     assert m.parameters == ("x0",)
     m.migrad()
 
-    lambda_no_signature = lambda *args: no_signature(42, *args)
-    m = Minuit(lambda_no_signature, 2)
+    m = Minuit(lambda *args: no_signature(42, *args), 2)
     assert m.values == (2,)
     assert m.parameters == ("x0",)
     m.migrad()
