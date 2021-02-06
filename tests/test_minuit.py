@@ -203,6 +203,7 @@ def test_Func2():
 
 
 def test_no_signature():
+    from functools import partial
     def no_signature(*args):
         x, y = args
         return (x - 1) ** 2 + (y - 2) ** 2
@@ -212,6 +213,18 @@ def test_no_signature():
     m = Minuit(no_signature, 3, 4)
     assert m.values == (3, 4)
     assert m.parameters == ("x0", "x1")
+
+    partial_no_signature = partial(no_signature, 42)
+    m = Minuit(partial_no_signature, 3)
+    assert m.values == (3,)
+    assert m.parameters == ("x0",)
+    m.migrad()
+
+    lambda_no_signature = lambda *args: no_signature(42, *args)
+    m = Minuit(lambda_no_signature, 2)
+    assert m.values == (2,)
+    assert m.parameters == ("x0",)
+    m.migrad()
 
     m = Minuit(no_signature, x=1, y=2, name=("x", "y"))
     assert m.values == (1, 2)
