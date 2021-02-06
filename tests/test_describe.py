@@ -52,6 +52,16 @@ def test_generic_function():
     assert describe(f) == ()
 
 
+def test_generic_partial():
+    from functools import partial
+
+    def f(*args):
+        pass
+
+    partial_f = partial(f, 42, 12, 4)
+    assert describe(partial_f) == ()
+
+
 def test_generic_lambda():
     assert describe(lambda *args: 0) == ()
 
