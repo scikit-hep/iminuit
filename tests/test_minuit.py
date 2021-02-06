@@ -204,6 +204,7 @@ def test_Func2():
 
 def test_no_signature():
     from functools import partial
+
     def no_signature(*args):
         x, y = args
         return (x - 1) ** 2 + (y - 2) ** 2
