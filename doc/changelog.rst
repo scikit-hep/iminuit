@@ -11,9 +11,9 @@ Changelog
 Other
 ~~~~~
 - Upgrade Minuit2 C++ code in ROOT to latest master with following improvements:
-  - improvement of seed when using an analytical gradient
-  - fix of last minimum state added twice to vector of minimum states in some cases
-    (no impact for iminuit users, but saves a bit of memory)
+   - improvement of seed when using an analytical gradient
+   - fix of last minimum state added twice to vector of minimum states in some cases
+     (no impact for iminuit users, but saves a bit of memory)
 - Documentation improvements
 - Updated tutorial about automatic differentiation, added comparison of numba.njit
   and jax.jit
