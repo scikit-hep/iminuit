@@ -8,6 +8,14 @@ Changelog
 2.3.1
 -----
 
+New features
+~~~~~~~~~~~~
+- ``iminuit.minimize``
+  - Keyword ``method`` now accepts "migrad" and "simplex"
+  - Keyword ``option`` now supports keyword "stra" to set ``Minuit.strategy``
+  - ``OptimizeResult.message`` now states if errors are not reliable
+- ``Minuit`` now supports functions wrapped with ``functools.partial``, by @jnsdrtlf
+
 Other
 ~~~~~
 - Upgrade Minuit2 C++ code in ROOT to latest master with following improvements:
@@ -15,8 +23,8 @@ Other
    - fix of last minimum state added twice to vector of minimum states in some cases
      (no impact for iminuit users, but saves a bit of memory)
 - Documentation improvements
-- Updated tutorial about automatic differentiation, added comparison of numba.njit
-  and jax.jit
+- Updated tutorial about automatic differentiation, added comparison of ``numba.njit``
+  and ``jax.jit``
 
 2.3.0 (January 24, 2021)
 ------------------------
