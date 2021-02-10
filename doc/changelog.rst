@@ -59,9 +59,9 @@ Minor improvements
 Other
 ~~~~~
 - Documentation improvements
-  - Further transition to numpydoc
-  - Clarified that iminuit is based on ROOT code
-  - List full iminuit version including ROOT version in docs
+   - Further transition to numpydoc
+   - Clarified that iminuit is based on ROOT code
+   - List full iminuit version including ROOT version in docs
 - Added type hints to many interfaces (incomplete)
 - Renamed ``iminuit._minuit`` to ``iminuit.minuit``, making the module public
 - Renamed ``iminuit._minimize`` to ``iminuit.minimize``, making the module public
