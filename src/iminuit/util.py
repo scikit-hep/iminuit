@@ -875,10 +875,10 @@ def _arguments_from_docstring(obj):
     #   Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])
 
     try:
+        # function wrapper functools.partial does not offer __name__,
+        # we cannot extract the signature in this case
         name = obj.__name__
     except AttributeError:
-        # See Issue #608
-        # https://github.com/scikit-hep/iminuit/issues/608
         return ()
 
     token = name + "("
