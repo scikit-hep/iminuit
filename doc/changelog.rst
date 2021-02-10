@@ -11,9 +11,9 @@ Changelog
 New features
 ~~~~~~~~~~~~
 - ``iminuit.minimize``
-  - Keyword ``method`` now accepts "migrad" and "simplex"
-  - Keyword ``option`` now supports keyword "stra" to set ``Minuit.strategy``
-  - ``OptimizeResult.message`` now states if errors are not reliable
+   - Keyword ``method`` now accepts "migrad" and "simplex"
+   - Keyword ``option`` now supports keyword "stra" to set ``Minuit.strategy``
+   - ``OptimizeResult.message`` now states if errors are not reliable
 - ``Minuit`` now supports functions wrapped with ``functools.partial``, by @jnsdrtlf
 
 Other
