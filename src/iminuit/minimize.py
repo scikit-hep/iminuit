@@ -9,7 +9,7 @@ def minimize(
     fun,
     x0,
     args=(),
-    method=None,
+    method="migrad",
     jac=None,
     hess=None,
     hessp=None,
@@ -24,15 +24,16 @@ def minimize(
 
     For a general description of the arguments, see ``scipy.optimize.minimize``.
 
-    The ``method`` argument is ignored. The optimisation is always done using MIGRAD.
+    Allowed values for ``method`` are "migrad" or "simplex". Default: "migrad".
 
-    The `options` argument can be used to pass special settings to Minuit.
+    The ``options`` argument can be used to pass special settings to Minuit.
     All are optional.
 
     **Options:**
 
       - *disp* (bool): Set to true to print convergence messages. Default: False.
-      - *tol* (float): Tolerance for convergence. Default: None.
+      - *stra* (int): Minuit strategy (0: fast/inaccurate, 1: balanced,
+        2: slow/accurate). Default: 1.
       - *maxfun* (int): Maximum allowed number of iterations. Default: None.
       - *maxfev* (int): Deprecated alias for *maxfun*.
       - *eps* (sequence): Initial step size to numerical compute derivative.
@@ -52,9 +53,6 @@ def minimize(
     from scipy.optimize import OptimizeResult, Bounds
 
     x0 = np.atleast_1d(x0)
-
-    if method not in {None, "migrad"}:
-        warnings.warn("method argument is ignored")
 
     if constraints is not None:
         raise ValueError("Constraints are not supported by Minuit, only bounds")
@@ -94,25 +92,33 @@ def minimize(
 
     ncall = 0
     if options:
-        if "disp" in options:
-            m.print_level = 2
+        m.print_level = 2 if options.get("disp", False) else 0
         if "maxiter" in options:
             warnings.warn("maxiter not supported, acts like maxfun instead")
-            ncall = options["maxiter"]
         if "maxfev" in options:
             warnings.warn(
                 "maxfev is deprecated, use maxfun instead", DeprecationWarning
             )
-            ncall = options["maxfev"]
-        if "maxfun" in options:
-            ncall = options["maxfun"]
-        if "eps" in options:
-            m.errors = options["eps"]
+        ncall = options.get("maxfun", options.get("maxfev", options.get("maxiter", 0)))
+        errors = options.get("eps", None)
+        if errors is not None:
+            m.errors = errors
+        m.strategy = options.get("stra", 1)
 
-    m.migrad(ncall=ncall)
+    if method == "migrad":
+        m.migrad(ncall=ncall)
+    elif method == "simplex":
+        m.simplex(ncall=ncall)
+    else:
+        raise ValueError(f"keyword method={method} not understood")
 
-    message = "Optimization terminated successfully."
-    if not m.valid:
+    if m.valid:
+        message = "Optimization terminated successfully"
+        if m.accurate:
+            message += "."
+        else:
+            message += ", but uncertainties are unrealiable."
+    else:
         message = "Optimization failed."
         fmin = m.fmin
         if fmin.has_reached_call_limit:

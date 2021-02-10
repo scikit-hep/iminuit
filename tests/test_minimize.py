@@ -132,10 +132,24 @@ def test_bounds():
 
 
 def test_method_warn():
-    with pytest.warns(UserWarning):
+    with pytest.raises(ValueError):
         minimize(func, (1.5, 1.7, 1.5), method="foo")
 
 
 def test_hess_warn():
     with pytest.warns(UserWarning):
         minimize(func, (1.5, 1.7, 1.5), hess=True)
+
+
+def test_unreliable_uncertainties():
+    r = minimize(func, (1.5, 1.7, 1.5), options={"stra": 0})
+    assert (
+        r.message
+        == "Optimization terminated successfully, but uncertainties are unrealiable."
+    )
+
+
+def test_simplex():
+    r = minimize(func, (1.5, 1.7, 1.5), method="simplex", tol=1e-4)
+    assert r.success
+    assert_allclose(r.x, (0, 1, 2), atol=2e-3)
