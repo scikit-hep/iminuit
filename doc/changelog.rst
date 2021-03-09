@@ -5,6 +5,16 @@
 Changelog
 =========
 
+2.4.1 (March 6, 2021)
+---------------------
+
+New features
+~~~~~~~~~~~~
+- ``iminuit.user.merge_user_func``, ported from probfit, by @mbaak
+  This functionality makes it possible to merge function codes into compound objects,
+  allowing one to build more complex cost functions easily.
+  See for example ``tutorials/generic_least_squares_function.ipynb``.
+
 2.4.0 (February 10, 2021)
 -------------------------
 

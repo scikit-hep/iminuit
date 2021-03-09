@@ -6,6 +6,30 @@ import numpy as np
 from iminuit._core import MnUserParameterState
 
 
+def f(x, y, z):
+    return x + y + z
+
+
+def f2(x, z, a):
+    return x + z + a
+
+
+def g(x, a, b):
+    return x + a + b
+
+
+def h(x, c, d):
+    return x + c + d
+
+
+def k_1(y, z):
+    return y + z
+
+
+def k_2(i, j):
+    return i + j
+
+
 def test_ndim():
     ndim = util._ndim
     assert ndim(1) == 0
@@ -304,3 +328,49 @@ def test_address_of_cfunc_bad_signature():
         return 0
 
     assert util._address_of_cfunc(fcn) == 0
+
+
+def test_merge_func_code():
+    funccode, [pf, pg, ph] = util.merge_func_code(f, g, h)
+    assert funccode.co_varnames == ["x", "y", "z", "a", "b", "c", "d"]
+    assert tuple(pf) == (0, 1, 2)
+    assert tuple(pg) == (0, 3, 4)
+    assert tuple(ph) == (0, 5, 6)
+
+
+def test_merge_func_code_prefix():
+    funccode, [pf, pg, ph] = util.merge_func_code(
+        f, g, h, prefix=["f_", "g_", "h_"], skip_first=True
+    )
+    expected = ["x", "f_y", "f_z", "g_a", "g_b", "h_c", "h_d"]
+    assert funccode.co_varnames == expected
+    assert tuple(pf) == (0, 1, 2)
+    assert tuple(pg) == (0, 3, 4)
+    assert tuple(ph) == (0, 5, 6)
+
+
+def test_merge_func_code_factor_list():
+    funccode, [pf, pg, pk_1, pk_2] = util.merge_func_code(
+        f, g, prefix=["f_", "g_"], skip_first=True, factor_list=[k_1, k_2]
+    )
+    expected = ["x", "f_y", "f_z", "g_a", "g_b", "g_i", "g_j"]
+    assert funccode.co_varnames == expected
+
+    assert tuple(pf) == (0, 1, 2)
+    assert tuple(pg) == (0, 3, 4)
+    assert tuple(pk_1) == (1, 2)
+    assert tuple(pk_2) == (5, 6)
+
+
+def test_merge_func_code_skip_prefix():
+    funccode, _ = util.merge_func_code(
+        f, f2, prefix=["f_", "g_"], skip_first=True, skip_prefix=["z"]
+    )
+    assert funccode.co_varnames == ["x", "f_y", "z", "g_a"]
+
+
+def test_construct_arg():
+    arg = (1, 2, 3, 4, 5, 6)
+    pos = np.array([0, 2, 4], dtype=np.int)
+    carg = util.construct_arg(arg, pos)
+    assert carg == (1, 3, 5)
