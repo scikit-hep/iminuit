@@ -1183,7 +1183,7 @@ class Minuit:
             # do not change vmin, vmax as title should contain the uncertainties, not plot limits
             axismin, axismax = fig.axes.get_xlim()
             spanmin = max(axismin, vmin)
-            spanmax = min(axinmax, vmax)
+            spanmax = min(axismax, vmax)
             plt.axvspan(spanmin, spanmax, facecolor="0.8")
 
         if text:
