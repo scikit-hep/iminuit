@@ -1162,7 +1162,7 @@ class Minuit:
     def _draw_profile(self, vname, x, y, band, text):
         from matplotlib import pyplot as plt
 
-        plt.plot(x, y)
+        fig, = plt.plot(x, y)
         plt.xlabel(vname)
         plt.ylabel("FCN")
 
@@ -1179,7 +1179,12 @@ class Minuit:
             vmax = v + self.errors[vname]
 
         if vmin is not None and band:
-            plt.axvspan(vmin, vmax, facecolor="0.8")
+            # make sure not to increase the plots size if errors > axes limits
+            # do not change vmin, vmax as title should contain the uncertainties, not plot limits
+            axismin, axismax = fig.axes.get_xlim()
+            spanmin = max(axismin, vmin)
+            spanmax = min(axinmax, vmax)
+            plt.axvspan(spanmin, spanmax, facecolor="0.8")
 
         if text:
             plt.title(
