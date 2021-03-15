@@ -1180,7 +1180,7 @@ class Minuit:
 
         if vmin is not None and band:
             # make sure not to increase the plots size if errors > axes limits
-            # do not change vmin, vmax as title should contain the uncertainties, not plot limits
+            # don't change vmin, vmax: title should contain the errors, not the plot limits
             axismin, axismax = fig.axes.get_xlim()
             spanmin = max(axismin, vmin)
             spanmax = min(axismax, vmax)
