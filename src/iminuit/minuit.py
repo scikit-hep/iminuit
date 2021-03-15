@@ -1162,7 +1162,7 @@ class Minuit:
     def _draw_profile(self, vname, x, y, band, text):
         from matplotlib import pyplot as plt
 
-        fig, = plt.plot(x, y)
+        (fig,) = plt.plot(x, y)
         plt.xlabel(vname)
         plt.ylabel("FCN")
 
