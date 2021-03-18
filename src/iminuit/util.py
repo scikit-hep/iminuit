@@ -79,6 +79,10 @@ class BasicView:
         s += ">"
         return s
 
+    def to_dict(self):
+        """Obtain dict representation"""
+        return dict(zip(self._minuit._pos2var, self))
+
 
 def _ndim(obj):
     nd = 0

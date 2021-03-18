@@ -71,6 +71,12 @@ def test_ValueView():
     v[:"z"] = 2
     assert_equal(v, (2, 2, 3))
 
+    v_dict = v.to_dict()
+    assert isinstance(v_dict, dict)
+    assert v_dict['x'] == v['x']
+    assert v_dict['y'] == v['y']
+    assert v_dict['z'] == v['z']
+
 
 def test_Matrix():
     m = util.Matrix(("a", "b"))
