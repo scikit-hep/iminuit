@@ -73,9 +73,9 @@ def test_ValueView():
 
     v_dict = v.to_dict()
     assert isinstance(v_dict, dict)
-    assert v_dict['x'] == v['x']
-    assert v_dict['y'] == v['y']
-    assert v_dict['z'] == v['z']
+    assert v_dict["x"] == v["x"]
+    assert v_dict["y"] == v["y"]
+    assert v_dict["z"] == v["z"]
 
 
 def test_Matrix():
