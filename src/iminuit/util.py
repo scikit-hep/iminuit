@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from . import _repr_html
 from . import _repr_text
 import numpy as np
+from typing import Dict
 
 inf = float("infinity")
 
@@ -79,7 +80,7 @@ class BasicView:
         s += ">"
         return s
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, float]:
         """Obtain dict representation"""
         return dict(zip(self._minuit._pos2var, self))
 
