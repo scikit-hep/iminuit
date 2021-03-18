@@ -81,7 +81,7 @@ class BasicView:
         return s
 
     def to_dict(self) -> Dict[str, float]:
-        """Obtain dict representation"""
+        """Obtain dict representation."""
         return dict(zip(self._minuit._pos2var, self))
 
 
