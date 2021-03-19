@@ -412,6 +412,20 @@ def test_addable_cost_1():
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
     assert lsq31212.func_code.co_varnames == ("c", "a", "b")
 
+    lsq1_ = LeastSquares(1, 2, 3, model1)
+    lsq11_ = lsq1 + lsq1_
+    assert lsq11_._items == [lsq1, lsq1_]
+    assert lsq11_.func_code.co_argcount == 1
+    assert lsq11_.func_code.co_varnames == ("a",)
+    assert lsq11_(1, 2) == lsq1(1)
+    lsq1_.rename_parameter("a", "d")
+    lsq11_ = lsq1 + lsq1_
+    assert lsq11_._items == [lsq1, lsq1_]
+    assert lsq11_.func_code.co_argcount == 2
+    assert lsq11_.func_code.co_varnames == ("a", "d")
+    assert lsq11_(1, 2) == lsq1(1) + lsq1(2)
+
+
 
 def test_addable_cost_2():
     ref = NormalConstraint("a", 1, 2), NormalConstraint(("b", "a"), (1, 1), (2, 2))
