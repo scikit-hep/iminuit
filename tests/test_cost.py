@@ -13,7 +13,7 @@ from iminuit.cost import (
     _log_poisson_part,
     _spd_transform,
 )
-from iminuit.util import make_func_code
+from iminuit.util import make_func_code, describe
 from collections.abc import Sequence
 
 stats = pytest.importorskip("scipy.stats")
@@ -61,6 +61,11 @@ def test_UnbinnedNLL(unbinned, verbose):
         Minuit(cost, mu=0, sigma=1)
     Minuit(cost, mu=0, sigma_new=1)
 
+    cost.rename_parameter('mu', 'mu_')
+    assert describe(cost) == ('mu_', 'sigma_new')
+    with pytest.raises(ValueError):
+        cost.rename_parameter('aaa', 'a')
+
 
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedUnbinnedNLL(unbinned, verbose):
@@ -84,6 +89,11 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
         Minuit(cost, n=len(x), mu=0, sigma=1)
     Minuit(cost, n=len(x), mu=0, sigma_new=1)
 
+    cost.rename_parameter('mu', 'mu_')
+    assert describe(cost) == ('n', 'mu_', 'sigma_new')
+    with pytest.raises(ValueError):
+        cost.rename_parameter('aaa', 'a')
+
 
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_BinnedNLL(binned, verbose):
@@ -106,6 +116,11 @@ def test_BinnedNLL(binned, verbose):
     with pytest.raises(RuntimeError):
         Minuit(cost, mu=0, sigma=1)
     Minuit(cost, mu=0, sigma_new=1)
+
+    cost.rename_parameter('mu', 'mu_')
+    assert describe(cost) == ('mu_', 'sigma_new')
+    with pytest.raises(ValueError):
+        cost.rename_parameter('aaa', 'a')
 
 
 def test_weighted_BinnedNLL():
@@ -164,6 +179,11 @@ def test_ExtendedBinnedNLL(binned, verbose):
     with pytest.raises(RuntimeError):
         Minuit(cost, n=mle[0], mu=0, sigma=1)
     Minuit(cost, n=mle[0], mu=0, sigma_new=1)
+
+    cost.rename_parameter('mu', 'mu_')
+    assert describe(cost) == ('n', 'mu_', 'sigma_new')
+    with pytest.raises(ValueError):
+        cost.rename_parameter('aaa', 'a')
 
 
 def test_weighted_ExtendedBinnedNLL():

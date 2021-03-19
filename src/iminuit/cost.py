@@ -111,6 +111,17 @@ class Cost:
     def func_code(self, value):
         self._func_code = value
 
+    def rename_parameter(self, old_name: str, new_name: str):
+        """Rename a parameter of the model attached to the Cost function."""
+        params = list(describe(self))
+
+        try:
+            params[params.index(old_name)] = new_name
+        except ValueError:
+            raise ValueError(f"Parameter '{old_name}' does not exist in: {params}")
+
+        self._func_code = make_func_code(params)
+
     @property
     def verbose(self):
         """
