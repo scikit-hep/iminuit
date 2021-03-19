@@ -13,6 +13,7 @@ from iminuit.cost import (
     _log_poisson_part,
     _spd_transform,
 )
+from iminuit.util import make_func_code
 from collections.abc import Sequence
 
 stats = pytest.importorskip("scipy.stats")
@@ -53,6 +54,13 @@ def test_UnbinnedNLL(unbinned, verbose):
     assert_allclose(m.values, mle[1:], atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
+    assert describe(cost) == ('mu', 'sigma')
+    cost.func_code = make_func_code(['mu', 'sigma_new'])
+    assert describe(cost) == ('mu', 'sigma_new')
+    with pytest.raises(RuntimeError):
+        Minuit(cost, mu=0, sigma=1)
+    Minuit(cost, mu=0, sigma_new=1)
+
 
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedUnbinnedNLL(unbinned, verbose):
@@ -69,6 +77,13 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
     assert_allclose(m.values, mle, atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
+    assert describe(cost) == ('n', 'mu', 'sigma')
+    cost.func_code = make_func_code(['n', 'mu', 'sigma_new'])
+    assert describe(cost) == ('n', 'mu', 'sigma_new')
+    with pytest.raises(RuntimeError):
+        Minuit(cost, n=len(x), mu=0, sigma=1)
+    Minuit(cost, n=len(x), mu=0, sigma_new=1)
+
 
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_BinnedNLL(binned, verbose):
@@ -84,6 +99,13 @@ def test_BinnedNLL(binned, verbose):
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle[1:], rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+
+    assert describe(cost) == ('mu', 'sigma')
+    cost.func_code = make_func_code(['mu', 'sigma_new'])
+    assert describe(cost) == ('mu', 'sigma_new')
+    with pytest.raises(RuntimeError):
+        Minuit(cost, mu=0, sigma=1)
+    Minuit(cost, mu=0, sigma_new=1)
 
 
 def test_weighted_BinnedNLL():
@@ -135,6 +157,13 @@ def test_ExtendedBinnedNLL(binned, verbose):
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+
+    assert describe(cost) == ('n', 'mu', 'sigma')
+    cost.func_code = make_func_code(['n', 'mu', 'sigma_new'])
+    assert describe(cost) == ('n', 'mu', 'sigma_new')
+    with pytest.raises(RuntimeError):
+        Minuit(cost, n=mle[0], mu=0, sigma=1)
+    Minuit(cost, n=mle[0], mu=0, sigma_new=1)
 
 
 def test_weighted_ExtendedBinnedNLL():

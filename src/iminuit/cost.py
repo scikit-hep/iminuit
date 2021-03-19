@@ -100,8 +100,16 @@ class Cost:
 
     @property
     def func_code(self):
-        """For internal use."""
+        """
+        Tuple describing function signature.
+        You can make a funccode from describable object by::
+            make_func_code(["x", "y"])
+        """
         return self._func_code
+
+    @func_code.setter
+    def func_code(self, value):
+        self._func_code = value
 
     @property
     def verbose(self):
