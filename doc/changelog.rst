@@ -14,6 +14,7 @@ New features
   This functionality makes it possible to merge function codes into compound objects,
   allowing one to build more complex cost functions easily.
   See for example ``tutorials/generic_least_squares_function.ipynb``.
+- ``iminuit.util.BasicView.to_dict`` added, by @watsonjj
 
 2.4.0 (February 10, 2021)
 -------------------------
