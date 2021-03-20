@@ -54,15 +54,15 @@ def test_UnbinnedNLL(unbinned, verbose):
     assert_allclose(m.values, mle[1:], atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
-    assert cost.func_code.co_varnames == ("mu", "sigma")
+    assert_equal(cost.func_code.co_varnames, ("mu", "sigma"))
     cost.func_code = make_func_code(["mu", "sigma_new"])
-    assert cost.func_code.co_varnames == ("mu", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("mu", "sigma_new"))
     with pytest.raises(RuntimeError):
         Minuit(cost, mu=0, sigma=1)
     Minuit(cost, mu=0, sigma_new=1)
 
     cost.rename_parameter("mu", "mu_")
-    assert cost.func_code.co_varnames == ("mu_", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("mu_", "sigma_new"))
     with pytest.raises(ValueError):
         cost.rename_parameter("aaa", "a")
 
@@ -82,15 +82,15 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
     assert_allclose(m.values, mle, atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
-    assert cost.func_code.co_varnames == ("n", "mu", "sigma")
+    assert_equal(cost.func_code.co_varnames, ("n", "mu", "sigma"))
     cost.func_code = make_func_code(["n", "mu", "sigma_new"])
-    assert cost.func_code.co_varnames == ("n", "mu", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("n", "mu", "sigma_new"))
     with pytest.raises(RuntimeError):
         Minuit(cost, n=len(x), mu=0, sigma=1)
     Minuit(cost, n=len(x), mu=0, sigma_new=1)
 
     cost.rename_parameter("mu", "mu_")
-    assert cost.func_code.co_varnames == ("n", "mu_", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("n", "mu_", "sigma_new"))
     with pytest.raises(ValueError):
         cost.rename_parameter("aaa", "a")
 
@@ -110,15 +110,15 @@ def test_BinnedNLL(binned, verbose):
     assert_allclose(m.values, mle[1:], rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
-    assert cost.func_code.co_varnames == ("mu", "sigma")
+    assert_equal(cost.func_code.co_varnames, ("mu", "sigma"))
     cost.func_code = make_func_code(["mu", "sigma_new"])
-    assert cost.func_code.co_varnames == ("mu", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("mu", "sigma_new"))
     with pytest.raises(RuntimeError):
         Minuit(cost, mu=0, sigma=1)
     Minuit(cost, mu=0, sigma_new=1)
 
     cost.rename_parameter("mu", "mu_")
-    assert cost.func_code.co_varnames == ("mu_", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("mu_", "sigma_new"))
     with pytest.raises(ValueError):
         cost.rename_parameter("aaa", "a")
 
@@ -173,15 +173,15 @@ def test_ExtendedBinnedNLL(binned, verbose):
     assert_allclose(m.values, mle, rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
 
-    assert cost.func_code.co_varnames == ("n", "mu", "sigma")
+    assert_equal(cost.func_code.co_varnames, ("n", "mu", "sigma"))
     cost.func_code = make_func_code(["n", "mu", "sigma_new"])
-    assert cost.func_code.co_varnames == ("n", "mu", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("n", "mu", "sigma_new"))
     with pytest.raises(RuntimeError):
         Minuit(cost, n=mle[0], mu=0, sigma=1)
     Minuit(cost, n=mle[0], mu=0, sigma_new=1)
 
     cost.rename_parameter("mu", "mu_")
-    assert cost.func_code.co_varnames == ("n", "mu_", "sigma_new")
+    assert_equal(cost.func_code.co_varnames, ("n", "mu_", "sigma_new"))
     with pytest.raises(ValueError):
         cost.rename_parameter("aaa", "a")
 
