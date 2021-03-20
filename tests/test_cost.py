@@ -386,6 +386,7 @@ def test_addable_cost_1():
     assert isinstance(lsq1, LeastSquares)
     assert isinstance(lsq2, LeastSquares)
     assert lsq12.func_code.co_varnames == ("a", "b")
+    assert_equal(lsq12.maps, [(0,), (1, 0)])
 
     assert lsq12(1, 2) == lsq1(1) + lsq2(2, 1)
 

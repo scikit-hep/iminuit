@@ -305,6 +305,11 @@ class CostSum(Cost, Sequence):
         """Get constituent cost function by index."""
         return self._items.__getitem__(key)
 
+    @property
+    def maps(self):
+        """Mapping of parameters."""
+        return self._maps
+
 
 class UnbinnedCost(MaskedCost):
     """Base class for unbinned cost functions."""
