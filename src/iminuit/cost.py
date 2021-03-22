@@ -104,7 +104,8 @@ class Cost:
         Tuple describing function signature.
 
         You can make a funccode from describable object by::
-        make_func_code(["x", "y"]).
+
+            make_func_code(["x", "y"])
         """
         return self._func_code
 

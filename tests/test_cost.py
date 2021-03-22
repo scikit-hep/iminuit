@@ -427,7 +427,6 @@ def test_addable_cost_1():
     assert lsq11_(1, 2) == lsq1(1) + lsq1(2)
 
 
-
 def test_addable_cost_2():
     ref = NormalConstraint("a", 1, 2), NormalConstraint(("b", "a"), (1, 1), (2, 2))
     cs = ref[0] + ref[1]
