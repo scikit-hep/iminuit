@@ -102,8 +102,9 @@ class Cost:
     def func_code(self):
         """
         Tuple describing function signature.
+
         You can make a funccode from describable object by::
-            make_func_code(["x", "y"])
+        make_func_code(["x", "y"]).
         """
         return self._func_code
 
@@ -307,7 +308,7 @@ class CostSum(Cost, Sequence):
 
     @property
     def maps(self):
-        """Mapping of parameters."""
+        """Map of parameters."""
         return self._maps
 
 
