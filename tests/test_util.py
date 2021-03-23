@@ -333,10 +333,19 @@ def test_make_func():
     assert util.describe(f2) == ("a", "z")
     assert f2(1, 2) == f(1, 2)
     assert f1 is not f2
+    f3 = util.make_func(f, "x", b="z")
+    assert util.describe(f3) == ("x", "z")
+    assert f3(1, 2) == f(1, 2)
 
     # check that arguments are not overridden
     assert util.describe(f1) == ("x", "y")
     assert util.describe(f) == ("a", "b")
+
+    with pytest.raises(ValueError):
+        util.make_func(f, "a", "b", "c")
+
+    with pytest.raises(ValueError):
+        util.make_func(f, "a", "b", "c", b="z")
 
 
 def test_make_func_with_non_signature():

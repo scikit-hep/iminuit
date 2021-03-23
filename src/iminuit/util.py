@@ -805,13 +805,17 @@ def make_func(callable, *new_parameters, **replacements):
         for k, v in replacements.items():
             keys[keys.index(k)] = v
     else:
+        # we intentionally do not call describe here
         keys = new_parameters
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
-        if c.co_argcount == len(keys) and hasattr(c, "replace"):
-            code = c.replace(co_varnames=tuple(keys))
-            return types.FunctionType(code, globals())
+        if c.co_argcount:
+            if c.co_argcount != len(keys):
+                raise ValueError("number of parameters do not match")
+            if hasattr(c, "replace"):
+                code = c.replace(co_varnames=tuple(keys))
+                return types.FunctionType(code, globals())
 
     # fallback implementation
     s = ",".join(keys)
