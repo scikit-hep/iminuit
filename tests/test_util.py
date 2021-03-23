@@ -77,10 +77,11 @@ def test_ValueView():
     assert v_dict["y"] == v["y"]
     assert v_dict["z"] == v["z"]
 
-    assert_equal(v[["x", "z", "y"]], (2, 3, 2))
-    assert_equal(v[("x", "z", "y")], (2, 3, 2))
-    assert_equal(v[[0, 1]], (2, 2))
-    assert_equal(v[[2, 0]], (3, 2))
+    v[:] = (1, 2, 3)
+    assert_equal(v[["x", "z"]], (1, 3))
+    assert_equal(v[[2, 0]], (3, 1))
+    v[["x", "z"]] = (3, 1)
+    assert_equal(v, (3, 2, 1))
 
 
 def test_Matrix():
