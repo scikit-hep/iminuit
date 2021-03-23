@@ -843,11 +843,10 @@ def merge_signatures(*callables):
 
     Returns
     -------
-    tuple(func_code, mapping)
-
-    func_code is the tuple of the merged function signature.
-    mapping contains the mapping of parameters indices from the merged signature to the
-    original signatures.
+    tuple(parameters, mapping)
+        parameters is the tuple of the merged parameter names.
+        mapping contains the mapping of parameters indices from the merged signature to
+        the original signatures.
     """
     args = []
     mapping = []
