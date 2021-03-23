@@ -4,6 +4,8 @@
 /probfit
 /iminuit-dev
 /root-*
+/dev
+/venv
 
 /build
 /dist
