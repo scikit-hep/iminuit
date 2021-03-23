@@ -15,7 +15,7 @@
 repos:
 # Standard hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.2.0
+  rev: v3.4.0
   hooks:
   - id: check-case-conflict
   - id: check-docstring-first
@@ -42,7 +42,7 @@ repos:
 
 # Python linter (Flake8)
 - repo: https://gitlab.com/pycqa/flake8
-  rev: 3.8.4
+  rev: 3.9.0
   hooks:
   - id: flake8
 
@@ -54,14 +54,14 @@ repos:
 
 # Python docstring formatting
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 5.1.1
+  rev: 6.0.0
   hooks:
   - id: pydocstyle
     files: src/iminuit/[^_].*\.py
 
 # C++ formatting
 - repo: git://github.com/doublify/pre-commit-clang-format
-  rev: master
+  rev: 62302476d0da01515660132d76902359bed0f782
   hooks:
   - id: clang-format
 

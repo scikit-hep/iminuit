@@ -7,6 +7,7 @@ from . import _repr_html
 from . import _repr_text
 import numpy as np
 from typing import Dict
+import types
 
 inf = float("infinity")
 
@@ -82,7 +83,7 @@ class BasicView:
 
     def to_dict(self) -> Dict[str, float]:
         """Obtain dict representation."""
-        return dict(zip(self._minuit._pos2var, self))
+        return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
 
 def _ndim(obj):
@@ -766,13 +767,95 @@ class MErrors(OrderedDict):
 
 def make_func_code(params):
     """
-    Make a func_code object to fake function signature.
+    Make a func_code object to fake a function signature.
 
-    You can make a funccode from describable object by::
+    Example::
 
-        make_func_code(["x", "y"])
+        def f(a, b): ...
+
+        f.func_code = make_func_code(["x", "y"])
     """
-    return Namespace(co_varnames=params, co_argcount=len(params))
+    return Namespace(co_varnames=tuple(params), co_argcount=len(params))
+
+
+def make_func(callable, *new_parameters, **replacements):
+    """
+    Return new callable with altered parameter names.
+
+    Parameters
+    ----------
+    *new_parameters: sequence of str
+        Replace the first N parameters.
+    **replacements: mapping of str to str
+        Replace argument names (key) with other names (value).
+
+    Returns
+    -------
+    callable with new parameter names.
+    """
+    if replacements:
+        keys = list(describe(callable))
+        if new_parameters:
+            n = len(new_parameters)
+            if n > len(keys):
+                raise ValueError(
+                    "new_parameters has more items then original signature"
+                )
+            keys[:n] = new_parameters
+        for k, v in replacements.items():
+            keys[keys.index(k)] = v
+    else:
+        keys = new_parameters
+
+    if hasattr(callable, "__code__") and callable.__code__.co_argcount == len(keys):
+        code = callable.__code__.replace(co_varnames=tuple(keys))
+        return types.FunctionType(code, globals())
+
+    # fallback implementation
+    s = ",".join(keys)
+    return eval(f"lambda {s} : f({s})", {"f": callable})
+
+
+def merge_signatures(*callables):
+    """
+    Merge signatures of callables with positional arguments.
+
+    This is best explained by an example::
+
+        def f(x, y, z): ...
+
+        def g(x, p): ...
+
+        parameters, mapping = merge_signatures(f, g)
+        # parameters is ('x', 'y', 'z', 'p')
+        # mapping is ((0, 1, 2), (0, 3))
+
+    Parameters
+    ----------
+    callable : callable
+        Callable whose parameters can be extracted with :func:`describe`.
+
+    Returns
+    -------
+    tuple(func_code, mapping)
+
+    func_code is the tuple of the merged function signature.
+    mapping contains the mapping of parameters indices from the merged signature to the
+    original signatures.
+    """
+    args = []
+    mapping = []
+    for f in callables:
+        map = []
+        for i, k in enumerate(describe(f)):
+            if k in args:
+                map.append(args.index(k))
+            else:
+                map.append(len(args))
+                args.append(k)
+        mapping.append(tuple(map))
+
+    return tuple(args), tuple(mapping)
 
 
 def describe(callable):
@@ -967,113 +1050,3 @@ def _address_of_cfunc(fcn):
     if isinstance(fcn, c_sig):
         return cast(fcn, c_void_p).value
     return 0
-
-
-def merge_func_code(
-    *arg, prefix=None, skip_first=False, factor_list=None, skip_prefix=None
-):
-    """
-    Merge function arguments.
-
-        def f(x,y,z): return do_something(x,y,z)
-        def g(x,z,p): return do_something(x,y,z)
-        fc, pos = merge_func_code(f,g)
-        #fc is now ('x','y','z','p')
-
-    Parameters
-    ----------
-        - **prefix** optional array of prefix string to add to each function
-          argument. Default None.::
-
-                def f(x,y,z): return do_something(x,y,z)
-                def g(x,z,p): return do_something(x,y,z)
-                fc, pos = merge_func_code(f,g,prefix=['f','g'], skip_first=True)
-                #fc now ('x','f_y','f_z','f_p')
-
-        - **skip_first** option boolean to skip prefixing the first argument
-          of each function. This should normally be true when prefix is not
-          None.
-
-        - **factor_list** option list of functions. For function that skip_first
-          should not be applied. The choice of prefix applice to factor_list
-          will be in the same order as prefix. Default None
-
-        - **skip_prefix** list of variable names that prefix should not be
-          applied to.
-
-    Returns
-    -------
-        tuple(Merged Func Code, position array)
-
-        position array **p[i][j]** indicates where in the argument list to
-        obtain argument **j** for functin **i**. If fact
-
-    .. seealso::
-
-        construct_arg
-    """
-    if prefix is not None and len(prefix) != len(arg):
-        raise ValueError(
-            "prefix should have the same length as number of ",
-            "functions. Expect %d(%r)" % (len(arg), arg),
-        )
-    all_arg = []
-    skip_prefix = set([]) if skip_prefix is None else set(skip_prefix)
-    for i, f in enumerate(arg):
-        tmp = []
-        first = skip_first
-        for vn in describe(f):
-            newv = vn
-            if not first and prefix is not None and newv not in skip_prefix:
-                newv = prefix[i] + newv
-            first = False
-            tmp.append(newv)
-        all_arg.append(tmp)
-
-    if factor_list is not None:
-        for i, f in enumerate(factor_list):
-            tmp = []
-            for vn in describe(f):
-                newv = vn
-                if prefix is not None and newv not in skip_prefix:
-                    newv = prefix[i] + newv
-                tmp.append(newv)
-            all_arg.append(tmp)
-
-    # now merge it
-    merge_arg = []
-    for a in all_arg:
-        for v in a:
-            if v not in merge_arg:
-                merge_arg.append(v)
-
-    # build the map list of numpy int array
-    pos = []
-    for a in all_arg:
-        tmp = []
-        for v in a:
-            tmp.append(merge_arg.index(v))
-        pos.append(np.array(tmp, dtype=np.int))
-    return Namespace(co_varnames=merge_arg, co_argcount=len(merge_arg)), pos
-
-
-def construct_arg(arg, fpos):
-    """
-    Pick a subset of arg.
-
-    Parameters
-    ----------
-    arg: tuple or function arguments
-        tuple or function arguments
-    fpos: array
-        array of positions, the subset to be picked up from arg
-
-    Returns
-    -------
-    subset of arg
-
-    .. seealso::
-        merge_func_code
-    """
-    arg = np.array(arg)
-    return tuple(arg[fpos])
