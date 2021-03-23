@@ -807,9 +807,11 @@ def make_func(callable, *new_parameters, **replacements):
     else:
         keys = new_parameters
 
-    if hasattr(callable, "__code__") and callable.__code__.co_argcount == len(keys):
-        code = callable.__code__.replace(co_varnames=tuple(keys))
-        return types.FunctionType(code, globals())
+    if hasattr(callable, "__code__"):
+        c = callable.__code__
+        if c.co_argcount == len(keys) and hasattr(c, "replace"):
+            code = c.replace(co_varnames=tuple(keys))
+            return types.FunctionType(code, globals())
 
     # fallback implementation
     s = ",".join(keys)
