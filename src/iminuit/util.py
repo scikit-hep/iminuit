@@ -44,26 +44,32 @@ class BasicView:
         return self._minuit.npar
 
     def __getitem__(self, key):
-        """Get value at key, which can be an index, a parameter name, or a slice."""
+        """
+        Get values of the view.
+
+        Parameters
+        ----------
+        key: int, str, slice, list of int or str
+            If the key is an int or str, return corresponding value.
+            If it is a slice, list of int or str, return the corresponding subset.
+        """
         key = _key2index(self._minuit._var2pos, key)
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            return [self._get(i) for i in ind]
+        if isinstance(key, list):
+            return [self._get(i) for i in key]
         return self._get(key)
 
     def __setitem__(self, key, value):
         """Assign a new value at key, which can be an index, a parameter name, or a slice."""
         self._minuit._copy_state_if_needed()
         key = _key2index(self._minuit._var2pos, key)
-        if isinstance(key, slice):
-            ind = range(*key.indices(len(self)))
-            if _ndim(value) == self._ndim:  # basic broadcasting
-                for i in ind:
+        if isinstance(key, list):
+            if _ndim(value) == self._ndim:  # support basic broadcasting
+                for i in key:
                     self._set(i, value)
             else:
-                if len(value) != len(ind):
+                if len(value) != len(key):
                     raise ValueError("length of argument does not match slice")
-                for i, v in zip(ind, value):
+                for i, v in zip(key, value):
                     self._set(i, v)
         else:
             self._set(key, value)
@@ -943,10 +949,12 @@ def _guess_initial_step(val):
 
 def _key2index(var2pos, key):
     if isinstance(key, slice):
-        sl = key
-        start = _key2index(var2pos, sl.start) if sl.start is not None else None
-        stop = _key2index(var2pos, sl.stop) if sl.stop is not None else None
-        return slice(start, stop, sl.step)
+        step = key.step if key.step is not None else 1
+        start = _key2index(var2pos, key.start) if key.start is not None else 0
+        stop = _key2index(var2pos, key.stop) if key.stop is not None else len(var2pos)
+        return list(range(start, stop, step))
+    if isinstance(key, list):
+        return [_key2index(var2pos, k) for k in key]
     if isinstance(key, int):
         i = key
         if i < 0:
