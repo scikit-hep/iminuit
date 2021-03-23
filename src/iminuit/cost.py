@@ -7,7 +7,7 @@ highest accucary and the most robust results. They are partially accelerated wit
 if numba is available.
 """
 
-from .util import describe, make_func_code
+from .util import describe, make_func_code, merge_signatures
 import numpy as np
 from collections.abc import Sequence
 from typing import Tuple
@@ -216,7 +216,7 @@ class CostSum(Cost, Sequence):
         csum = nll + lsq + ncs
 
     CostSum is used to combine data from different experiments or to combine normal cost
-    functions with soft constraints (see NormalConstraint).
+    functions with penalty terms (see NormalConstraint).
 
     The parameters of CostSum are the union of all parameters of its constituents.
 
@@ -255,28 +255,15 @@ class CostSum(Cost, Sequence):
                     self._items.append(Constant(item))
             else:
                 self._items.append(item)
-        args = self._update()
+        args, self._maps = merge_signatures(self._items)
         super().__init__(args, max(c.verbose for c in self._items))
 
     def _call(self, args):
         r = 0.0
-        for c, m in zip(self._items, self._maps):
-            a = tuple(args[mi] for mi in m)
-            r += c._call(a)
+        for c, map in zip(self._items, self._maps):
+            c_args = tuple(args[i] for i in map)
+            r += c._call(c_args)
         return r
-
-    def _update(self):
-        out_args = []
-        in_args = tuple(c._func_code.co_varnames for c in self._items)
-        for args in in_args:
-            for arg in args:
-                if arg not in out_args:
-                    out_args.append(arg)
-        self._maps = []
-        for args in in_args:
-            pos = tuple(out_args.index(arg) for arg in args)
-            self._maps.append(pos)
-        return tuple(out_args)
 
     def __len__(self):
         """Return number of constituent cost functions."""
