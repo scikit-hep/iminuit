@@ -216,7 +216,7 @@ class CostSum(Cost, Sequence):
         csum = nll + lsq + ncs
 
     CostSum is used to combine data from different experiments or to combine normal cost
-    functions with soft constraints (see NormalConstraint).
+    functions with penalty terms (see NormalConstraint).
 
     The parameters of CostSum are the union of all parameters of its constituents.
 
@@ -255,7 +255,7 @@ class CostSum(Cost, Sequence):
                     self._items.append(Constant(item))
             else:
                 self._items.append(item)
-        args, self._maps = merge_signatures(*self._items)
+        args, self._maps = merge_signatures(self._items)
         super().__init__(args, max(c.verbose for c in self._items))
 
     def _call(self, args):

@@ -365,7 +365,7 @@ def test_merge_signatures():
     def g(x, a, b):
         return x + a + b
 
-    args, (pf, pg) = util.merge_signatures(f, g)
+    args, (pf, pg) = util.merge_signatures([f, g])
     assert args == ("x", "y", "z", "a", "b")
     assert pf == (0, 1, 2)
     assert pg == (0, 3, 4)

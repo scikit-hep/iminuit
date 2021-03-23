@@ -819,7 +819,7 @@ def make_with_signature(callable, *varnames, **replacements):
     return eval(f"lambda {s} : f({s})", {"f": callable})
 
 
-def merge_signatures(*callables):
+def merge_signatures(callables):
     """
     Merge signatures of callables with positional arguments.
 
