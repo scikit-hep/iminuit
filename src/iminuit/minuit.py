@@ -1015,7 +1015,7 @@ class Minuit:
 
         x = np.linspace(bound[0], bound[1], size, dtype=np.double)
         y = np.empty(size, dtype=np.double)
-        status = np.empty(size, dtype=np.bool)
+        status = np.empty(size, dtype=bool)
 
         state = MnUserParameterState(self._last_state)  # copy
         ipar = self._var2pos[vname]
