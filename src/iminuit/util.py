@@ -778,47 +778,44 @@ def make_func_code(params):
     return Namespace(co_varnames=tuple(params), co_argcount=len(params))
 
 
-def make_func(callable, *new_parameters, **replacements):
+def make_with_signature(callable, *varnames, **replacements):
     """
-    Return new callable with altered parameter names.
+    Return new callable with altered signature.
 
     Parameters
     ----------
-    *new_parameters: sequence of str
-        Replace the first N parameters.
+    *varnames: sequence of str
+        Replace the first N argument names with these.
     **replacements: mapping of str to str
-        Replace argument names (key) with other names (value).
+        Replace old argument name (key) with new argument name (value).
 
     Returns
     -------
-    callable with new parameter names.
+    callable with new argument names.
     """
     if replacements:
-        keys = list(describe(callable))
-        if new_parameters:
-            n = len(new_parameters)
-            if n > len(keys):
-                raise ValueError(
-                    "new_parameters has more items then original signature"
-                )
-            keys[:n] = new_parameters
+        new_varnames = varnames
+        varnames = list(describe(callable))
+        if varnames:
+            n = len(new_varnames)
+            if n > len(varnames):
+                raise ValueError("varnames longer than original signature")
+            varnames[:n] = new_varnames
         for k, v in replacements.items():
-            keys[keys.index(k)] = v
-    else:
-        # we intentionally do not call describe here
-        keys = new_parameters
+            varnames[varnames.index(k)] = v
+        varnames = tuple(varnames)
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
         if c.co_argcount:
-            if c.co_argcount != len(keys):
+            if c.co_argcount != len(varnames):
                 raise ValueError("number of parameters do not match")
             if hasattr(c, "replace"):
-                code = c.replace(co_varnames=tuple(keys))
+                code = c.replace(co_varnames=varnames)
                 return types.FunctionType(code, globals())
 
     # fallback implementation
-    s = ",".join(keys)
+    s = ",".join(varnames)
     return eval(f"lambda {s} : f({s})", {"f": callable})
 
 
@@ -850,6 +847,7 @@ def merge_signatures(*callables):
     """
     args = []
     mapping = []
+
     for f in callables:
         map = []
         for i, k in enumerate(describe(f)):

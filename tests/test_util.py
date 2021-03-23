@@ -322,18 +322,18 @@ def test_make_func_code():
     assert fc.co_argcount == 1
 
 
-def test_make_func():
+def test_make_with_signature():
     def f(a, b):
         return a + b
 
-    f1 = util.make_func(f, "x", "y")
+    f1 = util.make_with_signature(f, "x", "y")
     assert util.describe(f1) == ("x", "y")
     assert f1(1, 2) == f(1, 2)
-    f2 = util.make_func(f, b="z")
+    f2 = util.make_with_signature(f, b="z")
     assert util.describe(f2) == ("a", "z")
     assert f2(1, 2) == f(1, 2)
     assert f1 is not f2
-    f3 = util.make_func(f, "x", b="z")
+    f3 = util.make_with_signature(f, "x", b="z")
     assert util.describe(f3) == ("x", "z")
     assert f3(1, 2) == f(1, 2)
 
@@ -342,17 +342,17 @@ def test_make_func():
     assert util.describe(f) == ("a", "b")
 
     with pytest.raises(ValueError):
-        util.make_func(f, "a", "b", "c")
+        util.make_with_signature(f, "a", "b", "c")
 
     with pytest.raises(ValueError):
-        util.make_func(f, "a", "b", "c", b="z")
+        util.make_with_signature(f, "a", "b", "c", b="z")
 
 
 def test_make_func_with_non_signature():
     def f(*args):
         return args[0]
 
-    f1 = util.make_func(f, "x", "y")
+    f1 = util.make_with_signature(f, "x", "y")
     assert util.describe(f1) == ("x", "y")
     assert f1(1, 2) == f(1, 2)
     assert f1 is not f
