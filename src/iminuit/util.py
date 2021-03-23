@@ -44,11 +44,17 @@ class BasicView:
         return self._minuit.npar
 
     def __getitem__(self, key):
-        """Get value at key, which can be an index, a parameter name, or a slice."""
+        """
+        Get subset of view.
+
+        Key can be an index,a parameter name, a tuple/list, or a slice.
+        """
         key = _key2index(self._minuit._var2pos, key)
         if isinstance(key, slice):
             ind = range(*key.indices(len(self)))
             return [self._get(i) for i in ind]
+        elif isinstance(key, list):
+            return [self._get(i) for i in key]
         return self._get(key)
 
     def __setitem__(self, key, value):
@@ -947,6 +953,8 @@ def _key2index(var2pos, key):
         start = _key2index(var2pos, sl.start) if sl.start is not None else None
         stop = _key2index(var2pos, sl.stop) if sl.stop is not None else None
         return slice(start, stop, sl.step)
+    if isinstance(key, tuple) or isinstance(key, list):
+        return [_key2index(var2pos, k) for k in key]
     if isinstance(key, int):
         i = key
         if i < 0:
