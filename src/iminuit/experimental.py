@@ -10,7 +10,7 @@ Use at your own risk.
 from .util import merge_signatures
 
 
-def expand(*callables):
+def expanded(*callables):
     """
     Return expanded callables with unified signatures.
 
