@@ -45,9 +45,13 @@ class BasicView:
 
     def __getitem__(self, key):
         """
-        Get subset of view.
+        Get values of the view.
 
-        Key can be an index,a parameter name, a tuple/list, or a slice.
+        Parameters
+        ----------
+        key: int, str, slice, list of int or str
+              If the key is an int or str, return corresponding value.
+              If it is a slice, list of int or str, return the corresponding subset. 
         """
         key = _key2index(self._minuit._var2pos, key)
         if isinstance(key, slice):
