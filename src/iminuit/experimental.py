@@ -12,10 +12,11 @@ from .util import merge_signatures
 
 def expand(*callables):
     """
-    Return expanded callables with unified the signatures.
+    Return expanded callables with unified signatures.
 
-    Uses :func:`merge_signatures` to unify the signatures and generates wrapper
-    functions that accept the merged signature.
+    Uses :func:`merge_signatures` to unify the signatures and generates function
+    wrappers that accept the merged signature and call the original function in the
+    correct way.
 
     This is best explained by an example::
 
@@ -24,8 +25,9 @@ def expand(*callables):
         def g(x, p): ...
 
         f2, g2 = expand_functions(f, g)
+
         # f2 is the equivalent of: def f2(x, y, z, p): return f(x, y, z)
-        # g2 is the equivalent of: def g2(x, y, z, p): return f(x, p)
+        # g2 is the equivalent of: def g2(x, y, z, p): return g(x, p)
     """
     varnames, mapping = merge_signatures(callables)
     total = ",".join(varnames)
