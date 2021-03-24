@@ -391,6 +391,22 @@ def test_addable_cost_3():
     assert cs((1, 1)) == pytest.approx(4.5)
 
 
+def test_cost_sum_signature_map():
+    def f(x, a, b):
+        pass
+
+    def g(x, b, c):
+        pass
+
+    c_f = UnbinnedNLL(None, f)
+    c_g = UnbinnedNLL(None, g)
+    c_sum = c_f + c_g
+
+    assert c_sum.func_code.co_varnames == ("a", "b", "c")
+    assert c_sum.signature_map[0] == (0, 1)
+    assert c_sum.signature_map[1] == (1, 2)
+
+
 def test_NormalConstraint_1():
     def model(x, a):
         return a

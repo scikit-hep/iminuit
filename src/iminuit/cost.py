@@ -273,6 +273,36 @@ class CostSum(Cost, Sequence):
         """Get constituent cost function by index."""
         return self._items.__getitem__(key)
 
+    @property
+    def signature_map(self):
+        """
+        Access the signature map for the underlying Cost functions.
+
+        The values in the signature map represent the position of a parameter
+        in this CostSum's signature::
+
+            def f(x, a, b):
+                pass
+
+            def g(x, b, c):
+                pass
+
+            c_f = UnbinnedNLL(data_f, f)
+            c_g = UnbinnedNLL(data_g, g)
+            c_sum = c_f + c_g
+
+            assert c_sum.func_code.co_varnames == ('a', 'b', 'c')
+            assert c_sum.signature_map[0] == (0, 1)
+            assert c_sum.signature_map[1] == (1, 2)
+
+        Returns
+        -------
+        list
+            List of tuples. Each index of the list relates to the underlying
+            Cost function.
+        """
+        return self._maps
+
 
 class UnbinnedCost(MaskedCost):
     """Base class for unbinned cost functions."""
