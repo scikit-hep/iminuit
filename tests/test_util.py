@@ -37,6 +37,11 @@ def test_ValueView():
     assert str(v) == repr(v)
 
     v[:] = (1, 2, 3)
+
+    assert_equal(v[:3], (1, 2, 3))
+    assert_equal(v[0:3], (1, 2, 3))
+    assert_equal(v[0:10], (1, 2, 3))
+
     assert_equal(v, (1, 2, 3))
     v[1:] = 4
     assert_equal(v, (1, 4, 4))

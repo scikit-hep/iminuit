@@ -1035,9 +1035,9 @@ def _guess_initial_step(val):
 
 def _key2index(var2pos, key):
     if isinstance(key, slice):
-        step = key.step if key.step is not None else 1
-        start = _key2index(var2pos, key.start) if key.start is not None else 0
-        stop = _key2index(var2pos, key.stop) if key.stop is not None else len(var2pos)
+        start = var2pos[key.start] if isinstance(key.start, str) else key.start
+        stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
+        start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
         return list(range(start, stop, step))
     if isinstance(key, list):
         return [_key2index(var2pos, k) for k in key]
