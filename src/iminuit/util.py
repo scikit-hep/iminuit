@@ -821,11 +821,14 @@ def make_with_signature(callable, *varnames, **replacements):
                 return types.FunctionType(code, globals())
 
     # fallback implementation
-    def caller(*args):
-        return callable(*args)
+    class Caller:
+        def __init__(self, varnames):
+            self.func_code = make_func_code(varnames)
 
-    caller.func_code = make_func_code(varnames)
-    return caller
+        def __call__(self, *args):
+            return callable(*args)
+
+    return Caller(varnames)
 
 
 def merge_signatures(callables):
