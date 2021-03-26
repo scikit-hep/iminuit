@@ -813,16 +813,22 @@ def make_with_signature(callable, *varnames, **replacements):
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
-        if c.co_argcount:
-            if c.co_argcount != len(varnames):
-                raise ValueError("number of parameters do not match")
-            if hasattr(c, "replace"):
-                code = c.replace(co_varnames=varnames)
-                return types.FunctionType(code, globals())
+        if c.co_argcount != len(varnames):
+            raise ValueError("number of parameters do not match")
+        if hasattr(c, "replace"):  # this was added after 3.6
+            # calling this introduces no overhead compared to original function
+            code = c.replace(co_varnames=varnames)
+            return types.FunctionType(code, globals())
 
-    # fallback implementation
-    s = ",".join(varnames)
-    return eval(f"lambda {s} : f({s})", {"f": callable})
+    # fallback implementation with additional overhead
+    class Caller:
+        def __init__(self, varnames):
+            self.func_code = make_func_code(varnames)
+
+        def __call__(self, *args):
+            return callable(*args)
+
+    return Caller(varnames)
 
 
 def merge_signatures(callables):
