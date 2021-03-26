@@ -821,8 +821,11 @@ def make_with_signature(callable, *varnames, **replacements):
                 return types.FunctionType(code, globals())
 
     # fallback implementation
-    s = ",".join(varnames)
-    return eval(f"lambda {s} : f({s})", {"f": callable})
+    def caller(*args):
+        return callable(*args)
+
+    caller.func_code = make_func_code(varnames)
+    return caller
 
 
 def merge_signatures(callables):

@@ -360,13 +360,16 @@ def test_make_with_signature():
 
 
 def test_make_func_with_non_signature():
-    def f(*args):
-        return args[0]
+    f = sum
 
-    f1 = util.make_with_signature(f, "x", "y")
-    assert util.describe(f1) == ("x", "y")
-    assert f1(1, 2) == f(1, 2)
+    f1 = util.make_with_signature(f, "x")
+    assert util.describe(f1) == ("x",)
+    assert f1([1, 2]) == f([1, 2])
     assert f1 is not f
+
+    f2 = util.make_with_signature(f1, x="a")
+    assert util.describe(f2) == ("a",)
+    assert f2([1, 2]) == f([1, 2])
 
 
 def test_merge_signatures():
