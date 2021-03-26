@@ -76,6 +76,21 @@ def test_Matrix():
     assert_equal(m, ((2, 2), (2, 8)))
     assert_allclose(np.dot(m, (1, 1)), (4, 10))
 
+    # matrix is always square
+
+    m = util.Matrix(("a", "b", "c"))
+    m[:] = np.arange(9).reshape((3, 3))
+    # [0 1 2
+    #  3 4 5
+    #  6 7 8]
+
+    # m1 = m[:2]
+    # assert_equal(m1, [[0, 1], [3, 4]])
+    m2 = m[[0, 2]]
+    assert_equal(m2, [[0, 2], [6, 8]])
+    m3 = m[["a", "c"]]
+    assert_equal(m3, [[0, 2], [6, 8]])
+
     with pytest.raises(TypeError):
         util.Matrix("ab")
 
@@ -333,19 +348,19 @@ def test_make_with_signature():
         return a + b
 
     f1 = util.make_with_signature(f, "x", "y")
-    assert util.describe(f1) == ("x", "y")
+    assert util.describe(f1) == ["x", "y"]
     assert f1(1, 2) == f(1, 2)
     f2 = util.make_with_signature(f, b="z")
-    assert util.describe(f2) == ("a", "z")
+    assert util.describe(f2) == ["a", "z"]
     assert f2(1, 2) == f(1, 2)
     assert f1 is not f2
     f3 = util.make_with_signature(f, "x", b="z")
-    assert util.describe(f3) == ("x", "z")
+    assert util.describe(f3) == ["x", "z"]
     assert f3(1, 2) == f(1, 2)
 
     # check that arguments are not overridden
-    assert util.describe(f1) == ("x", "y")
-    assert util.describe(f) == ("a", "b")
+    assert util.describe(f1) == ["x", "y"]
+    assert util.describe(f) == ["a", "b"]
 
     with pytest.raises(ValueError):
         util.make_with_signature(f, "a", "b", "c")
@@ -359,7 +374,7 @@ def test_make_func_with_non_signature():
         return args[0]
 
     f1 = util.make_with_signature(f, "x", "y")
-    assert util.describe(f1) == ("x", "y")
+    assert util.describe(f1) == ["x", "y"]
     assert f1(1, 2) == f(1, 2)
     assert f1 is not f
 
@@ -372,6 +387,6 @@ def test_merge_signatures():
         return x + a + b
 
     args, (pf, pg) = util.merge_signatures([f, g])
-    assert args == ("x", "y", "z", "a", "b")
+    assert args == ["x", "y", "z", "a", "b"]
     assert pf == (0, 1, 2)
     assert pg == (0, 3, 4)
