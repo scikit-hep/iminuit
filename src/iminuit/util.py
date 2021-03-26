@@ -816,7 +816,7 @@ def make_with_signature(callable, *varnames, **replacements):
         if c.co_argcount:
             if c.co_argcount != len(varnames):
                 raise ValueError("number of parameters do not match")
-            if hasattr(c, "replace"):
+            if hasattr(c, "replace"):  # this was added after 3.6
                 code = c.replace(co_varnames=varnames)
                 return types.FunctionType(code, globals())
 

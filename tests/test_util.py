@@ -359,17 +359,22 @@ def test_make_with_signature():
         util.make_with_signature(f, "a", "b", "c", b="z")
 
 
-def test_make_func_with_non_signature():
-    f = sum
+def test_make_with_signature_on_func_without_code_object():
+    class Fcn:
+        def __call__(self, x, y):
+            return x + y
 
-    f1 = util.make_with_signature(f, "x")
-    assert util.describe(f1) == ("x",)
-    assert f1([1, 2]) == f([1, 2])
+    f = Fcn()
+    assert not hasattr(f, "__code__")
+
+    f1 = util.make_with_signature(f, "x", "y")
+    assert util.describe(f1) == ("x", "y")
+    assert f1(1, 2) == f(1, 2)
     assert f1 is not f
 
     f2 = util.make_with_signature(f1, x="a")
-    assert util.describe(f2) == ("a",)
-    assert f2([1, 2]) == f([1, 2])
+    assert util.describe(f2) == ("a", "y")
+    assert f2(1, 2) == f(1, 2)
 
 
 def test_merge_signatures():
