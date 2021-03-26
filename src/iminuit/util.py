@@ -287,7 +287,26 @@ class Matrix(np.ndarray):
 
 
 class FMin:
-    """Function minimum view."""
+    """
+    Function minimum view.
+
+    This object provides detailed metadata about the function minimum. Inspect this to
+    check what exactly happened if the fit did not converge. Use the
+    :class:`iminuit.Minuit` object to get the best fit values, their
+    uncertainties, or the function value at the minimum. For convenience, you can also
+    get a basic OK from :class:`iminuit.Minuit` with the methods
+    :attr:`iminuit.Minuit.valid` and :attr:`iminuit.Minuit.accurate`.
+
+    See Also
+    --------
+    :attr:`iminuit.Minuit.values`
+    :attr:`iminuit.Minuit.errors`
+    :attr:`iminuit.Minuit.merrors`
+    :attr:`iminuit.Minuit.covariance`
+    :attr:`iminuit.Minuit.fval`
+    :attr:`iminuit.Minuit.valid`
+    :attr:`iminuit.Minuit.accurate`
+    """
 
     __slots__ = (
         "_src",
