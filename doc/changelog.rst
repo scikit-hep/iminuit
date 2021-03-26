@@ -5,23 +5,31 @@
 Changelog
 =========
 
-2.4.1 (March 6, 2021)
----------------------
+2.5.0
+-----
 
 New features
 ~~~~~~~~~~~~
-- ``iminuit.user.merge_user_func``, ported from probfit, by @mbaak
-  This functionality makes it possible to merge function codes into compound objects,
-  allowing one to build more complex cost functions easily.
-  See for example ``tutorials/generic_least_squares_function.ipynb``.
-- ``iminuit.util.BasicView.to_dict`` added, by @watsonjj
+- ``util.merge_signatures`` added based on ``merge_user_func`` from ``probfit``,
+  by @mbaak
+- ``util.make_with_signature`` added to create new functions with renamed arguments
+- ``util.BasicView.to_dict`` added, by @watsonjj
+- ``util.BasicView`` now supports element selection with sequences like
+  ``numpy.ndarray``
+
+Fixes
+~~~~~
+- ``util.BasicView`` now supports slices of the form ``a[:len(a)]`` or ``a[:M]`` with
+  ``M > len(a)`` like other Python containers
+- ``util.Matrix`` now returns a square matrix when it is used with a slice or item
+  selection
 
 2.4.0 (February 10, 2021)
 -------------------------
 
 New features
 ~~~~~~~~~~~~
-- ``iminuit.minimize``
+- ``minimize``
    - Keyword ``method`` now accepts "migrad" and "simplex"
    - Keyword ``option`` now supports keyword "stra" to set ``Minuit.strategy``
    - ``OptimizeResult.message`` now states if errors are not reliable
@@ -42,7 +50,7 @@ Other
 
 New features
 ~~~~~~~~~~~~
-- ``iminuit.cost.BinnedNLL`` and  ``iminuit.cost.ExtendedBinnedNLL`` now support
+- ``cost.BinnedNLL`` and  ``cost.ExtendedBinnedNLL`` now support
   weighted binned data
 
 Bug-fixes
@@ -62,7 +70,7 @@ Minor improvements
 - ``Minuit.profile``, ``Minuit.mnprofile``, ``Minuit.contour``, ``Minuit.draw_profile``,
   ``Minuit.draw_mnprofile``, and ``Minuit.draw_contour`` can now be called with
   ``subtract_min=True`` even if ``Minuit.fmin`` is None
-- ``iminuit.__version__`` now also displays the ROOT version of the C++ Minuit2 library
+- ``__version__`` now also displays the ROOT version of the C++ Minuit2 library
 - Support for adding constant numbers to cost functions, this allows you to write
   ``sum(cost1, cost2, ...)`` and may be useful to subtract a constant bias from the
   cost
@@ -74,8 +82,8 @@ Other
    - Clarified that iminuit is based on ROOT code
    - List full iminuit version including ROOT version in docs
 - Added type hints to many interfaces (incomplete)
-- Renamed ``iminuit._minuit`` to ``iminuit.minuit``, making the module public
-- Renamed ``iminuit._minimize`` to ``iminuit.minimize``, making the module public
+- Renamed ``_minuit`` to ``minuit``, making the module public
+- Renamed ``_minimize`` to ``minimize``, making the module public
 - pydocstyle added to pre-commit checks
 
 2.2.0 (December 20, 2020)
@@ -83,9 +91,9 @@ Other
 
 New features
 ~~~~~~~~~~~~
-- Cost functions in ``iminuit.cost`` are now additive, creating a new cost function with the
+- Cost functions in ``cost`` are now additive, creating a new cost function with the
   union of parameters that returns the sum of the results of the individual cost functions
-- ``iminuit.cost.NormalConstraint`` was added as a means to add soft constraints on a
+- ``cost.NormalConstraint`` was added as a means to add soft constraints on a
   parameter, can also be used to set up a covariance matrix between several parameters
 
 Other
@@ -121,7 +129,7 @@ Other
 2.0.0 (December 7, 2020)
 ------------------------
 
-This is a breaking change for iminuit. Interface that was deprecated in 1.x has been removed. In addition, breaking changes were made to the interface to arrive at a clean minimal state that is easier to learn, safer to use, and ready for the long-term future. **To keep existing scripts running, pin your major iminuit version to <2**, i.e. ``pip install 'iminuit<2'`` installs the 1.x series.
+This is a breaking change for  Interface that was deprecated in 1.x has been removed. In addition, breaking changes were made to the interface to arrive at a clean minimal state that is easier to learn, safer to use, and ready for the long-term future. **To keep existing scripts running, pin your major iminuit version to <2**, i.e. ``pip install 'iminuit<2'`` installs the 1.x series.
 
 Under the hood, Cython was replaced with pybind11 to generate the bindings to the C++ Minuit2 library. This simplified the code considerably (Cython is bad at generating correct C++ bindings, while it is a breeze with pybind11).
 
@@ -181,7 +189,7 @@ Removed and changed interface (breaking changes)
 
 - ``Minuit.fitarg`` was removed; to copy state use ``m2.values = m1.values; m2.limits = m1.limits`` etc. (Minuit object may become copyable and pickleable in the future)
 - ``Minuit.matrix`` was removed; see ``Minuit.covariance``
-- ``Minuit.covariance`` instead of a dict-like class is now an enhanced subclass of numpy.ndarray (iminuit.util.Matrix) with the features:
+- ``Minuit.covariance`` instead of a dict-like class is now an enhanced subclass of numpy.ndarray (util.Matrix) with the features:
 
   - Behaves like a numpy.ndarray in numerical computations
   - Rich display of the matrix in ipython and Jupyter notebook
@@ -262,7 +270,7 @@ Other changes
 - Documentation update and clean up
 - Logging messages from C++ Minuit2, which are produced when ``Minuit.print_level`` is set to 1 to 3 are now properly shown inside the notebook or the Python session instead of being printed to the terminal
 - Assigning to ``Minuit.print_level`` changes the logging threshold for all current and future ``Minuit`` instances in the current Python session, this is not really desired but cannot be avoided since the C++ logger is a global variable
-- docstring parsing for ``iminuit.util.describe`` was rewritten; behaviour of ``describe`` for corner cases of functions with positional and variable number of positional and keyword arguments are now well-defined
+- docstring parsing for ``util.describe`` was rewritten; behaviour of ``describe`` for corner cases of functions with positional and variable number of positional and keyword arguments are now well-defined
 - iminuit now has 100 % line coverage by unit tests
 
 1.5.4 (November 21, 2020)
@@ -341,15 +349,15 @@ Deprecated
 1.4.7 (July, 15, 2020)
 ----------------------
 
-- Fixed: ``iminuit.cost.LeastSquares`` failed when ``yerror`` is passed as list and mask is set
+- Fixed: ``cost.LeastSquares`` failed when ``yerror`` is passed as list and mask is set
 
 1.4.6 (July, 11, 2020)
 ----------------------
 
 - Update to Minuit2 C++ code to ROOT v6.23-01
 - Fixed: iminuit now reports an invalid fit if a cost function has only a maximum, not a minimum (fixed upstream)
-- Loss function in ``iminuit.cost.LeastSquares`` is now mutable
-- Cost functions in ``iminuit.cost`` now support value masks
+- Loss function in ``cost.LeastSquares`` is now mutable
+- Cost functions in ``cost`` now support value masks
 - Documentation improvements
 - Fixed a deprecation warning in ``Minuit.mnprofile``
 - Binder now uses wheels instead of compiling current iminuit
@@ -431,7 +439,7 @@ Bug-fixes
 - Fixed an exception in the rich display when results were NaN
 - ``Minuit.migrad_ok()`` (now replaced by `Minuit.accurate`) now returns false if HESSE failed after MIGRAD and made the minimum invalid
 - Running ``Minuit.hesse()`` now properly updates the function minimum
-- Fixed incorrect ``hess_inv`` returned by ``iminuit.minimize``
+- Fixed incorrect ``hess_inv`` returned by ``minimize``
 - Fixed duplicated printing of pedantic warning messages
 
 Deprecated
@@ -454,7 +462,7 @@ New features
 - iminuit now uses the PDG formatting rule for quantities with errors
 - slicing and basic broadcasting support for ``Minuit.values``, ``Minuit.errors``, ``Minuit.fixed``, e.g. the following works: ``m.fixed[:] = True``, ``m.values[:2] = [1, 2]``
 - ``Minuit.migrad(ncall=0)`` (the default) now uses MINUITs internal heuristic instead of a flat limit of 10000 calls
-- ``iminuit.minimize`` now supports the ``tol`` parameter
+- ``minimize`` now supports the ``tol`` parameter
 - `Minuit` now supports ``print_level=3``, which shows debug level information when MIGRAD runs
 - Binder support and Binder badge for tutorial notebooks added by @matthewfeickert
 
@@ -591,7 +599,7 @@ Documentation
 - For Numpy users, a second callback function interface and a ``Minuit.from_array_func`` constructor
   was added, where the parameters are passed as an array.
 - Results are now also available as Numpy arrays, e.g. ``np_values``, ``np_errors`` and ``np_covariance``.
-- A wrapper function ``iminuit.minimize`` for the MIGRAD optimiser was added,
+- A wrapper function ``minimize`` for the MIGRAD optimiser was added,
   that has the same arguments and return value format as ``scipy.optimize.minimize``.
 - Support for analytical gradients has been added, users can pass a ``grad`` callback function.
   This works, but for unknown reasons doesn't lead to performance improvements yet.
