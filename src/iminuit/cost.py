@@ -633,28 +633,27 @@ class LeastSquares(MaskedCost):
 
 class NormalConstraint(Cost):
     """
-    Soft gaussian constraint on one or several parameters.
+    Gaussian penalty for one or several parameters.
 
-    The Gaussian constraint acts like a pseudo-measurement of the parameter itself, based
-    on a (multi-variate) normal distribution. Gaussian constraints can be set for one or
+    The Gaussian penalty acts like a pseudo-measurement of the parameter itself, based
+    on a (multi-variate) normal distribution. Penalties can be set for one or
     several parameters at once (which is more efficient). When several parameter are
     constrained, one can specify the full covariance matrix of the parameters.
 
     Notes
     -----
-    It is sometimes necessary to add a weak Gaussian constraint on a parameter to avoid
+    It is sometimes necessary to add a weak penalty on a parameter to avoid
     instabilities in the fit. A typical example in high-energy physics is the fit of a
-    signal peak above some background. The signal peak typically has an amplitude which is
-    of interest and shape parameters, which are usually nuisance parameters. If the peak
-    in the sample is close to zero, the shape parameters of the signal model become
-    unconstrained by the data and the fit becomes unstable. This can be avoided by adding
-    weak (large uncertainty) gaussian constraints on the shape parameters whose pull is
-    negligible if the peak amplitude is non-zero.
+    signal peak above some background. If the amplitude of the peak vanishes, the shape
+    parameters of the peak become unconstrained and the fit becomes unstable. This can
+    be avoided by adding weak (large uncertainty) penalty on the shape parameters whose
+    pull is negligible if the peak amplitude is non-zero.
 
     This class can also be used to approximately include external measurements of some
     parameters, if the original cost function is not available or too costly to compute.
-    If the external measurement was performed in the asymptotic limit with a large sample,
-    a normal constraint is an accurate statistical representation of the external result.
+    If the external measurement was performed in the asymptotic limit with a large
+    sample, a Gaussian penalty is an accurate statistical representation of the
+    external result.
     """
 
     __slots__ = "_value", "_cov", "_covinv"
