@@ -2,11 +2,10 @@
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
-from collections.abc import Iterable
 from . import _repr_html
 from . import _repr_text
 import numpy as np
-from typing import Dict
+from typing import Dict, Sequence, Iterable
 import types
 
 inf = float("infinity")
@@ -222,12 +221,18 @@ class Matrix(np.ndarray):
 
     def __getitem__(self, key):
         """Get matrix element at key."""
-        var2pos = self._var2pos
-        if var2pos is not None:
-            if isinstance(key, tuple):
-                key = tuple((k if isinstance(k, int) else var2pos[k]) for k in key)
-            elif isinstance(key, str):
-                key = var2pos[key]
+        var2pos = self._var2pos or {}
+        if isinstance(key, tuple):  # tuple is special case for __getitem__
+            key = tuple(var2pos.get(k, k) for k in key)
+        elif isinstance(key, str):
+            key = var2pos[key]
+        elif isinstance(key, Sequence):
+            key = list(var2pos.get(k, k) for k in key)
+            t = super(Matrix, self).__getitem__(key).T
+            return super(Matrix, t).__getitem__(key).T
+        elif isinstance(key, slice):
+            key = slice(var2pos.get(key.start), var2pos.get(key.stop), key.step)
+            return super(Matrix, self).__getitem__((key, key))
         return super(Matrix, self).__getitem__(key)
 
     def to_table(self):
@@ -820,7 +825,7 @@ def make_with_signature(callable, *varnames, **replacements):
     """
     if replacements:
         new_varnames = varnames
-        varnames = list(describe(callable))
+        varnames = describe(callable)
         if varnames:
             n = len(new_varnames)
             if n > len(varnames):
@@ -889,7 +894,7 @@ def merge_signatures(callables):
                 args.append(k)
         mapping.append(tuple(map))
 
-    return tuple(args), tuple(mapping)
+    return args, mapping
 
 
 def describe(callable):
@@ -903,9 +908,9 @@ def describe(callable):
 
     Returns
     -------
-    tuple
-        Returns a tuple of strings with the parameters names if successful and an empty
-        tuple otherwise.
+    list
+        Returns a list of strings with the parameters names if successful and an empty
+        list otherwise.
 
     Notes
     -----
@@ -962,8 +967,8 @@ def _arguments_from_func_code(obj):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(obj, "func_code"):
         fc = obj.func_code
-        return tuple(fc.co_varnames[: fc.co_argcount])
-    return ()
+        return list(fc.co_varnames[: fc.co_argcount])
+    return []
 
 
 def _arguments_from_inspect(obj):
@@ -971,7 +976,7 @@ def _arguments_from_inspect(obj):
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
     except ValueError:
-        return ()
+        return []
 
     args = []
     for name, par in signature.parameters.items():
@@ -982,14 +987,14 @@ def _arguments_from_inspect(obj):
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
         args.append(name)
-    return tuple(args)
+    return args
 
 
 def _arguments_from_docstring(obj):
     doc = inspect.getdoc(obj)
 
     if doc is None:
-        return ()
+        return []
 
     # Examples of strings we want to parse:
     #   min(iterable, *[, default=obj, key=func]) -> value
@@ -1001,12 +1006,12 @@ def _arguments_from_docstring(obj):
         # we cannot extract the signature in this case
         name = obj.__name__
     except AttributeError:
-        return ()
+        return []
 
     token = name + "("
     start = doc.find(token)
     if start < 0:
-        return ()
+        return []
     start += len(token)
 
     nbrace = 1
@@ -1051,7 +1056,7 @@ def _arguments_from_docstring(obj):
     #   "arg1", "arg2", "key"
     #   "ncall_me", "resume", "nsplit"
 
-    return tuple(items)
+    return items
 
 
 def _guess_initial_step(val):
@@ -1064,16 +1069,15 @@ def _key2index(var2pos, key):
         stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
         start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
         return list(range(start, stop, step))
-    if isinstance(key, list):
+    if isinstance(key, str):
+        return var2pos[key]
+    if isinstance(key, Sequence):
         return [_key2index(var2pos, k) for k in key]
-    if isinstance(key, int):
-        i = key
-        if i < 0:
-            i += len(var2pos)
-        if i < 0 or i >= len(var2pos):
-            raise IndexError
-    else:
-        i = var2pos[key]
+    i = key
+    if i < 0:
+        i += len(var2pos)
+    if i < 0 or i >= len(var2pos):
+        raise IndexError
     return i
 
 
