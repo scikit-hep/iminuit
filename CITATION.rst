@@ -9,7 +9,7 @@ If you use iminuit in a scientific work, we appreciate your citation. A generic 
       DOI={10.5281/zenodo.4310361},
       publisher={Zenodo},
       year={2020},
-      month={Dec}
+      month={Dec},
       url={https://doi.org/10.5281/zenodo.4310361}
     }
 
