@@ -40,7 +40,7 @@ error estimates from likelihood profile analysis.
 * Documentation: http://iminuit.readthedocs.org
 * Source: https://github.com/scikit-hep/iminuit
 * Gitter: https://gitter.im/Scikit-HEP/community
-* License: *MINUIT2* is LGPL and *iminuit* is MIT
+* License: *MINUIT2* is LGPL-2.1 and *iminuit* is MIT
 * Citation: https://doi.org/10.5281/zenodo.3949207
 
 In a nutshell
