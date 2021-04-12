@@ -388,7 +388,7 @@ def test_make_with_signature_on_func_without_code_object():
     assert f1 is not f
 
     f2 = util.make_with_signature(f1, x="a")
-    assert util.describe(f2) == ("a", "y")
+    assert util.describe(f2) == ["a", "y"]
     assert f2(1, 2) == f(1, 2)
 
 
