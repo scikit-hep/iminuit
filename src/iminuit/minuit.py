@@ -308,9 +308,9 @@ class Minuit:
     @property
     def merrors(self) -> mutil.MErrors:
         """
-        Return a dict-like with Minos data objects.
+        Return a dict-like with MINOS data objects.
 
-        The Minos data objects contain the full status information of the Minos run.
+        The MINOS data objects contain the full status information of the MINOS run.
 
         See Also
         --------
@@ -732,26 +732,34 @@ class Minuit:
 
         Notes
         -----
-        Originally this was supposed to use MnScan from C++ Minuit2, but MnScan is broken.
-        It does a 1D scan with 41 steps for each parameter in sequence, so it is not
-        actually scanning the full hypercube. It first scans one parameter, then starts
-        the scan of the second parameter from the best value of the first and so on.
-        Other issues: One cannot configure the number of steps. A gradient and second
-        derivatives are computed for the starting values only to be discarded.
+        The scan can return an invalid minimum, this is not a cause for alarm. It just
+        minimizes the cost function, the EDM value is only computed after the scan found
+        a best point. If the best point still has a bad EDM value, the minimum is
+        considered invalid. But even if it is considered valid, it is probably not
+        accurate, since the tolerance is very lax. One should always run :meth:`migrad`
+        after the scan.
 
-        This implementation here does a full scan of the hypercube in Python. Returning a
-        valid FunctionMinimum object was a major challenge, because C++ Minuit2 does not
-        allow one to initialize data objects with data, it forces one to go through
-        algorithm objects. Because of that design, the Minuit2 C++ interface forces one to
-        compute the gradient and second derivatives for the starting values, even though
-        these are not used in a scan. We turn a disadvantage into an advantage by tricking
-        Minuit2 into computing updates of the step sizes and to estimate the EDM value.
+        This implementation here does a full scan of the hypercube in Python. Originally,
+        this was supposed to use MnScan from C++ Minuit2, but MnScan is unsuitable.
+        It does a 1D scan with 41 steps (not configurable) for each parameter in sequence,
+        so it is not actually scanning the full hypercube. It first scans one parameter,
+        then starts the scan of the second parameter from the best value of the first and
+        so on. This fails easily when the parameters are correlated.
         """
+        # Implementation notes:
+        # Returning a valid FunctionMinimum object was a major challenge, because C++
+        # Minuit2 does not allow one to initialize data objects with data, it forces one
+        # to go through algorithm objects. Because of that design, the Minuit2 C++
+        # interface forces one to compute the gradient and second derivatives for the
+        # starting values, even though these are not used in a scan. We turn a
+        # disadvantage into an advantage here by tricking Minuit2 into computing updates
+        # of the step sizes and to estimate the EDM value.
+
         # Running MnScan would look like this:
-        # scan = MnScan(self._fcn, self._last_state, self.strategy)
-        # fm = scan(0, 0)  # args are ignored
-        # self._last_state = fm.state
-        # self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
+        #  scan = MnScan(self._fcn, self._last_state, self.strategy)
+        #  fm = scan(0, 0)  # args are ignored
+        #  self._last_state = fm.state
+        #  self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
 
         n = self.nfit
         if ncall is None:
@@ -807,14 +815,11 @@ class Minuit:
         r"""
         Run HESSE algorithm to compute asymptotic errors.
 
-        HESSE estimates the covariance matrix by inverting the matrix of
-        `second derivatives (Hesse matrix) at the minimum
-        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. This covariance matrix is valid
-        if your :math:`\chi^2` or likelihood profile looks like a hyperparabola around
-        the minimum. Asymptotically (large samples) this is always the case, but in small
-        samples the uncertainty estimate is approximate. If you want to know how your
-        parameters are correlated, you also need to use this. The MINOS algorithm is
-        another way to estimate parameter uncertainties, see :meth:`minos`.
+        The HESSE method estimates the covariance matrix by inverting the matrix of
+        `second derivatives (HESSE matrix) at the minimum
+        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. To get parameters correlations,
+        you need to use this. The MINOS algorithm is another way to estimate parameter
+        uncertainties, see :meth:`minos`.
 
         Parameters
         ----------
@@ -822,6 +827,18 @@ class Minuit:
             Approximate upper limit for the number of calls made by the HESSE algorithm.
             If set to None, use the adaptive heuristic from the Minuit2 library
             (Default: None).
+
+        Notes
+        -----
+        The covariance matrix is asymptotically (in large samples) valid. By valid we mean
+        that confidence intervals constructed from the errors contain the true value with
+        a well-known coverage probability (68 % for each interval). In finite samples,
+        this is likely to be true if your cost function looks like a hyperparabola around
+        the minimum.
+
+        In practice, the errors very likely have correct coverage if the results from
+        MINOS and HESSE methods agree. It is possible to construct artifical functions
+        where this rule is violated, but in practice it should always work.
 
         See Also
         --------
@@ -865,41 +882,41 @@ class Minuit:
         self, *parameters: str, cl: Optional[float] = None, ncall: Optional[int] = None
     ):
         """
-        Run Minos algorithm to compute confidence intervals.
+        Run MINOS algorithm to compute confidence intervals.
 
-        The Minos algorithm uses the profile likelihood method to compute (generally
+        The MINOS algorithm uses the profile likelihood method to compute (generally
         asymmetric) confidence intervals. It scans the negative log-likelihood or
         (equivalently) the least-squares cost function around the minimum to construct a
         confidence interval.
 
         Notes
         -----
-        Asymptotically (large samples), the Minos interval has a coverage probability
+        Asymptotically (large samples), the MINOS interval has a coverage probability
         equal to the given confidence level. The coverage probability is the probility for
         the interval to contain the true value in repeated identical experiments.
 
         The interval is invariant to transformations and thus not distorted by parameter
         limits, unless the limits intersect with the confidence interval. As a
-        rule-of-thumb: when the confidence intervals computed with the Hesse and Minos
-        algorithms differ strongly, the Minos intervals are preferred. Otherwise, Hesse
+        rule-of-thumb: when the confidence intervals computed with the HESSE and MINOS
+        algorithms differ strongly, the MINOS intervals are preferred. Otherwise, HESSE
         intervals are preferred.
 
-        Running Minos is computationally expensive when there are many fit parameters.
+        Running MINOS is computationally expensive when there are many fit parameters.
         Effectively, it scans over one parameter in small steps and runs a full
         minimisation for all other parameters of the cost function for each scan point.
-        This requires many more function evaluations than running the Hesse algorithm.
+        This requires many more function evaluations than running the HESSE algorithm.
 
         Parameters
         ----------
         *parameters :
-            Names of parameters to generate Minos errors for. If no positional
-            arguments are given, Minos is run for each parameter.
+            Names of parameters to generate MINOS errors for. If no positional
+            arguments are given, MINOS is run for each parameter.
         cl :
             Confidence level for the confidence interval. If None, a standard 68.3 %
             confidence interval is produced (Default: None). Setting this to another
             value requires the scipy module to be installed.
         ncall :
-            Limit the number of calls made by Minos. If None, an adaptive internal
+            Limit the number of calls made by MINOS. If None, an adaptive internal
             heuristic of the Minuit2 library is used (Default: None).
         """
         ncall = 0 if ncall is None else int(ncall)
@@ -981,7 +998,7 @@ class Minuit:
         subtract_min: bool = False,
     ) -> Tuple[Sequence[float], Sequence[float], Sequence[bool]]:
         r"""
-        Get Minos profile over a specified interval.
+        Get MINOS profile over a specified interval.
 
         Scans over one parameter and minimises the function with respect to all other
         parameters for each scan point.
@@ -1045,7 +1062,7 @@ class Minuit:
         text: bool = True,
     ) -> Tuple[Sequence[float], Sequence[float]]:
         r"""
-        Draw Minos profile over a specified interval (requires matplotlib).
+        Draw MINOS profile over a specified interval (requires matplotlib).
 
         See :meth:`mnprofile` for details and shared arguments. The following arguments
         are accepted.
@@ -1053,10 +1070,10 @@ class Minuit:
         Parameters
         ----------
         band :
-            If true, show a band to indicate the Hesse error interval (Default: True).
+            If true, show a band to indicate the HESSE error interval (Default: True).
 
         text :
-            If true, show text a title with the function value and the Hesse error
+            If true, show text a title with the function value and the HESSE error
             (Default: True).
 
         Examples
@@ -1085,7 +1102,7 @@ class Minuit:
         Calculate 1D cost function profile over a range.
 
         A 1D scan of the cost function around the minimum, useful to inspect the
-        minimum. For a fit with several free parameters this is not the same as the Minos
+        minimum. For a fit with several free parameters this is not the same as the MINOS
         profile computed by :meth:`mncontour`.
 
         Parameters
@@ -1146,10 +1163,10 @@ class Minuit:
         Parameters
         ----------
         band :
-            If true, show a band to indicate the Hesse error interval (Default: True).
+            If true, show a band to indicate the HESSE error interval (Default: True).
 
         text :
-            If true, show text a title with the function value and the Hesse error
+            If true, show text a title with the function value and the HESSE error
             (Default: True).
 
         See Also
@@ -1376,7 +1393,7 @@ class Minuit:
         self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
     ) -> Sequence[Sequence[float]]:
         """
-        Draw 2D Minos confidence region (requires matplotlib).
+        Draw 2D MINOS confidence region (requires matplotlib).
 
         See :meth:`mncontour` for details on parameters and interpretation.
 
