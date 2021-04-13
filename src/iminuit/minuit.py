@@ -291,8 +291,8 @@ class Minuit:
         In case of complex fits, it can help to limit some parameters first, run Migrad,
         then remove the limits and run Migrad again. Limits will bias the result only if
         the best fit value is outside the limits, not if it is inside. Limits will affect
-        the estimated HESSE uncertainties if the parameter is close to a limit. They do
-        not affect the MINOS uncertainties, because those are invariant to
+        the estimated Hesse uncertainties if the parameter is close to a limit. They do
+        not affect the Minos uncertainties, because those are invariant to
         transformations and limits are implemented via a variable transformation.
 
         See Also
@@ -308,9 +308,9 @@ class Minuit:
     @property
     def merrors(self) -> mutil.MErrors:
         """
-        Return a dict-like with MINOS data objects.
+        Return a dict-like with Minos data objects.
 
-        The MINOS data objects contain the full status information of the MINOS run.
+        The Minos data objects contain the full status information of the Minos run.
 
         See Also
         --------
@@ -813,18 +813,18 @@ class Minuit:
 
     def hesse(self, ncall: Optional[int] = None):
         r"""
-        Run HESSE algorithm to compute asymptotic errors.
+        Run Hesse algorithm to compute asymptotic errors.
 
-        The HESSE method estimates the covariance matrix by inverting the matrix of
-        `second derivatives (HESSE matrix) at the minimum
+        The Hesse method estimates the covariance matrix by inverting the matrix of
+        `second derivatives (Hesse matrix) at the minimum
         <http://en.wikipedia.org/wiki/Hessian_matrix>`_. To get parameters correlations,
-        you need to use this. The MINOS algorithm is another way to estimate parameter
+        you need to use this. The Minos algorithm is another way to estimate parameter
         uncertainties, see :meth:`minos`.
 
         Parameters
         ----------
         ncall :
-            Approximate upper limit for the number of calls made by the HESSE algorithm.
+            Approximate upper limit for the number of calls made by the Hesse algorithm.
             If set to None, use the adaptive heuristic from the Minuit2 library
             (Default: None).
 
@@ -837,7 +837,7 @@ class Minuit:
         the minimum.
 
         In practice, the errors very likely have correct coverage if the results from
-        MINOS and HESSE methods agree. It is possible to construct artifical functions
+        Minos and Hesse methods agree. It is possible to construct artifical functions
         where this rule is violated, but in practice it should always work.
 
         See Also
@@ -850,7 +850,7 @@ class Minuit:
         # parameters are fixed
         if self.nfit == 0:
             warn(
-                "HESSE called with all parameters fixed",
+                "Hesse called with all parameters fixed",
                 mutil.IMinuitWarning,
                 stacklevel=2,
             )
@@ -872,7 +872,7 @@ class Minuit:
 
         if self._last_state.has_covariance is False:
             if not self._fmin:
-                raise RuntimeError("HESSE Failed")
+                raise RuntimeError("Hesse Failed")
 
         self._make_covariance()
 
@@ -882,41 +882,41 @@ class Minuit:
         self, *parameters: str, cl: Optional[float] = None, ncall: Optional[int] = None
     ):
         """
-        Run MINOS algorithm to compute confidence intervals.
+        Run Minos algorithm to compute confidence intervals.
 
-        The MINOS algorithm uses the profile likelihood method to compute (generally
+        The Minos algorithm uses the profile likelihood method to compute (generally
         asymmetric) confidence intervals. It scans the negative log-likelihood or
         (equivalently) the least-squares cost function around the minimum to construct a
         confidence interval.
 
         Notes
         -----
-        Asymptotically (large samples), the MINOS interval has a coverage probability
+        Asymptotically (large samples), the Minos interval has a coverage probability
         equal to the given confidence level. The coverage probability is the probility for
         the interval to contain the true value in repeated identical experiments.
 
         The interval is invariant to transformations and thus not distorted by parameter
         limits, unless the limits intersect with the confidence interval. As a
-        rule-of-thumb: when the confidence intervals computed with the HESSE and MINOS
-        algorithms differ strongly, the MINOS intervals are preferred. Otherwise, HESSE
+        rule-of-thumb: when the confidence intervals computed with the Hesse and Minos
+        algorithms differ strongly, the Minos intervals are preferred. Otherwise, Hesse
         intervals are preferred.
 
-        Running MINOS is computationally expensive when there are many fit parameters.
+        Running Minos is computationally expensive when there are many fit parameters.
         Effectively, it scans over one parameter in small steps and runs a full
         minimisation for all other parameters of the cost function for each scan point.
-        This requires many more function evaluations than running the HESSE algorithm.
+        This requires many more function evaluations than running the Hesse algorithm.
 
         Parameters
         ----------
         *parameters :
-            Names of parameters to generate MINOS errors for. If no positional
-            arguments are given, MINOS is run for each parameter.
+            Names of parameters to generate Minos errors for. If no positional
+            arguments are given, Minos is run for each parameter.
         cl :
             Confidence level for the confidence interval. If None, a standard 68.3 %
             confidence interval is produced (Default: None). Setting this to another
             value requires the scipy module to be installed.
         ncall :
-            Limit the number of calls made by MINOS. If None, an adaptive internal
+            Limit the number of calls made by Minos. If None, an adaptive internal
             heuristic of the Minuit2 library is used (Default: None).
         """
         ncall = 0 if ncall is None else int(ncall)
@@ -998,7 +998,7 @@ class Minuit:
         subtract_min: bool = False,
     ) -> Tuple[Sequence[float], Sequence[float], Sequence[bool]]:
         r"""
-        Get MINOS profile over a specified interval.
+        Get Minos profile over a specified interval.
 
         Scans over one parameter and minimises the function with respect to all other
         parameters for each scan point.
@@ -1062,7 +1062,7 @@ class Minuit:
         text: bool = True,
     ) -> Tuple[Sequence[float], Sequence[float]]:
         r"""
-        Draw MINOS profile over a specified interval (requires matplotlib).
+        Draw Minos profile over a specified interval (requires matplotlib).
 
         See :meth:`mnprofile` for details and shared arguments. The following arguments
         are accepted.
@@ -1070,10 +1070,10 @@ class Minuit:
         Parameters
         ----------
         band :
-            If true, show a band to indicate the HESSE error interval (Default: True).
+            If true, show a band to indicate the Hesse error interval (Default: True).
 
         text :
-            If true, show text a title with the function value and the HESSE error
+            If true, show text a title with the function value and the Hesse error
             (Default: True).
 
         Examples
@@ -1102,7 +1102,7 @@ class Minuit:
         Calculate 1D cost function profile over a range.
 
         A 1D scan of the cost function around the minimum, useful to inspect the
-        minimum. For a fit with several free parameters this is not the same as the MINOS
+        minimum. For a fit with several free parameters this is not the same as the Minos
         profile computed by :meth:`mncontour`.
 
         Parameters
@@ -1163,10 +1163,10 @@ class Minuit:
         Parameters
         ----------
         band :
-            If true, show a band to indicate the HESSE error interval (Default: True).
+            If true, show a band to indicate the Hesse error interval (Default: True).
 
         text :
-            If true, show text a title with the function value and the HESSE error
+            If true, show text a title with the function value and the Hesse error
             (Default: True).
 
         See Also
@@ -1329,7 +1329,7 @@ class Minuit:
         self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
     ) -> Sequence[Sequence[float]]:
         """
-        Get 2D MINOS confidence region.
+        Get 2D Minos confidence region.
 
         This scans over two parameters and minimises all other free parameters for each
         scan point. This scan produces a statistical confidence region according to the
@@ -1393,7 +1393,7 @@ class Minuit:
         self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
     ) -> Sequence[Sequence[float]]:
         """
-        Draw 2D MINOS confidence region (requires matplotlib).
+        Draw 2D Minos confidence region (requires matplotlib).
 
         See :meth:`mncontour` for details on parameters and interpretation.
 
