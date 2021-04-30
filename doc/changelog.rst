@@ -5,8 +5,8 @@
 Changelog
 =========
 
-2.5.0
------
+2.5.0 (April 30, 2021)
+----------------------
 
 New features
 ~~~~~~~~~~~~
@@ -14,8 +14,9 @@ New features
   by @mbaak
 - ``util.make_with_signature`` added to create new functions with renamed arguments
 - ``util.BasicView.to_dict`` added, by @watsonjj
-- ``util.BasicView`` now supports element selection with sequences like
+- ``util.BasicView`` and ``util.Matrix`` now supports element selection with sequences like
   ``numpy.ndarray``
+- ``util.propagate`` to error propagate covariance matrices from one vector space to another (Jacobi matrix is computed numerically)
 
 Fixes
 ~~~~~
@@ -23,6 +24,18 @@ Fixes
   ``M > len(a)`` like other Python containers
 - ``util.Matrix`` now returns a square matrix when it is used with a slice or item
   selection
+- Missing comma in BibTeX entry shown in CITATION.rst, by Ludwig Neste
+
+Other
+~~~~~
+- ``util.describe`` returns list instead of tuple
+
+Documentation
+~~~~~~~~~~~~~
+- Better docstring for ``util.FMin``
+- New tutorial on how to do simultaneous fits / adding likelihoods, by @watsonjj
+- New tutorial on how to use builtin cost function
+- New tutorial about how to draw error bands around fitted curves
 
 2.4.0 (February 10, 2021)
 -------------------------
