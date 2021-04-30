@@ -797,6 +797,8 @@ class MErrors(OrderedDict):
 
 
 def _jacobi(fn, x, dx, tol):
+    assert np.ndim(x) == 1
+    assert np.ndim(dx) == 1
     assert np.all(dx >= 0)
     assert tol > 0
     y = fn(x)
@@ -822,7 +824,7 @@ def _jacobi(fn, x, dx, tol):
                 break
             esq = np.dot(delta, delta)
             if esq > prev_esq:
-                warnings.warn("no convergence, jacobi matrix may be inaccurate")
+                warnings.warn("no convergence, Jacobi matrix may be inaccurate")
                 # uses previous jac[:, i]
                 break
             jac[:, i] = d

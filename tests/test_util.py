@@ -469,3 +469,29 @@ def test_jacobi():
     for i in range(n):
         jac_ref[i, i] = 1 / x[i]
     np.testing.assert_allclose(jac, jac_ref)
+
+
+def test_jacobi_on_bad_input():
+    x = np.array([1])
+    dx = np.array([0.1])
+    y, jac = util._jacobi(lambda x: np.nan, x, dx, 1e-3)
+
+    np.testing.assert_equal(y, np.nan)
+    np.testing.assert_equal(jac, np.nan)
+
+    x = np.array([1])
+    dx = np.array([0])
+    y, jac = util._jacobi(lambda x: np.nan, x, dx, 1e-3)
+
+    np.testing.assert_equal(y, np.nan)
+    np.testing.assert_equal(jac, 0)
+
+
+def test_jacobi_no_convergence():
+    rng = np.random.default_rng(1)
+
+    x = np.array([1])
+    dx = np.array([1])
+
+    with pytest.warns(UserWarning):
+        util._jacobi(lambda x: rng.normal(), x, dx, 1e-323)
