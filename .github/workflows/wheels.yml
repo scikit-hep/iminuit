@@ -9,8 +9,6 @@ on:
     paths-ignore:
       - 'doc/**'
       - '*.rst'
-  release:
-    types: [published]
 
 env:
   CIBW_BEFORE_BUILD: "python -m pip install numpy --only-binary=:all:"
@@ -64,27 +62,24 @@ jobs:
           path: dist/*.tar.gz
 
   release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [wheels, sdist]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: True
           body: "[See changelog on RTD](https://iminuit.readthedocs.io/en/stable/changelog.html)"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  upload:
-    needs: [wheels, sdist, release]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/download-artifact@v2
-      with:
-        name: artifact
-        path: dist
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
 
-    - uses: pypa/gh-action-pypi-publish@master
-      with:
-        user: __token__
-        password: ${{secrets.pypi_password}}
+      - uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{secrets.pypi_password}}
