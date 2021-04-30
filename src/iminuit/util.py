@@ -7,6 +7,7 @@ from . import _repr_text
 import numpy as np
 from typing import Dict, Sequence, Iterable
 import types
+import warnings
 
 inf = float("infinity")
 
@@ -793,6 +794,76 @@ class MErrors(OrderedDict):
                     break
             key = k
         return OrderedDict.__getitem__(self, key)
+
+
+def _jacobi(fn, x, dx, tol):
+    assert np.ndim(x) == 1
+    assert np.ndim(dx) == 1
+    assert np.all(dx >= 0)
+    assert tol > 0
+    y = fn(x)
+    yrank = np.ndim(y)
+    jac = np.zeros((1 if yrank == 0 else len(y), len(x)))
+    h = np.zeros(len(x))
+    for i, hi in enumerate(dx):
+        if i > 0:
+            h[i - 1] = 0
+        if hi == 0:
+            continue
+        h[i] = hi
+        prev_esq = inf
+        while h[i] > 0:
+            yu = fn(x + h)
+            yd = fn(x - h)
+            du = (yu - y) / h[i]
+            dd = (y - yd) / h[i]
+            d = 0.5 * (du + dd)
+            delta = du - dd
+            if np.all(np.abs(delta) <= tol * np.abs(d)):
+                jac[:, i] = d
+                break
+            esq = np.dot(delta, delta)
+            if esq > prev_esq:
+                warnings.warn("no convergence, Jacobi matrix may be inaccurate")
+                # uses previous jac[:, i]
+                break
+            jac[:, i] = d
+            prev_esq = esq
+            h[i] *= 0.1
+    return y, jac
+
+
+def propagate(fn, x, cov):
+    """
+    Numerically propagates the covariance into a new space.
+
+    The function does error propagation. It computes C' = J C J^T, where C is the
+    covariance matrix of the input, C' the matrix of the output, and J is the Jacobi
+    matrix of first derivatives of the mapping function fn. The Jacobi matrix is
+    computed numerically.
+
+    Parameters
+    ----------
+    fn: callable
+        Vectorized function that computes y = fn(x).
+    x: array-like with shape (N,)
+        Input vector.
+    cov: array-like with shape (N, N)
+        Covariance matrix of input vector.
+
+    Returns
+    -------
+    y, ycov
+        y is the result of fn(x)
+        ycov is the propagated covariance matrix.
+    """
+    x = np.atleast_1d(x)
+    cov = np.atleast_2d(cov)
+    tol = 1e-2
+    dx = (np.diag(cov) * tol) ** 0.5
+    y, jac = _jacobi(fn, x, dx, tol)
+    ycov = np.einsum("ij,kl,jl", jac, jac, cov)
+    return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
 
 
 def make_func_code(params):
