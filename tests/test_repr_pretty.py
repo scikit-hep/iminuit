@@ -173,6 +173,7 @@ def test_FMin():
         is_above_max_edm=False,
         has_reached_call_limit=False,
         has_parameters_at_limit=False,
+        errordef=1,
         state=[],
     )
     fmin = util.FMin(fm, 1, 2, 1, 0.1)

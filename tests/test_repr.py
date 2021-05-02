@@ -118,7 +118,7 @@ def minuit():
 @pytest.fixture
 def fmin_good():
     fm = Namespace(
-        fval=1.23456e-10,
+        fval=11.456,
         edm=1.23456e-10,
         up=0.5,
         is_valid=True,
@@ -131,9 +131,10 @@ def fmin_good():
         is_above_max_edm=False,
         has_reached_call_limit=False,
         has_parameters_at_limit=False,
+        errordef=1,
         state=[],
     )
-    return FMin(fm, 10, 3, 1, 1e-4)
+    return FMin(fm, 10, 3, 10, 1e-4)
 
 
 @pytest.fixture
@@ -152,6 +153,7 @@ def fmin_bad():
         is_above_max_edm=True,
         has_reached_call_limit=True,
         has_parameters_at_limit=True,
+        errordef=1,
         state=[
             Namespace(
                 has_limits=True,
@@ -172,7 +174,7 @@ def test_html_fmin_good(fmin_good):
     # fmt: off
     assert fmin_good._repr_html_() == """<table>
     <tr>
-        <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 1.235e-10 </td>
+        <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 11.46 (chi2/ndof = 1.1) </td>
         <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 10 </td>
     </tr>
     <tr>
