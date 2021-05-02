@@ -359,6 +359,17 @@ class Minuit:
         return self.npar - sum(self.fixed)
 
     @property
+    def ndof(self) -> float:
+        """
+        Get number of degrees of freedom if cost function supports this.
+
+        To support this feature, the cost function has to report the number of data
+        points with a property called ``ndata``. Unbinned cost functions should return
+        infinity.
+        """
+        return self._fcn._ndata() - self.nfit
+
+    @property
     def fmin(self) -> mutil.FMin:
         """
         Get function minimum data object.
@@ -656,7 +667,7 @@ class Minuit:
         self._last_state = fm.state
 
         edm_goal = self._migrad_edm_goal()
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
+        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
         self._make_covariance()
 
         return self  # return self for method chaining and to autodisplay current state
@@ -706,7 +717,7 @@ class Minuit:
         self._last_state = fm.state
 
         edm_goal = max(self._tolerance * fm.errordef, simplex.precision.eps2)
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
+        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
         self._covariance = None
         self._merrors = mutil.MErrors()
 
@@ -805,7 +816,7 @@ class Minuit:
         edm_goal = self._tolerance * self._fcn._errordef
         fm = FunctionMinimum(self._fcn, self._last_state, self.strategy, edm_goal)
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, edm_goal)
+        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
         self._covariance = None
         self._merrors = mutil.MErrors()
 
@@ -864,7 +875,9 @@ class Minuit:
             # can update _fmin which is more efficient
             hesse(self._fcn, fm, ncall)
             self._last_state = fm.state
-            self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self._fmin.edm_goal)
+            self._fmin = mutil.FMin(
+                fm, self.nfcn, self.ngrad, self.ndof, self._fmin.edm_goal
+            )
         else:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin

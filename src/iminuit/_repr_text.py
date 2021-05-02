@@ -1,5 +1,6 @@
 from .pdg_format import _round, _strip
 import re
+import numpy as np
 
 
 def pdg_format(value, *errors):
@@ -45,8 +46,10 @@ def format_line(widths, edges):
 
 
 def fmin_fields(fm):
+    rc = fm.reduced_chi2
     return [
-        f"FCN = {fm.fval:.4g}",
+        f"FCN = {fm.fval:.4g}"
+        + (f" (chi2/ndof = {rc:.1f})" if not np.isnan(rc) else ""),
         f"Nfcn = {fm.nfcn}",
         f"EDM = {fm.edm:.3g} (Goal: {fm.edm_goal:.3g})",
         f"Ngrad = {fm.ngrad}" if fm.ngrad > 0 else "",
