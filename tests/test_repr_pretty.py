@@ -175,7 +175,7 @@ def test_FMin():
         has_parameters_at_limit=False,
         state=[],
     )
-    fmin = util.FMin(fm, 1, 2, 0.1)
+    fmin = util.FMin(fm, 1, 2, 1, 0.1)
 
     with PrintAssert("<FMin ...>") as pr:
         fmin._repr_pretty_(pr, True)

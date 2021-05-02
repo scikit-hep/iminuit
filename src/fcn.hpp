@@ -26,6 +26,8 @@ struct FCN : ROOT::Minuit2::FCNGradientBase {
   std::vector<double> check_vector(std::vector<double> r,
                                    const std::vector<double>& x) const;
 
+  double ndata() const;
+
   py::object fcn_, grad_;
   bool array_call_;
   mutable double errordef_;

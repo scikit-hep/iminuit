@@ -5,6 +5,7 @@
 #include <pybind11/pybind11.h>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <sstream>
 #include <vector>
 #include "type_caster.hpp"
@@ -97,6 +98,11 @@ std::vector<double> FCN::check_vector(std::vector<double> r,
   return r;
 }
 
+double FCN::ndata() const {
+  if (py::hasattr(fcn_, "ndata")) return py::cast<double>(fcn_.attr("ndata"));
+  return std::numeric_limits<double>::quiet_NaN();
+}
+
 void bind_fcn(py::module m) {
 
   py::class_<FCNBase>(m, "FCNBase");
@@ -105,6 +111,7 @@ void bind_fcn(py::module m) {
       .def(py::init<py::object, py::object, bool, double>())
 
       .def("_grad", &FCN::Gradient)
+      .def("_ndata", &FCN::ndata)
       .def_readwrite("_nfcn", &FCN::nfcn_)
       .def_readwrite("_ngrad", &FCN::ngrad_)
       .def_readwrite("_throw_nan", &FCN::throw_nan_)

@@ -319,10 +319,11 @@ class FMin:
         "_has_parameters_at_limit",
         "_nfcn",
         "_ngrad",
+        "_ndof",
         "_edm_goal",
     )
 
-    def __init__(self, fmin, nfcn, ngrad, edm_goal):
+    def __init__(self, fmin, nfcn, ngrad, ndof, edm_goal):
         """Not to be initialized by users."""
         self._src = fmin
         self._has_parameters_at_limit = False
@@ -337,6 +338,7 @@ class FMin:
             self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
         self._nfcn = nfcn
         self._ngrad = ngrad
+        self._ndof = ndof
         self._edm_goal = edm_goal
 
     @property
@@ -365,6 +367,18 @@ class FMin:
     def fval(self):
         """Get cost function value at the minimum."""
         return self._src.fval
+
+    @property
+    def reduced_chi2(self):
+        """
+        Get chi2/ndof of the fit.
+
+        This returns NaN if the cost function is unbinned or does not support
+        reporting the degrees of freedom.
+        """
+        if np.isfinite(self._ndof):
+            return self.fval / self.errordef / self._ndof
+        return np.nan
 
     @property
     def has_parameters_at_limit(self):
@@ -516,7 +530,16 @@ class FMin:
 
     def __eq__(self, other):
         """Return True if all attributes are equal."""
-        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+
+        def relaxed_equal(k, a, b):
+            a = getattr(a, k)
+            b = getattr(b, k)
+            if isinstance(a, float):
+                if np.isnan(a):
+                    return np.isnan(b)
+            return a == b
+
+        return all(relaxed_equal(k, self, other) for k in self.__slots__)
 
     def __repr__(self):
         """Get detailed text representation."""

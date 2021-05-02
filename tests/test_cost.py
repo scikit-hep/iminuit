@@ -47,11 +47,15 @@ def test_UnbinnedNLL(unbinned, verbose):
         return norm(mu, sigma).pdf(x)
 
     cost = UnbinnedNLL(x, pdf, verbose=verbose)
+    assert cost.ndata == np.inf
+
     m = Minuit(cost, mu=0, sigma=1)
     m.limits["sigma"] = (0, None)
     m.migrad()
     assert_allclose(m.values, mle[1:], atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+
+    assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -62,12 +66,16 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
         return n, n * norm(mu, sigma).pdf(x)
 
     cost = ExtendedUnbinnedNLL(x, scaled_pdf, verbose=verbose)
+    assert cost.ndata == np.inf
+
     m = Minuit(cost, n=len(x), mu=0, sigma=1)
     m.limits["n"] = (0, None)
     m.limits["sigma"] = (0, None)
     m.migrad()
     assert_allclose(m.values, mle, atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+
+    assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -78,12 +86,17 @@ def test_BinnedNLL(binned, verbose):
         return norm(mu, sigma).cdf(x)
 
     cost = BinnedNLL(nx, xe, cdf, verbose=verbose)
+    assert cost.ndata == len(nx)
+
     m = Minuit(cost, mu=0, sigma=1)
     m.limits["sigma"] = (0, None)
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle[1:], rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+    assert m.ndof == len(nx) - 2
+
+    assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
 
 
 def test_weighted_BinnedNLL():
@@ -128,6 +141,8 @@ def test_ExtendedBinnedNLL(binned, verbose):
         return n * norm(mu, sigma).cdf(x)
 
     cost = ExtendedBinnedNLL(nx, xe, scaled_cdf, verbose=verbose)
+    assert cost.ndata == len(nx)
+
     m = Minuit(cost, n=mle[0], mu=0, sigma=1)
     m.limits["n"] = (0, None)
     m.limits["sigma"] = (0, None)
@@ -135,6 +150,9 @@ def test_ExtendedBinnedNLL(binned, verbose):
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+    assert m.ndof == len(nx) - 3
+
+    assert_allclose(m.fmin.reduced_chi2, 1, 0.1)
 
 
 def test_weighted_ExtendedBinnedNLL():
@@ -163,25 +181,30 @@ def test_ExtendedBinnedNLL_bad_input():
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_LeastSquares(loss, verbose):
-    np.random.seed(1)
-    x = np.random.rand(20)
-    y = 2 * x + 1
+    rng = np.random.default_rng(1)
+
+    x = np.linspace(0, 1, 1000)
     ye = 0.1
-    y += ye * np.random.randn(len(y))
+    y = rng.normal(2 * x + 1, ye)
 
     def model(x, a, b):
         return a + b * x
 
     cost = LeastSquares(x, y, ye, model, loss=loss, verbose=verbose)
+    assert cost.ndata == len(x)
+
     m = Minuit(cost, a=0, b=0)
     m.migrad()
-    assert_allclose(m.values, (1, 2), rtol=0.03)
+    assert_allclose(m.values, (1, 2), rtol=0.05)
     assert cost.loss == loss
     if loss != "linear":
         cost.loss = "linear"
         assert cost.loss != loss
     m.migrad()
-    assert_allclose(m.values, (1, 2), rtol=0.02)
+    assert_allclose(m.values, (1, 2), rtol=0.05)
+    assert m.ndof == len(x) - 2
+
+    assert_allclose(m.fmin.reduced_chi2, 1, atol=5e-2)
 
 
 def test_LeastSquares_bad_input():
@@ -225,10 +248,12 @@ def test_UnbinnedNLL_properties():
 
 def test_ExtendedUnbinnedNLL_mask():
     c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
+    assert c.ndata == np.inf
 
     assert np.isnan(c(0)) == True
     c.mask = np.arange(3) != 1
     assert np.isnan(c(0)) == False
+    assert c.ndata == np.inf
 
 
 def test_ExtendedUnbinnedNLL_properties():
@@ -244,10 +269,12 @@ def test_ExtendedUnbinnedNLL_properties():
 def test_BinnedNLL_mask():
 
     c = BinnedNLL([5, 1000, 1], [0, 1, 2, 3], expon_cdf)
+    assert c.ndata == 3
 
     c_unmasked = c(1)
     c.mask = np.arange(3) != 1
     assert c(1) < c_unmasked
+    assert c.ndata == 2
 
 
 def test_BinnedNLL_properties():
@@ -272,10 +299,12 @@ def test_BinnedNLL_properties():
 
 def test_ExtendedBinnedNLL_mask():
     c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], expon_cdf)
+    assert c.ndata == 3
 
     c_unmasked = c(2)
     c.mask = np.arange(3) != 1
     assert c(2) < c_unmasked
+    assert c.ndata == 2
 
 
 def test_ExtendedBinnedNLL_properties():
@@ -288,9 +317,22 @@ def test_ExtendedBinnedNLL_properties():
 
 def test_LeastSquares_mask():
     c = LeastSquares([1, 2, 3], [3, np.nan, 4], [1, 1, 1], lambda x, a: x + a)
+    assert c.ndata == 3
     assert np.isnan(c(0)) == True
+
+    m = Minuit(c, 1)
+    assert m.ndof == 2
+    m.migrad()
+    assert not m.valid
+
     c.mask = np.arange(3) != 1
     assert np.isnan(c(0)) == False
+    assert c.ndata == 2
+
+    assert m.ndof == 1
+    m.migrad()
+    assert m.valid
+    assert_equal(m.values, [1.5])
 
 
 def test_LeastSquares_properties():
@@ -337,6 +379,7 @@ def test_addable_cost_1():
     assert isinstance(lsq1, LeastSquares)
     assert isinstance(lsq2, LeastSquares)
     assert lsq12.func_code.co_varnames == ("a", "b")
+    assert lsq12.ndata == 2
 
     assert lsq12(1, 2) == lsq1(1) + lsq2(2, 1)
 
@@ -350,23 +393,28 @@ def test_addable_cost_1():
     lsq121 = lsq12 + lsq1
     assert lsq121._items == [lsq1, lsq2, lsq1]
     assert lsq121.func_code.co_varnames == ("a", "b")
+    assert lsq121.ndata == 3
 
     lsq312 = lsq3 + lsq12
     assert lsq312._items == [lsq3, lsq1, lsq2]
     assert lsq312.func_code.co_varnames == ("c", "a", "b")
+    assert lsq312.ndata == 3
 
     lsq31212 = lsq312 + lsq12
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2]
     assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+    assert lsq31212.ndata == 5
 
     lsq31212 += lsq1
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
     assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+    assert lsq31212.ndata == 6
 
 
 def test_addable_cost_2():
     ref = NormalConstraint("a", 1, 2), NormalConstraint(("b", "a"), (1, 1), (2, 2))
     cs = ref[0] + ref[1]
+    assert cs.ndata == 3
     assert isinstance(cs, Sequence)
     assert len(cs) == 2
     assert cs[0] is ref[0]
@@ -399,6 +447,8 @@ def test_NormalConstraint_1():
     lsq2 = lsq1 + NormalConstraint("a", 1, 0.1)
     assert lsq1.func_code.co_varnames == ("a",)
     assert lsq2.func_code.co_varnames == ("a",)
+    assert lsq1.ndata == 1
+    assert lsq2.ndata == 2
 
     m = Minuit(lsq1, 0)
     m.migrad()
@@ -422,6 +472,8 @@ def test_NormalConstraint_2():
     assert lsq1.func_code.co_varnames == ("a", "b")
     assert lsq2.func_code.co_varnames == ("a", "b")
     assert lsq3.func_code.co_varnames == ("a", "b")
+    assert lsq1.ndata == 2
+    assert lsq2.ndata == 4
 
     m = Minuit(lsq1, 0, 0)
     m.migrad()

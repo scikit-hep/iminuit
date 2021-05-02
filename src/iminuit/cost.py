@@ -91,7 +91,7 @@ except ImportError:  # pragma: no cover
 class Cost:
     """Base class for all cost functions."""
 
-    __slots__ = "_func_code", "_verbose"
+    __slots__ = "_func_code", "_verbose", "_ndata"
 
     @property
     def errordef(self):
@@ -116,10 +116,20 @@ class Cost:
     def verbose(self, value: int):
         self._verbose = value
 
-    def __init__(self, args: Tuple[float], verbose: int):
+    @property
+    def ndata(self):
+        """
+        Return number of points in least-squares fits or bins in a binned fit.
+
+        Infinity is returned if the cost function is unbinned.
+        """
+        return self._ndata
+
+    def __init__(self, args: Tuple[str], ndata: float, verbose: int):
         """For internal use."""
         self._func_code = make_func_code(args)
         self._verbose = verbose
+        self._ndata = ndata
 
     def __add__(self, rhs):
         """
@@ -175,7 +185,7 @@ class Constant(Cost):
     def __init__(self, value: float):
         """Initialize constant with a value."""
         self.value = value
-        super().__init__((), False)
+        super().__init__((), 0.0, False)
 
     def _call(self, args):
         return self.value
@@ -186,9 +196,9 @@ class MaskedCost(Cost):
 
     __slots__ = "_mask", "_masked"
 
-    def __init__(self, args, verbose):
+    def __init__(self, args, ndata, verbose):
         """For internal use."""
-        super().__init__(args, verbose)
+        super().__init__(args, ndata, verbose)
         self.mask = None
 
     @property
@@ -199,6 +209,16 @@ class MaskedCost(Cost):
         the first dimension of a value array, i.e. values[mask]. Default is None.
         """
         return self._mask
+
+    @property
+    def ndata(self):
+        """
+        Return number of points in least-squares fits or bins in a binned fit.
+
+        Infinity is returned if the cost function is unbinned.
+        """
+        n = np.sum(~self._mask) if self._mask is not None else 0
+        return self._ndata - n
 
     @mask.setter
     def mask(self, mask):
@@ -261,7 +281,9 @@ class CostSum(Cost, Sequence):
             else:
                 self._items.append(item)
         args, self._maps = merge_signatures(self._items)
-        super().__init__(args, max(c.verbose for c in self._items))
+        super().__init__(
+            args, sum(c.ndata for c in self._items), max(c.verbose for c in self._items)
+        )
 
     def _call(self, args):
         r = 0.0
@@ -297,7 +319,7 @@ class UnbinnedCost(MaskedCost):
         """For internal use."""
         self._data = _norm(data)
         self._model = model
-        super().__init__(describe(model)[1:], verbose)
+        super().__init__(describe(model)[1:], np.inf, verbose)
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -412,7 +434,7 @@ class BinnedCost(MaskedCost):
         if np.any((np.array(self._n.shape[0]) + 1) != self._xe.shape):
             raise ValueError("n and xe have incompatible shapes")
 
-        super().__init__(describe(model)[1:], verbose)
+        super().__init__(describe(model)[1:], len(n), verbose)
 
 
 class BinnedNLL(BinnedCost):
@@ -621,7 +643,7 @@ class LeastSquares(MaskedCost):
         self._yerror = yerror
         self._model = model
         self.loss = loss
-        super().__init__(describe(self._model)[1:], verbose)
+        super().__init__(describe(self._model)[1:], len(x), verbose)
 
     def _call(self, args):
         x, y, yerror = self._masked
@@ -684,7 +706,7 @@ class NormalConstraint(Cost):
         if self._cov.ndim < 2:
             self._cov **= 2
         self._covinv = _covinv(self._cov)
-        super().__init__(args, False)
+        super().__init__(args, len(self._value), False)
 
     @property
     def covariance(self):
