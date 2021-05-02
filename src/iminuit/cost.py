@@ -163,7 +163,12 @@ class Cost:
 
 
 class Constant(Cost):
-    """Cost function that represents a constant."""
+    """
+    Cost function that represents a constant.
+
+    If your cost function produces results that are far away from O(1), adding a
+    constant that brings the value closer to zero may improve the numerical stability.
+    """
 
     __slots__ = "value"
 
