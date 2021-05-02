@@ -1479,3 +1479,13 @@ def test_minos_without_migrad():
     assert me.is_valid
     assert me.lower == approx(-2, abs=5e-3)
     assert me.upper == approx(2, abs=5e-3)
+
+
+def test_missing_ndata():
+    def fcn(a):
+        return a
+
+    fcn.errordef = 1
+
+    m = Minuit(fcn, 1)
+    assert_equal(m.ndof, np.nan)

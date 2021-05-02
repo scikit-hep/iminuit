@@ -5,8 +5,17 @@
 Changelog
 =========
 
-2.5.1
+2.6.0
 -----
+New features
+~~~~~~~~~~~~
+- Builtin cost functions now report the number of data points with the attribute
+  ``Cost.ndata``
+- New attribute ``Minuit.ndof`` returns the degrees of freedom if the cost function
+  reports it or NaN
+- New attribute ``FMin.reduced_chi2`` to report the reduced chi2 of the fit; returns
+  NaN if the reduced chi2 cannot be computed for the cost function, in case of unbinned
+  maximum-likelihood or when the attribute ``Cost.ndata`` is missing
 
 2.5.0 (April 30, 2021)
 ----------------------
@@ -17,9 +26,10 @@ New features
   by @mbaak
 - ``util.make_with_signature`` added to create new functions with renamed arguments
 - ``util.BasicView.to_dict`` added, by @watsonjj
-- ``util.BasicView`` and ``util.Matrix`` now supports element selection with sequences like
-  ``numpy.ndarray``
-- ``util.propagate`` to error propagate covariance matrices from one vector space to another (Jacobi matrix is computed numerically)
+- ``util.BasicView`` and ``util.Matrix`` now supports element selection with sequences
+  like ``numpy.ndarray``
+- ``util.propagate`` to error propagate covariance matrices from one vector space to
+  another (Jacobi matrix is computed numerically)
 
 Fixes
 ~~~~~
