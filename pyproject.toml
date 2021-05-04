@@ -16,10 +16,3 @@ addopts = "-q -ra --ff"
 testpaths = [
     "tests"
 ]
-
-[tool.flake8]
-max-line-length = 95
-ignore = "E203,W503,E712"
-
-[tool.pydocstyle]
-convention = "numpy"
