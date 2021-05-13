@@ -26,7 +26,6 @@ repos:
   - id: debug-statements
   - id: end-of-file-fixer
   - id: mixed-line-ending
-  - id: requirements-txt-fixer
   - id: sort-simple-yaml
   - id: file-contents-sorter
   - id: trailing-whitespace
@@ -42,13 +41,13 @@ repos:
 
 # Python linter (Flake8)
 - repo: https://gitlab.com/pycqa/flake8
-  rev: 3.9.0
+  rev: 3.9.2
   hooks:
   - id: flake8
 
 # Python formatting
 - repo: https://github.com/psf/black
-  rev: 20.8b1
+  rev: 21.5b1
   hooks:
   - id: black
 
