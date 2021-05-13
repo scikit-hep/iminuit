@@ -1512,3 +1512,4 @@ def test_call_limit_reached_in_hesse():
     m.errordef = 1
     m.migrad(ncall=200)
     assert m.fmin.has_reached_call_limit
+    assert m.fmin.nfcn < 205
