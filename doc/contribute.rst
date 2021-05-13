@@ -40,34 +40,17 @@ Now you are in a feature branch, commit your edits here.
 venv
 ++++
 
-You have the source code now, but you also want to build and test. We recommend to make a dedicated build environment for ``iminuit``, separate from the Python installation you use for other projects.
+You have the source code now, but you also want to build and test. We recommend to make a dedicated virtual environment for ``iminuit``, separate from the Python installation you use for other projects.
 
-One way is to use `Python virtual environments`_ and ``pip`` to install the development packages listed in `requirements-dev.txt`_
+The recommended way is to use `Python virtual environments`_ and ``pip``.
 
 .. code-block:: bash
 
-    python -m venv py3 # folders called py* are ignored by git
+    python -m venv py3 # folders called py* are ignored by .gitignore
     source py3/bin/activate
-    pip install -r requirements-dev.txt
+    pip install -e '.[test]'
 
 To delete the virtual environment just delete the folder ``py3``.
-
-conda
-+++++
-
-Another way is to use `conda`_ environments. You need to install a conda first, e.g. `miniconda`_, then do:
-
-.. code-block:: bash
-
-    conda create -c conda-forge --name iminuit-dev --file requirements-dev.txt
-    conda activate iminuit-dev
-
-To deactivate or delete the environment, do:
-
-.. code-block:: bash
-
-    conda deactivate
-    conda env remove -n iminuit-dev
 
 Development workflow
 --------------------
@@ -78,23 +61,11 @@ To simplify hacking on OSX and Linux, we have a Makefile with common commands. T
 
    make help
 
-Build ``iminuit`` in-place:
+For example, build ``iminuit`` in-place and run the tests:
 
 .. code-block:: bash
 
-   python -m pip install -e .
-
-Run the tests:
-
-.. code-block:: bash
-
-    python -m pytest
-
-Run the notebook tests:
-
-.. code-block:: bash
-
-    python -m pytest tutorial
+   make test
 
 Run the tests and generate a coverage report:
 
@@ -109,6 +80,12 @@ Build the docs:
 
    make doc
    <your-web-browser> doc/_build/html/index.html
+
+To run the notebook tests you need to do:
+
+.. code-block:: bash
+
+   python -m pytest tutorial
 
 Maintainers that prepare a release, should follow the instructions in `doc/README.md`_
 
@@ -125,7 +102,6 @@ To check your ``iminuit`` version number and install location:
 
 .. _conda: https://conda.io/
 .. _miniconda: https://conda.io/en/latest/miniconda.html
-.. _requirements-dev.txt: https://github.com/scikit-hep/iminuit/blob/master/requirements-dev.txt
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/scikit-hep/iminuit
 .. _Makefile: https://github.com/scikit-hep/iminuit/blob/master/Makefile

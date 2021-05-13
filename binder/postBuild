@@ -1,2 +1,1 @@
-python -m pip install iminuit
-python -m pip install -r requirements-dev.txt
+python -m pip install iminuit[test]
