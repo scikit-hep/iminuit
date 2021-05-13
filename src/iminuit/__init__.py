@@ -29,6 +29,6 @@ try:
     from .minuit import Minuit
     from .minimize import minimize
     from .util import describe
-except ImportError:
-    pass
+except ImportError:  # pragma: no cover
+    pass  # pragma: no cover
 from .version import version as __version__
