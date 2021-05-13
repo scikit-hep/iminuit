@@ -4,16 +4,23 @@
 
 Changelog
 =========
-2.7.0
------
 
 2.7.0
 -----
-- Upgrade Minuit2 C++ code in ROOT to latest master with following improvements:
+
+Fixes
+~~~~~
+- Calling ``Minuit.fixed[...] = False`` on parameter that was not fixed before broke
+  lead to undefined behaviour in Minuit2 C++ code
+
+Other
+~~~~~
+- Upgrade Minuit2 C++ code to latest ROOT master with following improvements:
    - Simplified internal class structure, class tags replaced with enums
 
 2.6.0
 -----
+
 New features
 ~~~~~~~~~~~~
 - Builtin cost functions now report the number of data points with the attribute
