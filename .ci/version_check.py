@@ -12,7 +12,7 @@ changelog_fn = project_dir / "doc/changelog.rst"
 with open(version_fn) as f:
     version = {}
     exec(f.read(), version)
-    iminuit_version = version["iminuit_version"]
+    iminuit_version = version["version"]
     root_version = version["root_version"]
 
 # check that root version is up-to-date
