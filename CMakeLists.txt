@@ -21,7 +21,6 @@ add_subdirectory(extern/pybind11)
 file(GLOB SOURCES_A "src/*.cpp")
 set(SOURCES_B
     extern/root/math/minuit2/src/AnalyticalGradientCalculator.cxx
-    extern/root/math/minuit2/src/BasicMinimumError.cxx
     extern/root/math/minuit2/src/BFGSErrorUpdator.cxx
     extern/root/math/minuit2/src/DavidonErrorUpdator.cxx
     extern/root/math/minuit2/src/HessianGradientCalculator.cxx

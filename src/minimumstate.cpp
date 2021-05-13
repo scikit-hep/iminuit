@@ -16,7 +16,6 @@ py::tuple par2py(const MinimumParameters& pars) {
 
 MinimumParameters py2par(py::tuple tp) {
   static_assert(std::is_standard_layout<MinimumParameters>(), "");
-  static_assert(std::is_standard_layout<BasicMinimumParameters>(), "");
 
   struct Layout {
     MnAlgebraicVector fParameters;
@@ -29,8 +28,8 @@ MinimumParameters py2par(py::tuple tp) {
   MinimumParameters pars(py2lavector(tp[0]), py2lavector(tp[1]), tp[2].cast<double>());
 
   // evil workaround, will segfault or cause UB if source layout changes
-  auto& ptr = reinterpret_cast<std::shared_ptr<BasicMinimumParameters>&>(pars);
-  auto d = reinterpret_cast<Layout*>(ptr.get());
+  auto& ptr = reinterpret_cast<std::shared_ptr<Layout>&>(pars);
+  auto d = ptr.get();
   d->fValid = tp[3].cast<bool>();
   d->fHasStep = tp[4].cast<bool>();
 
@@ -45,7 +44,6 @@ py::tuple err2py(const MinimumError& err) {
 
 MinimumError py2err(py::tuple tp) {
   static_assert(std::is_standard_layout<MinimumError>(), "");
-  static_assert(std::is_standard_layout<BasicMinimumError>(), "");
 
   struct Layout {
     MnAlgebraicSymMatrix fMatrix;
@@ -61,8 +59,8 @@ MinimumError py2err(py::tuple tp) {
   MinimumError err(py2lasymmatrix(tp[0]), tp[1].cast<double>());
 
   // evil workaround, will segfault or cause UB if source layout changes
-  auto& ptr = reinterpret_cast<std::shared_ptr<BasicMinimumError>&>(err);
-  auto d = reinterpret_cast<Layout*>(ptr.get());
+  auto& ptr = reinterpret_cast<std::shared_ptr<Layout>&>(err);
+  auto d = ptr.get();
   d->fValid = tp[2].cast<bool>();
   d->fPosDef = tp[3].cast<bool>();
   d->fMadePosDef = tp[4].cast<bool>();
@@ -115,7 +113,6 @@ void bind_minimumstate(py::module m) {
           },
           [](py::tuple tp) {
             static_assert(std::is_standard_layout<MinimumState>(), "");
-            static_assert(std::is_standard_layout<BasicMinimumState>(), "");
 
             struct Layout {
               MinimumParameters fParameters;
@@ -128,8 +125,8 @@ void bind_minimumstate(py::module m) {
             MinimumState st{0};
 
             // evil workaround, will segfault or cause UB if source layout changes
-            auto& ptr = reinterpret_cast<std::shared_ptr<BasicMinimumState>&>(st);
-            auto d = reinterpret_cast<Layout*>(ptr.get());
+            auto& ptr = reinterpret_cast<std::shared_ptr<Layout>&>(st);
+            auto d = ptr.get();
             d->fParameters = py2par(tp[0]);
             d->fError = py2err(tp[1]);
             d->fGradient = py2grad(tp[2]);
