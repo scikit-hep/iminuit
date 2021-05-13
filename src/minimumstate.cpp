@@ -37,38 +37,15 @@ MinimumParameters py2par(py::tuple tp) {
 }
 
 py::tuple err2py(const MinimumError& err) {
-  return py::make_tuple(lasymmatrix2py(err.InvHessian()), err.Dcovar(), err.IsValid(),
-                        err.IsPosDef(), err.IsMadePosDef(), err.HesseFailed(),
-                        err.InvertFailed(), err.IsAvailable());
+  return py::make_tuple(lasymmatrix2py(err.InvHessian()), err.Dcovar(),
+                        static_cast<int>(err.GetStatus()));
 }
 
 MinimumError py2err(py::tuple tp) {
-  static_assert(std::is_standard_layout<MinimumError>(), "");
-
-  struct Layout {
-    MnAlgebraicSymMatrix fMatrix;
-    double fDCovar;
-    bool fValid;
-    bool fPosDef;
-    bool fMadePosDef;
-    bool fHesseFailed;
-    bool fInvertFailed;
-    bool fAvailable;
-  };
-
-  MinimumError err(py2lasymmatrix(tp[0]), tp[1].cast<double>());
-
-  // evil workaround, will segfault or cause UB if source layout changes
-  auto& ptr = reinterpret_cast<std::shared_ptr<Layout>&>(err);
-  auto d = ptr.get();
-  d->fValid = tp[2].cast<bool>();
-  d->fPosDef = tp[3].cast<bool>();
-  d->fMadePosDef = tp[4].cast<bool>();
-  d->fHesseFailed = tp[5].cast<bool>();
-  d->fInvertFailed = tp[6].cast<bool>();
-  d->fAvailable = tp[7].cast<bool>();
-
-  return err;
+  auto status = static_cast<MinimumError::Status>(tp[2].cast<int>());
+  if (status == MinimumError::MnGood)
+    return MinimumError(py2lasymmatrix(tp[0]), tp[1].cast<double>());
+  return MinimumError(py2lasymmatrix(tp[0]), status);
 }
 
 py::tuple grad2py(const FunctionGradient& g) {
