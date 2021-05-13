@@ -3,8 +3,16 @@ requires = [
     "setuptools>=42",
     "wheel",
     "cmake",
+    "numpy"
 ]
 build-backend = "setuptools.build_meta"
 
 [tool.nbqa.mutate]
 black = 1
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-q -ra --ff"
+testpaths = [
+    "tests"
+]
