@@ -5,8 +5,8 @@
 Changelog
 =========
 
-2.7.0
------
+2.6.1 (May 13, 2021)
+--------------------
 
 Fixes
 ~~~~~
@@ -18,8 +18,8 @@ Other
 - Upgrade Minuit2 C++ code to latest ROOT master with following improvements:
    - Simplified internal class structure, class tags replaced with enums
 
-2.6.0
------
+2.6.0 (May 2, 2021)
+-------------------
 
 New features
 ~~~~~~~~~~~~
