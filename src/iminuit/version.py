@@ -10,6 +10,6 @@
 iminuit_version = "2.7.0"
 
 # We list the corresponding ROOT version of the C++ Minuit2 library here
-root_version = "v6-23-01-RF-binSampling-685-ga642cc22e3"
+root_version = "v6-25-01-970-gbb7c58f472"
 
 version = f"{iminuit_version}+ROOT-{root_version}"

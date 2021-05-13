@@ -22,7 +22,6 @@ py::tuple fmin_getstate(const FunctionMinimum& self) {
 
 FunctionMinimum fmin_setstate(py::tuple tp) {
   static_assert(std::is_standard_layout<FunctionMinimum>(), "");
-  static_assert(std::is_standard_layout<BasicFunctionMinimum>(), "");
 
   if (tp.size() != 6) throw std::runtime_error("invalid state");
 
@@ -41,8 +40,8 @@ FunctionMinimum fmin_setstate(py::tuple tp) {
   FunctionMinimum fm(seed, up);
 
   // evil workaround, will segfault or cause UB if source layout changes
-  auto& ptr = reinterpret_cast<std::shared_ptr<BasicFunctionMinimum>&>(fm);
-  auto d = reinterpret_cast<Layout*>(ptr.get());
+  auto& ptr = reinterpret_cast<std::shared_ptr<Layout>&>(fm);
+  auto d = ptr.get();
 
   d->fStates = tp[2].cast<std::vector<MinimumState>>();
   d->fAboveMaxEdm = tp[3].cast<bool>();
