@@ -7,6 +7,11 @@ Changelog
 2.7.0
 -----
 
+2.7.0
+-----
+- Upgrade Minuit2 C++ code in ROOT to latest master with following improvements:
+   - Simplified internal class structure, class tags replaced with enums
+
 2.6.0
 -----
 New features

@@ -42,7 +42,7 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
   MinimumParameters minp(val, err, seed.Fval());
   std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), fcn.nfcn_));
   if (minstv.back().Edm() < edm_goal) return FunctionMinimum(seed, minstv, fcn.Up());
-  return FunctionMinimum(seed, minstv, fcn.Up(), FunctionMinimum::MnAboveMaxEdm());
+  return FunctionMinimum(seed, minstv, fcn.Up(), FunctionMinimum::MnAboveMaxEdm);
 }
 
 py::tuple seed2py(const MinimumSeed& seed) {
@@ -51,7 +51,6 @@ py::tuple seed2py(const MinimumSeed& seed) {
 
 MinimumSeed py2seed(py::tuple tp) {
   static_assert(std::is_standard_layout<MinimumSeed>(), "");
-  static_assert(std::is_standard_layout<BasicMinimumSeed>(), "");
 
   MinimumSeed seed(tp[0].cast<MinimumState>(), tp[1].cast<MnUserTransformation>());
 
@@ -61,8 +60,8 @@ MinimumSeed py2seed(py::tuple tp) {
     bool fValid;
   };
 
-  auto& ptr = reinterpret_cast<std::shared_ptr<BasicMinimumSeed>&>(seed);
-  auto d = reinterpret_cast<Layout*>(ptr.get());
+  auto& ptr = reinterpret_cast<std::shared_ptr<Layout>&>(seed);
+  auto d = ptr.get();
   d->fValid = tp[2].cast<bool>();
 
   return seed;
