@@ -1489,3 +1489,19 @@ def test_missing_ndata():
 
     m = Minuit(fcn, 1)
     assert_equal(m.ndof, np.nan)
+
+
+def test_issue_648():
+    class F:
+        errordef = 1
+        first = True
+
+        def __call__(self, a, b):
+            if self.first:
+                assert a == 1.0 and b == 2.0
+                self.first = False
+            return a ** 2 + b ** 2
+
+    m = Minuit(F(), a=1, b=2)
+    m.fixed["a"] = False  # this used to change a to b
+    m.migrad()
