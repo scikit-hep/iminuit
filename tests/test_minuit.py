@@ -1505,3 +1505,10 @@ def test_issue_648():
     m = Minuit(F(), a=1, b=2)
     m.fixed["a"] = False  # this used to change a to b
     m.migrad()
+
+
+def test_call_limit_reached_in_hesse():
+    m = Minuit(lambda x: ((x - 1.2) ** 4).sum(), np.ones(10) * 10)
+    m.errordef = 1
+    m.migrad(ncall=200)
+    assert m.fmin.has_reached_call_limit

@@ -5,13 +5,23 @@
 Changelog
 =========
 
+2.6.2
+-----
+
+Fixes
+~~~~~
+- Calling ``Minuit.migrad`` with a call limit under some circumstances used much more
+  calls than expected and did not report that the call limit was reached
+  (patch submitted to ROOT)
+
+
 2.6.1 (May 13, 2021)
 --------------------
 
 Fixes
 ~~~~~
 - Calling ``Minuit.fixed[...] = False`` on parameter that was not fixed before broke
-  lead to undefined behaviour in Minuit2 C++ code
+  lead to undefined behaviour in Minuit2 C++ code (patch submitted to ROOT)
 
 Other
 ~~~~~
