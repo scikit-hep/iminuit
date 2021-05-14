@@ -19,7 +19,9 @@
 import os
 
 # release and version are special variables used by sphinx
-from iminuit.version import version as release, iminuit_version as version  # noqa
+from iminuit.version import version, root_version
+
+release = f"{version} compiled with ROOT-{root_version}"
 
 # http://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
 # on_rtd is whether we are on readthedocs.org
@@ -179,7 +181,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "iminuit.tex", "iminuit Documentation", "Piti Ongmongkolkul", "manual")
+    ("index", "iminuit.tex", "iminuit Documentation", "iminuit team", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -207,7 +209,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "iminuit", "iminuit Documentation", ["Piti Ongmongkolkul"], 1)]
+man_pages = [("index", "iminuit", "iminuit Documentation", ["iminuit team"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -223,7 +225,7 @@ texinfo_documents = [
         "index",
         "iminuit",
         "iminuit Documentation",
-        "Piti Ongmongkolkul",
+        "iminuit team",
         "iminuit",
         "One line description of project.",
         "Miscellaneous",

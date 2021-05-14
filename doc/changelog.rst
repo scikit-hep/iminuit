@@ -5,18 +5,28 @@
 Changelog
 =========
 
+2.6.2
+-----
+
+Fixes
+~~~~~
+- Calling ``Minuit.migrad`` with a call limit under some circumstances used much more
+  calls than expected and did not report that the call limit was reached
+  (patch submitted to ROOT)
+
+
 2.6.1 (May 13, 2021)
 --------------------
 
 Fixes
 ~~~~~
-- Calling ``Minuit.fixed[...] = False`` on parameter that was not fixed before broke
-  lead to undefined behaviour in Minuit2 C++ code
+- Calling ``Minuit.fixed[...] = False`` on parameter that was not fixed before
+  lead to undefined behaviour in Minuit2 C++ code (patch submitted to ROOT)
 
 Other
 ~~~~~
-- Upgrade Minuit2 C++ code to latest ROOT master with following improvements:
-   - Simplified internal class structure, class tags replaced with enums
+- Upgrade Minuit2 C++ code to latest ROOT master with simplified internal class
+  structure and class tags replaced with enums
 
 2.6.0 (May 2, 2021)
 -------------------
@@ -77,10 +87,12 @@ New features
 
 Other
 ~~~~~
-- Upgrade Minuit2 C++ code in ROOT to latest master with following improvements:
+- Upgrade Minuit2 C++ code in ROOT to latest master with following improvements
+
    - improvement of seed when using an analytical gradient
    - fix of last minimum state added twice to vector of minimum states in some cases
      (no impact for iminuit users, but saves a bit of memory)
+
 - Documentation improvements
 - Updated tutorial about automatic differentiation, added comparison of ``numba.njit``
   and ``jax.jit``
@@ -118,9 +130,11 @@ Minor improvements
 Other
 ~~~~~
 - Documentation improvements
+
    - Further transition to numpydoc
    - Clarified that iminuit is based on ROOT code
    - List full iminuit version including ROOT version in docs
+
 - Added type hints to many interfaces (incomplete)
 - Renamed ``_minuit`` to ``minuit``, making the module public
 - Renamed ``_minimize`` to ``minimize``, making the module public

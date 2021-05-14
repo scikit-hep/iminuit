@@ -115,7 +115,7 @@ def test_bad_function():
 
         def __call__(self, x):
             self.n += 1
-            return x ** 2 + 1e-4 * (self.n % 3)
+            return x ** 2 + 1e-2 * (self.n % 3)
 
     r = minimize(Fcn(), [1], options={"maxfun": 100000000})
     assert not r.success
