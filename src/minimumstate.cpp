@@ -43,7 +43,7 @@ py::tuple err2py(const MinimumError& err) {
 
 MinimumError py2err(py::tuple tp) {
   auto status = static_cast<MinimumError::Status>(tp[2].cast<int>());
-  if (status == MinimumError::MnGood)
+  if (status == MinimumError::MnPosDef)
     return MinimumError(py2lasymmatrix(tp[0]), tp[1].cast<double>());
   return MinimumError(py2lasymmatrix(tp[0]), status);
 }
