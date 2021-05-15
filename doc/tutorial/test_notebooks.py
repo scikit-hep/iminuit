@@ -57,4 +57,4 @@ def test_notebook(filename):
     with open(pj(dir, filename)) as f:
         nb = nbformat.read(f, as_version=4)
         ep = Processor(timeout=1000)
-        ep.preprocess(nb, {"metadata": {"path": dir + "/../src"}})
+        ep.preprocess(nb, {"metadata": {"path": dir + "/../../src"}})

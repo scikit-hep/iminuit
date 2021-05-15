@@ -1,7 +1,7 @@
 Citation
 ========
 
-If you use iminuit in a scientific work, please cite us to support the time and work that went into making this software. A generic BibTeX entry is::
+If you use iminuit in a scientific work, please cite us ❤️. A generic BibTeX entry is::
 
     @article{iminuit,
       author={Hans Dembinski and Piti Ongmongkolkul et al.},

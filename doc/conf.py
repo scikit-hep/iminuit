@@ -10,16 +10,15 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import os
+from iminuit.version import version, root_version
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
 
-import os
-
 # release and version are special variables used by sphinx
-from iminuit.version import version, root_version
 
 release = f"{version} compiled with ROOT-{root_version}"
 
@@ -35,7 +34,6 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
-
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
@@ -43,6 +41,7 @@ extensions = [
     "sphinx.ext.autosummary",
     # 'matplotlib.sphinxext.only_directives',
     "matplotlib.sphinxext.plot_directive",
+    "nbsphinx",
 ]
 
 autoclass_content = "both"
@@ -247,3 +246,9 @@ if not on_rtd:
 
     html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+nbsphinx_kernel_name = "python3"
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc=figure.dpi=96",
+]
