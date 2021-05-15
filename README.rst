@@ -20,7 +20,7 @@
    :target: https://iminuit.readthedocs.io/en/latest
    :alt: Documentation Status
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/master?filepath=doc/tutorial
+   :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
    :target: https://doi.org/10.5281/zenodo.3949207
 
