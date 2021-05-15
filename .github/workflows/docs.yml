@@ -37,4 +37,4 @@ jobs:
         python -m pip install --upgrade pip wheel
         python -m pip install -e .[test]
         python -m ipykernel install --user --name python3
-    - run: make tutorial
+    - run: python -m pytest -n3 doc/tutorial
