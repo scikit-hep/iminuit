@@ -5,6 +5,6 @@
 Tutorials
 =========
 
-All the tutorials are in tutorial directory of the iminuit repository and `can be viewed online <http://nbviewer.ipython.org/urls/raw.github.com/scikit-hep/iminuit/master/tutorial/>`_.
+The following tutorials show how to use iminuit. The order is the recommended reading order, the later entries are about more and more specialized applications. Most users will only need the first tutorial.
 
-It is recommended to start with the basic tutorial. All other tutorials are optional, for those who want to know more about specific aspects.
+.. tutorials::

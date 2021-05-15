@@ -10,16 +10,18 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import os
+import sys
+from iminuit.version import version, root_version
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
 
-import os
+sys.path.append(os.path.abspath("./_ext"))
 
 # release and version are special variables used by sphinx
-from iminuit.version import version, root_version
 
 release = f"{version} compiled with ROOT-{root_version}"
 
@@ -35,7 +37,6 @@ on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
-
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
@@ -43,6 +44,7 @@ extensions = [
     "sphinx.ext.autosummary",
     # 'matplotlib.sphinxext.only_directives',
     "matplotlib.sphinxext.plot_directive",
+    "tutorials",
 ]
 
 autoclass_content = "both"
