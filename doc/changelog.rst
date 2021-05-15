@@ -14,6 +14,10 @@ Fixes
   calls than expected and did not report that the call limit was reached
   (patch submitted to ROOT)
 
+Documentation
+~~~~~~~~~~~~~
+- Tutorials are now listed in order with titles in the tutorials section and link
+  to live-rendered versions with nbviewer
 
 2.6.1 (May 13, 2021)
 --------------------

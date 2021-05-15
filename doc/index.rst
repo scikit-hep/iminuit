@@ -15,10 +15,10 @@
 
     about
     install
-    tutorials
     reference
-    benchmark
+    tutorials
     faq
     changelog
+    benchmark
     contribute
     citation

@@ -21,7 +21,7 @@ cov: build/done
 
 doc: build/done build/html/done
 
-build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* *.rst)
+build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
 	$(PYTHON) -c "from iminuit import Minuit" # requires iminuit to be installed
 	mkdir -p build/html
 	sphinx-build -W -a -E -b html -d build/doctrees doc build/html

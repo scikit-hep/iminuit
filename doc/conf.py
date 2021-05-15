@@ -11,15 +11,12 @@
 # serve to show the default.
 
 import os
-import sys
 from iminuit.version import version, root_version
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # sys.path.insert(0, os.path.abspath('.'))
-
-sys.path.append(os.path.abspath("./_ext"))
 
 # release and version are special variables used by sphinx
 
@@ -44,7 +41,7 @@ extensions = [
     "sphinx.ext.autosummary",
     # 'matplotlib.sphinxext.only_directives',
     "matplotlib.sphinxext.plot_directive",
-    "tutorials",
+    "nbsphinx",
 ]
 
 autoclass_content = "both"
@@ -249,3 +246,9 @@ if not on_rtd:
 
     html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
+nbsphinx_kernel_name = "python3"
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc=figure.dpi=96",
+]
