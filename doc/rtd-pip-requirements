@@ -4,3 +4,4 @@ matplotlib
 sphinx-rtd-theme
 nbsphinx
 ipykernel
+pandoc
