@@ -55,19 +55,15 @@ To delete the virtual environment just delete the folder ``py3``.
 Development workflow
 --------------------
 
-To simplify hacking on OSX and Linux, we have a Makefile with common commands. To see what commands are available, do:
+To simplify hacking on OSX and Linux, we have a Makefile with common commands.
 
-.. code-block:: bash
-
-   make help
-
-For example, build ``iminuit`` in-place and run the tests:
+Build ``iminuit`` in-place and run the tests:
 
 .. code-block:: bash
 
    make test
 
-Run the tests and generate a coverage report:
+Same and generate a coverage report:
 
 .. code-block:: bash
 
@@ -81,11 +77,11 @@ Build the docs:
    make doc
    <your-web-browser> doc/_build/html/index.html
 
-To run the notebook tests you need to do:
+Run the notebook tests:
 
 .. code-block:: bash
 
-   python -m pytest tutorial
+   make tutorial
 
 Maintainers that prepare a release, should follow the instructions in `doc/README.md`_
 
