@@ -15,11 +15,12 @@
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
-MinimumSeed make_seed(const FCN& fcn, const MnUserFcn& mfcn,
-                      const MnUserParameterState& st, const MnStrategy& str);
-
 FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
                      const MnStrategy& str, double edm_goal);
+
+FunctionMinimum init2(const MnUserTransformation& tr, py::sequence par,
+                      py::sequence cov, py::sequence grad, double fval, double up,
+                      double edm_goal, int nfcn);
 
 py::tuple fmin_getstate(const FunctionMinimum&);
 FunctionMinimum fmin_setstate(py::tuple);
@@ -28,6 +29,7 @@ void bind_functionminimum(py::module m) {
   py::class_<FunctionMinimum>(m, "FunctionMinimum")
 
       .def(py::init(&init))
+      .def(py::init(&init2))
 
       .def_property_readonly("state", &FunctionMinimum::UserState)
       .def_property_readonly("edm", &FunctionMinimum::Edm)

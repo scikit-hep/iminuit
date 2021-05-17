@@ -1,11 +1,13 @@
 #include <Minuit2/AnalyticalGradientCalculator.h>
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MinimumState.h>
+#include <Minuit2/MnMatrix.h>
 #include <Minuit2/MnSeedGenerator.h>
 #include <Minuit2/MnStrategy.h>
 #include <Minuit2/MnUserFcn.h>
 #include <Minuit2/MnUserParameterState.h>
 #include <Minuit2/Numerical2PGradientCalculator.h>
+#include <Minuit2/VariableMetricEDMEstimator.h>
 #include <pybind11/pybind11.h>
 #include <type_traits>
 #include <vector>
@@ -43,6 +45,50 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
   std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), fcn.nfcn_));
   if (minstv.back().Edm() < edm_goal) return FunctionMinimum(seed, minstv, fcn.Up());
   return FunctionMinimum(seed, minstv, fcn.Up(), FunctionMinimum::MnAboveMaxEdm);
+}
+
+FunctionMinimum init2(const MnUserTransformation& trafo, py::sequence py_par,
+                      py::sequence py_cov, py::sequence py_grad, double fval, double up,
+                      double edm_goal, int nfcn) {
+
+  // if parameters are fixed, py_par, py_cov, and py_grad only contain free parameters
+
+  const auto n = trafo.VariableParameters();
+
+  MnAlgebraicVector val{n}, step{n}, g{n}, g2{n};
+  MnAlgebraicSymMatrix cov{n};
+  for (unsigned i = 0; i < n; ++i) {
+    const auto iext = trafo.ExtOfInt(i);
+    val(i) = trafo.Ext2int(iext, py_par[i].cast<double>());
+    const auto di = trafo.DInt2Ext(i, val(i));
+    for (unsigned k = 0; k <= i; ++k) {
+      const auto py_covi = py_cov[i].cast<py::sequence>();
+      const auto dk = trafo.DInt2Ext(k, val(k));
+      cov(i, k) = py_covi[k].cast<double>() / di / dk;
+    }
+    step(i) = std::sqrt(cov(i, i));
+    g(i) = py_grad[i].cast<double>() / di;
+    // TODO: use diagonal elements of inverted IntCovariance for G2
+    g2(i) = std::sqrt(2 * up) / step(i);
+  }
+
+  MinimumParameters minp{val, step, fval};
+  MinimumError err{cov, MinimumError::MnPosDef};
+  FunctionGradient grad{g, g2, step};
+
+  const double edm = VariableMetricEDMEstimator().Estimate(grad, err);
+
+  MinimumState st{minp, err, grad, edm, nfcn};
+  MinimumSeed seed{st, trafo};
+
+  FunctionMinimum fm(seed, {}, up);
+  if (edm < edm_goal)
+    fm.Add(st, FunctionMinimum::MnValid);
+  else
+    fm.Add(st, FunctionMinimum::MnAboveMaxEdm);
+
+  // TODO call limit
+  return fm;
 }
 
 py::tuple seed2py(const MinimumSeed& seed) {

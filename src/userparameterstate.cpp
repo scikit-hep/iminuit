@@ -97,6 +97,9 @@ void bind_userparameterstate(py::module m) {
           [](const MnUserParameterState& self) { return globalcc2py(self.GlobalCC()); })
       .def_property_readonly("is_valid", &MnUserParameterState::IsValid)
       .def_property_readonly("has_covariance", &MnUserParameterState::HasCovariance)
+
+      .def_property_readonly("trafo", &MnUserParameterState::Trafo)
+
       .def("__len__", size)
       .def("__getitem__", getitem)
       .def("__iter__", iter)
