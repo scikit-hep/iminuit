@@ -28,9 +28,11 @@ def test_scipy_unbounded():
 
     m = Minuit(fcn, a=1, b=2)
     m.scipy()
+    m.strategy = 0
     print(m.fmin)
     print(m.params)
     assert_allclose(m.values, [0, 1], atol=1e-3)
+    assert_allclose(m.errors, [1, 2], atol=3e-2)
 
 
 def test_scipy_bounded():
@@ -41,3 +43,4 @@ def test_scipy_bounded():
     print(m.fmin)
     print(m.params)
     assert_allclose(m.values, [0.1, 1], atol=1e-3)
+    assert_allclose(m.errors, [1, 2], atol=3e-2)

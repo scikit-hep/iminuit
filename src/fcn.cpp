@@ -116,6 +116,8 @@ void bind_fcn(py::module m) {
       .def_readwrite("_ngrad", &FCN::ngrad_)
       .def_readwrite("_throw_nan", &FCN::throw_nan_)
       .def_property("_errordef", &FCN::Up, &set_errordef)
+      .def_property_readonly("_has_grad",
+                             [](FCN& self) { return !self.grad_.is_none(); })
 
       .def("__call__", &FCN::operator())
 

@@ -822,7 +822,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scipy(self, method=None, ncall: Optional[int] = None):
+    def scipy(self, method=None, ncall: Optional[int] = None, constraints=None):
         """Minimize with SciPy algorithms."""
         from scipy.optimize import minimize
 
@@ -848,36 +848,40 @@ class Minuit:
                 bound = (p.lower_limit, p.upper_limit)
             bounds.append(bound)
 
+        edm_goal = self._migrad_edm_goal()
+
+        # TODO use callback to implement stopping on ncalls
+        start = [p.value for p in self.params if not p.is_fixed]
         r = minimize(
             fcn,
-            [p.value for p in self.params if not p.is_fixed],
+            start,
             method=method,
             bounds=bounds,
-            jac=self.grad,
+            jac=self.grad if self.fcn._has_grad else None,
+            tol=edm_goal,
         )
 
-        self._last_state = MnUserParameterState(self._last_state)
-
-        # TODO what happens on r.success == False?
-        j = 0
-        for i, p in enumerate(self.params):
-            if not p.is_fixed:
-                self.values[i] = r.x[j]
-                j += 1
-
-        if self.strategy > 0:
-            self.hesse()
-        else:
-            self._last_state.set_covariance()
-
-        edm_goal = self._tolerance * self._fcn._errordef
-        fm = FunctionMinimum(self._fcn, self._last_state, self.strategy, edm_goal)
+        cov = [r.hess_inv(x) for x in np.eye(len(start))]
+        fm = FunctionMinimum(
+            self._init_state.trafo,
+            r.x,
+            cov,
+            r.jac,
+            r.fun,
+            self.errordef,
+            edm_goal,
+            self.nfcn,
+        )
         self._last_state = fm.state
         self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
 
-        # TODO also assign covariance matrix if it was computed and compute proper EDM
-        self._covariance = None
+        self._make_covariance()
         self._merrors = mutil.MErrors()
+
+        if self.strategy.strategy > 0:
+            self.hesse()
+
+        return self
 
     def hesse(self, ncall: Optional[int] = None):
         r"""
