@@ -27,7 +27,7 @@ def pdg_format(value, *errors):
     return strings
 
 
-def format_row(widths, *args):
+def format_row(widths, *args) -> str:
     return (
         "".join(
             ("│{0:^%i}" % w if w > 0 else "│ {0:%i}" % (-w - 1)).format(a)

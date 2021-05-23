@@ -16,8 +16,17 @@ from ._core import (
     FunctionMinimum,
 )
 import numpy as np
-from collections.abc import Iterable
-from typing import Tuple, Dict, Callable, Sequence, Optional, Union
+from typing import (
+    Tuple,
+    Dict,
+    Iterable,
+    Callable,
+    Collection,
+    Optional,
+    Union,
+    Generator,
+    Any,
+)
 
 MnPrint.global_level = 0
 
@@ -52,17 +61,17 @@ class Minuit:
     """Set :attr:`errordef` to this constant for a negative log-likelihood function."""
 
     @property
-    def fcn(self) -> Callable:
+    def fcn(self) -> Callable[[np.ndarray], float]:
         """Get cost function (usually a least-squares or likelihood function)."""
-        return self._fcn
+        return self._fcn  # type:ignore
 
     @property
-    def grad(self) -> Callable:
+    def grad(self) -> Callable[[np.ndarray], np.ndarray]:
         """Get gradient function of the cost function."""
-        return self._fcn._grad
+        return self._fcn._grad  # type:ignore
 
     @property
-    def pos2var(self) -> Tuple[str]:
+    def pos2var(self) -> Tuple[str, ...]:
         """Map variable index to name."""
         return self._pos2var
 
@@ -72,7 +81,7 @@ class Minuit:
         return self._var2pos
 
     @property
-    def parameters(self) -> Tuple[str]:
+    def parameters(self) -> Tuple[str, ...]:
         """
         Get tuple of parameter names.
 
@@ -98,10 +107,10 @@ class Minuit:
             m_nll = Minuit(a_likelihood_function)
             m_nll.errordef = Minuit.LIKELIHOOD     # == 0.5
         """
-        return self._fcn._errordef
+        return self._fcn._errordef  # type: ignore
 
     @errordef.setter
-    def errordef(self, value: float):
+    def errordef(self, value: float) -> None:
         if value <= 0:
             raise ValueError(f"errordef={value} must be a positive number")
         self._fcn._errordef = value
@@ -109,7 +118,7 @@ class Minuit:
             self._fmin._src.errordef = value
 
     @property
-    def precision(self) -> float:
+    def precision(self) -> Optional[float]:
         """
         Access estimated precision of the cost function.
 
@@ -121,7 +130,7 @@ class Minuit:
         return self._precision
 
     @precision.setter
-    def precision(self, value: float):
+    def precision(self, value: float) -> None:
         if value is not None and not (value > 0):
             raise ValueError("precision must be a positive number or None")
         self._precision = value
@@ -154,7 +163,7 @@ class Minuit:
         return self._tolerance
 
     @tol.setter
-    def tol(self, value: float):
+    def tol(self, value: float) -> None:
         if value <= 0:
             raise ValueError("tolerance must be positive")
         self._tolerance = value
@@ -182,7 +191,7 @@ class Minuit:
         return self._strategy
 
     @strategy.setter
-    def strategy(self, value: int):
+    def strategy(self, value: int) -> None:
         self._strategy.strategy = value
 
     @property
@@ -202,10 +211,10 @@ class Minuit:
         Setting print_level has the unwanted side-effect of setting the level
         globally for all Minuit instances in the current Python session.
         """
-        return MnPrint.global_level
+        return MnPrint.global_level  # type: ignore
 
     @print_level.setter
-    def print_level(self, level: int):
+    def print_level(self, level: int) -> None:
         MnPrint.global_level = level
 
     @property
@@ -216,10 +225,10 @@ class Minuit:
         If you set this to True, an error is raised whenever the function evaluates
         to NaN.
         """
-        return self._fcn._throw_nan
+        return self._fcn._throw_nan  # type: ignore
 
     @throw_nan.setter
-    def throw_nan(self, value: bool):
+    def throw_nan(self, value: bool) -> None:
         self._fcn._throw_nan = value
 
     @property
@@ -238,7 +247,7 @@ class Minuit:
         return self._values
 
     @values.setter
-    def values(self, args):
+    def values(self, args: Iterable) -> None:
         self._values[:] = args
 
     @property
@@ -255,7 +264,7 @@ class Minuit:
         return self._errors
 
     @errors.setter
-    def errors(self, args):
+    def errors(self, args: Iterable) -> None:
         self._errors[:] = args
 
     @property
@@ -277,7 +286,7 @@ class Minuit:
         return self._fixed
 
     @fixed.setter
-    def fixed(self, args):
+    def fixed(self, args: Iterable) -> None:
         self._fixed[:] = args
 
     @property
@@ -302,7 +311,7 @@ class Minuit:
         return self._limits
 
     @limits.setter
-    def limits(self, args):
+    def limits(self, args: Iterable) -> None:
         self._limits[:] = args
 
     @property
@@ -320,7 +329,7 @@ class Minuit:
         return self._merrors
 
     @property
-    def covariance(self) -> mutil.Matrix:
+    def covariance(self) -> Optional[mutil.Matrix]:
         r"""
         Return covariance matrix.
 
@@ -359,7 +368,7 @@ class Minuit:
         return self.npar - sum(self.fixed)
 
     @property
-    def ndof(self) -> float:
+    def ndof(self) -> int:
         """
         Get number of degrees of freedom if cost function supports this.
 
@@ -367,10 +376,10 @@ class Minuit:
         points with a property called ``ndata``. Unbinned cost functions should return
         infinity.
         """
-        return self._fcn._ndata() - self.nfit
+        return self._fcn._ndata() - self.nfit  # type: ignore
 
     @property
-    def fmin(self) -> mutil.FMin:
+    def fmin(self) -> Optional[mutil.FMin]:
         """
         Get function minimum data object.
 
@@ -381,7 +390,7 @@ class Minuit:
         return self._fmin
 
     @property
-    def fval(self) -> float:
+    def fval(self) -> Optional[float]:
         """
         Get function value at minimum.
 
@@ -395,7 +404,7 @@ class Minuit:
         return fm.fval if fm else None
 
     @property
-    def params(self) -> mutil.Params:
+    def params(self) -> Optional[mutil.Params]:
         """
         Get list of current parameter data objects.
 
@@ -414,7 +423,7 @@ class Minuit:
         --------
         params, util.Params
         """
-        return _get_params(self._init_state, {})
+        return _get_params(self._init_state, mutil.MErrors())
 
     @property
     def valid(self) -> bool:
@@ -427,7 +436,7 @@ class Minuit:
         --------
         util.FMin
         """
-        return self._fmin and self._fmin.is_valid
+        return self._fmin.is_valid if self._fmin else False
 
     @property
     def accurate(self) -> bool:
@@ -440,25 +449,25 @@ class Minuit:
         --------
         util.FMin
         """
-        return self._fmin and self._fmin.has_accurate_covar
+        return self._fmin.has_accurate_covar if self._fmin else False
 
     @property
     def nfcn(self) -> int:
         """Get total number of function calls."""
-        return self._fcn._nfcn
+        return self._fcn._nfcn  # type:ignore
 
     @property
     def ngrad(self) -> int:
         """Get total number of gradient calls."""
-        return self._fcn._ngrad
+        return self._fcn._ngrad  # type:ignore
 
     def __init__(
         self,
         fcn: Callable,
-        *args: Union[float, Sequence[float]],
+        *args: Union[float, mutil.Indexable[float]],
         grad: Optional[Callable] = None,
-        name: Optional[Sequence[str]] = None,
-        **kwds,
+        name: Optional[Collection[str]] = None,
+        **kwds: float,
     ):
         """
         Initialize Minuit object.
@@ -564,16 +573,19 @@ class Minuit:
         migrad, hesse, minos, scan, simplex
         """
         array_call = False
-        if len(args) == 1 and isinstance(args[0], Iterable):
+        if len(args) == 1 and isinstance(args[0], Collection):
             array_call = True
-            args = args[0]
+            start = np.array(args[0])
+        else:
+            start = np.array(args)
+        del args
 
         if name is None:
             name = mutil.describe(fcn)
             if len(name) == 0 or (array_call and len(name) == 1):
-                name = tuple(f"x{i}" for i in range(len(args)))
+                name = tuple(f"x{i}" for i in range(len(start)))
 
-        if len(args) == 0 and len(kwds) == 0:
+        if len(start) == 0 and len(kwds) == 0:
             raise RuntimeError(
                 "starting value(s) are required"
                 + (f" for {' '.join(name)}" if name else "")
@@ -593,7 +605,7 @@ class Minuit:
             getattr(fcn, "errordef", 0.0),
         )
 
-        self._init_state = _make_init_state(self._pos2var, args, kwds)
+        self._init_state = _make_init_state(self._pos2var, start, kwds)
         self._values = mutil.ValueView(self)
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
@@ -603,7 +615,7 @@ class Minuit:
 
         self.reset()
 
-    def reset(self):
+    def reset(self) -> "Minuit":  # requires from __future__ import annotations
         """
         Reset minimization state to initial state.
 
@@ -611,14 +623,14 @@ class Minuit:
         :attr:`print_level` unchanged.
         """
         self._last_state = self._init_state
-        self._fmin = None
+        self._fmin: Optional[mutil.FMin] = None
         self._fcn._nfcn = 0
         self._fcn._ngrad = 0
         self._merrors = mutil.MErrors()
-        self._covariance = None
+        self._covariance: Optional[mutil.Matrix] = None
         return self  # return self for method chaining and to autodisplay current state
 
-    def migrad(self, ncall: Optional[int] = None, iterate: int = 5):
+    def migrad(self, ncall: Optional[int] = None, iterate: int = 5) -> "Minuit":
         """
         Run Migrad minimization.
 
@@ -672,7 +684,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall: Optional[int] = None):
+    def simplex(self, ncall: Optional[int] = None) -> "Minuit":
         """
         Run Simplex minimization.
 
@@ -716,14 +728,16 @@ class Minuit:
         fm = simplex(ncall, self._tolerance)
         self._last_state = fm.state
 
-        edm_goal = max(self._tolerance * fm.errordef, simplex.precision.eps2)
+        edm_goal = max(
+            self._tolerance * fm.errordef, simplex.precision.eps2  # type:ignore
+        )
         self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
         self._covariance = None
         self._merrors = mutil.MErrors()
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scan(self, ncall: Optional[int] = None):
+    def scan(self, ncall: Optional[int] = None) -> "Minuit":
         """
         Brute-force minimization.
 
@@ -795,7 +809,7 @@ class Minuit:
                     v + e if up == np.inf else up,
                 )
 
-        def run(ipar):
+        def run(ipar: int) -> None:
             if ipar == self.npar:
                 r = self.fcn(x[: self.npar])
                 if r < x[self.npar]:
@@ -822,7 +836,12 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scipy(self, method=None, ncall: Optional[int] = None, constraints=None):
+    def scipy(
+        self,
+        method=None,
+        ncall=None,
+        constraints=None,
+    ):
         """Minimize with SciPy algorithms."""
         from scipy.optimize import minimize
 
@@ -883,8 +902,8 @@ class Minuit:
 
         return self
 
-    def hesse(self, ncall: Optional[int] = None):
-        r"""
+    def hesse(self, ncall: Optional[int] = None) -> "Minuit":
+        """
         Run Hesse algorithm to compute asymptotic errors.
 
         The Hesse method estimates the covariance matrix by inverting the matrix of
@@ -937,7 +956,7 @@ class Minuit:
             hesse(self._fcn, fm, ncall)
             self._last_state = fm.state
             self._fmin = mutil.FMin(
-                fm, self.nfcn, self.ngrad, self.ndof, self._fmin.edm_goal
+                fm, self.nfcn, self.ngrad, self.ndof, self._fmin.edm_goal  # type:ignore
             )
         else:
             # _fmin does not exist or _last_state was modified,
@@ -954,7 +973,7 @@ class Minuit:
 
     def minos(
         self, *parameters: str, cl: Optional[float] = None, ncall: Optional[int] = None
-    ):
+    ) -> "Minuit":
         """
         Run Minos algorithm to compute confidence intervals.
 
@@ -1068,9 +1087,9 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: Union[int, Sequence[int]] = 2,
+        bound: Union[float, mutil.UserBound] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[Sequence[float], Sequence[float], Sequence[bool]]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get Minos profile over a specified interval.
 
@@ -1130,11 +1149,11 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: Union[int, Sequence[Sequence[int]]] = 2,
+        bound: Union[mutil.UserBound, float] = 2,
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ) -> Tuple[Sequence[float], Sequence[float]]:
+    ) -> Tuple[Collection[float], Collection[float]]:
         r"""
         Draw Minos profile over a specified interval (requires matplotlib).
 
@@ -1169,9 +1188,9 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: Union[int, Tuple[int, int]] = 2,
+        bound: Union[float, mutil.UserBound] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[Sequence[float], Sequence[float]]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         r"""
         Calculate 1D cost function profile over a range.
 
@@ -1227,7 +1246,7 @@ class Minuit:
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ) -> Tuple[Sequence[float], Sequence[float]]:
+    ) -> Tuple[Collection[float], Collection[float]]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
 
@@ -1250,7 +1269,9 @@ class Minuit:
         x, y = self.profile(vname, size=size, bound=bound, subtract_min=subtract_min)
         return self._draw_profile(vname, x, y, band, text)
 
-    def _draw_profile(self, vname, x, y, band, text):
+    def _draw_profile(
+        self, vname: str, x: np.ndarray, y: np.ndarray, band: bool, text: bool
+    ) -> Tuple[np.ndarray, np.ndarray]:
         from matplotlib import pyplot as plt
 
         plt.plot(x, y)
@@ -1290,9 +1311,9 @@ class Minuit:
         y: str,
         *,
         size: int = 50,
-        bound: Union[int, Sequence[Sequence[int]]] = 2,
+        bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[Sequence[float], Sequence[float], Sequence[Sequence[float]]]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get a 2D contour of the function around the minimum.
 
@@ -1335,18 +1356,13 @@ class Minuit:
         --------
         mncontour, mnprofile
         """
-        try:
-            n = float(bound)
-            in_sigma = True
-        except TypeError:
-            in_sigma = False
-
-        if in_sigma:
-            xrange = self._normalize_bound(x, n)
-            yrange = self._normalize_bound(y, n)
-        else:
+        if isinstance(bound, tuple):
             xrange = self._normalize_bound(x, bound[0])
             yrange = self._normalize_bound(y, bound[1])
+        else:
+            n = float(bound)
+            xrange = self._normalize_bound(x, n)
+            yrange = self._normalize_bound(y, n)
 
         ipar = self._var2pos[x]
         jpar = self._var2pos[y]
@@ -1373,8 +1389,8 @@ class Minuit:
         y: str,
         *,
         size: int = 50,
-        bound: Union[int, Sequence[Sequence[int]]] = 2,
-    ) -> Tuple[Sequence[float], Sequence[float], Sequence[Sequence[float]]]:
+        bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
+    ) -> Tuple[Collection[float], Collection[float], Collection[Collection[float]]]:
         """
         Draw 2D contour around minimum (required matplotlib).
 
@@ -1401,7 +1417,7 @@ class Minuit:
 
     def mncontour(
         self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
-    ) -> Sequence[Sequence[float]]:
+    ) -> Collection[Collection[float]]:
         """
         Get 2D Minos confidence region.
 
@@ -1464,8 +1480,8 @@ class Minuit:
         return np.array(ce)
 
     def draw_mncontour(
-        self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
-    ) -> Sequence[Sequence[float]]:
+        self, x: str, y: str, *, cl: Optional[Iterable[float]] = None, size: int = 100
+    ) -> Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
 
@@ -1487,7 +1503,7 @@ class Minuit:
 
         c_val = []
         c_pts = []
-        for cl in cls:
+        for cl in cls:  # type:ignore
             pts = self.mncontour(x, y, cl=cl, size=size)
             # close curve
             pts = list(pts)
@@ -1501,28 +1517,23 @@ class Minuit:
 
         return cs
 
-    def _free_parameters(self):
+    def _free_parameters(self) -> Generator[str, None, None]:
         return (mp.name for mp in self._last_state if not mp.is_fixed)
 
-    def _normalize_bound(self, vname, bound):
-        try:
-            n = float(bound)
-            in_sigma = True
-        except TypeError:
-            in_sigma = False
-            pass
+    def _normalize_bound(
+        self, vname: str, bound: Union[float, mutil.UserBound]
+    ) -> Tuple[float, float]:
+        if isinstance(bound, Iterable):
+            return mutil._normalize_limit(bound)
 
-        if in_sigma:
-            if not self.accurate:
-                warn(
-                    "Specified nsigma bound, but error matrix is not accurate",
-                    mutil.IMinuitWarning,
-                )
-            start = self.values[vname]
-            sigma = self.errors[vname]
-            bound = (start - n * sigma, start + n * sigma)
-
-        return bound
+        if not self.accurate:
+            warn(
+                "Specified nsigma bound, but error matrix is not accurate",
+                mutil.IMinuitWarning,
+            )
+        start = self.values[vname]
+        sigma = self.errors[vname]
+        return (start - bound * sigma, start + bound * sigma)
 
     def _copy_state_if_needed(self):
         # If FunctionMinimum exists, _last_state may be a reference to its user state.
@@ -1536,7 +1547,7 @@ class Minuit:
         if self._fmin and self._last_state == self._fmin._src.state:
             self._last_state = MnUserParameterState(self._last_state)
 
-    def _make_covariance(self):
+    def _make_covariance(self) -> None:
         if self._last_state.has_covariance:
             cov = self._last_state.covariance
             m = mutil.Matrix(self._var2pos)
@@ -1561,7 +1572,7 @@ class Minuit:
         else:
             self._covariance = None
 
-    def _migrad_edm_goal(self):
+    def _migrad_edm_goal(self) -> float:
         pr = MnMachinePrecision()
         if self.precision is not None:
             pr.eps = self.precision
@@ -1570,7 +1581,7 @@ class Minuit:
         #   ModularFunctionMinimizer::Minimize
         # - goal is used to detect convergence but violations by 10x are also accepted;
         #   see VariableMetricBuilder.cxx:425
-        return 2e-3 * max(self.tol * self.errordef, pr.eps2)
+        return 2e-3 * max(self.tol * self.errordef, pr.eps2)  # type:ignore
 
     def __repr__(self):
         """Get detailed text representation."""
@@ -1614,7 +1625,9 @@ class Minuit:
             p.text(str(self))
 
 
-def _make_init_state(pos2var, args, kwds):
+def _make_init_state(
+    pos2var: Tuple[str, ...], args: np.ndarray, kwds: Dict[str, float]
+) -> MnUserParameterState:
     nargs = len(args)
     # check kwds
     if nargs:
@@ -1644,11 +1657,12 @@ def _make_init_state(pos2var, args, kwds):
     return state
 
 
-def _get_params(mps, merrors):
-    def get_me(name):
+def _get_params(mps: MnUserParameterState, merrors: mutil.MErrors) -> mutil.Params:
+    def get_me(name: str) -> Optional[Tuple[float, float]]:
         if name in merrors:
             me = merrors[name]
             return me.lower, me.upper
+        return None
 
     return mutil.Params(
         (
@@ -1672,13 +1686,13 @@ def _get_params(mps, merrors):
 
 
 class TemporaryErrordef:
-    def __init__(self, fcn, factor):
+    def __init__(self, fcn: FCN, factor: float):
         self.saved = fcn._errordef
         self.fcn = fcn
         self.fcn._errordef *= factor
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         pass
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: object) -> None:
         self.fcn._errordef = self.saved
