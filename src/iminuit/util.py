@@ -19,6 +19,7 @@ from typing import (
     Collection,
     TypeVar,
     Generic,
+    Sequence,
 )
 import types
 import warnings
@@ -114,7 +115,7 @@ class BasicView(abc.ABC):
 
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
-        if isinstance(other, Indexable):
+        if isinstance(other, Sequence):
             return len(self) == len(other) and all(x == y for x, y in zip(self, other))
         return False
 
@@ -269,7 +270,7 @@ class Matrix(np.ndarray):
             key = tuple(var2pos.get(k, k) for k in key)
         elif isinstance(key, str):
             key = var2pos[key]
-        elif isinstance(key, Iterable):
+        elif isinstance(key, Iterable) and not isinstance(key, np.ndarray):
             key = list(var2pos.get(k, k) for k in key)
             t = super(Matrix, self).__getitem__(key).T
             return super(Matrix, t).__getitem__(key).T
@@ -974,7 +975,10 @@ def make_with_signature(
                 raise ValueError("varnames longer than original signature")
             vars[:n] = varnames
         for k, v in replacements.items():
-            vars[varnames.index(k)] = v
+            vars[vars.index(k)] = v
+        vars = tuple(vars)
+    else:
+        vars = varnames
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
@@ -982,12 +986,12 @@ def make_with_signature(
             raise ValueError("number of parameters do not match")
         if hasattr(c, "replace"):  # this was added after 3.6
             # calling this introduces no overhead compared to original function
-            code = c.replace(co_varnames=tuple(vars))
+            code = c.replace(co_varnames=vars)
             return types.FunctionType(code, globals())
 
     # fallback implementation with additional overhead
     class Caller:
-        def __init__(self, varnames: List[str]):
+        def __init__(self, varnames: Tuple[str, ...]):
             self.func_code = make_func_code(varnames)
 
         def __call__(self, *args: Any) -> Any:
@@ -1225,11 +1229,11 @@ def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
 
 
 def _key2index(
-    var2pos: Dict[str, int], key: Union[slice, Collection[Union[str, int]], str, int]
+    var2pos: Dict[str, int], key: Union[slice, Iterable[Union[str, int]], str, int]
 ) -> Union[int, List[int]]:
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
-    if not isinstance(key, str) and isinstance(key, Collection):
+    if not isinstance(key, str) and isinstance(key, Iterable):
         return [_key2index_item(var2pos, k) for k in key]
     return _key2index_item(var2pos, key)
 
