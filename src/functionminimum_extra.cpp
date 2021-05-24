@@ -49,7 +49,7 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
 
 FunctionMinimum init2(const MnUserTransformation& trafo, py::sequence py_par,
                       py::sequence py_cov, py::sequence py_grad, double fval, double up,
-                      double edm_goal, int nfcn) {
+                      double edm_goal, int nfcn, int max_nfcn) {
 
   // if parameters are fixed, py_par, py_cov, and py_grad only contain free parameters
 
@@ -82,12 +82,13 @@ FunctionMinimum init2(const MnUserTransformation& trafo, py::sequence py_par,
   MinimumSeed seed{st, trafo};
 
   FunctionMinimum fm(seed, {}, up);
-  if (edm < edm_goal)
+  if (nfcn > max_nfcn)
+    fm.Add(st, FunctionMinimum::MnReachedCallLimit);
+  else if (edm < edm_goal)
     fm.Add(st, FunctionMinimum::MnValid);
   else
     fm.Add(st, FunctionMinimum::MnAboveMaxEdm);
 
-  // TODO call limit
   return fm;
 }
 

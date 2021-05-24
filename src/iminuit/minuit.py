@@ -1,6 +1,6 @@
 """Minuit class."""
 
-from warnings import warn
+import warnings
 from . import util as mutil
 from ._core import (
     FCN,
@@ -61,9 +61,9 @@ class Minuit:
     """Set :attr:`errordef` to this constant for a negative log-likelihood function."""
 
     @property
-    def fcn(self) -> Callable[[np.ndarray], float]:
+    def fcn(self) -> FCN:
         """Get cost function (usually a least-squares or likelihood function)."""
-        return self._fcn  # type:ignore
+        return self._fcn
 
     @property
     def grad(self) -> Callable[[np.ndarray], np.ndarray]:
@@ -404,7 +404,7 @@ class Minuit:
         return fm.fval if fm else None
 
     @property
-    def params(self) -> Optional[mutil.Params]:
+    def params(self) -> mutil.Params:
         """
         Get list of current parameter data objects.
 
@@ -788,7 +788,7 @@ class Minuit:
 
         n = self.nfit
         if ncall is None:
-            ncall = 200 + 100 * n + 5 * n * n
+            ncall = self._migrad_maxcall()
         nstep = int(ncall ** (1 / n))
 
         if self._last_state == self._init_state:
@@ -838,67 +838,99 @@ class Minuit:
 
     def scipy(
         self,
-        method=None,
-        ncall=None,
-        constraints=None,
-    ):
-        """Minimize with SciPy algorithms."""
-        from scipy.optimize import minimize
+        method: Optional[Union[str, Callable]] = None,
+        ncall: Optional[int] = None,
+        constraints: Optional[Iterable[Any]] = None,
+    ) -> "Minuit":
+        """
+        Minimize with SciPy algorithms.
 
-        def fcn(x):
-            par = np.empty(self.npar)
-            j = 0
-            for i, p in enumerate(self.params):
-                if p.is_fixed:
-                    par[i] = p.value
-                else:
-                    par[i] = x[j]
-                    j += 1
-            return self.fcn(par)
+        Parameters
+        ----------
+        method : str or Callable, optional
+            Which scipy method to use.
+        ncall : int, optional
+            Function call limit.
+        constraints : scipy.optimize.LinearConstraint or scipy.optimize.NonlinearConstraint
+            Linear or non-linear constraints, see scipy.optimize.minimize docs.
 
-        n = self.nfit
+        Notes
+        -----
+        The call limit may be violated since many algorithms checks the call limit only
+        after a full iteraction of their algorithm, which consists of several function calls.
+        """
+        from scipy.optimize import minimize, Bounds
+
         if ncall is None:
-            ncall = 200 + 100 * n + 5 * n * n
+            ncall = self._migrad_maxcall()
 
-        bounds = []
+        start = []
+        lower_bound = []
+        upper_bound = []
         for p in self.params:
-            bound = (None, None)
-            if p.has_limits:
-                bound = (p.lower_limit, p.upper_limit)
-            bounds.append(bound)
+            xi = p.value
+            if p.is_fixed:
+                ai = xi
+                bi = xi
+            else:
+                # ensure lower < x < upper for Minuit
+                ai = -np.inf if p.lower_limit is None else p.lower_limit
+                bi = np.inf if p.upper_limit is None else p.upper_limit
+                pr = self._mnprecision()
+                if ai > 0:
+                    ai *= 1 + pr.eps2
+                elif ai < 0:
+                    ai *= 1 - pr.eps2
+                else:
+                    ai = pr.eps2
+                if bi > 0:
+                    bi *= 1 - pr.eps2
+                elif bi < 0:
+                    bi *= 1 + pr.eps2
+                else:
+                    bi = -pr.eps2
+                if not (ai < xi < bi):
+                    xi = 0.5 * (ai + bi)
+            lower_bound.append(ai)
+            upper_bound.append(bi)
+            start.append(xi)
 
         edm_goal = self._migrad_edm_goal()
 
-        # TODO use callback to implement stopping on ncalls
-        start = [p.value for p in self.params if not p.is_fixed]
-        r = minimize(
-            fcn,
-            start,
-            method=method,
-            bounds=bounds,
-            jac=self.grad if self.fcn._has_grad else None,
-            tol=edm_goal,
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
 
-        cov = [r.hess_inv(x) for x in np.eye(len(start))]
+            r = minimize(
+                self.fcn,
+                start,
+                method=method,
+                bounds=Bounds(lower_bound, upper_bound, keep_feasible=True),
+                jac=self.grad if self.fcn._has_grad else None,
+                tol=edm_goal,
+                options={"maxfun": ncall},
+                constraints=constraints,
+            )
+
         fm = FunctionMinimum(
             self._init_state.trafo,
             r.x,
-            cov,
+            r.hess_inv(np.eye(self.npar)),
             r.jac,
             r.fun,
             self.errordef,
             edm_goal,
             self.nfcn,
+            ncall,
         )
+
         self._last_state = fm.state
         self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
 
-        self._make_covariance()
-        self._merrors = mutil.MErrors()
-
         if self.strategy.strategy > 0:
             self.hesse()
+
+        self._make_covariance()
+        self._merrors = mutil.MErrors()
 
         return self
 
@@ -940,7 +972,7 @@ class Minuit:
         # Should be fixed upstream: workaround for segfault in MnHesse when all
         # parameters are fixed
         if self.nfit == 0:
-            warn(
+            warnings.warn(
                 "Hesse called with all parameters fixed",
                 mutil.IMinuitWarning,
                 stacklevel=2,
@@ -1047,7 +1079,7 @@ class Minuit:
                 if par not in self._var2pos:
                     raise RuntimeError(f"Unknown parameter {par}")
                 if self.fixed[par]:
-                    warn(
+                    warnings.warn(
                         f"Cannot scan over fixed parameter {par}",
                         mutil.IMinuitWarning,
                     )
@@ -1135,7 +1167,9 @@ class Minuit:
             migrad = MnMigrad(self._fcn, state, self.strategy)
             fm = migrad(0, self._tolerance)
             if not fm.is_valid:
-                warn(f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning)
+                warnings.warn(
+                    f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning
+                )
             status[i] = fm.is_valid
             y[i] = fm.fval
 
@@ -1520,6 +1554,12 @@ class Minuit:
     def _free_parameters(self) -> Generator[str, None, None]:
         return (mp.name for mp in self._last_state if not mp.is_fixed)
 
+    def _mnprecision(self) -> MnMachinePrecision:
+        pr = MnMachinePrecision()
+        if self._precision is not None:
+            pr.eps = self._precision
+        return pr
+
     def _normalize_bound(
         self, vname: str, bound: Union[float, mutil.UserBound]
     ) -> Tuple[float, float]:
@@ -1527,7 +1567,7 @@ class Minuit:
             return mutil._normalize_limit(bound)
 
         if not self.accurate:
-            warn(
+            warnings.warn(
                 "Specified nsigma bound, but error matrix is not accurate",
                 mutil.IMinuitWarning,
             )
@@ -1573,15 +1613,17 @@ class Minuit:
             self._covariance = None
 
     def _migrad_edm_goal(self) -> float:
-        pr = MnMachinePrecision()
-        if self.precision is not None:
-            pr.eps = self.precision
         # EDM goal
         # - taken from the source code, see VariableMeticBuilder::Minimum and
         #   ModularFunctionMinimizer::Minimize
         # - goal is used to detect convergence but violations by 10x are also accepted;
         #   see VariableMetricBuilder.cxx:425
+        pr = self._mnprecision()
         return 2e-3 * max(self.tol * self.errordef, pr.eps2)  # type:ignore
+
+    def _migrad_maxcall(self) -> int:
+        n = self.nfit
+        return 200 + 100 * n + 5 * n * n
 
     def __repr__(self):
         """Get detailed text representation."""
@@ -1674,9 +1716,6 @@ def _get_params(mps: MnUserParameterState, merrors: mutil.MErrors) -> mutil.Para
                 get_me(mp.name),
                 mp.is_const,
                 mp.is_fixed,
-                mp.has_limits,
-                mp.has_lower_limit,
-                mp.has_upper_limit,
                 mp.lower_limit if mp.has_lower_limit else None,
                 mp.upper_limit if mp.has_upper_limit else None,
             )

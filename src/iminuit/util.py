@@ -619,9 +619,6 @@ class Param:
         "merror",
         "is_const",
         "is_fixed",
-        "has_limits",
-        "has_lower_limit",
-        "has_upper_limit",
         "lower_limit",
         "upper_limit",
     )
@@ -645,6 +642,21 @@ class Param:
             v = getattr(self, k)
             pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
+
+    @property
+    def has_limits(self):
+        """Query whether the parameter has an lower or upper limit."""
+        return self.has_lower_limit or self.has_upper_limit
+
+    @property
+    def has_lower_limit(self):
+        """Query whether parameter has a lower limit."""
+        return self.lower_limit is not None
+
+    @property
+    def has_upper_limit(self):
+        """Query whether parameter has an upper limit."""
+        return self.upper_limit is not None
 
     def __str__(self) -> str:
         """Get user-friendly text representation."""
