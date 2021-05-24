@@ -4,7 +4,7 @@ from iminuit import Minuit
 from iminuit.testing import rosenbrock, rosenbrock_grad
 import numpy as np
 
-pytest.importorskip("scipy")
+scopt = pytest.importorskip("scipy.optimize")
 
 
 @pytest.fixture
@@ -28,6 +28,10 @@ fcn.errordef = 1
 
 def grad(a, b):
     return 2 * a, b - 1
+
+
+def hess(par):
+    return [[2, 0], [0, 1]]
 
 
 @pytest.mark.parametrize("stra", (0, 1))
@@ -137,29 +141,37 @@ def test_scipy_ncall(stra, grad):
         "COBYLA",
         "SLSQP",
         "trust-constr",
-    ),
-)
-def test_scipy_method(method):
-    gr = None
-    if method in ("Newton-CG",):
-        gr = grad
-    elif method.startswith("trust"):
-        gr = grad
-    m = Minuit(fcn, a=1, b=2, grad=gr)
-    m.scipy(method=method)
-    assert m.valid, str(m)
-
-
-@pytest.mark.parametrize(
-    "method",
-    (
         "dogleg",
         "trust-ncg",
         "trust-exact",
         "trust-krylov",
     ),
 )
-def test_scipy_not_supported_method(method):
-    m = Minuit(fcn, a=1, b=2, grad=grad)
-    with pytest.raises(ValueError):
-        m.scipy(method=method)
+def test_scipy_method(method):
+    gr = None
+    he = None
+    if method in ("dogleg", "trust-ncg", "trust-exact", "trust-krylov"):
+        gr = grad
+        he = hess
+    if method in ("Newton-CG", "trust-constr"):
+        gr = grad
+    m = Minuit(fcn, a=1, b=2, grad=gr)
+    m.scipy(method=method, hess=he)
+    assert m.valid
+    assert_allclose(m.values, [0, 1], atol=1e-3)
+    assert_allclose(m.errors, [1, 2], rtol=1e-2)
+
+
+@pytest.mark.parametrize("ypos", (1, 1.1))
+def test_scipy_constraints(ypos):
+    def fcn(x, y):
+        return x ** 2 + y ** 2
+
+    m = Minuit(fcn, x=1, y=2)
+    m.errordef = 1
+    con = scopt.NonlinearConstraint(lambda x: x[0] ** 2 + (x[1] - ypos) ** 2, 0, 1)
+    m.scipy(constraints=[con])
+    if ypos == 1:
+        assert m.valid
+    assert_allclose(m.values, [0, ypos - 1], atol=1e-3)
+    assert m.accurate
