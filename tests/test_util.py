@@ -17,6 +17,11 @@ def test_ndim():
     assert ndim((None, (1, 2))) == 2
 
 
+def test_BasicView():
+    with pytest.raises(TypeError):
+        util.BasicView(None, 2)
+
+
 def test_ValueView():
     state = MnUserParameterState()
     state.add("x", 1.0, 0.1)
@@ -32,6 +37,11 @@ def test_ValueView():
             _copy_state_if_needed=lambda: None,
         )
     )
+
+    assert v == v
+    assert v == (1.0, 2.2, 3.3)
+    assert v != (1.0, 2.1, 3.3)
+    assert v != 0
 
     assert repr(v) == "<ValueView x=1.0 y=2.2 z=3.3>"
     assert str(v) == repr(v)

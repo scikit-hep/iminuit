@@ -19,7 +19,6 @@ from typing import (
     Collection,
     TypeVar,
     Generic,
-    Sequence,
 )
 import types
 import warnings
@@ -37,7 +36,7 @@ class Indexable(Iterable, Sized, Generic[T]):
 
     def __getitem__(self, idx: int) -> T:
         """Get item at index idx."""
-        ...
+        ...  # pragma: no cover
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -76,11 +75,11 @@ class BasicView(abc.ABC):
 
     @abc.abstractmethod
     def _get(self, idx: int) -> Any:
-        return NotImplemented
+        return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod
     def _set(self, idx: int, value: Any) -> None:
-        pass
+        pass  # pragma: no cover
 
     def __getitem__(self, key: Key) -> Any:
         """
@@ -115,9 +114,9 @@ class BasicView(abc.ABC):
 
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
-        if isinstance(other, Sequence):
+        if isinstance(other, Iterable) and isinstance(other, Sized):
             return len(self) == len(other) and all(x == y for x, y in zip(self, other))
-        return False
+        return NotImplemented
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
