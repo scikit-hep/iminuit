@@ -844,6 +844,8 @@ class Minuit:
         self,
         method: Optional[Union[str, Callable]] = None,
         ncall: Optional[int] = None,
+        hess: Optional[Any] = None,
+        hessp: Optional[Any] = None,
         constraints: Optional[Iterable[Any]] = None,
     ) -> "Minuit":
         """
@@ -871,11 +873,14 @@ class Minuit:
         start = []
         lower_bound = []
         upper_bound = []
+        has_limits = False
         for p in self.params:
+            has_limits |= p.has_limits
             xi = p.value
             if p.is_fixed:
                 ai = xi
                 bi = xi
+                has_limits = True
             else:
                 # ensure lower < x < upper for Minuit
                 ai = -np.inf if p.lower_limit is None else p.lower_limit
@@ -900,25 +905,70 @@ class Minuit:
 
         edm_goal = self._migrad_edm_goal()
 
+        if method is None:
+            # like in scipy.optimize.minimize
+            if constraints:
+                method = "SLSQP"
+            elif has_limits:
+                method = "L-BFGS-B"
+            else:
+                method = "BFGS"
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
+
+            options = {"maxiter": ncall}
+            if method in (
+                "Nelder-Mead",
+                "Powell",
+            ):
+                options["maxfev"] = ncall
+
+            if method == "L-BFGS-B":
+                options["maxfun"] = ncall
+
+            if constraints is None and method in ("COBYLA", "SLSQP", "trust-constr"):
+                constraints = ()
 
             r = minimize(
                 self.fcn,
                 start,
                 method=method,
-                bounds=Bounds(lower_bound, upper_bound, keep_feasible=True),
+                bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
+                if has_limits
+                else None,
                 jac=self.grad if self.fcn._has_grad else None,
-                tol=edm_goal ** 2,
-                options={"maxfun": ncall},
+                hess=hess,
+                hessp=hessp,
                 constraints=constraints,
+                tol=edm_goal ** 2,
+                options=options,
             )
+
+        if "hess_inv" in r:
+            cov = r.hess_inv
+            if not isinstance(cov, np.ndarray):
+                cov = r.hess_inv(np.eye(self.npar))
+        else:
+            cov = np.zeros((self.npar, self.npar))
+            for i, p in enumerate(self.params):
+                cov[i, i] = p.error ** 2
+
+        if "grad" in r:
+            # trust-constr returns grad
+            jac = r.grad
+        elif "jac" in r:
+            jac = r.jac
+        else:
+            tol = 1e-2
+            dx = (np.diag(cov) * tol) ** 0.5
+            jac = mutil._jacobi(self.fcn, r.x, dx, tol)[1][0]
 
         fm = FunctionMinimum(
             self._init_state.trafo,
             r.x,
-            r.hess_inv(np.eye(self.npar)),
-            r.jac,
+            cov,
+            jac,
             r.fun,
             self.errordef,
             edm_goal,

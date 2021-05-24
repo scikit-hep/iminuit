@@ -116,9 +116,50 @@ def test_scipy_ncall(stra, grad):
     m = Minuit(rosenbrock, x=2, y=2, grad=grad)
     m.strategy = stra
     m.scipy()
-    assert m.valid, str(m)
+    assert m.valid
     nfcn = m.fmin.nfcn
     m.reset()
     m.scipy(ncall=1)
     assert m.fmin.nfcn < nfcn
     assert not m.valid
+
+
+@pytest.mark.parametrize(
+    "method",
+    (
+        "Nelder-Mead",
+        "Powell",
+        "CG",
+        "BFGS",
+        "Newton-CG",
+        "L-BFGS-B",
+        "TNC",
+        "COBYLA",
+        "SLSQP",
+        "trust-constr",
+    ),
+)
+def test_scipy_method(method):
+    gr = None
+    if method in ("Newton-CG",):
+        gr = grad
+    elif method.startswith("trust"):
+        gr = grad
+    m = Minuit(fcn, a=1, b=2, grad=gr)
+    m.scipy(method=method)
+    assert m.valid, str(m)
+
+
+@pytest.mark.parametrize(
+    "method",
+    (
+        "dogleg",
+        "trust-ncg",
+        "trust-exact",
+        "trust-krylov",
+    ),
+)
+def test_scipy_not_supported_method(method):
+    m = Minuit(fcn, a=1, b=2, grad=grad)
+    with pytest.raises(ValueError):
+        m.scipy(method=method)
