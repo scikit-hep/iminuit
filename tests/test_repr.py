@@ -134,7 +134,7 @@ def fmin_good():
         errordef=1,
         state=[],
     )
-    return FMin(fm, 10, 3, 10, 1e-4)
+    return FMin(fm, "Migrad", 10, 3, 10, 1e-4)
 
 
 @pytest.fixture
@@ -167,12 +167,15 @@ def fmin_bad():
             )
         ],
     )
-    return FMin(fm, 100000, 200000, 1, 1e-5)
+    return FMin(fm, "SciPy[L-BFGS-B]", 100000, 200000, 1, 1e-5)
 
 
 def test_html_fmin_good(fmin_good):
     # fmt: off
     assert fmin_good._repr_html_() == """<table>
+    <tr>
+        <th colspan="5" style="text-align:center" title="Minimizer"> Migrad </th>
+    </tr>
     <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 11.46 (chi2/ndof = 1.1) </td>
         <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 10 </td>
@@ -182,8 +185,7 @@ def test_html_fmin_good(fmin_good):
         <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 3 </td>
     </tr>
     <tr>
-        <td style="text-align:center;{good}"> Valid Minimum </td>
-        <td style="text-align:center;{good}"> Valid Parameters </td>
+        <td colspan="2" style="text-align:center;{good}"> Valid Minimum </td>
         <td colspan="3" style="text-align:center;{good}"> No Parameters at limit </td>
     </tr>
     <tr>
@@ -205,6 +207,9 @@ def test_html_fmin_bad(fmin_bad):
     # fmt: off
     assert fmin_bad._repr_html_() == """<table>
     <tr>
+        <th colspan="5" style="text-align:center" title="Minimizer"> SciPy[L-BFGS-B] </th>
+    </tr>
+    <tr>
         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = nan </td>
         <td colspan="3" style="text-align:center" title="No. of function evaluations in last call and total number"> Nfcn = 100000 </td>
     </tr>
@@ -213,8 +218,7 @@ def test_html_fmin_bad(fmin_bad):
         <td colspan="3" style="text-align:center" title="No. of gradient evaluations in last call and total number"> Ngrad = 200000 </td>
     </tr>
     <tr>
-        <td style="text-align:center;{bad}"> INVALID Minimum </td>
-        <td style="text-align:center;{bad}"> INVALID Parameters </td>
+        <td colspan="2" style="text-align:center;{bad}"> INVALID Minimum </td>
         <td colspan="3" style="text-align:center;{warn}"> SOME Parameters at limit </td>
     </tr>
     <tr>

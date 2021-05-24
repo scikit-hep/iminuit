@@ -29,16 +29,16 @@ def grad(a, b):
 fcn.errordef = 1
 
 
-@pytest.mark.parametrize("str", (0, 1))
+@pytest.mark.parametrize("stra", (0, 1))
 @pytest.mark.parametrize("grad", (None, grad))
-def test_scipy_unbounded(str, grad):
+def test_scipy_unbounded(stra, grad):
     m = Minuit(fcn, a=1, b=2, grad=grad)
-    m.strategy = str
+    m.strategy = stra
     m.scipy()
     assert m.valid
-    assert m.accurate == (str == 1)
+    assert m.accurate == (stra == 1)
     assert_allclose(m.values, [0, 1], atol=1e-3)
-    if str == 1:
+    if stra == 1:
         assert_allclose(m.errors, [1, 2], atol=3e-2)
     if grad:
         assert m.fmin.ngrad > 0
@@ -46,18 +46,18 @@ def test_scipy_unbounded(str, grad):
         assert m.fmin.ngrad == 0
 
 
-@pytest.mark.parametrize("str", (0, 1))
+@pytest.mark.parametrize("stra", (0, 1))
 @pytest.mark.parametrize("grad", (None, grad))
-def test_scipy_bounded(str, grad):
+def test_scipy_bounded(stra, grad):
     m = Minuit(fcn, a=1, b=2, grad=grad)
     m.limits["a"] = (0.1, None)
-    m.strategy = str
+    m.strategy = stra
     m.scipy()
-    if str == 1:
+    if stra == 1:
         assert m.valid
         assert m.accurate
     assert_allclose(m.values, [0.1, 1], atol=1e-3)
-    if str == 1:
+    if stra == 1:
         assert_allclose(m.errors[1], 2, atol=3e-2)
     if grad:
         assert m.fmin.ngrad > 0
@@ -79,12 +79,12 @@ def test_scipy_fixed(grad):
         assert m.fmin.ngrad == 0
 
 
-@pytest.mark.parametrize("str", (0, 1))
+@pytest.mark.parametrize("stra", (0, 1))
 @pytest.mark.parametrize("grad", (None, grad))
-def test_scipy_errordef(str, grad):
+def test_scipy_errordef(stra, grad):
     m = Minuit(fcn, a=1, b=2, grad=grad)
     m.errordef = 4
-    m.strategy = str
+    m.strategy = stra
     m.scipy()
     assert m.valid
     assert_allclose(m.values, [0, 1], atol=1e-3)
@@ -95,16 +95,15 @@ def test_scipy_errordef(str, grad):
         assert m.fmin.ngrad == 0
 
 
-@pytest.mark.parametrize("str", (0, 1))
+@pytest.mark.parametrize("stra", (0, 1))
 @pytest.mark.parametrize("grad", (None, rosenbrock_grad))
-def test_scipy_ncall(str, grad):
-    m = Minuit(rosenbrock, x=10, y=10, grad=grad)
-    m.strategy = str
+def test_scipy_ncall(stra, grad):
+    m = Minuit(rosenbrock, x=2, y=2, grad=grad)
+    m.strategy = stra
     m.scipy()
-    print(str, grad, m)
+    assert m.valid, str(m)
     nfcn = m.fmin.nfcn
     m.reset()
     m.scipy(ncall=1)
     assert m.fmin.nfcn < nfcn
     assert not m.valid
-    print(str, grad, m)

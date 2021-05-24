@@ -170,7 +170,7 @@ def test_FMin():
         errordef=1,
         state=[],
     )
-    fmin = util.FMin(fm, 1, 2, 1, 0.1)
+    fmin = util.FMin(fm, "foo", 1, 2, 1, 0.1)
 
     with PrintAssert("<FMin ...>") as pr:
         fmin._repr_pretty_(pr, True)

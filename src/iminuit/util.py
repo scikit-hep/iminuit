@@ -359,6 +359,7 @@ class FMin:
 
     __slots__ = (
         "_src",
+        "_algorithm",
         "_has_parameters_at_limit",
         "_nfcn",
         "_ngrad",
@@ -366,9 +367,18 @@ class FMin:
         "_edm_goal",
     )
 
-    def __init__(self, fmin: Any, nfcn: int, ngrad: int, ndof: int, edm_goal: float):
+    def __init__(
+        self,
+        fmin: Any,
+        algorithm: str,
+        nfcn: int,
+        ngrad: int,
+        ndof: int,
+        edm_goal: float,
+    ):
         """Not to be initialized by users."""
         self._src = fmin
+        self._algorithm = algorithm
         self._has_parameters_at_limit = False
         for mp in fmin.state:
             if mp.is_fixed or not mp.has_limits:
@@ -383,6 +393,11 @@ class FMin:
         self._ngrad = ngrad
         self._ndof = ndof
         self._edm_goal = edm_goal
+
+    @property
+    def algorithm(self) -> str:
+        """Get algorithm that was used to compute the function minimum."""
+        return self._algorithm
 
     @property
     def edm(self) -> float:
@@ -450,7 +465,6 @@ class FMin:
 
         For it to return True, the following conditions need to be fulfilled:
 
-          - :attr:`has_valid_parameters` is True
           - :attr:`has_reached_call_limit` is False
           - :attr:`is_above_max_edm` is False
 
@@ -464,15 +478,9 @@ class FMin:
         """
         Return whether parameters are valid.
 
-        For it to return True, the following conditions need to be fulfilled:
-
-          - :attr:`has_reached_call_limit` is False
-          - :attr:`is_above_max_edm` is False
-
-        Note: The actual verdict is computed inside the Minuit2 C++ code, so we
-        cannot guarantee that is_valid is exactly equivalent to these conditions.
+        This is the same as :attr:`is_valid` and only kept for backward compatibility.
         """
-        return self._src.has_valid_parameters  # type:ignore
+        return self.is_valid
 
     @property
     def has_accurate_covar(self) -> bool:

@@ -679,7 +679,9 @@ class Minuit:
         self._last_state = fm.state
 
         edm_goal = self._migrad_edm_goal()
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
+        self._fmin = mutil.FMin(
+            fm, "Migrad", self.nfcn, self.ngrad, self.ndof, edm_goal
+        )
         self._make_covariance()
 
         return self  # return self for method chaining and to autodisplay current state
@@ -731,7 +733,9 @@ class Minuit:
         edm_goal = max(
             self._tolerance * fm.errordef, simplex.precision.eps2  # type:ignore
         )
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
+        self._fmin = mutil.FMin(
+            fm, "Simplex", self.nfcn, self.ngrad, self.ndof, edm_goal
+        )
         self._covariance = None
         self._merrors = mutil.MErrors()
 
@@ -830,7 +834,7 @@ class Minuit:
         edm_goal = self._tolerance * self._fcn._errordef
         fm = FunctionMinimum(self._fcn, self._last_state, self.strategy, edm_goal)
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
+        self._fmin = mutil.FMin(fm, "Scan", self.nfcn, self.ngrad, self.ndof, edm_goal)
         self._covariance = None
         self._merrors = mutil.MErrors()
 
@@ -906,7 +910,7 @@ class Minuit:
                 method=method,
                 bounds=Bounds(lower_bound, upper_bound, keep_feasible=True),
                 jac=self.grad if self.fcn._has_grad else None,
-                tol=edm_goal,
+                tol=edm_goal ** 2,
                 options={"maxfun": ncall},
                 constraints=constraints,
             )
@@ -924,7 +928,14 @@ class Minuit:
         )
 
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
+        self._fmin = mutil.FMin(
+            fm,
+            f"SciPy[{method if method else 'auto'}]",
+            self.nfcn,
+            self.ngrad,
+            self.ndof,
+            edm_goal,
+        )
 
         if self.strategy.strategy > 0:
             self.hesse()
@@ -992,6 +1003,7 @@ class Minuit:
                 self._last_state = fm.state
                 self._fmin = mutil.FMin(
                     fm,
+                    self._fmin.algorithm,
                     self.nfcn,
                     self.ngrad,
                     self.ndof,
