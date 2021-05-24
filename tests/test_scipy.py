@@ -2,6 +2,7 @@ import pytest
 from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.testing import rosenbrock, rosenbrock_grad
+import numpy as np
 
 pytest.importorskip("scipy")
 
@@ -22,11 +23,11 @@ def fcn(a, b):
     return a ** 2 + ((b - 1) / 2.0) ** 2 + 3
 
 
+fcn.errordef = 1
+
+
 def grad(a, b):
     return 2 * a, b - 1
-
-
-fcn.errordef = 1
 
 
 @pytest.mark.parametrize("stra", (0, 1))
@@ -48,15 +49,29 @@ def test_scipy_unbounded(stra, grad):
 
 @pytest.mark.parametrize("stra", (0, 1))
 @pytest.mark.parametrize("grad", (None, grad))
-def test_scipy_bounded(stra, grad):
+@pytest.mark.parametrize(
+    "lower,upper",
+    (
+        (-0.1, None),
+        (0, None),
+        (0.1, None),
+        (None, -0.1),
+        (None, 0),
+        (None, 0.1),
+        (-0.1, 0.1),
+    ),
+)
+def test_scipy_bounded(stra, grad, lower, upper):
     m = Minuit(fcn, a=1, b=2, grad=grad)
-    m.limits["a"] = (0.1, None)
+    m.limits["a"] = (lower, upper)
     m.strategy = stra
     m.scipy()
     if stra == 1:
         assert m.valid
         assert m.accurate
-    assert_allclose(m.values, [0.1, 1], atol=1e-3)
+    lower = -np.inf if lower is None else lower
+    upper = np.inf if upper is None else upper
+    assert_allclose(m.values, [np.clip(0, lower, upper), 1], atol=1e-3)
     if stra == 1:
         assert_allclose(m.errors[1], 2, atol=3e-2)
     if grad:

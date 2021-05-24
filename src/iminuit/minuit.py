@@ -893,8 +893,7 @@ class Minuit:
                     bi *= 1 + pr.eps2
                 else:
                     bi = -pr.eps2
-                if not (ai < xi < bi):
-                    xi = 0.5 * (ai + bi)
+                xi = np.clip(xi, ai, bi)
             lower_bound.append(ai)
             upper_bound.append(bi)
             start.append(xi)
