@@ -929,9 +929,6 @@ class Minuit:
         if self.strategy.strategy > 0:
             self.hesse()
 
-        self._make_covariance()
-        self._merrors = mutil.MErrors()
-
         return self
 
     def hesse(self, ncall: Optional[int] = None) -> "Minuit":
@@ -981,19 +978,30 @@ class Minuit:
 
         hesse = MnHesse(self.strategy)
 
-        fm = self._fmin._src if self._fmin else None
-        if fm and fm.state is self._last_state:
-            # fmin exists and _last_state not modified,
-            # can update _fmin which is more efficient
-            hesse(self._fcn, fm, ncall)
-            self._last_state = fm.state
-            self._fmin = mutil.FMin(
-                fm, self.nfcn, self.ngrad, self.ndof, self._fmin.edm_goal  # type:ignore
-            )
-        else:
+        if self._fmin is None:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin
             self._last_state = hesse(self._fcn, self._last_state, ncall)
+            self._merrors = mutil.MErrors()
+        else:
+            fm = self._fmin._src
+            if fm.state is self._last_state:
+                # fmin exists and _last_state not modified,
+                # can update _fmin which is more efficient
+                hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
+                self._last_state = fm.state
+                self._fmin = mutil.FMin(
+                    fm,
+                    self.nfcn,
+                    self.ngrad,
+                    self.ndof,
+                    self._fmin.edm_goal,
+                )
+            else:
+                # fmin exists but _last_state was modified
+                self._fmin = None
+                self._last_state = hesse(self._fcn, self._last_state, ncall)
+                self._merrors = mutil.MErrors()
 
         if self._last_state.has_covariance is False:
             if not self._fmin:
@@ -1058,11 +1066,11 @@ class Minuit:
         if not self._fmin:
             # create a seed minimum for MnMinos
             fm = FunctionMinimum(
-                self._fcn, self._last_state, self._strategy, self._tolerance
+                self._fcn, self._last_state, self._strategy, self._migrad_edm_goal()
             )
             # running MnHesse on seed is necessary for MnMinos to work
             hesse = MnHesse(self.strategy)
-            hesse(self._fcn, fm, ncall)
+            hesse(self._fcn, fm, ncall, self._migrad_edm_goal())
             self._last_state = fm.state
             self._make_covariance()
         else:

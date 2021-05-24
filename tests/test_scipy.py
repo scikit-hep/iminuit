@@ -98,11 +98,13 @@ def test_scipy_errordef(str, grad):
 @pytest.mark.parametrize("str", (0, 1))
 @pytest.mark.parametrize("grad", (None, rosenbrock_grad))
 def test_scipy_ncall(str, grad):
-    m = Minuit(rosenbrock, x=1000, y=2000, grad=grad)
+    m = Minuit(rosenbrock, x=10, y=10, grad=grad)
     m.strategy = str
     m.scipy()
+    print(str, grad, m)
     nfcn = m.fmin.nfcn
     m.reset()
     m.scipy(ncall=1)
-    print(m, m.fmin.nfcn, nfcn)
     assert m.fmin.nfcn < nfcn
+    assert not m.valid
+    print(str, grad, m)
