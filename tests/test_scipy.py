@@ -7,18 +7,6 @@ import numpy as np
 scopt = pytest.importorskip("scipy.optimize")
 
 
-@pytest.fixture
-def debug():
-    from iminuit._core import MnPrint
-
-    prev = MnPrint.global_level
-    MnPrint.global_level = 3
-    MnPrint.show_prefix_stack(True)
-    yield
-    MnPrint.global_level = prev
-    MnPrint.show_prefix_stack(False)
-
-
 def fcn(a, b):
     return a ** 2 + ((b - 1) / 2.0) ** 2 + 3
 
