@@ -78,7 +78,7 @@ def test_Matrix():
 
 
 def test_Param():
-    values = 3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
+    values = 3, "foo", 1.2, 3.4, None, False, False, 42, None
     p = util.Param(*values)
 
     with PrintAssert("Param(...)") as pr:
@@ -89,13 +89,7 @@ def test_Param():
 
 
 def test_Params():
-    p = util.Params(
-        [
-            util.Param(
-                3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
-            )
-        ]
-    )
+    p = util.Params([util.Param(3, "foo", 1.2, 3.4, None, False, False, 42, None)])
 
     with PrintAssert("Params(...)") as pr:
         p._repr_pretty_(pr, True)

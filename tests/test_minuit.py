@@ -962,8 +962,8 @@ def test_params():
 
     # these are the initial param states
     expected = (
-        Param(0, "x", 1.0, 3.0, None, False, True, False, False, False, None, None),
-        Param(1, "y", 2.0, 4.0, None, False, False, True, False, True, None, 10),
+        Param(0, "x", 1.0, 3.0, None, False, True, None, None),
+        Param(1, "y", 2.0, 4.0, None, False, False, None, 10),
     )
     assert m.params == expected
 

@@ -104,7 +104,7 @@ def test_Matrix():
 
 
 def test_Param():
-    values = 3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
+    values = 3, "foo", 1.2, 3.4, None, False, False, 42, None
     p = util.Param(*values)
 
     assert p.number == 3
@@ -122,20 +122,15 @@ def test_Param():
 
     assert repr(p) == (
         "Param(number=3, name='foo', value=1.2, error=3.4, merror=None, "
-        "is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, "
-        "has_upper_limit=False, lower_limit=42, upper_limit=None)"
+        "is_const=False, is_fixed=False, lower_limit=42, upper_limit=None)"
     )
 
 
 def test_Params():
     p = util.Params(
         [
-            util.Param(
-                0, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
-            ),
-            util.Param(
-                1, "bar", 3.4, 4.5, None, False, False, True, True, False, 42, None
-            ),
+            util.Param(0, "foo", 1.2, 3.4, None, False, False, 42, None),
+            util.Param(1, "bar", 3.4, 4.5, None, False, False, 42, None),
         ]
     )
 
