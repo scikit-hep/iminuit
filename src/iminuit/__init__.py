@@ -24,6 +24,8 @@ Further information:
 
 __all__ = ["Minuit", "minimize", "describe", "__version__"]
 
+from .version import version as __version__
+
 try:
     # make iminuit importable even if it is not installed yet for setup.cfg
     from .minuit import Minuit
@@ -31,4 +33,3 @@ try:
     from .util import describe
 except ImportError:  # pragma: no cover
     pass  # pragma: no cover
-from .version import version as __version__

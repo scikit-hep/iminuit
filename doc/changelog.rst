@@ -5,19 +5,30 @@
 Changelog
 =========
 
-2.6.2
+2.7.0
 -----
+New features
+~~~~~~~~~~~~
+- ``Minuit.scipy`` can be used to minimise with SciPy methods; optional, requires scipy
+- ``util.FMin`` has new html/text representations; the field ``Valid parameters`` was
+  removed, a title with the name of the minimisation method was added
 
 Fixes
 ~~~~~
 - Calling ``Minuit.migrad`` with a call limit under some circumstances used much more
   calls than expected and did not report that the call limit was reached
   (patch submitted to ROOT)
+- ``Minuit.hesse`` no longer sets the status of the FunctionMinimum unconditionally
+  to valid if it was invalid before
 
 Documentation
 ~~~~~~~~~~~~~
 - Tutorials are now listed in order with titles in the tutorials section and link
   to live-rendered versions with nbviewer
+
+Other
+~~~~~
+- ``util.BasicView`` is now a proper abstract base class
 
 2.6.1 (May 13, 2021)
 --------------------

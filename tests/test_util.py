@@ -296,10 +296,10 @@ def test_FMin():
 
 
 def test_normalize_limit():
-    assert util._normalize_limit(None) == (-util.inf, util.inf)
-    assert util._normalize_limit((None, 2)) == (-util.inf, 2)
-    assert util._normalize_limit((2, None)) == (2, util.inf)
-    assert util._normalize_limit((None, None)) == (-util.inf, util.inf)
+    assert util._normalize_limit(None) == (-np.inf, np.inf)
+    assert util._normalize_limit((None, 2)) == (-np.inf, 2)
+    assert util._normalize_limit((2, None)) == (2, np.inf)
+    assert util._normalize_limit((None, None)) == (-np.inf, np.inf)
     with pytest.raises(ValueError):
         util._normalize_limit((3, 2))
 

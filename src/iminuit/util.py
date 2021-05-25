@@ -16,17 +16,12 @@ from typing import (
     Sized,
     Optional,
     Callable,
-    Collection,
     TypeVar,
     Generic,
 )
 import types
 import warnings
 import abc
-
-inf = float("infinity")
-
-UserBound = Optional[Collection[Optional[float]]]
 
 T = TypeVar("T")
 
@@ -37,6 +32,9 @@ class Indexable(Iterable, Sized, Generic[T]):
     def __getitem__(self, idx: int) -> T:
         """Get item at index idx."""
         ...  # pragma: no cover
+
+
+UserBound = Optional[Indexable[Optional[float]]]
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -114,6 +112,8 @@ class BasicView(abc.ABC):
 
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
+        from typing import Iterable, Sized
+
         if isinstance(other, Iterable) and isinstance(other, Sized):
             return len(self) == len(other) and all(x == y for x, y in zip(self, other))
         return NotImplemented
@@ -132,6 +132,8 @@ class BasicView(abc.ABC):
 
 
 def _ndim(obj: Iterable) -> int:
+    from typing import Iterable
+
     nd = 0
     while isinstance(obj, Iterable):
         nd += 1
@@ -187,8 +189,8 @@ class LimitView(BasicView):
     def _get(self, i: int) -> Tuple[float, float]:
         p = self._minuit._last_state[i]
         return (
-            p.lower_limit if p.has_lower_limit else -inf,
-            p.upper_limit if p.has_upper_limit else inf,
+            p.lower_limit if p.has_lower_limit else -np.inf,
+            p.upper_limit if p.has_upper_limit else np.inf,
         )
 
     def _set(self, i: int, arg: UserBound) -> None:
@@ -198,14 +200,14 @@ class LimitView(BasicView):
         # changing limits is a cheap operation, start from clean state
         state.remove_limits(i)
         low, high = _normalize_limit(arg)
-        if low != -inf and high != inf:  # both must be set
+        if low != -np.inf and high != np.inf:  # both must be set
             if low == high:
                 state.fix(i)
             else:
                 state.set_limits(i, low, high)
-        elif low != -inf:  # lower limit must be set
+        elif low != -np.inf:  # lower limit must be set
             state.set_lower_limit(i, low)
-        elif high != inf:  # lower limit must be set
+        elif high != np.inf:  # lower limit must be set
             state.set_upper_limit(i, high)
         # bug in Minuit2: must set parameter value and error again after changing limits
         if val < low:
@@ -218,12 +220,12 @@ class LimitView(BasicView):
 
 def _normalize_limit(lim: UserBound) -> Tuple[float, float]:
     if lim is None:
-        return (-inf, inf)
+        return (-np.inf, np.inf)
     a, b = lim
     if a is None:
-        a = -inf
+        a = -np.inf
     if b is None:
-        b = inf
+        b = np.inf
     if a > b:
         raise ValueError("limit " + str(lim) + " is invalid")
     return a, b
@@ -264,6 +266,8 @@ class Matrix(np.ndarray):
         key: Union[Tuple[Union[str, int]], str, int, slice, Iterable[Union[str, int]]],
     ) -> Any:
         """Get matrix element at key."""
+        from typing import Iterable
+
         var2pos = self._var2pos or {}
         if isinstance(key, tuple):  # tuple is special case for __getitem__
             key = tuple(var2pos.get(k, k) for k in key)
@@ -384,8 +388,8 @@ class FMin:
                 continue
             v = mp.value
             e = mp.error
-            lb = mp.lower_limit if mp.has_lower_limit else -inf
-            ub = mp.upper_limit if mp.has_upper_limit else inf
+            lb = mp.lower_limit if mp.has_lower_limit else -np.inf
+            ub = mp.upper_limit if mp.has_upper_limit else np.inf
             # the 0.5 error threshold is somewhat arbitrary
             self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
         self._nfcn = nfcn
@@ -581,7 +585,7 @@ class FMin:
     def __eq__(self, other: object) -> bool:
         """Return True if all attributes are equal."""
 
-        def relaxed_equal(k: str, a: Any, b: Any) -> bool:
+        def relaxed_equal(k: str, a: object, b: object) -> bool:
             a = getattr(a, k)
             b = getattr(b, k)
             if isinstance(a, float) and np.isnan(a):
@@ -899,7 +903,7 @@ def _jacobi(
         if hi == 0:
             continue
         h[i] = hi
-        prev_esq = inf
+        prev_esq = np.inf
         while h[i] > 0:
             yu = fn(x + h)
             yd = fn(x - h)
@@ -922,7 +926,7 @@ def _jacobi(
 
 
 def propagate(
-    fn: Callable, x: Collection[float], cov: Collection[Collection[float]]
+    fn: Callable, x: Indexable[float], cov: Indexable[Indexable[float]]
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Numerically propagates the covariance into a new space.
@@ -956,7 +960,7 @@ def propagate(
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
 
 
-def make_func_code(params: Collection[str]) -> Namespace:
+def make_func_code(params: Indexable[str]) -> Namespace:
     """
     Make a func_code object to fake a function signature.
 
@@ -986,6 +990,8 @@ def make_with_signature(
     -------
     callable with new argument names.
     """
+    from typing import Tuple
+
     if replacements:
         vars = describe(callable)
         if vars:
@@ -1011,9 +1017,9 @@ def make_with_signature(
     # fallback implementation with additional overhead
     class Caller:
         def __init__(self, varnames: Tuple[str, ...]):
-            self.func_code = make_func_code(varnames)
+            self.func_code = make_func_code(varnames)  # type:ignore
 
-        def __call__(self, *args: Any) -> Any:
+        def __call__(self, *args: object) -> object:
             return callable(*args)
 
     return Caller(vars)
@@ -1047,6 +1053,8 @@ def merge_signatures(
         mapping contains the mapping of parameters indices from the merged signature to
         the original signatures.
     """
+    from typing import List
+
     args: List[str] = []
     mapping = []
 
@@ -1250,6 +1258,8 @@ def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
 def _key2index(
     var2pos: Dict[str, int], key: Union[slice, Iterable[Union[str, int]], str, int]
 ) -> Union[int, List[int]]:
+    from typing import Iterable
+
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
     if not isinstance(key, str) and isinstance(key, Iterable):
@@ -1266,3 +1276,16 @@ def _address_of_cfunc(fcn: Any) -> int:
     if isinstance(fcn, c_sig):
         return cast(fcn, c_void_p).value  # type: ignore
     return 0
+
+
+del Any
+del Dict
+del Union
+del Iterable
+del Callable
+del T
+del Optional
+del Sized
+del Tuple
+del Generator
+del List
