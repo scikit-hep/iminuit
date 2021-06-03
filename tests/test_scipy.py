@@ -227,3 +227,22 @@ def test_scipy_constraints_2(fixed):
     else:
         assert_allclose(m.values, [0.05, 0.05], atol=1e-3)
         assert_allclose(m.errors, [1, 1], atol=1e-3)
+
+
+def test_bad_constraint():
+    m = Minuit(fcn, a=1, b=2)
+    with pytest.raises(ValueError):
+        m.scipy(constraints={})
+    with pytest.raises(ValueError):
+        m.scipy(constraints=[{}])
+
+
+def test_high_print_level(capsys):
+    m = Minuit(fcn, a=1, b=2)
+    m.scipy()
+    assert capsys.readouterr()[0] == ""
+    m.reset()
+    m.print_level = 1
+    m.scipy()
+    m.print_level = 0
+    assert capsys.readouterr()[0] != ""
