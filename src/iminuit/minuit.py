@@ -870,35 +870,67 @@ class Minuit:
         if ncall is None:
             ncall = self._migrad_maxcall()
 
+        cfree = ~np.array(self.fixed[:], dtype=bool)
+        cpar = np.array(self.values[:])
+
+        class Wrapped:
+            __slots__ = ("fcn", "free", "par")
+
+            def __init__(self, fcn):
+                self.fcn = fcn
+                self.free = cfree
+                self.par = cpar
+
+            def __call__(self, par):
+                self.par[self.free] = par
+                return self.fcn(self.par)
+
+        fcn = Wrapped(self.fcn)
+
+        class WrappedGrad(Wrapped):
+            def __call__(self, par):
+                return super().__call__(par)[self.free]
+
+        grad = WrappedGrad(self.grad) if self.fcn._has_grad else None
+
+        if self.nfit < self.npar and (hess or hessp):
+            raise ValueError(
+                "options hess or hessp with fixed parameters are currently not supported"
+            )
+
+        if constraints is not None:
+            if not isinstance(constraints, Iterable):
+                constraints = [constraints]
+
+            for c in constraints:
+                c.fun = Wrapped(c.fun)
+
+        pr = self._mnprecision()
+
         start = []
         lower_bound = []
         upper_bound = []
         has_limits = False
         for p in self.params:
-            has_limits |= p.has_limits
-            xi = p.value
             if p.is_fixed:
-                ai = xi
-                bi = xi
-                has_limits = True
+                continue
+            has_limits |= p.has_limits
+            # ensure lower < x < upper for Minuit
+            ai = -np.inf if p.lower_limit is None else p.lower_limit
+            bi = np.inf if p.upper_limit is None else p.upper_limit
+            if ai > 0:
+                ai *= 1 + pr.eps2
+            elif ai < 0:
+                ai *= 1 - pr.eps2
             else:
-                # ensure lower < x < upper for Minuit
-                ai = -np.inf if p.lower_limit is None else p.lower_limit
-                bi = np.inf if p.upper_limit is None else p.upper_limit
-                pr = self._mnprecision()
-                if ai > 0:
-                    ai *= 1 + pr.eps2
-                elif ai < 0:
-                    ai *= 1 - pr.eps2
-                else:
-                    ai = pr.eps2
-                if bi > 0:
-                    bi *= 1 - pr.eps2
-                elif bi < 0:
-                    bi *= 1 + pr.eps2
-                else:
-                    bi = -pr.eps2
-                xi = np.clip(xi, ai, bi)
+                ai = pr.eps2
+            if bi > 0:
+                bi *= 1 - pr.eps2
+            elif bi < 0:
+                bi *= 1 + pr.eps2
+            else:
+                bi = -pr.eps2
+            xi = np.clip(p.value, ai, bi)
             lower_bound.append(ai)
             upper_bound.append(bi)
             start.append(xi)
@@ -917,6 +949,7 @@ class Minuit:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
 
+            # various workarounds for API inconsistencies in scipy.optimize.minimize
             options = {"maxiter": ncall}
             if method in (
                 "Nelder-Mead",
@@ -930,39 +963,46 @@ class Minuit:
             if constraints is None and method in ("COBYLA", "SLSQP", "trust-constr"):
                 constraints = ()
 
+            pr = self._mnprecision()
             r = minimize(
-                self.fcn,
+                fcn,
                 start,
                 method=method,
                 bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
                 if has_limits
                 else None,
-                jac=self.grad if self.fcn._has_grad else None,
+                jac=grad,
                 hess=hess,
                 hessp=hessp,
                 constraints=constraints,
-                tol=edm_goal ** 2,
+                tol=pr.eps,
                 options=options,
             )
+            if self.print_level > 0:
+                print(r)
 
         if "hess_inv" in r:
-            cov = r.hess_inv
-            if not isinstance(cov, np.ndarray):
-                cov = r.hess_inv(np.eye(self.npar))
+            c = r.hess_inv
+            if not isinstance(c, np.ndarray):
+                c = r.hess_inv(np.eye(self.nfit))
+            cov = np.zeros((self.npar, self.npar))
+            m = np.outer(cfree, cfree)
+            cov[m] = c.flatten()
         else:
             cov = np.zeros((self.npar, self.npar))
             for i, p in enumerate(self.params):
                 cov[i, i] = p.error ** 2
 
+        jac = np.zeros(self.npar)
         if "grad" in r:
             # trust-constr returns grad
-            jac = r.grad
+            jac[cfree] = r.grad
         elif "jac" in r:
-            jac = r.jac
+            jac[cfree] = r.jac
         else:
             tol = 1e-2
-            dx = (np.diag(cov) * tol) ** 0.5
-            jac = mutil._jacobi(self.fcn, r.x, dx, tol)[1][0]
+            dx = np.sqrt(np.diag(cov) * tol)[cfree]
+            jac[cfree] = mutil._jacobi(fcn, r.x, dx, tol)[1][0]
 
         fm = FunctionMinimum(
             self._init_state.trafo,
