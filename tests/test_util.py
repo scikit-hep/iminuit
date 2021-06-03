@@ -414,37 +414,39 @@ def test_merge_signatures():
     assert pg == (0, 3, 4)
 
 
-def test_propagate():
+def test_propagate_1():
     cov = [
-        [1, 0.1, 0.2],
-        [0.1, 2, 0.3],
-        [0.2, 0.3, 3],
+        [1.0, 0.1, 0.2],
+        [0.1, 2.0, 0.3],
+        [0.2, 0.3, 3.0],
     ]
     x = [1, 2, 3]
 
     def fn(x):
-        return 2 * x
+        return 2 * x + 1
 
     y, ycov = util.propagate(fn, x, cov)
-    np.testing.assert_allclose(y, [2, 4, 6])
+    np.testing.assert_allclose(y, [3, 5, 7])
     np.testing.assert_allclose(ycov, [[4, 0.4, 0.8], [0.4, 8, 1.2], [0.8, 1.2, 12]])
 
     y, ycov = util.propagate(fn, 1, 2)
-    np.testing.assert_allclose(y, 2)
+    np.testing.assert_allclose(y, 3)
     np.testing.assert_allclose(ycov, 8)
 
-    rng = np.random.default_rng(1)
-    a = rng.normal(size=(10, 3))
+
+def test_propagate_2():
+    cov = [
+        [1.0, 0.1, 0.2],
+        [0.1, 2.0, 0.3],
+        [0.2, 0.3, 3.0],
+    ]
+    x = [1.0, 2.0, 3.0]
+
+    a = 0.5 * np.arange(30).reshape((10, 3))
 
     def fn(x):
         return np.dot(a, x)
 
-    cov = [
-        [1, 0.1, 0.2],
-        [0.1, 2, 0.3],
-        [0.2, 0.3, 3],
-    ]
-    x = [1, 2, 3]
     y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(x))
     np.testing.assert_allclose(ycov, np.einsum("ij,kl,jl", a, a, cov))
@@ -456,6 +458,34 @@ def test_propagate():
     np.testing.assert_equal(y, fn(np.array(x)))
     jac = 2 * np.dot(cov, x)
     np.testing.assert_allclose(ycov, np.einsum("i,k,ik", jac, jac, cov))
+
+
+def test_propagate_3():
+    # matrices with full zero rows and columns are supported
+    cov = [
+        [1.0, 0.0, 0.2],
+        [0.0, 0.0, 0.0],
+        [0.2, 0.0, 3.0],
+    ]
+    x = [1.0, 2.0, 3.0]
+
+    def fn(x):
+        return 2 * x + 1
+
+    y, ycov = util.propagate(fn, x, cov)
+    np.testing.assert_allclose(y, [3, 5, 7])
+    np.testing.assert_allclose(ycov, [[4, 0.0, 0.8], [0.0, 0.0, 0.0], [0.8, 0.0, 12]])
+
+
+def test_proagate_on_bad_input():
+    cov = [[np.nan, 0.0], [0.0, 1.0]]
+    x = [1.0, 2.0]
+
+    def fn(x):
+        return 2 * x + 1
+
+    with pytest.raises(ValueError):
+        util.propagate(fn, x, cov)
 
 
 def test_jacobi():
@@ -490,10 +520,23 @@ def test_jacobi_on_bad_input():
 
     x = np.array([1])
     dx = np.array([0])
-    y, jac = util._jacobi(lambda x: np.nan, x, dx, 1e-3)
+    y, jac = util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
+
+    np.testing.assert_equal(y, 1)
+    np.testing.assert_equal(jac, 0)
+
+    x = np.array([np.nan])
+    dx = np.array([0.1])
+    y, jac = util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
 
     np.testing.assert_equal(y, np.nan)
-    np.testing.assert_equal(jac, 0)
+    np.testing.assert_equal(jac, np.nan)
+
+    x = np.array([1])
+    dx = np.array([np.nan])
+    with pytest.raises(AssertionError):
+        # dx must be >= 0
+        util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
 
 
 def test_jacobi_no_convergence():
@@ -502,5 +545,7 @@ def test_jacobi_no_convergence():
     x = np.array([1])
     dx = np.array([1])
 
-    with pytest.warns(UserWarning):
-        util._jacobi(lambda x: rng.normal(), x, dx, 1e-323)
+    y, jac = util._jacobi(lambda x: rng.normal(), x, dx, 1e-323)
+
+    np.testing.assert_allclose(y, 0, atol=1)
+    np.testing.assert_allclose(jac, 0, atol=1)

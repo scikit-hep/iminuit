@@ -20,7 +20,6 @@ from typing import (
     Generic,
 )
 import types
-import warnings
 import abc
 
 T = TypeVar("T")
@@ -904,7 +903,8 @@ def _jacobi(
             continue
         h[i] = hi
         prev_esq = np.inf
-        while h[i] > 0:
+        for iter in range(20):
+            assert h[i] > 0
             yu = fn(x + h)
             yd = fn(x - h)
             du = (yu - y) / h[i]
@@ -916,8 +916,7 @@ def _jacobi(
                 break
             esq = np.dot(delta, delta)
             if esq > prev_esq:
-                warnings.warn("no convergence, Jacobi matrix may be inaccurate")
-                # uses previous jac[:, i]
+                # no convergence, use previous more accurate jac[:, i]
                 break
             jac[:, i] = d
             prev_esq = esq
@@ -955,6 +954,8 @@ def propagate(
     cov = np.atleast_2d(cov)  # type:ignore
     tol = 1e-2
     dx = (np.diag(cov) * tol) ** 0.5
+    if not np.all(dx >= 0):
+        raise ValueError("diagonal elements of covariance matrix must be non-negative")
     y, jac = _jacobi(fn, x, dx, tol)
     ycov = np.einsum("ij,kl,jl", jac, jac, cov)
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov

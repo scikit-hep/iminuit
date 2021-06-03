@@ -857,26 +857,50 @@ class Minuit:
             Which scipy method to use.
         ncall : int, optional
             Function call limit.
-        constraints : scipy.optimize.LinearConstraint or scipy.optimize.NonlinearConstraint
-            Linear or non-linear constraints, see scipy.optimize.minimize docs.
+        hess : Callable, optional
+            Function that computes the Hessian matrix. It must use the same calling
+            conversion as the original fcn (several arguments which are numbers or
+            a single array argument).
+        hess : Callable, optional
+            Function that computes the Hessian matrix. It must use the same calling
+            conversion as the original fcn (several arguments which are numbers or
+            a single array argument) plus another argument which is an arbitrary vector.
+        constraints : scipy.optimize.LinearConstraint or
+                      scipy.optimize.NonlinearConstraint, optional
+            Linear or non-linear constraints, see docs of :func:`scipy.optimize.minimize`
+            look for the `constraints` parameter. The function used in the constraint
+            must use the same calling convention as the original fcn, see hess parameter
+            for details.
 
         Notes
         -----
         The call limit may be violated since many algorithms checks the call limit only
-        after a full iteraction of their algorithm, which consists of several function calls.
+        after a full iteraction of their algorithm, which consists of several function
+        calls. Some algorithms do not check the number of function calls at all, in this
+        case the call limit acts on the number of iterations of the algorithm. This
+        issue should be fixed in scipy.
+
+        The SciPy minimizers use their own internal rule for convergence. The EDM
+        criterion is evaluated only after the original algorithm already stopped.
         """
-        from scipy.optimize import minimize, Bounds
+        from scipy.optimize import (
+            minimize,
+            Bounds,
+            NonlinearConstraint,
+            LinearConstraint,
+        )
 
         if ncall is None:
             ncall = self._migrad_maxcall()
 
         cfree = ~np.array(self.fixed[:], dtype=bool)
         cpar = np.array(self.values[:])
+        no_fixed_parameters = self.nfit == self.npar
 
-        if np.all(cfree):
+        if no_fixed_parameters:
 
             class Wrapped:
-                __slots__ = ("fcn", "par")
+                __slots__ = ("fcn",)
 
                 def __init__(self, fcn):
                     self.fcn = fcn
@@ -893,7 +917,22 @@ class Minuit:
 
             WrappedGrad = Wrapped
             WrappedHess = Wrapped
-            WrappedHessp = Wrapped
+
+            class WrappedHessp:
+                __slots__ = ("fcn",)
+
+                def __init__(self, fcn):
+                    self.fcn = fcn
+
+                if self.fcn._array_call:
+
+                    def __call__(self, par, v):
+                        return self.fcn(par, v)
+
+                else:
+
+                    def __call__(self, par, v):
+                        return self.fcn(*par, v)
 
         else:
 
@@ -933,6 +972,29 @@ class Minuit:
                     h = super().__call__(par)
                     return np.atleast_2d(h)[self.freem].reshape(self.shape)
 
+            class WrappedHessp:
+                __slots__ = ("fcn", "free", "par", "vec")
+
+                def __init__(self, fcn):
+                    self.fcn = fcn
+                    self.free = cfree
+                    self.par = cpar
+                    self.vec = np.zeros_like(self.par)
+
+                if self.fcn._array_call:
+
+                    def __call__(self, par, v):
+                        self.par[self.free] = par
+                        self.vec[self.free] = v
+                        return self.fcn(self.par, self.vec)[self.free]
+
+                else:
+
+                    def __call__(self, par, v):
+                        self.par[self.free] = par
+                        self.vec[self.free] = v
+                        return self.fcn(*self.par, self.vec)[self.free]
+
         fcn = Wrapped(self.fcn._fcn)
 
         grad = self.fcn._grad
@@ -945,14 +1007,33 @@ class Minuit:
             hessp = WrappedHessp(hessp)
 
         if constraints is not None:
+            if isinstance(constraints, dict):
+                raise ValueError("setting constraints with dicts is not supported")
+
             if not isinstance(constraints, Iterable):
                 constraints = [constraints]
 
             for c in constraints:
-                c.fun = Wrapped(c.fun)
+                if isinstance(c, NonlinearConstraint):
+                    c.fun = Wrapped(c.fun)
+                elif isinstance(c, LinearConstraint):
+                    if no_fixed_parameters == False:
+                        x = cpar.copy()
+                        x[cfree] = 0
+                        shift = np.dot(c.A, x)
+                        c.lb -= shift
+                        c.ub -= shift
+                        c.A = np.atleast_1d(c.A)[cfree]
+                else:
+                    raise ValueError(
+                        "setting constraints with dicts is not supported, use "
+                        "LinearConstraint or NonlinearConstraint from scipy.optimize."
+                    )
 
         pr = self._mnprecision()
 
+        # Limits for scipy need to be a little bit tighter than the ones for Minuit
+        # so that the Jacobian of the transformation is not zero or infinite.
         start = []
         lower_bound = []
         upper_bound = []
@@ -992,39 +1073,35 @@ class Minuit:
             else:
                 method = "BFGS"
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
+        # various workarounds for API inconsistencies in scipy.optimize.minimize
+        options = {"maxiter": ncall}
+        if method in (
+            "Nelder-Mead",
+            "Powell",
+        ):
+            options["maxfev"] = ncall
 
-            # various workarounds for API inconsistencies in scipy.optimize.minimize
-            options = {"maxiter": ncall}
-            if method in (
-                "Nelder-Mead",
-                "Powell",
-            ):
-                options["maxfev"] = ncall
+        if method == "L-BFGS-B":
+            options["maxfun"] = ncall
 
-            if method == "L-BFGS-B":
-                options["maxfun"] = ncall
+        if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
+            constraints = ()
 
-            if constraints is None and method in ("COBYLA", "SLSQP", "trust-constr"):
-                constraints = ()
-
-            pr = self._mnprecision()
-            r = minimize(
-                fcn,
-                start,
-                method=method,
-                bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
-                if has_limits
-                else None,
-                jac=grad,
-                hess=hess,
-                hessp=hessp,
-                constraints=constraints,
-                options=options,
-            )
-            if self.print_level > 0:
-                print(r)
+        r = minimize(
+            fcn,
+            start,
+            method=method,
+            bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
+            if has_limits
+            else None,
+            jac=grad,
+            hess=hess,
+            hessp=hessp,
+            constraints=constraints,
+            options=options,
+        )
+        if self.print_level > 0:
+            print(r)
 
         self.fcn._nfcn += r["nfev"]
         if grad:
@@ -1042,7 +1119,16 @@ class Minuit:
         if needs_invert:
             hess_inv = np.linalg.inv(hess_inv)
 
-        # extend inverted hessian
+        accurate_covar = bool(hess) or bool(hessp)
+
+        # Newton-CG neither returns hessian nor inverted hessian
+        if hess_inv is None and accurate_covar:
+            if hessp:
+                hess = [hessp(r.x, ei) for ei in np.eye(self.nfit)]
+            else:
+                hess = hess(r.x)
+            hess_inv = np.linalg.inv(hess)
+
         if hess_inv is None:
             hess_inv = np.zeros((self.nfit, self.nfit))
             i = 0
@@ -1052,8 +1138,7 @@ class Minuit:
                 hess_inv[i, i] = p.error ** 2
                 i += 1
 
-        if "grad" in r:
-            # trust-constr returns grad
+        if "grad" in r:  # trust-constr has "grad" and "jac", but "grad" is "jac"!
             jac = r.grad
         elif "jac" in r:
             jac = r.jac
@@ -1072,7 +1157,7 @@ class Minuit:
             edm_goal,
             self.nfcn,
             ncall,
-            bool(hess) or bool(hessp),
+            accurate_covar,
         )
 
         self._last_state = fm.state
@@ -1085,8 +1170,11 @@ class Minuit:
             edm_goal,
         )
 
-        if hess is None and self.strategy.strategy > 0:
-            self.hesse()
+        if accurate_covar:
+            self._make_covariance()
+        else:
+            if self.strategy.strategy > 0:
+                self.hesse()
 
         return self
 
