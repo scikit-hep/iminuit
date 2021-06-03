@@ -18,8 +18,54 @@ def grad(a, b):
     return 2 * a, b - 1
 
 
-def hess(par):
-    return [[2, 0], [0, 1]]
+def hess(a, b):
+    return [[2, 0], [0, 0.5]]
+
+
+@pytest.mark.parametrize("array_call", (False, True))
+@pytest.mark.parametrize(
+    "method",
+    (
+        "Nelder-Mead",
+        "Powell",
+        "CG",
+        "BFGS",
+        "Newton-CG",
+        "L-BFGS-B",
+        "TNC",
+        "COBYLA",
+        "SLSQP",
+        "trust-constr",
+        "dogleg",
+        "trust-ncg",
+        "trust-exact",
+        "trust-krylov",
+    ),
+)
+def test_scipy_method(array_call, method):
+    fn = (lambda par: fcn(*par)) if array_call else fcn
+
+    gr = None
+    he = None
+    if method in (
+        "Newton-CG",
+        "trust-constr",
+        "dogleg",
+        "trust-ncg",
+        "trust-exact",
+        "trust-krylov",
+    ):
+        gr = (lambda par: grad(*par)) if array_call else grad
+    if method in ("dogleg", "trust-ncg", "trust-exact", "trust-krylov"):
+        he = (lambda par: hess(*par)) if array_call else hess
+    if array_call:
+        m = Minuit(fn, (1, 2), grad=gr)
+    else:
+        m = Minuit(fn, a=1, b=2, grad=gr)
+    m.scipy(method=method, hess=he)
+    assert m.valid
+    assert_allclose(m.values, [0, 1], atol=1e-3)
+    assert_allclose(m.errors, [1, 2], rtol=1e-2)
 
 
 @pytest.mark.parametrize("stra", (0, 1))
@@ -116,40 +162,6 @@ def test_scipy_ncall(stra, grad):
     assert not m.valid
 
 
-@pytest.mark.parametrize(
-    "method",
-    (
-        "Nelder-Mead",
-        "Powell",
-        "CG",
-        "BFGS",
-        "Newton-CG",
-        "L-BFGS-B",
-        "TNC",
-        "COBYLA",
-        "SLSQP",
-        "trust-constr",
-        "dogleg",
-        "trust-ncg",
-        "trust-exact",
-        "trust-krylov",
-    ),
-)
-def test_scipy_method(method):
-    gr = None
-    he = None
-    if method in ("dogleg", "trust-ncg", "trust-exact", "trust-krylov"):
-        gr = grad
-        he = hess
-    if method in ("Newton-CG", "trust-constr"):
-        gr = grad
-    m = Minuit(fcn, a=1, b=2, grad=gr)
-    m.scipy(method=method, hess=he)
-    assert m.valid
-    assert_allclose(m.values, [0, 1], atol=1e-3)
-    assert_allclose(m.errors, [1, 2], rtol=1e-2)
-
-
 @pytest.mark.parametrize("ypos", (1, 1.1))
 def test_scipy_constraints(ypos):
     def fcn(x, y):
@@ -157,9 +169,39 @@ def test_scipy_constraints(ypos):
 
     m = Minuit(fcn, x=1, y=2)
     m.errordef = 1
-    con = scopt.NonlinearConstraint(lambda x: x[0] ** 2 + (x[1] - ypos) ** 2, 0, 1)
+    con = scopt.NonlinearConstraint(lambda x, y: x ** 2 + (y - ypos) ** 2, 0, 1)
     m.scipy(constraints=[con])
     if ypos == 1:
         assert m.valid
     assert_allclose(m.values, [0, ypos - 1], atol=1e-3)
     assert m.accurate
+
+
+@pytest.mark.parametrize("ypos", (1, 1.1))
+def test_scipy_constraints_fixed(ypos):
+    def fcn(a, x, y):
+        return a + x ** 2 + y ** 2
+
+    m = Minuit(fcn, a=3, x=1, y=2)
+    m.fixed["a"] = True
+    m.errordef = 1
+    con = scopt.NonlinearConstraint(lambda a, x, y: x ** 2 + (y - ypos) ** 2, 0, 1)
+    m.scipy(constraints=con)
+    if ypos == 1:
+        assert m.valid
+    assert_allclose(m.values, [3, 0, ypos - 1], atol=1e-3)
+    assert m.accurate
+
+
+def test_scipy_hess_fixed():
+    m = Minuit(fcn, a=3, b=5, grad=grad)
+    m.fixed["a"] = True
+    m.scipy(method="Newton-CG", hess=hess)
+    print(m.nfcn)
+    m.reset()
+    m.scipy(hess=hess)
+    print(m.nfcn)
+    assert m.valid
+    assert m.accurate
+    assert_allclose(m.values, [3, 1], atol=1e-3)
+    assert_allclose(m.errors[1], 2, atol=1e-3)

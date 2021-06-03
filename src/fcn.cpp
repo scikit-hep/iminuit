@@ -110,14 +110,15 @@ void bind_fcn(py::module m) {
 
       .def(py::init<py::object, py::object, bool, double>())
 
-      .def("_grad", &FCN::Gradient)
+      .def("gradient", &FCN::Gradient)
       .def("_ndata", &FCN::ndata)
       .def_readwrite("_nfcn", &FCN::nfcn_)
       .def_readwrite("_ngrad", &FCN::ngrad_)
       .def_readwrite("_throw_nan", &FCN::throw_nan_)
       .def_property("_errordef", &FCN::Up, &set_errordef)
-      .def_property_readonly("_has_grad",
-                             [](FCN& self) { return !self.grad_.is_none(); })
+      .def_readonly("_array_call", &FCN::array_call_)
+      .def_readonly("_fcn", &FCN::fcn_)
+      .def_readonly("_grad", &FCN::grad_)
 
       .def("__call__", &FCN::operator())
 

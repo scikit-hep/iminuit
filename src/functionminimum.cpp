@@ -20,7 +20,7 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
 
 FunctionMinimum init2(const MnUserTransformation& tr, py::sequence par,
                       py::sequence cov, py::sequence grad, double fval, double up,
-                      double edm_goal, int nfcn, int max_nfcn);
+                      double edm_goal, int nfcn, int max_nfcn, bool exact_hess_inv);
 
 py::tuple fmin_getstate(const FunctionMinimum&);
 FunctionMinimum fmin_setstate(py::tuple);

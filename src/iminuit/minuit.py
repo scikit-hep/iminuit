@@ -68,7 +68,7 @@ class Minuit:
     @property
     def grad(self) -> Callable[[np.ndarray], np.ndarray]:
         """Get gradient function of the cost function."""
-        return self._fcn._grad  # type:ignore
+        return self._fcn.gradient  # type:ignore
 
     @property
     def pos2var(self) -> Tuple[str, ...]:
@@ -873,30 +873,76 @@ class Minuit:
         cfree = ~np.array(self.fixed[:], dtype=bool)
         cpar = np.array(self.values[:])
 
-        class Wrapped:
-            __slots__ = ("fcn", "free", "par")
+        if np.all(cfree):
 
-            def __init__(self, fcn):
-                self.fcn = fcn
-                self.free = cfree
-                self.par = cpar
+            class Wrapped:
+                __slots__ = ("fcn", "par")
 
-            def __call__(self, par):
-                self.par[self.free] = par
-                return self.fcn(self.par)
+                def __init__(self, fcn):
+                    self.fcn = fcn
 
-        fcn = Wrapped(self.fcn)
+                if self.fcn._array_call:
 
-        class WrappedGrad(Wrapped):
-            def __call__(self, par):
-                return super().__call__(par)[self.free]
+                    def __call__(self, par):
+                        return self.fcn(par)
 
-        grad = WrappedGrad(self.grad) if self.fcn._has_grad else None
+                else:
 
-        if self.nfit < self.npar and (hess or hessp):
-            raise ValueError(
-                "options hess or hessp with fixed parameters are currently not supported"
-            )
+                    def __call__(self, par):
+                        return self.fcn(*par)
+
+            WrappedGrad = Wrapped
+            WrappedHess = Wrapped
+            WrappedHessp = Wrapped
+
+        else:
+
+            class Wrapped:
+                __slots__ = ("fcn", "free", "par")
+
+                def __init__(self, fcn):
+                    self.fcn = fcn
+                    self.free = cfree
+                    self.par = cpar
+
+                if self.fcn._array_call:
+
+                    def __call__(self, par):
+                        self.par[self.free] = par
+                        return self.fcn(self.par)
+
+                else:
+
+                    def __call__(self, par):
+                        self.par[self.free] = par
+                        return self.fcn(*self.par)
+
+            class WrappedGrad(Wrapped):
+                def __call__(self, par):
+                    g = super().__call__(par)
+                    return np.atleast_1d(g)[self.free]
+
+            class WrappedHess(Wrapped):
+                def __init__(self, fcn):
+                    super().__init__(fcn)
+                    self.freem = np.outer(self.free, self.free)
+                    n = np.sum(self.free)
+                    self.shape = n, n
+
+                def __call__(self, par):
+                    h = super().__call__(par)
+                    return np.atleast_2d(h)[self.freem].reshape(self.shape)
+
+        fcn = Wrapped(self.fcn._fcn)
+
+        grad = self.fcn._grad
+        grad = WrappedGrad(grad) if grad else None
+
+        if hess:
+            hess = WrappedHess(hess)
+
+        if hessp:
+            hessp = WrappedHessp(hessp)
 
         if constraints is not None:
             if not isinstance(constraints, Iterable):
@@ -975,58 +1021,71 @@ class Minuit:
                 hess=hess,
                 hessp=hessp,
                 constraints=constraints,
-                tol=pr.eps,
                 options=options,
             )
             if self.print_level > 0:
                 print(r)
 
-        if "hess_inv" in r:
-            c = r.hess_inv
-            if not isinstance(c, np.ndarray):
-                c = r.hess_inv(np.eye(self.nfit))
-            cov = np.zeros((self.npar, self.npar))
-            m = np.outer(cfree, cfree)
-            cov[m] = c.flatten()
-        else:
-            cov = np.zeros((self.npar, self.npar))
-            for i, p in enumerate(self.params):
-                cov[i, i] = p.error ** 2
+        self.fcn._nfcn += r["nfev"]
+        if grad:
+            self.fcn._ngrad += r.get("njev", 0)
 
-        jac = np.zeros(self.npar)
+        hess_inv = None
+        needs_invert = False
+        if "hess_inv" in r:
+            hess_inv = r.hess_inv
+        elif "hess" in r:
+            hess_inv = r.hess
+            needs_invert = True
+        if hess_inv is not None and not isinstance(hess_inv, np.ndarray):
+            hess_inv = hess_inv(np.eye(self.nfit))
+        if needs_invert:
+            hess_inv = np.linalg.inv(hess_inv)
+
+        # extend inverted hessian
+        if hess_inv is None:
+            hess_inv = np.zeros((self.nfit, self.nfit))
+            i = 0
+            for p in self.params:
+                if p.is_fixed:
+                    continue
+                hess_inv[i, i] = p.error ** 2
+                i += 1
+
         if "grad" in r:
             # trust-constr returns grad
-            jac[cfree] = r.grad
+            jac = r.grad
         elif "jac" in r:
-            jac[cfree] = r.jac
+            jac = r.jac
         else:
             tol = 1e-2
-            dx = np.sqrt(np.diag(cov) * tol)[cfree]
-            jac[cfree] = mutil._jacobi(fcn, r.x, dx, tol)[1][0]
+            dx = np.sqrt(np.diag(hess_inv) * tol)
+            jac = mutil._jacobi(fcn, r.x, dx, tol)[1][0]
 
         fm = FunctionMinimum(
             self._init_state.trafo,
             r.x,
-            cov,
+            hess_inv,
             jac,
             r.fun,
             self.errordef,
             edm_goal,
             self.nfcn,
             ncall,
+            bool(hess) or bool(hessp),
         )
 
         self._last_state = fm.state
         self._fmin = mutil.FMin(
             fm,
-            f"SciPy[{method if method else 'auto'}]",
+            f"SciPy[{method}]",
             self.nfcn,
             self.ngrad,
             self.ndof,
             edm_goal,
         )
 
-        if self.strategy.strategy > 0:
+        if hess is None and self.strategy.strategy > 0:
             self.hesse()
 
         return self
