@@ -27,7 +27,7 @@ def pdg_format(value, *errors):
     return strings
 
 
-def format_row(widths, *args):
+def format_row(widths, *args) -> str:
     return (
         "".join(
             ("│{0:^%i}" % w if w > 0 else "│ {0:%i}" % (-w - 1)).format(a)
@@ -48,13 +48,13 @@ def format_line(widths, edges):
 def fmin_fields(fm):
     rc = fm.reduced_chi2
     return [
+        fm.algorithm,
         f"FCN = {fm.fval:.4g}"
         + (f" (chi2/ndof = {rc:.1f})" if not np.isnan(rc) else ""),
         f"Nfcn = {fm.nfcn}",
         f"EDM = {fm.edm:.3g} (Goal: {fm.edm_goal:.3g})",
         f"Ngrad = {fm.ngrad}" if fm.ngrad > 0 else "",
         f"{'Valid' if fm.is_valid else 'INVALID'} Minimum",
-        f"{'Valid' if fm.has_valid_parameters else 'INVALID'} Parameters",
         f"{'SOME' if fm.has_parameters_at_limit else 'No'} Parameters at limit",
         f"{'ABOVE' if fm.is_above_max_edm else 'Below'} EDM threshold (goal x 10)",
         f"{'ABOVE' if fm.has_reached_call_limit else 'Below'} call limit",
@@ -68,20 +68,23 @@ def fmin_fields(fm):
 
 def fmin(fm):
     ff = fmin_fields(fm)
+    w = (73,)
+    l1 = format_line(w, "┌┐")
+    i1 = format_row(w, ff[0] + "   ")
     w = (-34, 38)
-    l1 = format_line(w, "┌┬┐")
-    i1 = format_row(w, *ff[0:2])
-    i2 = format_row(w, *ff[2:4])
-    w = (15, 18, 38)
-    l2 = format_line(w, "├┬┼┤")
-    v1 = format_row(w, *ff[4:7])
-    l3 = format_line(w, "├┴┼┤")
+    l2 = format_line(w, "├┬┤")
+    i2 = format_row(w, *ff[1:3])
+    i3 = format_row(w, *ff[3:5])
+    w = (34, 38)
+    l3 = format_line(w, "├┼┤")
+    v1 = format_row(w, *ff[5:7])
+    l4 = format_line(w, "├┼┤")
     v2 = format_row((34, 38), *ff[7:9])
     w = (15, 18, 11, 13, 12)
-    l4 = format_line(w, "├┬┼┬┬┤")
+    l5 = format_line(w, "├┬┼┬┬┤")
     v3 = format_row(w, *ff[9:14])
-    l5 = format_line(w, "└┴┴┴┴┘")
-    return "\n".join((l1, i1, i2, l2, v1, l3, v2, l4, v3, l5))
+    l6 = format_line(w, "└┴┴┴┴┘")
+    return "\n".join((l1, i1, l2, i2, i3, l3, v1, l4, v2, l5, v3, l6))
 
 
 def params(mps):

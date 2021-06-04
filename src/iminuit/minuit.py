@@ -1,6 +1,6 @@
 """Minuit class."""
 
-from warnings import warn
+import warnings
 from . import util as mutil
 from ._core import (
     FCN,
@@ -16,8 +16,17 @@ from ._core import (
     FunctionMinimum,
 )
 import numpy as np
-from collections.abc import Iterable
-from typing import Tuple, Dict, Callable, Sequence, Optional, Union
+from typing import (
+    Tuple,
+    Dict,
+    Iterable,
+    Callable,
+    Collection,
+    Optional,
+    Union,
+    Generator,
+    Any,
+)
 
 MnPrint.global_level = 0
 
@@ -52,17 +61,17 @@ class Minuit:
     """Set :attr:`errordef` to this constant for a negative log-likelihood function."""
 
     @property
-    def fcn(self) -> Callable:
+    def fcn(self) -> FCN:
         """Get cost function (usually a least-squares or likelihood function)."""
         return self._fcn
 
     @property
-    def grad(self) -> Callable:
+    def grad(self) -> Callable[[np.ndarray], np.ndarray]:
         """Get gradient function of the cost function."""
-        return self._fcn._grad
+        return self._fcn.gradient  # type:ignore
 
     @property
-    def pos2var(self) -> Tuple[str]:
+    def pos2var(self) -> Tuple[str, ...]:
         """Map variable index to name."""
         return self._pos2var
 
@@ -72,7 +81,7 @@ class Minuit:
         return self._var2pos
 
     @property
-    def parameters(self) -> Tuple[str]:
+    def parameters(self) -> Tuple[str, ...]:
         """
         Get tuple of parameter names.
 
@@ -98,10 +107,10 @@ class Minuit:
             m_nll = Minuit(a_likelihood_function)
             m_nll.errordef = Minuit.LIKELIHOOD     # == 0.5
         """
-        return self._fcn._errordef
+        return self._fcn._errordef  # type: ignore
 
     @errordef.setter
-    def errordef(self, value: float):
+    def errordef(self, value: float) -> None:
         if value <= 0:
             raise ValueError(f"errordef={value} must be a positive number")
         self._fcn._errordef = value
@@ -109,7 +118,7 @@ class Minuit:
             self._fmin._src.errordef = value
 
     @property
-    def precision(self) -> float:
+    def precision(self) -> Optional[float]:
         """
         Access estimated precision of the cost function.
 
@@ -121,7 +130,7 @@ class Minuit:
         return self._precision
 
     @precision.setter
-    def precision(self, value: float):
+    def precision(self, value: float) -> None:
         if value is not None and not (value > 0):
             raise ValueError("precision must be a positive number or None")
         self._precision = value
@@ -154,7 +163,7 @@ class Minuit:
         return self._tolerance
 
     @tol.setter
-    def tol(self, value: float):
+    def tol(self, value: float) -> None:
         if value <= 0:
             raise ValueError("tolerance must be positive")
         self._tolerance = value
@@ -182,7 +191,7 @@ class Minuit:
         return self._strategy
 
     @strategy.setter
-    def strategy(self, value: int):
+    def strategy(self, value: int) -> None:
         self._strategy.strategy = value
 
     @property
@@ -202,10 +211,10 @@ class Minuit:
         Setting print_level has the unwanted side-effect of setting the level
         globally for all Minuit instances in the current Python session.
         """
-        return MnPrint.global_level
+        return MnPrint.global_level  # type: ignore
 
     @print_level.setter
-    def print_level(self, level: int):
+    def print_level(self, level: int) -> None:
         MnPrint.global_level = level
 
     @property
@@ -216,10 +225,10 @@ class Minuit:
         If you set this to True, an error is raised whenever the function evaluates
         to NaN.
         """
-        return self._fcn._throw_nan
+        return self._fcn._throw_nan  # type: ignore
 
     @throw_nan.setter
-    def throw_nan(self, value: bool):
+    def throw_nan(self, value: bool) -> None:
         self._fcn._throw_nan = value
 
     @property
@@ -238,7 +247,7 @@ class Minuit:
         return self._values
 
     @values.setter
-    def values(self, args):
+    def values(self, args: Iterable) -> None:
         self._values[:] = args
 
     @property
@@ -255,7 +264,7 @@ class Minuit:
         return self._errors
 
     @errors.setter
-    def errors(self, args):
+    def errors(self, args: Iterable) -> None:
         self._errors[:] = args
 
     @property
@@ -277,7 +286,7 @@ class Minuit:
         return self._fixed
 
     @fixed.setter
-    def fixed(self, args):
+    def fixed(self, args: Iterable) -> None:
         self._fixed[:] = args
 
     @property
@@ -302,7 +311,7 @@ class Minuit:
         return self._limits
 
     @limits.setter
-    def limits(self, args):
+    def limits(self, args: Iterable) -> None:
         self._limits[:] = args
 
     @property
@@ -320,7 +329,7 @@ class Minuit:
         return self._merrors
 
     @property
-    def covariance(self) -> mutil.Matrix:
+    def covariance(self) -> Optional[mutil.Matrix]:
         r"""
         Return covariance matrix.
 
@@ -359,7 +368,7 @@ class Minuit:
         return self.npar - sum(self.fixed)
 
     @property
-    def ndof(self) -> float:
+    def ndof(self) -> int:
         """
         Get number of degrees of freedom if cost function supports this.
 
@@ -367,10 +376,10 @@ class Minuit:
         points with a property called ``ndata``. Unbinned cost functions should return
         infinity.
         """
-        return self._fcn._ndata() - self.nfit
+        return self._fcn._ndata() - self.nfit  # type: ignore
 
     @property
-    def fmin(self) -> mutil.FMin:
+    def fmin(self) -> Optional[mutil.FMin]:
         """
         Get function minimum data object.
 
@@ -381,7 +390,7 @@ class Minuit:
         return self._fmin
 
     @property
-    def fval(self) -> float:
+    def fval(self) -> Optional[float]:
         """
         Get function value at minimum.
 
@@ -414,7 +423,7 @@ class Minuit:
         --------
         params, util.Params
         """
-        return _get_params(self._init_state, {})
+        return _get_params(self._init_state, mutil.MErrors())
 
     @property
     def valid(self) -> bool:
@@ -427,7 +436,7 @@ class Minuit:
         --------
         util.FMin
         """
-        return self._fmin and self._fmin.is_valid
+        return self._fmin.is_valid if self._fmin else False
 
     @property
     def accurate(self) -> bool:
@@ -440,25 +449,25 @@ class Minuit:
         --------
         util.FMin
         """
-        return self._fmin and self._fmin.has_accurate_covar
+        return self._fmin.has_accurate_covar if self._fmin else False
 
     @property
     def nfcn(self) -> int:
         """Get total number of function calls."""
-        return self._fcn._nfcn
+        return self._fcn._nfcn  # type:ignore
 
     @property
     def ngrad(self) -> int:
         """Get total number of gradient calls."""
-        return self._fcn._ngrad
+        return self._fcn._ngrad  # type:ignore
 
     def __init__(
         self,
         fcn: Callable,
-        *args: Union[float, Sequence[float]],
+        *args: Union[float, mutil.Indexable[float]],
         grad: Optional[Callable] = None,
-        name: Optional[Sequence[str]] = None,
-        **kwds,
+        name: Optional[Collection[str]] = None,
+        **kwds: float,
     ):
         """
         Initialize Minuit object.
@@ -564,16 +573,19 @@ class Minuit:
         migrad, hesse, minos, scan, simplex
         """
         array_call = False
-        if len(args) == 1 and isinstance(args[0], Iterable):
+        if len(args) == 1 and isinstance(args[0], Collection):
             array_call = True
-            args = args[0]
+            start = np.array(args[0])
+        else:
+            start = np.array(args)
+        del args
 
         if name is None:
             name = mutil.describe(fcn)
             if len(name) == 0 or (array_call and len(name) == 1):
-                name = tuple(f"x{i}" for i in range(len(args)))
+                name = tuple(f"x{i}" for i in range(len(start)))
 
-        if len(args) == 0 and len(kwds) == 0:
+        if len(start) == 0 and len(kwds) == 0:
             raise RuntimeError(
                 "starting value(s) are required"
                 + (f" for {' '.join(name)}" if name else "")
@@ -593,7 +605,7 @@ class Minuit:
             getattr(fcn, "errordef", 0.0),
         )
 
-        self._init_state = _make_init_state(self._pos2var, args, kwds)
+        self._init_state = _make_init_state(self._pos2var, start, kwds)
         self._values = mutil.ValueView(self)
         self._errors = mutil.ErrorView(self)
         self._fixed = mutil.FixedView(self)
@@ -603,7 +615,7 @@ class Minuit:
 
         self.reset()
 
-    def reset(self):
+    def reset(self) -> "Minuit":  # requires from __future__ import annotations
         """
         Reset minimization state to initial state.
 
@@ -611,14 +623,14 @@ class Minuit:
         :attr:`print_level` unchanged.
         """
         self._last_state = self._init_state
-        self._fmin = None
+        self._fmin: Optional[mutil.FMin] = None
         self._fcn._nfcn = 0
         self._fcn._ngrad = 0
         self._merrors = mutil.MErrors()
-        self._covariance = None
+        self._covariance: Optional[mutil.Matrix] = None
         return self  # return self for method chaining and to autodisplay current state
 
-    def migrad(self, ncall: Optional[int] = None, iterate: int = 5):
+    def migrad(self, ncall: Optional[int] = None, iterate: int = 5) -> "Minuit":
         """
         Run Migrad minimization.
 
@@ -667,12 +679,14 @@ class Minuit:
         self._last_state = fm.state
 
         edm_goal = self._migrad_edm_goal()
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
+        self._fmin = mutil.FMin(
+            fm, "Migrad", self.nfcn, self.ngrad, self.ndof, edm_goal
+        )
         self._make_covariance()
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall: Optional[int] = None):
+    def simplex(self, ncall: Optional[int] = None) -> "Minuit":
         """
         Run Simplex minimization.
 
@@ -716,14 +730,18 @@ class Minuit:
         fm = simplex(ncall, self._tolerance)
         self._last_state = fm.state
 
-        edm_goal = max(self._tolerance * fm.errordef, simplex.precision.eps2)
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
+        edm_goal = max(
+            self._tolerance * fm.errordef, simplex.precision.eps2  # type:ignore
+        )
+        self._fmin = mutil.FMin(
+            fm, "Simplex", self.nfcn, self.ngrad, self.ndof, edm_goal
+        )
         self._covariance = None
         self._merrors = mutil.MErrors()
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scan(self, ncall: Optional[int] = None):
+    def scan(self, ncall: Optional[int] = None) -> "Minuit":
         """
         Brute-force minimization.
 
@@ -774,7 +792,7 @@ class Minuit:
 
         n = self.nfit
         if ncall is None:
-            ncall = 200 + 100 * n + 5 * n * n
+            ncall = self._migrad_maxcall()
         nstep = int(ncall ** (1 / n))
 
         if self._last_state == self._init_state:
@@ -795,7 +813,7 @@ class Minuit:
                     v + e if up == np.inf else up,
                 )
 
-        def run(ipar):
+        def run(ipar: int) -> None:
             if ipar == self.npar:
                 r = self.fcn(x[: self.npar])
                 if r < x[self.npar]:
@@ -816,14 +834,352 @@ class Minuit:
         edm_goal = self._tolerance * self._fcn._errordef
         fm = FunctionMinimum(self._fcn, self._last_state, self.strategy, edm_goal)
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, self.nfcn, self.ngrad, self.ndof, edm_goal)
+        self._fmin = mutil.FMin(fm, "Scan", self.nfcn, self.ngrad, self.ndof, edm_goal)
         self._covariance = None
         self._merrors = mutil.MErrors()
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def hesse(self, ncall: Optional[int] = None):
-        r"""
+    def scipy(
+        self,
+        method: Optional[Union[str, Callable]] = None,
+        ncall: Optional[int] = None,
+        hess: Optional[Any] = None,
+        hessp: Optional[Any] = None,
+        constraints: Optional[Iterable[Any]] = None,
+    ) -> "Minuit":
+        """
+        Minimize with SciPy algorithms.
+
+        Parameters
+        ----------
+        method : str or Callable, optional
+            Which scipy method to use.
+        ncall : int, optional
+            Function call limit.
+        hess : Callable, optional
+            Function that computes the Hessian matrix. It must use the same calling
+            conversion as the original fcn (several arguments which are numbers or
+            a single array argument).
+        hess : Callable, optional
+            Function that computes the Hessian matrix. It must use the same calling
+            conversion as the original fcn (several arguments which are numbers or
+            a single array argument) plus another argument which is an arbitrary vector.
+        constraints : scipy.optimize.LinearConstraint or
+                      scipy.optimize.NonlinearConstraint, optional
+            Linear or non-linear constraints, see docs of :func:`scipy.optimize.minimize`
+            look for the `constraints` parameter. The function used in the constraint
+            must use the same calling convention as the original fcn, see hess parameter
+            for details.
+
+        Notes
+        -----
+        The call limit may be violated since many algorithms checks the call limit only
+        after a full iteraction of their algorithm, which consists of several function
+        calls. Some algorithms do not check the number of function calls at all, in this
+        case the call limit acts on the number of iterations of the algorithm. This
+        issue should be fixed in scipy.
+
+        The SciPy minimizers use their own internal rule for convergence. The EDM
+        criterion is evaluated only after the original algorithm already stopped.
+        """
+        from scipy.optimize import (
+            minimize,
+            Bounds,
+            NonlinearConstraint,
+            LinearConstraint,
+        )
+
+        if ncall is None:
+            ncall = self._migrad_maxcall()
+
+        cfree = ~np.array(self.fixed[:], dtype=bool)
+        cpar = np.array(self.values[:])
+        no_fixed_parameters = self.nfit == self.npar
+
+        if no_fixed_parameters:
+
+            class Wrapped:
+                __slots__ = ("fcn",)
+
+                def __init__(self, fcn):
+                    self.fcn = fcn
+
+                if self.fcn._array_call:
+
+                    def __call__(self, par):
+                        return self.fcn(par)
+
+                else:
+
+                    def __call__(self, par):
+                        return self.fcn(*par)
+
+            WrappedGrad = Wrapped
+            WrappedHess = Wrapped
+
+            class WrappedHessp:
+                __slots__ = ("fcn",)
+
+                def __init__(self, fcn):
+                    self.fcn = fcn
+
+                if self.fcn._array_call:
+
+                    def __call__(self, par, v):
+                        return self.fcn(par, v)
+
+                else:
+
+                    def __call__(self, par, v):
+                        return self.fcn(*par, v)
+
+        else:
+
+            class Wrapped:
+                __slots__ = ("fcn", "free", "par")
+
+                def __init__(self, fcn):
+                    self.fcn = fcn
+                    self.free = cfree
+                    self.par = cpar
+
+                if self.fcn._array_call:
+
+                    def __call__(self, par):
+                        self.par[self.free] = par
+                        return self.fcn(self.par)
+
+                else:
+
+                    def __call__(self, par):
+                        self.par[self.free] = par
+                        return self.fcn(*self.par)
+
+            class WrappedGrad(Wrapped):
+                def __call__(self, par):
+                    g = super().__call__(par)
+                    return np.atleast_1d(g)[self.free]
+
+            class WrappedHess(Wrapped):
+                def __init__(self, fcn):
+                    super().__init__(fcn)
+                    self.freem = np.outer(self.free, self.free)
+                    n = np.sum(self.free)
+                    self.shape = n, n
+
+                def __call__(self, par):
+                    h = super().__call__(par)
+                    return np.atleast_2d(h)[self.freem].reshape(self.shape)
+
+            class WrappedHessp:
+                __slots__ = ("fcn", "free", "par", "vec")
+
+                def __init__(self, fcn):
+                    self.fcn = fcn
+                    self.free = cfree
+                    self.par = cpar
+                    self.vec = np.zeros_like(self.par)
+
+                if self.fcn._array_call:
+
+                    def __call__(self, par, v):
+                        self.par[self.free] = par
+                        self.vec[self.free] = v
+                        return self.fcn(self.par, self.vec)[self.free]
+
+                else:
+
+                    def __call__(self, par, v):
+                        self.par[self.free] = par
+                        self.vec[self.free] = v
+                        return self.fcn(*self.par, self.vec)[self.free]
+
+        fcn = Wrapped(self.fcn._fcn)
+
+        grad = self.fcn._grad
+        grad = WrappedGrad(grad) if grad else None
+
+        if hess:
+            hess = WrappedHess(hess)
+
+        if hessp:
+            hessp = WrappedHessp(hessp)
+
+        if constraints is not None:
+            if isinstance(constraints, dict):
+                raise ValueError("setting constraints with dicts is not supported")
+
+            if not isinstance(constraints, Iterable):
+                constraints = [constraints]
+
+            for c in constraints:
+                if isinstance(c, NonlinearConstraint):
+                    c.fun = Wrapped(c.fun)
+                elif isinstance(c, LinearConstraint):
+                    if no_fixed_parameters == False:
+                        x = cpar.copy()
+                        x[cfree] = 0
+                        shift = np.dot(c.A, x)
+                        c.lb -= shift
+                        c.ub -= shift
+                        c.A = np.atleast_1d(c.A)[cfree]
+                else:
+                    raise ValueError(
+                        "setting constraints with dicts is not supported, use "
+                        "LinearConstraint or NonlinearConstraint from scipy.optimize."
+                    )
+
+        pr = self._mnprecision()
+
+        # Limits for scipy need to be a little bit tighter than the ones for Minuit
+        # so that the Jacobian of the transformation is not zero or infinite.
+        start = []
+        lower_bound = []
+        upper_bound = []
+        has_limits = False
+        for p in self.params:
+            if p.is_fixed:
+                continue
+            has_limits |= p.has_limits
+            # ensure lower < x < upper for Minuit
+            ai = -np.inf if p.lower_limit is None else p.lower_limit
+            bi = np.inf if p.upper_limit is None else p.upper_limit
+            if ai > 0:
+                ai *= 1 + pr.eps2
+            elif ai < 0:
+                ai *= 1 - pr.eps2
+            else:
+                ai = pr.eps2
+            if bi > 0:
+                bi *= 1 - pr.eps2
+            elif bi < 0:
+                bi *= 1 + pr.eps2
+            else:
+                bi = -pr.eps2
+            xi = np.clip(p.value, ai, bi)
+            lower_bound.append(ai)
+            upper_bound.append(bi)
+            start.append(xi)
+
+        edm_goal = self._migrad_edm_goal()
+
+        if method is None:
+            # like in scipy.optimize.minimize
+            if constraints:
+                method = "SLSQP"
+            elif has_limits:
+                method = "L-BFGS-B"
+            else:
+                method = "BFGS"
+
+        # various workarounds for API inconsistencies in scipy.optimize.minimize
+        options = {"maxiter": ncall}
+        if method in (
+            "Nelder-Mead",
+            "Powell",
+        ):
+            options["maxfev"] = ncall
+
+        if method == "L-BFGS-B":
+            options["maxfun"] = ncall
+
+        if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
+            constraints = ()
+
+        r = minimize(
+            fcn,
+            start,
+            method=method,
+            bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
+            if has_limits
+            else None,
+            jac=grad,
+            hess=hess,
+            hessp=hessp,
+            constraints=constraints,
+            options=options,
+        )
+        if self.print_level > 0:
+            print(r)
+
+        self.fcn._nfcn += r["nfev"]
+        if grad:
+            self.fcn._ngrad += r.get("njev", 0)
+
+        hess_inv = None
+        needs_invert = False
+        if "hess_inv" in r:
+            hess_inv = r.hess_inv
+        elif "hess" in r:
+            hess_inv = r.hess
+            needs_invert = True
+        if hess_inv is not None and not isinstance(hess_inv, np.ndarray):
+            hess_inv = hess_inv(np.eye(self.nfit))
+        if needs_invert:
+            hess_inv = np.linalg.inv(hess_inv)
+
+        accurate_covar = bool(hess) or bool(hessp)
+
+        # Newton-CG neither returns hessian nor inverted hessian
+        if hess_inv is None and accurate_covar:
+            if hessp:
+                hess = [hessp(r.x, ei) for ei in np.eye(self.nfit)]
+            else:
+                hess = hess(r.x)
+            hess_inv = np.linalg.inv(hess)
+
+        if hess_inv is None:
+            hess_inv = np.zeros((self.nfit, self.nfit))
+            i = 0
+            for p in self.params:
+                if p.is_fixed:
+                    continue
+                hess_inv[i, i] = p.error ** 2
+                i += 1
+
+        if "grad" in r:  # trust-constr has "grad" and "jac", but "grad" is "jac"!
+            jac = r.grad
+        elif "jac" in r:
+            jac = r.jac
+        else:
+            tol = 1e-2
+            dx = np.sqrt(np.diag(hess_inv) * tol)
+            jac = mutil._jacobi(fcn, r.x, dx, tol)[1][0]
+
+        fm = FunctionMinimum(
+            self._init_state.trafo,
+            r.x,
+            hess_inv,
+            jac,
+            r.fun,
+            self.errordef,
+            edm_goal,
+            self.nfcn,
+            ncall,
+            accurate_covar,
+        )
+
+        self._last_state = fm.state
+        self._fmin = mutil.FMin(
+            fm,
+            f"SciPy[{method}]",
+            self.nfcn,
+            self.ngrad,
+            self.ndof,
+            edm_goal,
+        )
+
+        if accurate_covar:
+            self._make_covariance()
+        else:
+            if self.strategy.strategy > 0:
+                self.hesse()
+
+        return self
+
+    def hesse(self, ncall: Optional[int] = None) -> "Minuit":
+        """
         Run Hesse algorithm to compute asymptotic errors.
 
         The Hesse method estimates the covariance matrix by inverting the matrix of
@@ -860,7 +1216,7 @@ class Minuit:
         # Should be fixed upstream: workaround for segfault in MnHesse when all
         # parameters are fixed
         if self.nfit == 0:
-            warn(
+            warnings.warn(
                 "Hesse called with all parameters fixed",
                 mutil.IMinuitWarning,
                 stacklevel=2,
@@ -869,19 +1225,31 @@ class Minuit:
 
         hesse = MnHesse(self.strategy)
 
-        fm = self._fmin._src if self._fmin else None
-        if fm and fm.state is self._last_state:
-            # fmin exists and _last_state not modified,
-            # can update _fmin which is more efficient
-            hesse(self._fcn, fm, ncall)
-            self._last_state = fm.state
-            self._fmin = mutil.FMin(
-                fm, self.nfcn, self.ngrad, self.ndof, self._fmin.edm_goal
-            )
-        else:
+        if self._fmin is None:
             # _fmin does not exist or _last_state was modified,
             # so we cannot just update last _fmin
             self._last_state = hesse(self._fcn, self._last_state, ncall)
+            self._merrors = mutil.MErrors()
+        else:
+            fm = self._fmin._src
+            if fm.state is self._last_state:
+                # fmin exists and _last_state not modified,
+                # can update _fmin which is more efficient
+                hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
+                self._last_state = fm.state
+                self._fmin = mutil.FMin(
+                    fm,
+                    self._fmin.algorithm,
+                    self.nfcn,
+                    self.ngrad,
+                    self.ndof,
+                    self._fmin.edm_goal,
+                )
+            else:
+                # fmin exists but _last_state was modified
+                self._fmin = None
+                self._last_state = hesse(self._fcn, self._last_state, ncall)
+                self._merrors = mutil.MErrors()
 
         if self._last_state.has_covariance is False:
             if not self._fmin:
@@ -893,7 +1261,7 @@ class Minuit:
 
     def minos(
         self, *parameters: str, cl: Optional[float] = None, ncall: Optional[int] = None
-    ):
+    ) -> "Minuit":
         """
         Run Minos algorithm to compute confidence intervals.
 
@@ -946,11 +1314,11 @@ class Minuit:
         if not self._fmin:
             # create a seed minimum for MnMinos
             fm = FunctionMinimum(
-                self._fcn, self._last_state, self._strategy, self._tolerance
+                self._fcn, self._last_state, self._strategy, self._migrad_edm_goal()
             )
             # running MnHesse on seed is necessary for MnMinos to work
             hesse = MnHesse(self.strategy)
-            hesse(self._fcn, fm, ncall)
+            hesse(self._fcn, fm, ncall, self._migrad_edm_goal())
             self._last_state = fm.state
             self._make_covariance()
         else:
@@ -967,7 +1335,7 @@ class Minuit:
                 if par not in self._var2pos:
                     raise RuntimeError(f"Unknown parameter {par}")
                 if self.fixed[par]:
-                    warn(
+                    warnings.warn(
                         f"Cannot scan over fixed parameter {par}",
                         mutil.IMinuitWarning,
                     )
@@ -1007,9 +1375,9 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: Union[int, Sequence[int]] = 2,
+        bound: Union[float, mutil.UserBound] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[Sequence[float], Sequence[float], Sequence[bool]]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get Minos profile over a specified interval.
 
@@ -1055,7 +1423,9 @@ class Minuit:
             migrad = MnMigrad(self._fcn, state, self.strategy)
             fm = migrad(0, self._tolerance)
             if not fm.is_valid:
-                warn(f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning)
+                warnings.warn(
+                    f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning
+                )
             status[i] = fm.is_valid
             y[i] = fm.fval
 
@@ -1069,11 +1439,11 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: Union[int, Sequence[Sequence[int]]] = 2,
+        bound: Union[mutil.UserBound, float] = 2,
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ) -> Tuple[Sequence[float], Sequence[float]]:
+    ) -> Tuple[Collection[float], Collection[float]]:
         r"""
         Draw Minos profile over a specified interval (requires matplotlib).
 
@@ -1108,9 +1478,9 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: Union[int, Tuple[int, int]] = 2,
+        bound: Union[float, mutil.UserBound] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[Sequence[float], Sequence[float]]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         r"""
         Calculate 1D cost function profile over a range.
 
@@ -1166,7 +1536,7 @@ class Minuit:
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ) -> Tuple[Sequence[float], Sequence[float]]:
+    ) -> Tuple[Collection[float], Collection[float]]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
 
@@ -1189,7 +1559,9 @@ class Minuit:
         x, y = self.profile(vname, size=size, bound=bound, subtract_min=subtract_min)
         return self._draw_profile(vname, x, y, band, text)
 
-    def _draw_profile(self, vname, x, y, band, text):
+    def _draw_profile(
+        self, vname: str, x: np.ndarray, y: np.ndarray, band: bool, text: bool
+    ) -> Tuple[np.ndarray, np.ndarray]:
         from matplotlib import pyplot as plt
 
         plt.plot(x, y)
@@ -1229,9 +1601,9 @@ class Minuit:
         y: str,
         *,
         size: int = 50,
-        bound: Union[int, Sequence[Sequence[int]]] = 2,
+        bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[Sequence[float], Sequence[float], Sequence[Sequence[float]]]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get a 2D contour of the function around the minimum.
 
@@ -1274,18 +1646,13 @@ class Minuit:
         --------
         mncontour, mnprofile
         """
-        try:
-            n = float(bound)
-            in_sigma = True
-        except TypeError:
-            in_sigma = False
-
-        if in_sigma:
-            xrange = self._normalize_bound(x, n)
-            yrange = self._normalize_bound(y, n)
-        else:
+        if isinstance(bound, tuple):
             xrange = self._normalize_bound(x, bound[0])
             yrange = self._normalize_bound(y, bound[1])
+        else:
+            n = float(bound)
+            xrange = self._normalize_bound(x, n)
+            yrange = self._normalize_bound(y, n)
 
         ipar = self._var2pos[x]
         jpar = self._var2pos[y]
@@ -1312,8 +1679,8 @@ class Minuit:
         y: str,
         *,
         size: int = 50,
-        bound: Union[int, Sequence[Sequence[int]]] = 2,
-    ) -> Tuple[Sequence[float], Sequence[float], Sequence[Sequence[float]]]:
+        bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
+    ) -> Tuple[Collection[float], Collection[float], Collection[Collection[float]]]:
         """
         Draw 2D contour around minimum (required matplotlib).
 
@@ -1340,7 +1707,7 @@ class Minuit:
 
     def mncontour(
         self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
-    ) -> Sequence[Sequence[float]]:
+    ) -> Collection[Collection[float]]:
         """
         Get 2D Minos confidence region.
 
@@ -1403,8 +1770,8 @@ class Minuit:
         return np.array(ce)
 
     def draw_mncontour(
-        self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
-    ) -> Sequence[Sequence[float]]:
+        self, x: str, y: str, *, cl: Optional[Iterable[float]] = None, size: int = 100
+    ) -> Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
 
@@ -1426,7 +1793,7 @@ class Minuit:
 
         c_val = []
         c_pts = []
-        for cl in cls:
+        for cl in cls:  # type:ignore
             pts = self.mncontour(x, y, cl=cl, size=size)
             # close curve
             pts = list(pts)
@@ -1440,28 +1807,29 @@ class Minuit:
 
         return cs
 
-    def _free_parameters(self):
+    def _free_parameters(self) -> Generator[str, None, None]:
         return (mp.name for mp in self._last_state if not mp.is_fixed)
 
-    def _normalize_bound(self, vname, bound):
-        try:
-            n = float(bound)
-            in_sigma = True
-        except TypeError:
-            in_sigma = False
-            pass
+    def _mnprecision(self) -> MnMachinePrecision:
+        pr = MnMachinePrecision()
+        if self._precision is not None:
+            pr.eps = self._precision
+        return pr
 
-        if in_sigma:
-            if not self.accurate:
-                warn(
-                    "Specified nsigma bound, but error matrix is not accurate",
-                    mutil.IMinuitWarning,
-                )
-            start = self.values[vname]
-            sigma = self.errors[vname]
-            bound = (start - n * sigma, start + n * sigma)
+    def _normalize_bound(
+        self, vname: str, bound: Union[float, mutil.UserBound]
+    ) -> Tuple[float, float]:
+        if isinstance(bound, Iterable):
+            return mutil._normalize_limit(bound)
 
-        return bound
+        if not self.accurate:
+            warnings.warn(
+                "Specified nsigma bound, but error matrix is not accurate",
+                mutil.IMinuitWarning,
+            )
+        start = self.values[vname]
+        sigma = self.errors[vname]
+        return (start - bound * sigma, start + bound * sigma)
 
     def _copy_state_if_needed(self):
         # If FunctionMinimum exists, _last_state may be a reference to its user state.
@@ -1475,7 +1843,7 @@ class Minuit:
         if self._fmin and self._last_state == self._fmin._src.state:
             self._last_state = MnUserParameterState(self._last_state)
 
-    def _make_covariance(self):
+    def _make_covariance(self) -> None:
         if self._last_state.has_covariance:
             cov = self._last_state.covariance
             m = mutil.Matrix(self._var2pos)
@@ -1500,16 +1868,18 @@ class Minuit:
         else:
             self._covariance = None
 
-    def _migrad_edm_goal(self):
-        pr = MnMachinePrecision()
-        if self.precision is not None:
-            pr.eps = self.precision
+    def _migrad_edm_goal(self) -> float:
         # EDM goal
         # - taken from the source code, see VariableMeticBuilder::Minimum and
         #   ModularFunctionMinimizer::Minimize
         # - goal is used to detect convergence but violations by 10x are also accepted;
         #   see VariableMetricBuilder.cxx:425
-        return 2e-3 * max(self.tol * self.errordef, pr.eps2)
+        pr = self._mnprecision()
+        return 2e-3 * max(self.tol * self.errordef, pr.eps2)  # type:ignore
+
+    def _migrad_maxcall(self) -> int:
+        n = self.nfit
+        return 200 + 100 * n + 5 * n * n
 
     def __repr__(self):
         """Get detailed text representation."""
@@ -1553,7 +1923,9 @@ class Minuit:
             p.text(str(self))
 
 
-def _make_init_state(pos2var, args, kwds):
+def _make_init_state(
+    pos2var: Tuple[str, ...], args: np.ndarray, kwds: Dict[str, float]
+) -> MnUserParameterState:
     nargs = len(args)
     # check kwds
     if nargs:
@@ -1583,11 +1955,12 @@ def _make_init_state(pos2var, args, kwds):
     return state
 
 
-def _get_params(mps, merrors):
-    def get_me(name):
+def _get_params(mps: MnUserParameterState, merrors: mutil.MErrors) -> mutil.Params:
+    def get_me(name: str) -> Optional[Tuple[float, float]]:
         if name in merrors:
             me = merrors[name]
             return me.lower, me.upper
+        return None
 
     return mutil.Params(
         (
@@ -1599,9 +1972,6 @@ def _get_params(mps, merrors):
                 get_me(mp.name),
                 mp.is_const,
                 mp.is_fixed,
-                mp.has_limits,
-                mp.has_lower_limit,
-                mp.has_upper_limit,
                 mp.lower_limit if mp.has_lower_limit else None,
                 mp.upper_limit if mp.has_upper_limit else None,
             )
@@ -1611,13 +1981,13 @@ def _get_params(mps, merrors):
 
 
 class TemporaryErrordef:
-    def __init__(self, fcn, factor):
+    def __init__(self, fcn: FCN, factor: float):
         self.saved = fcn._errordef
         self.fcn = fcn
         self.fcn._errordef *= factor
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         pass
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: object) -> None:
         self.fcn._errordef = self.saved

@@ -96,14 +96,22 @@ def fmin(fm):
     return to_str(
         table(
             tr(
-                td(
+                th(
                     ff[0],
+                    colspan=5,
+                    style="text-align:center",
+                    title="Minimizer",
+                ),
+            ),
+            tr(
+                td(
+                    ff[1],
                     colspan=2,
                     style="text-align:left",
                     title="Minimum value of function",
                 ),
                 td(
-                    ff[1],
+                    ff[2],
                     colspan=3,
                     style="text-align:center",
                     title="No. of function evaluations in last call and total number",
@@ -111,13 +119,13 @@ def fmin(fm):
             ),
             tr(
                 td(
-                    ff[2],
+                    ff[3],
                     colspan=2,
                     style="text-align:left",
                     title="Estimated distance to minimum and goal",
                 ),
                 td(
-                    ff[3],
+                    ff[4],
                     colspan=3,
                     style="text-align:center",
                     title="No. of gradient evaluations in last call and total number",
@@ -125,16 +133,13 @@ def fmin(fm):
             ),
             tr(
                 td(
-                    ff[4],
+                    ff[5],
+                    colspan=2,
                     style="text-align:center;" + good(fm.is_valid, True),
                 ),
                 td(
-                    ff[5],
-                    style="text-align:center;" + good(fm.has_valid_parameters, True),
-                ),
-                td(
                     ff[6],
-                    colspan="3",
+                    colspan=3,
                     style="text-align:center;"
                     + good(fm.has_parameters_at_limit, False, warn_style),
                 ),

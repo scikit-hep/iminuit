@@ -5,11 +5,35 @@ from argparse import Namespace
 from . import _repr_html
 from . import _repr_text
 import numpy as np
-from typing import Dict, Sequence, Iterable
+from typing import (
+    Dict,
+    Iterable,
+    Any,
+    Union,
+    List,
+    Tuple,
+    Generator,
+    Sized,
+    Optional,
+    Callable,
+    TypeVar,
+    Generic,
+)
 import types
-import warnings
+import abc
 
-inf = float("infinity")
+T = TypeVar("T")
+
+
+class Indexable(Iterable, Sized, Generic[T]):
+    """Indexable type for mypy."""
+
+    def __getitem__(self, idx: int) -> T:
+        """Get item at index idx."""
+        ...  # pragma: no cover
+
+
+UserBound = Optional[Indexable[Optional[float]]]
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -20,7 +44,7 @@ class HesseFailedWarning(IMinuitWarning):
     """HESSE failed warning."""
 
 
-class BasicView:
+class BasicView(abc.ABC):
     """
     Array-like view of parameter state.
 
@@ -30,21 +54,31 @@ class BasicView:
 
     __slots__ = ("_minuit", "_ndim")
 
-    def __init__(self, minuit, ndim=0):
+    Key = Union[int, str, slice, List[Union[int, str]]]
+
+    def __init__(self, minuit: Any, ndim: int = 0):
         """Not to be initialized by users."""
         self._minuit = minuit
         self._ndim = ndim
 
-    def __iter__(self):
+    def __iter__(self) -> Generator:
         """Get iterator over values."""
         for i in range(len(self)):
             yield self._get(i)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Get number of paramters."""
-        return self._minuit.npar
+        return self._minuit.npar  # type: ignore
 
-    def __getitem__(self, key):
+    @abc.abstractmethod
+    def _get(self, idx: int) -> Any:
+        return NotImplemented  # pragma: no cover
+
+    @abc.abstractmethod
+    def _set(self, idx: int, value: Any) -> None:
+        pass  # pragma: no cover
+
+    def __getitem__(self, key: Key) -> Any:
         """
         Get values of the view.
 
@@ -59,7 +93,7 @@ class BasicView:
             return [self._get(i) for i in key]
         return self._get(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Key, value: Any) -> None:
         """Assign a new value at key, which can be an index, a parameter name, or a slice."""
         self._minuit._copy_state_if_needed()
         key = _key2index(self._minuit._var2pos, key)
@@ -75,11 +109,15 @@ class BasicView:
         else:
             self._set(key, value)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
-        return len(self) == len(other) and all(x == y for x, y in zip(self, other))
+        from typing import Iterable, Sized
 
-    def __repr__(self):
+        if isinstance(other, Iterable) and isinstance(other, Sized):
+            return len(self) == len(other) and all(x == y for x, y in zip(self, other))
+        return NotImplemented
+
+    def __repr__(self) -> str:
         """Get detailed text representation."""
         s = f"<{self.__class__.__name__}"
         for (k, v) in zip(self._minuit._pos2var, self):
@@ -92,7 +130,9 @@ class BasicView:
         return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
 
-def _ndim(obj):
+def _ndim(obj: Iterable) -> int:
+    from typing import Iterable
+
     nd = 0
     while isinstance(obj, Iterable):
         nd += 1
@@ -108,30 +148,30 @@ def _ndim(obj):
 class ValueView(BasicView):
     """Array-like view of parameter values."""
 
-    def _get(self, i):
-        return self._minuit._last_state[i].value
+    def _get(self, i: int) -> float:
+        return self._minuit._last_state[i].value  # type:ignore
 
-    def _set(self, i, value):
+    def _set(self, i: int, value: float) -> None:
         self._minuit._last_state.set_value(i, value)
 
 
 class ErrorView(BasicView):
     """Array-like view of parameter errors."""
 
-    def _get(self, i):
-        return self._minuit._last_state[i].error
+    def _get(self, i: int) -> float:
+        return self._minuit._last_state[i].error  # type:ignore
 
-    def _set(self, i, value):
+    def _set(self, i: int, value: float) -> None:
         self._minuit._last_state.set_error(i, value)
 
 
 class FixedView(BasicView):
     """Array-like view of whether parameters are fixed."""
 
-    def _get(self, i):
-        return self._minuit._last_state[i].is_fixed
+    def _get(self, i: int) -> bool:
+        return self._minuit._last_state[i].is_fixed  # type:ignore
 
-    def _set(self, i, fix):
+    def _set(self, i: int, fix: bool) -> None:
         if fix:
             self._minuit._last_state.fix(i)
         else:
@@ -141,32 +181,32 @@ class FixedView(BasicView):
 class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
-    def __init__(self, minuit):
+    def __init__(self, minuit: Any):
         """Not to be initialized by users."""
         super(LimitView, self).__init__(minuit, 1)
 
-    def _get(self, i):
+    def _get(self, i: int) -> Tuple[float, float]:
         p = self._minuit._last_state[i]
         return (
-            p.lower_limit if p.has_lower_limit else -inf,
-            p.upper_limit if p.has_upper_limit else inf,
+            p.lower_limit if p.has_lower_limit else -np.inf,
+            p.upper_limit if p.has_upper_limit else np.inf,
         )
 
-    def _set(self, i, args):
+    def _set(self, i: int, arg: UserBound) -> None:
         state = self._minuit._last_state
         val = state[i].value
         err = state[i].error
         # changing limits is a cheap operation, start from clean state
         state.remove_limits(i)
-        low, high = _normalize_limit(args)
-        if low != -inf and high != inf:  # both must be set
+        low, high = _normalize_limit(arg)
+        if low != -np.inf and high != np.inf:  # both must be set
             if low == high:
                 state.fix(i)
             else:
                 state.set_limits(i, low, high)
-        elif low != -inf:  # lower limit must be set
+        elif low != -np.inf:  # lower limit must be set
             state.set_lower_limit(i, low)
-        elif high != inf:  # lower limit must be set
+        elif high != np.inf:  # lower limit must be set
             state.set_upper_limit(i, high)
         # bug in Minuit2: must set parameter value and error again after changing limits
         if val < low:
@@ -177,17 +217,17 @@ class LimitView(BasicView):
         state.set_error(i, err)
 
 
-def _normalize_limit(lim):
+def _normalize_limit(lim: UserBound) -> Tuple[float, float]:
     if lim is None:
-        return (-inf, inf)
-    lim = list(lim)
-    if lim[0] is None:
-        lim[0] = -inf
-    if lim[1] is None:
-        lim[1] = inf
-    if lim[0] > lim[1]:
+        return (-np.inf, np.inf)
+    a, b = lim
+    if a is None:
+        a = -np.inf
+    if b is None:
+        b = np.inf
+    if a > b:
         raise ValueError("limit " + str(lim) + " is invalid")
-    return tuple(lim)
+    return a, b
 
 
 class Matrix(np.ndarray):
@@ -200,7 +240,7 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, parameters):
+    def __new__(cls, parameters: Union[Dict, Tuple]) -> Any:
         """Not to be initialized by users."""
         if isinstance(parameters, dict):
             var2pos = parameters
@@ -213,21 +253,26 @@ class Matrix(np.ndarray):
         obj._var2pos = var2pos
         return obj
 
-    def __array_finalize__(self, obj):
+    def __array_finalize__(self, obj: Any) -> None:
         """For internal use."""
         if obj is None:
             self._var2pos = None
         else:
             self._var2pos = getattr(obj, "_var2pos", None)
 
-    def __getitem__(self, key):
+    def __getitem__(
+        self,
+        key: Union[Tuple[Union[str, int]], str, int, slice, Iterable[Union[str, int]]],
+    ) -> Any:
         """Get matrix element at key."""
+        from typing import Iterable
+
         var2pos = self._var2pos or {}
         if isinstance(key, tuple):  # tuple is special case for __getitem__
             key = tuple(var2pos.get(k, k) for k in key)
         elif isinstance(key, str):
             key = var2pos[key]
-        elif isinstance(key, Sequence):
+        elif isinstance(key, Iterable) and not isinstance(key, np.ndarray):
             key = list(var2pos.get(k, k) for k in key)
             t = super(Matrix, self).__getitem__(key).T
             return super(Matrix, t).__getitem__(key).T
@@ -236,7 +281,7 @@ class Matrix(np.ndarray):
             return super(Matrix, self).__getitem__((key, key))
         return super(Matrix, self).__getitem__(key)
 
-    def to_table(self):
+    def to_table(self) -> Tuple[List[List[str]], Tuple[str, ...]]:
         """
         Convert matrix to tabular format.
 
@@ -254,8 +299,8 @@ class Matrix(np.ndarray):
         x     1   -0
         y    -0    4
         """
-        names = tuple(self._var2pos)
-        nums = _repr_text.matrix_format(self.flatten())
+        names = tuple(self._var2pos)  # type:ignore
+        nums = _repr_text.matrix_format(self.flatten())  # type:ignore
         tab = []
         n = len(self)
         for i, name in enumerate(names):
@@ -316,6 +361,7 @@ class FMin:
 
     __slots__ = (
         "_src",
+        "_algorithm",
         "_has_parameters_at_limit",
         "_nfcn",
         "_ngrad",
@@ -323,17 +369,26 @@ class FMin:
         "_edm_goal",
     )
 
-    def __init__(self, fmin, nfcn, ngrad, ndof, edm_goal):
+    def __init__(
+        self,
+        fmin: Any,
+        algorithm: str,
+        nfcn: int,
+        ngrad: int,
+        ndof: int,
+        edm_goal: float,
+    ):
         """Not to be initialized by users."""
         self._src = fmin
+        self._algorithm = algorithm
         self._has_parameters_at_limit = False
         for mp in fmin.state:
             if mp.is_fixed or not mp.has_limits:
                 continue
             v = mp.value
             e = mp.error
-            lb = mp.lower_limit if mp.has_lower_limit else -inf
-            ub = mp.upper_limit if mp.has_upper_limit else inf
+            lb = mp.lower_limit if mp.has_lower_limit else -np.inf
+            ub = mp.upper_limit if mp.has_upper_limit else np.inf
             # the 0.5 error threshold is somewhat arbitrary
             self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
         self._nfcn = nfcn
@@ -342,7 +397,12 @@ class FMin:
         self._edm_goal = edm_goal
 
     @property
-    def edm(self):
+    def algorithm(self) -> str:
+        """Get algorithm that was used to compute the function minimum."""
+        return self._algorithm
+
+    @property
+    def edm(self) -> float:
         """
         Get Estimated Distance to Minimum.
 
@@ -352,10 +412,10 @@ class FMin:
         taking the difference between the predicted (based on gradient and Hessian)
         function value at the minimum and the actual value.
         """
-        return self._src.edm
+        return self._src.edm  # type:ignore
 
     @property
-    def edm_goal(self):
+    def edm_goal(self) -> float:
         """
         Get EDM threshold value for stopping the minimization.
 
@@ -364,12 +424,12 @@ class FMin:
         return self._edm_goal
 
     @property
-    def fval(self):
+    def fval(self) -> float:
         """Get cost function value at the minimum."""
-        return self._src.fval
+        return self._src.fval  # type:ignore
 
     @property
-    def reduced_chi2(self):
+    def reduced_chi2(self) -> float:
         """
         Get chi2/ndof of the fit.
 
@@ -381,7 +441,7 @@ class FMin:
         return np.nan
 
     @property
-    def has_parameters_at_limit(self):
+    def has_parameters_at_limit(self) -> bool:
         """
         Return whether any bounded parameter was fitted close to a bound.
 
@@ -391,48 +451,41 @@ class FMin:
         return self._has_parameters_at_limit
 
     @property
-    def nfcn(self):
+    def nfcn(self) -> int:
         """Get number of function calls so far."""
         return self._nfcn
 
     @property
-    def ngrad(self):
+    def ngrad(self) -> int:
         """Get number of function gradient calls so far."""
         return self._ngrad
 
     @property
-    def is_valid(self):
+    def is_valid(self) -> bool:
         """
         Return whether Migrad converged successfully.
 
         For it to return True, the following conditions need to be fulfilled:
 
-          - :attr:`has_valid_parameters` is True
           - :attr:`has_reached_call_limit` is False
           - :attr:`is_above_max_edm` is False
 
         Note: The actual verdict is computed inside the Minuit2 C++ code, so we
         cannot guarantee that is_valid is exactly equivalent to these conditions.
         """
-        return self._src.is_valid
+        return self._src.is_valid  # type:ignore
 
     @property
-    def has_valid_parameters(self):
+    def has_valid_parameters(self) -> bool:
         """
         Return whether parameters are valid.
 
-        For it to return True, the following conditions need to be fulfilled:
-
-          - :attr:`has_reached_call_limit` is False
-          - :attr:`is_above_max_edm` is False
-
-        Note: The actual verdict is computed inside the Minuit2 C++ code, so we
-        cannot guarantee that is_valid is exactly equivalent to these conditions.
+        This is the same as :attr:`is_valid` and only kept for backward compatibility.
         """
-        return self._src.has_valid_parameters
+        return self.is_valid
 
     @property
-    def has_accurate_covar(self):
+    def has_accurate_covar(self) -> bool:
         """
         Return whether the covariance matrix is accurate.
 
@@ -443,10 +496,10 @@ class FMin:
         approximation has been returned instead of an accurate matrix computed by
         the Hesse method.
         """
-        return self._src.has_accurate_covar
+        return self._src.has_accurate_covar  # type:ignore
 
     @property
-    def has_posdef_covar(self):
+    def has_posdef_covar(self) -> bool:
         """
         Return whether the Hessian matrix is positive definite.
 
@@ -471,10 +524,10 @@ class FMin:
                       else:
                           return value2
         """
-        return self._src.has_posdef_covar
+        return self._src.has_posdef_covar  # type:ignore
 
     @property
-    def has_made_posdef_covar(self):
+    def has_made_posdef_covar(self) -> bool:
         """
         Return whether the matrix was forced to be positive definite.
 
@@ -487,61 +540,60 @@ class FMin:
         Minuit forced the matrix to be positive definite, the parameter uncertainties
         are false, see :attr:`has_posdef_covar` for more details.
         """
-        return self._src.has_made_posdef_covar
+        return self._src.has_made_posdef_covar  # type:ignore
 
     @property
-    def hesse_failed(self):
+    def hesse_failed(self) -> bool:
         """Return whether the last call to Hesse failed."""
-        return self._src.hesse_failed
+        return self._src.hesse_failed  # type:ignore
 
     @property
-    def has_covariance(self):
+    def has_covariance(self) -> bool:
         """
         Return whether a covariance matrix was computed at all.
 
         This is false if the Simplex minimization algorithm was used instead of
         Migrad, in which no approximation to the Hessian is computed.
         """
-        return self._src.has_covariance
+        return self._src.has_covariance  # type:ignore
 
     @property
-    def is_above_max_edm(self):
+    def is_above_max_edm(self) -> bool:
         """
         Return whether the EDM value is below the convergence threshold.
 
         Returns True, if the fit did not converge; otherwise returns False.
         """
-        return self._src.is_above_max_edm
+        return self._src.is_above_max_edm  # type:ignore
 
     @property
-    def has_reached_call_limit(self):
+    def has_reached_call_limit(self) -> bool:
         """
         Return whether Migrad exceeded the allowed number of function calls.
 
         Returns True true, the fit was stopped before convergence was reached;
         otherwise returns False.
         """
-        return self._src.has_reached_call_limit
+        return self._src.has_reached_call_limit  # type:ignore
 
     @property
-    def errordef(self):
+    def errordef(self) -> float:
         """Equal to the value of :attr:`iminuit.Minuit.errordef` when Migrad ran."""
-        return self._src.errordef
+        return self._src.errordef  # type:ignore
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Return True if all attributes are equal."""
 
-        def relaxed_equal(k, a, b):
+        def relaxed_equal(k: str, a: object, b: object) -> bool:
             a = getattr(a, k)
             b = getattr(b, k)
-            if isinstance(a, float):
-                if np.isnan(a):
-                    return np.isnan(b)
-            return a == b
+            if isinstance(a, float) and np.isnan(a):
+                return np.isnan(b)  # type:ignore
+            return a == b  # type:ignore
 
         return all(relaxed_equal(k, self, other) for k in self.__slots__)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Get detailed text representation."""
         s = "<FMin"
         for key in sorted(dir(self)):
@@ -552,14 +604,14 @@ class FMin:
         s += ">"
         return s
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get user-friendly text representation."""
-        return _repr_text.fmin(self)
+        return _repr_text.fmin(self)  # type:ignore
 
-    def _repr_html_(self):
-        return _repr_html.fmin(self)
+    def _repr_html_(self) -> str:
+        return _repr_html.fmin(self)  # type:ignore
 
-    def _repr_pretty_(self, p, cycle):
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("<FMin ...>")
         else:
@@ -577,24 +629,23 @@ class Param:
         "merror",
         "is_const",
         "is_fixed",
-        "has_limits",
-        "has_lower_limit",
-        "has_upper_limit",
         "lower_limit",
         "upper_limit",
     )
 
-    def __init__(self, *args):
+    def __init__(
+        self, *args: Union[int, str, float, Optional[Tuple[float, float]], bool]
+    ):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Return True if all values are equal."""
         return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Get detailed text representation."""
         pairs = []
         for k in self.__slots__:
@@ -602,11 +653,26 @@ class Param:
             pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
 
-    def __str__(self):
-        """Get user-friendly text representation."""
-        return _repr_text.params([self])
+    @property
+    def has_limits(self):
+        """Query whether the parameter has an lower or upper limit."""
+        return self.has_lower_limit or self.has_upper_limit
 
-    def _repr_pretty_(self, p, cycle):
+    @property
+    def has_lower_limit(self):
+        """Query whether parameter has a lower limit."""
+        return self.lower_limit is not None
+
+    @property
+    def has_upper_limit(self):
+        """Query whether parameter has an upper limit."""
+        return self.upper_limit is not None
+
+    def __str__(self) -> str:
+        """Get user-friendly text representation."""
+        return _repr_text.params([self])  # type:ignore
+
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("Param(...)")
         else:
@@ -750,17 +816,17 @@ class MError:
         "min",
     )
 
-    def __init__(self, *args):
+    def __init__(self, *args: Union[int, str, float, bool]):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Return True if all values are equal."""
         return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Get detailed text representation."""
         s = "<MError"
         for idx, k in enumerate(self.__slots__):
@@ -769,14 +835,14 @@ class MError:
         s += ">"
         return s
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get user-friendly text representation."""
-        return _repr_text.merrors({None: self})
+        return _repr_text.merrors({None: self})  # type:ignore
 
-    def _repr_html_(self):
-        return _repr_html.merrors({None: self})
+    def _repr_html_(self) -> str:
+        return _repr_html.merrors({None: self})  # type:ignore
 
-    def _repr_pretty_(self, p, cycle):
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("<MError ...>")
         else:
@@ -819,9 +885,11 @@ class MErrors(OrderedDict):
         return OrderedDict.__getitem__(self, key)
 
 
-def _jacobi(fn, x, dx, tol):
-    assert np.ndim(x) == 1
-    assert np.ndim(dx) == 1
+def _jacobi(
+    fn: Callable, x: np.ndarray, dx: np.ndarray, tol: float
+) -> Tuple[np.ndarray, np.ndarray]:
+    assert x.ndim == 1
+    assert dx.ndim == 1
     assert np.all(dx >= 0)
     assert tol > 0
     y = fn(x)
@@ -834,8 +902,9 @@ def _jacobi(fn, x, dx, tol):
         if hi == 0:
             continue
         h[i] = hi
-        prev_esq = inf
-        while h[i] > 0:
+        prev_esq = np.inf
+        for iter in range(20):
+            assert h[i] > 0
             yu = fn(x + h)
             yd = fn(x - h)
             du = (yu - y) / h[i]
@@ -847,8 +916,7 @@ def _jacobi(fn, x, dx, tol):
                 break
             esq = np.dot(delta, delta)
             if esq > prev_esq:
-                warnings.warn("no convergence, Jacobi matrix may be inaccurate")
-                # uses previous jac[:, i]
+                # no convergence, use previous more accurate jac[:, i]
                 break
             jac[:, i] = d
             prev_esq = esq
@@ -856,7 +924,9 @@ def _jacobi(fn, x, dx, tol):
     return y, jac
 
 
-def propagate(fn, x, cov):
+def propagate(
+    fn: Callable, x: Indexable[float], cov: Indexable[Indexable[float]]
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Numerically propagates the covariance into a new space.
 
@@ -880,16 +950,18 @@ def propagate(fn, x, cov):
         y is the result of fn(x)
         ycov is the propagated covariance matrix.
     """
-    x = np.atleast_1d(x)
-    cov = np.atleast_2d(cov)
+    x = np.atleast_1d(x)  # type:ignore
+    cov = np.atleast_2d(cov)  # type:ignore
     tol = 1e-2
     dx = (np.diag(cov) * tol) ** 0.5
+    if not np.all(dx >= 0):
+        raise ValueError("diagonal elements of covariance matrix must be non-negative")
     y, jac = _jacobi(fn, x, dx, tol)
     ycov = np.einsum("ij,kl,jl", jac, jac, cov)
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
 
 
-def make_func_code(params):
+def make_func_code(params: Indexable[str]) -> Namespace:
     """
     Make a func_code object to fake a function signature.
 
@@ -902,7 +974,9 @@ def make_func_code(params):
     return Namespace(co_varnames=tuple(params), co_argcount=len(params))
 
 
-def make_with_signature(callable, *varnames, **replacements):
+def make_with_signature(
+    callable: Callable, *varnames: str, **replacements: str
+) -> Callable:
     """
     Return new callable with altered signature.
 
@@ -917,39 +991,44 @@ def make_with_signature(callable, *varnames, **replacements):
     -------
     callable with new argument names.
     """
+    from typing import Tuple
+
     if replacements:
-        new_varnames = varnames
-        varnames = describe(callable)
-        if varnames:
-            n = len(new_varnames)
-            if n > len(varnames):
+        vars = describe(callable)
+        if vars:
+            n = len(varnames)
+            if n > len(vars):
                 raise ValueError("varnames longer than original signature")
-            varnames[:n] = new_varnames
+            vars[:n] = varnames
         for k, v in replacements.items():
-            varnames[varnames.index(k)] = v
-        varnames = tuple(varnames)
+            vars[vars.index(k)] = v
+        vars = tuple(vars)
+    else:
+        vars = varnames
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
-        if c.co_argcount != len(varnames):
+        if c.co_argcount != len(vars):
             raise ValueError("number of parameters do not match")
         if hasattr(c, "replace"):  # this was added after 3.6
             # calling this introduces no overhead compared to original function
-            code = c.replace(co_varnames=varnames)
+            code = c.replace(co_varnames=vars)
             return types.FunctionType(code, globals())
 
     # fallback implementation with additional overhead
     class Caller:
-        def __init__(self, varnames):
-            self.func_code = make_func_code(varnames)
+        def __init__(self, varnames: Tuple[str, ...]):
+            self.func_code = make_func_code(varnames)  # type:ignore
 
-        def __call__(self, *args):
+        def __call__(self, *args: object) -> object:
             return callable(*args)
 
-    return Caller(varnames)
+    return Caller(vars)
 
 
-def merge_signatures(callables):
+def merge_signatures(
+    callables: Iterable[Callable],
+) -> Tuple[List[str], List[Tuple[int, ...]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -975,7 +1054,9 @@ def merge_signatures(callables):
         mapping contains the mapping of parameters indices from the merged signature to
         the original signatures.
     """
-    args = []
+    from typing import List
+
+    args: List[str] = []
     mapping = []
 
     for f in callables:
@@ -991,7 +1072,7 @@ def merge_signatures(callables):
     return args, mapping
 
 
-def describe(callable):
+def describe(callable: Callable) -> List[str]:
     """
     Attempt to extract the function argument names.
 
@@ -1049,7 +1130,7 @@ def describe(callable):
         def fcn(a, b, c=1): ...
     """
     if _address_of_cfunc(callable) != 0:
-        return ()
+        return []
     return (
         _arguments_from_func_code(callable)
         or _arguments_from_inspect(callable)
@@ -1057,7 +1138,7 @@ def describe(callable):
     )
 
 
-def _arguments_from_func_code(obj):
+def _arguments_from_func_code(obj: Any) -> List[str]:
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(obj, "func_code"):
         fc = obj.func_code
@@ -1065,7 +1146,7 @@ def _arguments_from_func_code(obj):
     return []
 
 
-def _arguments_from_inspect(obj):
+def _arguments_from_inspect(obj: Callable) -> List[str]:
     try:
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
@@ -1084,7 +1165,7 @@ def _arguments_from_inspect(obj):
     return args
 
 
-def _arguments_from_docstring(obj):
+def _arguments_from_docstring(obj: Callable) -> List[str]:
     doc = inspect.getdoc(obj)
 
     if doc is None:
@@ -1135,7 +1216,7 @@ def _arguments_from_docstring(obj):
     #   "arg1", "arg2", "*", "key=func"
     #   "int ncall_me =10000", "resume=True", "int nsplit=1"
 
-    def extract(s):
+    def extract(s: str) -> str:
         a = s.find(" ")
         b = s.find("=")
         if a < 0:
@@ -1153,20 +1234,20 @@ def _arguments_from_docstring(obj):
     return items
 
 
-def _guess_initial_step(val):
+def _guess_initial_step(val: float) -> float:
     return 1e-2 * val if val != 0 else 1e-1  # heuristic
 
 
-def _key2index(var2pos, key):
-    if isinstance(key, slice):
-        start = var2pos[key.start] if isinstance(key.start, str) else key.start
-        stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
-        start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
-        return list(range(start, stop, step))
+def _key2index_from_slice(var2pos: Dict[str, int], key: slice) -> List[int]:
+    start = var2pos[key.start] if isinstance(key.start, str) else key.start
+    stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
+    start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
+    return list(range(start, stop, step))
+
+
+def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
     if isinstance(key, str):
         return var2pos[key]
-    if isinstance(key, Sequence):
-        return [_key2index(var2pos, k) for k in key]
     i = key
     if i < 0:
         i += len(var2pos)
@@ -1175,12 +1256,37 @@ def _key2index(var2pos, key):
     return i
 
 
-def _address_of_cfunc(fcn):
+def _key2index(
+    var2pos: Dict[str, int], key: Union[slice, Iterable[Union[str, int]], str, int]
+) -> Union[int, List[int]]:
+    from typing import Iterable
+
+    if isinstance(key, slice):
+        return _key2index_from_slice(var2pos, key)
+    if not isinstance(key, str) and isinstance(key, Iterable):
+        return [_key2index_item(var2pos, k) for k in key]
+    return _key2index_item(var2pos, key)
+
+
+def _address_of_cfunc(fcn: Any) -> int:
     from ctypes import c_void_p, c_double, c_uint32, POINTER, CFUNCTYPE, cast
 
     c_sig = CFUNCTYPE(c_double, c_uint32, POINTER(c_double))
 
     fcn = getattr(fcn, "ctypes", None)
     if isinstance(fcn, c_sig):
-        return cast(fcn, c_void_p).value
+        return cast(fcn, c_void_p).value  # type: ignore
     return 0
+
+
+del Any
+del Dict
+del Union
+del Iterable
+del Callable
+del T
+del Optional
+del Sized
+del Tuple
+del Generator
+del List

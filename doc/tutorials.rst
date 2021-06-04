@@ -17,6 +17,7 @@ The following tutorials show how to use iminuit. The order is the recommended re
     tutorial/simultaneous_fits
     tutorial/numba
     tutorial/automatic_differentiation
+    tutorial/scipy_and_constraints
     tutorial/external_minimizer
     tutorial/generic_least_squares
     tutorial/cython_tutorial

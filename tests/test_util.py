@@ -17,6 +17,11 @@ def test_ndim():
     assert ndim((None, (1, 2))) == 2
 
 
+def test_BasicView():
+    with pytest.raises(TypeError):
+        util.BasicView(None, 2)
+
+
 def test_ValueView():
     state = MnUserParameterState()
     state.add("x", 1.0, 0.1)
@@ -32,6 +37,11 @@ def test_ValueView():
             _copy_state_if_needed=lambda: None,
         )
     )
+
+    assert v == v
+    assert v == (1.0, 2.2, 3.3)
+    assert v != (1.0, 2.1, 3.3)
+    assert v != 0
 
     assert repr(v) == "<ValueView x=1.0 y=2.2 z=3.3>"
     assert str(v) == repr(v)
@@ -104,7 +114,7 @@ def test_Matrix():
 
 
 def test_Param():
-    values = 3, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
+    values = 3, "foo", 1.2, 3.4, None, False, False, 42, None
     p = util.Param(*values)
 
     assert p.number == 3
@@ -122,20 +132,15 @@ def test_Param():
 
     assert repr(p) == (
         "Param(number=3, name='foo', value=1.2, error=3.4, merror=None, "
-        "is_const=False, is_fixed=False, has_limits=True, has_lower_limit=True, "
-        "has_upper_limit=False, lower_limit=42, upper_limit=None)"
+        "is_const=False, is_fixed=False, lower_limit=42, upper_limit=None)"
     )
 
 
 def test_Params():
     p = util.Params(
         [
-            util.Param(
-                0, "foo", 1.2, 3.4, None, False, False, True, True, False, 42, None
-            ),
-            util.Param(
-                1, "bar", 3.4, 4.5, None, False, False, True, True, False, 42, None
-            ),
+            util.Param(0, "foo", 1.2, 3.4, None, False, False, 42, None),
+            util.Param(1, "bar", 3.4, 4.5, None, False, False, 42, None),
         ]
     )
 
@@ -250,8 +255,9 @@ def test_FMin():
         has_parameters_at_limit=False,
         state=[],
     )
-    fmin = util.FMin(fm, 1, 2, 1, 0.1)
+    fmin = util.FMin(fm, "foo", 1, 2, 1, 0.1)
     assert {x for x in dir(fmin) if not x.startswith("_")} == {
+        "algorithm",
         "edm",
         "edm_goal",
         "errordef",
@@ -270,15 +276,17 @@ def test_FMin():
         "has_reached_call_limit",
         "has_parameters_at_limit",
     }
+    assert fmin.algorithm == "foo"
     assert fmin.edm == 1.23456e-10
     assert fmin.edm_goal == 0.1
     assert fmin.has_parameters_at_limit == False
 
-    assert fmin == util.FMin(fm, 1, 2, 1, 0.1)
-    assert fmin != util.FMin(fm, 1, 2, 1, 0.3)
+    assert fmin == util.FMin(fm, "foo", 1, 2, 1, 0.1)
+    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.3)
+    assert fmin != util.FMin(fm, "bar", 1, 2, 1, 0.1)
 
     assert repr(fmin) == (
-        "<FMin edm=1.23456e-10 edm_goal=0.1 errordef=0.5 fval=1.23456e-10"
+        "<FMin algorithm='foo' edm=1.23456e-10 edm_goal=0.1 errordef=0.5 fval=1.23456e-10"
         " has_accurate_covar=True has_covariance=True has_made_posdef_covar=False"
         " has_parameters_at_limit=False has_posdef_covar=True"
         " has_reached_call_limit=False has_valid_parameters=True"
@@ -288,10 +296,10 @@ def test_FMin():
 
 
 def test_normalize_limit():
-    assert util._normalize_limit(None) == (-util.inf, util.inf)
-    assert util._normalize_limit((None, 2)) == (-util.inf, 2)
-    assert util._normalize_limit((2, None)) == (2, util.inf)
-    assert util._normalize_limit((None, None)) == (-util.inf, util.inf)
+    assert util._normalize_limit(None) == (-np.inf, np.inf)
+    assert util._normalize_limit((None, 2)) == (-np.inf, 2)
+    assert util._normalize_limit((2, None)) == (2, np.inf)
+    assert util._normalize_limit((None, None)) == (-np.inf, np.inf)
     with pytest.raises(ValueError):
         util._normalize_limit((3, 2))
 
@@ -406,37 +414,39 @@ def test_merge_signatures():
     assert pg == (0, 3, 4)
 
 
-def test_propagate():
+def test_propagate_1():
     cov = [
-        [1, 0.1, 0.2],
-        [0.1, 2, 0.3],
-        [0.2, 0.3, 3],
+        [1.0, 0.1, 0.2],
+        [0.1, 2.0, 0.3],
+        [0.2, 0.3, 3.0],
     ]
     x = [1, 2, 3]
 
     def fn(x):
-        return 2 * x
+        return 2 * x + 1
 
     y, ycov = util.propagate(fn, x, cov)
-    np.testing.assert_allclose(y, [2, 4, 6])
+    np.testing.assert_allclose(y, [3, 5, 7])
     np.testing.assert_allclose(ycov, [[4, 0.4, 0.8], [0.4, 8, 1.2], [0.8, 1.2, 12]])
 
     y, ycov = util.propagate(fn, 1, 2)
-    np.testing.assert_allclose(y, 2)
+    np.testing.assert_allclose(y, 3)
     np.testing.assert_allclose(ycov, 8)
 
-    rng = np.random.default_rng(1)
-    a = rng.normal(size=(10, 3))
+
+def test_propagate_2():
+    cov = [
+        [1.0, 0.1, 0.2],
+        [0.1, 2.0, 0.3],
+        [0.2, 0.3, 3.0],
+    ]
+    x = [1.0, 2.0, 3.0]
+
+    a = 0.5 * np.arange(30).reshape((10, 3))
 
     def fn(x):
         return np.dot(a, x)
 
-    cov = [
-        [1, 0.1, 0.2],
-        [0.1, 2, 0.3],
-        [0.2, 0.3, 3],
-    ]
-    x = [1, 2, 3]
     y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(x))
     np.testing.assert_allclose(ycov, np.einsum("ij,kl,jl", a, a, cov))
@@ -448,6 +458,34 @@ def test_propagate():
     np.testing.assert_equal(y, fn(np.array(x)))
     jac = 2 * np.dot(cov, x)
     np.testing.assert_allclose(ycov, np.einsum("i,k,ik", jac, jac, cov))
+
+
+def test_propagate_3():
+    # matrices with full zero rows and columns are supported
+    cov = [
+        [1.0, 0.0, 0.2],
+        [0.0, 0.0, 0.0],
+        [0.2, 0.0, 3.0],
+    ]
+    x = [1.0, 2.0, 3.0]
+
+    def fn(x):
+        return 2 * x + 1
+
+    y, ycov = util.propagate(fn, x, cov)
+    np.testing.assert_allclose(y, [3, 5, 7])
+    np.testing.assert_allclose(ycov, [[4, 0.0, 0.8], [0.0, 0.0, 0.0], [0.8, 0.0, 12]])
+
+
+def test_proagate_on_bad_input():
+    cov = [[np.nan, 0.0], [0.0, 1.0]]
+    x = [1.0, 2.0]
+
+    def fn(x):
+        return 2 * x + 1
+
+    with pytest.raises(ValueError):
+        util.propagate(fn, x, cov)
 
 
 def test_jacobi():
@@ -482,10 +520,23 @@ def test_jacobi_on_bad_input():
 
     x = np.array([1])
     dx = np.array([0])
-    y, jac = util._jacobi(lambda x: np.nan, x, dx, 1e-3)
+    y, jac = util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
+
+    np.testing.assert_equal(y, 1)
+    np.testing.assert_equal(jac, 0)
+
+    x = np.array([np.nan])
+    dx = np.array([0.1])
+    y, jac = util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
 
     np.testing.assert_equal(y, np.nan)
-    np.testing.assert_equal(jac, 0)
+    np.testing.assert_equal(jac, np.nan)
+
+    x = np.array([1])
+    dx = np.array([np.nan])
+    with pytest.raises(AssertionError):
+        # dx must be >= 0
+        util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
 
 
 def test_jacobi_no_convergence():
@@ -494,5 +545,7 @@ def test_jacobi_no_convergence():
     x = np.array([1])
     dx = np.array([1])
 
-    with pytest.warns(UserWarning):
-        util._jacobi(lambda x: rng.normal(), x, dx, 1e-323)
+    y, jac = util._jacobi(lambda x: rng.normal(), x, dx, 1e-323)
+
+    np.testing.assert_allclose(y, 0, atol=1)
+    np.testing.assert_allclose(jac, 0, atol=1)

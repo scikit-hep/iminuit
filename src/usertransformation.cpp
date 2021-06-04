@@ -42,6 +42,9 @@ void bind_usertransformation(py::module m) {
 
       .def("name", &MnUserTransformation::GetName)
       .def("index", &MnUserTransformation::FindIndex)
+      .def("ext2int", &MnUserTransformation::Ext2int)
+      .def("int2ext", &MnUserTransformation::Int2ext)
+      .def("dint2ext", &MnUserTransformation::DInt2Ext)
 
       .def("__len__", size)
       .def("__iter__", iter)
