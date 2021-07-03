@@ -858,19 +858,21 @@ class Minuit:
         ncall : int, optional
             Function call limit.
         hess : Callable, optional
-            Function that computes the Hessian matrix. It must use the same calling
-            conversion as the original fcn (several arguments which are numbers or
-            a single array argument).
-        hess : Callable, optional
-            Function that computes the Hessian matrix. It must use the same calling
-            conversion as the original fcn (several arguments which are numbers or
-            a single array argument) plus another argument which is an arbitrary vector.
+            Function that computes the Hessian matrix. It must use the exact same
+            calling conversion as the original fcn (several arguments which are numbers
+            or a single array argument).
+        hessp : Callable, optional
+            Function that computes the product of the Hessian matrix with a vector.
+            It must use the same calling conversion as the original fcn (several
+            arguments which are numbers or a single array argument) and end with another
+            argument which is an arbitrary vector.
         constraints : scipy.optimize.LinearConstraint or
                       scipy.optimize.NonlinearConstraint, optional
             Linear or non-linear constraints, see docs of :func:`scipy.optimize.minimize`
             look for the `constraints` parameter. The function used in the constraint
-            must use the same calling convention as the original fcn, see hess parameter
-            for details.
+            must use the exact same calling convention as the original fcn, see hess
+            parameter for details. No parameters may be omitted in the signature, even
+            if those parameters are not used in the constraint.
 
         Notes
         -----
@@ -881,7 +883,9 @@ class Minuit:
         issue should be fixed in scipy.
 
         The SciPy minimizers use their own internal rule for convergence. The EDM
-        criterion is evaluated only after the original algorithm already stopped.
+        criterion is evaluated only after the original algorithm already stopped. This
+        means that usually SciPy minimizers will use more iterations than Migrad and
+        the tolerance :attr:`tol` has no effect on SciPy minimizers.
         """
         from scipy.optimize import (
             minimize,
@@ -1107,36 +1111,44 @@ class Minuit:
         if grad:
             self.fcn._ngrad += r.get("njev", 0)
 
-        hess_inv = None
+        # Get inverse Hesse matrix, working around many inconsistencies in scipy.
+        # Try in order:
+        # 1) If hess_inv is returned as full matrix as result, use that.
+        # 2) If hess is returned as full matrix, invert it and use that.
+        # - These two are approximations to the exact Hessian. -
+        # 3) If externally computed hessian was passed to method, use that.
+        #    Hessian is considered accurate then.
+
+        matrix = None
         needs_invert = False
         if "hess_inv" in r:
-            hess_inv = r.hess_inv
+            matrix = r.hess_inv
         elif "hess" in r:
-            hess_inv = r.hess
+            matrix = r.hess
             needs_invert = True
-        if hess_inv is not None and not isinstance(hess_inv, np.ndarray):
-            hess_inv = hess_inv(np.eye(self.nfit))
-        if needs_invert:
-            hess_inv = np.linalg.inv(hess_inv)
+        # hess_inv is a function, need to convert to full matrix
+        if matrix is not None and isinstance(matrix, Callable):
+            matrix = matrix(np.eye(self.nfit))
 
         accurate_covar = bool(hess) or bool(hessp)
 
         # Newton-CG neither returns hessian nor inverted hessian
-        if hess_inv is None and accurate_covar:
-            if hessp:
-                hess = [hessp(r.x, ei) for ei in np.eye(self.nfit)]
-            else:
-                hess = hess(r.x)
-            hess_inv = np.linalg.inv(hess)
+        if matrix is None:
+            if accurate_covar:
+                if hessp:
+                    hess = [hessp(r.x, ei) for ei in np.eye(self.nfit)]
+                else:
+                    hess = hess(r.x)
+                needs_invert = True
 
-        if hess_inv is None:
-            hess_inv = np.zeros((self.nfit, self.nfit))
-            i = 0
+        if needs_invert:
+            matrix = np.linalg.inv(matrix)
+
+        # Last resort: use parameter step sizes as "errors"
+        if matrix is None:
+            matrix = np.zeros((self.nfit, self.nfit))
             for p in self.params:
-                if p.is_fixed:
-                    continue
-                hess_inv[i, i] = p.error ** 2
-                i += 1
+                matrix[p.number, p.number] = 0 if p.is_fixed else p.error ** 2
 
         if "grad" in r:  # trust-constr has "grad" and "jac", but "grad" is "jac"!
             jac = r.grad
@@ -1144,13 +1156,13 @@ class Minuit:
             jac = r.jac
         else:
             tol = 1e-2
-            dx = np.sqrt(np.diag(hess_inv) * tol)
+            dx = np.sqrt(np.diag(matrix) * tol)
             jac = mutil._jacobi(fcn, r.x, dx, tol)[1][0]
 
         fm = FunctionMinimum(
             self._init_state.trafo,
             r.x,
-            hess_inv,
+            matrix,
             jac,
             r.fun,
             self.errordef,
