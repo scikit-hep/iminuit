@@ -1136,9 +1136,9 @@ class Minuit:
         if matrix is None:
             if accurate_covar:
                 if hessp:
-                    hess = [hessp(r.x, ei) for ei in np.eye(self.nfit)]
+                    matrix = [hessp(r.x, ei) for ei in np.eye(self.nfit)]
                 else:
-                    hess = hess(r.x)
+                    matrix = hess(r.x)
                 needs_invert = True
 
         if needs_invert:
@@ -1148,7 +1148,8 @@ class Minuit:
         if matrix is None:
             matrix = np.zeros((self.nfit, self.nfit))
             for p in self.params:
-                matrix[p.number, p.number] = 0 if p.is_fixed else p.error ** 2
+                i = p.number - 1
+                matrix[i, i] = 0 if p.is_fixed else p.error ** 2
 
         if "grad" in r:  # trust-constr has "grad" and "jac", but "grad" is "jac"!
             jac = r.grad
