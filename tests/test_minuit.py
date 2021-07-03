@@ -1321,10 +1321,16 @@ def test_tolerance():
     m.migrad()
     assert m.valid
     edm = m.fmin.edm
+    m.tol = 0
     m.reset()
-    m.tol = 1e-6
     m.migrad()
     assert m.fmin.edm < edm
+    m.reset()
+    m.tol = None
+    assert m.tol == 0.1
+    m.reset()
+    m.migrad()
+    assert m.fmin.edm == edm
 
 
 def test_bad_tolerance():
@@ -1332,9 +1338,6 @@ def test_bad_tolerance():
 
     with pytest.raises(ValueError):
         m.tol = -1
-
-    with pytest.raises(ValueError):
-        m.tol = 0
 
 
 def test_issue_544():
