@@ -1899,7 +1899,7 @@ class Minuit:
         else:
             self._covariance = None
 
-    def _edm_goal(self, /, migrad_factor=False) -> float:
+    def _edm_goal(self, migrad_factor=False) -> float:
         # EDM goal
         # - taken from the source code, see VariableMeticBuilder::Minimum and
         #   ModularFunctionMinimizer::Minimize
