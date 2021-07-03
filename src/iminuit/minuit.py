@@ -887,12 +887,16 @@ class Minuit:
         means that usually SciPy minimizers will use more iterations than Migrad and
         the tolerance :attr:`tol` has no effect on SciPy minimizers.
         """
-        from scipy.optimize import (
-            minimize,
-            Bounds,
-            NonlinearConstraint,
-            LinearConstraint,
-        )
+        try:
+            from scipy.optimize import (
+                minimize,
+                Bounds,
+                NonlinearConstraint,
+                LinearConstraint,
+            )
+        except ModuleNotFoundError as exc:
+            exc.msg += "\n\nPlease install scipy to use scipy minimizers in iminuit."
+            raise
 
         if ncall is None:
             ncall = self._migrad_maxcall()
@@ -1147,9 +1151,12 @@ class Minuit:
         # Last resort: use parameter step sizes as "errors"
         if matrix is None:
             matrix = np.zeros((self.nfit, self.nfit))
+            i = 0
             for p in self.params:
-                i = p.number - 1
-                matrix[i, i] = 0 if p.is_fixed else p.error ** 2
+                if p.is_fixed:
+                    continue
+                matrix[i, i] = p.error ** 2
+                i += 1
 
         if "grad" in r:  # trust-constr has "grad" and "jac", but "grad" is "jac"!
             jac = r.grad
