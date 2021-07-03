@@ -164,8 +164,8 @@ class Minuit:
 
     @tol.setter
     def tol(self, value: float) -> None:
-        if value <= 0:
-            raise ValueError("tolerance must be positive")
+        if value < 0:
+            raise ValueError("tolerance must be non-negative")
         self._tolerance = value
 
     @property
@@ -678,9 +678,13 @@ class Minuit:
 
         self._last_state = fm.state
 
-        edm_goal = self._migrad_edm_goal()
         self._fmin = mutil.FMin(
-            fm, "Migrad", self.nfcn, self.ngrad, self.ndof, edm_goal
+            fm,
+            "Migrad",
+            self.nfcn,
+            self.ngrad,
+            self.ndof,
+            self._edm_goal(with_migrad_factor=True),
         )
         self._make_covariance()
 
@@ -730,11 +734,8 @@ class Minuit:
         fm = simplex(ncall, self._tolerance)
         self._last_state = fm.state
 
-        edm_goal = max(
-            self._tolerance * fm.errordef, simplex.precision.eps2  # type:ignore
-        )
         self._fmin = mutil.FMin(
-            fm, "Simplex", self.nfcn, self.ngrad, self.ndof, edm_goal
+            fm, "Simplex", self.nfcn, self.ngrad, self.ndof, self._edm_goal()
         )
         self._covariance = None
         self._merrors = mutil.MErrors()
@@ -831,7 +832,7 @@ class Minuit:
 
         run(0)
 
-        edm_goal = self._tolerance * self._fcn._errordef
+        edm_goal = self._edm_goal()
         fm = FunctionMinimum(self._fcn, self._last_state, self.strategy, edm_goal)
         self._last_state = fm.state
         self._fmin = mutil.FMin(fm, "Scan", self.nfcn, self.ngrad, self.ndof, edm_goal)
@@ -1070,8 +1071,6 @@ class Minuit:
             upper_bound.append(bi)
             start.append(xi)
 
-        edm_goal = self._migrad_edm_goal()
-
         if method is None:
             # like in scipy.optimize.minimize
             if constraints:
@@ -1167,6 +1166,7 @@ class Minuit:
             dx = np.sqrt(np.diag(matrix) * tol)
             jac = mutil._jacobi(fcn, r.x, dx, tol)[1][0]
 
+        edm_goal = self._edm_goal(with_migrad_factor=True)
         fm = FunctionMinimum(
             self._init_state.trafo,
             r.x,
@@ -1888,14 +1888,18 @@ class Minuit:
         else:
             self._covariance = None
 
-    def _migrad_edm_goal(self) -> float:
+    def _edm_goal(self, with_migrad_factor=False) -> float:
         # EDM goal
         # - taken from the source code, see VariableMeticBuilder::Minimum and
         #   ModularFunctionMinimizer::Minimize
         # - goal is used to detect convergence but violations by 10x are also accepted;
         #   see VariableMetricBuilder.cxx:425
-        pr = self._mnprecision()
-        return 2e-3 * max(self.tol * self.errordef, pr.eps2)  # type:ignore
+        edm_goal = max(
+            self.tol * self.errordef, self._mnprecision().eps2  # type:ignore
+        )
+        if with_migrad_factor:
+            edm_goal *= 2e-3
+        return edm_goal
 
     def _migrad_maxcall(self) -> int:
         n = self.nfit
