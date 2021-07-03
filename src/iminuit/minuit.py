@@ -130,7 +130,7 @@ class Minuit:
         return self._precision
 
     @precision.setter
-    def precision(self, value: float) -> None:
+    def precision(self, value: Optional[float]) -> None:
         if value is not None and not (value > 0):
             raise ValueError("precision must be a positive number or None")
         self._precision = value
@@ -152,9 +152,15 @@ class Minuit:
             * Migrad: edm_max = 0.002 * tol * errordef
             * Simplex: edm_max = tol * errordef
 
-        Users can set `tol` (default: 0.1) to a different value to speed up convergence
-        at the cost of a larger error on the fitted parameters and possibly invalid
-        estimates for parameter uncertainties.
+        Users can set `tol` (default: 0.1) to a different value to either speed up
+        convergence at the cost of a larger error on the fitted parameters and possibly
+        invalid estimates for parameter uncertainties or smaller values to get more
+        accurate parameter values, although this should never be necessary as the
+        default is fine.
+
+        If the tolerance is set to a very small value or zero, Minuit will use an
+        internal lower limit for the tolerance. To restore the default use, one can
+        assign `None`.
 
         Under some circumstances, Migrad is allowed to violate edm_max by a factor of
         10. Users should not try to detect convergence by comparing edm with edm_max,
@@ -163,8 +169,10 @@ class Minuit:
         return self._tolerance
 
     @tol.setter
-    def tol(self, value: float) -> None:
-        if value < 0:
+    def tol(self, value: Optional[float]) -> None:
+        if value is None:  # used to reset tolerance
+            value = 0.1
+        elif value < 0:
             raise ValueError("tolerance must be non-negative")
         self._tolerance = value
 
@@ -596,7 +604,7 @@ class Minuit:
         self._pos2var = tuple(name)
         self._var2pos = {k: i for i, k in enumerate(name)}
 
-        self._tolerance = 0.1
+        self.tol = None  # set to default value
         self._strategy = MnStrategy(1)
         self._fcn = FCN(
             fcn,
@@ -684,7 +692,7 @@ class Minuit:
             self.nfcn,
             self.ngrad,
             self.ndof,
-            self._edm_goal(with_migrad_factor=True),
+            self._edm_goal(migrad_factor=True),
         )
         self._make_covariance()
 
@@ -1166,7 +1174,7 @@ class Minuit:
             dx = np.sqrt(np.diag(matrix) * tol)
             jac = mutil._jacobi(fcn, r.x, dx, tol)[1][0]
 
-        edm_goal = self._edm_goal(with_migrad_factor=True)
+        edm_goal = self._edm_goal(migrad_factor=True)
         fm = FunctionMinimum(
             self._init_state.trafo,
             r.x,
@@ -1334,11 +1342,14 @@ class Minuit:
         if not self._fmin:
             # create a seed minimum for MnMinos
             fm = FunctionMinimum(
-                self._fcn, self._last_state, self._strategy, self._migrad_edm_goal()
+                self._fcn,
+                self._last_state,
+                self._strategy,
+                self._edm_goal(migrad_factor=True),
             )
             # running MnHesse on seed is necessary for MnMinos to work
             hesse = MnHesse(self.strategy)
-            hesse(self._fcn, fm, ncall, self._migrad_edm_goal())
+            hesse(self._fcn, fm, ncall, self._edm_goal(migrad_factor=True))
             self._last_state = fm.state
             self._make_covariance()
         else:
@@ -1888,7 +1899,7 @@ class Minuit:
         else:
             self._covariance = None
 
-    def _edm_goal(self, with_migrad_factor=False) -> float:
+    def _edm_goal(self, /, migrad_factor=False) -> float:
         # EDM goal
         # - taken from the source code, see VariableMeticBuilder::Minimum and
         #   ModularFunctionMinimizer::Minimize
@@ -1897,7 +1908,7 @@ class Minuit:
         edm_goal = max(
             self.tol * self.errordef, self._mnprecision().eps2  # type:ignore
         )
-        if with_migrad_factor:
+        if migrad_factor:
             edm_goal *= 2e-3
         return edm_goal
 

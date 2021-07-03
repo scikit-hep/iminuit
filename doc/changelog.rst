@@ -16,6 +16,7 @@ New features
   Other algorithms support minimisation under arbitrary non-linear constraints.
 - ``util.FMin`` has new html/text representations; the field ``Valid parameters`` was
   removed, a title with the name of the minimisation method was added
+- ``Minuit.tol`` now accepts the values 0 and ``None``, the latter resets the default
 
 Fixes
 ~~~~~
