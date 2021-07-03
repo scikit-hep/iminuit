@@ -9,7 +9,11 @@ Changelog
 -----
 New features
 ~~~~~~~~~~~~
-- ``Minuit.scipy`` can be used to minimise with SciPy methods; optional, requires scipy
+- ``Minuit.scipy`` can be used to minimise with SciPy algorithms. These may succeed
+  when ``Minuit.migrad`` fails and support additional features. Some algorithms
+  allow one to pass a function that returns the Hessian matrix (which may be computed
+  analytically or via automatic differentiation provided by other libraries like JAX).
+  Other algorithms support minimisation under arbitrary non-linear constraints.
 - ``util.FMin`` has new html/text representations; the field ``Valid parameters`` was
   removed, a title with the name of the minimisation method was added
 
@@ -23,8 +27,7 @@ Fixes
 
 Documentation
 ~~~~~~~~~~~~~
-- Tutorials are now listed in order with titles in the tutorials section and link
-  to live-rendered versions with nbviewer
+- Tutorial notebooks are now fully integrated into the HTML documentation
 
 Other
 ~~~~~
