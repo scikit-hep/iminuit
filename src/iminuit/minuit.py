@@ -894,7 +894,7 @@ class Minuit:
                 NonlinearConstraint,
                 LinearConstraint,
             )
-        except ModuleNotFoundError as exc:
+        except ModuleNotFoundError as exc:  # pragma: no cover
             exc.msg += "\n\nPlease install scipy to use scipy minimizers in iminuit."
             raise
 
