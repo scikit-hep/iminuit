@@ -44,6 +44,10 @@ class HesseFailedWarning(IMinuitWarning):
     """HESSE failed warning."""
 
 
+class PerformanceWarning(UserWarning):
+    """Warning about performance issues."""
+
+
 class BasicView(abc.ABC):
     """
     Array-like view of parameter state.
