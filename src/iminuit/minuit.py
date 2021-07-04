@@ -1253,35 +1253,36 @@ class Minuit:
 
         hesse = MnHesse(self.strategy)
 
-        if self._fmin is None:
-            # _fmin does not exist or _last_state was modified,
-            # so we cannot just update last _fmin
-            self._last_state = hesse(self._fcn, self._last_state, ncall)
+        if self._fmin is None or self._fmin._src.state is not self._last_state:
+            # _fmin does not exist or last_state was modified, create a seed minimum
+            fm = FunctionMinimum(
+                self._fcn,
+                self._last_state,
+                self._strategy,
+                self._edm_goal(migrad_factor=True),
+            )
+            self._fmin = mutil.FMin(
+                fm,
+                "External",
+                self.nfcn,
+                self.ngrad,
+                self.ndof,
+                self._edm_goal(migrad_factor=True),
+            )
             self._merrors = mutil.MErrors()
-        else:
-            fm = self._fmin._src
-            if fm.state is self._last_state:
-                # fmin exists and _last_state not modified,
-                # can update _fmin which is more efficient
-                hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
-                self._last_state = fm.state
-                self._fmin = mutil.FMin(
-                    fm,
-                    self._fmin.algorithm,
-                    self.nfcn,
-                    self.ngrad,
-                    self.ndof,
-                    self._fmin.edm_goal,
-                )
-            else:
-                # fmin exists but _last_state was modified
-                self._fmin = None
-                self._last_state = hesse(self._fcn, self._last_state, ncall)
-                self._merrors = mutil.MErrors()
 
-        if self._last_state.has_covariance is False:
-            if not self._fmin:
-                raise RuntimeError("Hesse Failed")
+        fm = self._fmin._src
+        # update _fmin with Hesse
+        hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
+        self._last_state = fm.state
+        self._fmin = mutil.FMin(
+            fm,
+            self._fmin.algorithm,
+            self.nfcn,
+            self.ngrad,
+            self.ndof,
+            self._fmin.edm_goal,
+        )
 
         self._make_covariance()
 
@@ -1335,25 +1336,14 @@ class Minuit:
         else:
             try:
                 from scipy.stats import chi2
-            except ImportError:  # pragma: no cover
-                raise ImportError("setting cl requires scipy")  # pragma: no cover
+            except ModuleNotFoundError as exc:  # pragma: no cover
+                exc.msg += "\nPlease install scipy to set the cl argument."
+                raise
             factor = chi2(1).ppf(cl)
 
         if not self._fmin:
-            # create a seed minimum for MnMinos
-            fm = FunctionMinimum(
-                self._fcn,
-                self._last_state,
-                self._strategy,
-                self._edm_goal(migrad_factor=True),
-            )
-            # running MnHesse on seed is necessary for MnMinos to work
-            hesse = MnHesse(self.strategy)
-            hesse(self._fcn, fm, ncall, self._edm_goal(migrad_factor=True))
-            self._last_state = fm.state
-            self._make_covariance()
-        else:
-            fm = self._fmin._src
+            self.hesse()  # also creates self._fmin
+        fm = self._fmin._src
 
         if not fm.is_valid:
             raise RuntimeError("Function minimum is not valid.")

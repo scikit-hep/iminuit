@@ -1081,12 +1081,13 @@ def test_hesse_without_migrad():
     m.values["x"] = 1
     m.hesse()
     assert m.errors["x"] == approx((1.0 / 14.0) ** 0.5, abs=1e-4)
-    assert m.fmin is None
+    assert m.fmin
 
     m = Minuit(lambda x: 0, 0)
     m.errordef = 1
-    with pytest.raises(RuntimeError):
-        m.hesse()
+    m.hesse()
+    assert not m.accurate
+    assert m.fmin.hesse_failed
 
 
 def test_edm_goal():
@@ -1516,3 +1517,20 @@ def test_call_limit_reached_in_hesse():
     m.migrad(ncall=200)
     assert m.fmin.has_reached_call_limit
     assert m.fmin.nfcn < 205
+
+
+def test_issue_643():
+    def fcn(x, y, z):
+        return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
+
+    fcn.errordef = Minuit.LEAST_SQUARES
+
+    m = Minuit(fcn, x=2, y=3, z=4)
+    m.migrad()
+
+    m2 = Minuit(fcn, x=m.values["x"], y=m.values["y"], z=m.values["z"])
+    # this used to call MnHesse although it was not needed and quickly exhaust call limit
+    for i in range(10):
+        # m2.values[:] = (2, 3, 4)
+        m2.minos()
+    # Call limit will still eventually become exhausted by calling Minos
