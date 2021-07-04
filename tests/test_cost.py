@@ -12,6 +12,7 @@ from iminuit.cost import (
     NormalConstraint,
     _log_poisson_part,
     _spd_transform,
+    PerformanceWarning,
 )
 from collections.abc import Sequence
 
@@ -441,7 +442,7 @@ def test_addable_cost_3():
 
 def test_NormalConstraint_1():
     def model(x, a):
-        return a
+        return a * np.ones_like(x)
 
     lsq1 = LeastSquares(0, 1, 1, model)
     lsq2 = lsq1 + NormalConstraint("a", 1, 0.1)
@@ -514,7 +515,44 @@ def test_spd_transform():
 def test_log_poisson_part():
     assert _log_poisson_part(0, 0) == 0
     assert _log_poisson_part(0, 1) == 0
-    assert _log_poisson_part(1, 0) == np.inf
+    assert _log_poisson_part(1, 0) == pytest.approx(743, abs=1)
     n = np.array([(0.0, 0.0)])
     assert_allclose(_log_poisson_part(n, 0), 0)
     assert_allclose(_log_poisson_part(n, 1), 0)
+
+
+def test_model_float128():
+    def model(x, a):
+        x = x.astype(np.float128)
+        return a + x
+
+    for cost in (
+        UnbinnedNLL([1], model),
+        ExtendedUnbinnedNLL([1], lambda x, a: (1, model(x, a))),
+        BinnedNLL([1], [1, 2], model),
+        BinnedNLL([[1, 1]], [1, 2], model),
+        ExtendedBinnedNLL([1], [1, 2], model),
+        ExtendedBinnedNLL([[1, 1]], [1, 2], model),
+        LeastSquares([1.0], [2.0], [3.0], model),
+        LeastSquares([1.0], [2.0], [3.0], model, loss="soft_l1"),
+    ):
+        assert cost(1).dtype == np.float128
+
+        Minuit(cost, a=0).migrad()  # should not raise
+
+
+def test_model_performance_warning():
+    def model(x, a):
+        return [0 for xi in x]
+
+    with pytest.warns(PerformanceWarning):
+        BinnedNLL([1], [1.0, 2.0], model)(1)
+
+    with pytest.warns(PerformanceWarning):
+        ExtendedBinnedNLL([1], [1.0, 2.0], model)(1)
+
+    with pytest.warns(PerformanceWarning):
+        UnbinnedNLL([1], model)(1)
+
+    with pytest.warns(PerformanceWarning):
+        ExtendedUnbinnedNLL([1], lambda x, a: (1, model(x, a)))(1)

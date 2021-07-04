@@ -17,6 +17,11 @@ New features
 - ``util.FMin`` has new html/text representations; the field ``Valid parameters`` was
   removed, a title with the name of the minimisation method was added
 - ``Minuit.tol`` now accepts the values 0 and ``None``, the latter resets the default
+- Builtin cost functions now support models that return arrays in long double precision
+  ``float128``. In this case, all computations inside the cost function are also done in
+  higher precision.
+- Builtin cost functions now raise a warning if the user-defined model does not return
+  a numpy array
 
 Fixes
 ~~~~~

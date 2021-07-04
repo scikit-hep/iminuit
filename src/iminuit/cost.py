@@ -7,85 +7,148 @@ highest accucary and the most robust results. They are partially accelerated wit
 if numba is available.
 """
 
-from .util import describe, make_func_code, merge_signatures
+from .util import describe, make_func_code, merge_signatures, PerformanceWarning
 import numpy as np
 from collections.abc import Sequence
-from typing import Tuple
-
-
-def _safe_log(x):
-    # does not return NaN for x == 0
-    log_const = 1e-323  # pragma: no cover
-    return np.log(x + log_const)  # pragma: no cover
+from typing import Tuple, Callable, Union
+import warnings
 
 
 def _sum_log_x(x):
-    return np.sum(_safe_log(x))  # pragma: no cover
+    return np.sum(np.log(x + 1e-323))
 
 
 def _spd_transform(n, mu):
     # Scaled Poisson distribution from Bohm and Zech, NIMA 748 (2014) 1-6
-    v, var = np.transpose(n)  # pragma: no cover
-    s = v / (var + 1e-323)  # pragma: no cover
-    return v * s, mu * s  # pragma: no cover
+    v, var = np.transpose(n)
+    s = v / (var + 1e-323)
+    return v * s, mu * s
 
 
 def _log_poisson_part(n, mu):
-    return n * _safe_log(n / (mu + 1e-323))  # pragma: no cover
+    # add n log(n) to keep sum small, required to not loose accuracy in Minuit
+    return n * (np.log(n + 1e-323) - np.log(mu + 1e-323))
 
 
 def _sum_log_poisson_part(n, mu):
-    # subtract n log(n) to keep sum small, required to not loose accuracy in Minuit
-    if n.ndim == 2:  # pragma: no cover
-        n2, mu2 = _spd_transform(n, mu)  # pragma: no cover
-    else:  # pragma: no cover
-        n2, mu2 = n, mu  # pragma: no cover
-    return np.sum(_log_poisson_part(n2, mu2))  # pragma: no cover
+    if n.ndim == 2:
+        n2, mu2 = _spd_transform(n, mu)
+    else:
+        n2, mu2 = n, mu
+    return np.sum(_log_poisson_part(n2, mu2))
 
 
 def _sum_log_poisson(n, mu):
-    # subtract n - n log(n) to keep sum small, required to not loose accuracy in Minuit
-    if n.ndim == 2:  # pragma: no cover
-        n2, mu2 = _spd_transform(n, mu)  # pragma: no cover
-    else:  # pragma: no cover
-        n2, mu2 = n, mu  # pragma: no cover
-    return np.sum(mu2 - n2 + _log_poisson_part(n2, mu2))  # pragma: no cover
+    if n.ndim == 2:
+        n2, mu2 = _spd_transform(n, mu)
+    else:
+        n2, mu2 = n, mu
+    # subtract n to keep sum small, required to not loose accuracy in Minuit
+    return np.sum(mu2 - n2 + _log_poisson_part(n2, mu2))
 
 
 def _z_squared(y, ye, ym):
-    z = y - ym  # pragma: no cover
-    z /= ye  # pragma: no cover
-    return z * z  # pragma: no cover
+    z = (y - ym) / ye
+    return z * z
 
 
 def _sum_z_squared(y, ye, ym):
-    return np.sum(_z_squared(y, ye, ym))  # pragma: no cover
+    return np.sum(_z_squared(y, ye, ym))
 
 
 def _sum_z_squared_soft_l1(y, ye, ym):
-    z = _z_squared(y, ye, ym)  # pragma: no cover
-    return np.sum(2 * (np.sqrt(1.0 + z) - 1.0))  # pragma: no cover
+    z = _z_squared(y, ye, ym)
+    return np.sum(2 * (np.sqrt(1.0 + z) - 1.0))
 
 
 try:
     import numba as nb
+    from numba.extending import overload
 
-    jit = nb.njit(nogil=True, cache=True)
+    _spd_transform_np = _spd_transform
 
-    _safe_log = jit(_safe_log)
-    _sum_log_x = jit(_sum_log_x)
-    _spd_transform = jit(_spd_transform)
-    _log_poisson_part = jit(_log_poisson_part)
-    _sum_log_poisson_part = jit(_sum_log_poisson_part)
-    _sum_log_poisson = jit(_sum_log_poisson)
-    _z_squared = jit(_z_squared)
-    _sum_z_squared = jit(_sum_z_squared)
-    _sum_z_squared_soft_l1 = jit(_sum_z_squared_soft_l1)
+    @overload(_spd_transform, inline="always")
+    def _spd_transform_ol(n, mu):
+        return _spd_transform_np  # pragma: nocover
 
-    del jit
+    _log_poisson_part_np = _log_poisson_part
+
+    @overload(_log_poisson_part, inline="always")
+    def _log_poisson_part_ol(n, mu):
+        return _log_poisson_part_np  # pragma: nocove
+
+    _z_squared_np = _z_squared
+
+    @overload(_z_squared, inline="always")
+    def _z_squared_ol(y, ye, ym):
+        return _z_squared_np  # pragma: nocove
+
+    _sum_log_x_np = _sum_log_x
+    _sum_log_x_nb = nb.njit(
+        nogil=True,
+        cache=True,
+        error_model="numpy",
+    )(_sum_log_x_np)
+
+    def _sum_log_x(x):
+        if x.dtype in (np.float32, np.float64):
+            return _sum_log_x_nb(x)
+        return _sum_log_x_np(x)
+
+    _sum_log_poisson_part_np = _sum_log_poisson_part
+    _sum_log_poisson_part_nb = nb.njit(
+        nogil=True,
+        cache=True,
+        error_model="numpy",
+    )(_sum_log_poisson_part_np)
+
+    def _sum_log_poisson_part(n, mu):
+        if mu.dtype in (np.float32, np.float64):
+            return _sum_log_poisson_part_nb(n, mu)
+        return _sum_log_poisson_part_np(n, mu)
+
+    _sum_log_poisson_np = _sum_log_poisson
+    _sum_log_poisson_nb = nb.njit(
+        nogil=True,
+        cache=True,
+        error_model="numpy",
+    )(_sum_log_poisson_np)
+
+    def _sum_log_poisson(n, mu):
+        if mu.dtype in (np.float32, np.float64):
+            return _sum_log_poisson_nb(n, mu)
+        # fallback to numpy for float128
+        return _sum_log_poisson_np(n, mu)
+
+    _sum_z_squared_np = _sum_z_squared
+    _sum_z_squared_nb = nb.njit(
+        nogil=True,
+        cache=True,
+        error_model="numpy",
+    )(_sum_z_squared_np)
+
+    def _sum_z_squared(y, ye, ym):
+        if ym.dtype in (np.float32, np.float64):
+            return _sum_z_squared_nb(y, ye, ym)
+        # fallback to numpy for float128
+        return _sum_z_squared_np(y, ye, ym)
+
+    _sum_z_squared_soft_l1_np = _sum_z_squared_soft_l1
+    _sum_z_squared_soft_l1_nb = nb.njit(
+        nogil=True,
+        cache=True,
+        error_model="numpy",
+    )(_sum_z_squared_soft_l1_np)
+
+    def _sum_z_squared_soft_l1(y, ye, ym):
+        if ym.dtype in (np.float32, np.float64):
+            return _sum_z_squared_soft_l1_nb(y, ye, ym)
+        # fallback to numpy for float128
+        return _sum_z_squared_soft_l1_np(y, ye, ym)
+
     del nb
-except ImportError:  # pragma: no cover
-    pass  # pragma: no cover
+except ModuleNotFoundError:  # pragma: no cover
+    pass
 
 
 class Cost:
@@ -315,7 +378,7 @@ class UnbinnedCost(MaskedCost):
     def data(self, value):
         self._data[:] = value
 
-    def __init__(self, data, model, verbose):
+    def __init__(self, data, model: Callable, verbose):
         """For internal use."""
         self._data = _norm(data)
         self._model = model
@@ -336,7 +399,7 @@ class UnbinnedNLL(UnbinnedCost):
         """Get probability density model."""
         return self._model
 
-    def __init__(self, data, pdf, verbose=0):
+    def __init__(self, data, pdf: Callable, verbose: int = 0):
         """
         Initialize UnbinnedNLL with data and model.
 
@@ -355,7 +418,9 @@ class UnbinnedNLL(UnbinnedCost):
 
     def _call(self, args):
         data = self._masked
-        return -2.0 * _sum_log_x(self._model(data, *args))
+        pdf = self._model(data, *args)
+        pdf = _check_model_output(pdf)
+        return -2.0 * _sum_log_x(pdf)
 
 
 class ExtendedUnbinnedNLL(UnbinnedCost):
@@ -372,7 +437,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         """Get density model."""
         return self._model
 
-    def __init__(self, data, scaled_pdf, verbose=0):
+    def __init__(self, data, scaled_pdf: Callable, verbose: int = 0):
         """
         Initialize cost function with data and model.
 
@@ -392,8 +457,11 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
     def _call(self, args):
         data = self._masked
-        ns, s = self._model(data, *args)
-        return 2.0 * (ns - _sum_log_x(s))
+        ns, spdf = self._model(data, *args)
+        spdf = _check_model_output(
+            spdf, "Model should return numpy array in second position"
+        )
+        return 2.0 * (ns - _sum_log_x(spdf))
 
 
 class BinnedCost(MaskedCost):
@@ -450,7 +518,7 @@ class BinnedNLL(BinnedCost):
         """Get cumulative density function."""
         return self._model
 
-    def __init__(self, n, xe, cdf, verbose=0):
+    def __init__(self, n, xe, cdf: Callable, verbose: int = 0):
         """
         Initialize cost function with data and model.
 
@@ -472,7 +540,9 @@ class BinnedNLL(BinnedCost):
         super().__init__(n, xe, cdf, verbose)
 
     def _call(self, args):
-        prob = np.diff(self._model(self._xe, *args))
+        cdf = self._model(self._xe, *args)
+        cdf = _check_model_output(cdf)
+        prob = np.diff(cdf)
         n = self._masked
         ma = self._mask
         if ma is not None:
@@ -499,7 +569,7 @@ class ExtendedBinnedNLL(BinnedCost):
         """Get integrated density model."""
         return self._model
 
-    def __init__(self, n, xe, scaled_cdf, verbose=0):
+    def __init__(self, n, xe, scaled_cdf: Callable, verbose: int = 0):
         """
         Initialize cost function with data and model.
 
@@ -520,7 +590,9 @@ class ExtendedBinnedNLL(BinnedCost):
         super().__init__(n, xe, scaled_cdf, verbose)
 
     def _call(self, args):
-        mu = np.diff(self._model(self._xe, *args))
+        scdf = self._model(self._xe, *args)
+        scdf = _check_model_output(scdf)
+        mu = np.diff(scdf)
         ma = self._mask
         n = self._masked
         if ma is not None:
@@ -577,9 +649,11 @@ class LeastSquares(MaskedCost):
         return self._loss
 
     @loss.setter
-    def loss(self, loss):
+    def loss(self, loss: Union[str, Callable]):
+        from typing import Callable
+
         self._loss = loss
-        if hasattr(loss, "__call__"):
+        if isinstance(loss, Callable):
             self._cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
         elif loss == "linear":
             self._cost = _sum_z_squared
@@ -588,7 +662,15 @@ class LeastSquares(MaskedCost):
         else:
             raise ValueError("unknown loss type: " + loss)
 
-    def __init__(self, x, y, yerror, model, loss="linear", verbose=0):
+    def __init__(
+        self,
+        x,
+        y,
+        yerror,
+        model: Callable,
+        loss: Union[str, Callable] = "linear",
+        verbose: int = 0,
+    ):
         """
         Initialize cost function with data and model.
 
@@ -628,11 +710,11 @@ class LeastSquares(MaskedCost):
         """
         x = _norm(x)
         y = _norm(y)
-        yerror = np.asarray(yerror, dtype=float)
 
         if len(x) != len(y):
             raise ValueError("x and y must have same length")
 
+        yerror = np.asarray(yerror, dtype=float)
         if yerror.ndim == 0:
             yerror = yerror * np.ones_like(y)
         elif yerror.shape != y.shape:
@@ -648,6 +730,7 @@ class LeastSquares(MaskedCost):
     def _call(self, args):
         x, y, yerror = self._masked
         ym = self._model(x, *args)
+        ym = _check_model_output(ym)
         return self._cost(y, yerror, ym)
 
     def _make_masked(self):
@@ -739,8 +822,28 @@ class NormalConstraint(Cost):
 
 
 def _norm(value):
-    return np.atleast_1d(np.asarray(value, dtype=float))
+    value = np.atleast_1d(value)
+    dtype = value.dtype
+    if dtype.kind != "f":
+        value = value.astype(np.float64)
+    return value
 
 
 def _covinv(array):
     return np.linalg.inv(array) if array.ndim == 2 else 1.0 / array
+
+
+def _check_model_output(x, msg="Model should return numpy array"):
+    if not isinstance(x, np.ndarray):
+        warnings.warn(
+            f"{msg}, but returns {type(x)}",
+            PerformanceWarning,
+        )
+        return np.array(x)
+    return x
+
+
+del Sequence
+del Callable
+del Tuple
+del Union
