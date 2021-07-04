@@ -48,6 +48,7 @@ Fixes
 Documentation
 ~~~~~~~~~~~~~
 - Tutorial notebooks are now fully integrated into the HTML documentation
+- A tutorial on using constrained minimisation from SciPy for HEP task was added
 
 Other
 ~~~~~
