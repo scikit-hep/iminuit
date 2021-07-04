@@ -1529,8 +1529,12 @@ def test_issue_643():
     m.migrad()
 
     m2 = Minuit(fcn, x=m.values["x"], y=m.values["y"], z=m.values["z"])
-    # this used to call MnHesse although it was not needed and quickly exhaust call limit
+    # used to call MnHesse when it was not needed and quickly exhaust call limit
     for i in range(10):
-        # m2.values[:] = (2, 3, 4)
         m2.minos()
-    # Call limit will still eventually become exhausted by calling Minos
+
+    m2.reset()
+    # used to exhaust call limit, because calls to MnHesse did not reset call count
+    for i in range(10):
+        m2.values = m.values
+        m2.minos()

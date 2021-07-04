@@ -78,6 +78,13 @@ def test_MnUserParameterState():
     assert st[1].lower_limit == 1
     assert st[1].upper_limit == 4
 
+    st2 = MnUserParameterState(st)
+    assert st2 == st
+
+    st2.set_value(0, 1.1)
+
+    assert st2 != st
+
 
 def test_MnMigrad():
     fcn = FCN(fn, None, False, 1)

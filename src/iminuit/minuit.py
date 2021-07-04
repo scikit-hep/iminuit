@@ -1251,15 +1251,14 @@ class Minuit:
             )
             return self
 
-        hesse = MnHesse(self.strategy)
-
         if self._fmin is None or self._fmin._src.state is not self._last_state:
             # _fmin does not exist or last_state was modified, create a seed minimum
+            edm_goal = self._edm_goal(migrad_factor=True)
             fm = FunctionMinimum(
                 self._fcn,
                 self._last_state,
                 self._strategy,
-                self._edm_goal(migrad_factor=True),
+                edm_goal,
             )
             self._fmin = mutil.FMin(
                 fm,
@@ -1267,12 +1266,14 @@ class Minuit:
                 self.nfcn,
                 self.ngrad,
                 self.ndof,
-                self._edm_goal(migrad_factor=True),
+                edm_goal,
             )
             self._merrors = mutil.MErrors()
 
         fm = self._fmin._src
+
         # update _fmin with Hesse
+        hesse = MnHesse(self.strategy)
         hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
         self._last_state = fm.state
         self._fmin = mutil.FMin(
@@ -1341,12 +1342,13 @@ class Minuit:
                 raise
             factor = chi2(1).ppf(cl)
 
-        if not self._fmin:
+        if not self._fmin or self._fmin._src.state is not self._last_state:
+            # _fmin does not exist or last_state was modified
             self.hesse()  # also creates self._fmin
         fm = self._fmin._src
 
         if not fm.is_valid:
-            raise RuntimeError("Function minimum is not valid.")
+            raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
         if len(parameters) == 0:
             pars = [par for par in self.parameters if not self.fixed[par]]

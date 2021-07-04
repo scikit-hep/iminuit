@@ -7,6 +7,13 @@ Changelog
 
 2.7.0
 -----
+API change
+~~~~~~~~~~
+- If ``Minuit.hesse`` is called when ``Minuit.fmin`` is ``None``, an instance
+  ``Minuit.fmin`` is now created. If Hesse fails, the code does not raise an exception
+  anymore, since now the error state can be accessed as usual from the ``Minuit.fmin``
+  object. Users who relied on the exception should check ``Minuit.fmin`` from now on.
+
 New features
 ~~~~~~~~~~~~
 - ``Minuit.scipy`` can be used to minimise with SciPy algorithms. These may succeed
@@ -25,6 +32,10 @@ Fixes
   (patch submitted to ROOT)
 - ``Minuit.hesse`` no longer sets the status of the FunctionMinimum unconditionally
   to valid if it was invalid before
+- Repeated calls to ``Minuit.hesse`` no longer accumulate calls and eventually exhaust
+  the call limit, the call counter is now properly reset
+- Calling ``Minuit.minos`` repeatedly now does not recompute the Hessian and avoids
+  a bug that used to exhaust the call limit before in this case
 
 Documentation
 ~~~~~~~~~~~~~

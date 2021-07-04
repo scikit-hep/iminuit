@@ -10,7 +10,8 @@ using namespace ROOT::Minuit2;
 
 void update_fmin(MnHesse& self, const FCNBase& fcn, FunctionMinimum& min,
                  unsigned maxcalls, float maxedm) {
-  MnUserFcn mfcn(fcn, min.UserState().Trafo(), min.NFcn());
+  // We reset call counter here in contrast to MnHesse.cxx:83
+  MnUserFcn mfcn(fcn, min.UserState().Trafo(), 0);
 
   // Run Hesse
   MinimumState st = self(mfcn, min.State(), min.UserState().Trafo(), maxcalls);
@@ -32,15 +33,6 @@ void bind_hesse(py::module m) {
   py::class_<MnHesse>(m, "MnHesse")
 
       .def(py::init<const MnStrategy&>())
-      // pybind11 needs help to figure out the return value that's why we use lambdas
-      .def(
-          "__call__",
-          [](MnHesse& self, const FCNBase& fcn, const MnUserParameterState& state,
-             unsigned maxcalls) -> MnUserParameterState {
-            return self(fcn, state, maxcalls);
-          },
-          py::keep_alive<1, 2>())
-
       .def("__call__", update_fmin)
 
       ;
