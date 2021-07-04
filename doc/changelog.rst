@@ -4,9 +4,12 @@
 
 Changelog
 =========
-
-2.7.0
+2.7.1
 -----
+
+2.7.0 (July 4, 2021)
+--------------------
+
 API change
 ~~~~~~~~~~
 - If ``Minuit.hesse`` is called when ``Minuit.fmin`` is ``None``, an instance
