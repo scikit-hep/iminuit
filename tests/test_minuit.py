@@ -607,58 +607,79 @@ def test_mncontour(grad, cl):
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_contour(grad):
-    # FIXME: check the result
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    m.contour("x", "y")
+    x, y, v = m.contour("x", "y")
+    X, Y = np.meshgrid(x, y)
+    assert_allclose(func0(X, Y), v.T)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_profile(grad):
-    # FIXME: check the result
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    m.profile("y")
+
+    y, v = m.profile("y", subtract_min=False)
+    assert_allclose(func0(m.values[0], y), v)
+
+    v2 = m.profile("y", subtract_min=True)[1]
+    assert np.min(v2) == 0
+    assert_allclose(v - np.min(v), v2)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_mnprofile(grad):
-    # FIXME: check the result
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    if grad is None:
-        m.mnprofile("y", subtract_min=True)
+
     with pytest.raises(ValueError):
         m.mnprofile("foo")
 
+    y, v, _ = m.mnprofile("y", size=10, subtract_min=False)
+    m2 = Minuit(func0, grad=grad, x=1.0, y=2.0)
+    m2.fixed[1] = True
+    v2 = []
+    for yi in y:
+        m2.values = (m.values[0], yi)
+        m2.migrad()
+        v2.append(m2.fval)
 
-def test_mnprofile_subtract():
-    m = Minuit(func0, x=1.0, y=2.0)
-    m.migrad()
-    m.mnprofile("y", subtract_min=True)
+    assert_allclose(v, v2)
 
-
-def test_profile_subtract():
-    m = Minuit(func0, x=1.0, y=2.0)
-    m.migrad()
-    m.profile("y", subtract_min=True)
+    y, v3, _ = m.mnprofile("y", size=10, subtract_min=True)
+    assert np.min(v3) == 0
+    assert_allclose(v - np.min(v), v3)
 
 
 def test_contour_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
     m.migrad()
-    m.contour("x", "y", subtract_min=True)
+    v = m.contour("x", "y", subtract_min=False)[2]
+    v2 = m.contour("x", "y", subtract_min=True)[2]
+    assert np.min(v2) == 0
+    assert_allclose(v - np.min(v), v2)
 
 
 def test_mncontour_no_fmin():
-    m = Minuit(lambda x, y: 0, x=0, y=0)
-    m.errordef = 1
-    with pytest.raises(ValueError):
-        m.mncontour("x", "y")
+    m = Minuit(func0, x=0, y=0)
+
+    with pytest.raises(RuntimeError):
+        m.mncontour("x", "y")  # fails, because this is not a minimum
+
+    # succeeds
+    m.values = (2, 5)
+    c = m.mncontour("x", "y", size=10)
+
+    # compute reference to compare with
+    m2 = Minuit(func0, x=0, y=0)
+    m2.migrad()
+    c2 = m.mncontour("x", "y", size=10)
+
+    assert_allclose(c, c2)
 
 
 def test_mncontour_with_fixed_var():
-    m = Minuit(lambda x, y: 0, x=0, y=0)
+    m = Minuit(func0, x=0, y=0)
     m.errordef = 1
     m.fixed["x"] = True
     m.migrad()
@@ -1538,3 +1559,21 @@ def test_issue_643():
     for i in range(10):
         m2.values = m.values
         m2.minos()
+
+
+def test_issue_669():
+    m = Minuit(func0, x=0, y=0)
+
+    m.migrad()
+
+    xy1 = m.mncontour(x="x", y="y", size=10)
+    xy2 = m.mncontour(x="y", y="x", size=10)  # used to fail
+
+    # needs better way to compare polygons
+    for x, y in xy1:
+        match = False
+        for (y2, x2) in xy2:
+            if abs(x - x2) < 1e-3 and abs(y - y2) < 1e-3:
+                match = True
+                break
+        assert match

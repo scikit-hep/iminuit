@@ -19,12 +19,12 @@ import numpy as np
 from typing import (
     Tuple,
     Dict,
+    Set,
     Iterable,
     Callable,
     Collection,
     Optional,
     Union,
-    Generator,
     Any,
 )
 
@@ -1251,8 +1251,8 @@ class Minuit:
             )
             return self
 
-        if self._fmin is None or self._fmin._src.state is not self._last_state:
-            # _fmin does not exist or last_state was modified, create a seed minimum
+        if self._fmin_does_not_exist_or_last_state_was_modified():
+            # create a seed minimum
             edm_goal = self._edm_goal(migrad_factor=True)
             fm = FunctionMinimum(
                 self._fcn,
@@ -1342,12 +1342,11 @@ class Minuit:
                 raise
             factor = chi2(1).ppf(cl)
 
-        if not self._fmin or self._fmin._src.state is not self._last_state:
-            # _fmin does not exist or last_state was modified
-            self.hesse()  # also creates self._fmin
+        if self._fmin_does_not_exist_or_last_state_was_modified():
+            self.hesse()  # creates self._fmin
         fm = self._fmin._src
 
-        if not fm.is_valid:
+        if not self.valid:
             raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
         if len(parameters) == 0:
@@ -1647,7 +1646,7 @@ class Minuit:
         y :
             Second parameter for scan.
         size :
-            Number of scanning points (Default: 50).
+            Number of scanning points per parameter (Default: 50).
         bound :
             If bound is 2x2 array, [[v1min,v1max],[v2min,v2max]].
             If bound is a number, it specifies how many :math:`\sigma`
@@ -1776,16 +1775,20 @@ class Minuit:
             except ImportError:  # pragma: no cover
                 raise ImportError("setting cl requires scipy")  # pragma: no cover
 
-        if not self._fmin:
-            raise ValueError("Run MIGRAD first")
+        if self._fmin_does_not_exist_or_last_state_was_modified():
+            self.hesse()  # creates self._fmin
+
+        if not self.valid:
+            raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
+
+        pars = set((x, y)) - self._free_parameters()
+        if pars:
+            raise ValueError(
+                f"mncontour can only be run on free parameters, not on {pars}"
+            )
 
         ix = self._var2pos[x]
         iy = self._var2pos[y]
-
-        vary = self._free_parameters()
-        if x not in vary or y not in vary:
-            raise ValueError("mncontour cannot be run on fixed parameters.")
-
         with TemporaryErrordef(self._fcn, factor):
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             ce = mnc(ix, iy, size)[2]
@@ -1830,8 +1833,8 @@ class Minuit:
 
         return cs
 
-    def _free_parameters(self) -> Generator[str, None, None]:
-        return (mp.name for mp in self._last_state if not mp.is_fixed)
+    def _free_parameters(self) -> Set[str]:
+        return set(mp.name for mp in self._last_state if not mp.is_fixed)
 
     def _mnprecision(self) -> MnMachinePrecision:
         pr = MnMachinePrecision()
@@ -1907,6 +1910,9 @@ class Minuit:
     def _migrad_maxcall(self) -> int:
         n = self.nfit
         return 200 + 100 * n + 5 * n * n
+
+    def _fmin_does_not_exist_or_last_state_was_modified(self) -> bool:
+        return not self._fmin or self._fmin._src.state is not self._last_state
 
     def __repr__(self):
         """Get detailed text representation."""

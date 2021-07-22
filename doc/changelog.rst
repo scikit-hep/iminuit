@@ -4,8 +4,21 @@
 
 Changelog
 =========
-2.7.1
+2.8.0
 -----
+API change
+~~~~~~~~~~
+- ``Minuit.mncontour`` now raises ``RuntimeError`` instead of ``ValueError`` if it is
+  not called at a valid minimum point
+
+New features
+~~~~~~~~~~~~
+- ``Minuit.mncontour`` can now be called at any point without running a minimiser before,
+  similar to ``Minuit.minos``
+
+Fixes
+~~~~~
+- ``Minuit.mncontour`` used to fail if called twice in a row
 
 2.7.0 (July 4, 2021)
 --------------------
