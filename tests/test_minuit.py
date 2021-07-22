@@ -1538,3 +1538,12 @@ def test_issue_643():
     for i in range(10):
         m2.values = m.values
         m2.minos()
+
+
+def test_issue_669():
+    m = Minuit(func0, x=0, y=0)
+
+    m.migrad()
+
+    m.mncontour(x="x", y="y")  # works
+    m.mncontour(x="y", y="x")  # fails

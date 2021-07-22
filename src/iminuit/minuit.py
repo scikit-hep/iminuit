@@ -1777,15 +1777,16 @@ class Minuit:
                 raise ImportError("setting cl requires scipy")  # pragma: no cover
 
         if not self._fmin:
-            raise ValueError("Run MIGRAD first")
+            self.migrad()
+
+        pars = set((x, y)) - self._free_parameters()
+        if pars:
+            raise ValueError(
+                f"mncontour can only be run on free parameters, not on {pars}"
+            )
 
         ix = self._var2pos[x]
         iy = self._var2pos[y]
-
-        vary = self._free_parameters()
-        if x not in vary or y not in vary:
-            raise ValueError("mncontour cannot be run on fixed parameters.")
-
         with TemporaryErrordef(self._fcn, factor):
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             ce = mnc(ix, iy, size)[2]
