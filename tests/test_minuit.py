@@ -663,13 +663,14 @@ def test_contour_subtract():
 def test_mncontour_no_fmin():
     m = Minuit(func0, x=0, y=0)
 
-    c = m.mncontour("x", "y")  # fails and returns no points
-    assert len(c) == 0
+    with pytest.raises(RuntimeError):
+        m.mncontour("x", "y")  # fails, because this is not a minimum
 
     # succeeds
     m.values = (2, 5)
     c = m.mncontour("x", "y", size=10)
 
+    # compute reference to compare with
     m2 = Minuit(func0, x=0, y=0)
     m2.migrad()
     c2 = m.mncontour("x", "y", size=10)
@@ -678,7 +679,7 @@ def test_mncontour_no_fmin():
 
 
 def test_mncontour_with_fixed_var():
-    m = Minuit(lambda x, y: 0, x=0, y=0)
+    m = Minuit(func0, x=0, y=0)
     m.errordef = 1
     m.fixed["x"] = True
     m.migrad()

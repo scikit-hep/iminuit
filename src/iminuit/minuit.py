@@ -1346,7 +1346,7 @@ class Minuit:
             self.hesse()  # creates self._fmin
         fm = self._fmin._src
 
-        if not fm.is_valid:
+        if not self.valid:
             raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
         if len(parameters) == 0:
@@ -1777,6 +1777,9 @@ class Minuit:
 
         if self._fmin_does_not_exist_or_last_state_was_modified():
             self.hesse()  # creates self._fmin
+
+        if not self.valid:
+            raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
         pars = set((x, y)) - self._free_parameters()
         if pars:
