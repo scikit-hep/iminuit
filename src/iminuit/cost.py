@@ -65,6 +65,10 @@ try:
     import numba as nb
     from numba.extending import overload
 
+    # If numba is available, use it to accelerate computations in float32 and float64
+    # precision. Fall back to plain numpy for float128 which is not currently supported
+    # by numba.
+
     _spd_transform_np = _spd_transform
 
     @overload(_spd_transform, inline="always")
@@ -147,6 +151,7 @@ try:
         return _sum_z_squared_soft_l1_np(y, ye, ym)
 
     del nb
+    del overload
 except ModuleNotFoundError:  # pragma: no cover
     pass
 
