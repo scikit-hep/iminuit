@@ -635,20 +635,28 @@ def test_mnprofile(grad):
 def test_mnprofile_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
     m.migrad()
-    m.mnprofile("y", subtract_min=True)
+    v = m.mnprofile("y", subtract_min=False)[1]
+    v2 = m.mnprofile("y", subtract_min=True)[1]
+    assert np.min(v2) == 0
+    assert_allclose(v - np.min(v), v2)
 
 
 def test_profile_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
     m.migrad()
-    m.profile("y", subtract_min=True)
+    v = m.profile("y", subtract_min=False)[1]
+    v2 = m.profile("y", subtract_min=True)[1]
+    assert np.min(v2) == 0
+    assert_allclose(v - np.min(v), v2)
 
 
 def test_contour_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
     m.migrad()
-    x, y, v = m.contour("x", "y", subtract_min=True)
-    assert np.min(v) == 0
+    v = m.contour("x", "y", subtract_min=False)[2]
+    v2 = m.contour("x", "y", subtract_min=True)[2]
+    assert np.min(v2) == 0
+    assert_allclose(v - np.min(v), v2)
 
 
 def test_mncontour_no_fmin():
