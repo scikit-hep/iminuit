@@ -69,19 +69,19 @@ try:
 
     @overload(_spd_transform, inline="always")
     def _spd_transform_ol(n, mu):
-        return _spd_transform_np  # pragma: nocover
+        return _spd_transform_np  # pragma: no cover
 
     _log_poisson_part_np = _log_poisson_part
 
     @overload(_log_poisson_part, inline="always")
     def _log_poisson_part_ol(n, mu):
-        return _log_poisson_part_np  # pragma: nocove
+        return _log_poisson_part_np  # pragma: no cover
 
     _z_squared_np = _z_squared
 
     @overload(_z_squared, inline="always")
     def _z_squared_ol(y, ye, ym):
-        return _z_squared_np  # pragma: nocove
+        return _z_squared_np  # pragma: no cover
 
     _sum_log_x_np = _sum_log_x
     _sum_log_x_nb = nb.njit(
