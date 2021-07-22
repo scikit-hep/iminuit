@@ -61,13 +61,12 @@ def _sum_z_squared_soft_l1(y, ye, ym):
     return np.sum(2 * (np.sqrt(1.0 + z) - 1.0))
 
 
+# If numba is available, use it to accelerate computations in float32 and float64
+# precision. Fall back to plain numpy for float128 which is not currently supported
+# by numba.
 try:
     import numba as nb
     from numba.extending import overload
-
-    # If numba is available, use it to accelerate computations in float32 and float64
-    # precision. Fall back to plain numpy for float128 which is not currently supported
-    # by numba.
 
     _spd_transform_np = _spd_transform
 
