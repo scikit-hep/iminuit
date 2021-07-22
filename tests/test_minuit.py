@@ -647,14 +647,25 @@ def test_profile_subtract():
 def test_contour_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
     m.migrad()
-    m.contour("x", "y", subtract_min=True)
+    x, y, v = m.contour("x", "y", subtract_min=True)
+    assert np.min(v) == 0
 
 
 def test_mncontour_no_fmin():
-    m = Minuit(lambda x, y: 0, x=0, y=0)
-    m.errordef = 1
-    with pytest.raises(ValueError):
-        m.mncontour("x", "y")
+    m = Minuit(func0, x=0, y=0)
+
+    c = m.mncontour("x", "y")  # fails and returns no points
+    assert len(c) == 0
+
+    # succeeds
+    m.values = (2, 5)
+    c = m.mncontour("x", "y", size=10)
+
+    m2 = Minuit(func0, x=0, y=0)
+    m2.migrad()
+    c2 = m.mncontour("x", "y", size=10)
+
+    assert_allclose(c, c2)
 
 
 def test_mncontour_with_fixed_var():
@@ -1545,5 +1556,14 @@ def test_issue_669():
 
     m.migrad()
 
-    m.mncontour(x="x", y="y")  # works
-    m.mncontour(x="y", y="x")  # fails
+    xy1 = m.mncontour(x="x", y="y", size=10)
+    xy2 = m.mncontour(x="y", y="x", size=10)  # used to fail
+
+    # needs better way to compare polygons
+    for x, y in xy1:
+        match = False
+        for (y2, x2) in xy2:
+            if abs(x - x2) < 1e-3 and abs(y - y2) < 1e-3:
+                match = True
+                break
+        assert match

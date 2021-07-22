@@ -1251,8 +1251,8 @@ class Minuit:
             )
             return self
 
-        if self._fmin is None or self._fmin._src.state is not self._last_state:
-            # _fmin does not exist or last_state was modified, create a seed minimum
+        if self._fmin_does_not_exist_or_last_state_was_modified():
+            # create a seed minimum
             edm_goal = self._edm_goal(migrad_factor=True)
             fm = FunctionMinimum(
                 self._fcn,
@@ -1342,9 +1342,8 @@ class Minuit:
                 raise
             factor = chi2(1).ppf(cl)
 
-        if not self._fmin or self._fmin._src.state is not self._last_state:
-            # _fmin does not exist or last_state was modified
-            self.hesse()  # also creates self._fmin
+        if self._fmin_does_not_exist_or_last_state_was_modified():
+            self.hesse()  # creates self._fmin
         fm = self._fmin._src
 
         if not fm.is_valid:
@@ -1776,8 +1775,8 @@ class Minuit:
             except ImportError:  # pragma: no cover
                 raise ImportError("setting cl requires scipy")  # pragma: no cover
 
-        if not self._fmin:
-            self.migrad()
+        if self._fmin_does_not_exist_or_last_state_was_modified():
+            self.hesse()  # creates self._fmin
 
         pars = set((x, y)) - self._free_parameters()
         if pars:
@@ -1908,6 +1907,9 @@ class Minuit:
     def _migrad_maxcall(self) -> int:
         n = self.nfit
         return 200 + 100 * n + 5 * n * n
+
+    def _fmin_does_not_exist_or_last_state_was_modified(self) -> bool:
+        return not self._fmin or self._fmin._src.state is not self._last_state
 
     def __repr__(self):
         """Get detailed text representation."""
