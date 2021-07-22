@@ -607,47 +607,48 @@ def test_mncontour(grad, cl):
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_contour(grad):
-    # FIXME: check the result
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    m.contour("x", "y")
+    x, y, v = m.contour("x", "y")
+    X, Y = np.meshgrid(x, y)
+    assert_allclose(func0(X, Y), v.T)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_profile(grad):
-    # FIXME: check the result
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    m.profile("y")
+
+    y, v = m.profile("y", subtract_min=False)
+    assert_allclose(func0(m.values[0], y), v)
+
+    v2 = m.profile("y", subtract_min=True)[1]
+    assert np.min(v2) == 0
+    assert_allclose(v - np.min(v), v2)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_mnprofile(grad):
-    # FIXME: check the result
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    if grad is None:
-        m.mnprofile("y", subtract_min=True)
+
     with pytest.raises(ValueError):
         m.mnprofile("foo")
 
+    y, v, _ = m.mnprofile("y", size=10, subtract_min=False)
+    m2 = Minuit(func0, grad=grad, x=1.0, y=2.0)
+    m2.fixed[1] = True
+    v2 = []
+    for yi in y:
+        m2.values = (m.values[0], yi)
+        m2.migrad()
+        v2.append(m2.fval)
 
-def test_mnprofile_subtract():
-    m = Minuit(func0, x=1.0, y=2.0)
-    m.migrad()
-    v = m.mnprofile("y", subtract_min=False)[1]
-    v2 = m.mnprofile("y", subtract_min=True)[1]
-    assert np.min(v2) == 0
-    assert_allclose(v - np.min(v), v2)
+    assert_allclose(v, v2)
 
-
-def test_profile_subtract():
-    m = Minuit(func0, x=1.0, y=2.0)
-    m.migrad()
-    v = m.profile("y", subtract_min=False)[1]
-    v2 = m.profile("y", subtract_min=True)[1]
-    assert np.min(v2) == 0
-    assert_allclose(v - np.min(v), v2)
+    y, v3, _ = m.mnprofile("y", size=10, subtract_min=True)
+    assert np.min(v3) == 0
+    assert_allclose(v - np.min(v), v3)
 
 
 def test_contour_subtract():

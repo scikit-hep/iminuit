@@ -1646,7 +1646,7 @@ class Minuit:
         y :
             Second parameter for scan.
         size :
-            Number of scanning points (Default: 50).
+            Number of scanning points per parameter (Default: 50).
         bound :
             If bound is 2x2 array, [[v1min,v1max],[v2min,v2max]].
             If bound is a number, it specifies how many :math:`\sigma`
