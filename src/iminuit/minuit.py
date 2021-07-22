@@ -19,12 +19,12 @@ import numpy as np
 from typing import (
     Tuple,
     Dict,
+    Set,
     Iterable,
     Callable,
     Collection,
     Optional,
     Union,
-    Generator,
     Any,
 )
 
@@ -1831,8 +1831,8 @@ class Minuit:
 
         return cs
 
-    def _free_parameters(self) -> Generator[str, None, None]:
-        return (mp.name for mp in self._last_state if not mp.is_fixed)
+    def _free_parameters(self) -> Set[str]:
+        return set(mp.name for mp in self._last_state if not mp.is_fixed)
 
     def _mnprecision(self) -> MnMachinePrecision:
         pr = MnMachinePrecision()
