@@ -45,6 +45,10 @@ void bind_usertransformation(py::module m) {
       .def("ext2int", &MnUserTransformation::Ext2int)
       .def("int2ext", &MnUserTransformation::Int2ext)
       .def("dint2ext", &MnUserTransformation::DInt2Ext)
+      .def("ext_of_int", &MnUserTransformation::ExtOfInt)
+      .def("int_of_ext", &MnUserTransformation::IntOfExt)
+      .def_property_readonly("variable_parameters",
+                             &MnUserTransformation::VariableParameters)
 
       .def("__len__", size)
       .def("__iter__", iter)
