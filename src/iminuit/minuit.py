@@ -1176,7 +1176,7 @@ class Minuit:
 
         edm_goal = self._edm_goal(migrad_factor=True)
         fm = FunctionMinimum(
-            self._init_state.trafo,
+            self._last_state.trafo,
             r.x,
             matrix,
             jac,

@@ -246,3 +246,15 @@ def test_high_print_level(capsys):
     m.scipy()
     m.print_level = 0
     assert capsys.readouterr()[0] != ""
+
+
+def test_on_modified_state():
+    m = Minuit(fcn, a=1, b=2)
+    m.scipy()
+    assert m.valid
+    assert_allclose(m.values, [0, 1], atol=1e-3)
+    m.fixed[1] = True  # modify latest state
+    m.values = 1, 2
+    m.scipy()  # used to fail
+    assert m.valid
+    assert_allclose(m.values, [0, 2], atol=1e-3)
