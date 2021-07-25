@@ -24,6 +24,7 @@ set(SOURCES_B
     extern/root/math/minuit2/src/BFGSErrorUpdator.cxx
     extern/root/math/minuit2/src/DavidonErrorUpdator.cxx
     extern/root/math/minuit2/src/HessianGradientCalculator.cxx
+    extern/root/math/minuit2/src/ExternalInternalGradientCalculator.cxx
     extern/root/math/minuit2/src/InitialGradientCalculator.cxx
     extern/root/math/minuit2/src/LaEigenValues.cxx
     extern/root/math/minuit2/src/LaInnerProduct.cxx

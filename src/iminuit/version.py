@@ -10,4 +10,4 @@
 version = "2.8.0"
 
 # We list the corresponding ROOT version of the C++ Minuit2 library here
-root_version = "v6-25-01-981-g907554c8a1"
+root_version = "v6-25-01-1694-g187368db19"
