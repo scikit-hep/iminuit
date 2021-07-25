@@ -4,10 +4,12 @@
 
 Changelog
 =========
-2.8.0
------
-API change
-~~~~~~~~~~
+
+2.8.0 (July 25, 2021)
+---------------------
+
+Minor API change
+~~~~~~~~~~~~~~~~
 - ``Minuit.mncontour`` now raises ``RuntimeError`` instead of ``ValueError`` if it is
   not called at a valid minimum point
 
@@ -23,8 +25,8 @@ Fixes
 2.7.0 (July 4, 2021)
 --------------------
 
-API change
-~~~~~~~~~~
+Minor API change
+~~~~~~~~~~~~~~~~
 - If ``Minuit.hesse`` is called when ``Minuit.fmin`` is ``None``, an instance
   ``Minuit.fmin`` is now created. If Hesse fails, the code does not raise an exception
   anymore, since now the error state can be accessed as usual from the ``Minuit.fmin``
