@@ -8,15 +8,6 @@ from setuptools import Extension
 from setuptools.command.build_ext import build_ext
 
 
-# Convert distutils Windows platform specifiers to CMake -A arguments
-PLAT_TO_CMAKE = {
-    "win32": "Win32",
-    "win-amd64": "x64",
-    "win-arm32": "ARM",
-    "win-arm64": "ARM64",
-}
-
-
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=""):
         Extension.__init__(self, name, sources=[])
@@ -51,7 +42,12 @@ class CMakeBuild(build_ext):
             # generator name.
             if not contains_arch:
                 # Convert distutils Windows platform specifiers to CMake -A arguments
-                arch = PLAT_TO_CMAKE[self.plat_name]
+                arch = {
+                    "win32": "Win32",
+                    "win-amd64": "x64",
+                    "win-arm32": "ARM",
+                    "win-arm64": "ARM64",
+                }[self.plat_name]
                 cmake_args += ["-A", arch]
 
             cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
