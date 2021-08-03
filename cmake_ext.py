@@ -1,9 +1,11 @@
-import sys
 import os
+import re
 import subprocess
+import sys
+from pathlib import Path
+
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
-from pathlib import Path
 
 
 class CMakeExtension(Extension):
@@ -15,11 +17,6 @@ class CMakeExtension(Extension):
 class CMakeBuild(build_ext):
     def build_extension(self, ext):
         extdir = Path(self.get_ext_fullpath(ext.name)).parent.absolute()
-        # required for auto-detection of auxiliary "native" libs
-        cmake_args = [
-            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}/",
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
-        ]
 
         debug = int(os.environ.get("DEBUG", 0)) if self.debug is None else self.debug
         cfg = "Debug" if debug else "Release"
@@ -28,7 +25,12 @@ class CMakeBuild(build_ext):
         # Can be set with Conda-Build, for example.
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "")
 
-        cmake_args += [f"-DCMAKE_BUILD_TYPE={cfg}"]
+        cmake_args = [
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}/",
+            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DCMAKE_BUILD_TYPE={cfg}",
+        ]
+
         build_args = ["--config", cfg]  # needed by some generators, e.g. on Windows
 
         if self.compiler.compiler_type == "msvc":
@@ -48,9 +50,13 @@ class CMakeBuild(build_ext):
                 }[self.plat_name]
                 cmake_args += ["-A", arch]
 
-            cmake_args += [
-                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}".format(cfg.upper(), extdir)
-            ]
+            cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
+
+        elif sys.platform.startswith("darwin"):
+            # Cross-compile support for macOS - respect ARCHFLAGS if set
+            archs = re.findall(r"-arch (\S+)", os.environ.get("ARCHFLAGS", ""))
+            if archs:
+                cmake_args += [f"-DCMAKE_OSX_ARCHITECTURES={';'.join(archs)}"]
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level
         # across all generators.
@@ -64,6 +70,7 @@ class CMakeBuild(build_ext):
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
+
         subprocess.check_call(
             ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
         )

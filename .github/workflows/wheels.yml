@@ -8,18 +8,28 @@ jobs:
     name: Build ${{ matrix.py }} wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         py: [cp36, cp37, cp38, cp39]
-      fail-fast: false
-    env:
-      CIBW_BUILD: ${{ matrix.py }}-*
+        arch: [auto]
+        include:
+          - os: macos-latest
+            py: cp38
+            arch: universal2
+          - os: macos-latest
+            py: cp39
+            arch: universal2
+
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: true
 
-      - uses: pypa/cibuildwheel@v2.0.0
+      - uses: pypa/cibuildwheel@v2.0.1
+        env:
+          CIBW_BUILD: ${{ matrix.py }}-*
+          CIBW_ARCHS: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v2
         with:
