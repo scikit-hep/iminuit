@@ -29,6 +29,32 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - run: python -m pip install --upgrade pip wheel
-    - run: python -m pip install .
-    - run: python -m pip install pytest
+    - run: python -m pip install . pytest
     - run: python -m pytest
+
+  # aarch64:
+  #   strategy:
+  #     matrix:
+  #       py: cp39
+  #       arch: [aarch64]
+  #     fail-fast: false
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     py: /opt/python/${{ matrix.py }}-${{ matrix.py }}/bin/python
+  #     img: quay.io/pypa/manylinux2014_${{ matrix.arch }}
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     with:
+  #       submodules: true
+  #   - uses: docker/setup-qemu-action@v1
+  #   - run: >
+  #           docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws
+  #           ${{ env.img }}
+  #           bash -exc '${{ env.py }} -m venv venv &&
+  #           source venv/bin/activate &&
+  #           python -m pip install --upgrade pip wheel &&
+  #           python -m pip install . pytest'
+  #   - run: >
+  #           docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws
+  #           ${{ env.img }}
+  #           venv/bin/python -m pytest
