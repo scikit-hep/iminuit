@@ -5,7 +5,7 @@ on:
 
 jobs:
   wheels:
-    name: Build ${{ matrix.py }} wheels on ${{ matrix.os }} ${{ matrix.arch }}
+    name: ${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
