@@ -5,6 +5,13 @@
 Changelog
 =========
 
+2.8.1
+-----
+
+Other
+~~~~~
+- @henryiii added Silicon wheels
+
 2.8.0 (July 25, 2021)
 ---------------------
 
