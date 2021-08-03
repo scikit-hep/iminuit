@@ -3,7 +3,6 @@ requires = [
     "setuptools>=42",
     "wheel",
     "cmake",
-    "numpy"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -21,3 +20,4 @@ testpaths = [
 before-build = "python -m pip install numpy --only-binary=:all:"
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
+test-skip = ["*universal2:arm64"]
