@@ -9,7 +9,7 @@ How to make a release
 - On develop
   - Update `src/iminuit/version.py` to released version
   - Update `doc/changelog.rst` to released version and add today's date
-  - Note: A prerelease can be published simply by adding `.rcN` to `iminuit_version`,
+  - Note: A prerelease can be published simply by adding `.rcN` to `version`,
     where N is a number >= 0
 - Merge develop into master
   - Option: do a `git rebase -i` to make history edits
