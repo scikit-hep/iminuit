@@ -5,13 +5,13 @@
 Changelog
 =========
 
-2.8.1.rc1
----------
+2.8.1 (August 4, 2021)
+----------------------
 
 Other
 ~~~~~
-- @henryiii added Silicon wheels
-- @odidev added aarch64 wheels
+- @henryiii added Apple Silicon wheels
+- @odidev added Linux aarch64 wheels
 
 2.8.0 (July 25, 2021)
 ---------------------
