@@ -31,7 +31,7 @@ double FCN::operator()(const std::vector<double>& x) const {
     if (cfcn_) {
       return cfcn_(x.size(), x.data());
     } else {
-      py::array_t<double> a(static_cast<ssize_t>(x.size()), x.data());
+      py::array_t<double> a(static_cast<Py_ssize_t>(x.size()), x.data());
       return check_value(py::cast<double>(fcn_(a)), x);
     }
   }
@@ -41,7 +41,7 @@ double FCN::operator()(const std::vector<double>& x) const {
 std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
   ++ngrad_;
   if (array_call_) {
-    py::array_t<double> a(static_cast<ssize_t>(x.size()), x.data());
+    py::array_t<double> a(static_cast<Py_ssize_t>(x.size()), x.data());
     return check_vector(py::cast<std::vector<double>>(grad_(a)), x);
   }
   return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))), x);
