@@ -31,7 +31,7 @@ struct type_caster<std::vector<Value>> {
 public:
   template <typename T>
   static handle cast(T&& src, return_value_policy, handle) {
-    array_t<Value> arr({static_cast<ssize_t>(src.size())});
+    array_t<Value> arr({static_cast<Py_ssize_t>(src.size())});
     std::copy(src.begin(), src.end(), arr.mutable_data());
     return arr.release();
   }
