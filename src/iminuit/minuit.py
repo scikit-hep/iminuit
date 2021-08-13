@@ -1760,6 +1760,10 @@ class Minuit:
         -------
         points : array of float (N x 2)
             Contour points of the form [[x1, y1]...[xn, yn]].
+            Note that the last point [xn, yn] is not identical to [x1, y1]. To draw a
+            closed contour, please use a closed polygon, like matplotlib.patch.Polygon
+            with the closed=True option, or simulate a closed curve by appending the
+            first point at the end of the array.
 
         See Also
         --------
@@ -1796,7 +1800,13 @@ class Minuit:
         return np.array(ce)
 
     def draw_mncontour(
-        self, x: str, y: str, *, cl: Optional[Iterable[float]] = None, size: int = 100
+        self,
+        x: str,
+        y: str,
+        *,
+        cl: Optional[Iterable[float]] = None,
+        size: int = 100,
+        locator="top",
     ) -> Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
@@ -1817,6 +1827,8 @@ class Minuit:
         size :
             Number of points on each contour(s) (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
+        locator : str
+            Where to place the numerical label (default: "top").
 
         Examples
         --------
@@ -1846,7 +1858,7 @@ class Minuit:
             pts.append(pts[0])
             c_val.append(cl if cl is not None else 0.68)
             c_pts.append([pts])  # level can have more than one contour in mpl
-        cs = ContourSet(plt.gca(), c_val, c_pts)
+        cs = ContourSet(plt.gca(), c_val, c_pts, locator="top")
         plt.clabel(cs)
         plt.xlabel(x)
         plt.ylabel(y)
