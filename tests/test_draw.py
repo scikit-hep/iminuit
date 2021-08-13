@@ -39,8 +39,16 @@ def test_mnprofile(minuit):
     minuit.draw_mnprofile("x")  # plots with minos errors
 
 
-def test_mncontour(minuit):
+def test_mncontour_1(minuit):
     minuit.draw_mncontour("x", "y")
+
+
+def test_mncontour_2(minuit):
+    minuit.draw_mncontour("x", "y", cl=0.68)
+
+
+def test_mncontour_3(minuit):
+    minuit.draw_mncontour("x", "y", cl=[0.68, 0.9])
 
 
 def test_drawcontour(minuit):

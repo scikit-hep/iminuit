@@ -5,6 +5,15 @@
 Changelog
 =========
 
+2.8.2 (August 13, 2021)
+----------------------
+
+Fixes
+~~~~~
+- ``Minuit.draw_mncontour`` can now be used by passing a float to argument ``cl`` as
+  advertised in the documentation, which was extended and clarified to give all options
+  for the keyword ``cl``.
+
 2.8.1 (August 4, 2021)
 ----------------------
 
