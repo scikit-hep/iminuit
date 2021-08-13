@@ -1744,16 +1744,16 @@ class Minuit:
 
         Parameters
         ----------
-        x :
+        x : str
             Variable name of the first parameter.
-        y :
+        y : str
             Variable name of the second parameter.
-        cl :
+        cl : float or None
             Confidence level of the contour. If None, a standard 68 % contour is computed
-            (Default: None). Setting this to another value requires the scipy module to
+            (default: None). Setting this to another value requires the scipy module to
             be installed.
-        size :
-            Number of points on the contour to find. Default 100. Increasing this makes
+        size : int
+            Number of points on the contour to find (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
 
         Returns
@@ -1801,12 +1801,32 @@ class Minuit:
         """
         Draw 2D Minos confidence region (requires matplotlib).
 
-        See :meth:`mncontour` for details on parameters and interpretation.
+        See :meth:`mncontour` for details on the interpretation of the region.
+
+        Parameters
+        ----------
+        x :
+            Variable name of the first parameter.
+        y :
+            Variable name of the second parameter.
+        cl : int, list of int, or None
+            Confidence level(s) of the contour(s) (default: None). If None (default),
+            a standard 68 % contour is drawn. It is possible to draw several contours by
+            passing a list of confidence levels between zero and one. Setting this to
+            value other than None requires the scipy module to be installed.
+        size :
+            Number of points on each contour(s) (default: 100). Increasing this makes
+            the contour smoother, but requires more computation time.
 
         Examples
         --------
         .. plot:: plots/mncontour.py
             :include-source:
+
+        Returns
+        -------
+        ContourSet
+            Instance of a ContourSet class from matplot.contour.
 
         See Also
         --------
@@ -1815,7 +1835,7 @@ class Minuit:
         from matplotlib import pyplot as plt
         from matplotlib.contour import ContourSet
 
-        cls = [None] if cl is None else cl
+        cls = cl if isinstance(cl, Iterable) else [cl]
 
         c_val = []
         c_pts = []
