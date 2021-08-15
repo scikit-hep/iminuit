@@ -5,7 +5,7 @@
 Changelog
 =========
 
-2.8.2 (August 13, 2021)
+2.8.2 (August 15, 2021)
 -----------------------
 
 Improvements
@@ -17,6 +17,8 @@ Fixes
 ~~~~~
 - ``Minuit.draw_mncontour`` can now be used by passing a single float to keyword ``cl``,
   in addition to passing a list of floats
+- Use ``pybind11::ssize_t`` everywhere instead of non-standard ``ssize_t`` to fix
+  compilation against Python-3.10 on Windows, co-authored with @cgohlke
 
 Documentation
 ~~~~~~~~~~~~~
