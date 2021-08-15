@@ -1704,7 +1704,7 @@ class Minuit:
         bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
     ) -> Tuple[Collection[float], Collection[float], Collection[Collection[float]]]:
         """
-        Draw 2D contour around minimum (required matplotlib).
+        Draw 2D contour around minimum (requires matplotlib).
 
         See :meth:`contour` for details on parameters and interpretation. Please also read
         the docs of :meth:`mncontour` to understand the difference between the two.
@@ -1806,7 +1806,6 @@ class Minuit:
         *,
         cl: Optional[Iterable[float]] = None,
         size: int = 100,
-        locator="top",
     ) -> Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
@@ -1827,8 +1826,6 @@ class Minuit:
         size :
             Number of points on each contour(s) (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
-        locator : str
-            Where to place the numerical label (default: "top").
 
         Examples
         --------
@@ -1845,20 +1842,25 @@ class Minuit:
         mncontour
         """
         from matplotlib import pyplot as plt
+        from matplotlib.path import Path
         from matplotlib.contour import ContourSet
 
         cls = cl if isinstance(cl, Iterable) else [cl]
 
         c_val = []
         c_pts = []
+        codes = []
         for cl in cls:  # type:ignore
             pts = self.mncontour(x, y, cl=cl, size=size)
-            # close curve
-            pts = list(pts)
-            pts.append(pts[0])
+            # add extra point whose coordinates are ignored
+            pts = np.append(pts, pts[:1], axis=0)
             c_val.append(cl if cl is not None else 0.68)
             c_pts.append([pts])  # level can have more than one contour in mpl
-        cs = ContourSet(plt.gca(), c_val, c_pts, locator="top")
+            codes.append(
+                [[Path.MOVETO] + [Path.LINETO] * (size - 2) + [Path.CLOSEPOLY]]
+            )
+        assert len(c_val) == len(codes), f"{len(c_val)} {len(codes)}"
+        cs = ContourSet(plt.gca(), c_val, c_pts, codes)
         plt.clabel(cs)
         plt.xlabel(x)
         plt.ylabel(y)
