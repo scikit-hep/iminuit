@@ -8,11 +8,6 @@ Changelog
 2.8.2 (August 15, 2021)
 -----------------------
 
-Improvements
-~~~~~~~~~~~~
-- ``Minuit.draw_mncontour`` now draws the numerical label on top of the curve by
-  default. The location can be configured with the ``location`` keyword.
-
 Fixes
 ~~~~~
 - ``Minuit.draw_mncontour`` can now be used by passing a single float to keyword ``cl``,
