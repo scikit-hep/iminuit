@@ -5,6 +5,26 @@
 Changelog
 =========
 
+2.8.2 (August 13, 2021)
+-----------------------
+
+Improvements
+~~~~~~~~~~~~
+- ``Minuit.draw_mncontour`` now draws the numerical label on top of the curve by
+  default. The location can be configured with the ``location`` keyword.
+
+Fixes
+~~~~~
+- ``Minuit.draw_mncontour`` can now be used by passing a single float to keyword ``cl``,
+  in addition to passing a list of floats
+
+Documentation
+~~~~~~~~~~~~~
+- Docstring improved for ``Minuit.mncontour``, advice added on how to draw closed curve
+  with points returned by ``Minuit.mncontour``
+- Docstring improved for ``Minuit.draw_mncontour``, parameters and returned objects are
+  now properly documented
+
 2.8.1 (August 4, 2021)
 ----------------------
 
