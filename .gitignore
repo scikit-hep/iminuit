@@ -47,3 +47,5 @@ MANIFEST
 htmlcov
 cover
 coverage.xml
+
+tests/fig/*.svg

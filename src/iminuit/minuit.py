@@ -1845,20 +1845,25 @@ class Minuit:
         mncontour
         """
         from matplotlib import pyplot as plt
+        from matplotlib.path import Path
         from matplotlib.contour import ContourSet
 
         cls = cl if isinstance(cl, Iterable) else [cl]
 
         c_val = []
         c_pts = []
+        codes = []
         for cl in cls:  # type:ignore
             pts = self.mncontour(x, y, cl=cl, size=size)
-            # close curve
-            pts = list(pts)
-            pts.append(pts[0])
+            # add extra point whose coordinates are ignored
+            pts = np.append(pts, pts[:1], axis=0)
             c_val.append(cl if cl is not None else 0.68)
             c_pts.append([pts])  # level can have more than one contour in mpl
-        cs = ContourSet(plt.gca(), c_val, c_pts, locator="top")
+            codes.append(
+                [[Path.MOVETO] + [Path.LINETO] * (size - 2) + [Path.CLOSEPOLY]]
+            )
+        assert len(c_val) == len(codes), f"{len(c_val)} {len(codes)}"
+        cs = ContourSet(plt.gca(), c_val, c_pts, codes, locator="top")
         plt.clabel(cs)
         plt.xlabel(x)
         plt.ylabel(y)
