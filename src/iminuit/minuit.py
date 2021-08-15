@@ -1704,7 +1704,7 @@ class Minuit:
         bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
     ) -> Tuple[Collection[float], Collection[float], Collection[Collection[float]]]:
         """
-        Draw 2D contour around minimum (required matplotlib).
+        Draw 2D contour around minimum (requires matplotlib).
 
         See :meth:`contour` for details on parameters and interpretation. Please also read
         the docs of :meth:`mncontour` to understand the difference between the two.
