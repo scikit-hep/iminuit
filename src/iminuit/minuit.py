@@ -1806,7 +1806,6 @@ class Minuit:
         *,
         cl: Optional[Iterable[float]] = None,
         size: int = 100,
-        locator="top",
     ) -> Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
@@ -1827,8 +1826,6 @@ class Minuit:
         size :
             Number of points on each contour(s) (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
-        locator : str
-            Where to place the numerical label (default: "top").
 
         Examples
         --------
@@ -1863,7 +1860,7 @@ class Minuit:
                 [[Path.MOVETO] + [Path.LINETO] * (size - 2) + [Path.CLOSEPOLY]]
             )
         assert len(c_val) == len(codes), f"{len(c_val)} {len(codes)}"
-        cs = ContourSet(plt.gca(), c_val, c_pts, codes, locator="top")
+        cs = ContourSet(plt.gca(), c_val, c_pts, codes)
         plt.clabel(cs)
         plt.xlabel(x)
         plt.ylabel(y)
