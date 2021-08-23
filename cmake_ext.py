@@ -31,6 +31,11 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_BUILD_TYPE={cfg}",
         ]
 
+        # Adding CMake arguments set as environment variable
+        # (needed e.g. to build for ARM OSx on conda-forge)
+        if "CMAKE_ARGS" in os.environ:
+            cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
+
         build_args = ["--config", cfg]  # needed by some generators, e.g. on Windows
 
         if self.compiler.compiler_type == "msvc":
