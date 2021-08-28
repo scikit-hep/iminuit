@@ -5,6 +5,13 @@
 Changelog
 =========
 
+2.8.3
+-----
+
+Fixes
+-----
+- Support cross-compiling of ARM on Conda, by @henryiii
+
 2.8.2 (August 15, 2021)
 -----------------------
 
