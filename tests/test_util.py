@@ -539,13 +539,46 @@ def test_jacobi_on_bad_input():
         util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
 
 
-def test_jacobi_no_convergence():
+@pytest.mark.parametrize("fail", (False, True))
+def test_jacobi_low_resolution(fail, capsys):
+    x = np.array([1])
+    dx = np.array([1])
+
+    y, jac = util._jacobi(
+        lambda x: np.exp(x.astype(np.float32)),
+        x,
+        dx,
+        1e-10 if fail else 1e-3,
+        debug=True,
+    )
+
+    assert fail == ("no convergence" in capsys.readouterr()[0])
+
+    np.testing.assert_allclose(y, np.exp(1), rtol=1e-3)
+    np.testing.assert_allclose(jac, np.exp(1), rtol=1e-3)
+
+
+def test_jacobi_divergence_1(capsys):
     rng = np.random.default_rng(1)
 
     x = np.array([1])
     dx = np.array([1])
 
-    y, jac = util._jacobi(lambda x: rng.normal(), x, dx, 1e-323)
+    y, jac = util._jacobi(lambda x: rng.normal(), x, dx, 0.1, debug=True)
+
+    assert "divergence" in capsys.readouterr()[0]
 
     np.testing.assert_allclose(y, 0, atol=1)
-    np.testing.assert_allclose(jac, 0, atol=1)
+    np.testing.assert_equal(jac, np.nan)
+
+
+def test_jacobi_divergence_2(capsys):
+    x = np.array([1e-10])
+    dx = np.array([0.1])
+
+    y, jac = util._jacobi(lambda x: 1 / x, x, dx, 1e-3, debug=True)
+
+    assert "divergence" in capsys.readouterr()[0]
+
+    np.testing.assert_allclose(y, 1e10)
+    np.testing.assert_equal(jac, np.nan)
