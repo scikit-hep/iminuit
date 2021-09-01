@@ -890,7 +890,7 @@ class MErrors(OrderedDict):
 
 
 def _jacobi(
-    fn: Callable, x: np.ndarray, dx: np.ndarray, tol: float
+    fn: Callable, x: np.ndarray, dx: np.ndarray, tol: float, debug: bool = False
 ) -> Tuple[np.ndarray, np.ndarray]:
     assert x.ndim == 1
     assert dx.ndim == 1
@@ -900,6 +900,7 @@ def _jacobi(
     yrank = np.ndim(y)
     jac = np.zeros((1 if yrank == 0 else len(y), len(x)))
     h = np.zeros(len(x))
+    divergence = True
     for i, hi in enumerate(dx):
         if i > 0:
             h[i - 1] = 0
@@ -916,11 +917,25 @@ def _jacobi(
             d = 0.5 * (du + dd)
             delta = du - dd
             if np.all(np.abs(delta) <= tol * np.abs(d)):
+                if debug:
+                    print(
+                        f"jacobi: iter={iter} converged; delta={delta} "
+                        f"threshold={tol * np.abs(d)}"
+                    )
                 jac[:, i] = d
                 break
             esq = np.dot(delta, delta)
-            if esq > prev_esq:
-                # no convergence, use previous more accurate jac[:, i]
+            if debug:
+                print(f"jacobi: iter={iter} d={d} esq={esq} h={h}")
+            if iter > 0 and esq < prev_esq:
+                divergence = False
+            if esq >= prev_esq:
+                if divergence:
+                    print(f"jacobi: iter={iter} divergence detected")
+                    jac[:, i] = np.nan
+                else:
+                    print(f"jacobi: iter={iter} no convergence")
+                    # no convergence, use previous more accurate jac[:, i]
                 break
             jac[:, i] = d
             prev_esq = esq
