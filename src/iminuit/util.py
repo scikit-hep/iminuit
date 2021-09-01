@@ -918,20 +918,23 @@ def _jacobi(
             delta = du - dd
             if np.all(np.abs(delta) <= tol * np.abs(d)):
                 if debug:
-                    print(f"jacobi: {iter=} converged {delta=} {tol * np.abs(d)=}")
+                    print(
+                        f"jacobi: iter={iter} converged; delta={delta} "
+                        f"threshold={tol * np.abs(d)}"
+                    )
                 jac[:, i] = d
                 break
             esq = np.dot(delta, delta)
             if debug:
-                print(f"jacobi: {iter=} {d=} {esq=} {h=}")
+                print(f"jacobi: iter={iter} d={d} esq={esq} h={h}")
             if iter > 0 and esq < prev_esq:
                 divergence = False
             if esq >= prev_esq:
                 if divergence:
-                    print(f"jacobi: {iter=} divergence detected")
+                    print(f"jacobi: iter={iter} divergence detected")
                     jac[:, i] = np.nan
                 else:
-                    print(f"jacobi: {iter=} no convergence")
+                    print(f"jacobi: iter={iter} no convergence")
                     # no convergence, use previous more accurate jac[:, i]
                 break
             jac[:, i] = d
