@@ -42,9 +42,6 @@ Checkout our large and comprehensive list of `tutorials`_ that take you all the 
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 
-.. image:: https://img.shields.io/gitter/room/Scikit-HEP/iminuit
-   :alt: Gitter
-
 In a nutshell
 -------------
 
