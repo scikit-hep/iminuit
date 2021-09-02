@@ -37,7 +37,7 @@ The iminuit package comes with additional features:
 - Support for SciPy minimisers
 - Numba support (optional)
 
-Checkout the comprehensive list of `tutorials`_ that demonstrate these features.
+Checkout our large and comprehensive list of `tutorials`_ that take you all the way from beginner to power user. For help and how-to questions, please use the `discussions`_ on GitHub.
 
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
@@ -74,3 +74,4 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 
 .. _changelog: https://iminuit.readthedocs.io/en/stable/changelog.html
 .. _tutorials: https://iminuit.readthedocs.io/en/stable/tutorials.html
+.. _discussions: https://github.com/scikit-hep/iminuit/discussions
