@@ -32,7 +32,7 @@ Minuit was designed to minimise statistical cost functions, for likelihood and l
 
 The iminuit package comes with additional features:
 
-- Included cost functions for binned and unbinned maximum-likelihood and (robust)
+- Cost functions for binned and unbinned maximum-likelihood and (robust)
   least-squares fits
 - Support for SciPy minimisers
 - Numba support (optional)
