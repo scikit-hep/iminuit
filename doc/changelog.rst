@@ -5,8 +5,8 @@
 Changelog
 =========
 
-2.8.3
------
+2.8.3 (September 3, 2021)
+-------------------------
 
 New features
 ~~~~~~~~~~~~
@@ -14,13 +14,13 @@ New features
   for the derivate) and non-converging derivatives (using the best value computed so far
   for the derivative)
 
-Fixes
-~~~~~
-- Support cross-compiling of ARM on Conda, by @henryiii
-
 Documentation
 ~~~~~~~~~~~~~
 - Fixes for faulty LaTeX rendering in some tutorials
+
+Other
+~~~~~
+- Support cross-compiling of ARM on Conda, by @henryiii
 
 2.8.2 (August 15, 2021)
 -----------------------
