@@ -15,7 +15,7 @@
 repos:
 # Standard hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.0.0
+  rev: v4.0.1
   hooks:
   - id: check-case-conflict
   - id: check-docstring-first
@@ -39,13 +39,13 @@ repos:
 
 # Python formatting
 - repo: https://github.com/psf/black
-  rev: 21.5b1
+  rev: 21.8b0
   hooks:
   - id: black
 
 # Python docstring formatting
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 6.0.0
+  rev: 6.1.1
   hooks:
   - id: pydocstyle
     files: src/iminuit/[^_].*\.py
