@@ -18,9 +18,11 @@
 .. image:: https://readthedocs.org/projects/iminuit/badge/?version=stable
    :target: https://iminuit.readthedocs.io/en/stable
 .. image:: https://img.shields.io/pypi/l/iminuit
-  :alt: License
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
    :target: https://doi.org/10.5281/zenodo.3949207
+.. image:: https://img.shields.io/badge/ascl-2108.024-blue.svg?colorB=262255
+   :target: https://ascl.net/2108.024
+   :alt: ascl:2108.024
 
 *iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
 
