@@ -51,8 +51,8 @@ repos:
     files: src/iminuit/[^_].*\.py
 
 # C++ formatting
-- repo: git://github.com/doublify/pre-commit-clang-format
-  rev: 62302476d0da01515660132d76902359bed0f782
+- repo: https://github.com/ssciwr/clang-format-precommit
+  rev: v12.0.1
   hooks:
   - id: clang-format
 
