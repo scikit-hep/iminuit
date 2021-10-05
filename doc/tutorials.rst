@@ -15,6 +15,7 @@ The following tutorials show how to use iminuit. The order is the recommended re
     tutorial/hesse_and_minos
     tutorial/error_bands
     tutorial/simultaneous_fits
+    tutorial/conditional_variable
     tutorial/numba
     tutorial/automatic_differentiation
     tutorial/scipy_and_constraints
