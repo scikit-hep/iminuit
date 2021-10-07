@@ -39,7 +39,7 @@ repos:
 
 # Python formatting
 - repo: https://github.com/psf/black
-  rev: 21.8b0
+  rev: 21.9b0
   hooks:
   - id: black
 
@@ -52,7 +52,7 @@ repos:
 
 # C++ formatting
 - repo: https://github.com/ssciwr/clang-format-hook
-  rev: v12.0.1
+  rev: v13.0.0
   hooks:
   - id: clang-format
 

@@ -1,10 +1,37 @@
 """
-Standard cost functions to minimize.
+Standard cost functions to minimize for statistical fits.
 
+What to use when
+----------------
+- Fit a normalised probability density to data
+  - Data is not binned: UnbinnedNLL
+  - Data is binned: BinnedNLL; also supports histogram of weighted samples
+- Fit a density to data, density is not normalised
+  - Data is not binned: ExtendedUnbinnedNLL
+  - Data is binned: ExtendedBinnedNLL; also supports histogram of weighted samples
+- Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations
+  (x can be multi-dimensional)
+  - y values contain no outliers: LeastSquares
+  - y values contain outliers: LeastSquares with "soft_l1" loss function
+
+Cost functions are addable
+--------------------------
+All cost functions can be added, which generates a new combined cost function.
+Parameters with the same name are shared between component cost functions. Use this to
+constrain one or several parameters with different data sets and using different
+statistical models for each data set. Gaussian penalty terms can also be added to the
+cost function to introduce external knowledge about a parameter.
+
+Notes
+-----
 The cost functions defined here should be preferred over custom implementations. They
 have been optimized with knowledge about implementation details of Minuit to give the
 highest accucary and the most robust results. They are partially accelerated with numba,
 if numba is available.
+
+The binned versions of the log-likelihood fits support weighted samples. For each bin
+of the histogram, the sum of weights and the sum of squared weights is needed then, see
+class documentation for details.
 """
 
 from .util import describe, make_func_code, merge_signatures, PerformanceWarning
@@ -823,6 +850,9 @@ class NormalConstraint(Cost):
         if self._covinv.ndim < 2:
             return np.sum(delta ** 2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
+
+
+GaussianPenalty = NormalConstraint
 
 
 def _norm(value):
