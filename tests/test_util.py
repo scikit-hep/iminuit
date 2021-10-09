@@ -4,6 +4,7 @@ from argparse import Namespace
 from numpy.testing import assert_equal, assert_allclose
 import numpy as np
 from iminuit._core import MnUserParameterState
+import pickle
 
 
 def test_ndim():
@@ -111,6 +112,12 @@ def test_Matrix():
 
     with pytest.raises(TypeError):
         util.Matrix(1)
+
+    m2 = pickle.loads(pickle.dumps(m))
+    assert type(m2) is util.Matrix
+
+    assert_equal(m2, m)
+    assert m2._var2pos == m._var2pos
 
 
 def test_Param():
