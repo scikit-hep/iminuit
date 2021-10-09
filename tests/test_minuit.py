@@ -1195,21 +1195,6 @@ def test_bad_functions_np(func, expected):
     assert str(expected) in str(excinfo.value)
 
 
-def test_issue_424():
-    def lsq(x, y, z):
-        return (x - 1) ** 2 + (y - 4) ** 2 / 2 + (z - 9) ** 2 / 3
-
-    m = Minuit(lsq, x=0.0, y=0.0, z=0.0)
-    m.errordef = 1
-    m.migrad()
-
-    m.fixed["x"] = True
-    m.errors["x"] = 2
-    m.hesse()
-    assert m.fixed["x"] is True
-    assert m.errors["x"] == 2
-
-
 @pytest.mark.parametrize("sign", (-1, 1))
 def test_parameter_at_limit(sign):
     m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0)
@@ -1362,13 +1347,6 @@ def test_bad_tolerance():
         m.tol = -1
 
 
-def test_issue_544():
-    m = Minuit(func0, x=0, y=0)
-    m.fixed = True
-    with pytest.warns(IMinuitWarning):
-        m.hesse()  # this used to cause a segfault
-
-
 def test_cfunc():
     nb = pytest.importorskip("numba")
 
@@ -1516,64 +1494,9 @@ def test_missing_ndata():
     assert_equal(m.ndof, np.nan)
 
 
-def test_issue_648():
-    class F:
-        errordef = 1
-        first = True
-
-        def __call__(self, a, b):
-            if self.first:
-                assert a == 1.0 and b == 2.0
-                self.first = False
-            return a ** 2 + b ** 2
-
-    m = Minuit(F(), a=1, b=2)
-    m.fixed["a"] = False  # this used to change a to b
-    m.migrad()
-
-
 def test_call_limit_reached_in_hesse():
     m = Minuit(lambda x: ((x - 1.2) ** 4).sum(), np.ones(10) * 10)
     m.errordef = 1
     m.migrad(ncall=200)
     assert m.fmin.has_reached_call_limit
     assert m.fmin.nfcn < 205
-
-
-def test_issue_643():
-    def fcn(x, y, z):
-        return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
-
-    fcn.errordef = Minuit.LEAST_SQUARES
-
-    m = Minuit(fcn, x=2, y=3, z=4)
-    m.migrad()
-
-    m2 = Minuit(fcn, x=m.values["x"], y=m.values["y"], z=m.values["z"])
-    # used to call MnHesse when it was not needed and quickly exhaust call limit
-    for i in range(10):
-        m2.minos()
-
-    m2.reset()
-    # used to exhaust call limit, because calls to MnHesse did not reset call count
-    for i in range(10):
-        m2.values = m.values
-        m2.minos()
-
-
-def test_issue_669():
-    m = Minuit(func0, x=0, y=0)
-
-    m.migrad()
-
-    xy1 = m.mncontour(x="x", y="y", size=10)
-    xy2 = m.mncontour(x="y", y="x", size=10)  # used to fail
-
-    # needs better way to compare polygons
-    for x, y in xy1:
-        match = False
-        for (y2, x2) in xy2:
-            if abs(x - x2) < 1e-3 and abs(y - y2) < 1e-3:
-                match = True
-                break
-        assert match

@@ -340,6 +340,17 @@ class Matrix(np.ndarray):
         else:
             p.text(str(self))
 
+    # ndarray uses __reduce__ for pickling instead of __getstate__
+    def __reduce__(self):
+        """Get representation for pickling and copying."""
+        restore, args, state = super().__reduce__()
+        return restore, args, (state, self._var2pos)
+
+    def __setstate__(self, state):
+        """Restore from pickled state."""
+        state, self._var2pos = state
+        super().__setstate__(state)
+
 
 class FMin:
     """
