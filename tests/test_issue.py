@@ -109,7 +109,10 @@ def test_issue_687():
     m = Minuit(fcn, start)
 
     m.migrad()
+    s_m = str(m)
 
     s = pickle.dumps(m)
     m2 = pickle.loads(s)
-    print(m2)  # this used to fail
+
+    s_m2 = str(m2)  # this used to fail
+    assert s_m == s_m2

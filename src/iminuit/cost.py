@@ -1,21 +1,25 @@
 """
 Standard cost functions to minimize for statistical fits.
 
+We provide these for convenience, so that you do not have to write your own for standard fits.
+The cost functions optionally use Numba to accelerate some calculations, if Numba is
+installed.
+
 What to use when
 ----------------
 - Fit a normalised probability density to data
   - Data is not binned: UnbinnedNLL
-  - Data is binned: BinnedNLL; also supports histogram of weighted samples
+  - Data is binned: BinnedNLL, also supports histogram of weighted samples
 - Fit a density to data, density is not normalised
   - Data is not binned: ExtendedUnbinnedNLL
-  - Data is binned: ExtendedBinnedNLL; also supports histogram of weighted samples
+  - Data is binned: ExtendedBinnedNLL, also supports histogram of weighted samples
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations
   (x can be multi-dimensional)
   - y values contain no outliers: LeastSquares
   - y values contain outliers: LeastSquares with "soft_l1" loss function
 
-Cost functions are addable
---------------------------
+Combining cost functions
+------------------------
 All cost functions can be added, which generates a new combined cost function.
 Parameters with the same name are shared between component cost functions. Use this to
 constrain one or several parameters with different data sets and using different
@@ -24,10 +28,9 @@ cost function to introduce external knowledge about a parameter.
 
 Notes
 -----
-The cost functions defined here should be preferred over custom implementations. They
-have been optimized with knowledge about implementation details of Minuit to give the
-highest accucary and the most robust results. They are partially accelerated with numba,
-if numba is available.
+The cost functions defined here have been optimized with knowledge about implementation
+details of Minuit to give the highest accucary and the most robust results, so they
+should perform well. If you have trouble with your own implementations, try these.
 
 The binned versions of the log-likelihood fits support weighted samples. For each bin
 of the histogram, the sum of weights and the sum of squared weights is needed then, see
@@ -850,9 +853,6 @@ class NormalConstraint(Cost):
         if self._covinv.ndim < 2:
             return np.sum(delta ** 2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
-
-
-GaussianPenalty = NormalConstraint
 
 
 def _norm(value):

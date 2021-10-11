@@ -5,6 +5,19 @@
 Changelog
 =========
 
+2.8.4 (October 11, 2021)
+------------------------
+Fixes
+~~~~~
+- Pickling of ``util.Matrix`` resulted in incomplete state after unpickling, which would
+  cause an exception when you tried to print the matrix
+
+Documentation
+~~~~~~~~~~~~~
+- New tutorial on fitting PDFs that depend on a conditional variable
+- Fixed JAX tutorial, adapting to change in their interface
+- Extended documentation of cost functions
+
 2.8.3 (September 3, 2021)
 -------------------------
 

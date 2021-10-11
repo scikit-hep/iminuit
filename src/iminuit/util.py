@@ -1,4 +1,9 @@
-"""Data classes and utilities used by :class:`iminuit.Minuit`."""
+"""
+Data classes and utilities used by :class:`iminuit.Minuit`.
+
+You can look up the interface of data classes that iminuit uses here. Also of interest
+for users are :func:`propagate` and :func:`make_with_signature`.
+"""
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
