@@ -9,6 +9,7 @@ from iminuit.cost import (
     ExtendedUnbinnedNLL,
     ExtendedBinnedNLL,
     LeastSquares,
+    Constant,
     NormalConstraint,
     _log_poisson_part,
     PerformanceWarning,
@@ -49,6 +50,12 @@ def cdf(x, mu, sigma):
 
 def scaled_cdf(x, n, mu, sigma):
     return n * norm(mu, sigma).cdf(x)
+
+
+def test_Constant():
+    c = Constant(2.5)
+    assert c.value == 2.5
+    assert c.ndata == 0
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -109,15 +116,20 @@ def test_weighted_BinnedNLL():
     xe = np.array([0, 1, 10])
     p = np.diff(expon_cdf(xe, 1))
     n = p * 1000
-    m1 = Minuit(BinnedNLL(n, xe, expon_cdf), 1)
+    c = BinnedNLL(n, xe, expon_cdf)
+
+    c = BinnedNLL(n, xe, expon_cdf)
+    assert_equal(c.data, n)
+    m1 = Minuit(c, 1)
     m1.migrad()
     assert m1.values[0] == pytest.approx(1, rel=1e-2)
 
     w = np.transpose((n, 4 * n))
-    m2 = Minuit(BinnedNLL(w, xe, expon_cdf), 1)
+    c = BinnedNLL(w, xe, expon_cdf)
+    assert_equal(c.data, w)
+    m2 = Minuit(c, 1)
     m2.migrad()
     assert m2.values[0] == pytest.approx(1, rel=1e-2)
-
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
 
 
@@ -134,6 +146,11 @@ def test_BinnedNLL_bad_input_2():
 def test_BinnedNLL_bad_input_3():
     with pytest.raises(ValueError):
         BinnedNLL([[1, 2, 3]], [1], lambda x, a: 0)
+
+
+def test_BinnedNLL_bad_input_4():
+    with pytest.raises(ValueError, match="n must have shape"):
+        BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))

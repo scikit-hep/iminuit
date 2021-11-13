@@ -194,7 +194,7 @@ class Cost(abc.ABC):
         Infinity is returned if the cost function is unbinned. This is used by Minuit
         to compute the reduced chi2, a goodness-of-fit estimate.
         """
-        ...
+        ...  # pragma: no cover
 
     @property
     def verbose(self):
