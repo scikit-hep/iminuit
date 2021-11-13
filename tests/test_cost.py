@@ -11,7 +11,6 @@ from iminuit.cost import (
     LeastSquares,
     NormalConstraint,
     _log_poisson_part,
-    _spd_transform,
     PerformanceWarning,
 )
 from collections.abc import Sequence
@@ -40,12 +39,21 @@ def binned(unbinned):
     return mle, nx, xe
 
 
+def pdf(x, mu, sigma):
+    return norm(mu, sigma).pdf(x)
+
+
+def cdf(x, mu, sigma):
+    return norm(mu, sigma).cdf(x)
+
+
+def scaled_cdf(x, n, mu, sigma):
+    return n * norm(mu, sigma).cdf(x)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_UnbinnedNLL(unbinned, verbose):
     mle, x = unbinned
-
-    def pdf(x, mu, sigma):
-        return norm(mu, sigma).pdf(x)
 
     cost = UnbinnedNLL(x, pdf, verbose=verbose)
     assert cost.ndata == np.inf
@@ -83,9 +91,6 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
 def test_BinnedNLL(binned, verbose):
     mle, nx, xe = binned
 
-    def cdf(x, mu, sigma):
-        return norm(mu, sigma).cdf(x)
-
     cost = BinnedNLL(nx, xe, cdf, verbose=verbose)
     assert cost.ndata == len(nx)
 
@@ -101,18 +106,15 @@ def test_BinnedNLL(binned, verbose):
 
 
 def test_weighted_BinnedNLL():
-    def cdf(x, a):
-        return 1 - np.exp(-a * x)
-
     xe = np.array([0, 1, 10])
-    p = np.diff(cdf(xe, 1))
+    p = np.diff(expon_cdf(xe, 1))
     n = p * 1000
-    m1 = Minuit(BinnedNLL(n, xe, cdf), 1)
+    m1 = Minuit(BinnedNLL(n, xe, expon_cdf), 1)
     m1.migrad()
     assert m1.values[0] == pytest.approx(1, rel=1e-2)
 
     w = np.transpose((n, 4 * n))
-    m2 = Minuit(BinnedNLL(w, xe, cdf), 1)
+    m2 = Minuit(BinnedNLL(w, xe, expon_cdf), 1)
     m2.migrad()
     assert m2.values[0] == pytest.approx(1, rel=1e-2)
 
@@ -138,9 +140,6 @@ def test_BinnedNLL_bad_input_3():
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
 
-    def scaled_cdf(x, n, mu, sigma):
-        return n * norm(mu, sigma).cdf(x)
-
     cost = ExtendedBinnedNLL(nx, xe, scaled_cdf, verbose=verbose)
     assert cost.ndata == len(nx)
 
@@ -157,19 +156,16 @@ def test_ExtendedBinnedNLL(binned, verbose):
 
 
 def test_weighted_ExtendedBinnedNLL():
-    def cdf(x, a, b):
-        return b * (1 - np.exp(-a * x))
-
     xe = np.array([0, 1, 10])
-    n = np.diff(cdf(xe, 1, 100))
-    m1 = Minuit(ExtendedBinnedNLL(n, xe, cdf), 1, 100)
+    n = np.diff(expon_cdf(xe, 1))
+    m1 = Minuit(ExtendedBinnedNLL(n, xe, expon_cdf), 1)
     m1.migrad()
-    assert_allclose(m1.values, (1, 100), rtol=1e-2)
+    assert_allclose(m1.values, (1,), rtol=1e-2)
 
     w = np.transpose((n, 4 * n))
-    m2 = Minuit(ExtendedBinnedNLL(w, xe, cdf), 1, 100)
+    m2 = Minuit(ExtendedBinnedNLL(w, xe, expon_cdf), 1)
     m2.migrad()
-    assert_allclose(m2.values, (1, 100), rtol=1e-2)
+    assert_allclose(m2.values, (1,), rtol=1e-2)
 
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
 
@@ -210,10 +206,10 @@ def test_LeastSquares(loss, verbose):
 
 def test_LeastSquares_bad_input():
     with pytest.raises(ValueError):
-        LeastSquares([1, 2], [1], [1], lambda x, a: 0)
+        LeastSquares([1, 2], [], [1], lambda x, a: 0)
 
     with pytest.raises(ValueError):
-        LeastSquares([1, 2], [1, 2], [1], lambda x, a: 0)
+        LeastSquares([1, 2], [3, 4, 5], [1], lambda x, a: 0)
 
     with pytest.raises(ValueError):
         LeastSquares([1], [1], [1], lambda x, a: 0, loss="foo")
@@ -503,15 +499,6 @@ def test_NormalConstraint_properties():
     assert_equal(nc.covariance, (1, 2))
 
 
-def test_spd_transform():
-    n = np.array([(0.0, 0.0)])
-    assert_allclose(_spd_transform(n, 0), [[0], [0]])
-    assert_allclose(_spd_transform(n, 1), [[0], [0]])
-    n = np.array([(0.0, 1.0)])
-    assert_allclose(_spd_transform(n, 0), [[0], [0]])
-    assert_allclose(_spd_transform(n, 1), [[0], [0]])
-
-
 def test_log_poisson_part():
     assert _log_poisson_part(0, 0) == 0
     assert _log_poisson_part(0, 1) == 0
@@ -556,3 +543,24 @@ def test_model_performance_warning():
 
     with pytest.warns(PerformanceWarning):
         ExtendedUnbinnedNLL([1], lambda x, a: (1, model(x, a)))(1)
+
+
+@pytest.mark.parametrize("klass", (BinnedNLL, ExtendedBinnedNLL))
+def test_update_data_with_mask(klass):
+    xe = np.arange(0, 4)
+    nx = np.diff(expon_cdf(xe, 1))
+    nx[0] += 1
+    c = klass(nx.copy(), xe, expon_cdf)
+
+    c.mask = [False, True, True]
+    assert c(1) == 0
+    nx[0] += 1
+    c.n = nx
+    assert c(1) == 0
+    nx[1] += 1
+    c.n = nx
+    assert c(1) != 0
+    nx[0] -= 2
+    c.mask = (True, False, True)
+    c.n = nx
+    assert c(1) == 0

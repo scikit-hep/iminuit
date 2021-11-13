@@ -37,9 +37,15 @@ of the histogram, the sum of weights and the sum of squared weights is needed th
 class documentation for details.
 """
 
-from .util import describe, make_func_code, merge_signatures, PerformanceWarning
+from .util import (
+    describe,
+    make_func_code,
+    merge_signatures,
+    PerformanceWarning,
+)
 import numpy as np
 from collections.abc import Sequence
+import abc
 from typing import Tuple, Callable, Union
 import warnings
 
@@ -48,33 +54,18 @@ def _sum_log_x(x):
     return np.sum(np.log(x + 1e-323))
 
 
-def _spd_transform(n, mu):
-    # Scaled Poisson distribution from Bohm and Zech, NIMA 748 (2014) 1-6
-    v, var = np.transpose(n)
-    s = v / (var + 1e-323)
-    return v * s, mu * s
-
-
 def _log_poisson_part(n, mu):
     # add n log(n) to keep sum small, required to not loose accuracy in Minuit
     return n * (np.log(n + 1e-323) - np.log(mu + 1e-323))
 
 
 def _sum_log_poisson_part(n, mu):
-    if n.ndim == 2:
-        n2, mu2 = _spd_transform(n, mu)
-    else:
-        n2, mu2 = n, mu
-    return np.sum(_log_poisson_part(n2, mu2))
+    return np.sum(_log_poisson_part(n, mu))
 
 
 def _sum_log_poisson(n, mu):
-    if n.ndim == 2:
-        n2, mu2 = _spd_transform(n, mu)
-    else:
-        n2, mu2 = n, mu
     # subtract n to keep sum small, required to not loose accuracy in Minuit
-    return np.sum(mu2 - n2 + _log_poisson_part(n2, mu2))
+    return np.sum(mu - n + _log_poisson_part(n, mu))
 
 
 def _z_squared(y, ye, ym):
@@ -97,12 +88,6 @@ def _sum_z_squared_soft_l1(y, ye, ym):
 try:
     import numba as nb
     from numba.extending import overload
-
-    _spd_transform_np = _spd_transform
-
-    @overload(_spd_transform, inline="always")
-    def _spd_transform_ol(n, mu):
-        return _spd_transform_np  # pragma: no cover
 
     _log_poisson_part_np = _log_poisson_part
 
@@ -185,10 +170,10 @@ except ModuleNotFoundError:  # pragma: no cover
     pass
 
 
-class Cost:
+class Cost(abc.ABC):
     """Base class for all cost functions."""
 
-    __slots__ = "_func_code", "_verbose", "_ndata"
+    __slots__ = ("_func_code", "_verbose")
 
     @property
     def errordef(self):
@@ -199,6 +184,17 @@ class Cost:
     def func_code(self):
         """For internal use."""
         return self._func_code
+
+    @property
+    @abc.abstractmethod
+    def ndata(self):
+        """
+        Return number of points in least-squares fits or bins in a binned fit.
+
+        Infinity is returned if the cost function is unbinned. This is used by Minuit
+        to compute the reduced chi2, a goodness-of-fit estimate.
+        """
+        ...
 
     @property
     def verbose(self):
@@ -213,20 +209,10 @@ class Cost:
     def verbose(self, value: int):
         self._verbose = value
 
-    @property
-    def ndata(self):
-        """
-        Return number of points in least-squares fits or bins in a binned fit.
-
-        Infinity is returned if the cost function is unbinned.
-        """
-        return self._ndata
-
-    def __init__(self, args: Tuple[str], ndata: float, verbose: int):
+    def __init__(self, args: Tuple[str], verbose: int):
         """For internal use."""
         self._func_code = make_func_code(args)
         self._verbose = verbose
-        self._ndata = ndata
 
     def __add__(self, rhs):
         """
@@ -282,48 +268,15 @@ class Constant(Cost):
     def __init__(self, value: float):
         """Initialize constant with a value."""
         self.value = value
-        super().__init__((), 0.0, False)
+        super().__init__((), False)
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        return 0
 
     def _call(self, args):
         return self.value
-
-
-class MaskedCost(Cost):
-    """Base class for cost functions that support data masking."""
-
-    __slots__ = "_mask", "_masked"
-
-    def __init__(self, args, ndata, verbose):
-        """For internal use."""
-        super().__init__(args, ndata, verbose)
-        self.mask = None
-
-    @property
-    def mask(self):
-        """Boolean array, array of indices, or None.
-
-        If not None, only values selected by the mask are considered. The mask acts on
-        the first dimension of a value array, i.e. values[mask]. Default is None.
-        """
-        return self._mask
-
-    @property
-    def ndata(self):
-        """
-        Return number of points in least-squares fits or bins in a binned fit.
-
-        Infinity is returned if the cost function is unbinned.
-        """
-        n = np.sum(~self._mask) if self._mask is not None else 0
-        return self._ndata - n
-
-    @mask.setter
-    def mask(self, mask):
-        self._mask = None if mask is None else np.asarray(mask)
-        self._masked = self._make_masked()
-
-    def _make_masked(self):
-        return self._data if self._mask is None else self._data[self._mask]
 
 
 class CostSum(Cost, Sequence):
@@ -378,9 +331,7 @@ class CostSum(Cost, Sequence):
             else:
                 self._items.append(item)
         args, self._maps = merge_signatures(self._items)
-        super().__init__(
-            args, sum(c.ndata for c in self._items), max(c.verbose for c in self._items)
-        )
+        super().__init__(args, max(c.verbose for c in self._items))
 
     def _call(self, args):
         r = 0.0
@@ -388,6 +339,11 @@ class CostSum(Cost, Sequence):
             c_args = tuple(args[i] for i in map)
             r += c._call(c_args)
         return r
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        return sum(c.ndata for c in self._items)
 
     def __len__(self):
         """Return number of constituent cost functions."""
@@ -398,25 +354,67 @@ class CostSum(Cost, Sequence):
         return self._items.__getitem__(key)
 
 
-class UnbinnedCost(MaskedCost):
-    """Base class for unbinned cost functions."""
+class MaskedCost(Cost):
+    """Base class for cost functions that support data masking."""
 
-    __slots__ = "_data", "_model"
+    __slots__ = "_data", "_mask", "_masked"
+
+    def __init__(self, args, data, verbose):
+        """For internal use."""
+        super().__init__(args, verbose)
+        if np.ndim(data) > 1:
+            self._data = np.transpose(data)
+        self._data = data
+        self.mask = None  # triggers update of _masked, _ndata
+
+    @property
+    def mask(self):
+        """Boolean array, array of indices, or None.
+
+        If not None, only values selected by the mask are considered. The mask acts on
+        the first dimension of a value array, i.e. values[mask]. Default is None.
+        """
+        return self._mask
+
+    @mask.setter
+    def mask(self, mask):
+        self._mask = None if mask is None else np.asarray(mask)
+        self._update_masked()
 
     @property
     def data(self):
-        """Unbinned samples."""
+        """Return data samples."""
         return self._data
 
     @data.setter
     def data(self, value):
         self._data[:] = value
+        self._update_masked()
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        return len(self._masked)
+
+    def _update_masked(self):
+        self._masked = self._data if self._mask is None else self._data[self._mask]
+
+
+class UnbinnedCost(MaskedCost):
+    """Base class for unbinned cost functions."""
+
+    __slots__ = "_model"
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        # unbinned likelihoods have infinite degrees of freedom
+        return np.inf
 
     def __init__(self, data, model: Callable, verbose):
         """For internal use."""
-        self._data = _norm(data)
         self._model = model
-        super().__init__(describe(model)[1:], np.inf, verbose)
+        super().__init__(describe(model)[1:], _norm(data), verbose)
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -501,16 +499,53 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_n", "_xe", "_model"
+    __slots__ = "_xe", "_model"
+
+    def _weighted(self):
+        return self._data.ndim > self._xe.ndim
+
+    def _prepare_data(self, value):
+        assert self._xe is not None
+
+        n = _norm(value)
+        xe = self._xe
+
+        if n.ndim == xe.ndim:
+            is_weighted = False
+        else:
+            is_weighted = True
+            if n.ndim > xe.ndim + 1 or n.ndim < xe.ndim:
+                raise ValueError("n must either have same dimension as xe or one extra")
+
+        if np.any(
+            np.array(n.shape[:-1] if is_weighted else n.shape) + 1 != self._xe.shape
+        ):
+            raise ValueError("n and xe have incompatible shapes")
+
+        if is_weighted:
+            if n.shape[-1] != 2:
+                raise ValueError("n must have shape (..., 2)")
+            # Scale factor from Bohm and Zech, NIMA 748 (2014) 1-6
+            v = n[..., 0]
+            var = n[..., 1]
+            s = v / (var + 1e-323)
+            return np.column_stack((v, var, v * s, s))
+
+        return n
 
     @property
-    def n(self):
+    def data(self):
         """Access bin counts."""
-        return self._n
+        if self._weighted():
+            return self._data[:, :2]
+        return self._data
 
-    @n.setter
-    def n(self, value):
-        self._n[:] = value
+    @data.setter
+    def data(self, value):
+        # calling the property's setter from the base class is clunky
+        super(__class__, self.__class__).data.__set__(self, self._prepare_data(value))
+
+    n = data
 
     @property
     def xe(self):
@@ -523,26 +558,16 @@ class BinnedCost(MaskedCost):
 
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
-        self._n = _norm(n)
         self._xe = _norm(xe)
         self._model = model
-
-        if self._n.ndim > 2:
-            raise ValueError("n must be at most 2-dimensional")
-
-        if self._n.ndim == 2 and self._n.shape[1] != 2:
-            raise ValueError("n must shape (N x 2) if 2-dimensional")
-
-        if np.any((np.array(self._n.shape[0]) + 1) != self._xe.shape):
-            raise ValueError("n and xe have incompatible shapes")
-
-        super().__init__(describe(model)[1:], len(n), verbose)
+        super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
 
 
 class BinnedNLL(BinnedCost):
     """Binned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
+    This cost function works with normal and weighted histograms. See init for details.
     """
 
     __slots__ = ()
@@ -578,22 +603,27 @@ class BinnedNLL(BinnedCost):
         cdf = _check_model_output(cdf)
         prob = np.diff(cdf)
         n = self._masked
-        ma = self._mask
+        ma = self.mask
         if ma is not None:
             prob = prob[ma]
-        mu = np.sum(n) * prob
-        # + np.sum(mu) can be skipped, it is effectively constant
+            prob /= np.sum(prob)  # normalise probability
+        if self._weighted():
+            mu = np.sum(n[:, 0]) * prob
+            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
+            mu *= n[:, 3]
+            n = n[:, 2]
+        else:
+            mu = np.sum(n) * prob
+        # + np.sum(mu) is skipped, it is constant since sum(prob) = 1
         return 2.0 * _sum_log_poisson_part(n, mu)
-
-    def _make_masked(self):
-        return self._n if self._mask is None else self._n[self._mask]
 
 
 class ExtendedBinnedNLL(BinnedCost):
     """Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data
-    is binned.
+    is binned. This cost function works with normal and weighted histograms. See init
+    for details.
     """
 
     __slots__ = ()
@@ -627,14 +657,15 @@ class ExtendedBinnedNLL(BinnedCost):
         scdf = self._model(self._xe, *args)
         scdf = _check_model_output(scdf)
         mu = np.diff(scdf)
-        ma = self._mask
+        ma = self.mask
         n = self._masked
         if ma is not None:
             mu = mu[ma]
+        if self._weighted():
+            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
+            mu *= n[:, 3]
+            n = n[:, 2]
         return 2.0 * _sum_log_poisson(n, mu)
-
-    def _make_masked(self):
-        return self._n if self._mask is None else self._n[self._mask]
 
 
 class LeastSquares(MaskedCost):
@@ -643,34 +674,40 @@ class LeastSquares(MaskedCost):
     Use this if you have data of the form (x, y +/- yerror).
     """
 
-    __slots__ = "_loss", "_cost", "_x", "_y", "_yerror", "_model"
+    __slots__ = "_loss", "_cost", "_model"
 
     @property
     def x(self):
         """Get explanatory variables."""
-        return self._x
+        return self.data[:, 0]
 
     @x.setter
     def x(self, value):
-        self._x[:] = value
+        d = self.data
+        d[:, 0] = _norm(value)
+        self.data = d  # this also resets the masked
 
     @property
     def y(self):
         """Get samples."""
-        return self._y
+        return self.data[:, 1]
 
     @y.setter
     def y(self, value):
-        self._y[:] = value
+        d = self.data
+        d[:, 1] = _norm(value)
+        self.data = d  # this also resets the masked
 
     @property
     def yerror(self):
         """Get sample uncertainties."""
-        return self._yerror
+        return self.data[:, 2]
 
     @yerror.setter
     def yerror(self, value):
-        self._yerror[:] = value
+        d = self.data
+        d[:, 2] = _norm(value)
+        self.data = d
 
     @property
     def model(self):
@@ -744,35 +781,17 @@ class LeastSquares(MaskedCost):
         """
         x = _norm(x)
         y = _norm(y)
+        data = np.column_stack(np.broadcast_arrays(x, y, yerror))
 
-        if len(x) != len(y):
-            raise ValueError("x and y must have same length")
-
-        yerror = np.asarray(yerror, dtype=float)
-        if yerror.ndim == 0:
-            yerror = yerror * np.ones_like(y)
-        elif yerror.shape != y.shape:
-            raise ValueError("y and yerror must have same shape")
-
-        self._x = x
-        self._y = y
-        self._yerror = yerror
         self._model = model
         self.loss = loss
-        super().__init__(describe(self._model)[1:], len(x), verbose)
+        super().__init__(describe(self._model)[1:], data, verbose)
 
     def _call(self, args):
-        x, y, yerror = self._masked
+        x, y, yerror = self._masked.T
         ym = self._model(x, *args)
         ym = _check_model_output(ym)
         return self._cost(y, yerror, ym)
-
-    def _make_masked(self):
-        ma = self._mask
-        if ma is None:
-            return self._x, self._y, self._yerror
-        else:
-            return self._x[ma], self._y[ma], self._yerror[ma]
 
 
 class NormalConstraint(Cost):
@@ -823,7 +842,7 @@ class NormalConstraint(Cost):
         if self._cov.ndim < 2:
             self._cov **= 2
         self._covinv = _covinv(self._cov)
-        super().__init__(args, len(self._value), False)
+        super().__init__(args, False)
 
     @property
     def covariance(self):
@@ -853,6 +872,11 @@ class NormalConstraint(Cost):
         if self._covinv.ndim < 2:
             return np.sum(delta ** 2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        return len(self._value)
 
 
 def _norm(value):
