@@ -349,6 +349,18 @@ def test_LeastSquares_mask():
     assert_equal(m.values, [1.5])
 
 
+def test_LeastSquares_mask_2():
+    c = LeastSquares([1, 2], [1, 5], 1, lambda x, a: a * x)
+    assert c(2) == pytest.approx(2)
+    c.mask = [False, True]
+    assert c(2) == pytest.approx(1)
+    c.x = [2, 2]
+    c.y = [4, 4]
+    c.yerror = [2, 2]
+    assert c(2) == pytest.approx(0)
+    assert c(1) == pytest.approx(1)
+
+
 def test_LeastSquares_properties():
     def model(x, a):
         return a
