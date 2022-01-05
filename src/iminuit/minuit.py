@@ -1841,9 +1841,12 @@ class Minuit:
         --------
         mncontour
         """
+        import matplotlib
         from matplotlib import pyplot as plt
         from matplotlib.path import Path
         from matplotlib.contour import ContourSet
+
+        mpl_version = tuple(int(x) for x in matplotlib.__version__.split("."))
 
         cls = cl if isinstance(cl, Iterable) else [cl]
 
@@ -1852,8 +1855,12 @@ class Minuit:
         codes = []
         for cl in cls:  # type:ignore
             pts = self.mncontour(x, y, cl=cl, size=size)
-            # add extra point whose coordinates are ignored
-            pts = np.append(pts, pts[:1], axis=0)
+
+            if mpl_version < (3, 5):
+                # add extra point whose coordinates are ignored
+                # in matplotlib 3.5+, these are now full paths instead of lines
+                pts = np.append(pts, pts[:1], axis=0)
+
             c_val.append(cl if cl is not None else 0.68)
             c_pts.append([pts])  # level can have more than one contour in mpl
             codes.append(
