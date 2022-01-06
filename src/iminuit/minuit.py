@@ -1841,31 +1841,27 @@ class Minuit:
         --------
         mncontour
         """
-        import matplotlib
+        from matplotlib import __version__ as mpl_version
         from matplotlib import pyplot as plt
         from matplotlib.path import Path
         from matplotlib.contour import ContourSet
 
-        mpl_version = tuple(int(x) for x in matplotlib.__version__.split("."))
+        mpl_version = tuple(map(int, mpl_version.split(".")))
 
         cls = cl if isinstance(cl, Iterable) else [cl]
 
         c_val = []
         c_pts = []
         codes = []
+        n_lineto = size - 2 if mpl_version < (3, 5) else size - 1
         for cl in cls:  # type:ignore
             pts = self.mncontour(x, y, cl=cl, size=size)
-
-            if mpl_version < (3, 5):
-                # add extra point whose coordinates are ignored
-                # in matplotlib 3.5+, these are now full paths instead of lines
-                pts = np.append(pts, pts[:1], axis=0)
+            # add extra point whose coordinates are ignored to close the contour
+            pts = np.append(pts, pts[:1], axis=0)
 
             c_val.append(cl if cl is not None else 0.68)
             c_pts.append([pts])  # level can have more than one contour in mpl
-            codes.append(
-                [[Path.MOVETO] + [Path.LINETO] * (size - 2) + [Path.CLOSEPOLY]]
-            )
+            codes.append([[Path.MOVETO] + [Path.LINETO] * n_lineto + [Path.CLOSEPOLY]])
         assert len(c_val) == len(codes), f"{len(c_val)} {len(codes)}"
         cs = ContourSet(plt.gca(), c_val, c_pts, codes)
         plt.clabel(cs)
