@@ -5,8 +5,27 @@
 Changelog
 =========
 
+2.9.0 (January 7, 2022)
+-----------------------
+
+Fixes
+~~~~~
+- ``Minuit.draw_mncontour`` now works with matplotlib >= 3.5
+- Builtin cost functions now work correctly when the mask is set and data is updated on
+  the existing cost function
+
+Performance
+~~~~~~~~~~~
+- Builtin cost functions are now more performant when used with weighted binned data
+
+Other
+~~~~~
+- Wheels for Python 3.10, by @henryiii
+- Bump pybind11 to 2.9.0, by @henryiii
+
 2.8.4 (October 11, 2021)
 ------------------------
+
 Fixes
 ~~~~~
 - Pickling of ``util.Matrix`` resulted in incomplete state after unpickling, which would
