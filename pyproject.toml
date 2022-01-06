@@ -17,7 +17,6 @@ testpaths = [
 ]
 
 [tool.cibuildwheel]
-before-build = "python -m pip install numpy --only-binary=:all:"
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 test-skip = ["*universal2:arm64"]
