@@ -1,23 +1,17 @@
 # Makefile for developers with some convenient quick ways to do common things
 
-ifeq ($(shell python -c 'import sys; print(sys.version_info.major)'), 3)
-	PYTHON = python
-else
-	PYTHON = python3
-endif
-
 # default target
 build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
-	DEBUG=1 $(PYTHON) setup.py develop
+	DEBUG=1 python3 setup.py develop
 	touch build/done
 
 test: build/done
-	$(PYTHON) -m pytest -vv -r a --ff --pdb
+	python3 -m pytest -vv -r a --ff --pdb
 
 cov: build/done
 	# This only computes the coverage in pure Python.
 	rm -rf htmlcov
-	$(PYTHON) -m pytest -x --ff --cov src/iminuit --cov-report term-missing --cov-report html
+	python3 -m pytest -x --ff --cov src/iminuit --cov-report term-missing --cov-report html
 
 doc: build/done build/html/done
 
@@ -29,7 +23,7 @@ build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/*
 tutorial: build/done build/tutorial_done
 
 build/tutorial_done: $(wildcard src/iminuit/*.py doc/tutorial/*.ipynb)
-	$(PYTHON) -m pytest -n8 doc/tutorial
+	python3 -m pytest -n8 doc/tutorial
 	touch build/tutorial_done
 
 check:
@@ -42,5 +36,5 @@ clean:
 
 ## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
 # pylint: build
-# 	@$(PYTHON) -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
+# 	@python3 -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
 # 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'
