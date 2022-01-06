@@ -18,7 +18,7 @@ testpaths = ["tests"]
 # this makes sure that we build only on platforms that have a corresponding numpy wheel
 before-build = "python -m pip install numpy --only-binary=:all:"
 # update skip when numpy wheels become available
-skip = ["*-musllinux_*", "cp310-win32"]
+skip = ["*-musllinux_*", "cp310-win32", "cp310-manylinux_i686"]
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 test-skip = ["*universal2:arm64"]
