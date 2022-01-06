@@ -59,7 +59,7 @@ In a nutshell
     def cost_function(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
-    fcn.errordef = Minuit.LEAST_SQUARES
+    cost_function.errordef = Minuit.LEAST_SQUARES
 
     m = Minuit(cost_function, x=0, y=0, z=0)
 
