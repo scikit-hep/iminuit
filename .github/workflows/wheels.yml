@@ -13,7 +13,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - run: python .ci/release_check.py
 
@@ -26,13 +26,16 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         arch: [auto, aarch64]
-        py: [cp36, cp37, cp38, cp39]
+        py: [cp36, cp37, cp38, cp39, cp310]
         include:
           - os: macos-latest
             py: cp38
             arch: universal2
           - os: macos-latest
             py: cp39
+            arch: universal2
+          - os: macos-latest
+            py: cp310
             arch: universal2
         exclude:
           - os: windows-latest
@@ -50,7 +53,7 @@ jobs:
       - if: ${{ matrix.arch == 'aarch64' }}
         uses: docker/setup-qemu-action@v1
 
-      - uses: pypa/cibuildwheel@v2.0.1
+      - uses: pypa/cibuildwheel@v2.3.1
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -71,7 +74,7 @@ jobs:
       - uses: actions/setup-python@v2
         name: Install Python
         with:
-          python-version: '3.8'
+          python-version: '3.9'
 
       - run: python -m pip install --upgrade pip wheel
       - run: python setup.py sdist
