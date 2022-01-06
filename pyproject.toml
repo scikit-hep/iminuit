@@ -12,11 +12,11 @@ black = 1
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-q -ra --ff"
-testpaths = [
-    "tests"
-]
+testpaths = ["tests"]
 
 [tool.cibuildwheel]
+# this makes sure that we build only on platforms that have a corresponding numpy wheel
+before-build = "python -m pip install numpy --only-binary=:all:"
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 test-skip = ["*universal2:arm64"]
@@ -25,5 +25,7 @@ manylinux-i686-image = "manylinux2014"
 
 [[tool.cibuildwheel.overrides]]
 select = "cp3?-*"
+# update skip when numpy wheels become available
+skip = ["*-musllinux_*", "cp310-win32"]
 manylinux-x86_64-image = "manylinux2010"
 manylinux-i686-image = "manylinux2010"
