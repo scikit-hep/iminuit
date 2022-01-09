@@ -15,7 +15,8 @@ jobs:
         with:
           python-version: '3.9'
 
-      - run: python .ci/release_check.py
+      - if: ${{ github.ref == 'refs/heads/master' }}
+        run: python .ci/release_check.py
 
   wheels:
     needs: release_check
