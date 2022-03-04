@@ -55,7 +55,7 @@ def test_MnUserCovariance():
 
 
 def fn(x, y):
-    return 10 + x ** 2 + ((y - 1) / 2) ** 2
+    return 10 + x**2 + ((y - 1) / 2) ** 2
 
 
 def fn_grad(x, y):
@@ -104,7 +104,7 @@ def test_MnMigrad():
 
 
 def test_MnMigrad_grad():
-    fcn = FCN(lambda x: 10 + x ** 2, lambda x: [2 * x], False, 1)
+    fcn = FCN(lambda x: 10 + x**2, lambda x: [2 * x], False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     migrad = MnMigrad(fcn, state, 1)
@@ -176,7 +176,7 @@ def test_MnMigrad_np():
 
 
 def test_MnScan():
-    fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
+    fcn = FCN(lambda x: 10 + x**2, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 2, 5)
     scan = MnScan(fcn, state, 1)
@@ -188,7 +188,7 @@ def test_MnScan():
 
 
 def test_MnSimplex():
-    fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
+    fcn = FCN(lambda x: 10 + x**2, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 2, 5)
     simplex = MnSimplex(fcn, state, 1)
@@ -200,7 +200,7 @@ def test_MnSimplex():
 
 
 def test_FunctionMinimum():
-    fcn = FCN(lambda x: 10 + x ** 2, None, False, 1)
+    fcn = FCN(lambda x: 10 + x**2, None, False, 1)
     st = MnUserParameterState()
     st.add("x", 0.01, 5)
     str = MnStrategy(1)

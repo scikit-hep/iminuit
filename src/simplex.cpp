@@ -1,7 +1,7 @@
+#include "fcn.hpp"
 #include <Minuit2/FCNBase.h>
 #include <Minuit2/MnSimplex.h>
 #include <pybind11/pybind11.h>
-#include "fcn.hpp"
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

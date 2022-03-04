@@ -527,14 +527,14 @@ def test_jacobi_on_bad_input():
 
     x = np.array([1])
     dx = np.array([0])
-    y, jac = util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
+    y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
 
     np.testing.assert_equal(y, 1)
     np.testing.assert_equal(jac, 0)
 
     x = np.array([np.nan])
     dx = np.array([0.1])
-    y, jac = util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
+    y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
 
     np.testing.assert_equal(y, np.nan)
     np.testing.assert_equal(jac, np.nan)
@@ -543,7 +543,7 @@ def test_jacobi_on_bad_input():
     dx = np.array([np.nan])
     with pytest.raises(AssertionError):
         # dx must be >= 0
-        util._jacobi(lambda x: x ** 2, x, dx, 1e-3)
+        util._jacobi(lambda x: x**2, x, dx, 1e-3)
 
 
 @pytest.mark.parametrize("fail", (False, True))

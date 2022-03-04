@@ -9,7 +9,7 @@ def framed(s):
 
 
 def test_params():
-    m = Minuit(lambda x, y: x ** 2 + (y / 2) ** 2 + 1, x=0, y=0)
+    m = Minuit(lambda x, y: x**2 + (y / 2) ** 2 + 1, x=0, y=0)
     m.errordef = 1
     m.limits["y"] = (-1, 1)
     m.fixed["x"] = True
@@ -27,7 +27,7 @@ def test_params():
 
 
 def test_matrix():
-    m = Minuit(lambda x, y: x ** 2 + (y / 2) ** 2 + 1, x=0, y=0)
+    m = Minuit(lambda x, y: x**2 + (y / 2) ** 2 + 1, x=0, y=0)
     m.errordef = 1
     m.migrad()
     assert (

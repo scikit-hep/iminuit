@@ -490,7 +490,7 @@ def test_html_correlation_matrix():
 
 
 def test_html_minuit():
-    m = Minuit(lambda x, y: x ** 2 + 4 * y ** 2, x=0, y=0)
+    m = Minuit(lambda x, y: x**2 + 4 * y**2, x=0, y=0)
     m.errordef = 1
     assert m._repr_html_() == m.params._repr_html_()
     m.migrad()
@@ -622,7 +622,7 @@ def test_text_matrix_difficult_values():
 
 
 def test_text_minuit():
-    m = Minuit(lambda x, y: x ** 2 + 4 * y ** 2, x=0, y=0)
+    m = Minuit(lambda x, y: x**2 + 4 * y**2, x=0, y=0)
     m.errordef = 1
     assert str(m) == str(m.params)
     m.migrad()

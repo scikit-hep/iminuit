@@ -95,7 +95,7 @@ def func4_grad(x, y, z):
 def func5(x, long_variable_name_really_long_why_does_it_has_to_be_this_long, z):
     return (
         (x - 1) ** 2
-        + long_variable_name_really_long_why_does_it_has_to_be_this_long ** 2
+        + long_variable_name_really_long_why_does_it_has_to_be_this_long**2
         + (z + 1) ** 2
     )
 
@@ -109,7 +109,7 @@ def func5_grad(x, long_variable_name_really_long_why_does_it_has_to_be_this_long
 
 @lsq
 def func6(x, m, s, a):
-    return a / ((x - m) ** 2 + s ** 2)
+    return a / ((x - m) ** 2 + s**2)
 
 
 class Correlated:
@@ -119,7 +119,7 @@ class Correlated:
         sx = 2
         sy = 1
         corr = 0.5
-        cov = (sx ** 2, corr * sx * sy), (corr * sx * sy, sy ** 2)
+        cov = (sx**2, corr * sx * sy), (corr * sx * sy, sy**2)
         self.cinv = np.linalg.inv(cov)
 
     def __call__(self, x):
@@ -306,7 +306,7 @@ def test_array_func_2():
 
 
 def test_wrong_use_of_array_init():
-    m = Minuit(lambda a, b: a ** 2 + b ** 2, (1, 2))
+    m = Minuit(lambda a, b: a**2 + b**2, (1, 2))
     m.errordef = Minuit.LEAST_SQUARES
     with pytest.raises(TypeError):
         m.migrad()
@@ -452,7 +452,7 @@ def test_minos_cl(cl, k, limit):
     assert m.accurate
     m.minos(cl=cl)
     assert m.values["lambd"] == approx(k)
-    assert m.errors["lambd"] == approx(k ** 0.5, abs=2e-3 if limit else None)
+    assert m.errors["lambd"] == approx(k**0.5, abs=2e-3 if limit else None)
     assert m.merrors["lambd"].lower == approx(lower, rel=1e-3)
     assert m.merrors["lambd"].upper == approx(upper, rel=1e-3)
     assert m.merrors[0].lower == m.merrors["lambd"].lower
@@ -850,7 +850,7 @@ def test_likelihood():
 
     def nll(mu, sigma):
         z = (data - mu) / sigma
-        logp = -0.5 * z ** 2 - np.log(sigma)
+        logp = -0.5 * z**2 - np.log(sigma)
         return -np.sum(logp)
 
     m = Minuit(nll, mu=0, sigma=1)
@@ -896,7 +896,7 @@ def test_migrad_ncall():
 
         def __call__(self, x):
             self.nfcn += 1
-            return np.exp(x ** 2)
+            return np.exp(x**2)
 
     # check that counting is accurate
     fcn = Func()
@@ -925,7 +925,7 @@ def test_ngrad():
         ngrad = 0
 
         def __call__(self, x):
-            return x ** 2
+            return x**2
 
         def grad(self, x):
             self.ngrad += 1
@@ -949,7 +949,7 @@ def test_ngrad():
 
 
 def test_errordef():
-    m = Minuit(lambda x: x ** 2, 0)
+    m = Minuit(lambda x: x**2, 0)
     m.errordef = 4
     assert m.errordef == 4
     m.migrad()
@@ -1043,7 +1043,7 @@ def test_function_without_local_minimum():
 
 def test_function_with_maximum():
     def func(a):
-        return -(a ** 2)
+        return -(a**2)
 
     m = Minuit(func, a=0)
     m.errordef = 1
@@ -1094,11 +1094,11 @@ def test_view_lifetime():
 
 
 def test_hesse_without_migrad():
-    m = Minuit(lambda x: x ** 2 + x ** 4, x=0)
+    m = Minuit(lambda x: x**2 + x**4, x=0)
     m.errordef = 0.5
     # second derivative: 12 x^2 + 2
     m.hesse()
-    assert m.errors["x"] == approx(0.5 ** 0.5, abs=1e-4)
+    assert m.errors["x"] == approx(0.5**0.5, abs=1e-4)
     m.values["x"] = 1
     m.hesse()
     assert m.errors["x"] == approx((1.0 / 14.0) ** 0.5, abs=1e-4)

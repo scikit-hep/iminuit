@@ -54,7 +54,7 @@ def test_tol():
 
     def rosen(par):
         x, y = par
-        return (1 - x) ** 2 + 100 * (y - x ** 2) ** 2
+        return (1 - x) ** 2 + 100 * (y - x**2) ** 2
 
     r1 = minimize(rosen, (0, 0), tol=1)
     r2 = minimize(rosen, (0, 0), tol=1e-6)
@@ -63,9 +63,9 @@ def test_tol():
 
 
 def test_disp(capsys):
-    minimize(lambda x: x ** 2, 0)
+    minimize(lambda x: x**2, 0)
     assert capsys.readouterr()[0] == ""
-    minimize(lambda x: x ** 2, 0, options={"disp": True})
+    minimize(lambda x: x**2, 0, options={"disp": True})
     assert capsys.readouterr()[0] != ""
 
 
@@ -115,7 +115,7 @@ def test_bad_function():
 
         def __call__(self, x):
             self.n += 1
-            return x ** 2 + 1e-2 * (self.n % 3)
+            return x**2 + 1e-2 * (self.n % 3)
 
     r = minimize(Fcn(), [1], options={"maxfun": 100000000})
     assert not r.success

@@ -69,7 +69,7 @@ def test_UnbinnedNLL(unbinned, verbose):
     m.limits["sigma"] = (0, None)
     m.migrad()
     assert_allclose(m.values, mle[1:], atol=1e-3)
-    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+    assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
 
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
@@ -89,7 +89,7 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose):
     m.limits["sigma"] = (0, None)
     m.migrad()
     assert_allclose(m.values, mle, atol=1e-3)
-    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+    assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
 
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
@@ -106,7 +106,7 @@ def test_BinnedNLL(binned, verbose):
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle[1:], rtol=0.15)
-    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+    assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
     assert m.ndof == len(nx) - 2
 
     assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
@@ -166,7 +166,7 @@ def test_ExtendedBinnedNLL(binned, verbose):
     m.migrad()
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)
-    assert m.errors["mu"] == pytest.approx(1000 ** -0.5, rel=0.05)
+    assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
     assert m.ndof == len(nx) - 3
 
     assert_allclose(m.fmin.reduced_chi2, 1, 0.1)
@@ -493,7 +493,7 @@ def test_NormalConstraint_2():
     sa = 0.1
     sb = 0.02
     rho = 0.5
-    cov = ((sa ** 2, rho * sa * sb), (rho * sa * sb, sb ** 2))
+    cov = ((sa**2, rho * sa * sb), (rho * sa * sb, sb**2))
     lsq3 = lsq1 + NormalConstraint(("a", "b"), (1, 2), cov)
     assert lsq1.func_code.co_varnames == ("a", "b")
     assert lsq2.func_code.co_varnames == ("a", "b")

@@ -20,7 +20,7 @@ class TrackingFcn:
         self.ncall += 1
         # make problem non-linear
         z = self.y - par
-        return np.sum(z ** 2 + 0.1 * z ** 4)
+        return np.sum(z**2 + 0.1 * z**4)
 
 
 class Runner:
@@ -216,7 +216,7 @@ for method, (m, ms) in zip(sorted(methods), markers):
         nc, md = np.transpose(data[npar])
         x.append(np.median(nc) / npar)
         y.append(np.median(md))
-        s.append(50 * npar ** 0.5)
+        s.append(50 * npar**0.5)
 
     plt.scatter(x, y, s, marker=m, color=mfc, edgecolor=color, zorder=zorder)
 
