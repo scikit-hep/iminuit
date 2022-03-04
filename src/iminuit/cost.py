@@ -444,6 +444,12 @@ class UnbinnedNLL(UnbinnedCost):
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
+        log : bool, optional
+            Distributions of the exponential family (normal, exponential, poisson, ...)
+            allow one to compute the logarithm of the pdf directly, which is more
+            accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
+            to True, if the model returns the logarithm of the pdf instead of the pdf.
+            Default is False.
         """
         super().__init__(data, pdf, verbose, log)
 
@@ -486,10 +492,11 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
         log : bool, optional
-            Distributions of exponential family (among them the normal, exponential,
-            and poisson distributions, allow one to compute the logarithm of the pdf
-            more accurate and efficiently. Set this to true, if the model returns the
-            logarithm of the pdf instead of the pdf.
+            Distributions of the exponential family (normal, exponential, poisson, ...)
+            allow one to compute the logarithm of the pdf directly, which is more
+            accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
+            to True, if the model returns the logarithm of the density as the second
+            argument instead of the density. Default is False.
         """
         super().__init__(data, scaled_pdf, verbose, log)
 
