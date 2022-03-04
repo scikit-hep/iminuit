@@ -86,23 +86,23 @@ def _sum_z_squared_soft_l1(y, ye, ym):
 # precision. Fall back to plain numpy for float128 which is not currently supported
 # by numba.
 try:
-    import numba as nb
-    from numba.extending import overload
+    from numba import njit as _njit
+    from numba.extending import overload as _overload
 
     _log_poisson_part_np = _log_poisson_part
 
-    @overload(_log_poisson_part, inline="always")
+    @_overload(_log_poisson_part, inline="always")
     def _log_poisson_part_ol(n, mu):
         return _log_poisson_part_np  # pragma: no cover
 
     _z_squared_np = _z_squared
 
-    @overload(_z_squared, inline="always")
+    @_overload(_z_squared, inline="always")
     def _z_squared_ol(y, ye, ym):
         return _z_squared_np  # pragma: no cover
 
     _sum_log_x_np = _sum_log_x
-    _sum_log_x_nb = nb.njit(
+    _sum_log_x_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -114,7 +114,7 @@ try:
         return _sum_log_x_np(x)
 
     _sum_log_poisson_part_np = _sum_log_poisson_part
-    _sum_log_poisson_part_nb = nb.njit(
+    _sum_log_poisson_part_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -126,7 +126,7 @@ try:
         return _sum_log_poisson_part_np(n, mu)
 
     _sum_log_poisson_np = _sum_log_poisson
-    _sum_log_poisson_nb = nb.njit(
+    _sum_log_poisson_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -139,7 +139,7 @@ try:
         return _sum_log_poisson_np(n, mu)
 
     _sum_z_squared_np = _sum_z_squared
-    _sum_z_squared_nb = nb.njit(
+    _sum_z_squared_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -152,7 +152,7 @@ try:
         return _sum_z_squared_np(y, ye, ym)
 
     _sum_z_squared_soft_l1_np = _sum_z_squared_soft_l1
-    _sum_z_squared_soft_l1_nb = nb.njit(
+    _sum_z_squared_soft_l1_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -164,8 +164,6 @@ try:
         # fallback to numpy for float128
         return _sum_z_squared_soft_l1_np(y, ye, ym)
 
-    del nb
-    del overload
 except ModuleNotFoundError:  # pragma: no cover
     pass
 
