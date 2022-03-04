@@ -40,6 +40,10 @@ def binned(unbinned):
     return mle, nx, xe
 
 
+def logpdf(x, mu, sigma):
+    return norm(mu, sigma).logpdf(x)
+
+
 def pdf(x, mu, sigma):
     return norm(mu, sigma).pdf(x)
 
@@ -59,10 +63,11 @@ def test_Constant():
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_UnbinnedNLL(unbinned, verbose):
+@pytest.mark.parametrize("model", (logpdf, pdf))
+def test_UnbinnedNLL(unbinned, verbose, model):
     mle, x = unbinned
 
-    cost = UnbinnedNLL(x, pdf, verbose=verbose)
+    cost = UnbinnedNLL(x, model, verbose=verbose, log=model is logpdf)
     assert cost.ndata == np.inf
 
     m = Minuit(cost, mu=0, sigma=1)
@@ -75,13 +80,18 @@ def test_UnbinnedNLL(unbinned, verbose):
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_ExtendedUnbinnedNLL(unbinned, verbose):
+@pytest.mark.parametrize("model", (logpdf, pdf))
+def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
     mle, x = unbinned
 
-    def scaled_pdf(x, n, mu, sigma):
-        return n, n * norm(mu, sigma).pdf(x)
+    log = model is logpdf
 
-    cost = ExtendedUnbinnedNLL(x, scaled_pdf, verbose=verbose)
+    def density(x, n, mu, sigma):
+        if log:
+            return n, np.log(n) + logpdf(x, mu, sigma)
+        return n, n * pdf(x, mu, sigma)
+
+    cost = ExtendedUnbinnedNLL(x, density, verbose=verbose, log=log)
     assert cost.ndata == np.inf
 
     m = Minuit(cost, n=len(x), mu=0, sigma=1)

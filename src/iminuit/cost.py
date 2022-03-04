@@ -401,7 +401,7 @@ class MaskedCost(Cost):
 class UnbinnedCost(MaskedCost):
     """Base class for unbinned cost functions."""
 
-    __slots__ = "_model"
+    __slots__ = "_model", "_log"
 
     @Cost.ndata.getter
     def ndata(self):
@@ -409,9 +409,10 @@ class UnbinnedCost(MaskedCost):
         # unbinned likelihoods have infinite degrees of freedom
         return np.inf
 
-    def __init__(self, data, model: Callable, verbose):
+    def __init__(self, data, model: Callable, verbose: int, log: bool):
         """For internal use."""
         self._model = model
+        self._log = log
         super().__init__(describe(model)[1:], _norm(data), verbose)
 
 
@@ -429,7 +430,7 @@ class UnbinnedNLL(UnbinnedCost):
         """Get probability density model."""
         return self._model
 
-    def __init__(self, data, pdf: Callable, verbose: int = 0):
+    def __init__(self, data, pdf: Callable, verbose: int = 0, log: bool = False):
         """
         Initialize UnbinnedNLL with data and model.
 
@@ -444,13 +445,15 @@ class UnbinnedNLL(UnbinnedCost):
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
         """
-        super().__init__(data, pdf, verbose)
+        super().__init__(data, pdf, verbose, log)
 
     def _call(self, args):
         data = self._masked
-        pdf = self._model(data, *args)
-        pdf = _check_model_output(pdf)
-        return -2.0 * _sum_log_x(pdf)
+        x = self._model(data, *args)
+        x = _check_model_output(x)
+        if self._log:
+            return -2.0 * np.sum(x)
+        return -2.0 * _sum_log_x(x)
 
 
 class ExtendedUnbinnedNLL(UnbinnedCost):
@@ -467,7 +470,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         """Get density model."""
         return self._model
 
-    def __init__(self, data, scaled_pdf: Callable, verbose: int = 0):
+    def __init__(self, data, scaled_pdf: Callable, verbose: int = 0, log: bool = False):
         """
         Initialize cost function with data and model.
 
@@ -482,16 +485,21 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
+        log : bool, optional
+            Distributions of exponential family (among them the normal, exponential,
+            and poisson distributions, allow one to compute the logarithm of the pdf
+            more accurate and efficiently. Set this to true, if the model returns the
+            logarithm of the pdf instead of the pdf.
         """
-        super().__init__(data, scaled_pdf, verbose)
+        super().__init__(data, scaled_pdf, verbose, log)
 
     def _call(self, args):
         data = self._masked
-        ns, spdf = self._model(data, *args)
-        spdf = _check_model_output(
-            spdf, "Model should return numpy array in second position"
-        )
-        return 2.0 * (ns - _sum_log_x(spdf))
+        ns, x = self._model(data, *args)
+        x = _check_model_output(x, "Model should return numpy array in second position")
+        if self._log:
+            return 2 * (ns - np.sum(x))
+        return 2 * (ns - _sum_log_x(x))
 
 
 class BinnedCost(MaskedCost):
