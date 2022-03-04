@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 
-with open("data.json") as f:
+with open("cost.json") as f:
     data = json.load(f)
 
 variant = {}

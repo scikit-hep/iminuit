@@ -2197,8 +2197,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[10]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[10]",
+      "name": "test_minuit_numba_sum_log[10]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[10]",
       "params": {
         "n": 10
       },
@@ -2234,8 +2234,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[31]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[31]",
+      "name": "test_minuit_numba_sum_log[31]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[31]",
       "params": {
         "n": 31
       },
@@ -2271,8 +2271,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[100]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[100]",
+      "name": "test_minuit_numba_sum_log[100]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[100]",
       "params": {
         "n": 100
       },
@@ -2308,8 +2308,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[316]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[316]",
+      "name": "test_minuit_numba_sum_log[316]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[316]",
       "params": {
         "n": 316
       },
@@ -2345,8 +2345,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[1000]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[1000]",
+      "name": "test_minuit_numba_sum_log[1000]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[1000]",
       "params": {
         "n": 1000
       },
@@ -2382,8 +2382,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[3162]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[3162]",
+      "name": "test_minuit_numba_sum_log[3162]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[3162]",
       "params": {
         "n": 3162
       },
@@ -2419,8 +2419,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[10000]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[10000]",
+      "name": "test_minuit_numba_sum_log[10000]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[10000]",
       "params": {
         "n": 10000
       },
@@ -2456,8 +2456,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[31622]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[31622]",
+      "name": "test_minuit_numba_sum_log[31622]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[31622]",
       "params": {
         "n": 31622
       },
@@ -2493,8 +2493,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[100000]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[100000]",
+      "name": "test_minuit_numba_sum_log[100000]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[100000]",
       "params": {
         "n": 100000
       },
@@ -2530,8 +2530,8 @@
     },
     {
       "group": null,
-      "name": "test_minuit_sum_log[316227]",
-      "fullname": "bench/test_cost.py::test_minuit_sum_log[316227]",
+      "name": "test_minuit_numba_sum_log[316227]",
+      "fullname": "bench/test_cost.py::test_minuit_numba_sum_log[316227]",
       "params": {
         "n": 316227
       },

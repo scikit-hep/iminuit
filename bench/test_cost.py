@@ -71,7 +71,7 @@ def test_numba_sum_log_parallel(benchmark, n):
 
 
 @pytest.mark.parametrize("n", N[:-1])
-def test_minuit_sum_log(benchmark, n):
+def test_minuit_numba_sum_log(benchmark, n):
     rng = np.random.default_rng(1)
     x = rng.normal(size=n)
 
