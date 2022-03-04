@@ -8,7 +8,7 @@ scopt = pytest.importorskip("scipy.optimize")
 
 
 def fcn(a, b):
-    return a ** 2 + ((b - 1) / 2.0) ** 2 + 3
+    return a**2 + ((b - 1) / 2.0) ** 2 + 3
 
 
 fcn.errordef = 1
@@ -193,7 +193,7 @@ def test_scipy_ncall(stra, grad):
 @pytest.mark.parametrize("fixed", (False, True))
 def test_scipy_constraints_1(lb, fixed):
     def fcn(a, x, y):
-        return a + x ** 2 + y ** 2
+        return a + x**2 + y**2
 
     m = Minuit(fcn, a=3, x=1, y=2)
     m.fixed["a"] = fixed
@@ -213,7 +213,7 @@ def test_scipy_constraints_1(lb, fixed):
 @pytest.mark.parametrize("fixed", (False, True))
 def test_scipy_constraints_2(fixed):
     def fcn(x, y):
-        return x ** 2 + y ** 2
+        return x**2 + y**2
 
     m = Minuit(fcn, x=1, y=2)
     m.errordef = 1

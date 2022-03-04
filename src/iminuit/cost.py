@@ -868,7 +868,7 @@ class NormalConstraint(Cost):
     def _call(self, args):
         delta = self._value - args
         if self._covinv.ndim < 2:
-            return np.sum(delta ** 2 * self._covinv)
+            return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
     @Cost.ndata.getter

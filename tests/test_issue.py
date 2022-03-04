@@ -28,7 +28,7 @@ def test_issue_424():
 def test_issue_544():
     @lsq
     def fcn(x, y):
-        return x ** 2 + y ** 2
+        return x**2 + y**2
 
     m = Minuit(fcn, x=0, y=0)
     m.fixed = True
@@ -45,7 +45,7 @@ def test_issue_648():
             if self.first:
                 assert a == 1.0 and b == 2.0
                 self.first = False
-            return a ** 2 + b ** 2
+            return a**2 + b**2
 
     m = Minuit(F(), a=1, b=2)
     m.fixed["a"] = False  # this used to change a to b
@@ -75,7 +75,7 @@ def test_issue_643():
 def test_issue_669():
     @lsq
     def fcn(x, y):
-        return x ** 2 + (y / 2) ** 2
+        return x**2 + (y / 2) ** 2
 
     m = Minuit(fcn, x=0, y=0)
 
@@ -96,7 +96,7 @@ def test_issue_669():
 
 @lsq
 def fcn(par):
-    return np.sum(par ** 2)
+    return np.sum(par**2)
 
 
 def grad(par):

@@ -1162,7 +1162,7 @@ class Minuit:
             for p in self.params:
                 if p.is_fixed:
                     continue
-                matrix[i, i] = p.error ** 2
+                matrix[i, i] = p.error**2
                 i += 1
 
         if "grad" in r:  # trust-constr has "grad" and "jac", but "grad" is "jac"!

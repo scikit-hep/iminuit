@@ -257,10 +257,10 @@ def _round(values, leader, n_exp_extern):
 
     if leader is None:
         # invalid leading error, cannot determine digits
-        scale = 10 ** -n_exp
+        scale = 10**-n_exp
         return ([fmt(v * scale, 4) for v in values], n_exp)
 
-    scale = 10 ** -n_exp
+    scale = 10**-n_exp
     digits = round(lerror * scale, 3)
     if digits < 0.355:
         n_digits = 2
@@ -290,7 +290,7 @@ def _round(values, leader, n_exp_extern):
                 if i != leader
                 else math.copysign(digits, values[leader])
             )
-            * 10 ** shift,
+            * 10**shift,
             n_digits - shift,
         )
         for (i, x) in enumerate(values)

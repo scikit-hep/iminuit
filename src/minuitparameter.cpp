@@ -1,7 +1,7 @@
+#include "equal.hpp"
 #include <Minuit2/MinuitParameter.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
-#include "equal.hpp"
 
 namespace ROOT {
 namespace Minuit2 {

@@ -1,9 +1,9 @@
+#include "equal.hpp"
+#include "type_caster.hpp"
 #include <Minuit2/MnUserCovariance.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <vector>
-#include "equal.hpp"
-#include "type_caster.hpp"
 
 namespace ROOT {
 namespace Minuit2 {

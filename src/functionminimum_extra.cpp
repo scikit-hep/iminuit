@@ -1,3 +1,5 @@
+#include "equal.hpp"
+#include "fcn.hpp"
 #include <Minuit2/AnalyticalGradientCalculator.h>
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MinimumState.h>
@@ -11,8 +13,6 @@
 #include <pybind11/pybind11.h>
 #include <type_traits>
 #include <vector>
-#include "equal.hpp"
-#include "fcn.hpp"
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

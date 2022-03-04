@@ -1,9 +1,9 @@
+#include "equal.hpp"
+#include "type_caster.hpp"
 #include <Minuit2/MnUserParameterState.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <type_traits>
-#include "equal.hpp"
-#include "type_caster.hpp"
 
 namespace ROOT {
 namespace Minuit2 {
