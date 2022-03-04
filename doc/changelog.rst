@@ -5,6 +5,16 @@
 Changelog
 =========
 
+2.10.0 (March 4, 2022)
+----------------------
+
+New features
+~~~~~~~~~~~~
+- ``UnbinnedNLL`` and ``ExtendedUnbinnedNLL`` now support models that predict the
+  ``logpdf`` instead of the ``pdf`` when the extra keyword ``log=True`` is set; when
+  it is possible, using the ``logpdf`` instead of the ``pdf`` for fitting is faster
+  and numerically more stable
+
 2.9.0 (January 7, 2022)
 -----------------------
 
