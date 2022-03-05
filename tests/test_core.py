@@ -14,6 +14,7 @@ from iminuit._core import (
 from pytest import approx
 import pytest
 import pickle
+import numpy as np
 
 
 @pytest.fixture
@@ -119,28 +120,29 @@ def test_MnMigrad_grad():
     assert fcn._ngrad > 0
 
 
-@pytest.mark.parametrize("npar", (1, 2, 3))
-def test_MnMigrad_cfunc(npar):
+def test_MnMigrad_cfunc():
     nb = pytest.importorskip("numba")
 
     c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
+
+    y = np.arange(5)
 
     @nb.cfunc(c_sig)
     def fcn(n, x):
         x = nb.carray(x, (n,))
         r = 0.0
         for i in range(n):
-            r += (x[i] - i) ** 2
+            r += (y[i] - x[i]) ** 2
         return r
 
     fcn = FCN(fcn, None, True, 1)
     state = MnUserParameterState()
-    for i in range(npar):
+    for i in range(len(y)):
         state.add(f"x{i}", 5, 0.1)
     migrad = MnMigrad(fcn, state, 1)
     fmin = migrad(0, 0.1)
     state = fmin.state
-    assert len(state) == npar
+    assert len(state) == len(y)
     for i, p in enumerate(state):
         assert p.number == i
         assert p.value == approx(i, abs=1e-3)
