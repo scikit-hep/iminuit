@@ -23,6 +23,7 @@ __pycache__
 
 pip-wheel-metadata
 
+.benchmarks
 .DS_Store
 .idea
 .vscode

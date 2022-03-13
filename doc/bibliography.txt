@@ -1,6 +1,7 @@
 .. _scipy: https://www.scipy.org/
 .. _scipy.optimize: https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html
 .. _numba: https://numba.pydata.org
+.. _numba_stats: https://github.com/HDembinski/numba-stats
 .. _jax: https://jax.readthedocs.io
 .. _nlopt: https://nlopt.readthedocs.io/en/latest
 .. _pyhf: https://github.com/diana-hep/pyhf
