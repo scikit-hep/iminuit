@@ -20,32 +20,59 @@ for b in data["benchmarks"]:
     n = int(n)
     name = b["name"]
     name = name[name.find("_") + 1 : name.find("[")]
+    extra = [k for (k, v) in b["params"].items() if k != "n" and v]
+    if extra:
+        name += "_" + "_".join(extra)
     t = b["stats"]["mean"]
     if name not in variant:
         variant[name] = []
     variant[name].append((n, t))
 
+for k in variant:
+    print(k)
+
 fig, ax = plt.subplots(
-    1, 2, figsize=(13, 4), sharex=True, sharey=True, constrained_layout=True
+    2, 2, figsize=(13, 8), sharex=True, sharey=False, constrained_layout=True
 )
-for name, d in variant.items():
-    n, t = np.transpose(d)
-    is_minuit = int("minuit" in name)
-    plt.sca(ax[is_minuit])
-    if is_minuit:
-        name = name[name.find("_") + 1 :]
-    ls = "-"
-    if "parallel" in name and "fastmath" in name:
-        ls = "-."
-    elif "parallel" in name:
-        ls = "--"
-    elif "fastmath" in name:
-        ls = ":"
-    plt.plot(n, t, ls=ls, label=name)
-for axi in ax:
+names = [
+    ["UnbinnedNLL", "simple", "UnbinnedNLL_log", "simple_log"],
+    [
+        "UnbinnedNLL_log",
+        "numba_sum_logpdf",
+        "numba_sum_logpdf_parallel",
+        "numba_sum_logpdf_fastmath",
+        "numba_sum_logpdf_fastmath_parallel",
+    ],
+    [
+        "minuit_UnbinnedNLL",
+        "minuit_UnbinnedNLL_log",
+        "minuit_simple_numba",
+        "minuit_simple_numba_log",
+        "minuit_cfunc_sum_logpdf",
+    ],
+    [
+        "minuit_numba_sum_logpdf_parallel_fastmath",
+        "minuit_numba_handtuned_parallel_fastmath",
+    ],
+]
+
+for axi, subnames in zip(ax.flat, names):
+    plt.sca(axi)
+    for name in subnames:
+        d = variant[name]
+        n, t = np.transpose(d)
+        ls = "-"
+        if "parallel" in name and "fastmath" in name:
+            ls = "-."
+        elif "parallel" in name:
+            ls = "--"
+        elif "fastmath" in name:
+            ls = ":"
+        plt.plot(n, t, ls=ls, label=name)
+for axi in ax.flat:
     axi.loglog()
-    axi.legend(title="minuit" if axi is ax[1] else None, ncol=2, frameon=False)
-fig.suptitle("Fit of 2 parameters (normal distribution)")
+    axi.legend(frameon=False)
+fig.suptitle("Fit of normal distribution with 2 parameters")
 fig.supxlabel("number of data points")
 fig.supylabel("runtime / sec")
 plt.show()
