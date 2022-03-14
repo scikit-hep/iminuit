@@ -9,7 +9,7 @@ if len(sys.argv) == 2:
 else:
     from pathlib import Path
 
-    fn = sorted(Path("../.benchmarks").rglob("*cost.json"))[-1]
+    fn = sorted(Path(".benchmarks").rglob("*cost.json"))[-1]
 
 with open(fn) as f:
     data = json.load(f)

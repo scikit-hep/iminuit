@@ -15,7 +15,7 @@ These steps require little effort in terms of changing your code and should be t
 - If you have a large sample, use a binned fit instead of an unbinned fit.
 - Use a faster implementation of the probability density, e.g. from `numba_stats`_.
 - For an unbinned fit, use the ``logpdf`` instead of the ``pdf``, if possible.
-- Use `numba`_ to compile the cost function; perhaps with options `parallel=True` and `fastmath=True` to parallelize computation (but see benchmark results).
+- Use `numba`_ to compile the cost function; try options `parallel=True` and `fastmath=True` to parallelize computation.
 
 Benchmark of unbinned maximum-likelihood fit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -42,12 +42,12 @@ We need to compute the log-probability for maximum-likelihood. For many common d
 Conclusions
 ^^^^^^^^^^^
 
-- :class:`iminuit.cost.UnbinnedNLL` is as fast as a simple direct implementation.
-- Using ``logpdf`` instead of ``log(pdf)`` is a big gain for a normal distribution, it is about five times faster. This is because the compiler can use SIMD instructions more efficently and omit the extra calls to the ``log`` and ``exp`` functions. Function calls that cannot be inlined in a hot loop are detrimental for performance.
-- Using `numba`_ is not a huge gain if the ``pdf`` or ``logpdf`` is already compiled.
-- Using `numba`_ to generate a C function pointer for the cost function is a moderate speed-up for small samples, but negligible for large samples.
-- Using `numba`_ with the options ``parallel`` and ``fastmath`` individually does not gain anything, while using both at the same time is a moderate gain of about 30 %.
-- Hand-tuning the cost function can give better parallel performance than using the ``logpdf`` implementation from `numba_stats`_.
+- :class:`iminuit.cost.UnbinnedNLL` is nearly as fast as a simple direct implementation.
+- Using ``logpdf`` instead of ``log(pdf)`` is a big gain for a normal distribution, it is about five times faster. This is because the compiler can use SIMD instructions more efficently and omit the extra calls to the ``log`` and ``exp`` functions.
+- Using `numba`_ is not a huge gain if the ``pdf`` or ``logpdf`` is already compiled. Directly calling a compiled cost function instead of :class:`iminuit.cost.UnbinnedNLL` reduces the call overhead a little, but this is barely noticable in practice.
+- Using `numba`_ to generate a C function pointer for the cost function reduces the call overhead even further, but it is again barely noticable in practice.
+- Using `numba`_ with the option ``parallel`` is a considerable gain for samples with more than 3000 elements, and ``parallel`` together with ``fastmath`` increases this gain even more.
+- Hand-tuning the cost function does not produce better results than the `numba_stats`_ implementation.
 
 Minuit2 vs other optimisers
 ---------------------------
