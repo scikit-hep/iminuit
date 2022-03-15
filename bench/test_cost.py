@@ -19,10 +19,16 @@ def test_UnbinnedNLL(benchmark, n, log):
 
 
 @pytest.mark.parametrize("n", N)
+@pytest.mark.parametrize("lib", ["numba_stats", "scipy"])
 @pytest.mark.parametrize("log", [False, True])
-def test_simple(benchmark, n, log):
+def test_custom(benchmark, n, log, lib):
     rng = np.random.default_rng(1)
     x = rng.normal(size=n)
+
+    if lib == "numba_stats":
+        from numba_stats import norm
+    else:
+        from scipy.stats import norm
 
     if log:
 
@@ -37,26 +43,10 @@ def test_simple(benchmark, n, log):
     benchmark(cost, x, 0.0, 1.0)
 
 
-@pytest.mark.parametrize("n", N)
-@pytest.mark.parametrize("parallel", [False, True])
-@pytest.mark.parametrize("fastmath", [False, True])
-def test_numba_sum_logpdf(benchmark, n, parallel, fastmath):
-    rng = np.random.default_rng(1)
-    x = rng.normal(size=n)
-
-    @nb.njit(parallel=parallel, fastmath=fastmath)
-    def cost(x, mu, sigma):
-        return -np.sum(norm.logpdf(x, mu, sigma))
-
-    cost(x, 0.0, 1.0)  # jit warm-up
-
-    benchmark(cost, x, 0.0, 1.0)
-
-
 @pytest.mark.parametrize("n", N[:-1])
-@pytest.mark.parametrize("log", [False, True])
 @pytest.mark.parametrize("numba", [False, True])
-def test_minuit_simple(benchmark, n, log, numba):
+@pytest.mark.parametrize("log", [False, True])
+def test_minuit_custom(benchmark, n, log, numba):
     rng = np.random.default_rng(1)
     x = rng.normal(size=n)
 
@@ -92,7 +82,7 @@ def test_minuit_simple(benchmark, n, log, numba):
 
 
 @pytest.mark.parametrize("n", N[:-1])
-def test_minuit_numba_sum_logpdf_parallel_fastmath(benchmark, n):
+def test_minuit_custom_log_numba_parallel_fastmath(benchmark, n):
     rng = np.random.default_rng(1)
     x = rng.normal(size=n)
 
@@ -116,7 +106,7 @@ def test_minuit_numba_sum_logpdf_parallel_fastmath(benchmark, n):
 
 
 @pytest.mark.parametrize("n", N[:-1])
-def test_minuit_numba_handtuned_parallel_fastmath(benchmark, n):
+def test_minuit_handtuned_log_numba_parallel_fastmath(benchmark, n):
     rng = np.random.default_rng(1)
     x = rng.normal(size=n)
 
@@ -143,7 +133,7 @@ def test_minuit_numba_handtuned_parallel_fastmath(benchmark, n):
 
 
 @pytest.mark.parametrize("n", N[:-1])
-def test_minuit_cfunc_sum_logpdf(benchmark, n):
+def test_minuit_custom_log_cfunc(benchmark, n):
     rng = np.random.default_rng(1)
     x = rng.normal(size=n)
 
@@ -183,3 +173,29 @@ def test_minuit_UnbinnedNLL(benchmark, n, log):
     m = benchmark(run)
     assert m.valid
     assert_allclose(m.values, [0, 1], atol=2 / n**0.5)
+
+
+@pytest.mark.parametrize("n", N[:-1])
+@pytest.mark.parametrize("BatchMode", [False, True])
+@pytest.mark.parametrize("NumCPU", [0, nb.get_num_threads()])
+def test_RooFit(benchmark, n, BatchMode, NumCPU):
+    import ROOT as R
+
+    x = R.RooRealVar("x", "x", -10, 10)
+    mu = R.RooRealVar("mu", "mu", 0, -10, 10)
+    sigma = R.RooRealVar("sigma", "sigma", 1, 0, 10)
+    gauss = R.RooGaussian("gauss", "pdf", x, mu, sigma)
+
+    data = gauss.generate(x, n)
+
+    def run():
+        mu.setVal(0)
+        sigma.setVal(1)
+        args = [R.RooFit.PrintLevel(-1), R.RooFit.BatchMode(BatchMode)]
+        if NumCPU:
+            args.append(R.RooFit.NumCPU(NumCPU))
+        gauss.fitTo(data, *args)
+
+    benchmark(run)
+    assert_allclose(mu.getVal(), 0, atol=5 / n**0.5)
+    assert_allclose(sigma.getVal(), 1, atol=5 / n**0.5)
