@@ -1,3 +1,4 @@
+.. _RooFit: https://root.cern/manual/roofit/
 .. _scipy: https://www.scipy.org/
 .. _scipy.optimize: https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html
 .. _numba: https://numba.pydata.org
