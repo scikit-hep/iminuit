@@ -17,8 +17,9 @@ jobs:
       with:
         python-version: 3.8
     - run: sudo apt-get install pandoc
+    - run: python -m pip install --upgrade pip
+    - run: python -m pip install .[doc,test]
+    - run: python -m ipykernel install --user --name python3
     - run: |
-        python -m pip install --upgrade pip
-        python -m pip install .[doc,test]
-        python -m ipykernel install --user --name python3
-    - run: make doc
+        mkdir -p build/html
+        sphinx-build -j3 -W -a -E -b html -d build/doctrees doc build/html
