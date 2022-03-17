@@ -47,13 +47,16 @@ def format_line(widths, edges):
 
 def fmin_fields(fm):
     rc = fm.reduced_chi2
+    s_ncall = f"Nfcn = {fm.nfcn}"
+    if fm.ngrad > 0:
+        s_ncall += f", Ngrad = {fm.ngrad}"
     return [
-        fm.algorithm,
+        f"{fm.algorithm}",
         f"FCN = {fm.fval:.4g}"
         + (f" (chi2/ndof = {rc:.1f})" if not np.isnan(rc) else ""),
-        f"Nfcn = {fm.nfcn}",
+        s_ncall,
         f"EDM = {fm.edm:.3g} (Goal: {fm.edm_goal:.3g})",
-        f"Ngrad = {fm.ngrad}" if fm.ngrad > 0 else "",
+        f"time = {fm.time:.1f} sec" if fm.time >= 0.1 else "",
         f"{'Valid' if fm.is_valid else 'INVALID'} Minimum",
         f"{'SOME' if fm.has_parameters_at_limit else 'No'} Parameters at limit",
         f"{'ABOVE' if fm.is_above_max_edm else 'Below'} EDM threshold (goal x 10)",

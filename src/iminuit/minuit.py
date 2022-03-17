@@ -28,6 +28,7 @@ from typing import (
     Any,
 )
 
+
 MnPrint.global_level = 0
 
 __all__ = ["Minuit"]
@@ -674,15 +675,17 @@ class Minuit:
 
         migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
 
-        # Automatically call Migrad up to `iterate` times if minimum is not valid.
-        # This simple heuristic makes Migrad converge more often.
-        for _ in range(iterate):
-            # workaround: precision must be set again after each call to MnMigrad
-            if self._precision is not None:
-                migrad.precision = self._precision
-            fm = migrad(ncall, self._tolerance)
-            if fm.is_valid or fm.has_reached_call_limit:
-                break
+        t = mutil._Timer(self._fmin)
+        with t:
+            # Automatically call Migrad up to `iterate` times if minimum is not valid.
+            # This simple heuristic makes Migrad converge more often.
+            for _ in range(iterate):
+                # workaround: precision must be set again after each call to MnMigrad
+                if self._precision is not None:
+                    migrad.precision = self._precision
+                fm = migrad(ncall, self._tolerance)
+                if fm.is_valid or fm.has_reached_call_limit:
+                    break
 
         self._last_state = fm.state
 
@@ -693,6 +696,7 @@ class Minuit:
             self.ngrad,
             self.ndof,
             self._edm_goal(migrad_factor=True),
+            t.value,
         )
         self._make_covariance()
 
@@ -739,11 +743,19 @@ class Minuit:
         if self._precision is not None:
             simplex.precision = self._precision
 
-        fm = simplex(ncall, self._tolerance)
+        t = mutil._Timer(self._fmin)
+        with t:
+            fm = simplex(ncall, self._tolerance)
         self._last_state = fm.state
 
         self._fmin = mutil.FMin(
-            fm, "Simplex", self.nfcn, self.ngrad, self.ndof, self._edm_goal()
+            fm,
+            "Simplex",
+            self.nfcn,
+            self.ngrad,
+            self.ndof,
+            self._edm_goal(),
+            t.value,
         )
         self._covariance = None
         self._merrors = mutil.MErrors()
@@ -838,12 +850,22 @@ class Minuit:
                     x[ipar] = xi
                     run(ipar + 1)
 
-        run(0)
+        t = mutil._Timer(self._fmin)
+        with t:
+            run(0)
 
         edm_goal = self._edm_goal()
         fm = FunctionMinimum(self._fcn, self._last_state, self.strategy, edm_goal)
         self._last_state = fm.state
-        self._fmin = mutil.FMin(fm, "Scan", self.nfcn, self.ngrad, self.ndof, edm_goal)
+        self._fmin = mutil.FMin(
+            fm,
+            "Scan",
+            self.nfcn,
+            self.ngrad,
+            self.ndof,
+            edm_goal,
+            t.value,
+        )
         self._covariance = None
         self._merrors = mutil.MErrors()
 
@@ -1102,19 +1124,21 @@ class Minuit:
         if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
             constraints = ()
 
-        r = minimize(
-            fcn,
-            start,
-            method=method,
-            bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
-            if has_limits
-            else None,
-            jac=grad,
-            hess=hess,
-            hessp=hessp,
-            constraints=constraints,
-            options=options,
-        )
+        t = mutil._Timer(self._fmin)
+        with t:
+            r = minimize(
+                fcn,
+                start,
+                method=method,
+                bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
+                if has_limits
+                else None,
+                jac=grad,
+                hess=hess,
+                hessp=hessp,
+                constraints=constraints,
+                options=options,
+            )
         if self.print_level > 0:
             print(r)
 
@@ -1196,6 +1220,7 @@ class Minuit:
             self.ngrad,
             self.ndof,
             edm_goal,
+            t.value,
         )
 
         if accurate_covar:
@@ -1261,12 +1286,7 @@ class Minuit:
                 edm_goal,
             )
             self._fmin = mutil.FMin(
-                fm,
-                "External",
-                self.nfcn,
-                self.ngrad,
-                self.ndof,
-                edm_goal,
+                fm, "External", self.nfcn, self.ngrad, self.ndof, edm_goal, 0
             )
             self._merrors = mutil.MErrors()
 
@@ -1274,7 +1294,11 @@ class Minuit:
 
         # update _fmin with Hesse
         hesse = MnHesse(self.strategy)
-        hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
+
+        t = mutil._Timer(self._fmin)
+        with t:
+            hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
+
         self._last_state = fm.state
         self._fmin = mutil.FMin(
             fm,
@@ -1283,6 +1307,7 @@ class Minuit:
             self.ngrad,
             self.ndof,
             self._fmin.edm_goal,
+            t.value,
         )
 
         self._make_covariance()
@@ -1364,31 +1389,34 @@ class Minuit:
                 else:
                     pars.append(par)
 
-        with TemporaryErrordef(self._fcn, factor):
-            minos = MnMinos(self._fcn, fm, self.strategy)
-            for par in pars:
-                me = minos(self._var2pos[par], ncall, self._tolerance)
-                self._merrors[par] = mutil.MError(
-                    me.number,
-                    par,
-                    me.lower,
-                    me.upper,
-                    me.is_valid,
-                    me.lower_valid,
-                    me.upper_valid,
-                    me.at_lower_limit,
-                    me.at_upper_limit,
-                    me.at_lower_max_fcn,
-                    me.at_upper_max_fcn,
-                    me.lower_new_min,
-                    me.upper_new_min,
-                    me.nfcn,
-                    me.min,
-                )
+        t = mutil._Timer(self._fmin)
+        with t:
+            with TemporaryErrordef(self._fcn, factor):
+                minos = MnMinos(self._fcn, fm, self.strategy)
+                for par in pars:
+                    me = minos(self._var2pos[par], ncall, self._tolerance)
+                    self._merrors[par] = mutil.MError(
+                        me.number,
+                        par,
+                        me.lower,
+                        me.upper,
+                        me.is_valid,
+                        me.lower_valid,
+                        me.upper_valid,
+                        me.at_lower_limit,
+                        me.at_upper_limit,
+                        me.at_lower_max_fcn,
+                        me.at_upper_max_fcn,
+                        me.lower_new_min,
+                        me.upper_new_min,
+                        me.nfcn,
+                        me.min,
+                    )
 
         if self._fmin:
             self._fmin._nfcn = self.nfcn
             self._fmin._ngrad = self.ngrad
+            self._fmin._time = t.value
 
         return self  # return self for method chaining and to autodisplay current state
 

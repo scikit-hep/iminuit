@@ -44,6 +44,13 @@ extensions = [
     "nbsphinx",
 ]
 
+nbsphinx_kernel_name = "python3"
+nbsphinx_execute = "always"
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc=figure.dpi=96",
+]
+
 autoclass_content = "both"
 autosummary_generate = True
 # def skip(app, what, name, obj, skip, options):
