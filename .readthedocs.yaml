@@ -14,5 +14,6 @@ python:
     - method: pip
       path: .
       extra_requirements:
+        - test
         - doc
   system_packages: false
