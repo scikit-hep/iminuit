@@ -114,7 +114,7 @@ def fmin(fm):
                     ff[2],
                     colspan=3,
                     style="text-align:center",
-                    title="No. of function evaluations in last call and total number",
+                    title="Total number of function and (optional) gradient evaluations",
                 ),
             ),
             tr(
@@ -128,7 +128,7 @@ def fmin(fm):
                     ff[4],
                     colspan=3,
                     style="text-align:center",
-                    title="No. of gradient evaluations in last call and total number",
+                    title="Total run time of algorithms",
                 ),
             ),
             tr(

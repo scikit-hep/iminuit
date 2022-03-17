@@ -262,7 +262,7 @@ def test_FMin():
         has_parameters_at_limit=False,
         state=[],
     )
-    fmin = util.FMin(fm, "foo", 1, 2, 1, 0.1)
+    fmin = util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.2)
     assert {x for x in dir(fmin) if not x.startswith("_")} == {
         "algorithm",
         "edm",
@@ -282,15 +282,18 @@ def test_FMin():
         "is_above_max_edm",
         "has_reached_call_limit",
         "has_parameters_at_limit",
+        "time",
     }
     assert fmin.algorithm == "foo"
     assert fmin.edm == 1.23456e-10
     assert fmin.edm_goal == 0.1
     assert fmin.has_parameters_at_limit == False
+    assert fmin.time == 1.2
 
-    assert fmin == util.FMin(fm, "foo", 1, 2, 1, 0.1)
-    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.3)
-    assert fmin != util.FMin(fm, "bar", 1, 2, 1, 0.1)
+    assert fmin == util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.2)
+    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.3, 1.2)
+    assert fmin != util.FMin(fm, "bar", 1, 2, 1, 0.1, 1.2)
+    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.5)
 
     assert repr(fmin) == (
         "<FMin algorithm='foo' edm=1.23456e-10 edm_goal=0.1 errordef=0.5 fval=1.23456e-10"
@@ -298,7 +301,7 @@ def test_FMin():
         " has_parameters_at_limit=False has_posdef_covar=True"
         " has_reached_call_limit=False has_valid_parameters=True"
         " hesse_failed=False is_above_max_edm=False is_valid=True"
-        " nfcn=1 ngrad=2 reduced_chi2=2.46912e-10>"
+        " nfcn=1 ngrad=2 reduced_chi2=2.46912e-10 time=1.2>"
     )
 
 

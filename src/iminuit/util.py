@@ -26,6 +26,7 @@ from typing import (
 )
 import types
 import abc
+from time import monotonic
 
 T = TypeVar("T")
 
@@ -387,6 +388,7 @@ class FMin:
         "_ngrad",
         "_ndof",
         "_edm_goal",
+        "_time",
     )
 
     def __init__(
@@ -397,6 +399,7 @@ class FMin:
         ngrad: int,
         ndof: int,
         edm_goal: float,
+        time: float,
     ):
         """Not to be initialized by users."""
         self._src = fmin
@@ -415,6 +418,7 @@ class FMin:
         self._ngrad = ngrad
         self._ndof = ndof
         self._edm_goal = edm_goal
+        self._time = time
 
     @property
     def algorithm(self) -> str:
@@ -600,6 +604,11 @@ class FMin:
     def errordef(self) -> float:
         """Equal to the value of :attr:`iminuit.Minuit.errordef` when Migrad ran."""
         return self._src.errordef  # type:ignore
+
+    @property
+    def time(self) -> float:
+        """Runtime of the last algorithm."""
+        return self._time
 
     def __eq__(self, other: object) -> bool:
         """Return True if all attributes are equal."""
@@ -994,6 +1003,17 @@ def propagate(
     y, jac = _jacobi(fn, x, dx, tol)
     ycov = np.einsum("ij,kl,jl", jac, jac, cov)
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
+
+
+class _Timer:
+    def __init__(self, fmin):
+        self._prev = fmin.time if fmin else 0.0
+
+    def __enter__(self):
+        self.value = monotonic()
+
+    def __exit__(self, *args):
+        self.value = monotonic() - self.value + self._prev
 
 
 def make_func_code(params: Indexable[str]) -> Namespace:
