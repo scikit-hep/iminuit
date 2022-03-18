@@ -456,7 +456,7 @@ class UnbinnedNLL(UnbinnedCost):
     def _call(self, args):
         data = self._masked
         x = self._model(data, *args)
-        x = _check_model_output(x)
+        x = _normalize_model_output(x)
         if self._log:
             return -2.0 * np.sum(x)
         return -2.0 * _sum_log_x(x)
@@ -503,7 +503,9 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
     def _call(self, args):
         data = self._masked
         ns, x = self._model(data, *args)
-        x = _check_model_output(x, "Model should return numpy array in second position")
+        x = _normalize_model_output(
+            x, "Model should return numpy array in second position"
+        )
         if self._log:
             return 2 * (ns - np.sum(x))
         return 2 * (ns - _sum_log_x(x))
@@ -613,7 +615,7 @@ class BinnedNLL(BinnedCost):
 
     def _call(self, args):
         cdf = self._model(self._xe, *args)
-        cdf = _check_model_output(cdf)
+        cdf = _normalize_model_output(cdf)
         prob = np.diff(cdf)
         n = self._masked
         ma = self.mask
@@ -668,7 +670,7 @@ class ExtendedBinnedNLL(BinnedCost):
 
     def _call(self, args):
         scdf = self._model(self._xe, *args)
-        scdf = _check_model_output(scdf)
+        scdf = _normalize_model_output(scdf)
         mu = np.diff(scdf)
         ma = self.mask
         n = self._masked
@@ -684,42 +686,49 @@ class ExtendedBinnedNLL(BinnedCost):
 class LeastSquares(MaskedCost):
     """Least-squares cost function (aka chisquare function).
 
-    Use this if you have data of the form (x, y +/- yerror).
+    Use this if you have data of the form (x, y +/- yerror), where x can be 1-dimensional
+    or multi-dimensional, but y is always 1-dimensional. See :meth:`__init__` for details
+    on how to use a multivariate model.
     """
 
-    __slots__ = "_loss", "_cost", "_model"
+    __slots__ = "_loss", "_cost", "_model", "_ndim"
 
     @property
     def x(self):
         """Get explanatory variables."""
-        return self.data[:, 0]
+        if self._ndim == 1:
+            return self.data[:, 0]
+        return self.data.T[: self._ndim]
 
     @x.setter
     def x(self, value):
         d = self.data
-        d[:, 0] = _norm(value)
-        self.data = d  # this also resets the masked
+        if self._ndim == 1:
+            d[:, 0] = _norm(value)
+        else:
+            d[:, : self._ndim] = _norm(value).T
+        self.data = d  # this also resets self.masked
 
     @property
     def y(self):
         """Get samples."""
-        return self.data[:, 1]
+        return self.data[:, self._ndim]
 
     @y.setter
     def y(self, value):
         d = self.data
-        d[:, 1] = _norm(value)
-        self.data = d  # this also resets the masked
+        d[:, self._ndim] = _norm(value)
+        self.data = d  # this also resets self.masked
 
     @property
     def yerror(self):
         """Get sample uncertainties."""
-        return self.data[:, 2]
+        return self.data[:, self._ndim + 1]
 
     @yerror.setter
     def yerror(self, value):
         d = self.data
-        d[:, 2] = _norm(value)
+        d[:, self._ndim + 1] = _norm(value)
         self.data = d
 
     @property
@@ -761,16 +770,19 @@ class LeastSquares(MaskedCost):
         Parameters
         ----------
         x : array-like
-            Locations where the model is evaluated.
+            Locations where the model is evaluated. If the model is multivariate, x
+            is allowed to be higher-dimensional with shape (D, N), where D is the number
+            of dimensions and N the number of data points.
         y : array-like
-            Observed values. Must have the same length as `x`.
+            Observed values. Must have the same length as x.
         yerror : array-like or float
-            Estimated uncertainty of observed values. Must have same shape as `y` or
-            be a scalar, which is then broadcasted to same shape as `y`.
+            Estimated uncertainty of observed values. Must have same shape as y or
+            be a scalar, which is then broadcasted to same shape as y.
         model : callable
             Function of the form f(x, par0, [par1, ...]) whose output is compared
-            to observed values, where `x` is the location and `parN` are model
-            parameters.
+            to observed values, where x is the location and par0, ... are model
+            parameters. If the model is multivariate, the location x must have shape
+            (D, N), where D is the number of dimensions and N the number of data points.
         loss : str or callable, optional
             The loss function can be modified to make the fit robust against outliers,
             see scipy.optimize.least_squares for details. Only "linear" (default) and
@@ -794,16 +806,22 @@ class LeastSquares(MaskedCost):
         """
         x = _norm(x)
         y = _norm(y)
-        data = np.column_stack(np.broadcast_arrays(x, y, yerror))
+        assert x.ndim >= 1  # guaranteed by _norm
 
+        self._ndim = x.ndim
         self._model = model
         self.loss = loss
+
+        x = np.atleast_2d(x)
+        data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
+
         super().__init__(describe(self._model)[1:], data, verbose)
 
     def _call(self, args):
-        x, y, yerror = self._masked.T
+        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
+        y, yerror = self._masked.T[self._ndim :]
         ym = self._model(x, *args)
-        ym = _check_model_output(ym)
+        ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
 
 
@@ -904,7 +922,7 @@ def _covinv(array):
     return np.linalg.inv(array) if array.ndim == 2 else 1.0 / array
 
 
-def _check_model_output(x, msg="Model should return numpy array"):
+def _normalize_model_output(x, msg="Model should return numpy array"):
     if not isinstance(x, np.ndarray):
         warnings.warn(
             f"{msg}, but returns {type(x)}",

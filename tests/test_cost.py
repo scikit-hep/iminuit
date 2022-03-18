@@ -390,6 +390,30 @@ def test_LeastSquares_properties():
         c.yerror = [1, 2]
 
 
+def test_LeastSquares_2D():
+    x = np.array([1.0, 2.0, 3.0])
+    y = np.array([4.0, 5.0, 6.0])
+    z = 1.5 * x + 0.2 * y
+    ze = 1.5
+
+    def model(xy, a, b):
+        x, y = xy
+        return a * x + b * y
+
+    c = LeastSquares((x, y), z, ze, model)
+    assert_equal(c.x, (x, y))
+    assert_equal(c.y, z)
+    assert_equal(c.yerror, ze)
+    assert_allclose(c(1.5, 0.2), 0.0)
+    assert_allclose(c(2.5, 0.2), np.sum(((z - 2.5 * x - 0.2 * y) / ze) ** 2))
+    assert_allclose(c(1.5, 1.2), np.sum(((z - 1.5 * x - 1.2 * y) / ze) ** 2))
+
+    c.y = 2 * z
+    assert_equal(c.y, 2 * z)
+    c.x = (y, x)
+    assert_equal(c.x, (y, x))
+
+
 def test_addable_cost_1():
     def model1(x, a):
         return a + x
@@ -584,12 +608,12 @@ def test_model_performance_warning():
         ExtendedUnbinnedNLL([1], lambda x, a: (1, model(x, a)))(1)
 
 
-@pytest.mark.parametrize("klass", (BinnedNLL, ExtendedBinnedNLL))
-def test_update_data_with_mask(klass):
+@pytest.mark.parametrize("cls", (BinnedNLL, ExtendedBinnedNLL))
+def test_update_data_with_mask(cls):
     xe = np.arange(0, 4)
     nx = np.diff(expon_cdf(xe, 1))
     nx[0] += 1
-    c = klass(nx.copy(), xe, expon_cdf)
+    c = cls(nx.copy(), xe, expon_cdf)
 
     c.mask = [False, True, True]
     assert c(1) == 0
