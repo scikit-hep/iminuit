@@ -771,8 +771,8 @@ class LeastSquares(MaskedCost):
         ----------
         x : array-like
             Locations where the model is evaluated. If the model is multivariate, x
-            is allowed to be higher-dimensional with shape (D, N), where D is the number
-            of dimensions and N the number of data points.
+            must have the shape (D, N), where D is the number of dimensions and N the
+            number of data points.
         y : array-like
             Observed values. Must have the same length as x.
         yerror : array-like or float
@@ -781,8 +781,8 @@ class LeastSquares(MaskedCost):
         model : callable
             Function of the form f(x, par0, [par1, ...]) whose output is compared
             to observed values, where x is the location and par0, ... are model
-            parameters. If the model is multivariate, the location x must have shape
-            (D, N), where D is the number of dimensions and N the number of data points.
+            parameters. If the model is multivariate, x must have shape (D, N), where D
+            is the number of dimensions and N the number of data points.
         loss : str or callable, optional
             The loss function can be modified to make the fit robust against outliers,
             see scipy.optimize.least_squares for details. Only "linear" (default) and
