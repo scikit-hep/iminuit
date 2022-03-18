@@ -12,7 +12,6 @@ The following tutorials show how to use iminuit. The order is the recommended re
 
     tutorial/basic_tutorial
     tutorial/cost_functions
-    tutorial/multivariate_least_squares
     tutorial/hesse_and_minos
     tutorial/error_bands
     tutorial/simultaneous_fits
