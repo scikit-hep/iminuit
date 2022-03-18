@@ -52,6 +52,8 @@ Checkout our large and comprehensive list of `tutorials`_ that take you all the 
 In a nutshell
 -------------
 
+iminuit is intended to be used with a user-provided negative log-likelihood function or least-squares function. Standard functions are included in ``iminuit.cost``, so you don't have to write them yourself. The following example shows how iminuit is used with a dummy least-squares function.
+
 .. code-block:: python
 
     from iminuit import Minuit
@@ -69,6 +71,12 @@ In a nutshell
     m.hesse()   # run covariance estimator
     print(m.errors)  # x: 1, y: 1, z: 1
 
+Partner projects
+----------------
+
+* `numba_stats`_ provides faster implementations of probability density functions than scipy, and a few specific ones used in particle physics that are not in scipy.
+* `jacobi`_ provides a robust, fast, and accurate calculation of the Jacobi matrix of any transformation function and building a function for generic error propagation.
+
 Versions
 --------
 
@@ -79,3 +87,5 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 .. _changelog: https://iminuit.readthedocs.io/en/stable/changelog.html
 .. _tutorials: https://iminuit.readthedocs.io/en/stable/tutorials.html
 .. _discussions: https://github.com/scikit-hep/iminuit/discussions
+.. _jacobi: https://github.com/hdembinski/jacobi
+.. _numba_stats: https://github.com/HDembinski/numba-stats
