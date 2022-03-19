@@ -112,9 +112,12 @@ def test_Matrix():
         ("a", "a"),
         ("a", "b"),
         ("a", "c"),
+        ("b", "b"),
         ("b", "c"),
         ("c", "c"),
     ]
+    for k, v in d.items():
+        assert v == m[k]
 
     with pytest.raises(TypeError):
         util.Matrix("ab")
