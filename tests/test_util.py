@@ -107,6 +107,18 @@ def test_Matrix():
     m3 = m[["a", "c"]]
     assert_equal(m3, [[0, 2], [6, 8]])
 
+    d = m.to_dict()
+    assert list(d.keys()) == [
+        ("a", "a"),
+        ("a", "b"),
+        ("a", "c"),
+        ("b", "b"),
+        ("b", "c"),
+        ("c", "c"),
+    ]
+    for k, v in d.items():
+        assert v == m[k]
+
     with pytest.raises(TypeError):
         util.Matrix("ab")
 
