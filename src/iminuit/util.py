@@ -291,6 +291,20 @@ class Matrix(np.ndarray):
             return super(Matrix, self).__getitem__((key, key))
         return super(Matrix, self).__getitem__(key)
 
+    def to_dict(self) -> Dict[Tuple(str, str), float]:
+        """
+        Convert matrix to dict.
+
+        Since the matrix is symmetric, the dict only contains the lower triangular matrix.
+        """
+        names = tuple(self._var2pos)  # type:ignore
+        d = {}
+        for i, pi in enumerate(names):
+            for j in range(i + 1):
+                pj = names[j]
+                d[pi, pj] = self[i, j]
+        return d
+
     def to_table(self) -> Tuple[List[List[str]], Tuple[str, ...]]:
         """
         Convert matrix to tabular format.
