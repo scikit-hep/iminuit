@@ -1,40 +1,45 @@
 """
 Standard cost functions to minimize for statistical fits.
 
-We provide these for convenience, so that you do not have to write your own for standard fits.
-The cost functions optionally use Numba to accelerate some calculations, if Numba is
+We provide these for convenience, so that you do not have to write your own for standard
+fits. The cost functions optionally use Numba to accelerate some calculations, if Numba is
 installed.
 
 What to use when
 ----------------
 - Fit a normalised probability density to data
-  - Data is not binned: UnbinnedNLL
-  - Data is binned: BinnedNLL, also supports histogram of weighted samples
+
+    - Data is not binned: UnbinnedNLL
+    - Data is binned: BinnedNLL, also supports histogram of weighted samples
+
 - Fit a density to data, density is not normalised
-  - Data is not binned: ExtendedUnbinnedNLL
-  - Data is binned: ExtendedBinnedNLL, also supports histogram of weighted samples
-- Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations
-  (x can be multi-dimensional)
-  - y values contain no outliers: LeastSquares
-  - y values contain outliers: LeastSquares with "soft_l1" loss function
+
+    - Data is not binned: ExtendedUnbinnedNLL
+    - Data is binned: ExtendedBinnedNLL, also supports histogram of weighted samples
+
+- Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations (x
+  can be multi-dimensional)
+
+    - y values contain no outliers: LeastSquares
+    - y values contain outliers: LeastSquares with loss function ``soft_l1``
 
 Combining cost functions
 ------------------------
-All cost functions can be added, which generates a new combined cost function.
-Parameters with the same name are shared between component cost functions. Use this to
-constrain one or several parameters with different data sets and using different
-statistical models for each data set. Gaussian penalty terms can also be added to the
-cost function to introduce external knowledge about a parameter.
+All cost functions can be added, which generates a new combined cost function. Parameters
+with the same name are shared between component cost functions. Use this to constrain one
+or several parameters with different data sets and using different statistical models for
+each data set. Gaussian penalty terms can also be added to the cost function to introduce
+external knowledge about a parameter.
 
 Notes
 -----
 The cost functions defined here have been optimized with knowledge about implementation
-details of Minuit to give the highest accucary and the most robust results, so they
-should perform well. If you have trouble with your own implementations, try these.
+details of Minuit to give the highest accucary and the most robust results, so they should
+perform well. If you have trouble with your own implementations, try these.
 
-The binned versions of the log-likelihood fits support weighted samples. For each bin
-of the histogram, the sum of weights and the sum of squared weights is needed then, see
-class documentation for details.
+The binned versions of the log-likelihood fits support weighted samples. For each bin of
+the histogram, the sum of weights and the sum of squared weights is needed then, see class
+documentation for details.
 """
 
 from .util import (
@@ -189,8 +194,8 @@ class Cost(abc.ABC):
         """
         Return number of points in least-squares fits or bins in a binned fit.
 
-        Infinity is returned if the cost function is unbinned. This is used by Minuit
-        to compute the reduced chi2, a goodness-of-fit estimate.
+        Infinity is returned if the cost function is unbinned. This is used by Minuit to
+        compute the reduced chi2, a goodness-of-fit estimate.
         """
         ...  # pragma: no cover
 
@@ -257,8 +262,8 @@ class Constant(Cost):
     """
     Cost function that represents a constant.
 
-    If your cost function produces results that are far away from O(1), adding a
-    constant that brings the value closer to zero may improve the numerical stability.
+    If your cost function produces results that are far away from O(1), adding a constant
+    that brings the value closer to zero may improve the numerical stability.
     """
 
     __slots__ = "value"
@@ -298,11 +303,11 @@ class CostSum(Cost, Sequence):
     Warnings
     --------
     CostSum does not work very well with cost functions that accept arrays, because the
-    function signature does not allow one to determine how many parameters are accepted
-    by the function and which parameters overlap between different cost functions.
+    function signature does not allow one to determine how many parameters are accepted by
+    the function and which parameters overlap between different cost functions.
 
-    CostSum works with cost functions that accept arrays only under the condition that
-    all cost functions accept the very same array parameter:
+    CostSum works with cost functions that accept arrays only under the condition that all
+    cost functions accept the very same array parameter:
 
     1) All array must have the same name in all constituent cost functions.
     2) All arrays must have the same length.
@@ -439,17 +444,17 @@ class UnbinnedNLL(UnbinnedCost):
         data : array-like
             Sample of observations.
         pdf : callable
-            Probability density function of the form f(data, par0, [par1, ...]),
-            where `data` is the data sample and `parN` are model parameters.
+            Probability density function of the form f(data, par0, [par1, ...]), where
+            `data` is the data sample and `parN` are model parameters.
         verbose : int, optional
-            Verbosity level. 0: is no output (default).
-            1: print current args and negative log-likelihood value.
+            Verbosity level. 0: is no output (default). 1: print current args and negative
+            log-likelihood value.
         log : bool, optional
             Distributions of the exponential family (normal, exponential, poisson, ...)
-            allow one to compute the logarithm of the pdf directly, which is more
-            accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
-            to True, if the model returns the logarithm of the pdf instead of the pdf.
-            Default is False.
+            allow one to compute the logarithm of the pdf directly, which is more accurate
+            and efficient than effectively doing ``log(exp(logpdf))``. Set this to True,
+            if the model returns the logarithm of the pdf instead of the pdf. Default is
+            False.
         """
         super().__init__(data, pdf, verbose, log)
 
@@ -485,18 +490,22 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         data : array-like
             Sample of observations.
         scaled_pdf : callable
-            Density function of the form f(data, par0, [par1, ...]), where `data` is
-            the data sample and `parN` are model parameters. Must return a tuple
-            (<integral over f in data range>, <f evaluated at data points>).
+            Density function of the form f(data, par0, [par1, ...]), where data is the
+            data sample and par0, ... are model parameters. Must return a tuple
+            (<integral over f in data window>, <f evaluated at data points>). The first
+            value is the density integrated over the data window, the interval that we
+            consider for the fit. For example, if the data are exponentially distributed,
+            but we fit only the interval (0, 5), then the first value is the density
+            integrated from 0 to 5.
         verbose : int, optional
-            Verbosity level. 0: is no output (default).
-            1: print current args and negative log-likelihood value.
+            Verbosity level. 0: is no output (default). 1: print current args and negative
+            log-likelihood value.
         log : bool, optional
             Distributions of the exponential family (normal, exponential, poisson, ...)
-            allow one to compute the logarithm of the pdf directly, which is more
-            accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
-            to True, if the model returns the logarithm of the density as the second
-            argument instead of the density. Default is False.
+            allow one to compute the logarithm of the pdf directly, which is more accurate
+            and efficient than effectively doing ``log(exp(logpdf))``. Set this to True,
+            if the model returns the logarithm of the density as the second argument
+            instead of the density. Default is False.
         """
         super().__init__(data, scaled_pdf, verbose, log)
 
@@ -579,7 +588,8 @@ class BinnedCost(MaskedCost):
 
 
 class BinnedNLL(BinnedCost):
-    """Binned negative log-likelihood.
+    """
+    Binned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
     This cost function works with normal and weighted histograms. See init for details.
@@ -634,11 +644,12 @@ class BinnedNLL(BinnedCost):
 
 
 class ExtendedBinnedNLL(BinnedCost):
-    """Binned extended negative log-likelihood.
+    """
+    Binned extended negative log-likelihood.
 
-    Use this if shape and normalization of the fitted PDF are of interest and the data
-    is binned. This cost function works with normal and weighted histograms. See init
-    for details.
+    Use this if shape and normalization of the fitted PDF are of interest and the data is
+    binned. This cost function works with normal and weighted histograms. See init for
+    details.
     """
 
     __slots__ = ()
@@ -655,16 +666,16 @@ class ExtendedBinnedNLL(BinnedCost):
         Parameters
         ----------
         n : array-like
-            Histogram counts. If this is an array N x 2, it is interpreted as pairs of
-            sum of weights and sum of weights squared.
+            Histogram counts. If this is an array N x 2, it is interpreted as pairs of sum
+            of weights and sum of weights squared.
         xe : array-like
             Bin edge locations, must be len(n) + 1.
         scaled_cdf : callable
-            Scaled Cumulative density function of the form f(xe, par0, [par1, ...]),
-            where `xe` is a bin edge and `parN` are model parameters.
+            Scaled Cumulative density function of the form f(xe, par0, [par1, ...]), where
+            `xe` is a bin edge and `parN` are model parameters.
         verbose : int, optional
-            Verbosity level. 0: is no output (default).
-            1: print current args and negative log-likelihood value.
+            Verbosity level. 0: is no output (default). 1: print current args and negative
+            log-likelihood value.
         """
         super().__init__(n, xe, scaled_cdf, verbose)
 
@@ -770,28 +781,28 @@ class LeastSquares(MaskedCost):
         Parameters
         ----------
         x : array-like
-            Locations where the model is evaluated. If the model is multivariate, x
-            must have the shape (D, N), where D is the number of dimensions and N the
-            number of data points.
+            Locations where the model is evaluated. If the model is multivariate, x must
+            have the shape (D, N), where D is the number of dimensions and N the number of
+            data points.
         y : array-like
             Observed values. Must have the same length as x.
         yerror : array-like or float
-            Estimated uncertainty of observed values. Must have same shape as y or
-            be a scalar, which is then broadcasted to same shape as y.
+            Estimated uncertainty of observed values. Must have same shape as y or be a
+            scalar, which is then broadcasted to same shape as y.
         model : callable
-            Function of the form f(x, par0, [par1, ...]) whose output is compared
-            to observed values, where x is the location and par0, ... are model
-            parameters. If the model is multivariate, x must have shape (D, N), where D
-            is the number of dimensions and N the number of data points.
+            Function of the form f(x, par0, [par1, ...]) whose output is compared to
+            observed values, where x is the location and par0, ... are model parameters.
+            If the model is multivariate, x must have shape (D, N), where D is the number
+            of dimensions and N the number of data points.
         loss : str or callable, optional
-            The loss function can be modified to make the fit robust against outliers,
-            see scipy.optimize.least_squares for details. Only "linear" (default) and
-            "soft_l1" are currently implemented, but users can pass any loss function
-            as this argument. It should be a monotonic, twice differentiable function,
-            which accepts the squared residual and returns a modified squared residual.
+            The loss function can be modified to make the fit robust against outliers, see
+            scipy.optimize.least_squares for details. Only "linear" (default) and
+            "soft_l1" are currently implemented, but users can pass any loss function as
+            this argument. It should be a monotonic, twice differentiable function, which
+            accepts the squared residual and returns a modified squared residual.
         verbose : int, optional
-            Verbosity level. 0: is no output (default).
-            1: print current args and negative log-likelihood value.
+            Verbosity level. 0: is no output (default). 1: print current args and negative
+            log-likelihood value.
 
         Notes
         -----
@@ -829,25 +840,24 @@ class NormalConstraint(Cost):
     """
     Gaussian penalty for one or several parameters.
 
-    The Gaussian penalty acts like a pseudo-measurement of the parameter itself, based
-    on a (multi-variate) normal distribution. Penalties can be set for one or
-    several parameters at once (which is more efficient). When several parameter are
-    constrained, one can specify the full covariance matrix of the parameters.
+    The Gaussian penalty acts like a pseudo-measurement of the parameter itself, based on
+    a (multi-variate) normal distribution. Penalties can be set for one or several
+    parameters at once (which is more efficient). When several parameter are constrained,
+    one can specify the full covariance matrix of the parameters.
 
     Notes
     -----
-    It is sometimes necessary to add a weak penalty on a parameter to avoid
-    instabilities in the fit. A typical example in high-energy physics is the fit of a
-    signal peak above some background. If the amplitude of the peak vanishes, the shape
-    parameters of the peak become unconstrained and the fit becomes unstable. This can
-    be avoided by adding weak (large uncertainty) penalty on the shape parameters whose
-    pull is negligible if the peak amplitude is non-zero.
+    It is sometimes necessary to add a weak penalty on a parameter to avoid instabilities
+    in the fit. A typical example in high-energy physics is the fit of a signal peak above
+    some background. If the amplitude of the peak vanishes, the shape parameters of the
+    peak become unconstrained and the fit becomes unstable. This can be avoided by adding
+    weak (large uncertainty) penalty on the shape parameters whose pull is negligible if
+    the peak amplitude is non-zero.
 
     This class can also be used to approximately include external measurements of some
     parameters, if the original cost function is not available or too costly to compute.
-    If the external measurement was performed in the asymptotic limit with a large
-    sample, a Gaussian penalty is an accurate statistical representation of the
-    external result.
+    If the external measurement was performed in the asymptotic limit with a large sample,
+    a Gaussian penalty is an accurate statistical representation of the external result.
     """
 
     __slots__ = "_value", "_cov", "_covinv"
@@ -863,8 +873,8 @@ class NormalConstraint(Cost):
         value : float or array-like
             Expected value(s). Must have same length as `args`.
         error : float or array-like
-            Expected error(s). If 1D, must have same length as `args`. If 2D, must be
-            the covariance matrix of the parameters.
+            Expected error(s). If 1D, must have same length as `args`. If 2D, must be the
+            covariance matrix of the parameters.
         """
         if isinstance(args, str):
             args = [args]
