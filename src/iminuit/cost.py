@@ -17,8 +17,8 @@ What to use when
     - Data is not binned: ExtendedUnbinnedNLL
     - Data is binned: ExtendedBinnedNLL, also supports histogram of weighted samples
 
-- Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations (x
-  can be multi-dimensional)
+- Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
+  is one- or multi-dimensional, y is one-dimensional.
 
     - y values contain no outliers: LeastSquares
     - y values contain outliers: LeastSquares with loss function ``soft_l1``
@@ -425,7 +425,8 @@ class UnbinnedNLL(UnbinnedCost):
     """Unbinned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the original
-    unbinned data is available.
+    unbinned data is available. The data can be one- or multi-dimensional, see
+    :meth:`__init__` for details on how to fit multivariate data.
     """
 
     __slots__ = ()
@@ -442,10 +443,14 @@ class UnbinnedNLL(UnbinnedCost):
         Parameters
         ----------
         data : array-like
-            Sample of observations.
+            Sample of observations. If the observations are multidimensional, data must
+            have the shape (D, N), where D is the number of dimensions and N the number of
+            data points.
         pdf : callable
             Probability density function of the form f(data, par0, [par1, ...]), where
-            `data` is the data sample and `parN` are model parameters.
+            data is the data sample and par0, ... are model parameters. If the data are
+            multivariate, data passed to f has shape (D, N), where D is the number of
+            dimensions and N the number of data points.
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and negative
             log-likelihood value.
@@ -470,8 +475,9 @@ class UnbinnedNLL(UnbinnedCost):
 class ExtendedUnbinnedNLL(UnbinnedCost):
     """Unbinned extended negative log-likelihood.
 
-    Use this if shape and normalization of the fitted PDF are of interest and the
-    original unbinned data is available.
+    Use this if shape and normalization of the fitted PDF are of interest and the original
+    unbinned data is available. The data can be one- or multi-dimensional, see
+    :meth:`__init__` for details on how to fit multivariate data.
     """
 
     __slots__ = ()
@@ -488,15 +494,19 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         Parameters
         ----------
         data : array-like
-            Sample of observations.
+            Sample of observations. If the observations are multidimensional, data must
+            have the shape (D, N), where D is the number of dimensions and N the number of
+            data points.
         scaled_pdf : callable
             Density function of the form f(data, par0, [par1, ...]), where data is the
-            data sample and par0, ... are model parameters. Must return a tuple
+            sample and par0, ... are model parameters. Must return a tuple
             (<integral over f in data window>, <f evaluated at data points>). The first
             value is the density integrated over the data window, the interval that we
             consider for the fit. For example, if the data are exponentially distributed,
             but we fit only the interval (0, 5), then the first value is the density
-            integrated from 0 to 5.
+            integrated from 0 to 5. If the data are multivariate, data passed to f has
+            shape (D, N), where D is the number of dimensions and N the number of data
+            points.
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and negative
             log-likelihood value.
@@ -697,9 +707,9 @@ class ExtendedBinnedNLL(BinnedCost):
 class LeastSquares(MaskedCost):
     """Least-squares cost function (aka chisquare function).
 
-    Use this if you have data of the form (x, y +/- yerror), where x can be 1-dimensional
-    or multi-dimensional, but y is always 1-dimensional. See :meth:`__init__` for details
-    on how to use a multivariate model.
+    Use this if you have data of the form (x, y +/- yerror), where x can be
+    one-dimensional or multi-dimensional, but y is always one-dimensional. See
+    :meth:`__init__` for details on how to use a multivariate model.
     """
 
     __slots__ = "_loss", "_cost", "_model", "_ndim"
@@ -782,7 +792,7 @@ class LeastSquares(MaskedCost):
         ----------
         x : array-like
             Locations where the model is evaluated. If the model is multivariate, x must
-            have the shape (D, N), where D is the number of dimensions and N the number of
+            have shape (D, N), where D is the number of dimensions and N the number of
             data points.
         y : array-like
             Observed values. Must have the same length as x.
@@ -792,7 +802,7 @@ class LeastSquares(MaskedCost):
         model : callable
             Function of the form f(x, par0, [par1, ...]) whose output is compared to
             observed values, where x is the location and par0, ... are model parameters.
-            If the model is multivariate, x must have shape (D, N), where D is the number
+            If the model is multivariate, x has shape (D, N), where D is the number
             of dimensions and N the number of data points.
         loss : str or callable, optional
             The loss function can be modified to make the fit robust against outliers, see
