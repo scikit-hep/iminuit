@@ -247,6 +247,14 @@ def test_use_array_call():
         Minuit(lambda *args: 0, [1, 2], name=["a", "b", "c"])
 
 
+def test_release_with_none():
+    m = Minuit(func0, x=0, y=0)
+    m.fixed = (True, False)
+    assert m.fixed == (True, False)
+    m.fixed = None
+    assert m.fixed == (False, False)
+
+
 def test_parameters():
     m = Minuit(lambda a, b: 0, a=1, b=1)
     assert m.parameters == ("a", "b")
