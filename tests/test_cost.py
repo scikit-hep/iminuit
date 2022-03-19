@@ -79,6 +79,30 @@ def test_UnbinnedNLL(unbinned, verbose, model):
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
+def test_UnbinnedNLL_2D():
+    def model_base(mux, muy, sx, sy, rho):
+        C = np.empty((2, 2))
+        C[0, 0] = sx**2
+        C[0, 1] = C[1, 0] = sx * sy * rho
+        C[1, 1] = sy**2
+        m = [mux, muy]
+        return stats.multivariate_normal(m, C)
+
+    def model(x_y, mux, muy, sx, sy, rho):
+        return model_base(mux, muy, sx, sy, rho).pdf(x_y.T)
+
+    truth = 0.1, 0.2, 0.3, 0.4, 0.5
+    x, y = model_base(*truth).rvs(size=1000, random_state=1).T
+
+    cost = UnbinnedNLL((x, y), model)
+    m = Minuit(cost, *truth)
+    m.limits["sx", "sy"] = (0, None)
+    m.limits["rho"] = (-1, 1)
+    m.migrad()
+
+    assert_allclose(m.values, truth, atol=0.02)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
 def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
@@ -102,6 +126,30 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
 
     assert_equal(m.fmin.reduced_chi2, np.nan)
+
+
+def test_ExtendedUnbinnedNLL_2D():
+    def model_base(mux, muy, sx, sy, rho):
+        C = np.empty((2, 2))
+        C[0, 0] = sx**2
+        C[0, 1] = C[1, 0] = sx * sy * rho
+        C[1, 1] = sy**2
+        m = [mux, muy]
+        return stats.multivariate_normal(m, C)
+
+    def model(x_y, n, mux, muy, sx, sy, rho):
+        return n * 1000, n * 1000 * model_base(mux, muy, sx, sy, rho).pdf(x_y.T)
+
+    truth = 1.0, 0.1, 0.2, 0.3, 0.4, 0.5
+    x, y = model_base(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
+
+    cost = ExtendedUnbinnedNLL((x, y), model)
+    m = Minuit(cost, *truth)
+    m.limits["n", "sx", "sy"] = (0, None)
+    m.limits["rho"] = (-1, 1)
+    m.migrad()
+
+    assert_allclose(m.values, truth, atol=0.1)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
