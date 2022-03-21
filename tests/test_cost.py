@@ -20,6 +20,15 @@ stats = pytest.importorskip("scipy.stats")
 norm = stats.norm
 
 
+def mvnorm(mux, muy, sx, sy, rho):
+    C = np.empty((2, 2))
+    C[0, 0] = sx**2
+    C[0, 1] = C[1, 0] = sx * sy * rho
+    C[1, 1] = sy**2
+    m = [mux, muy]
+    return stats.multivariate_normal(m, C)
+
+
 def expon_cdf(x, a):
     return 1 - np.exp(-x / a)
 
@@ -80,25 +89,18 @@ def test_UnbinnedNLL(unbinned, verbose, model):
 
 
 def test_UnbinnedNLL_2D():
-    def model_base(mux, muy, sx, sy, rho):
-        C = np.empty((2, 2))
-        C[0, 0] = sx**2
-        C[0, 1] = C[1, 0] = sx * sy * rho
-        C[1, 1] = sy**2
-        m = [mux, muy]
-        return stats.multivariate_normal(m, C)
-
     def model(x_y, mux, muy, sx, sy, rho):
-        return model_base(mux, muy, sx, sy, rho).pdf(x_y.T)
+        return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
     truth = 0.1, 0.2, 0.3, 0.4, 0.5
-    x, y = model_base(*truth).rvs(size=1000, random_state=1).T
+    x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
 
     cost = UnbinnedNLL((x, y), model)
     m = Minuit(cost, *truth)
     m.limits["sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
+    assert m.valid
 
     assert_allclose(m.values, truth, atol=0.02)
 
@@ -129,25 +131,18 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
 
 
 def test_ExtendedUnbinnedNLL_2D():
-    def model_base(mux, muy, sx, sy, rho):
-        C = np.empty((2, 2))
-        C[0, 0] = sx**2
-        C[0, 1] = C[1, 0] = sx * sy * rho
-        C[1, 1] = sy**2
-        m = [mux, muy]
-        return stats.multivariate_normal(m, C)
-
     def model(x_y, n, mux, muy, sx, sy, rho):
-        return n * 1000, n * 1000 * model_base(mux, muy, sx, sy, rho).pdf(x_y.T)
+        return n * 1000, n * 1000 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
     truth = 1.0, 0.1, 0.2, 0.3, 0.4, 0.5
-    x, y = model_base(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
 
     cost = ExtendedUnbinnedNLL((x, y), model)
     m = Minuit(cost, *truth)
     m.limits["n", "sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
+    assert m.valid
 
     assert_allclose(m.values, truth, atol=0.1)
 
@@ -219,6 +214,25 @@ def test_BinnedNLL_ndof_zero():
     assert np.isnan(m.fmin.reduced_chi2)
 
 
+def test_BinnedNLL_2D():
+    truth = (0.1, 0.2, 0.3, 0.4, 0.5)
+    x, y = mvnorm(*truth).rvs(size=1000).T
+
+    w, xe, ye = np.histogram2d(x, y, bins=(20, 50))
+
+    def model(xy, mux, muy, sx, sy, rho):
+        return mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
+
+    cost = BinnedNLL(w, (xe, ye), model)
+    assert cost.ndata == np.prod(w.shape)
+    m = Minuit(cost, *truth)
+    m.limits["sx", "sy"] = (0, None)
+    m.limits["rho"] = (-1, 1)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.values, truth, atol=0.05)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -256,6 +270,25 @@ def test_weighted_ExtendedBinnedNLL():
 def test_ExtendedBinnedNLL_bad_input():
     with pytest.raises(ValueError):
         ExtendedBinnedNLL([1], [1], lambda x, a: 0)
+
+
+def test_ExtendedBinnedNLL_2D():
+    truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
+
+    w, xe, ye = np.histogram2d(x, y)
+
+    def model(xy, n, mux, muy, sx, sy, rho):
+        return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
+
+    cost = ExtendedBinnedNLL(w, (xe, ye), model)
+    assert cost.ndata == np.prod(w.shape)
+    m = Minuit(cost, *truth)
+    m.limits["n", "sx", "sy"] = (0, None)
+    m.limits["rho"] = (-1, 1)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.values, truth, atol=0.05)
 
 
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])

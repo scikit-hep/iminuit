@@ -51,7 +51,7 @@ from .util import (
 import numpy as np
 from collections.abc import Sequence
 import abc
-from typing import Tuple, Callable, Union
+from typing import Tuple, Callable, Union, Iterable
 import warnings
 
 
@@ -397,7 +397,7 @@ class MaskedCost(Cost):
     @Cost.ndata.getter
     def ndata(self):
         """See Cost.ndata."""
-        return len(self._masked)
+        return np.prod(self._masked.shape)
 
     def _update_masked(self):
         self._masked = self._data if self._mask is None else self._data[self._mask]
@@ -533,7 +533,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_xe", "_model"
+    __slots__ = "_xe", "_model", "_ndim"
 
     def _weighted(self):
         return self._data.ndim > self._xe.ndim
@@ -542,19 +542,21 @@ class BinnedCost(MaskedCost):
         assert self._xe is not None
 
         n = _norm(value)
-        xe = self._xe
 
-        if n.ndim == xe.ndim:
+        if n.ndim == self._ndim:
             is_weighted = False
         else:
             is_weighted = True
-            if n.ndim > xe.ndim + 1 or n.ndim < xe.ndim:
+            if n.ndim > self._ndim + 1 or n.ndim < self._ndim:
                 raise ValueError("n must either have same dimension as xe or one extra")
 
-        if np.any(
-            np.array(n.shape[:-1] if is_weighted else n.shape) + 1 != self._xe.shape
-        ):
-            raise ValueError("n and xe have incompatible shapes")
+        xe = (self._xe,) if self._ndim == 1 else self._xe
+        for d, xei in enumerate(xe):
+            if len(xei) != n.shape[d] + 1:
+                raise ValueError(
+                    f"n and xe have incompatible shapes along dimension {d}: "
+                    f"{n.shape[d]}+1 != {len(xei)}"
+                )
 
         if is_weighted:
             if n.shape[-1] != 2:
@@ -592,7 +594,16 @@ class BinnedCost(MaskedCost):
 
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
-        self._xe = _norm(xe)
+        self._ndim = 1
+        if not isinstance(xe, Iterable):
+            raise ValueError("xe must be iterable")
+        if isinstance(xe[0], Iterable):
+            self._ndim = len(xe)
+
+        if self._ndim == 1:
+            self._xe = _norm(xe)
+        else:
+            self._xe = tuple(_norm(xei) for xei in xe)
         self._model = model
         super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
 
