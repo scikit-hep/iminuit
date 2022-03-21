@@ -649,14 +649,19 @@ class BinnedNLL(BinnedCost):
         Parameters
         ----------
         n : array-like
-            Histogram counts. If this is an array N x 2, it is interpreted as pairs of
-            sum of weights and sum of weights squared.
-        xe : array-like
-            Bin edge locations, must be len(n) + 1.
+            Histogram counts. If this is an array with dimension D+1, where D is the
+            number of supplied axis edges, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
+        xe : array-like or collection of array-like
+            Bin edge locations, must be len(n) + 1. If the histogram has more than one
+            dimension, xe must be a collection of the bin edge locations along each
+            dimension.
         cdf : callable
             Cumulative density function of the form f(xe, par0, par1, ..., parN),
-            where `xe` is a bin edge and par0, ... parN are model parameters. Must be
-            normalized to unity over the range (xe[0], xe[-1]).
+            where xe is a bin edge and par0, ... are model parameters. Must be
+            normalized to unity over the range (xe[0], xe[-1]). If the model is
+            multivariate, xe must be an array-like with shape (D, N), where D is the
+            dimension and N is the number of points where the model is evaluated.
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
@@ -697,13 +702,18 @@ class ExtendedBinnedNLL(BinnedCost):
         Parameters
         ----------
         n : array-like
-            Histogram counts. If this is an array N x 2, it is interpreted as pairs of sum
-            of weights and sum of weights squared.
-        xe : array-like
-            Bin edge locations, must be len(n) + 1.
+            Histogram counts. If this is an array with dimension D+1, where D is the
+            number of supplied axis edges, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
+        xe : array-like or collection of array-like
+            Bin edge locations, must be len(n) + 1. If the histogram has more than one
+            dimension, xe must be a collection of the bin edge locations along each
+            dimension.
         scaled_cdf : callable
             Scaled Cumulative density function of the form f(xe, par0, [par1, ...]), where
-            `xe` is a bin edge and `parN` are model parameters.
+            xe is a bin edge and par0, ... are model parameters.  If the model is
+            multivariate, xe must be an array-like with shape (D, N), where D is the
+            dimension and N is the number of points where the model is evaluated.
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and negative
             log-likelihood value.
