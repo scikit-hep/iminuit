@@ -213,6 +213,16 @@ def test_BinnedNLL_ndof_zero():
     assert np.isnan(m.fmin.reduced_chi2)
 
 
+def test_BinnedNLL_bad_input_5():
+    with pytest.raises(ValueError):
+        BinnedNLL([[1, 2, 3]], [[1, 2], [1, 2, 3]], lambda x, a: 0)
+
+
+def test_BinnedNLL_bad_input_6():
+    with pytest.raises(ValueError):
+        BinnedNLL(1, 2, lambda x, a: 0)
+
+
 def test_BinnedNLL_2D():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000).T
@@ -220,7 +230,7 @@ def test_BinnedNLL_2D():
     w, xe, ye = np.histogram2d(x, y, bins=(20, 50))
 
     def model(xy, mux, muy, sx, sy, rho):
-        return mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
+        return mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
 
     cost = BinnedNLL(w, (xe, ye), model)
     assert cost.ndata == np.prod(w.shape)
@@ -230,6 +240,12 @@ def test_BinnedNLL_2D():
     m.migrad()
     assert m.valid
     assert_allclose(m.values, truth, atol=0.05)
+
+    assert cost.ndata == np.prod(w.shape)
+    w2 = w.copy()
+    w2[1, 1] += 1
+    cost.n = w2
+    assert cost(*m.values) > m.fval
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
