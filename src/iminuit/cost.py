@@ -391,13 +391,8 @@ class MaskedCost(Cost):
 
     @data.setter
     def data(self, value):
-        self._data[:] = value
+        self._data[...] = value
         self._update_masked()
-
-    @Cost.ndata.getter
-    def ndata(self):
-        """See Cost.ndata."""
-        return np.prod(self._masked.shape)
 
     def _update_masked(self):
         self._masked = self._data if self._mask is None else self._data[self._mask]
@@ -535,8 +530,16 @@ class BinnedCost(MaskedCost):
 
     __slots__ = "_xe", "_model", "_ndim"
 
-    def _weighted(self):
-        return self._data.ndim > self._xe.ndim
+    def _is_weighted(self):
+        return self._data.ndim > self._ndim
+
+    def _maybe_apply_bohm_zech_scaling(self, mu):
+        n = self._masked
+        if self._is_weighted():
+            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
+            mu *= n[..., 3]
+            n = n[..., 2]
+        return n
 
     def _prepare_data(self, value):
         assert self._xe is not None
@@ -569,11 +572,23 @@ class BinnedCost(MaskedCost):
 
         return n
 
+    def _pred(self, args):
+        X = np.meshgrid(*self._xe) if self._ndim > 1 else self._xe
+        cdf = self._model(X, *args)
+        cdf = _normalize_model_output(cdf)
+        if self._ndim == 1:
+            d = np.diff(cdf)
+        elif self._ndim == 2:
+            d = cdf[1:, 1:] - cdf[1:, :-1] - cdf[:-1, 1:] + cdf[:-1, :-1]
+        else:
+            raise ValueError("general ND case with D > 2 currently not supported")
+        return d
+
     @property
     def data(self):
         """Access bin counts."""
-        if self._weighted():
-            return self._data[:, :2]
+        if self._is_weighted():
+            return self._data[..., :2]
         return self._data
 
     @data.setter
@@ -591,6 +606,15 @@ class BinnedCost(MaskedCost):
     @xe.setter
     def xe(self, value):
         self.xe[:] = value
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        if self._is_weighted():
+            shape = self._masked.shape[:-1]
+        else:
+            shape = self._masked.shape
+        return np.prod(shape)
 
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
@@ -613,7 +637,8 @@ class BinnedNLL(BinnedCost):
     Binned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
-    This cost function works with normal and weighted histograms. See init for details.
+    This cost function works with normal and weighted histograms. The histogram can be
+    one- or multi-dimensional, see :meth:`__init__` for details.
     """
 
     __slots__ = ()
@@ -645,22 +670,13 @@ class BinnedNLL(BinnedCost):
         super().__init__(n, xe, cdf, verbose)
 
     def _call(self, args):
-        cdf = self._model(self._xe, *args)
-        cdf = _normalize_model_output(cdf)
-        prob = np.diff(cdf)
-        n = self._masked
+        prob = self._pred(args)
         ma = self.mask
         if ma is not None:
             prob = prob[ma]
             prob /= np.sum(prob)  # normalise probability
-        if self._weighted():
-            mu = np.sum(n[:, 0]) * prob
-            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
-            mu *= n[:, 3]
-            n = n[:, 2]
-        else:
-            mu = np.sum(n) * prob
-        # + np.sum(mu) is skipped, it is constant since sum(prob) = 1
+        n = self._maybe_apply_bohm_zech_scaling(prob)
+        mu = prob * np.sum(n)
         return 2.0 * _sum_log_poisson_part(n, mu)
 
 
@@ -669,8 +685,8 @@ class ExtendedBinnedNLL(BinnedCost):
     Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data is
-    binned. This cost function works with normal and weighted histograms. See init for
-    details.
+    binned. This cost function works with normal and weighted histograms. The histogram
+    can be one- or multi-dimensional, see :meth:`__init__` for details.
     """
 
     __slots__ = ()
@@ -701,17 +717,11 @@ class ExtendedBinnedNLL(BinnedCost):
         super().__init__(n, xe, scaled_cdf, verbose)
 
     def _call(self, args):
-        scdf = self._model(self._xe, *args)
-        scdf = _normalize_model_output(scdf)
-        mu = np.diff(scdf)
+        mu = self._pred(args)
         ma = self.mask
-        n = self._masked
         if ma is not None:
             mu = mu[ma]
-        if self._weighted():
-            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
-            mu *= n[:, 3]
-            n = n[:, 2]
+        n = self._maybe_apply_bohm_zech_scaling(mu)
         return 2.0 * _sum_log_poisson(n, mu)
 
 
@@ -786,6 +796,11 @@ class LeastSquares(MaskedCost):
             self._cost = _sum_z_squared_soft_l1
         else:
             raise ValueError("unknown loss type: " + loss)
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        return len(self._masked)
 
     def __init__(
         self,

@@ -171,7 +171,6 @@ def test_weighted_BinnedNLL():
     n = p * 1000
     c = BinnedNLL(n, xe, expon_cdf)
 
-    c = BinnedNLL(n, xe, expon_cdf)
     assert_equal(c.data, n)
     m1 = Minuit(c, 1)
     m1.migrad()
@@ -221,7 +220,7 @@ def test_BinnedNLL_2D():
     w, xe, ye = np.histogram2d(x, y, bins=(20, 50))
 
     def model(xy, mux, muy, sx, sy, rho):
-        return mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
+        return mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
 
     cost = BinnedNLL(w, (xe, ye), model)
     assert cost.ndata == np.prod(w.shape)
@@ -279,7 +278,7 @@ def test_ExtendedBinnedNLL_2D():
     w, xe, ye = np.histogram2d(x, y)
 
     def model(xy, n, mux, muy, sx, sy, rho):
-        return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
+        return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
 
     cost = ExtendedBinnedNLL(w, (xe, ye), model)
     assert cost.ndata == np.prod(w.shape)
