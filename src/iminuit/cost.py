@@ -528,7 +528,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_xe", "_model", "_ndim"
+    __slots__ = "_xe", "_X", "_model", "_ndim"
 
     def _is_weighted(self):
         return self._data.ndim > self._ndim
@@ -553,12 +553,11 @@ class BinnedCost(MaskedCost):
             if n.ndim > self._ndim + 1 or n.ndim < self._ndim:
                 raise ValueError("n must either have same dimension as xe or one extra")
 
-        xe = (self._xe,) if self._ndim == 1 else self._xe
-        for d, xei in enumerate(xe):
-            if len(xei) != n.shape[d] + 1:
+        for i, xei in enumerate([self._xe] if self._ndim == 1 else self._xe):
+            if len(xei) != n.shape[i] + 1:
                 raise ValueError(
-                    f"n and xe have incompatible shapes along dimension {d}: "
-                    f"{n.shape[d]}+1 != {len(xei)}"
+                    f"n and xe have incompatible shapes along dimension {i}, "
+                    "xe must be longer by one element along each dimension"
                 )
 
         if is_weighted:
@@ -573,15 +572,12 @@ class BinnedCost(MaskedCost):
         return n
 
     def _pred(self, args):
-        X = np.meshgrid(*self._xe) if self._ndim > 1 else self._xe
-        cdf = self._model(X, *args)
-        cdf = _normalize_model_output(cdf)
-        if self._ndim == 1:
-            d = np.diff(cdf)
-        elif self._ndim == 2:
-            d = cdf[1:, 1:] - cdf[1:, :-1] - cdf[:-1, 1:] + cdf[:-1, :-1]
-        else:
-            raise ValueError("general ND case with D > 2 currently not supported")
+        d = self._model(self._X, *args)
+        d = _normalize_model_output(d)
+        if self._ndim > 1:
+            d = d.reshape(tuple(len(xei) for xei in self._xe))
+        for i in range(self._ndim):
+            d = np.diff(d, axis=i)
         return d
 
     @property
@@ -603,10 +599,6 @@ class BinnedCost(MaskedCost):
         """Access bin edges."""
         return self._xe
 
-    @xe.setter
-    def xe(self, value):
-        self.xe[:] = value
-
     @Cost.ndata.getter
     def ndata(self):
         """See Cost.ndata."""
@@ -623,11 +615,13 @@ class BinnedCost(MaskedCost):
             raise ValueError("xe must be iterable")
         if isinstance(xe[0], Iterable):
             self._ndim = len(xe)
-
         if self._ndim == 1:
-            self._xe = _norm(xe)
+            self._xe = self._X = _norm(xe)
         else:
             self._xe = tuple(_norm(xei) for xei in xe)
+            self._X = np.row_stack(
+                [x.flatten() for x in np.meshgrid(*self._xe, indexing="ij")]
+            )
         self._model = model
         super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
 

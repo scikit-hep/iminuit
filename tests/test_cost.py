@@ -275,7 +275,7 @@ def test_ExtendedBinnedNLL_2D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
 
-    w, xe, ye = np.histogram2d(x, y)
+    w, xe, ye = np.histogram2d(x, y, bins=(10, 20))
 
     def model(xy, n, mux, muy, sx, sy, rho):
         return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
@@ -284,6 +284,33 @@ def test_ExtendedBinnedNLL_2D():
     assert cost.ndata == np.prod(w.shape)
     m = Minuit(cost, *truth)
     m.limits["n", "sx", "sy"] = (0, None)
+    m.limits["rho"] = (-1, 1)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.values, truth, atol=0.05)
+
+
+def test_ExtendedBinnedNLL_3D():
+    truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
+    n = int(truth[0] * 10000)
+    x, y = mvnorm(*truth[1:-2]).rvs(size=n).T
+    z = norm(truth[-2], truth[-1]).rvs(size=n)
+
+    w, edges = np.histogramdd((x, y, z), bins=(5, 10, 20))
+
+    def model(xyz, n, mux, muy, sx, sy, rho, muz, sz):
+        *xy, z = xyz
+        return (
+            n
+            * 10000
+            * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
+            * norm(muz, sz).cdf(z)
+        )
+
+    cost = ExtendedBinnedNLL(w, edges, model)
+    assert cost.ndata == np.prod(w.shape)
+    m = Minuit(cost, *truth)
+    m.limits["n", "sx", "sy", "sz"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
@@ -400,13 +427,9 @@ def test_BinnedNLL_properties():
     assert_equal(c.n, [1])
     assert_equal(c.xe, [1, 2])
     c.n = [2]
-    c.xe = [2, 3]
     assert_equal(c.n, [2])
-    assert_equal(c.xe, [2, 3])
     with pytest.raises(ValueError):
         c.n = [1, 2]
-    with pytest.raises(ValueError):
-        c.xe = [1, 2, 3]
 
 
 def test_ExtendedBinnedNLL_mask():
