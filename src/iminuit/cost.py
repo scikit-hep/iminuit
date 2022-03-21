@@ -528,7 +528,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_xe", "_X", "_model", "_ndim"
+    __slots__ = "_xe", "_xe_shape", "_X", "_model", "_ndim"
 
     def _is_weighted(self):
         return self._data.ndim > self._ndim
@@ -574,8 +574,8 @@ class BinnedCost(MaskedCost):
     def _pred(self, args):
         d = self._model(self._X, *args)
         d = _normalize_model_output(d)
-        if self._ndim > 1:
-            d = d.reshape(tuple(len(xei) for xei in self._xe))
+        if self._xe_shape is not None:
+            d = d.reshape(self._xe_shape)
         for i in range(self._ndim):
             d = np.diff(d, axis=i)
         return d
@@ -617,8 +617,10 @@ class BinnedCost(MaskedCost):
             self._ndim = len(xe)
         if self._ndim == 1:
             self._xe = self._X = _norm(xe)
+            self._xe_shape = None
         else:
             self._xe = tuple(_norm(xei) for xei in xe)
+            self._xe_shape = tuple(len(xei) for xei in xe)
             self._X = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self._xe, indexing="ij")]
             )
