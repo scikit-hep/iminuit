@@ -211,6 +211,14 @@ def test_BinnedNLL_bad_input_4():
         BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
 
 
+def test_BinnedNLL_ndof_zero():
+    c = BinnedNLL([1, 2], [0, 1, 2], lambda x, loc, scale: norm.cdf(x, loc, scale))
+    m = Minuit(c, loc=0, scale=1)
+    m.migrad()
+    assert c.ndata == m.nfit
+    assert np.isnan(m.fmin.reduced_chi2)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned

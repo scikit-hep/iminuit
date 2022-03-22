@@ -474,7 +474,7 @@ class FMin:
         This returns NaN if the cost function is unbinned or does not support
         reporting the degrees of freedom.
         """
-        if np.isfinite(self._ndof):
+        if np.isfinite(self._ndof) and self._ndof > 0:
             return self.fval / self.errordef / self._ndof
         return np.nan
 
