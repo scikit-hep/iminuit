@@ -528,7 +528,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_xe", "_xe_shape", "_X", "_model", "_ndim"
+    __slots__ = "_xe", "_xe_shape", "_X", "_model", "_ndim", "_loss"
 
     def _is_weighted(self):
         return self._data.ndim > self._ndim
@@ -578,6 +578,9 @@ class BinnedCost(MaskedCost):
             d = d.reshape(self._xe_shape)
         for i in range(self._ndim):
             d = np.diff(d, axis=i)
+        # differences can come out negative due to round-off error in subtraction,
+        # we set negative values to zero
+        d[d < 0] = 0
         return d
 
     @property
@@ -608,8 +611,21 @@ class BinnedCost(MaskedCost):
             shape = self._masked.shape
         return np.prod(shape)
 
+    @property
+    def loss(self):
+        """Access loss function."""
+        return self._loss
+
+    @loss.setter
+    def loss(self, value):
+        if value == "soft_l1":
+            self._loss = _sum_z_squared_soft_l1
+        else:
+            self._loss = value
+
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
+        self._loss = None
         self._ndim = 1
         if not isinstance(xe, Iterable):
             raise ValueError("xe must be iterable")
@@ -635,6 +651,17 @@ class BinnedNLL(BinnedCost):
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
     This cost function works with normal and weighted histograms. The histogram can be
     one- or multi-dimensional, see :meth:`__init__` for details.
+
+    The cost function returns a value that is asymptotically chi2-distributed. It is
+    constructed from the log-likelihood assuming a multivariate-normal distribution and
+    using the saturated model as a reference.
+
+    Q = -2 (lnP - lnP')
+    lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
+    lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
+    Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
+      = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
+      = 2 sum_i k_i (ln(k_i) - ln(mu_i))
     """
 
     __slots__ = ()
@@ -660,10 +687,11 @@ class BinnedNLL(BinnedCost):
             dimension.
         cdf : callable
             Cumulative density function of the form f(xe, par0, par1, ..., parN),
-            where xe is a bin edge and par0, ... are model parameters. Must be
-            normalized to unity over the range (xe[0], xe[-1]). If the model is
-            multivariate, xe must be an array-like with shape (D, N), where D is the
-            dimension and N is the number of points where the model is evaluated.
+            where xe is a bin edge and par0, ... are model parameters. The corresponding
+            density must be normalized to unity over the space covered by the histogram.
+            If the model is multivariate, xe must be an array-like with shape (D, N),
+            where D is the dimension and N is the number of points where the model is
+            evaluated.
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
@@ -678,6 +706,8 @@ class BinnedNLL(BinnedCost):
             prob /= np.sum(prob)  # normalise probability
         n = self._maybe_apply_bohm_zech_scaling(prob)
         mu = prob * np.sum(n)
+        if self._loss:
+            return self._loss(n, mu**0.5, mu)
         return 2.0 * _sum_log_poisson_part(n, mu)
 
 
@@ -688,6 +718,15 @@ class ExtendedBinnedNLL(BinnedCost):
     Use this if shape and normalization of the fitted PDF are of interest and the data is
     binned. This cost function works with normal and weighted histograms. The histogram
     can be one- or multi-dimensional, see :meth:`__init__` for details.
+
+    The cost function returns a value that is asymptotically chi2-distributed. It is
+    constructed from the log-likelihood assuming a poisson distribution and using the
+    saturated model as a reference.
+
+    Q = -2 (lnP - lnP')
+    lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
+    lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
+    Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
     """
 
     __slots__ = ()
@@ -728,6 +767,8 @@ class ExtendedBinnedNLL(BinnedCost):
         if ma is not None:
             mu = mu[ma]
         n = self._maybe_apply_bohm_zech_scaling(mu)
+        if self._loss:
+            return self._loss(n, mu**0.5, mu)
         return 2.0 * _sum_log_poisson(n, mu)
 
 
