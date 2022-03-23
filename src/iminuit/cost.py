@@ -731,7 +731,7 @@ class BinnedNLL(BinnedCost):
             prob /= np.sum(prob)  # normalise probability
         n = self._maybe_apply_bohm_zech_scaling(prob)
         mu = prob * np.sum(n)
-        return 2.0 * _multinominal_chi2(n, mu)
+        return _multinominal_chi2(n, mu)
 
 
 class ExtendedBinnedNLL(BinnedCost):
@@ -791,7 +791,7 @@ class ExtendedBinnedNLL(BinnedCost):
         if ma is not None:
             mu = mu[ma]
         n = self._maybe_apply_bohm_zech_scaling(mu)
-        return 2.0 * _poisson_chi2(n, mu)
+        return _poisson_chi2(n, mu)
 
 
 class LeastSquares(MaskedCost):

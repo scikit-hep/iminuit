@@ -11,7 +11,7 @@ from iminuit.cost import (
     LeastSquares,
     Constant,
     NormalConstraint,
-    _multinominal_nll,
+    _multinominal_chi2,
     PerformanceWarning,
 )
 from collections.abc import Sequence
@@ -708,16 +708,16 @@ def test_NormalConstraint_properties():
     assert_equal(nc.covariance, (1, 2))
 
 
-def test_multinominal_nll():
+def test_multinominal_chi2():
     zero = np.array(0)
     one = np.array(1)
 
-    assert _multinominal_nll(zero, zero) == 0
-    assert _multinominal_nll(zero, one) == 0
-    assert _multinominal_nll(one, zero) == pytest.approx(743, abs=1)
+    assert _multinominal_chi2(zero, zero) == 0
+    assert _multinominal_chi2(zero, one) == 0
+    assert _multinominal_chi2(one, zero) == pytest.approx(1486, abs=1)
     n = np.array([(0.0, 0.0)])
-    assert_allclose(_multinominal_nll(n, zero), 0)
-    assert_allclose(_multinominal_nll(n, one), 0)
+    assert_allclose(_multinominal_chi2(n, zero), 0)
+    assert_allclose(_multinominal_chi2(n, one), 0)
 
 
 def test_model_float128():
