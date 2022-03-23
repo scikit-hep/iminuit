@@ -225,7 +225,7 @@ def test_BinnedNLL_bad_input_6():
 
 def test_BinnedNLL_2D():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
-    x, y = mvnorm(*truth).rvs(size=1000).T
+    x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
 
     w, xe, ye = np.histogram2d(x, y, bins=(20, 50))
 
@@ -250,9 +250,9 @@ def test_BinnedNLL_2D():
 
 def test_BinnedNLL_2D_with_zero_bins():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
-    x, y = mvnorm(*truth).rvs(size=1000).T
+    x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
 
-    w, xe, ye = np.histogram2d(x, y, bins=(20, 50), range=((-10, 10), (-10, 10)))
+    w, xe, ye = np.histogram2d(x, y, bins=(50, 100), range=((-5, 5), (-5, 5)))
     assert np.mean(w == 0) > 0.25
 
     def model(xy, mux, muy, sx, sy, rho):
@@ -714,7 +714,7 @@ def test_multinominal_chi2():
 
     assert _multinominal_chi2(zero, zero) == 0
     assert _multinominal_chi2(zero, one) == 0
-    assert _multinominal_chi2(one, zero) == pytest.approx(1486, abs=1)
+    assert _multinominal_chi2(one, zero) == pytest.approx(1487, abs=1)
     n = np.array([(0.0, 0.0)])
     assert_allclose(_multinominal_chi2(n, zero), 0)
     assert_allclose(_multinominal_chi2(n, one), 0)
