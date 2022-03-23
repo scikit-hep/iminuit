@@ -9,19 +9,21 @@ What to use when
 ----------------
 - Fit a normalised probability density to data
 
-    - Data is not binned: UnbinnedNLL
-    - Data is binned: BinnedNLL, also supports histogram of weighted samples
+    - Data are not binned: :class:`UnbinnedNLL`
+    - Data are binned: :class:`BinnedNLL`, also supports histogram of weighted samples
 
 - Fit a density to data, density is not normalised
 
-    - Data is not binned: ExtendedUnbinnedNLL
-    - Data is binned: ExtendedBinnedNLL, also supports histogram of weighted samples
+    - Data are not binned: :class:`ExtendedUnbinnedNLL`
+    - Data are binned: :class:`ExtendedBinnedNLL`, also supports histogram of weighted samples
 
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
   is one- or multi-dimensional, y is one-dimensional.
 
-    - y values contain no outliers: LeastSquares
-    - y values contain outliers: LeastSquares with loss function ``soft_l1``
+    - y values contain no outliers: :class:`LeastSquares`
+    - y values contain outliers: :class:`LeastSquares` with loss function set to "soft_l1"
+
+- Include constraints from external fits or apply regularisation: :class:`NormalConstraint`
 
 Combining cost functions
 ------------------------
@@ -51,26 +53,41 @@ from .util import (
 import numpy as np
 from collections.abc import Sequence
 import abc
-from typing import Tuple, Callable, Union
+import typing as _tp
 import warnings
 
 
-def _sum_log_x(x):
-    return np.sum(np.log(x + 1e-323))
+def _safe_log(x):
+    # guard against x = 0
+    return np.log(x + 1e-323)
 
 
-def _log_poisson_part(n, mu):
-    # add n log(n) to keep sum small, required to not loose accuracy in Minuit
-    return n * (np.log(n + 1e-323) - np.log(mu + 1e-323))
+def _unbinned_nll(x):
+    return -np.sum(_safe_log(x))
 
 
-def _sum_log_poisson_part(n, mu):
-    return np.sum(_log_poisson_part(n, mu))
+def _multinominal_chi2(n, mu):
+    # This form makes the result asymptotically chi2 distributed and keeps the
+    # sum small, which helps to not loose accuracy in Minuit.
+    #
+    # Q = -2 (lnP - lnP')
+    # lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
+    # lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
+    # Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
+    #   = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
+    #   = 2 sum_i k_i (ln(k_i) - ln(mu_i))
+    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def _sum_log_poisson(n, mu):
-    # subtract n to keep sum small, required to not loose accuracy in Minuit
-    return np.sum(mu - n + _log_poisson_part(n, mu))
+def _poisson_chi2(n, mu):
+    # This form makes the result asymptotically chi2 distributed and keeps the
+    # sum small, which helps to not loose accuracy in Minuit.
+    #
+    # Q = -2 (lnP - lnP')
+    # lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
+    # lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
+    # Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
+    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
 def _z_squared(y, ye, ym):
@@ -78,13 +95,16 @@ def _z_squared(y, ye, ym):
     return z * z
 
 
-def _sum_z_squared(y, ye, ym):
+def _chi2(y, ye, ym):
     return np.sum(_z_squared(y, ye, ym))
 
 
-def _sum_z_squared_soft_l1(y, ye, ym):
-    z = _z_squared(y, ye, ym)
-    return np.sum(2 * (np.sqrt(1.0 + z) - 1.0))
+def _soft_l1_loss(z_sqr):
+    return np.sum(2 * (np.sqrt(1 + z_sqr) - 1))
+
+
+def _soft_l1_cost(y, ye, ym):
+    return _soft_l1_loss(_z_squared(y, ye, ym))
 
 
 # If numba is available, use it to accelerate computations in float32 and float64
@@ -94,80 +114,95 @@ try:
     from numba import njit as _njit
     from numba.extending import overload as _overload
 
-    _log_poisson_part_np = _log_poisson_part
-
-    @_overload(_log_poisson_part, inline="always")
-    def _log_poisson_part_ol(n, mu):
-        return _log_poisson_part_np  # pragma: no cover
-
-    _z_squared_np = _z_squared
+    @_overload(_safe_log, inline="always")
+    def _ol_safe_log(x):
+        return _safe_log  # pragma: no cover
 
     @_overload(_z_squared, inline="always")
-    def _z_squared_ol(y, ye, ym):
-        return _z_squared_np  # pragma: no cover
+    def _ol_z_squared(y, ye, ym):
+        return _z_squared  # pragma: no cover
 
-    _sum_log_x_np = _sum_log_x
-    _sum_log_x_nb = _njit(
+    _unbinned_nll_np = _unbinned_nll
+    _unbinned_nll_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_sum_log_x_np)
+    )(_unbinned_nll_np)
 
-    def _sum_log_x(x):
+    def _unbinned_nll(x):
         if x.dtype in (np.float32, np.float64):
-            return _sum_log_x_nb(x)
-        return _sum_log_x_np(x)
+            return _unbinned_nll_nb(x)
+        # fallback to numpy for float128
+        return _unbinned_nll_np(x)
 
-    _sum_log_poisson_part_np = _sum_log_poisson_part
-    _sum_log_poisson_part_nb = _njit(
+    _multinominal_chi2_np = _multinominal_chi2
+    _multinominal_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_sum_log_poisson_part_np)
+    )(_multinominal_chi2_np)
 
-    def _sum_log_poisson_part(n, mu):
+    def _multinominal_chi2(n, mu):
         if mu.dtype in (np.float32, np.float64):
-            return _sum_log_poisson_part_nb(n, mu)
-        return _sum_log_poisson_part_np(n, mu)
+            return _multinominal_chi2_nb(n, mu)
+        # fallback to numpy for float128
+        return _multinominal_chi2_np(n, mu)
 
-    _sum_log_poisson_np = _sum_log_poisson
-    _sum_log_poisson_nb = _njit(
+    _poisson_chi2_np = _poisson_chi2
+    _poisson_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_sum_log_poisson_np)
+    )(_poisson_chi2_np)
 
-    def _sum_log_poisson(n, mu):
+    def _poisson_chi2(n, mu):
         if mu.dtype in (np.float32, np.float64):
-            return _sum_log_poisson_nb(n, mu)
+            return _poisson_chi2_nb(n, mu)
         # fallback to numpy for float128
-        return _sum_log_poisson_np(n, mu)
+        return _poisson_chi2_np(n, mu)
 
-    _sum_z_squared_np = _sum_z_squared
-    _sum_z_squared_nb = _njit(
+    _chi2_np = _chi2
+    _chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_sum_z_squared_np)
+    )(_chi2_np)
 
-    def _sum_z_squared(y, ye, ym):
+    def _chi2(y, ye, ym):
         if ym.dtype in (np.float32, np.float64):
-            return _sum_z_squared_nb(y, ye, ym)
+            return _chi2_nb(y, ye, ym)
         # fallback to numpy for float128
-        return _sum_z_squared_np(y, ye, ym)
+        return _chi2_np(y, ye, ym)
 
-    _sum_z_squared_soft_l1_np = _sum_z_squared_soft_l1
-    _sum_z_squared_soft_l1_nb = _njit(
+    _soft_l1_loss_np = _soft_l1_loss
+    _soft_l1_loss_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_sum_z_squared_soft_l1_np)
+    )(_soft_l1_loss_np)
 
-    def _sum_z_squared_soft_l1(y, ye, ym):
-        if ym.dtype in (np.float32, np.float64):
-            return _sum_z_squared_soft_l1_nb(y, ye, ym)
+    def _soft_l1_loss(z_sqr):
+        if z_sqr.dtype in (np.float32, np.float64):
+            return _soft_l1_loss_nb(z_sqr)
         # fallback to numpy for float128
-        return _sum_z_squared_soft_l1_np(y, ye, ym)
+        return _soft_l1_loss_np(z_sqr)
+
+    @_overload(_soft_l1_loss, inline="always")
+    def _ol_soft_l1_loss(z_sqr):
+        return _soft_l1_loss_np  # pragma: no cover
+
+    _soft_l1_cost_np = _soft_l1_cost
+    _soft_l1_cost_nb = _njit(
+        nogil=True,
+        cache=True,
+        error_model="numpy",
+    )(_soft_l1_cost_np)
+
+    def _soft_l1_cost(y, ye, ym):
+        if ym.dtype in (np.float32, np.float64):
+            return _soft_l1_cost_nb(y, ye, ym)
+        # fallback to numpy for float128
+        return _soft_l1_cost_np(y, ye, ym)
 
 except ModuleNotFoundError:  # pragma: no cover
     pass
@@ -212,7 +247,7 @@ class Cost(abc.ABC):
     def verbose(self, value: int):
         self._verbose = value
 
-    def __init__(self, args: Tuple[str], verbose: int):
+    def __init__(self, args: _tp.Tuple[str], verbose: int):
         """For internal use."""
         self._func_code = make_func_code(args)
         self._verbose = verbose
@@ -391,13 +426,8 @@ class MaskedCost(Cost):
 
     @data.setter
     def data(self, value):
-        self._data[:] = value
+        self._data[...] = value
         self._update_masked()
-
-    @Cost.ndata.getter
-    def ndata(self):
-        """See Cost.ndata."""
-        return len(self._masked)
 
     def _update_masked(self):
         self._masked = self._data if self._mask is None else self._data[self._mask]
@@ -414,7 +444,7 @@ class UnbinnedCost(MaskedCost):
         # unbinned likelihoods have infinite degrees of freedom
         return np.inf
 
-    def __init__(self, data, model: Callable, verbose: int, log: bool):
+    def __init__(self, data, model: _tp.Callable, verbose: int, log: bool):
         """For internal use."""
         self._model = model
         self._log = log
@@ -425,8 +455,7 @@ class UnbinnedNLL(UnbinnedCost):
     """Unbinned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the original
-    unbinned data is available. The data can be one- or multi-dimensional, see
-    :meth:`__init__` for details on how to fit multivariate data.
+    unbinned data is available. The data can be one- or multi-dimensional.
     """
 
     __slots__ = ()
@@ -436,7 +465,13 @@ class UnbinnedNLL(UnbinnedCost):
         """Get probability density model."""
         return self._model
 
-    def __init__(self, data, pdf: Callable, verbose: int = 0, log: bool = False):
+    def __init__(
+        self,
+        data,
+        pdf: _tp.Callable,
+        verbose: int = 0,
+        log: bool = False,
+    ):
         """
         Initialize UnbinnedNLL with data and model.
 
@@ -469,15 +504,14 @@ class UnbinnedNLL(UnbinnedCost):
         x = _normalize_model_output(x)
         if self._log:
             return -2.0 * np.sum(x)
-        return -2.0 * _sum_log_x(x)
+        return 2.0 * _unbinned_nll(x)
 
 
 class ExtendedUnbinnedNLL(UnbinnedCost):
     """Unbinned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the original
-    unbinned data is available. The data can be one- or multi-dimensional, see
-    :meth:`__init__` for details on how to fit multivariate data.
+    unbinned data is available. The data can be one- or multi-dimensional.
     """
 
     __slots__ = ()
@@ -487,7 +521,13 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         """Get density model."""
         return self._model
 
-    def __init__(self, data, scaled_pdf: Callable, verbose: int = 0, log: bool = False):
+    def __init__(
+        self,
+        data,
+        scaled_pdf: _tp.Callable,
+        verbose: int = 0,
+        log: bool = False,
+    ):
         """
         Initialize cost function with data and model.
 
@@ -527,34 +567,43 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         )
         if self._log:
             return 2 * (ns - np.sum(x))
-        return 2 * (ns - _sum_log_x(x))
+        return 2 * (ns + _unbinned_nll(x))
 
 
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_xe", "_model"
+    __slots__ = "_xe", "_xe_shape", "_X", "_model", "_ndim"
 
-    def _weighted(self):
-        return self._data.ndim > self._xe.ndim
+    def _is_weighted(self):
+        return self._data.ndim > self._ndim
+
+    def _maybe_apply_bohm_zech_scaling(self, mu):
+        n = self._masked
+        if self._is_weighted():
+            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
+            mu *= n[..., 3]
+            n = n[..., 2]
+        return n
 
     def _prepare_data(self, value):
         assert self._xe is not None
 
         n = _norm(value)
-        xe = self._xe
 
-        if n.ndim == xe.ndim:
+        if n.ndim == self._ndim:
             is_weighted = False
         else:
             is_weighted = True
-            if n.ndim > xe.ndim + 1 or n.ndim < xe.ndim:
+            if n.ndim > self._ndim + 1 or n.ndim < self._ndim:
                 raise ValueError("n must either have same dimension as xe or one extra")
 
-        if np.any(
-            np.array(n.shape[:-1] if is_weighted else n.shape) + 1 != self._xe.shape
-        ):
-            raise ValueError("n and xe have incompatible shapes")
+        for i, xei in enumerate([self._xe] if self._ndim == 1 else self._xe):
+            if len(xei) != n.shape[i] + 1:
+                raise ValueError(
+                    f"n and xe have incompatible shapes along dimension {i}, "
+                    "xe must be longer by one element along each dimension"
+                )
 
         if is_weighted:
             if n.shape[-1] != 2:
@@ -567,11 +616,23 @@ class BinnedCost(MaskedCost):
 
         return n
 
+    def _pred(self, args):
+        d = self._model(self._X, *args)
+        d = _normalize_model_output(d)
+        if self._xe_shape is not None:
+            d = d.reshape(self._xe_shape)
+        for i in range(self._ndim):
+            d = np.diff(d, axis=i)
+        # differences can come out negative due to round-off error in subtraction,
+        # we set negative values to zero
+        d[d < 0] = 0
+        return d
+
     @property
     def data(self):
         """Access bin counts."""
-        if self._weighted():
-            return self._data[:, :2]
+        if self._is_weighted():
+            return self._data[..., :2]
         return self._data
 
     @data.setter
@@ -586,13 +647,31 @@ class BinnedCost(MaskedCost):
         """Access bin edges."""
         return self._xe
 
-    @xe.setter
-    def xe(self, value):
-        self.xe[:] = value
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        if self._is_weighted():
+            shape = self._masked.shape[:-1]
+        else:
+            shape = self._masked.shape
+        return np.prod(shape)
 
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
-        self._xe = _norm(xe)
+        self._ndim = 1
+        if not isinstance(xe, _tp.Iterable):
+            raise ValueError("xe must be iterable")
+        if isinstance(xe[0], _tp.Iterable):
+            self._ndim = len(xe)
+        if self._ndim == 1:
+            self._xe = self._X = _norm(xe)
+            self._xe_shape = None
+        else:
+            self._xe = tuple(_norm(xei) for xei in xe)
+            self._xe_shape = tuple(len(xei) for xei in xe)
+            self._X = np.row_stack(
+                [x.flatten() for x in np.meshgrid(*self._xe, indexing="ij")]
+            )
         self._model = model
         super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
 
@@ -602,7 +681,12 @@ class BinnedNLL(BinnedCost):
     Binned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
-    This cost function works with normal and weighted histograms. See init for details.
+    This cost function works with normal and weighted histograms. The histogram can be
+    one- or multi-dimensional.
+
+    The cost function has a minimum value that is asymptotically chi2-distributed. It is
+    constructed from the log-likelihood assuming a multivariate-normal distribution and
+    using the saturated model as a reference.
     """
 
     __slots__ = ()
@@ -612,21 +696,27 @@ class BinnedNLL(BinnedCost):
         """Get cumulative density function."""
         return self._model
 
-    def __init__(self, n, xe, cdf: Callable, verbose: int = 0):
+    def __init__(self, n, xe, cdf: _tp.Callable, verbose: int = 0):
         """
         Initialize cost function with data and model.
 
         Parameters
         ----------
         n : array-like
-            Histogram counts. If this is an array N x 2, it is interpreted as pairs of
-            sum of weights and sum of weights squared.
-        xe : array-like
-            Bin edge locations, must be len(n) + 1.
+            Histogram counts. If this is an array with dimension D+1, where D is the
+            number of supplied axis edges, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
+        xe : array-like or collection of array-like
+            Bin edge locations, must be len(n) + 1. If the histogram has more than one
+            dimension, xe must be a collection of the bin edge locations along each
+            dimension.
         cdf : callable
             Cumulative density function of the form f(xe, par0, par1, ..., parN),
-            where `xe` is a bin edge and par0, ... parN are model parameters. Must be
-            normalized to unity over the range (xe[0], xe[-1]).
+            where xe is a bin edge and par0, ... are model parameters. The corresponding
+            density must be normalized to unity over the space covered by the histogram.
+            If the model is multivariate, xe must be an array-like with shape (D, N),
+            where D is the dimension and N is the number of points where the model is
+            evaluated.
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
@@ -634,23 +724,14 @@ class BinnedNLL(BinnedCost):
         super().__init__(n, xe, cdf, verbose)
 
     def _call(self, args):
-        cdf = self._model(self._xe, *args)
-        cdf = _normalize_model_output(cdf)
-        prob = np.diff(cdf)
-        n = self._masked
+        prob = self._pred(args)
         ma = self.mask
         if ma is not None:
             prob = prob[ma]
             prob /= np.sum(prob)  # normalise probability
-        if self._weighted():
-            mu = np.sum(n[:, 0]) * prob
-            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
-            mu *= n[:, 3]
-            n = n[:, 2]
-        else:
-            mu = np.sum(n) * prob
-        # + np.sum(mu) is skipped, it is constant since sum(prob) = 1
-        return 2.0 * _sum_log_poisson_part(n, mu)
+        n = self._maybe_apply_bohm_zech_scaling(prob)
+        mu = prob * np.sum(n)
+        return 2.0 * _multinominal_chi2(n, mu)
 
 
 class ExtendedBinnedNLL(BinnedCost):
@@ -658,8 +739,12 @@ class ExtendedBinnedNLL(BinnedCost):
     Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data is
-    binned. This cost function works with normal and weighted histograms. See init for
-    details.
+    binned. This cost function works with normal and weighted histograms. The histogram
+    can be one- or multi-dimensional.
+
+    The cost function has a minimum value that is asymptotically chi2-distributed. It is
+    constructed from the log-likelihood assuming a poisson distribution and using the
+    saturated model as a reference.
     """
 
     __slots__ = ()
@@ -669,20 +754,31 @@ class ExtendedBinnedNLL(BinnedCost):
         """Get integrated density model."""
         return self._model
 
-    def __init__(self, n, xe, scaled_cdf: Callable, verbose: int = 0):
+    def __init__(
+        self,
+        n,
+        xe,
+        scaled_cdf: _tp.Callable,
+        verbose: int = 0,
+    ):
         """
         Initialize cost function with data and model.
 
         Parameters
         ----------
         n : array-like
-            Histogram counts. If this is an array N x 2, it is interpreted as pairs of sum
-            of weights and sum of weights squared.
-        xe : array-like
-            Bin edge locations, must be len(n) + 1.
+            Histogram counts. If this is an array with dimension D+1, where D is the
+            number of supplied axis edges, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
+        xe : array-like or collection of array-like
+            Bin edge locations, must be len(n) + 1. If the histogram has more than one
+            dimension, xe must be a collection of the bin edge locations along each
+            dimension.
         scaled_cdf : callable
             Scaled Cumulative density function of the form f(xe, par0, [par1, ...]), where
-            `xe` is a bin edge and `parN` are model parameters.
+            xe is a bin edge and par0, ... are model parameters.  If the model is
+            multivariate, xe must be an array-like with shape (D, N), where D is the
+            dimension and N is the number of points where the model is evaluated.
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and negative
             log-likelihood value.
@@ -690,18 +786,12 @@ class ExtendedBinnedNLL(BinnedCost):
         super().__init__(n, xe, scaled_cdf, verbose)
 
     def _call(self, args):
-        scdf = self._model(self._xe, *args)
-        scdf = _normalize_model_output(scdf)
-        mu = np.diff(scdf)
+        mu = self._pred(args)
         ma = self.mask
-        n = self._masked
         if ma is not None:
             mu = mu[ma]
-        if self._weighted():
-            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
-            mu *= n[:, 3]
-            n = n[:, 2]
-        return 2.0 * _sum_log_poisson(n, mu)
+        n = self._maybe_apply_bohm_zech_scaling(mu)
+        return 2.0 * _poisson_chi2(n, mu)
 
 
 class LeastSquares(MaskedCost):
@@ -763,26 +853,29 @@ class LeastSquares(MaskedCost):
         return self._loss
 
     @loss.setter
-    def loss(self, loss: Union[str, Callable]):
-        from typing import Callable
-
+    def loss(self, loss: _tp.Union[str, _tp.Callable]):
         self._loss = loss
-        if isinstance(loss, Callable):
-            self._cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
-        elif loss == "linear":
-            self._cost = _sum_z_squared
+        if loss == "linear":
+            self._cost = _chi2
         elif loss == "soft_l1":
-            self._cost = _sum_z_squared_soft_l1
+            self._cost = _soft_l1_cost
+        elif isinstance(loss, _tp.Callable):
+            self._cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
         else:
             raise ValueError("unknown loss type: " + loss)
+
+    @Cost.ndata.getter
+    def ndata(self):
+        """See Cost.ndata."""
+        return len(self._masked)
 
     def __init__(
         self,
         x,
         y,
         yerror,
-        model: Callable,
-        loss: Union[str, Callable] = "linear",
+        model: _tp.Callable,
+        loss: _tp.Union[str, _tp.Callable] = "linear",
         verbose: int = 0,
     ):
         """
@@ -872,7 +965,12 @@ class NormalConstraint(Cost):
 
     __slots__ = "_value", "_cov", "_covinv"
 
-    def __init__(self, args, value, error):
+    def __init__(
+        self,
+        args: _tp.Union[str, _tp.Iterable[str]],
+        value,
+        error,
+    ):
         """
         Initialize the normal constraint with expected value(s) and error(s).
 
@@ -950,9 +1048,3 @@ def _normalize_model_output(x, msg="Model should return numpy array"):
         )
         return np.array(x)
     return x
-
-
-del Sequence
-del Callable
-del Tuple
-del Union

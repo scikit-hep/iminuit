@@ -5,22 +5,17 @@
 Tutorials
 =========
 
-The following tutorials show how to use iminuit. The order is the recommended reading order, the later entries are about more and more specialized applications. Most users will only need the first tutorial.
+The following tutorials show how to use iminuit and explore different aspects of the library. The order is the recommended reading order, the later entries are about more and more specialized applications.
+Important for most users are only the first two entries.
 
 .. toctree::
     :maxdepth: 1
 
-    tutorial/basic_tutorial
-    tutorial/cost_functions
-    tutorial/binned_vs_unbinned
-    tutorial/hesse_and_minos
-    tutorial/error_bands
-    tutorial/simultaneous_fits
-    tutorial/conditional_variable
-    tutorial/numba
-    tutorial/automatic_differentiation
-    tutorial/scipy_and_constraints
-    tutorial/external_minimizer
-    tutorial/generic_least_squares
-    tutorial/cython_tutorial
-    tutorial/cost_function_benchmarks
+    notebooks/basic_tutorial
+    notebooks/cost_functions
+    notebooks/simultaneous_fits
+    notebooks/conditional_variable
+    notebooks/scipy_and_constraints
+    notebooks/external_minimizer
+    notebooks/generic_least_squares
+    notebooks/cython_tutorial
