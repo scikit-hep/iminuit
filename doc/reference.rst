@@ -36,19 +36,19 @@ Minuit
 .. autoclass:: Minuit
     :members:
 
-minimize
---------
-
-.. autofunction:: minimize
-
-cost
-----
+Cost functions
+--------------
 
 .. automodule:: iminuit.cost
     :members:
 
-util
-----
+Scipy-like interface
+--------------------
+
+.. autofunction:: minimize
+
+Utilities
+---------
 
 .. currentmodule:: iminuit.util
 
