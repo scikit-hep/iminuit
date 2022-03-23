@@ -17,6 +17,7 @@
     install
     reference
     tutorials
+    studies
     faq
     changelog
     benchmark

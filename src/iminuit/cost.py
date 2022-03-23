@@ -9,19 +9,21 @@ What to use when
 ----------------
 - Fit a normalised probability density to data
 
-    - Data is not binned: UnbinnedNLL
-    - Data is binned: BinnedNLL, also supports histogram of weighted samples
+    - Data are not binned: :class:`UnbinnedNLL`
+    - Data are binned: :class:`BinnedNLL`, also supports histogram of weighted samples
 
 - Fit a density to data, density is not normalised
 
-    - Data is not binned: ExtendedUnbinnedNLL
-    - Data is binned: ExtendedBinnedNLL, also supports histogram of weighted samples
+    - Data are not binned: :class:`ExtendedUnbinnedNLL`
+    - Data are binned: :class:`ExtendedBinnedNLL`, also supports histogram of weighted samples
 
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
   is one- or multi-dimensional, y is one-dimensional.
 
-    - y values contain no outliers: LeastSquares
-    - y values contain outliers: LeastSquares with loss function ``soft_l1``
+    - y values contain no outliers: :class:`LeastSquares`
+    - y values contain outliers: :class:`LeastSquares` with loss function set to "soft_l1"
+
+- Include constraints from external fits or apply regularisation: :class:`NormalConstraint`
 
 Combining cost functions
 ------------------------
@@ -52,7 +54,6 @@ import numpy as np
 from collections.abc import Sequence
 import abc
 import typing as _tp
-import numpy.typing as _ntp
 import warnings
 
 
@@ -65,16 +66,28 @@ def _unbinned_nll(x):
     return -np.sum(_safe_log(x))
 
 
-def _multinominal_nll(n, mu):
-    # this form makes 2 nll asymptotically chi2 distributed and keeps sum small,
-    # which helps to not loose accuracy in Minuit
-    return np.sum(n * (_safe_log(n) - _safe_log(mu)))
+def _multinominal_chi2(n, mu):
+    # This form makes the result asymptotically chi2 distributed and keeps the
+    # sum small, which helps to not loose accuracy in Minuit.
+    #
+    # Q = -2 (lnP - lnP')
+    # lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
+    # lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
+    # Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
+    #   = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
+    #   = 2 sum_i k_i (ln(k_i) - ln(mu_i))
+    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def _poisson_nll(n, mu):
-    # this form makes 2 nll asymptotically chi2 distributed and keeps sum small,
-    # which helps to not loose accuracy in Minuit
-    return np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
+def _poisson_chi2(n, mu):
+    # This form makes the result asymptotically chi2 distributed and keeps the
+    # sum small, which helps to not loose accuracy in Minuit.
+    #
+    # Q = -2 (lnP - lnP')
+    # lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
+    # lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
+    # Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
+    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
 def _z_squared(y, ye, ym):
@@ -122,31 +135,31 @@ try:
         # fallback to numpy for float128
         return _unbinned_nll_np(x)
 
-    _multinominal_nll_np = _multinominal_nll
-    _multinominal_nll_nb = _njit(
+    _multinominal_chi2_np = _multinominal_chi2
+    _multinominal_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_multinominal_nll_np)
+    )(_multinominal_chi2_np)
 
-    def _multinominal_nll(n, mu):
+    def _multinominal_chi2(n, mu):
         if mu.dtype in (np.float32, np.float64):
-            return _multinominal_nll_nb(n, mu)
+            return _multinominal_chi2_nb(n, mu)
         # fallback to numpy for float128
-        return _multinominal_nll_np(n, mu)
+        return _multinominal_chi2_np(n, mu)
 
-    _poisson_nll_np = _poisson_nll
-    _poisson_nll_nb = _njit(
+    _poisson_chi2_np = _poisson_chi2
+    _poisson_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_poisson_nll_np)
+    )(_poisson_chi2_np)
 
-    def _poisson_nll(n, mu):
+    def _poisson_chi2(n, mu):
         if mu.dtype in (np.float32, np.float64):
-            return _poisson_nll_nb(n, mu)
+            return _poisson_chi2_nb(n, mu)
         # fallback to numpy for float128
-        return _poisson_nll_np(n, mu)
+        return _poisson_chi2_np(n, mu)
 
     _chi2_np = _chi2
     _chi2_nb = _njit(
@@ -442,8 +455,7 @@ class UnbinnedNLL(UnbinnedCost):
     """Unbinned negative log-likelihood.
 
     Use this if only the shape of the fitted PDF is of interest and the original
-    unbinned data is available. The data can be one- or multi-dimensional, see
-    :meth:`__init__` for details on how to fit multivariate data.
+    unbinned data is available. The data can be one- or multi-dimensional.
     """
 
     __slots__ = ()
@@ -455,7 +467,7 @@ class UnbinnedNLL(UnbinnedCost):
 
     def __init__(
         self,
-        data: _ntp.ArrayLike,
+        data,
         pdf: _tp.Callable,
         verbose: int = 0,
         log: bool = False,
@@ -499,8 +511,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
     """Unbinned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the original
-    unbinned data is available. The data can be one- or multi-dimensional, see
-    :meth:`__init__` for details on how to fit multivariate data.
+    unbinned data is available. The data can be one- or multi-dimensional.
     """
 
     __slots__ = ()
@@ -512,7 +523,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
     def __init__(
         self,
-        data: _ntp.ArrayLike,
+        data,
         scaled_pdf: _tp.Callable,
         verbose: int = 0,
         log: bool = False,
@@ -671,18 +682,11 @@ class BinnedNLL(BinnedCost):
 
     Use this if only the shape of the fitted PDF is of interest and the data is binned.
     This cost function works with normal and weighted histograms. The histogram can be
-    one- or multi-dimensional, see :meth:`__init__` for details.
+    one- or multi-dimensional.
 
-    The cost function returns a value that is asymptotically chi2-distributed. It is
+    The cost function has a minimum value that is asymptotically chi2-distributed. It is
     constructed from the log-likelihood assuming a multivariate-normal distribution and
     using the saturated model as a reference.
-
-    Q = -2 (lnP - lnP')
-    lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
-    lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
-    Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
-      = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
-      = 2 sum_i k_i (ln(k_i) - ln(mu_i))
     """
 
     __slots__ = ()
@@ -727,7 +731,7 @@ class BinnedNLL(BinnedCost):
             prob /= np.sum(prob)  # normalise probability
         n = self._maybe_apply_bohm_zech_scaling(prob)
         mu = prob * np.sum(n)
-        return 2.0 * _multinominal_nll(n, mu)
+        return 2.0 * _multinominal_chi2(n, mu)
 
 
 class ExtendedBinnedNLL(BinnedCost):
@@ -736,16 +740,11 @@ class ExtendedBinnedNLL(BinnedCost):
 
     Use this if shape and normalization of the fitted PDF are of interest and the data is
     binned. This cost function works with normal and weighted histograms. The histogram
-    can be one- or multi-dimensional, see :meth:`__init__` for details.
+    can be one- or multi-dimensional.
 
-    The cost function returns a value that is asymptotically chi2-distributed. It is
+    The cost function has a minimum value that is asymptotically chi2-distributed. It is
     constructed from the log-likelihood assuming a poisson distribution and using the
     saturated model as a reference.
-
-    Q = -2 (lnP - lnP')
-    lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
-    lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
-    Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
     """
 
     __slots__ = ()
@@ -757,8 +756,8 @@ class ExtendedBinnedNLL(BinnedCost):
 
     def __init__(
         self,
-        n: _ntp.ArrayLike,
-        xe: _ntp.ArrayLike,
+        n,
+        xe,
         scaled_cdf: _tp.Callable,
         verbose: int = 0,
     ):
@@ -792,7 +791,7 @@ class ExtendedBinnedNLL(BinnedCost):
         if ma is not None:
             mu = mu[ma]
         n = self._maybe_apply_bohm_zech_scaling(mu)
-        return 2.0 * _poisson_nll(n, mu)
+        return 2.0 * _poisson_chi2(n, mu)
 
 
 class LeastSquares(MaskedCost):
@@ -872,9 +871,9 @@ class LeastSquares(MaskedCost):
 
     def __init__(
         self,
-        x: _ntp.ArrayLike,
-        y: _ntp.ArrayLike,
-        yerror: _ntp.ArrayLike,
+        x,
+        y,
+        yerror,
         model: _tp.Callable,
         loss: _tp.Union[str, _tp.Callable] = "linear",
         verbose: int = 0,
@@ -969,8 +968,8 @@ class NormalConstraint(Cost):
     def __init__(
         self,
         args: _tp.Union[str, _tp.Iterable[str]],
-        value: _ntp.ArrayLike,
-        error: _ntp.ArrayLike,
+        value,
+        error,
     ):
         """
         Initialize the normal constraint with expected value(s) and error(s).

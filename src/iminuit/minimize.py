@@ -1,4 +1,11 @@
-"""Scipy interface for Minuit."""
+"""
+Scipy interface for Minuit.
+
+The :func:`minimize` function provides the same interface as ``scipy.optimize.minimize``.
+If you are familiar with the latter, this allows you to use Minuit with a quick start.
+Eventually, you still may want to learn the interface of the :class:`Minuit` class, as it
+provides more functionality if you are interested in parameter uncertainties.
+"""
 
 from .minuit import Minuit
 import warnings

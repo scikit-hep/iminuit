@@ -39,21 +39,16 @@ Minuit
 minimize
 --------
 
-The :func:`minimize` function provides the same interface as :func:`scipy.optimize.minimize`.
-If you are familiar with the latter, this allows you to use Minuit with a quick start.
-Eventually, you still may want to learn the interface of the :class:`Minuit` class,
-as it provides more functionality if you are interested in parameter uncertainties.
-
 .. autofunction:: minimize
 
-iminuit.cost
-------------
+cost
+----
 
 .. automodule:: iminuit.cost
     :members:
 
-iminuit.util
-------------
+util
+----
 
 .. currentmodule:: iminuit.util
 
