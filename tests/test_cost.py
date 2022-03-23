@@ -11,7 +11,7 @@ from iminuit.cost import (
     LeastSquares,
     Constant,
     NormalConstraint,
-    _log_poisson_part,
+    _multinominal_nll,
     PerformanceWarning,
 )
 from collections.abc import Sequence
@@ -248,6 +248,25 @@ def test_BinnedNLL_2D():
     assert cost(*m.values) > m.fval
 
 
+def test_BinnedNLL_2D_with_zero_bins():
+    truth = (0.1, 0.2, 0.3, 0.4, 0.5)
+    x, y = mvnorm(*truth).rvs(size=1000).T
+
+    w, xe, ye = np.histogram2d(x, y, bins=(20, 50), range=((-10, 10), (-10, 10)))
+    assert np.mean(w == 0) > 0.25
+
+    def model(xy, mux, muy, sx, sy, rho):
+        return mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
+
+    cost = BinnedNLL(w, (xe, ye), model)
+    m = Minuit(cost, *truth)
+    m.limits["sx", "sy"] = (0, None)
+    m.limits["rho"] = (-1, 1)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.values, truth, atol=0.05)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -289,7 +308,7 @@ def test_ExtendedBinnedNLL_bad_input():
 
 def test_ExtendedBinnedNLL_2D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
-    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
 
     w, xe, ye = np.histogram2d(x, y, bins=(10, 20))
 
@@ -303,7 +322,7 @@ def test_ExtendedBinnedNLL_2D():
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
-    assert_allclose(m.values, truth, atol=0.05)
+    assert_allclose(m.values, truth, atol=0.1)
 
 
 def test_ExtendedBinnedNLL_3D():
@@ -689,13 +708,16 @@ def test_NormalConstraint_properties():
     assert_equal(nc.covariance, (1, 2))
 
 
-def test_log_poisson_part():
-    assert _log_poisson_part(0, 0) == 0
-    assert _log_poisson_part(0, 1) == 0
-    assert _log_poisson_part(1, 0) == pytest.approx(743, abs=1)
+def test_multinominal_nll():
+    zero = np.array(0)
+    one = np.array(1)
+
+    assert _multinominal_nll(zero, zero) == 0
+    assert _multinominal_nll(zero, one) == 0
+    assert _multinominal_nll(one, zero) == pytest.approx(743, abs=1)
     n = np.array([(0.0, 0.0)])
-    assert_allclose(_log_poisson_part(n, 0), 0)
-    assert_allclose(_log_poisson_part(n, 1), 0)
+    assert_allclose(_multinominal_nll(n, zero), 0)
+    assert_allclose(_multinominal_nll(n, one), 0)
 
 
 def test_model_float128():
