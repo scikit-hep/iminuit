@@ -45,12 +45,11 @@ Cost functions
 Scipy-like interface
 --------------------
 
-.. autofunction:: minimize
+.. automodule:: iminuit.minimize
+    :members:
 
 Utilities
 ---------
-
-.. currentmodule:: iminuit.util
 
 .. automodule:: iminuit.util
     :members:
