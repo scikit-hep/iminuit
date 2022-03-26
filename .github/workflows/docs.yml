@@ -18,6 +18,8 @@ jobs:
         python-version: 3.8
     - run: sudo apt-get install pandoc
     - run: python -m pip install --upgrade pip
+    # temporary fix until nbconvert fixes its use of Jinja2
+    - run: python -m pip install Jinja2==3.0
     - run: python -m pip install .[doc,test]
     - run: python -m ipykernel install --user --name python3
     - run: |
