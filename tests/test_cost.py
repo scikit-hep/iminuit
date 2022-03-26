@@ -12,6 +12,7 @@ from iminuit.cost import (
     Constant,
     NormalConstraint,
     _multinominal_chi2,
+    _soft_l1_loss,
     PerformanceWarning,
 )
 from collections.abc import Sequence
@@ -706,6 +707,16 @@ def test_NormalConstraint_properties():
     nc.covariance = (1, 2)
     assert_equal(nc.value, (2, 3))
     assert_equal(nc.covariance, (1, 2))
+
+
+@pytest.mark.parametrize("dtype", (np.float32, np.float128))
+def test_soft_l1_loss(dtype):
+    v = np.array([0], dtype=dtype)
+    assert _soft_l1_loss(v) == v
+    v[:] = 0.1
+    assert _soft_l1_loss(v) == pytest.approx(0.1, abs=0.01)
+    v[:] = 1e10
+    assert _soft_l1_loss(v) == pytest.approx(2e5, rel=0.01)
 
 
 def test_multinominal_chi2():
