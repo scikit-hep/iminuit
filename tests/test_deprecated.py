@@ -1,5 +1,6 @@
 from iminuit._deprecated import deprecated
 import pytest
+import numpy as np
 
 
 def test_deprecated_func():
@@ -7,5 +8,5 @@ def test_deprecated_func():
     def func(x):
         pass
 
-    with pytest.warns(DeprecationWarning, match="func is deprecated: bla"):
+    with pytest.warns(np.VisibleDeprecationWarning, match="func is deprecated: bla"):
         func(1)

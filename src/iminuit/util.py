@@ -1,14 +1,12 @@
 """
 Data classes and utilities used by :class:`iminuit.Minuit`.
 
-You can look up the interface of data classes that iminuit uses here. Also of interest
-for users are :func:`propagate` and :func:`make_with_signature`.
+You can look up the interface of data classes that iminuit uses here.
 """
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
-from . import _repr_html
-from . import _repr_text
+from . import _repr_html, _repr_text, _deprecated
 import numpy as np
 from typing import (
     Dict,
@@ -24,7 +22,6 @@ from typing import (
     TypeVar,
     Generic,
 )
-import types
 import abc
 from time import monotonic
 
@@ -982,16 +979,16 @@ def _jacobi(
     return y, jac
 
 
+@_deprecated.deprecated("use jacobi.propagate instead from jacobi library")
 def propagate(
     fn: Callable, x: Indexable[float], cov: Indexable[Indexable[float]]
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Numerically propagates the covariance into a new space.
 
-    The function does error propagation. It computes C' = J C J^T, where C is the
-    covariance matrix of the input, C' the matrix of the output, and J is the Jacobi
-    matrix of first derivatives of the mapping function fn. The Jacobi matrix is
-    computed numerically.
+    This function is deprecated and will be removed. Please use jacobi.propagate from the
+    jacobi library, which is more accurate. The signatures of the two functions are
+    compatible, so it is a drop-in replacement.
 
     Parameters
     ----------
@@ -1079,12 +1076,7 @@ def make_with_signature(
         c = callable.__code__
         if c.co_argcount != len(vars):
             raise ValueError("number of parameters do not match")
-        if hasattr(c, "replace"):  # this was added after 3.6
-            # calling this introduces no overhead compared to original function
-            code = c.replace(co_varnames=vars)
-            return types.FunctionType(code, globals())
 
-    # fallback implementation with additional overhead
     class Caller:
         def __init__(self, varnames: Tuple[str, ...]):
             self.func_code = make_func_code(varnames)  # type:ignore

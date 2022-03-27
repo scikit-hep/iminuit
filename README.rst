@@ -40,7 +40,6 @@ The iminuit package comes with additional features:
   - Non-linear regression with (optionally robust) weighted least-squares
   - Gaussian penalty terms
   - Cost functions can be combined by adding them: ``total_cost = cost_1 + cost_2``
-- Tools for numerical error propagation ``iminuit.util.propagate``
 - Support for SciPy minimisers as alternatives to Minuit's Migrad algorithm (optional)
 - Support for Numba accelerated functions (optional)
 

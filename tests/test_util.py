@@ -447,11 +447,13 @@ def test_propagate_1():
     def fn(x):
         return 2 * x + 1
 
-    y, ycov = util.propagate(fn, x, cov)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_allclose(y, [3, 5, 7])
     np.testing.assert_allclose(ycov, [[4, 0.4, 0.8], [0.4, 8, 1.2], [0.8, 1.2, 12]])
 
-    y, ycov = util.propagate(fn, 1, 2)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, ycov = util.propagate(fn, 1, 2)
     np.testing.assert_allclose(y, 3)
     np.testing.assert_allclose(ycov, 8)
 
@@ -469,14 +471,16 @@ def test_propagate_2():
     def fn(x):
         return np.dot(a, x)
 
-    y, ycov = util.propagate(fn, x, cov)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(x))
     np.testing.assert_allclose(ycov, np.einsum("ij,kl,jl", a, a, cov))
 
     def fn(x):
         return np.linalg.multi_dot([x.T, cov, x])
 
-    y, ycov = util.propagate(fn, x, cov)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(np.array(x)))
     jac = 2 * np.dot(cov, x)
     np.testing.assert_allclose(ycov, np.einsum("i,k,ik", jac, jac, cov))
@@ -494,20 +498,22 @@ def test_propagate_3():
     def fn(x):
         return 2 * x + 1
 
-    y, ycov = util.propagate(fn, x, cov)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_allclose(y, [3, 5, 7])
     np.testing.assert_allclose(ycov, [[4, 0.0, 0.8], [0.0, 0.0, 0.0], [0.8, 0.0, 12]])
 
 
-def test_proagate_on_bad_input():
+def test_propagate_on_bad_input():
     cov = [[np.nan, 0.0], [0.0, 1.0]]
     x = [1.0, 2.0]
 
     def fn(x):
         return 2 * x + 1
 
-    with pytest.raises(ValueError):
-        util.propagate(fn, x, cov)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        with pytest.raises(ValueError):
+            util.propagate(fn, x, cov)
 
 
 def test_jacobi():

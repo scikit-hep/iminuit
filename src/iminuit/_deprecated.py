@@ -1,4 +1,5 @@
 import warnings
+from numpy import VisibleDeprecationWarning
 
 
 class deprecated:
@@ -9,7 +10,7 @@ class deprecated:
         def decorated_func(*args, **kwargs):
             warnings.warn(
                 f"{func.__name__} is deprecated: {self._reason}",
-                category=DeprecationWarning,
+                category=VisibleDeprecationWarning,
                 stacklevel=2,
             )
             return func(*args, **kwargs)
