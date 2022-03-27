@@ -18,3 +18,4 @@ an advanced audience.
     notebooks/automatic_differentiation
     notebooks/cost_function_benchmarks
     notebooks/gof
+    notebooks/memory_layout
