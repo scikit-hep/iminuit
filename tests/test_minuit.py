@@ -1,4 +1,3 @@
-import warnings
 import platform
 import pytest
 import numpy as np
@@ -25,19 +24,9 @@ is_pypy = platform.python_implementation() == "PyPy"
 
 
 def test_pedantic_warning_message():
-    with warnings.catch_warnings(record=True) as w:
+    with pytest.warns(IMinuitWarning, match=r"errordef not set, using 1"):
         m = Minuit(lambda x: 0, x=0)
         m.migrad()  # MARKER
-
-    with open(__file__) as f:
-        for lineno, line in enumerate(f):
-            if "m.migrad()  # MARKER" in line:
-                break
-
-    assert len(w) == 1
-    assert "errordef not set, using 1" in str(w[0].message)
-    assert w[0].filename == __file__
-    assert w[0].lineno == lineno + 1
 
 
 def test_version():
