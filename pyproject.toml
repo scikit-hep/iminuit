@@ -12,7 +12,10 @@ black = 1
 minversion = "6.0"
 addopts = "-q -ra --ff"
 testpaths = ["tests"]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    "ignore::ImportWarning",
+]
 
 [tool.cibuildwheel]
 # update skip when numpy wheels become available
