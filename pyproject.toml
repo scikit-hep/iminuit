@@ -13,8 +13,8 @@ minversion = "6.0"
 addopts = "-q -ra --ff"
 testpaths = ["tests"]
 filterwarnings = [
-    "error",
-    "ignore::ImportWarning",
+    "error::numpy.VisibleDeprecationWarning",
+    "error::DeprecationWarning",
 ]
 
 [tool.cibuildwheel]
