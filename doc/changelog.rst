@@ -5,10 +5,17 @@
 Changelog
 =========
 
-2.11.1.dev0
------------
+2.11.1 (March 27, 2022)
+-----------------------
 
-TODO
+Fixes
+~~~~~
+- Fixed a failure of ``util.make_with_signature`` in some situations
+
+Other
+~~~~~
+- Raise numpy.VisibleDeprecationWarning instead of warnings.DeprecationWarning
+- ``util.propagate`` is deprecated in favour of ``jacobi.propagate`` from the jacobi library
 
 2.11.0 (March 27, 2022)
 -----------------------
