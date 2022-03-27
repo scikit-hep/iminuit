@@ -5,6 +5,26 @@
 Changelog
 =========
 
+2.11.0 (March 27, 2022)
+-----------------------
+
+New features
+~~~~~~~~~~~~
+- All builtin cost functions now support multidimensional data
+- ``Matrix.to_dict`` was added for symmetry with ``BasicValueView.to_dict``
+- For long-running fits, total runtime is now shown in ``FMin`` display and total runtime can be accessed via property ``FMin.time``
+
+Fixes
+~~~~~
+- In binned fits when ``ndof`` is zero, show ``reduced chi2 = nan`` in the ``FMin`` display instead of raising a ZeroDivisionError
+
+Documentation
+~~~~~~~~~~~~~
+- Tutorials and studies are now listed separately
+- Tutorial for fits of multivariate data were added
+- The cost function tutorial was improved
+- Studies in regard to performance were added, including a comparison with RooFit
+
 2.10.0 (March 4, 2022)
 ----------------------
 
