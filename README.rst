@@ -15,7 +15,7 @@
    :target: https://github.com/conda-forge/iminuit-feedstock
 .. image:: https://coveralls.io/repos/github/scikit-hep/iminuit/badge.svg?branch=develop
    :target: https://coveralls.io/github/scikit-hep/iminuit?branch=develop
-.. image:: https://readthedocs.org/projects/iminuit/badge/?version=stable
+.. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
    :target: https://iminuit.readthedocs.io/en/stable
 .. image:: https://img.shields.io/pypi/l/iminuit
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
