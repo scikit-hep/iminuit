@@ -20,6 +20,6 @@ How to make a release
 - Create release on Github
   - tag: vX.Y.Z (matching `src/iminuit/version.py`)
   - title: vX.Y.Z
-  - Message: [See changelog on RTD](https://iminuit.readthedocs.io/en/stable/changelog.html)
+  - Message: [Link to changelog](https://iminuit.readthedocs.io/en/stable/changelog.html)
   - Note: conda-forge should pick this up automatically and generate conda packages
 - Update `src/iminuit/version.py` beyond released version

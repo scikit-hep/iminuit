@@ -6,6 +6,8 @@ on:
 jobs:
   release_check:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.test }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -17,6 +19,9 @@ jobs:
 
       - if: ${{ github.ref == 'refs/heads/master' }}
         run: python .ci/release_check.py
+
+      - id: tag
+        run: echo "::set-output name=$(python .ci/get_tag.py)"
 
   wheels:
     needs: release_check
@@ -102,3 +107,14 @@ jobs:
         with:
           user: __token__
           password: ${{secrets.pypi_password}}
+
+  release:
+    needs: [release_check, upload]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: softprops/action-gh-release@v1
+        with:
+          body: "[Link to changelog](https://iminuit.readthedocs.io/en/stable/changelog.html)"
+          draft: True
+          name: ${{ needs.release_check.outputs.tag }}
+          target_commitish: ${{ github.ref_name }}

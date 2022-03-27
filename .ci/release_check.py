@@ -48,6 +48,7 @@ assert f"v{iminuit_version}" not in tags, "tag exists"
 with urllib.request.urlopen("https://pypi.org/pypi/iminuit/json") as r:
     pypi_versions = [parse_version(v) for v in json.loads(r.read())["releases"]]
 
+pypi_versions.sort()
 print("latest PyPI version:", pypi_versions[-1])
 
 assert parse_version(iminuit_version) not in pypi_versions, "pypi version exists"
