@@ -115,6 +115,7 @@ jobs:
       - uses: softprops/action-gh-release@v1
         with:
           body: "[Link to changelog](https://iminuit.readthedocs.io/en/stable/changelog.html)"
-          draft: True
+          draft: ${{ github.ref != 'refs/heads/master' }}
           name: ${{ needs.release_check.outputs.tag }}
+          tag_name: ${{ needs.release_check.outputs.tag }}
           target_commitish: ${{ github.ref_name }}
