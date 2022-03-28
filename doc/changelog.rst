@@ -5,6 +5,13 @@
 Changelog
 =========
 
+2.11.2 (March 28, 2022)
+-----------------------
+
+Other
+~~~~~
+- Fixed wording in cost function tutorial
+
 2.11.1 (March 27, 2022)
 -----------------------
 
