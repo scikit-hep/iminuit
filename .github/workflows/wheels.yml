@@ -112,6 +112,12 @@ jobs:
     needs: [release_check, upload]
     runs-on: ubuntu-latest
     steps:
+      - if: ${{ github.ref == 'refs/heads/master' }}
+        uses: actions/checkout@v2
+      - if: ${{ github.ref == 'refs/heads/master' }}
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: ${{ needs.release_check.outputs.tag }}
       - uses: softprops/action-gh-release@v1
         with:
           body: "[Link to changelog](https://iminuit.readthedocs.io/en/stable/changelog.html)"
