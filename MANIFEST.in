@@ -3,6 +3,7 @@ include src/*.hpp
 include src/iminuit/*.py
 include tests/*.py
 include tests/*.txt
+include tests/*.html
 recursive-include extern/root/math/minuit2/inc *.h
 recursive-include extern/root/math/minuit2/src *.cxx
 recursive-include extern/pybind11/include *.h
