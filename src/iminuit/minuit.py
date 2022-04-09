@@ -17,7 +17,7 @@ from ._core import (
 )
 import numpy as np
 import typing as _tp
-
+import numpy.typing as _ntp
 
 MnPrint.global_level = 0
 
@@ -1419,6 +1419,7 @@ class Minuit:
         *,
         size: int = 30,
         bound: _tp.Union[float, mutil.UserBound] = 2,
+        grid: _tp.Optional[_ntp.ArrayLike] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1429,34 +1430,42 @@ class Minuit:
 
         Parameters
         ----------
-        vname :
-            Name of parameter to scan.
-        size :
-            Number of scanning points (Default: 30).
-        bound :
-            If bound is tuple, (left, right) scanning bound. If bound is a number, it
-            specifies how many :math:`\sigma` symmetrically from minimum (minimum +/-
-            bound * :math:`\sigma`) (Default: 2).
-        subtract_min :
-            Subtract minimum from return values (Default: False).
+        vname : str
+            Parameter to scan over.
+        size : int, optional
+            Number of scanning points (Default: 100). Ignored if grid is set.
+        bound : tuple of float or float, optional
+            If bound is tuple, (left, right) scanning bound.
+            If bound is a number, it specifies an interval of N :math:`\sigma`
+            symmetrically around the minimum (Default: 2). Ignored if grid is set.
+        grid : array-like, optional
+            Parameter values on which to compute the profile. If grid is set, size and
+            bound are ignored.
+        subtract_min : bool, optional
+            If true, subtract offset so that smallest value is zero (Default: False).
 
         Returns
         -------
-        locations : array of float
+        array of float
             Parameter values where the profile was computed.
-        fvals: array of float
+        array of float
             Profile values.
-        status: array of bool
+        array of bool
             Whether minimisation in each point succeeded or not.
         """
         if vname not in self._pos2var:
             raise ValueError("Unknown parameter %s" % vname)
 
-        bound = self._normalize_bound(vname, bound)
+        if grid is not None:
+            x = np.array(grid, dtype=float)
+            if x.ndim != 1:
+                raise ValueError("grid must be 1D array-like")
+        else:
+            bound = self._normalize_bound(vname, bound)
+            x = np.linspace(bound[0], bound[1], size, dtype=float)
 
-        x = np.linspace(bound[0], bound[1], size, dtype=np.double)
-        y = np.empty(size, dtype=np.double)
-        status = np.empty(size, dtype=bool)
+        y = np.empty_like(x)
+        status = np.empty(len(x), dtype=bool)
 
         state = MnUserParameterState(self._last_state)  # copy
         ipar = self._var2pos[vname]
@@ -1478,27 +1487,20 @@ class Minuit:
         return x, y, status
 
     def draw_mnprofile(
-        self,
-        vname: str,
-        *,
-        size: int = 30,
-        bound: _tp.Union[mutil.UserBound, float] = 2,
-        subtract_min: bool = False,
-        band: bool = True,
-        text: bool = True,
+        self, vname: str, *, band: bool = True, text: bool = True, **kwargs
     ) -> _tp.Tuple[_tp.Collection[float], _tp.Collection[float]]:
         r"""
         Draw Minos profile over a specified interval (requires matplotlib).
 
-        See :meth:`mnprofile` for details and shared arguments. The following arguments
-        are accepted.
+        See :meth:`mnprofile` for details and shared arguments. The following additional
+        arguments are accepted.
 
         Parameters
         ----------
-        band :
+        band : bool, optional
             If true, show a band to indicate the Hesse error interval (Default: True).
 
-        text :
+        text : bool, optional
             If true, show text a title with the function value and the Hesse error
             (Default: True).
 
@@ -1511,9 +1513,9 @@ class Minuit:
         --------
         mnprofile, profile, draw_profile
         """
-        x, y, _ = self.mnprofile(
-            vname, size=size, bound=bound, subtract_min=subtract_min
-        )
+        if "subtract_min" not in kwargs:
+            kwargs["subtract_min"] = True
+        x, y, _ = self.mnprofile(vname, **kwargs)
         return self._draw_profile(vname, x, y, band, text)
 
     def profile(
@@ -1522,6 +1524,7 @@ class Minuit:
         *,
         size: int = 100,
         bound: _tp.Union[float, mutil.UserBound] = 2,
+        grid: _tp.Optional[_ntp.ArrayLike] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         r"""
@@ -1533,34 +1536,42 @@ class Minuit:
 
         Parameters
         ----------
-        vname :
+        vname : str
             Parameter to scan over.
-        size :
-            Number of scanning points (Default: 100).
-        bound :
+        size : int, optional
+            Number of scanning points (Default: 100). Ignored if grid is set.
+        bound : tuple of float or float, optional
             If bound is tuple, (left, right) scanning bound.
             If bound is a number, it specifies an interval of N :math:`\sigma`
-            symmetrically around the minimum (Default: 2).
-        subtract_min :
+            symmetrically around the minimum (Default: 2). Ignored if grid is set.
+        grid : array-like, optional
+            Parameter values on which to compute the profile. If grid is set, size and
+            bound are ignored.
+        subtract_min : bool, optional
             If true, subtract offset so that smallest value is zero (Default: False).
 
         Returns
         -------
-        x : array of float
+        array of float
             Parameter values.
-        y : array of float
+        array of float
             Function values.
 
         See Also
         --------
         mnprofile
         """
-        bound = self._normalize_bound(vname, bound)
+        if grid is not None:
+            x = np.array(grid, dtype=float)
+            if x.ndim != 1:
+                raise ValueError("grid must be 1D array-like")
+        else:
+            bound = self._normalize_bound(vname, bound)
+            x = np.linspace(bound[0], bound[1], size, dtype=float)
 
-        ipar = self._var2pos[vname]
-        x = np.linspace(bound[0], bound[1], size, dtype=np.double)
-        y = np.empty(size, dtype=np.double)
+        y = np.empty_like(x)
         values = np.array(self.values)
+        ipar = self._var2pos[vname]
         for i, vi in enumerate(x):
             values[ipar] = vi
             y[i] = self.fcn(values)
@@ -1571,14 +1582,7 @@ class Minuit:
         return x, y
 
     def draw_profile(
-        self,
-        vname: str,
-        *,
-        size: int = 100,
-        bound: _tp.Union[int, _tp.Tuple[int, int]] = 2,
-        subtract_min: bool = False,
-        band: bool = True,
-        text: bool = True,
+        self, vname: str, *, band: bool = True, text: bool = True, **kwargs
     ) -> _tp.Tuple[_tp.Collection[float], _tp.Collection[float]]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
@@ -1588,10 +1592,10 @@ class Minuit:
 
         Parameters
         ----------
-        band :
+        band : bool, optional
             If true, show a band to indicate the Hesse error interval (Default: True).
 
-        text :
+        text : bool, optional
             If true, show text a title with the function value and the Hesse error
             (Default: True).
 
@@ -1599,7 +1603,9 @@ class Minuit:
         --------
         profile, mnprofile, draw_mnprofile
         """
-        x, y = self.profile(vname, size=size, bound=bound, subtract_min=subtract_min)
+        if "subtract_min" not in kwargs:
+            kwargs["subtract_min"] = True
+        x, y = self.profile(vname, **kwargs)
         return self._draw_profile(vname, x, y, band, text)
 
     def _draw_profile(
@@ -1647,6 +1653,7 @@ class Minuit:
         bound: _tp.Union[
             float, _tp.Tuple[_tp.Tuple[float, float], _tp.Tuple[float, float]]
         ] = 2,
+        grid: _tp.Optional[_tp.Tuple[_ntp.ArrayLike, _ntp.ArrayLike]] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1664,69 +1671,76 @@ class Minuit:
 
         Parameters
         ----------
-        x :
+        x : str
             First parameter for scan.
-        y :
+        y : str
             Second parameter for scan.
-        size :
-            Number of scanning points per parameter (Default: 50).
-        bound :
+        size : int or tuple of int, optional
+            Number of scanning points per parameter (Default: 50). A tuple is
+            interpreted as the number of scanning points per parameter.
+            Ignored if grid is set.
+        bound : float or tuple of floats, optional
             If bound is 2x2 array, [[v1min,v1max],[v2min,v2max]].
             If bound is a number, it specifies how many :math:`\sigma`
             symmetrically from minimum (minimum+- bound*:math:`\sigma`).
-            (Default: 2).
+            (Default: 2). Ignored if grid is set.
+        grid : tuple of array-like, optional
+            Grid points to scan over. If grid is set, size and bound are ignored.
         subtract_min :
             Subtract minimum from return values (Default: False).
 
         Returns
         -------
-        x : array of float
+        array of float
             Parameter values of first parameter.
-        y : array of float
+        array of float
             Parameter values of second parameter.
-        fval : 2D array of float
+        2D array of float
             Function values.
 
         See Also
         --------
         mncontour, mnprofile
         """
-        if isinstance(bound, tuple):
-            xrange = self._normalize_bound(x, bound[0])
-            yrange = self._normalize_bound(y, bound[1])
+        if grid is not None:
+            xv = np.array(grid[0], dtype=float)
+            yv = np.array(grid[1], dtype=float)
         else:
-            n = float(bound)
-            xrange = self._normalize_bound(x, n)
-            yrange = self._normalize_bound(y, n)
+            if isinstance(bound, tuple):
+                xrange = self._normalize_bound(x, bound[0])
+                yrange = self._normalize_bound(y, bound[1])
+            else:
+                n = float(bound)
+                xrange = self._normalize_bound(x, n)
+                yrange = self._normalize_bound(y, n)
+            if isinstance(size, _tp.Iterable):
+                xsize, ysize = size
+            else:
+                xsize = size
+                ysize = size
+            xv = np.linspace(xrange[0], xrange[1], xsize)
+            yv = np.linspace(yrange[0], yrange[1], ysize)
+        zv = np.empty((len(xv), len(yv)), dtype=float)
 
         ipar = self._var2pos[x]
         jpar = self._var2pos[y]
-
-        x = np.linspace(xrange[0], xrange[1], size)
-        y = np.linspace(yrange[0], yrange[1], size)
-
-        z = np.empty((size, size), dtype=np.double)
         values = np.array(self.values)
-        for i, xi in enumerate(x):
+        for i, xi in enumerate(xv):
             values[ipar] = xi
-            for j, yi in enumerate(y):
+            for j, yi in enumerate(yv):
                 values[jpar] = yi
-                z[i, j] = self._fcn(values)
+                zv[i, j] = self._fcn(values)
 
         if subtract_min:
-            z -= np.min(z)
+            zv -= np.min(zv)
 
-        return x, y, z
+        return xv, yv, zv
 
     def draw_contour(
         self,
         x: str,
         y: str,
-        *,
-        size: int = 50,
-        bound: _tp.Union[
-            float, _tp.Tuple[_tp.Tuple[float, float], _tp.Tuple[float, float]]
-        ] = 2,
+        **kwargs,
     ) -> _tp.Tuple[
         _tp.Collection[float],
         _tp.Collection[float],
@@ -1744,11 +1758,13 @@ class Minuit:
         """
         from matplotlib import pyplot as plt
 
-        vx, vy, vz = self.contour(x, y, size=size, bound=bound, subtract_min=True)
+        if "subtract_min" not in kwargs:
+            kwargs["subtract_min"] = True
+        vx, vy, vz = self.contour(x, y, **kwargs)
 
         v = [self.errordef * (i + 1) for i in range(4)]
 
-        CS = plt.contour(vx, vy, vz, v)
+        CS = plt.contour(vx, vy, vz.T, v)
         plt.clabel(CS, v)
         plt.xlabel(x)
         plt.ylabel(y)
@@ -1777,17 +1793,17 @@ class Minuit:
             Variable name of the first parameter.
         y : str
             Variable name of the second parameter.
-        cl : float or None
+        cl : float or None, optional
             Confidence level of the contour. If None, a standard 68 % contour is computed
             (default: None). Setting this to another value requires the scipy module to
             be installed.
-        size : int
+        size : int, optional
             Number of points on the contour to find (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
 
         Returns
         -------
-        points : array of float (N x 2)
+        array of float (N x 2)
             Contour points of the form [[x1, y1]...[xn, yn]].
             Note that the last point [xn, yn] is not identical to [x1, y1]. To draw a
             closed contour, please use a closed polygon, like matplotlib.patch.Polygon
@@ -1833,7 +1849,7 @@ class Minuit:
         x: str,
         y: str,
         *,
-        cl: _tp.Optional[_tp.Iterable[float]] = None,
+        cl: _tp.Optional[_tp.Union[float, _tp.Collection[float]]] = None,
         size: int = 100,
     ) -> _tp.Any:
         """
@@ -1843,16 +1859,16 @@ class Minuit:
 
         Parameters
         ----------
-        x :
+        x : str
             Variable name of the first parameter.
-        y :
+        y : str
             Variable name of the second parameter.
-        cl : int, list of int, or None
+        cl : float or collection of floats, optional
             Confidence level(s) of the contour(s) (default: None). If None (default),
             a standard 68 % contour is drawn. It is possible to draw several contours by
             passing a list of confidence levels between zero and one. Setting this to
             value other than None requires the scipy module to be installed.
-        size :
+        size : int, optional
             Number of points on each contour(s) (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
 
