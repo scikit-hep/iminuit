@@ -1703,8 +1703,11 @@ class Minuit:
         mncontour, mnprofile
         """
         if grid is not None:
-            xv = np.array(grid[0], dtype=float)
-            yv = np.array(grid[1], dtype=float)
+            xg, yg = grid
+            xv = np.array(xg, dtype=float)
+            yv = np.array(yg, dtype=float)
+            if xv.ndim != 1 or yv.ndim != 1:
+                raise ValueError("grid per parameter must be 1D array-like")
         else:
             if isinstance(bound, tuple):
                 xrange = self._normalize_bound(x, bound[0])

@@ -631,6 +631,22 @@ def test_contour_grid():
     assert_allclose(func0(X, Y), v.T)
 
 
+def test_contour_bad_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=([1, 2, 3], [[1, 2, 3]]))
+
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=([1, 2, 3],))
+
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=([1, 2, 3], [1, 2], [3, 4]))
+
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=(10, [1, 2, 3]))
+
+
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_profile(grad):
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
@@ -652,6 +668,16 @@ def test_profile_grid():
     assert y[0] == 0
     assert y[-1] == 4
     assert_allclose(func0(m.values[0], y), v)
+
+
+def test_profile_bad_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.profile("y", grid=[[1, 2, 3]])
+
+    with pytest.raises(ValueError):
+        m.profile("y", grid=10)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -693,6 +719,15 @@ def test_mnprofile_grid():
         m2.migrad()
         v2.append(m2.fval)
     assert_allclose(v, v2)
+
+
+def test_mnprofile_bad_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.mnprofile("y", grid=10)
+    with pytest.raises(ValueError):
+        m.mnprofile("y", grid=[[10, 20]])
 
 
 def test_contour_subtract():
