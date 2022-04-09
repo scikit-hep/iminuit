@@ -16,17 +16,7 @@ from ._core import (
     FunctionMinimum,
 )
 import numpy as np
-from typing import (
-    Tuple,
-    Dict,
-    Set,
-    Iterable,
-    Callable,
-    Collection,
-    Optional,
-    Union,
-    Any,
-)
+import typing as _tp
 
 
 MnPrint.global_level = 0
@@ -67,22 +57,22 @@ class Minuit:
         return self._fcn
 
     @property
-    def grad(self) -> Callable[[np.ndarray], np.ndarray]:
+    def grad(self) -> _tp.Callable[[np.ndarray], np.ndarray]:
         """Get gradient function of the cost function."""
         return self._fcn.gradient  # type:ignore
 
     @property
-    def pos2var(self) -> Tuple[str, ...]:
+    def pos2var(self) -> _tp.Tuple[str, ...]:
         """Map variable index to name."""
         return self._pos2var
 
     @property
-    def var2pos(self) -> Dict[str, int]:
+    def var2pos(self) -> _tp.Dict[str, int]:
         """Map variable name to index."""
         return self._var2pos
 
     @property
-    def parameters(self) -> Tuple[str, ...]:
+    def parameters(self) -> _tp.Tuple[str, ...]:
         """
         Get tuple of parameter names.
 
@@ -119,7 +109,7 @@ class Minuit:
             self._fmin._src.errordef = value
 
     @property
-    def precision(self) -> Optional[float]:
+    def precision(self) -> _tp.Optional[float]:
         """
         Access estimated precision of the cost function.
 
@@ -131,7 +121,7 @@ class Minuit:
         return self._precision
 
     @precision.setter
-    def precision(self, value: Optional[float]) -> None:
+    def precision(self, value: _tp.Optional[float]) -> None:
         if value is not None and not (value > 0):
             raise ValueError("precision must be a positive number or None")
         self._precision = value
@@ -170,7 +160,7 @@ class Minuit:
         return self._tolerance
 
     @tol.setter
-    def tol(self, value: Optional[float]) -> None:
+    def tol(self, value: _tp.Optional[float]) -> None:
         if value is None:  # used to reset tolerance
             value = 0.1
         elif value < 0:
@@ -256,7 +246,7 @@ class Minuit:
         return self._values
 
     @values.setter
-    def values(self, args: Iterable) -> None:
+    def values(self, args: _tp.Iterable) -> None:
         self._values[:] = args
 
     @property
@@ -273,7 +263,7 @@ class Minuit:
         return self._errors
 
     @errors.setter
-    def errors(self, args: Iterable) -> None:
+    def errors(self, args: _tp.Iterable) -> None:
         self._errors[:] = args
 
     @property
@@ -295,7 +285,7 @@ class Minuit:
         return self._fixed
 
     @fixed.setter
-    def fixed(self, args: Iterable) -> None:
+    def fixed(self, args: _tp.Iterable) -> None:
         self._fixed[:] = args
 
     @property
@@ -320,7 +310,7 @@ class Minuit:
         return self._limits
 
     @limits.setter
-    def limits(self, args: Iterable) -> None:
+    def limits(self, args: _tp.Iterable) -> None:
         self._limits[:] = args
 
     @property
@@ -338,7 +328,7 @@ class Minuit:
         return self._merrors
 
     @property
-    def covariance(self) -> Optional[mutil.Matrix]:
+    def covariance(self) -> _tp.Optional[mutil.Matrix]:
         r"""
         Return covariance matrix.
 
@@ -388,7 +378,7 @@ class Minuit:
         return self._fcn._ndata() - self.nfit  # type: ignore
 
     @property
-    def fmin(self) -> Optional[mutil.FMin]:
+    def fmin(self) -> _tp.Optional[mutil.FMin]:
         """
         Get function minimum data object.
 
@@ -399,7 +389,7 @@ class Minuit:
         return self._fmin
 
     @property
-    def fval(self) -> Optional[float]:
+    def fval(self) -> _tp.Optional[float]:
         """
         Get function value at minimum.
 
@@ -472,10 +462,10 @@ class Minuit:
 
     def __init__(
         self,
-        fcn: Callable,
-        *args: Union[float, mutil.Indexable[float]],
-        grad: Optional[Callable] = None,
-        name: Optional[Collection[str]] = None,
+        fcn: _tp.Callable,
+        *args: _tp.Union[float, mutil.Indexable[float]],
+        grad: _tp.Optional[_tp.Callable] = None,
+        name: _tp.Optional[_tp.Collection[str]] = None,
         **kwds: float,
     ):
         """
@@ -582,7 +572,7 @@ class Minuit:
         migrad, hesse, minos, scan, simplex
         """
         array_call = False
-        if len(args) == 1 and isinstance(args[0], Collection):
+        if len(args) == 1 and isinstance(args[0], _tp.Collection):
             array_call = True
             start = np.array(args[0])
         else:
@@ -632,14 +622,14 @@ class Minuit:
         :attr:`print_level` unchanged.
         """
         self._last_state = self._init_state
-        self._fmin: Optional[mutil.FMin] = None
+        self._fmin: _tp.Optional[mutil.FMin] = None
         self._fcn._nfcn = 0
         self._fcn._ngrad = 0
         self._merrors = mutil.MErrors()
-        self._covariance: Optional[mutil.Matrix] = None
+        self._covariance: _tp.Optional[mutil.Matrix] = None
         return self  # return self for method chaining and to autodisplay current state
 
-    def migrad(self, ncall: Optional[int] = None, iterate: int = 5) -> "Minuit":
+    def migrad(self, ncall: _tp.Optional[int] = None, iterate: int = 5) -> "Minuit":
         """
         Run Migrad minimization.
 
@@ -702,7 +692,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall: Optional[int] = None) -> "Minuit":
+    def simplex(self, ncall: _tp.Optional[int] = None) -> "Minuit":
         """
         Run Simplex minimization.
 
@@ -762,7 +752,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scan(self, ncall: Optional[int] = None) -> "Minuit":
+    def scan(self, ncall: _tp.Optional[int] = None) -> "Minuit":
         """
         Brute-force minimization.
 
@@ -873,11 +863,11 @@ class Minuit:
 
     def scipy(
         self,
-        method: Optional[Union[str, Callable]] = None,
-        ncall: Optional[int] = None,
-        hess: Optional[Any] = None,
-        hessp: Optional[Any] = None,
-        constraints: Optional[Iterable[Any]] = None,
+        method: _tp.Optional[_tp.Union[str, _tp.Callable]] = None,
+        ncall: _tp.Optional[int] = None,
+        hess: _tp.Optional[_tp.Any] = None,
+        hessp: _tp.Optional[_tp.Any] = None,
+        constraints: _tp.Optional[_tp.Iterable[_tp.Any]] = None,
     ) -> "Minuit":
         """
         Minimize with SciPy algorithms.
@@ -1049,7 +1039,7 @@ class Minuit:
             if isinstance(constraints, dict):
                 raise ValueError("setting constraints with dicts is not supported")
 
-            if not isinstance(constraints, Iterable):
+            if not isinstance(constraints, _tp.Iterable):
                 constraints = [constraints]
 
             for c in constraints:
@@ -1162,7 +1152,7 @@ class Minuit:
             matrix = r.hess
             needs_invert = True
         # hess_inv is a function, need to convert to full matrix
-        if matrix is not None and isinstance(matrix, Callable):
+        if matrix is not None and isinstance(matrix, _tp.Callable):
             matrix = matrix(np.eye(self.nfit))
 
         accurate_covar = bool(hess) or bool(hessp)
@@ -1231,7 +1221,7 @@ class Minuit:
 
         return self
 
-    def hesse(self, ncall: Optional[int] = None) -> "Minuit":
+    def hesse(self, ncall: _tp.Optional[int] = None) -> "Minuit":
         """
         Run Hesse algorithm to compute asymptotic errors.
 
@@ -1315,7 +1305,10 @@ class Minuit:
         return self  # return self for method chaining and to autodisplay current state
 
     def minos(
-        self, *parameters: str, cl: Optional[float] = None, ncall: Optional[int] = None
+        self,
+        *parameters: str,
+        cl: _tp.Optional[float] = None,
+        ncall: _tp.Optional[int] = None,
     ) -> "Minuit":
         """
         Run Minos algorithm to compute confidence intervals.
@@ -1425,9 +1418,9 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: Union[float, mutil.UserBound] = 2,
+        bound: _tp.Union[float, mutil.UserBound] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get Minos profile over a specified interval.
 
@@ -1489,11 +1482,11 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: Union[mutil.UserBound, float] = 2,
+        bound: _tp.Union[mutil.UserBound, float] = 2,
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ) -> Tuple[Collection[float], Collection[float]]:
+    ) -> _tp.Tuple[_tp.Collection[float], _tp.Collection[float]]:
         r"""
         Draw Minos profile over a specified interval (requires matplotlib).
 
@@ -1528,9 +1521,9 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: Union[float, mutil.UserBound] = 2,
+        bound: _tp.Union[float, mutil.UserBound] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         r"""
         Calculate 1D cost function profile over a range.
 
@@ -1582,11 +1575,11 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: Union[int, Tuple[int, int]] = 2,
+        bound: _tp.Union[int, _tp.Tuple[int, int]] = 2,
         subtract_min: bool = False,
         band: bool = True,
         text: bool = True,
-    ) -> Tuple[Collection[float], Collection[float]]:
+    ) -> _tp.Tuple[_tp.Collection[float], _tp.Collection[float]]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
 
@@ -1611,7 +1604,7 @@ class Minuit:
 
     def _draw_profile(
         self, vname: str, x: np.ndarray, y: np.ndarray, band: bool, text: bool
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         from matplotlib import pyplot as plt
 
         plt.plot(x, y)
@@ -1651,9 +1644,11 @@ class Minuit:
         y: str,
         *,
         size: int = 50,
-        bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
+        bound: _tp.Union[
+            float, _tp.Tuple[_tp.Tuple[float, float], _tp.Tuple[float, float]]
+        ] = 2,
         subtract_min: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get a 2D contour of the function around the minimum.
 
@@ -1729,8 +1724,14 @@ class Minuit:
         y: str,
         *,
         size: int = 50,
-        bound: Union[float, Tuple[Tuple[float, float], Tuple[float, float]]] = 2,
-    ) -> Tuple[Collection[float], Collection[float], Collection[Collection[float]]]:
+        bound: _tp.Union[
+            float, _tp.Tuple[_tp.Tuple[float, float], _tp.Tuple[float, float]]
+        ] = 2,
+    ) -> _tp.Tuple[
+        _tp.Collection[float],
+        _tp.Collection[float],
+        _tp.Collection[_tp.Collection[float]],
+    ]:
         """
         Draw 2D contour around minimum (requires matplotlib).
 
@@ -1756,8 +1757,8 @@ class Minuit:
         return vx, vy, vz
 
     def mncontour(
-        self, x: str, y: str, *, cl: Optional[float] = None, size: int = 100
-    ) -> Collection[Collection[float]]:
+        self, x: str, y: str, *, cl: _tp.Optional[float] = None, size: int = 100
+    ) -> _tp.Collection[_tp.Collection[float]]:
         """
         Get 2D Minos confidence region.
 
@@ -1832,9 +1833,9 @@ class Minuit:
         x: str,
         y: str,
         *,
-        cl: Optional[Iterable[float]] = None,
+        cl: _tp.Optional[_tp.Iterable[float]] = None,
         size: int = 100,
-    ) -> Any:
+    ) -> _tp.Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
 
@@ -1876,7 +1877,7 @@ class Minuit:
 
         mpl_version = tuple(map(int, mpl_version.split(".")))
 
-        cls = cl if isinstance(cl, Iterable) else [cl]
+        cls = cl if isinstance(cl, _tp.Iterable) else [cl]
 
         c_val = []
         c_pts = []
@@ -1898,7 +1899,7 @@ class Minuit:
 
         return cs
 
-    def _free_parameters(self) -> Set[str]:
+    def _free_parameters(self) -> _tp.Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)
 
     def _mnprecision(self) -> MnMachinePrecision:
@@ -1908,9 +1909,9 @@ class Minuit:
         return pr
 
     def _normalize_bound(
-        self, vname: str, bound: Union[float, mutil.UserBound]
-    ) -> Tuple[float, float]:
-        if isinstance(bound, Iterable):
+        self, vname: str, bound: _tp.Union[float, mutil.UserBound]
+    ) -> _tp.Tuple[float, float]:
+        if isinstance(bound, _tp.Iterable):
             return mutil._normalize_limit(bound)
 
         if not self.accurate:
@@ -2022,7 +2023,7 @@ class Minuit:
 
 
 def _make_init_state(
-    pos2var: Tuple[str, ...], args: np.ndarray, kwds: Dict[str, float]
+    pos2var: _tp.Tuple[str, ...], args: np.ndarray, kwds: _tp.Dict[str, float]
 ) -> MnUserParameterState:
     nargs = len(args)
     # check kwds
@@ -2054,7 +2055,7 @@ def _make_init_state(
 
 
 def _get_params(mps: MnUserParameterState, merrors: mutil.MErrors) -> mutil.Params:
-    def get_me(name: str) -> Optional[Tuple[float, float]]:
+    def get_me(name: str) -> _tp.Optional[_tp.Tuple[float, float]]:
         if name in merrors:
             me = merrors[name]
             return me.lower, me.upper
