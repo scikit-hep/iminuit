@@ -116,3 +116,40 @@ def test_issue_687():
 
     s_m2 = str(m2)  # this used to fail
     assert s_m == s_m2
+
+
+def test_issue_694():
+    from iminuit.cost import ExtendedUnbinnedNLL
+    from scipy.stats import norm, expon
+
+    xmus = 1.0
+    xmub = 5.0
+    xsigma = 1.0
+    ymu = 0.5
+    ysigma = 0.2
+    ytau = 0.1
+
+    for seed in range(100):
+        rng = np.random.default_rng(seed)
+
+        xs = rng.normal(xmus, xsigma, size=33)
+        xb = rng.normal(xmub, xsigma, size=66)
+        x = np.append(xs, xb)
+
+        def model(x, sig_n, sig_mu, sig_sigma, bkg_n, bkg_tau):
+            return sig_n + bkg_n, (
+                sig_n * norm.pdf(x, sig_mu, sig_sigma)
+                + bkg_n * expon.pdf(x, 0, bkg_tau)
+            )
+
+        nll = ExtendedUnbinnedNLL(x, model)
+
+        m = Minuit(nll, sig_n=33, sig_mu=ymu, sig_sigma=ysigma, bkg_n=66, bkg_tau=ytau)
+        m.migrad()
+
+        if np.isnan(m.fmin.edm):
+            assert m.valid is False
+            assert m.fmin.is_above_max_edm is True
+            break
+    else:
+        assert False

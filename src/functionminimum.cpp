@@ -34,16 +34,23 @@ void bind_functionminimum(py::module m) {
       .def_property_readonly("state", &FunctionMinimum::UserState)
       .def_property_readonly("edm", &FunctionMinimum::Edm)
       .def_property_readonly("fval", &FunctionMinimum::Fval)
-      .def_property_readonly("is_valid", &FunctionMinimum::IsValid)
-      .def_property_readonly("has_valid_parameters",
-                             &FunctionMinimum::HasValidParameters)
+      // TODO this needs to be fixed upstream in ROOT
+      .def_property_readonly("is_valid",
+                             [](const FunctionMinimum& self) {
+                               return self.IsValid() && !std::isnan(self.Edm());
+                             })
+      // FunctionMinimum::HasValidParameters is not wrapped to Python
       .def_property_readonly("has_accurate_covar", &FunctionMinimum::HasAccurateCovar)
       .def_property_readonly("has_posdef_covar", &FunctionMinimum::HasPosDefCovar)
       .def_property_readonly("has_made_posdef_covar",
                              &FunctionMinimum::HasMadePosDefCovar)
       .def_property_readonly("hesse_failed", &FunctionMinimum::HesseFailed)
       .def_property_readonly("has_covariance", &FunctionMinimum::HasCovariance)
-      .def_property_readonly("is_above_max_edm", &FunctionMinimum::IsAboveMaxEdm)
+      // TODO this needs to be fixed upstream in ROOT
+      .def_property_readonly("is_above_max_edm",
+                             [](const FunctionMinimum& self) {
+                               return self.IsAboveMaxEdm() || std::isnan(self.Edm());
+                             })
       .def_property_readonly("has_reached_call_limit",
                              &FunctionMinimum::HasReachedCallLimit)
       .def_property("errordef", &FunctionMinimum::Up, &FunctionMinimum::SetErrorDef)
