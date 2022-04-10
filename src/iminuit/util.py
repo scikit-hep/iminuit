@@ -7,23 +7,11 @@ import inspect
 from collections import OrderedDict
 from argparse import Namespace
 from . import _repr_html, _repr_text, _deprecated
+from . import typing as _mtp
 import numpy as np
 import typing as _tp
 import abc
 from time import monotonic
-
-_T = _tp.TypeVar("_T")
-
-
-class Indexable(_tp.Iterable, _tp.Sized, _tp.Generic[_T]):
-    """Indexable type for mypy."""
-
-    def __getitem__(self, idx: int) -> _T:
-        """Get item at index idx."""
-        ...  # pragma: no cover
-
-
-UserBound = _tp.Optional[Indexable[_tp.Optional[float]]]
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -48,8 +36,6 @@ class BasicView(abc.ABC):
 
     __slots__ = ("_minuit", "_ndim")
 
-    _Key = _tp.Union[int, str, slice, _tp.List[_tp.Union[int, str]]]
-
     def __init__(self, minuit: _tp.Any, ndim: int = 0):
         """Not to be initialized by users."""
         self._minuit = minuit
@@ -72,7 +58,7 @@ class BasicView(abc.ABC):
     def _set(self, idx: int, value: _tp.Any) -> None:
         pass  # pragma: no cover
 
-    def __getitem__(self, key: _Key) -> _tp.Any:
+    def __getitem__(self, key: _mtp.Key) -> _tp.Any:
         """
         Get values of the view.
 
@@ -87,7 +73,7 @@ class BasicView(abc.ABC):
             return [self._get(i) for i in key]
         return self._get(key)
 
-    def __setitem__(self, key: _Key, value: _tp.Any) -> None:
+    def __setitem__(self, key: _mtp.Key, value: _tp.Any) -> None:
         """Assign a new value at key, which can be an index, a parameter name, or a slice."""
         self._minuit._copy_state_if_needed()
         key = _key2index(self._minuit._var2pos, key)
@@ -182,7 +168,7 @@ class LimitView(BasicView):
             p.upper_limit if p.has_upper_limit else np.inf,
         )
 
-    def _set(self, i: int, arg: UserBound) -> None:
+    def _set(self, i: int, arg: _mtp.UserBound) -> None:
         state = self._minuit._last_state
         val = state[i].value
         err = state[i].error
@@ -207,7 +193,7 @@ class LimitView(BasicView):
         state.set_error(i, err)
 
 
-def _normalize_limit(lim: UserBound) -> _tp.Tuple[float, float]:
+def _normalize_limit(lim: _mtp.UserBound) -> _tp.Tuple[float, float]:
     if lim is None:
         return (-np.inf, np.inf)
     a, b = lim
@@ -971,7 +957,9 @@ def _jacobi(
 
 @_deprecated.deprecated("use jacobi.propagate instead from jacobi library")
 def propagate(
-    fn: _tp.Callable, x: Indexable[float], cov: Indexable[Indexable[float]]
+    fn: _tp.Callable,
+    x: _mtp.Indexable[float],
+    cov: _mtp.Indexable[_mtp.Indexable[float]],
 ) -> _tp.Tuple[np.ndarray, np.ndarray]:
     """
     Numerically propagates the covariance into a new space.
@@ -1017,7 +1005,7 @@ class _Timer:
         self.value = monotonic() - self.value + self._prev
 
 
-def make_func_code(params: Indexable[str]) -> Namespace:
+def make_func_code(params: _mtp.Indexable[str]) -> Namespace:
     """
     Make a func_code object to fake a function signature.
 

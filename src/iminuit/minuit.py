@@ -17,10 +17,11 @@ from ._core import (
 )
 import numpy as np
 import typing as _tp
+from . import typing as _mtp
 
 # Better use numpy.typing.ArrayLike in the future, but this
 # requires dropping Python-3.6 support
-_ArrayLike = mutil.Indexable
+_ArrayLike = _mtp.Indexable
 
 MnPrint.global_level = 0
 
@@ -466,9 +467,9 @@ class Minuit:
     def __init__(
         self,
         fcn: _tp.Callable,
-        *args: _tp.Union[float, mutil.Indexable[float]],
+        *args: _tp.Union[float, _ArrayLike[float]],
         grad: _tp.Optional[_tp.Callable] = None,
-        name: _tp.Optional[_tp.Collection[str]] = None,
+        name: _tp.Optional[_mtp.Indexable[str]] = None,
         **kwds: float,
     ):
         """
@@ -1421,8 +1422,8 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: _tp.Union[float, mutil.UserBound] = 2,
-        grid: _tp.Optional[_ArrayLike] = None,
+        bound: _tp.Union[float, _mtp.UserBound] = 2,
+        grid: _tp.Optional[_ArrayLike[float]] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1526,8 +1527,8 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: _tp.Union[float, mutil.UserBound] = 2,
-        grid: _tp.Optional[_ArrayLike] = None,
+        bound: _tp.Union[float, _mtp.UserBound] = 2,
+        grid: _tp.Optional[_ArrayLike[float]] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         r"""
@@ -1586,7 +1587,7 @@ class Minuit:
 
     def draw_profile(
         self, vname: str, *, band: bool = True, text: bool = True, **kwargs
-    ) -> _tp.Tuple[_tp.Collection[float], _tp.Collection[float]]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
 
@@ -1747,11 +1748,7 @@ class Minuit:
         x: str,
         y: str,
         **kwargs,
-    ) -> _tp.Tuple[
-        _tp.Collection[float],
-        _tp.Collection[float],
-        _tp.Collection[_tp.Collection[float]],
-    ]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Draw 2D contour around minimum (requires matplotlib).
 
@@ -1780,7 +1777,7 @@ class Minuit:
 
     def mncontour(
         self, x: str, y: str, *, cl: _tp.Optional[float] = None, size: int = 100
-    ) -> _tp.Collection[_tp.Collection[float]]:
+    ) -> np.ndarray:
         """
         Get 2D Minos confidence region.
 
@@ -1855,7 +1852,7 @@ class Minuit:
         x: str,
         y: str,
         *,
-        cl: _tp.Optional[_tp.Union[float, _tp.Collection[float]]] = None,
+        cl: _tp.Optional[_tp.Union[float, _ArrayLike[float]]] = None,
         size: int = 100,
     ) -> _tp.Any:
         """
@@ -1931,7 +1928,7 @@ class Minuit:
         return pr
 
     def _normalize_bound(
-        self, vname: str, bound: _tp.Union[float, mutil.UserBound]
+        self, vname: str, bound: _tp.Union[float, _mtp.UserBound]
     ) -> _tp.Tuple[float, float]:
         if isinstance(bound, _tp.Iterable):
             return mutil._normalize_limit(bound)
