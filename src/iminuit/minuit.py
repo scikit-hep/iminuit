@@ -17,7 +17,9 @@ from ._core import (
 )
 import numpy as np
 import typing as _tp
-import numpy.typing as _ntp
+
+# import numpy.typing as _ntp
+_ArrayLike = _tp.Iterable  # use numpy.typing.ArrayLike in the future
 
 MnPrint.global_level = 0
 
@@ -1419,7 +1421,7 @@ class Minuit:
         *,
         size: int = 30,
         bound: _tp.Union[float, mutil.UserBound] = 2,
-        grid: _tp.Optional[_ntp.ArrayLike] = None,
+        grid: _tp.Optional[_ArrayLike] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1524,7 +1526,7 @@ class Minuit:
         *,
         size: int = 100,
         bound: _tp.Union[float, mutil.UserBound] = 2,
-        grid: _tp.Optional[_ntp.ArrayLike] = None,
+        grid: _tp.Optional[_ArrayLike] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         r"""
@@ -1653,7 +1655,7 @@ class Minuit:
         bound: _tp.Union[
             float, _tp.Tuple[_tp.Tuple[float, float], _tp.Tuple[float, float]]
         ] = 2,
-        grid: _tp.Optional[_tp.Tuple[_ntp.ArrayLike, _ntp.ArrayLike]] = None,
+        grid: _tp.Optional[_tp.Tuple[_ArrayLike, _ArrayLike]] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
