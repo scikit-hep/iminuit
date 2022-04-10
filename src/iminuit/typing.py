@@ -9,7 +9,7 @@ import typing as _tp
 T = _tp.TypeVar("T")
 
 
-class Indexable(_tp.Iterable, _tp.Sized, _tp.Generic[T]):
+class Indexable(_tp.Collection[T]):
     """Indexable type for mypy."""
 
     def __getitem__(self, idx: int) -> T:
