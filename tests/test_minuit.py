@@ -611,6 +611,42 @@ def test_contour(grad):
     assert_allclose(func0(X, Y), v.T)
 
 
+def test_contour_separate_size():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    x, y, v = m.contour("x", "y", size=(10, 20))
+    assert len(x) == 10
+    assert len(y) == 20
+    X, Y = np.meshgrid(x, y)
+    assert_allclose(func0(X, Y), v.T)
+
+
+def test_contour_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    x, y, v = m.contour("x", "y", grid=(np.linspace(0, 2, 10), np.linspace(0, 4, 20)))
+    assert len(x) == 10
+    assert len(y) == 20
+    X, Y = np.meshgrid(x, y)
+    assert_allclose(func0(X, Y), v.T)
+
+
+def test_contour_bad_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=([1, 2, 3], [[1, 2, 3]]))
+
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=([1, 2, 3],))
+
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=([1, 2, 3], [1, 2], [3, 4]))
+
+    with pytest.raises(ValueError):
+        m.contour("x", "y", grid=(10, [1, 2, 3]))
+
+
 @pytest.mark.parametrize("grad", (None, func0_grad))
 def test_profile(grad):
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
@@ -622,6 +658,26 @@ def test_profile(grad):
     v2 = m.profile("y", subtract_min=True)[1]
     assert np.min(v2) == 0
     assert_allclose(v - np.min(v), v2)
+
+
+def test_profile_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    y, v = m.profile("y", grid=np.linspace(0, 4, 15))
+    assert len(y) == 15
+    assert y[0] == 0
+    assert y[-1] == 4
+    assert_allclose(func0(m.values[0], y), v)
+
+
+def test_profile_bad_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.profile("y", grid=[[1, 2, 3]])
+
+    with pytest.raises(ValueError):
+        m.profile("y", grid=10)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -646,6 +702,32 @@ def test_mnprofile(grad):
     y, v3, _ = m.mnprofile("y", size=10, subtract_min=True)
     assert np.min(v3) == 0
     assert_allclose(v - np.min(v), v3)
+
+
+def test_mnprofile_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    y, v, _ = m.mnprofile("y", grid=np.linspace(0, 4, 15))
+    assert len(y) == 15
+    assert y[0] == 0
+    assert y[-1] == 4
+    m2 = Minuit(func0, x=1.0, y=2.0)
+    m2.fixed[1] = True
+    v2 = []
+    for yi in y:
+        m2.values = (m.values[0], yi)
+        m2.migrad()
+        v2.append(m2.fval)
+    assert_allclose(v, v2)
+
+
+def test_mnprofile_bad_grid():
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.mnprofile("y", grid=10)
+    with pytest.raises(ValueError):
+        m.mnprofile("y", grid=[[10, 20]])
 
 
 def test_contour_subtract():

@@ -44,9 +44,12 @@ def test_profile_1(fig, minuit, arg):
 @pytest.mark.parametrize("arg", ("x", "y"))
 def test_profile_2(fig, minuit, arg):
     # plots with minos errors
-    minuit.minos()
     minuit.draw_profile(arg)
     plt.ylim(0, 5)
+
+
+def test_profile_3(fig, minuit):
+    minuit.draw_profile("x", grid=np.linspace(0, 5))
 
 
 @pytest.mark.parametrize("arg", ("x", "y"))
@@ -62,6 +65,11 @@ def test_mnprofile_2(fig, minuit, arg):
     minuit.minos()
     minuit.draw_mnprofile(arg)
     plt.ylim(0, 5)
+
+
+def test_mnprofile_3(fig, minuit):
+    minuit.minos()
+    minuit.draw_mnprofile("x", grid=np.linspace(0, 5))
 
 
 def test_mncontour_1(fig, minuit):
@@ -86,3 +94,11 @@ def test_contour_2(fig, minuit):
 
 def test_contour_3(fig, minuit):
     minuit.draw_contour("x", "y", size=100, bound=((-0.5, 2.5), (-1, 3)))
+
+
+def test_contour_4(fig, minuit):
+    minuit.draw_contour("x", "y", size=(10, 50), bound=((-0.5, 2.5), (-1, 3)))
+
+
+def test_contour_5(fig, minuit):
+    minuit.draw_contour("x", "y", grid=(np.linspace(-0.5, 2.5), np.linspace(-1, 3)))
