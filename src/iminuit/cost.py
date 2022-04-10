@@ -247,7 +247,7 @@ class Cost(abc.ABC):
     def verbose(self, value: int):
         self._verbose = value
 
-    def __init__(self, args: _tp.Tuple[str], verbose: int):
+    def __init__(self, args: _tp.Tuple[str, ...], verbose: int):
         """For internal use."""
         self._func_code = make_func_code(args)
         self._verbose = verbose
@@ -308,7 +308,7 @@ class Constant(Cost):
         self.value = value
         super().__init__((), False)
 
-    @Cost.ndata.getter
+    @Cost.ndata.getter  # type:ignore
     def ndata(self):
         """See Cost.ndata."""
         return 0
@@ -378,7 +378,7 @@ class CostSum(Cost, Sequence):
             r += c._call(c_args)
         return r
 
-    @Cost.ndata.getter
+    @Cost.ndata.getter  # type:ignore
     def ndata(self):
         """See Cost.ndata."""
         return sum(c.ndata for c in self._items)
@@ -438,7 +438,7 @@ class UnbinnedCost(MaskedCost):
 
     __slots__ = "_model", "_log"
 
-    @Cost.ndata.getter
+    @Cost.ndata.getter  # type:ignore
     def ndata(self):
         """See Cost.ndata."""
         # unbinned likelihoods have infinite degrees of freedom
@@ -647,7 +647,7 @@ class BinnedCost(MaskedCost):
         """Access bin edges."""
         return self._xe
 
-    @Cost.ndata.getter
+    @Cost.ndata.getter  # type:ignore
     def ndata(self):
         """See Cost.ndata."""
         if self._is_weighted():
@@ -855,16 +855,19 @@ class LeastSquares(MaskedCost):
     @loss.setter
     def loss(self, loss: _tp.Union[str, _tp.Callable]):
         self._loss = loss
-        if loss == "linear":
-            self._cost = _chi2
-        elif loss == "soft_l1":
-            self._cost = _soft_l1_cost
-        elif isinstance(loss, _tp.Callable):
-            self._cost = lambda y, ye, ym: np.sum(loss(_z_squared(y, ye, ym)))
+        if isinstance(loss, str):
+            if loss == "linear":
+                self._cost = _chi2
+            elif loss == "soft_l1":
+                self._cost = _soft_l1_cost
+            else:
+                raise ValueError("unknown loss type: " + loss)
         else:
-            raise ValueError("unknown loss type: " + loss)
+            self._cost = lambda y, ye, ym: np.sum(
+                loss(_z_squared(y, ye, ym))  # type:ignore
+            )
 
-    @Cost.ndata.getter
+    @Cost.ndata.getter  # type:ignore
     def ndata(self):
         """See Cost.ndata."""
         return len(self._masked)
@@ -984,14 +987,13 @@ class NormalConstraint(Cost):
             Expected error(s). If 1D, must have same length as `args`. If 2D, must be the
             covariance matrix of the parameters.
         """
-        if isinstance(args, str):
-            args = [args]
         self._value = _norm(value)
         self._cov = _norm(error)
         if self._cov.ndim < 2:
             self._cov **= 2
         self._covinv = _covinv(self._cov)
-        super().__init__(args, False)
+        tp_args = (args,) if isinstance(args, str) else tuple(args)
+        super().__init__(tp_args, False)
 
     @property
     def covariance(self):
@@ -1022,7 +1024,7 @@ class NormalConstraint(Cost):
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
-    @Cost.ndata.getter
+    @Cost.ndata.getter  # type:ignore
     def ndata(self):
         """See Cost.ndata."""
         return len(self._value)

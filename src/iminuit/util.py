@@ -68,26 +68,26 @@ class BasicView(abc.ABC):
             If the key is an int or str, return corresponding value.
             If it is a slice, list of int or str, return the corresponding subset.
         """
-        key = _key2index(self._minuit._var2pos, key)
-        if isinstance(key, list):
-            return [self._get(i) for i in key]
-        return self._get(key)
+        index = _key2index(self._minuit._var2pos, key)
+        if isinstance(index, list):
+            return [self._get(i) for i in index]
+        return self._get(index)
 
     def __setitem__(self, key: _mtp.Key, value: _tp.Any) -> None:
         """Assign a new value at key, which can be an index, a parameter name, or a slice."""
         self._minuit._copy_state_if_needed()
-        key = _key2index(self._minuit._var2pos, key)
-        if isinstance(key, list):
+        index = _key2index(self._minuit._var2pos, key)
+        if isinstance(index, list):
             if _ndim(value) == self._ndim:  # support basic broadcasting
-                for i in key:
+                for i in index:
                     self._set(i, value)
             else:
-                if len(value) != len(key):
+                if len(value) != len(index):
                     raise ValueError("length of argument does not match slice")
-                for i, v in zip(key, value):
+                for i, v in zip(index, value):
                     self._set(i, v)
         else:
-            self._set(key, value)
+            self._set(index, value)
 
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
@@ -225,42 +225,53 @@ class Matrix(np.ndarray):
         else:
             raise TypeError("parameters must be tuple or dict")
         n = len(parameters)
-        obj = super(Matrix, cls).__new__(cls, (n, n))
+        obj = super().__new__(cls, (n, n))
         obj._var2pos = var2pos
         return obj
 
     def __array_finalize__(self, obj: _tp.Any) -> None:
         """For internal use."""
         if obj is None:
-            self._var2pos = None
+            self._var2pos: _tp.Dict[str, int] = {}
         else:
-            self._var2pos = getattr(obj, "_var2pos", None)
+            self._var2pos = getattr(obj, "_var2pos", {})
 
     def __getitem__(
         self,
         key: _tp.Union[
-            _tp.Tuple[_tp.Union[str, int]],
-            str,
             int,
+            str,
+            _tp.Tuple[_tp.Union[int, str], _tp.Union[int, str]],
+            _tp.Iterable[_tp.Union[int, str]],
+            np.ndarray,
             slice,
-            _tp.Iterable[_tp.Union[str, int]],
         ],
     ) -> _tp.Any:
         """Get matrix element at key."""
         import typing as _tp
 
-        var2pos = self._var2pos or {}
-        if isinstance(key, tuple):  # tuple is special case for __getitem__
-            key = tuple(var2pos.get(k, k) for k in key)
-        elif isinstance(key, str):
-            key = var2pos[key]
-        elif isinstance(key, _tp.Iterable) and not isinstance(key, np.ndarray):
-            key = list(var2pos.get(k, k) for k in key)
-            t = super(Matrix, self).__getitem__(key).T
-            return super(Matrix, t).__getitem__(key).T
-        elif isinstance(key, slice):
-            key = slice(var2pos.get(key.start), var2pos.get(key.stop), key.step)
-            return super(Matrix, self).__getitem__((key, key))
+        var2pos = self._var2pos
+
+        def trafo(key):
+            if isinstance(key, str):
+                return var2pos[key]
+            if isinstance(key, slice):
+                return slice(trafo(key.start), trafo(key.stop), key.step)
+            if isinstance(key, tuple):
+                return tuple(trafo(k) for k in key)
+            return key
+
+        if isinstance(key, slice):
+            # slice returns square matrix
+            sl = trafo(key)
+            return super(Matrix, self).__getitem__((sl, sl))
+        if isinstance(key, (str, tuple)):
+            return super(Matrix, self).__getitem__(trafo(key))
+        if isinstance(key, _tp.Iterable) and not isinstance(key, np.ndarray):
+            # iterable returns square matrix
+            index2 = [trafo(k) for k in key]  # type:ignore
+            t = super(Matrix, self).__getitem__(index2).T
+            return super(Matrix, t).__getitem__(index2).T
         return super(Matrix, self).__getitem__(key)
 
     def to_dict(self) -> _tp.Dict[_tp.Tuple[str, str], float]:
@@ -269,7 +280,7 @@ class Matrix(np.ndarray):
 
         Since the matrix is symmetric, the dict only contains the upper triangular matrix.
         """
-        names = tuple(self._var2pos)  # type:ignore
+        names = tuple(self._var2pos)
         d = {}
         for i, pi in enumerate(names):
             for j in range(i, len(names)):
@@ -321,6 +332,8 @@ class Matrix(np.ndarray):
 
     def __str__(self):
         """Get user-friendly text representation."""
+        if self.ndim != 2:
+            return repr(self)
         return _repr_text.matrix(self)
 
     def _repr_html_(self):
@@ -958,8 +971,8 @@ def _jacobi(
 @_deprecated.deprecated("use jacobi.propagate instead from jacobi library")
 def propagate(
     fn: _tp.Callable,
-    x: _mtp.Indexable[float],
-    cov: _mtp.Indexable[_mtp.Indexable[float]],
+    x: _tp.Collection[float],
+    cov: _tp.Collection[_tp.Collection[float]],
 ) -> _tp.Tuple[np.ndarray, np.ndarray]:
     """
     Numerically propagates the covariance into a new space.
@@ -983,14 +996,18 @@ def propagate(
         y is the result of fn(x)
         ycov is the propagated covariance matrix.
     """
-    x = np.atleast_1d(x)  # type:ignore
-    cov = np.atleast_2d(cov)  # type:ignore
+    vx = np.atleast_1d(x)  # type:ignore
+    if np.ndim(cov) != 2:  # type:ignore
+        raise ValueError("cov must be 2D array-like")
+    vcov = np.atleast_2d(cov)  # type:ignore
+    if vcov.shape[0] != vcov.shape[1]:
+        raise ValueError("cov must have shape (N, N)")
     tol = 1e-2
-    dx = (np.diag(cov) * tol) ** 0.5
+    dx = (np.diag(vcov) * tol) ** 0.5
     if not np.all(dx >= 0):
         raise ValueError("diagonal elements of covariance matrix must be non-negative")
-    y, jac = _jacobi(fn, x, dx, tol)
-    ycov = np.einsum("ij,kl,jl", jac, jac, cov)
+    y, jac = _jacobi(fn, vx, dx, tol)
+    ycov = np.einsum("ij,kl,jl", jac, jac, vcov)
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
 
 
@@ -1005,7 +1022,7 @@ class _Timer:
         self.value = monotonic() - self.value + self._prev
 
 
-def make_func_code(params: _mtp.Indexable[str]) -> Namespace:
+def make_func_code(params: _tp.Collection[str]) -> Namespace:
     """
     Make a func_code object to fake a function signature.
 
@@ -1035,18 +1052,16 @@ def make_with_signature(
     -------
     callable with new argument names.
     """
-    from typing import Tuple
-
     if replacements:
-        vars = describe(callable)
-        if vars:
+        d = describe(callable)
+        if d:
             n = len(varnames)
-            if n > len(vars):
+            if n > len(d):
                 raise ValueError("varnames longer than original signature")
-            vars[:n] = varnames
+            d[:n] = varnames
         for k, v in replacements.items():
-            vars[vars.index(k)] = v
-        vars = tuple(vars)
+            d[d.index(k)] = v
+        vars = tuple(d)
     else:
         vars = varnames
 
@@ -1056,7 +1071,7 @@ def make_with_signature(
             raise ValueError("number of parameters do not match")
 
     class Caller:
-        def __init__(self, varnames: Tuple[str, ...]):
+        def __init__(self, varnames: _tp.Tuple[str, ...]):
             self.func_code = make_func_code(varnames)  # type:ignore
 
         def __call__(self, *args: object) -> object:
@@ -1297,7 +1312,7 @@ def _key2index_item(var2pos: _tp.Dict[str, int], key: _tp.Union[str, int]) -> in
 
 def _key2index(
     var2pos: _tp.Dict[str, int],
-    key: _tp.Union[slice, _tp.Iterable[_tp.Union[str, int]], str, int],
+    key: _mtp.Key,
 ) -> _tp.Union[int, _tp.List[int]]:
     import typing as _tp
 
