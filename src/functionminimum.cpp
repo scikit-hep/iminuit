@@ -35,8 +35,9 @@ void bind_functionminimum(py::module m) {
       .def_property_readonly("edm", &FunctionMinimum::Edm)
       .def_property_readonly("fval", &FunctionMinimum::Fval)
       .def_property_readonly("is_valid", &FunctionMinimum::IsValid)
-      .def_property_readonly("has_valid_parameters",
-                             &FunctionMinimum::HasValidParameters)
+      // No need to wrap HasValidParameters
+      // .def_property_readonly("has_valid_parameters",
+      //                        &FunctionMinimum::HasValidParameters)
       .def_property_readonly("has_accurate_covar", &FunctionMinimum::HasAccurateCovar)
       .def_property_readonly("has_posdef_covar", &FunctionMinimum::HasPosDefCovar)
       .def_property_readonly("has_made_posdef_covar",

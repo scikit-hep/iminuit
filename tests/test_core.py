@@ -228,7 +228,6 @@ def test_FunctionMinimum_pickle():
     assert fm.edm == fm2.edm
     assert fm.fval == fm2.fval
     assert fm.is_valid == fm2.is_valid
-    assert fm.has_valid_parameters == fm2.has_valid_parameters
     assert fm.has_accurate_covar == fm2.has_accurate_covar
     assert fm.has_posdef_covar == fm2.has_posdef_covar
     assert fm.has_made_posdef_covar == fm2.has_made_posdef_covar
