@@ -18,8 +18,9 @@ from ._core import (
 import numpy as np
 import typing as _tp
 
-# import numpy.typing as _ntp
-_ArrayLike = _tp.Iterable  # use numpy.typing.ArrayLike in the future
+# Better use numpy.typing.ArrayLike in the future, but this
+# requires dropping Python-3.6 support
+_ArrayLike = mutil.Indexable
 
 MnPrint.global_level = 0
 

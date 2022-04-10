@@ -8,35 +8,22 @@ from collections import OrderedDict
 from argparse import Namespace
 from . import _repr_html, _repr_text, _deprecated
 import numpy as np
-from typing import (
-    Dict,
-    Iterable,
-    Any,
-    Union,
-    List,
-    Tuple,
-    Generator,
-    Sized,
-    Optional,
-    Callable,
-    TypeVar,
-    Generic,
-)
+import typing as _tp
 import abc
 from time import monotonic
 
-T = TypeVar("T")
+_T = _tp.TypeVar("_T")
 
 
-class Indexable(Iterable, Sized, Generic[T]):
+class Indexable(_tp.Iterable, _tp.Sized, _tp.Generic[_T]):
     """Indexable type for mypy."""
 
-    def __getitem__(self, idx: int) -> T:
+    def __getitem__(self, idx: int) -> _T:
         """Get item at index idx."""
         ...  # pragma: no cover
 
 
-UserBound = Optional[Indexable[Optional[float]]]
+UserBound = _tp.Optional[Indexable[_tp.Optional[float]]]
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -61,14 +48,14 @@ class BasicView(abc.ABC):
 
     __slots__ = ("_minuit", "_ndim")
 
-    Key = Union[int, str, slice, List[Union[int, str]]]
+    _Key = _tp.Union[int, str, slice, _tp.List[_tp.Union[int, str]]]
 
-    def __init__(self, minuit: Any, ndim: int = 0):
+    def __init__(self, minuit: _tp.Any, ndim: int = 0):
         """Not to be initialized by users."""
         self._minuit = minuit
         self._ndim = ndim
 
-    def __iter__(self) -> Generator:
+    def __iter__(self) -> _tp.Generator:
         """Get iterator over values."""
         for i in range(len(self)):
             yield self._get(i)
@@ -78,14 +65,14 @@ class BasicView(abc.ABC):
         return self._minuit.npar  # type: ignore
 
     @abc.abstractmethod
-    def _get(self, idx: int) -> Any:
+    def _get(self, idx: int) -> _tp.Any:
         return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod
-    def _set(self, idx: int, value: Any) -> None:
+    def _set(self, idx: int, value: _tp.Any) -> None:
         pass  # pragma: no cover
 
-    def __getitem__(self, key: Key) -> Any:
+    def __getitem__(self, key: _Key) -> _tp.Any:
         """
         Get values of the view.
 
@@ -100,7 +87,7 @@ class BasicView(abc.ABC):
             return [self._get(i) for i in key]
         return self._get(key)
 
-    def __setitem__(self, key: Key, value: Any) -> None:
+    def __setitem__(self, key: _Key, value: _tp.Any) -> None:
         """Assign a new value at key, which can be an index, a parameter name, or a slice."""
         self._minuit._copy_state_if_needed()
         key = _key2index(self._minuit._var2pos, key)
@@ -118,9 +105,7 @@ class BasicView(abc.ABC):
 
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
-        from typing import Iterable, Sized
-
-        if isinstance(other, Iterable) and isinstance(other, Sized):
+        if isinstance(other, _tp.Iterable) and isinstance(other, _tp.Sized):
             return len(self) == len(other) and all(x == y for x, y in zip(self, other))
         return NotImplemented
 
@@ -132,16 +117,14 @@ class BasicView(abc.ABC):
         s += ">"
         return s
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> _tp.Dict[str, float]:
         """Obtain dict representation."""
         return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
 
-def _ndim(obj: Iterable) -> int:
-    from typing import Iterable
-
+def _ndim(obj: _tp.Iterable) -> int:
     nd = 0
-    while isinstance(obj, Iterable):
+    while isinstance(obj, _tp.Iterable):
         nd += 1
         for x in obj:
             if x is not None:
@@ -188,11 +171,11 @@ class FixedView(BasicView):
 class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
-    def __init__(self, minuit: Any):
+    def __init__(self, minuit: _tp.Any):
         """Not to be initialized by users."""
         super(LimitView, self).__init__(minuit, 1)
 
-    def _get(self, i: int) -> Tuple[float, float]:
+    def _get(self, i: int) -> _tp.Tuple[float, float]:
         p = self._minuit._last_state[i]
         return (
             p.lower_limit if p.has_lower_limit else -np.inf,
@@ -224,7 +207,7 @@ class LimitView(BasicView):
         state.set_error(i, err)
 
 
-def _normalize_limit(lim: UserBound) -> Tuple[float, float]:
+def _normalize_limit(lim: UserBound) -> _tp.Tuple[float, float]:
     if lim is None:
         return (-np.inf, np.inf)
     a, b = lim
@@ -247,7 +230,7 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, parameters: Union[Dict, Tuple]) -> Any:
+    def __new__(cls, parameters: _tp.Union[_tp.Dict, _tp.Tuple]) -> _tp.Any:
         """Not to be initialized by users."""
         if isinstance(parameters, dict):
             var2pos = parameters
@@ -260,7 +243,7 @@ class Matrix(np.ndarray):
         obj._var2pos = var2pos
         return obj
 
-    def __array_finalize__(self, obj: Any) -> None:
+    def __array_finalize__(self, obj: _tp.Any) -> None:
         """For internal use."""
         if obj is None:
             self._var2pos = None
@@ -269,17 +252,23 @@ class Matrix(np.ndarray):
 
     def __getitem__(
         self,
-        key: Union[Tuple[Union[str, int]], str, int, slice, Iterable[Union[str, int]]],
-    ) -> Any:
+        key: _tp.Union[
+            _tp.Tuple[_tp.Union[str, int]],
+            str,
+            int,
+            slice,
+            _tp.Iterable[_tp.Union[str, int]],
+        ],
+    ) -> _tp.Any:
         """Get matrix element at key."""
-        from typing import Iterable
+        import typing as _tp
 
         var2pos = self._var2pos or {}
         if isinstance(key, tuple):  # tuple is special case for __getitem__
             key = tuple(var2pos.get(k, k) for k in key)
         elif isinstance(key, str):
             key = var2pos[key]
-        elif isinstance(key, Iterable) and not isinstance(key, np.ndarray):
+        elif isinstance(key, _tp.Iterable) and not isinstance(key, np.ndarray):
             key = list(var2pos.get(k, k) for k in key)
             t = super(Matrix, self).__getitem__(key).T
             return super(Matrix, t).__getitem__(key).T
@@ -288,7 +277,7 @@ class Matrix(np.ndarray):
             return super(Matrix, self).__getitem__((key, key))
         return super(Matrix, self).__getitem__(key)
 
-    def to_dict(self) -> Dict[Tuple[str, str], float]:
+    def to_dict(self) -> _tp.Dict[_tp.Tuple[str, str], float]:
         """
         Convert matrix to dict.
 
@@ -302,7 +291,7 @@ class Matrix(np.ndarray):
                 d[pi, pj] = self[i, j]
         return d
 
-    def to_table(self) -> Tuple[List[List[str]], Tuple[str, ...]]:
+    def to_table(self) -> _tp.Tuple[_tp.List[_tp.List[str]], _tp.Tuple[str, ...]]:
         """
         Convert matrix to tabular format.
 
@@ -404,7 +393,7 @@ class FMin:
 
     def __init__(
         self,
-        fmin: Any,
+        fmin: _tp.Any,
         algorithm: str,
         nfcn: int,
         ngrad: int,
@@ -651,7 +640,7 @@ class FMin:
     def _repr_html_(self) -> str:
         return _repr_html.fmin(self)  # type:ignore
 
-    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
         if cycle:
             p.text("<FMin ...>")
         else:
@@ -674,7 +663,8 @@ class Param:
     )
 
     def __init__(
-        self, *args: Union[int, str, float, Optional[Tuple[float, float]], bool]
+        self,
+        *args: _tp.Union[int, str, float, _tp.Optional[_tp.Tuple[float, float]], bool],
     ):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
@@ -712,7 +702,7 @@ class Param:
         """Get user-friendly text representation."""
         return _repr_text.params([self])  # type:ignore
 
-    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
         if cycle:
             p.text("Param(...)")
         else:
@@ -856,7 +846,7 @@ class MError:
         "min",
     )
 
-    def __init__(self, *args: Union[int, str, float, bool]):
+    def __init__(self, *args: _tp.Union[int, str, float, bool]):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
@@ -882,7 +872,7 @@ class MError:
     def _repr_html_(self) -> str:
         return _repr_html.merrors({None: self})  # type:ignore
 
-    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
         if cycle:
             p.text("<MError ...>")
         else:
@@ -926,8 +916,8 @@ class MErrors(OrderedDict):
 
 
 def _jacobi(
-    fn: Callable, x: np.ndarray, dx: np.ndarray, tol: float, debug: bool = False
-) -> Tuple[np.ndarray, np.ndarray]:
+    fn: _tp.Callable, x: np.ndarray, dx: np.ndarray, tol: float, debug: bool = False
+) -> _tp.Tuple[np.ndarray, np.ndarray]:
     assert x.ndim == 1
     assert dx.ndim == 1
     assert np.all(dx >= 0)
@@ -981,8 +971,8 @@ def _jacobi(
 
 @_deprecated.deprecated("use jacobi.propagate instead from jacobi library")
 def propagate(
-    fn: Callable, x: Indexable[float], cov: Indexable[Indexable[float]]
-) -> Tuple[np.ndarray, np.ndarray]:
+    fn: _tp.Callable, x: Indexable[float], cov: Indexable[Indexable[float]]
+) -> _tp.Tuple[np.ndarray, np.ndarray]:
     """
     Numerically propagates the covariance into a new space.
 
@@ -1041,8 +1031,8 @@ def make_func_code(params: Indexable[str]) -> Namespace:
 
 
 def make_with_signature(
-    callable: Callable, *varnames: str, **replacements: str
-) -> Callable:
+    callable: _tp.Callable, *varnames: str, **replacements: str
+) -> _tp.Callable:
     """
     Return new callable with altered signature.
 
@@ -1088,8 +1078,8 @@ def make_with_signature(
 
 
 def merge_signatures(
-    callables: Iterable[Callable],
-) -> Tuple[List[str], List[Tuple[int, ...]]]:
+    callables: _tp.Iterable[_tp.Callable],
+) -> _tp.Tuple[_tp.List[str], _tp.List[_tp.Tuple[int, ...]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1133,7 +1123,7 @@ def merge_signatures(
     return args, mapping
 
 
-def describe(callable: Callable) -> List[str]:
+def describe(callable: _tp.Callable) -> _tp.List[str]:
     """
     Attempt to extract the function argument names.
 
@@ -1199,7 +1189,7 @@ def describe(callable: Callable) -> List[str]:
     )
 
 
-def _arguments_from_func_code(obj: Any) -> List[str]:
+def _arguments_from_func_code(obj: _tp.Any) -> _tp.List[str]:
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(obj, "func_code"):
         fc = obj.func_code
@@ -1207,7 +1197,7 @@ def _arguments_from_func_code(obj: Any) -> List[str]:
     return []
 
 
-def _arguments_from_inspect(obj: Callable) -> List[str]:
+def _arguments_from_inspect(obj: _tp.Callable) -> _tp.List[str]:
     try:
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
@@ -1226,7 +1216,7 @@ def _arguments_from_inspect(obj: Callable) -> List[str]:
     return args
 
 
-def _arguments_from_docstring(obj: Callable) -> List[str]:
+def _arguments_from_docstring(obj: _tp.Callable) -> _tp.List[str]:
     doc = inspect.getdoc(obj)
 
     if doc is None:
@@ -1299,14 +1289,14 @@ def _guess_initial_step(val: float) -> float:
     return 1e-2 * val if val != 0 else 1e-1  # heuristic
 
 
-def _key2index_from_slice(var2pos: Dict[str, int], key: slice) -> List[int]:
+def _key2index_from_slice(var2pos: _tp.Dict[str, int], key: slice) -> _tp.List[int]:
     start = var2pos[key.start] if isinstance(key.start, str) else key.start
     stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
     start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
     return list(range(start, stop, step))
 
 
-def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
+def _key2index_item(var2pos: _tp.Dict[str, int], key: _tp.Union[str, int]) -> int:
     if isinstance(key, str):
         return var2pos[key]
     i = key
@@ -1318,18 +1308,19 @@ def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
 
 
 def _key2index(
-    var2pos: Dict[str, int], key: Union[slice, Iterable[Union[str, int]], str, int]
-) -> Union[int, List[int]]:
-    from typing import Iterable
+    var2pos: _tp.Dict[str, int],
+    key: _tp.Union[slice, _tp.Iterable[_tp.Union[str, int]], str, int],
+) -> _tp.Union[int, _tp.List[int]]:
+    import typing as _tp
 
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
-    if not isinstance(key, str) and isinstance(key, Iterable):
+    if not isinstance(key, str) and isinstance(key, _tp.Iterable):
         return [_key2index_item(var2pos, k) for k in key]
     return _key2index_item(var2pos, key)
 
 
-def _address_of_cfunc(fcn: Any) -> int:
+def _address_of_cfunc(fcn: _tp.Any) -> int:
     from ctypes import c_void_p, c_double, c_uint32, POINTER, CFUNCTYPE, cast
 
     c_sig = CFUNCTYPE(c_double, c_uint32, POINTER(c_double))
@@ -1338,16 +1329,3 @@ def _address_of_cfunc(fcn: Any) -> int:
     if isinstance(fcn, c_sig):
         return cast(fcn, c_void_p).value  # type: ignore
     return 0
-
-
-del Any
-del Dict
-del Union
-del Iterable
-del Callable
-del T
-del Optional
-del Sized
-del Tuple
-del Generator
-del List
