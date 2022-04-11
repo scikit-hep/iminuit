@@ -18,8 +18,9 @@ from ._core import (
 import numpy as np
 import typing as _tp
 
-# import numpy.typing as _ntp
-_ArrayLike = _tp.Iterable  # use numpy.typing.ArrayLike in the future
+# Better use numpy.typing.ArrayLike in the future, but this
+# requires dropping Python-3.6 support
+_ArrayLike = _tp.Collection
 
 MnPrint.global_level = 0
 
@@ -465,7 +466,7 @@ class Minuit:
     def __init__(
         self,
         fcn: _tp.Callable,
-        *args: _tp.Union[float, mutil.Indexable[float]],
+        *args: _tp.Union[float, _ArrayLike[float]],
         grad: _tp.Optional[_tp.Callable] = None,
         name: _tp.Optional[_tp.Collection[str]] = None,
         **kwds: float,
@@ -597,7 +598,8 @@ class Minuit:
         self._pos2var = tuple(name)
         self._var2pos = {k: i for i, k in enumerate(name)}
 
-        self.tol = None  # set to default value
+        # set self.tol to default value
+        self.tol = None  # type:ignore
         self._strategy = MnStrategy(1)
         self._fcn = FCN(
             fcn,
@@ -967,7 +969,7 @@ class Minuit:
 
         else:
 
-            class Wrapped:
+            class Wrapped:  # type:ignore
                 __slots__ = ("fcn", "free", "par")
 
                 def __init__(self, fcn):
@@ -987,12 +989,12 @@ class Minuit:
                         self.par[self.free] = par
                         return self.fcn(*self.par)
 
-            class WrappedGrad(Wrapped):
+            class WrappedGrad(Wrapped):  # type:ignore
                 def __call__(self, par):
                     g = super().__call__(par)
                     return np.atleast_1d(g)[self.free]
 
-            class WrappedHess(Wrapped):
+            class WrappedHess(Wrapped):  # type:ignore
                 def __init__(self, fcn):
                     super().__init__(fcn)
                     self.freem = np.outer(self.free, self.free)
@@ -1003,7 +1005,7 @@ class Minuit:
                     h = super().__call__(par)
                     return np.atleast_2d(h)[self.freem].reshape(self.shape)
 
-            class WrappedHessp:
+            class WrappedHessp:  # type:ignore
                 __slots__ = ("fcn", "free", "par", "vec")
 
                 def __init__(self, fcn):
@@ -1154,8 +1156,8 @@ class Minuit:
             matrix = r.hess
             needs_invert = True
         # hess_inv is a function, need to convert to full matrix
-        if matrix is not None and isinstance(matrix, _tp.Callable):
-            matrix = matrix(np.eye(self.nfit))
+        if isinstance(matrix, _tp.Callable):  # type:ignore
+            matrix = matrix(np.eye(self.nfit))  # type:ignore
 
         accurate_covar = bool(hess) or bool(hessp)
 
@@ -1282,6 +1284,7 @@ class Minuit:
             )
             self._merrors = mutil.MErrors()
 
+        assert self._fmin is not None
         fm = self._fmin._src
 
         # update _fmin with Hesse
@@ -1364,6 +1367,8 @@ class Minuit:
 
         if self._fmin_does_not_exist_or_last_state_was_modified():
             self.hesse()  # creates self._fmin
+
+        assert self._fmin is not None
         fm = self._fmin._src
 
         if not self.valid:
@@ -1420,8 +1425,8 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: _tp.Union[float, mutil.UserBound] = 2,
-        grid: _tp.Optional[_ArrayLike] = None,
+        bound: _tp.Union[float, _tp.Collection[float]] = 2,
+        grid: _tp.Optional[_ArrayLike[float]] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1463,8 +1468,8 @@ class Minuit:
             if x.ndim != 1:
                 raise ValueError("grid must be 1D array-like")
         else:
-            bound = self._normalize_bound(vname, bound)
-            x = np.linspace(bound[0], bound[1], size, dtype=float)
+            a, b = self._normalize_bound(vname, bound)
+            x = np.linspace(a, b, size, dtype=float)
 
         y = np.empty_like(x)
         status = np.empty(len(x), dtype=bool)
@@ -1525,8 +1530,8 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: _tp.Union[float, mutil.UserBound] = 2,
-        grid: _tp.Optional[_ArrayLike] = None,
+        bound: _tp.Union[float, _tp.Collection[float]] = 2,
+        grid: _tp.Optional[_ArrayLike[float]] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         r"""
@@ -1568,8 +1573,8 @@ class Minuit:
             if x.ndim != 1:
                 raise ValueError("grid must be 1D array-like")
         else:
-            bound = self._normalize_bound(vname, bound)
-            x = np.linspace(bound[0], bound[1], size, dtype=float)
+            a, b = self._normalize_bound(vname, bound)
+            x = np.linspace(a, b, size, dtype=float)
 
         y = np.empty_like(x)
         values = np.array(self.values)
@@ -1585,7 +1590,7 @@ class Minuit:
 
     def draw_profile(
         self, vname: str, *, band: bool = True, text: bool = True, **kwargs
-    ) -> _tp.Tuple[_tp.Collection[float], _tp.Collection[float]]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
 
@@ -1712,8 +1717,9 @@ class Minuit:
                 raise ValueError("grid per parameter must be 1D array-like")
         else:
             if isinstance(bound, tuple):
-                xrange = self._normalize_bound(x, bound[0])
-                yrange = self._normalize_bound(y, bound[1])
+                xb, yb = bound
+                xrange = self._normalize_bound(x, xb)
+                yrange = self._normalize_bound(y, yb)
             else:
                 n = float(bound)
                 xrange = self._normalize_bound(x, n)
@@ -1746,11 +1752,7 @@ class Minuit:
         x: str,
         y: str,
         **kwargs,
-    ) -> _tp.Tuple[
-        _tp.Collection[float],
-        _tp.Collection[float],
-        _tp.Collection[_tp.Collection[float]],
-    ]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Draw 2D contour around minimum (requires matplotlib).
 
@@ -1779,7 +1781,7 @@ class Minuit:
 
     def mncontour(
         self, x: str, y: str, *, cl: _tp.Optional[float] = None, size: int = 100
-    ) -> _tp.Collection[_tp.Collection[float]]:
+    ) -> np.ndarray:
         """
         Get 2D Minos confidence region.
 
@@ -1844,6 +1846,7 @@ class Minuit:
         ix = self._var2pos[x]
         iy = self._var2pos[y]
         with TemporaryErrordef(self._fcn, factor):
+            assert self._fmin is not None
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             ce = mnc(ix, iy, size)[2]
 
@@ -1854,7 +1857,7 @@ class Minuit:
         x: str,
         y: str,
         *,
-        cl: _tp.Optional[_tp.Union[float, _tp.Collection[float]]] = None,
+        cl: _tp.Optional[_tp.Union[float, _ArrayLike[float]]] = None,
         size: int = 100,
     ) -> _tp.Any:
         """
@@ -1898,13 +1901,15 @@ class Minuit:
 
         mpl_version = tuple(map(int, mpl_version.split(".")))
 
-        cls = cl if isinstance(cl, _tp.Iterable) else [cl]
+        cls: _tp.List[_tp.Optional[float]] = (
+            list(cl) if isinstance(cl, _tp.Iterable) else [cl]
+        )
 
         c_val = []
         c_pts = []
         codes = []
         n_lineto = size - 2 if mpl_version < (3, 5) else size - 1
-        for cl in cls:  # type:ignore
+        for cl in cls:
             pts = self.mncontour(x, y, cl=cl, size=size)
             # add extra point whose coordinates are ignored to close the contour
             pts = np.append(pts, pts[:1], axis=0)
@@ -1930,9 +1935,9 @@ class Minuit:
         return pr
 
     def _normalize_bound(
-        self, vname: str, bound: _tp.Union[float, mutil.UserBound]
+        self, vname: str, bound: _tp.Union[float, _tp.Collection[float]]
     ) -> _tp.Tuple[float, float]:
-        if isinstance(bound, _tp.Iterable):
+        if isinstance(bound, _tp.Collection):
             return mutil._normalize_limit(bound)
 
         if not self.accurate:

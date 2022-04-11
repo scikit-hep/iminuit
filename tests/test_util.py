@@ -78,19 +78,31 @@ def test_ValueView():
 
 def test_Matrix():
     m = util.Matrix(("a", "b"))
-    m[:] = [[1, 1], [1, 4]]
-    assert_equal(m, ((1, 1), (1, 4)))
-    assert repr(m) == "[[1. 1.]\n [1. 4.]]"
+    m[:] = [[1, 2], [2, 8]]
+    assert_equal(m, ((1, 2), (2, 8)))
+    assert repr(m) == "[[1. 2.]\n [2. 8.]]"
     c = m.correlation()
-    assert_allclose(c, ((1.0, 0.5), (0.5, 1.0)))
-    assert m["a", "b"] == 1.0
-    assert m["a", 1] == 1.0
-    assert m[1, 1] == 4.0
-    assert_equal(m["b"], (1, 4))
+    assert_allclose(c, ((1.0, 0.5**0.5), (0.5**0.5, 1.0)))
+    assert m["a", "b"] == 2.0
+    assert m["a", 1] == 2.0
+    assert m[1, "a"] == 2.0
+    assert m[1, 1] == 8.0
+    assert_equal(m[0], [1, 2])
+    assert_equal(m["b"], (2, 8))
+    assert_equal(m[:], [[1, 2], [2, 8]])
+    assert_equal(m[:, 0], [1, 2])
+    assert_equal(m[:, 1], [2, 8])
+
+    # this swaps rows and cols
+    assert_equal(m[[1, 0]], [[8, 2], [2, 1]])
 
     m *= 2
-    assert_equal(m, ((2, 2), (2, 8)))
-    assert_allclose(np.dot(m, (1, 1)), (4, 10))
+    assert_equal(m, ((2, 4), (4, 16)))
+
+    m2 = np.dot(m, (1, 1))
+    assert repr(m2) == "[ 6. 20.]"
+    assert str(m2) == "[ 6. 20.]"
+    assert_allclose(m2, (6, 20))
 
     # matrix is always square
 
@@ -453,7 +465,7 @@ def test_propagate_1():
     np.testing.assert_allclose(ycov, [[4, 0.4, 0.8], [0.4, 8, 1.2], [0.8, 1.2, 12]])
 
     with pytest.warns(np.VisibleDeprecationWarning):
-        y, ycov = util.propagate(fn, 1, 2)
+        y, ycov = util.propagate(fn, [1], [[2]])
     np.testing.assert_allclose(y, 3)
     np.testing.assert_allclose(ycov, 8)
 
@@ -511,6 +523,15 @@ def test_propagate_on_bad_input():
     def fn(x):
         return 2 * x + 1
 
+    with pytest.warns(np.VisibleDeprecationWarning):
+        with pytest.raises(ValueError):
+            util.propagate(fn, x, cov)
+
+    with pytest.warns(np.VisibleDeprecationWarning):
+        with pytest.raises(ValueError):
+            util.propagate(fn, x, 1)
+
+    cov = [[1.0], [1.0]]
     with pytest.warns(np.VisibleDeprecationWarning):
         with pytest.raises(ValueError):
             util.propagate(fn, x, cov)
