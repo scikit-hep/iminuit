@@ -527,6 +527,15 @@ def test_propagate_on_bad_input():
         with pytest.raises(ValueError):
             util.propagate(fn, x, cov)
 
+    with pytest.warns(np.VisibleDeprecationWarning):
+        with pytest.raises(ValueError):
+            util.propagate(fn, x, 1)
+
+    cov = [[1.0], [1.0]]
+    with pytest.warns(np.VisibleDeprecationWarning):
+        with pytest.raises(ValueError):
+            util.propagate(fn, x, cov)
+
 
 def test_jacobi():
     n = 100
