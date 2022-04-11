@@ -16,7 +16,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) # optional, ensure standard is supported
 set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
 
 # Now we can find pybind11
-add_subdirectory(extern/pybind11)
+option(IMINUIT_EXTERNAL_PYBIND11 "Build against an external pybind11" OFF)
+if(IMINUIT_EXTERNAL_PYBIND11)
+  find_package(pybind11 CONFIG REQUIRED)
+else()
+  add_subdirectory(extern/pybind11)
+endif()
 
 file(GLOB SOURCES_A "src/*.cpp")
 set(SOURCES_B
