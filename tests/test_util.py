@@ -101,6 +101,7 @@ def test_Matrix():
 
     m2 = np.dot(m, (1, 1))
     assert repr(m2) == "[ 6. 20.]"
+    assert str(m2) == "[ 6. 20.]"
     assert_allclose(m2, (6, 20))
 
     # matrix is always square
