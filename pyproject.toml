@@ -5,9 +5,6 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
-[tool.nbqa.mutate]
-black = 1
-
 [tool.mypy]
 ignore_missing_imports = true
 
