@@ -106,7 +106,38 @@ def _soft_l1_loss(z_sqr):
 def _soft_l1_cost(y, ye, ym):
     return _soft_l1_loss(_z_squared(y, ye, ym))
 
+def bblite(mu,n):
+    """
+    Compared to the "normal" Beeston-Barlow method, the lite method uses one nuisance parameter (NP) per bin instead of one NP per component per bin.
+    Beeston-Barlow assumed a Poisson distribution.
+    Signal and background templates share one parameter per bin.
+    For a single bin, i:
+                -ln(L) = -n*ln(b*mu) + b*mu + (b-1)^2/2s^2 ,   (1)
+    [note that we emit the label i in all variables (L, b,u,s and n) for simplicity]
+    where L is the likelihood,
+    n is the number of yields,
+    b is the nuisance parameter (NP) (only 1 used)-->what we calculate,
+    mu is the total number of expected events in the bin, given the values of all the other parameters,
+    and s (sigma) is the relative (statistical) uncertainty in the prediction.
 
+
+    To minimise this log-likelihood, we set the derivative of (1) to zero, i.e. -ln(L)/dB = 0
+
+                    ==> b^2 + (mu*s^2 - 1)b - n*s^2 = 0.        (2)
+
+    One can then solve the quadratic equation and obtain the correct (maximal/positive)root.
+        
+        ==> b = -(mu*s^2-1)/2  +/- sqrt( (mu*s^2-1)^2 - 4n*s^2 ) /2
+                = -    x /2    +/-  sqrt ( x^2       - 4n*s^2 ) /2    (3)
+                
+                ,where x = (mu*s^2-1).
+    """
+    s2 = 1/mu
+    x = mu * s2 - 1
+    b = -x * 0.5 + np.sqrt(x**2 + 4 * n * s2) * 0.5
+
+    return np.sum(-n * np.log(b * mu) + b * mu + (b - 1)**2 / 2 * s2)
+    
 # If numba is available, use it to accelerate computations in float32 and float64
 # precision. Fall back to plain numpy for float128 which is not currently supported
 # by numba.
