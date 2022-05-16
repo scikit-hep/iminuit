@@ -709,7 +709,7 @@ def test_NormalConstraint_properties():
     assert_equal(nc.covariance, (1, 2))
 
 
-@pytest.mark.parametrize("dtype", (np.float32, np.float128))
+@pytest.mark.parametrize("dtype", (np.float32, np.longdouble))
 def test_soft_l1_loss(dtype):
     v = np.array([0], dtype=dtype)
     assert _soft_l1_loss(v) == v
@@ -731,9 +731,9 @@ def test_multinominal_chi2():
     assert_allclose(_multinominal_chi2(n, one), 0)
 
 
-def test_model_float128():
+def test_model_longdouble():
     def model(x, a):
-        x = x.astype(np.float128)
+        x = x.astype(np.longdouble)
         return a + x
 
     for cost in (
@@ -746,7 +746,7 @@ def test_model_float128():
         LeastSquares([1.0], [2.0], [3.0], model),
         LeastSquares([1.0], [2.0], [3.0], model, loss="soft_l1"),
     ):
-        assert cost(1).dtype == np.float128
+        assert cost(1).dtype == np.longdouble
 
         Minuit(cost, a=0).migrad()  # should not raise
 
