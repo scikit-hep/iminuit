@@ -12,6 +12,7 @@ an advanced audience.
     :maxdepth: 1
 
     notebooks/binned_vs_unbinned
+    notebooks/template_fits
     notebooks/hesse_and_minos
     notebooks/error_bands
     notebooks/numba

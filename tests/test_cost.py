@@ -11,7 +11,9 @@ from iminuit.cost import (
     LeastSquares,
     Constant,
     NormalConstraint,
-    _multinominal_chi2,
+    BarlowBeestonLite,
+    multinominal_chi2,
+    barlow_beeston_lite,
     _soft_l1_loss,
     PerformanceWarning,
 )
@@ -728,12 +730,12 @@ def test_multinominal_chi2():
     zero = np.array(0)
     one = np.array(1)
 
-    assert _multinominal_chi2(zero, zero) == 0
-    assert _multinominal_chi2(zero, one) == 0
-    assert _multinominal_chi2(one, zero) == pytest.approx(1487, abs=1)
+    assert multinominal_chi2(zero, zero) == 0
+    assert multinominal_chi2(zero, one) == 0
+    assert multinominal_chi2(one, zero) == pytest.approx(1487, abs=1)
     n = np.array([(0.0, 0.0)])
-    assert_allclose(_multinominal_chi2(n, zero), 0)
-    assert_allclose(_multinominal_chi2(n, one), 0)
+    assert_allclose(multinominal_chi2(n, zero), 0)
+    assert_allclose(multinominal_chi2(n, one), 0)
 
 
 @pytest.mark.skipif(
@@ -795,3 +797,31 @@ def test_update_data_with_mask(cls):
     c.mask = (True, False, True)
     c.n = nx
     assert c(1) == 0
+
+
+def test_barlow_beeston_lite():
+    n = np.array([1, 2, 3])
+    r = barlow_beeston_lite(n, n, n**2)
+    assert_allclose(r, 0)
+
+    n = np.array([1, 2, 3])
+    r = barlow_beeston_lite(n, n, 10 * n**2)
+    assert_allclose(r, 0)
+
+    mu = np.array([2, 2, 3])
+    r = barlow_beeston_lite(n, mu, mu**2)
+    assert r > 0
+
+    mu = np.array([0.999, 2, 3])
+    r = barlow_beeston_lite(n, mu, mu**2)
+    assert r > 0
+
+
+def test_BarlowBeestonLite():
+    n = np.array([1, 2, 3])
+    t = np.array([[1, 1, 0], [0, 1, 3]])
+    c = BarlowBeestonLite(n, t)
+    m = Minuit(c, 1, 1)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.fval, 0, atol=1e-9)

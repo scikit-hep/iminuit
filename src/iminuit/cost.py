@@ -66,37 +66,9 @@ def _unbinned_nll(x):
     return -np.sum(_safe_log(x))
 
 
-def _multinominal_chi2(n, mu):
-    # This form makes the result asymptotically chi2 distributed and keeps the
-    # sum small, which helps to not loose accuracy in Minuit.
-    #
-    # Q = -2 (lnP - lnP')
-    # lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
-    # lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
-    # Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
-    #   = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
-    #   = 2 sum_i k_i (ln(k_i) - ln(mu_i))
-    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
-
-
-def _poisson_chi2(n, mu):
-    # This form makes the result asymptotically chi2 distributed and keeps the
-    # sum small, which helps to not loose accuracy in Minuit.
-    #
-    # Q = -2 (lnP - lnP')
-    # lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
-    # lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
-    # Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
-    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
-
-
 def _z_squared(y, ye, ym):
     z = (y - ym) / ye
     return z * z
-
-
-def _chi2(y, ye, ym):
-    return np.sum(_z_squared(y, ye, ym))
 
 
 def _soft_l1_loss(z_sqr):
@@ -106,38 +78,142 @@ def _soft_l1_loss(z_sqr):
 def _soft_l1_cost(y, ye, ym):
     return _soft_l1_loss(_z_squared(y, ye, ym))
 
-def bblite(mu,n):
+
+def chi2(y, ye, ym):
     """
-    Compared to the "normal" Beeston-Barlow method, the lite method uses one nuisance parameter (NP) per bin instead of one NP per component per bin.
-    Beeston-Barlow assumed a Poisson distribution.
-    Signal and background templates share one parameter per bin.
-    For a single bin, i:
-                -ln(L) = -n*ln(b*mu) + b*mu + (b-1)^2/2s^2 ,   (1)
-    [note that we emit the label i in all variables (L, b,u,s and n) for simplicity]
-    where L is the likelihood,
-    n is the number of yields,
-    b is the nuisance parameter (NP) (only 1 used)-->what we calculate,
-    mu is the total number of expected events in the bin, given the values of all the other parameters,
-    and s (sigma) is the relative (statistical) uncertainty in the prediction.
+    Compute (potentially) chi2-distributed cost.
 
+    The value returned by this function is chi2-distributed, if the observed values are
+    normally distributed around the expected values with the provided standard deviations.
 
-    To minimise this log-likelihood, we set the derivative of (1) to zero, i.e. -ln(L)/dB = 0
+    Parameters
+    ----------
+    y : array-like
+        Observed values.
+    ye : array-like
+        Uncertainties of values.
+    ym : array-like
+        Expected values.
 
-                    ==> b^2 + (mu*s^2 - 1)b - n*s^2 = 0.        (2)
-
-    One can then solve the quadratic equation and obtain the correct (maximal/positive)root.
-        
-        ==> b = -(mu*s^2-1)/2  +/- sqrt( (mu*s^2-1)^2 - 4n*s^2 ) /2
-                = -    x /2    +/-  sqrt ( x^2       - 4n*s^2 ) /2    (3)
-                
-                ,where x = (mu*s^2-1).
+    Returns
+    -------
+    float
+        Const function value.
     """
-    s2 = 1/mu
-    x = mu * s2 - 1
-    b = -x * 0.5 + np.sqrt(x**2 + 4 * n * s2) * 0.5
+    y, ye, ym = np.atleast_1d(y, ye, ym)
+    return np.sum(_z_squared(y, ye, ym))
 
-    return np.sum(-n * np.log(b * mu) + b * mu + (b - 1)**2 / 2 * s2)
-    
+
+def multinominal_chi2(n, p):
+    """
+    Compute asymptotically chi2-distributed cost for binomially-distributed data.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    p : array-like
+        Probabilities for an event to be end up in each bin.
+        Must satisfy sum(p) == 1.
+
+    Returns
+    -------
+    float
+        Cost function value.
+
+    Notes
+    -----
+    The implementation makes the result asymptotically chi2-distributed and
+    keeps the sum small near the minimum, which helps to maximise the numerical
+    accuracy for Minuit.
+
+    The formula is derived from the likelihood ratio with respect to a
+    saturated model (which has mu = n):
+
+    Q = -2 (lnP - lnP')
+    lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
+    lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
+    Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
+      = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
+      = 2 sum_i k_i (ln(k_i) - ln(mu_i))
+    """
+    n = np.atleast_1d(n)
+    p = np.atleast_1d(p)
+    mu = np.sum(n) * p
+    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
+
+
+def poisson_chi2(n, mu):
+    """
+    Compute asymptotically chi2-distributed cost for Poisson-distributed data.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts.
+
+    Returns
+    -------
+    float
+        Cost function value.
+
+    Notes
+    -----
+    The implementation makes the result asymptotically chi2-distributed and
+    keeps the sum small near the minimum, which helps to maximise the numerical
+    accuracy for Minuit.
+
+    The formula is derived from the likelihood ratio with respect to a
+    saturated model (which has mu = n):
+
+    Q = -2 (lnP - lnP')
+    lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
+    lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
+    Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
+    """
+    n = np.atleast_1d(n)
+    mu = np.atleast_1d(mu)
+    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
+
+
+def barlow_beeston_lite_chi2(n, mu, mu_var):
+    """
+    Compute asymptotically chi2-distributed cost for template fit.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts. This is the sum of the template components scaled
+        with the template fractions.
+    mu_var : array-like
+        Expected variance of expected counts.
+
+    Returns
+    -------
+    float
+        Cost function value.
+
+    Notes
+    -----
+    The implementation makes the result asymptotically chi2-distributed and
+    keeps the sum small near the minimum, which helps to maximise the numerical
+    accuracy for Minuit.
+    """
+    # b_var is trivially 1 for Poisson, but not for weighted templates
+    b_var = mu_var / mu**2
+
+    # need to solve quadratic equation b^2 + (mu var_b - 1) b - n var_b = 0
+    p = mu * b_var - 1
+    q = -n * b_var
+    beta = 0.5 * (-p + np.sqrt(p**2 - 4 * q))
+
+    return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / b_var)
+
+
 # If numba is available, use it to accelerate computations in float32 and float64
 # precision. Fall back to plain numpy for float128 which is not currently supported
 # by numba.
@@ -166,44 +242,50 @@ try:
         # fallback to numpy for float128
         return _unbinned_nll_np(x)
 
-    _multinominal_chi2_np = _multinominal_chi2
+    _multinominal_chi2_np = multinominal_chi2
     _multinominal_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_multinominal_chi2_np)
 
-    def _multinominal_chi2(n, mu):
-        if mu.dtype in (np.float32, np.float64):
-            return _multinominal_chi2_nb(n, mu)
+    def multinominal_chi2(n, p):  # noqa
+        if p.dtype in (np.float32, np.float64):
+            return _multinominal_chi2_nb(n, p)
         # fallback to numpy for float128
-        return _multinominal_chi2_np(n, mu)
+        return _multinominal_chi2_np(n, p)
 
-    _poisson_chi2_np = _poisson_chi2
+    multinominal_chi2.__doc__ = _multinominal_chi2_np.__doc__
+
+    _poisson_chi2_np = poisson_chi2
     _poisson_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_poisson_chi2_np)
 
-    def _poisson_chi2(n, mu):
+    def poisson_chi2(n, mu):  # noqa
         if mu.dtype in (np.float32, np.float64):
             return _poisson_chi2_nb(n, mu)
         # fallback to numpy for float128
         return _poisson_chi2_np(n, mu)
 
-    _chi2_np = _chi2
+    poisson_chi2.__doc__ = _poisson_chi2_np.__doc__
+
+    _chi2_np = chi2
     _chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_chi2_np)
 
-    def _chi2(y, ye, ym):
+    def chi2(y, ye, ym):  # noqa
         if ym.dtype in (np.float32, np.float64):
             return _chi2_nb(y, ye, ym)
         # fallback to numpy for float128
         return _chi2_np(y, ye, ym)
+
+    chi2.__doc__ = _chi2_np.__doc__
 
     _soft_l1_loss_np = _soft_l1_loss
     _soft_l1_loss_nb = _njit(
@@ -222,18 +304,18 @@ try:
     def _ol_soft_l1_loss(z_sqr):
         return _soft_l1_loss_np  # pragma: no cover
 
-    _soft_l1_cost_np = _soft_l1_cost
-    _soft_l1_cost_nb = _njit(
+    __soft_l1_cost_np = _soft_l1_cost
+    __soft_l1_cost_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(_soft_l1_cost_np)
+    )(__soft_l1_cost_np)
 
-    def _soft_l1_cost(y, ye, ym):
+    def __soft_l1_cost(y, ye, ym):
         if ym.dtype in (np.float32, np.float64):
-            return _soft_l1_cost_nb(y, ye, ym)
+            return __soft_l1_cost_nb(y, ye, ym)
         # fallback to numpy for float128
-        return _soft_l1_cost_np(y, ye, ym)
+        return __soft_l1_cost_np(y, ye, ym)
 
 except ModuleNotFoundError:  # pragma: no cover
     pass
@@ -707,6 +789,77 @@ class BinnedCost(MaskedCost):
         super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
 
 
+class BarlowBeestonLite(MaskedCost):
+    """
+    Binned cost function for a template fit with uncertainties on the template.
+
+    Compared to the Beeston-Barlow method, the lite method uses one nuisance
+    parameter per bin instead of one nuisance parameter per component per bin,
+    and replaces the Poisson constraint with a Gaussian on the multiplicative
+    nuisance parameter.
+
+    J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
+    P. Mandrik, https://arxiv.org/abs/1708.07708
+    """
+
+    __slots__ = ("_templates", "_sum_templates")
+
+    def __init__(
+        self, n, templates, name: _tp.Collection[str] = None, verbose: int = 0
+    ):
+        """
+        Initialize cost function with data and model.
+
+        Parameters
+        ----------
+        n : array-like
+            Histogram counts.
+        templates : array-like
+            TODO
+        name : collection of str, optional
+            Parameter names.
+        verbose : int, optional
+            Verbosity level. 0: is no output (default).
+            1: print current args and negative log-likelihood value.
+        """
+        n = np.atleast_1d(n)
+        templates = np.atleast_2d(templates)
+        M = len(templates)
+        if M < 1:
+            raise ValueError("at least one template is required")
+        if n.shape != templates.shape[1:]:
+            raise ValueError("shapes of n and templates do not match")
+        self._templates = templates
+        self._sum_templates = np.sum(templates, axis=1)
+        if name is None:
+            name = [f"x{i}" for i in range(M)]
+        else:
+            if len(name) != M:
+                raise ValueError("number of names must match number of templates")
+        super().__init__(name, n, verbose)
+
+    @Cost.ndata.getter  # type:ignore
+    def ndata(self):
+        """See Cost.ndata."""
+        shape = self._masked.shape
+        return np.prod(shape)
+
+    def _call(self, args):
+        mu = 0
+        mu_var = 0
+        for a, t, nt in zip(args, self._templates, self._sum_templates):
+            f = a / nt
+            mu += f * t
+            var_t = t  # different if weighted templates are used, TODO
+            mu_var += var_t * f**2
+
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
+            mu_var = mu_var[ma]
+        return barlow_beeston_lite_chi2(self._masked, mu, mu_var)
+
+
 class BinnedNLL(BinnedCost):
     """
     Binned negative log-likelihood.
@@ -755,14 +908,13 @@ class BinnedNLL(BinnedCost):
         super().__init__(n, xe, cdf, verbose)
 
     def _call(self, args):
-        prob = self._pred(args)
+        p = self._pred(args)
         ma = self.mask
         if ma is not None:
-            prob = prob[ma]
-            prob /= np.sum(prob)  # normalise probability
-        n = self._maybe_apply_bohm_zech_scaling(prob)
-        mu = prob * np.sum(n)
-        return _multinominal_chi2(n, mu)
+            p = p[ma]
+            p /= np.sum(p)  # normalise probability
+        n = self._maybe_apply_bohm_zech_scaling(p)
+        return multinominal_chi2(n, p)
 
 
 class ExtendedBinnedNLL(BinnedCost):
@@ -822,7 +974,7 @@ class ExtendedBinnedNLL(BinnedCost):
         if ma is not None:
             mu = mu[ma]
         n = self._maybe_apply_bohm_zech_scaling(mu)
-        return _poisson_chi2(n, mu)
+        return poisson_chi2(n, mu)
 
 
 class LeastSquares(MaskedCost):
@@ -888,7 +1040,7 @@ class LeastSquares(MaskedCost):
         self._loss = loss
         if isinstance(loss, str):
             if loss == "linear":
-                self._cost = _chi2
+                self._cost = chi2
             elif loss == "soft_l1":
                 self._cost = _soft_l1_cost
             else:
