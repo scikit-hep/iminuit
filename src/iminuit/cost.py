@@ -130,15 +130,14 @@ def multinominal_chi2(n, p):
     The formula is derived from the likelihood ratio with respect to a
     saturated model (which has mu = n):
 
-    Q = -2 (lnP - lnP')
-    lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
-    lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
-    Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
-      = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
-      = 2 sum_i k_i (ln(k_i) - ln(mu_i))
+        Q = -2 (lnP - lnP')
+        lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
+        lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
+        Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
+        Q = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
+        Q = 2 sum_i k_i (ln(k_i) - ln(mu_i))
     """
-    n = np.atleast_1d(n)
-    p = np.atleast_1d(p)
+    n, p = np.atleast_1d(n, p)
     mu = np.sum(n) * p
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
@@ -161,26 +160,26 @@ def poisson_chi2(n, mu):
 
     Notes
     -----
-    The implementation makes the result asymptotically chi2-distributed and
-    keeps the sum small near the minimum, which helps to maximise the numerical
-    accuracy for Minuit.
+    The implementation makes the result asymptotically chi2-distributed,
+    which helps to maximise the numerical accuracy for Minuit.
 
     The formula is derived from the likelihood ratio with respect to a
     saturated model (which has mu = n):
 
-    Q = -2 (lnP - lnP')
-    lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
-    lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
-    Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
+        Q = -2 (lnP - lnP')
+        lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
+        lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
+        Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
     """
-    n = np.atleast_1d(n)
-    mu = np.atleast_1d(mu)
+    n, mu = np.atleast_1d(n, mu)
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
 def barlow_beeston_lite_chi2(n, mu, mu_var):
     """
     Compute asymptotically chi2-distributed cost for template fit.
+
+    J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
 
     Parameters
     ----------
@@ -199,19 +198,18 @@ def barlow_beeston_lite_chi2(n, mu, mu_var):
 
     Notes
     -----
-    The implementation makes the result asymptotically chi2-distributed and
-    keeps the sum small near the minimum, which helps to maximise the numerical
+    The implementation deviates slightly from the paper by making the result
+    asymptotically chi2-distributed, which helps to maximise the numerical
     accuracy for Minuit.
     """
-    # b_var is trivially 1 for Poisson, but not for weighted templates
-    b_var = mu_var / mu**2
+    beta_var = mu_var / mu**2
 
-    # need to solve quadratic equation b^2 + (mu var_b - 1) b - n var_b = 0
-    p = mu * b_var - 1
-    q = -n * b_var
+    # need to solve quadratic equation b^2 + (mu beta_var - 1) b - n beta_var = 0
+    p = mu * beta_var - 1
+    q = -n * beta_var
     beta = 0.5 * (-p + np.sqrt(p**2 - 4 * q))
 
-    return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / b_var)
+    return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
 
 
 # If numba is available, use it to accelerate computations in float32 and float64
