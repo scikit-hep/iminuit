@@ -13,7 +13,7 @@ from iminuit.cost import (
     NormalConstraint,
     BarlowBeestonLite,
     multinominal_chi2,
-    barlow_beeston_lite,
+    barlow_beeston_lite_chi2,
     _soft_l1_loss,
     PerformanceWarning,
 )
@@ -799,21 +799,21 @@ def test_update_data_with_mask(cls):
     assert c(1) == 0
 
 
-def test_barlow_beeston_lite():
+def test_barlow_beeston_lite_chi2():
     n = np.array([1, 2, 3])
-    r = barlow_beeston_lite(n, n, n**2)
+    r = barlow_beeston_lite_chi2(n, n, n**2)
     assert_allclose(r, 0)
 
     n = np.array([1, 2, 3])
-    r = barlow_beeston_lite(n, n, 10 * n**2)
+    r = barlow_beeston_lite_chi2(n, n, 10 * n**2)
     assert_allclose(r, 0)
 
     mu = np.array([2, 2, 3])
-    r = barlow_beeston_lite(n, mu, mu**2)
+    r = barlow_beeston_lite_chi2(n, mu, mu**2)
     assert r > 0
 
     mu = np.array([0.999, 2, 3])
-    r = barlow_beeston_lite(n, mu, mu**2)
+    r = barlow_beeston_lite_chi2(n, mu, mu**2)
     assert r > 0
 
 
