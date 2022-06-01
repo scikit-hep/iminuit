@@ -104,7 +104,7 @@ def chi2(y, ye, ym):
     return np.sum(_z_squared(y, ye, ym))
 
 
-def multinominal_chi2(n, p):
+def multinominal_chi2(n, mu):
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
 
@@ -112,9 +112,8 @@ def multinominal_chi2(n, p):
     ----------
     n : array-like
         Observed counts.
-    p : array-like
-        Probabilities for an event to be end up in each bin.
-        Must satisfy sum(p) == 1.
+    mu : array-like
+        Expected counts per bin. Must satisfy sum(mu) == sum(n).
 
     Returns
     -------
@@ -127,8 +126,8 @@ def multinominal_chi2(n, p):
     keeps the sum small near the minimum, which helps to maximise the numerical
     accuracy for Minuit.
 
-    The formula is derived from the likelihood ratio with respect to a
-    saturated model (which has mu = n):
+    The formula is derived from the likelihood ratio of a binomial model with respect
+    to a saturated model (which has mu = n):
 
         Q = -2 (lnP - lnP')
         lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
@@ -137,8 +136,7 @@ def multinominal_chi2(n, p):
         Q = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
         Q = 2 sum_i k_i (ln(k_i) - ln(mu_i))
     """
-    n, p = np.atleast_1d(n, p)
-    mu = np.sum(n) * p
+    n, mu = np.atleast_1d(n, mu)
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
@@ -827,6 +825,12 @@ class BarlowBeestonLite(MaskedCost):
             raise ValueError("at least one template is required")
         if n.shape != templates.shape[1:]:
             raise ValueError("shapes of n and templates do not match")
+        # must cut away bins in which all templates have zero entries
+        ma = False
+        for t in templates:
+            ma |= t > 0
+        n = n[ma]
+        templates = templates[:, ma]
         self._templates = templates
         self._sum_templates = np.sum(templates, axis=1)
         if name is None:
@@ -911,8 +915,9 @@ class BinnedNLL(BinnedCost):
         if ma is not None:
             p = p[ma]
             p /= np.sum(p)  # normalise probability
-        n = self._maybe_apply_bohm_zech_scaling(p)
-        return multinominal_chi2(n, p)
+        mu = p * np.sum(self._masked[..., 0] if self._is_weighted() else self._masked)
+        n = self._maybe_apply_bohm_zech_scaling(mu)
+        return multinominal_chi2(n, mu)
 
 
 class ExtendedBinnedNLL(BinnedCost):
