@@ -819,9 +819,35 @@ def test_barlow_beeston_lite_chi2():
 
 def test_BarlowBeestonLite():
     n = np.array([1, 2, 3])
+    xe = np.array([0, 1, 2, 3])
     t = np.array([[1, 1, 0], [0, 1, 3]])
-    c = BarlowBeestonLite(n, t)
+
+    c = BarlowBeestonLite(n, xe, t)
     m = Minuit(c, 1, 1)
     m.migrad()
-    assert m.valid
     assert_allclose(m.fval, 0, atol=1e-9)
+    assert_allclose(m.values, [2, 4], atol=1e-3)
+
+
+def test_BarlowBeestonLite_weighted_data():
+    n = np.array([1, 2, 3])
+    xe = np.array([0, 1, 2, 3])
+    t = np.array([[1, 1, 0], [0, 1, 3]]) * 1e6
+
+    c = BarlowBeestonLite(n, xe, t)
+    m = Minuit(c, 1, 1)
+    m.migrad()
+    assert_allclose(m.fval, 0, atol=1e-4)
+    assert_allclose(m.values, [2, 4], atol=1e-2)
+    J = np.ones(2)
+    var = np.einsum("i,j,ij", J, J, m.covariance)
+    assert_allclose(var, np.sum(n), atol=0.02)
+
+    var = np.power(m.errors, 2)
+    n = np.transpose((n, 2 * n))
+    c = BarlowBeestonLite(n, xe, t)
+    m = Minuit(c, 1, 1)
+    m.migrad()
+    assert_allclose(m.fval, 0, atol=1e-5)
+    assert_allclose(m.values, [2, 4], atol=1e-2)
+    assert_allclose(np.power(m.errors, 2), 2 * var, atol=1e-3)

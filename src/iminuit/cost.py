@@ -511,7 +511,8 @@ class MaskedCost(Cost):
         super().__init__(args, verbose)
         if np.ndim(data) > 1:
             self._data = np.transpose(data)
-        self._data = data
+        else:
+            self._data = data
         self.mask = None  # triggers update of _masked, _ndata
 
     @property
@@ -721,8 +722,8 @@ class BinnedCost(MaskedCost):
             v = n[..., 0]
             var = n[..., 1]
             s = v / (var + 1e-323)
-            return np.column_stack((v, var, v * s, s))
-
+            n = np.column_stack((v, var, v * s, s))
+            return n
         return n
 
     def _pred(self, args):
@@ -785,7 +786,7 @@ class BinnedCost(MaskedCost):
         super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
 
 
-class BarlowBeestonLite(MaskedCost):
+class BarlowBeestonLite(BinnedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
@@ -800,10 +801,39 @@ class BarlowBeestonLite(MaskedCost):
     P. Mandrik, https://arxiv.org/abs/1708.07708
     """
 
-    __slots__ = ("_templates", "_sum_templates")
+    __slots__ = ("_templates",)
+
+    def _prepare_templates(self, templates):
+        assert self._xe is not None
+
+        self._templates = []
+        for t in templates:
+            t = _norm(t)
+            shape = self._xe_shape if self._xe_shape else (len(self._xe),)
+            if t.ndim > self._ndim:
+                # template is weighted
+                if t.ndim != self._ndim + 1 or t.shape[:-1] != shape:
+                    raise ValueError("shapes of n and templates do not match")
+                val = t[..., 0]
+                var = t[..., 1]
+            else:
+                val = t
+                var = t
+            ma = self.mask
+            norm = np.sum(val[ma] if ma is not None else val)
+            val = val / norm
+            var = var / norm**2
+            self._templates.append((val, var))
+
+        # must mask away bins in which all templates have zero entries
+        ma = False
+        for v, _ in self._templates:
+            ma |= v > 0
+        if np.any(~ma):
+            self.mask = ma
 
     def __init__(
-        self, n, templates, name: _tp.Collection[str] = None, verbose: int = 0
+        self, n, xe, templates, name: _tp.Collection[str] = None, verbose: int = 0
     ):
         """
         Initialize cost function with data and model.
@@ -811,60 +841,71 @@ class BarlowBeestonLite(MaskedCost):
         Parameters
         ----------
         n : array-like
-            Histogram of sample counts (unscaled). The histogram may be
-            multi-dimensional.
-        templates : array-like
-            Collection of histograms, which contain the counts in each template
-            (unscaled). The expected shape is (K, ...), where K is the number of
-            templates and ... corresponds to the shape of n.
+            Histogram counts. If this is an array with dimension D+1, where D is the
+            number of histogram axes, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
+        xe : array-like or collection of array-like
+            Bin edge locations, must be len(n) + 1, where n is the number of bins.
+            If the histogram has more than one axis, xe must be a collection of the
+            bin edge locations along each axis.
+        templates : collection of array-like
+            Collection of arrays, which contain the histogram counts of each template.
+            The template histograms must use the same axes as the data histogram. If
+            the counts are represented by an array with dimension D+1, where D is the
+            number of histogram axes, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
         name : collection of str, optional
             Optional name for the yield of each template. Must have length K.
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
         """
-        n = np.atleast_1d(n)
-        templates = np.atleast_2d(templates)
+        self._ndim = 1
+        if not isinstance(xe, _tp.Iterable):
+            raise ValueError("xe must be iterable")
+        if isinstance(xe[0], _tp.Iterable):
+            self._ndim = len(xe)
+        if self._ndim == 1:
+            self._xe = _norm(xe)
+            self._xe_shape = None
+        else:
+            self._xe = tuple(_norm(xei) for xei in xe)
+            self._xe_shape = tuple(len(xei) for xei in xe)
+
         M = len(templates)
         if M < 1:
             raise ValueError("at least one template is required")
-        if n.shape != templates.shape[1:]:
-            raise ValueError("shapes of n and templates do not match")
-        # must cut away bins in which all templates have zero entries
-        ma = False
-        for t in templates:
-            ma |= t > 0
-        n = n[ma]
-        templates = templates[:, ma]
-        self._templates = templates
-        self._sum_templates = np.sum(templates, axis=1)
         if name is None:
             name = [f"x{i}" for i in range(M)]
         else:
             if len(name) != M:
                 raise ValueError("number of names must match number of templates")
-        super().__init__(name, n, verbose)
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        shape = self._masked.shape
-        return np.prod(shape)
+        MaskedCost.__init__(self, name, self._prepare_data(n), verbose)
+
+        self._prepare_templates(templates)
 
     def _call(self, args):
         mu = 0
         mu_var = 0
-        for a, t, nt in zip(args, self._templates, self._sum_templates):
-            f = a / nt
-            mu += f * t
-            var_t = t  # different if weighted templates are used, TODO
-            mu_var += var_t * f**2
+        for a, (t, vt) in zip(args, self._templates):
+            mu += a * t
+            mu_var += a**2 * vt
 
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
             mu_var = mu_var[ma]
-        return barlow_beeston_lite_chi2(self._masked, mu, mu_var)
+
+        if self._is_weighted():
+            n, s = self._masked[2:]
+            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
+            mu *= s
+            mu_var *= s**2
+        else:
+            n = self._masked
+
+        return barlow_beeston_lite_chi2(n, mu, mu_var)
 
 
 class BinnedNLL(BinnedCost):
@@ -895,12 +936,12 @@ class BinnedNLL(BinnedCost):
         ----------
         n : array-like
             Histogram counts. If this is an array with dimension D+1, where D is the
-            number of supplied axis edges, then the last dimension must have two elements
+            number of histogram axes, then the last dimension must have two elements
             and is interpreted as pairs of sum of weights and sum of weights squared.
         xe : array-like or collection of array-like
-            Bin edge locations, must be len(n) + 1. If the histogram has more than one
-            dimension, xe must be a collection of the bin edge locations along each
-            dimension.
+            Bin edge locations, must be len(n) + 1, where n is the number of bins.
+            If the histogram has more than one axis, xe must be a collection of the
+            bin edge locations along each axis.
         cdf : callable
             Cumulative density function of the form f(xe, par0, par1, ..., parN),
             where xe is a bin edge and par0, ... are model parameters. The corresponding
@@ -959,12 +1000,12 @@ class ExtendedBinnedNLL(BinnedCost):
         ----------
         n : array-like
             Histogram counts. If this is an array with dimension D+1, where D is the
-            number of supplied axis edges, then the last dimension must have two elements
+            number of histogram axes, then the last dimension must have two elements
             and is interpreted as pairs of sum of weights and sum of weights squared.
         xe : array-like or collection of array-like
-            Bin edge locations, must be len(n) + 1. If the histogram has more than one
-            dimension, xe must be a collection of the bin edge locations along each
-            dimension.
+            Bin edge locations, must be len(n) + 1, where n is the number of bins.
+            If the histogram has more than one axis, xe must be a collection of the
+            bin edge locations along each axis.
         scaled_cdf : callable
             Scaled Cumulative density function of the form f(xe, par0, [par1, ...]), where
             xe is a bin edge and par0, ... are model parameters.  If the model is
