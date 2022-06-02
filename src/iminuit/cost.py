@@ -789,11 +789,13 @@ class BarlowBeestonLite(MaskedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
-    Compared to the Beeston-Barlow method, the lite method uses one nuisance
+    Compared to the original Beeston-Barlow method, the Lite method uses one nuisance
     parameter per bin instead of one nuisance parameter per component per bin,
     and replaces the Poisson constraint with a Gaussian on the multiplicative
     nuisance parameter.
 
+    Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
+    https://doi.org/10.1016/0010-4655(93)90005-W)
     J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
     P. Mandrik, https://arxiv.org/abs/1708.07708
     """
@@ -809,11 +811,14 @@ class BarlowBeestonLite(MaskedCost):
         Parameters
         ----------
         n : array-like
-            Histogram counts.
+            Histogram of sample counts (unscaled). The histogram may be
+            multi-dimensional.
         templates : array-like
-            TODO
+            Collection of histograms, which contain the counts in each template
+            (unscaled). The expected shape is (K, ...), where K is the number of
+            templates and ... corresponds to the shape of n.
         name : collection of str, optional
-            Parameter names.
+            Optional name for the yield of each template. Must have length K.
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
