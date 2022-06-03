@@ -851,3 +851,11 @@ def test_BarlowBeestonLite_weighted_data():
     assert_allclose(m.fval, 0, atol=1e-5)
     assert_allclose(m.values, [2, 4], atol=1e-2)
     assert_allclose(np.power(m.errors, 2), 2 * var, atol=1e-3)
+
+
+def test_BarlowBeestonLite_bad_input():
+    with pytest.raises(ValueError):
+        BarlowBeestonLite([1, 2], [1, 2, 3], [])
+
+    with pytest.raises(ValueError):
+        BarlowBeestonLite([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]])

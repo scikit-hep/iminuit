@@ -79,6 +79,55 @@ def _soft_l1_cost(y, ye, ym):
     return _soft_l1_loss(_z_squared(y, ye, ym))
 
 
+def _replace_none(x, replacement):
+    if x is None:
+        return replacement
+    return x
+
+
+class BohmZechTransform:
+    """
+    Apply Bohm-Zech transform.
+
+    See Bohm and Zech, NIMA 748 (2014) 1-6.
+    """
+
+    def __init__(self, val, var):
+        """
+        Initialize transformer with data value and variance.
+
+        Parameters
+        ----------
+        val : array-like
+            Observed values.
+        var : array-like
+            Estimated variance of observed values.
+        """
+        val, var = np.atleast_1d(val, var)
+        self._scale = val / (var + 1e-323)
+        self._obs = val * self._scale
+
+    def __call__(self, val, var=None):
+        """
+        Return precomputed scaled data and scaled prediction.
+
+        Parameters
+        ----------
+        val : array-like
+            Predicted values.
+        var : array-like, optional
+            Predicted variance.
+
+        Returns
+        -------
+        (obs, pred) or (obs, pred, pred_var)
+        """
+        s = self._scale
+        if var is None:
+            return self._obs, val * s
+        return self._obs, val * s, var * s**2
+
+
 def chi2(y, ye, ym):
     """
     Compute (potentially) chi2-distributed cost.
@@ -300,18 +349,18 @@ try:
     def _ol_soft_l1_loss(z_sqr):
         return _soft_l1_loss_np  # pragma: no cover
 
-    __soft_l1_cost_np = _soft_l1_cost
-    __soft_l1_cost_nb = _njit(
+    _soft_l1_cost_np = _soft_l1_cost
+    _soft_l1_cost_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
-    )(__soft_l1_cost_np)
+    )(_soft_l1_cost_np)
 
-    def __soft_l1_cost(y, ye, ym):
+    def _soft_l1_cost(y, ye, ym):
         if ym.dtype in (np.float32, np.float64):
-            return __soft_l1_cost_nb(y, ye, ym)
+            return _soft_l1_cost_nb(y, ye, ym)
         # fallback to numpy for float128
-        return __soft_l1_cost_np(y, ye, ym)
+        return _soft_l1_cost_np(y, ye, ym)
 
 except ModuleNotFoundError:  # pragma: no cover
     pass
@@ -504,16 +553,20 @@ class CostSum(Cost, Sequence):
 class MaskedCost(Cost):
     """Base class for cost functions that support data masking."""
 
-    __slots__ = "_data", "_mask", "_masked"
+    __slots__ = "_data", "_mask", "_masked", "_updater"
 
-    def __init__(self, args, data, verbose):
+    def __init__(self, args, data, verbose, *updater):
         """For internal use."""
-        super().__init__(args, verbose)
-        if np.ndim(data) > 1:
-            self._data = np.transpose(data)
-        else:
-            self._data = data
-        self.mask = None  # triggers update of _masked, _ndata
+        self._data = data
+        self._mask = None
+
+        Cost.__init__(self, args, verbose)
+
+        def up():
+            self._masked = self._data[_replace_none(self._mask, ...)]
+
+        self._updater = (up,) + updater
+        self._update()
 
     @property
     def mask(self):
@@ -527,7 +580,7 @@ class MaskedCost(Cost):
     @mask.setter
     def mask(self, mask):
         self._mask = None if mask is None else np.asarray(mask)
-        self._update_masked()
+        self._update()
 
     @property
     def data(self):
@@ -537,10 +590,11 @@ class MaskedCost(Cost):
     @data.setter
     def data(self, value):
         self._data[...] = value
-        self._update_masked()
+        self._update()
 
-    def _update_masked(self):
-        self._masked = self._data if self._mask is None else self._data[self._mask]
+    def _update(self):
+        for up in self._updater:
+            up()
 
 
 class UnbinnedCost(MaskedCost):
@@ -558,7 +612,8 @@ class UnbinnedCost(MaskedCost):
         """For internal use."""
         self._model = model
         self._log = log
-        super().__init__(describe(model)[1:], _norm(data), verbose)
+        d = _norm(data)
+        super().__init__(describe(model)[1:], d, verbose)
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -683,30 +738,39 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_xe", "_xe_shape", "_X", "_model", "_ndim"
+    __slots__ = "_xe", "_ndim", "_bztrafo"
 
-    def _is_weighted(self):
-        return self._data.ndim > self._ndim
+    n = MaskedCost.data
 
-    def _maybe_apply_bohm_zech_scaling(self, mu):
-        n = self._masked
-        if self._is_weighted():
-            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
-            mu *= n[..., 3]
-            n = n[..., 2]
-        return n
+    @property
+    def xe(self):
+        """Access bin edges."""
+        return self._xe
 
-    def _prepare_data(self, value):
-        assert self._xe is not None
+    @Cost.ndata.getter  # type:ignore
+    def ndata(self):
+        """See Cost.ndata."""
+        return np.prod(self._masked.shape[: self._ndim])
 
-        n = _norm(value)
+    def __init__(self, args, n, xe, verbose):
+        """For internal use."""
+        if not isinstance(xe, _tp.Iterable):
+            raise ValueError("xe must be iterable")
 
-        if n.ndim == self._ndim:
-            is_weighted = False
+        self._ndim = 1
+        if isinstance(xe[0], _tp.Iterable):
+            self._ndim = len(xe)
+
+        if self._ndim == 1:
+            self._xe = _norm(xe)
         else:
-            is_weighted = True
-            if n.ndim > self._ndim + 1 or n.ndim < self._ndim:
-                raise ValueError("n must either have same dimension as xe or one extra")
+            self._xe = tuple(_norm(xei) for xei in xe)
+
+        n = _norm(n)
+        is_weighted = n.ndim > self._ndim
+
+        if n.ndim != (self._ndim + 1 if is_weighted else self._ndim):
+            raise ValueError("n must either have same dimension as xe or one extra")
 
         for i, xei in enumerate([self._xe] if self._ndim == 1 else self._xe):
             if len(xei) != n.shape[i] + 1:
@@ -718,16 +782,40 @@ class BinnedCost(MaskedCost):
         if is_weighted:
             if n.shape[-1] != 2:
                 raise ValueError("n must have shape (..., 2)")
-            # Scale factor from Bohm and Zech, NIMA 748 (2014) 1-6
-            v = n[..., 0]
-            var = n[..., 1]
-            s = v / (var + 1e-323)
-            n = np.column_stack((v, var, v * s, s))
-            return n
-        return n
+            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])
+        else:
+            self._bztrafo = None
+
+        def up():
+            if self._bztrafo:
+                ma = _replace_none(self._mask, ...)
+                self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
+
+        super().__init__(args, n, verbose, up)
+
+
+class BinnedCostWithModel(BinnedCost):
+    """Base class for binned cost functions."""
+
+    __slots__ = "_xe_shape", "_model", "_model_arg"
+
+    def __init__(self, n, xe, model, verbose):
+        """For internal use."""
+        self._model = model
+
+        super().__init__(describe(model)[1:], n, xe, verbose)
+
+        if self._ndim == 1:
+            self._xe_shape = None
+            self._model_arg = _norm(self.xe)
+        else:
+            self._xe_shape = tuple(len(xei) for xei in self.xe)
+            self._model_arg = np.row_stack(
+                [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
+            )
 
     def _pred(self, args):
-        d = self._model(self._X, *args)
+        d = self._model(self._model_arg, *args)
         d = _normalize_model_output(d)
         if self._xe_shape is not None:
             d = d.reshape(self._xe_shape)
@@ -737,53 +825,6 @@ class BinnedCost(MaskedCost):
         # we set negative values to zero
         d[d < 0] = 0
         return d
-
-    @property
-    def data(self):
-        """Access bin counts."""
-        if self._is_weighted():
-            return self._data[..., :2]
-        return self._data
-
-    @data.setter
-    def data(self, value):
-        # calling the property's setter from the base class is clunky
-        super(__class__, self.__class__).data.__set__(self, self._prepare_data(value))
-
-    n = data
-
-    @property
-    def xe(self):
-        """Access bin edges."""
-        return self._xe
-
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        if self._is_weighted():
-            shape = self._masked.shape[:-1]
-        else:
-            shape = self._masked.shape
-        return np.prod(shape)
-
-    def __init__(self, n, xe, model, verbose):
-        """For internal use."""
-        self._ndim = 1
-        if not isinstance(xe, _tp.Iterable):
-            raise ValueError("xe must be iterable")
-        if isinstance(xe[0], _tp.Iterable):
-            self._ndim = len(xe)
-        if self._ndim == 1:
-            self._xe = self._X = _norm(xe)
-            self._xe_shape = None
-        else:
-            self._xe = tuple(_norm(xei) for xei in xe)
-            self._xe_shape = tuple(len(xei) for xei in xe)
-            self._X = np.row_stack(
-                [x.flatten() for x in np.meshgrid(*self._xe, indexing="ij")]
-            )
-        self._model = model
-        super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
 
 
 class BarlowBeestonLite(BinnedCost):
@@ -802,35 +843,6 @@ class BarlowBeestonLite(BinnedCost):
     """
 
     __slots__ = ("_templates",)
-
-    def _prepare_templates(self, templates):
-        assert self._xe is not None
-
-        self._templates = []
-        for t in templates:
-            t = _norm(t)
-            shape = self._xe_shape if self._xe_shape else (len(self._xe),)
-            if t.ndim > self._ndim:
-                # template is weighted
-                if t.ndim != self._ndim + 1 or t.shape[:-1] != shape:
-                    raise ValueError("shapes of n and templates do not match")
-                val = t[..., 0]
-                var = t[..., 1]
-            else:
-                val = t
-                var = t
-            ma = self.mask
-            norm = np.sum(val[ma] if ma is not None else val)
-            val = val / norm
-            var = var / norm**2
-            self._templates.append((val, var))
-
-        # must mask away bins in which all templates have zero entries
-        ma = False
-        for v, _ in self._templates:
-            ma |= v > 0
-        if np.any(~ma):
-            self.mask = ma
 
     def __init__(
         self, n, xe, templates, name: _tp.Collection[str] = None, verbose: int = 0
@@ -860,18 +872,6 @@ class BarlowBeestonLite(BinnedCost):
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
         """
-        self._ndim = 1
-        if not isinstance(xe, _tp.Iterable):
-            raise ValueError("xe must be iterable")
-        if isinstance(xe[0], _tp.Iterable):
-            self._ndim = len(xe)
-        if self._ndim == 1:
-            self._xe = _norm(xe)
-            self._xe_shape = None
-        else:
-            self._xe = tuple(_norm(xei) for xei in xe)
-            self._xe_shape = tuple(len(xei) for xei in xe)
-
         M = len(templates)
         if M < 1:
             raise ValueError("at least one template is required")
@@ -881,9 +881,38 @@ class BarlowBeestonLite(BinnedCost):
             if len(name) != M:
                 raise ValueError("number of names must match number of templates")
 
-        MaskedCost.__init__(self, name, self._prepare_data(n), verbose)
+        super().__init__(name, n, xe, verbose)
 
         self._prepare_templates(templates)
+
+    def _prepare_templates(self, templates):
+        assert self._xe is not None
+
+        self._templates = []
+        for t in templates:
+            t = _norm(t)
+            shape = np.shape(self.xe)
+            if t.ndim > self._ndim:
+                # template is weighted
+                if t.ndim != self._ndim + 1 or t.shape[:-1] != shape:
+                    raise ValueError("shapes of n and templates do not match")
+                val = t[..., 0]
+                var = t[..., 1]
+            else:
+                val = t
+                var = t
+            ma = self.mask
+            norm = np.sum(val[ma] if ma is not None else val)
+            val = val / norm
+            var = var / norm**2
+            self._templates.append((val, var))
+
+        # must mask away bins in which all templates have zero entries
+        ma = False
+        for v, _ in self._templates:
+            ma |= v > 0
+        if np.any(~ma):
+            self.mask = ma
 
     def _call(self, args):
         mu = 0
@@ -897,18 +926,15 @@ class BarlowBeestonLite(BinnedCost):
             mu = mu[ma]
             mu_var = mu_var[ma]
 
-        if self._is_weighted():
-            n, s = self._masked[2:]
-            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
-            mu *= s
-            mu_var *= s**2
+        if self._bztrafo:
+            n, mu, mu_var = self._bztrafo(mu, mu_var)
         else:
             n = self._masked
 
         return barlow_beeston_lite_chi2(n, mu, mu_var)
 
 
-class BinnedNLL(BinnedCost):
+class BinnedNLL(BinnedCostWithModel):
     """
     Binned negative log-likelihood.
 
@@ -957,16 +983,20 @@ class BinnedNLL(BinnedCost):
 
     def _call(self, args):
         p = self._pred(args)
-        ma = self.mask
+        ma = ... if self.mask is None else self.mask
         if ma is not None:
             p = p[ma]
             p /= np.sum(p)  # normalise probability
-        mu = p * np.sum(self._masked[..., 0] if self._is_weighted() else self._masked)
-        n = self._maybe_apply_bohm_zech_scaling(mu)
+        if self._bztrafo:
+            mu = p * np.sum(self._masked[..., 0])
+            n, mu = self._bztrafo(mu)
+        else:
+            mu = p * np.sum(self._masked)
+            n = self._masked
         return multinominal_chi2(n, mu)
 
 
-class ExtendedBinnedNLL(BinnedCost):
+class ExtendedBinnedNLL(BinnedCostWithModel):
     """
     Binned extended negative log-likelihood.
 
@@ -1022,7 +1052,10 @@ class ExtendedBinnedNLL(BinnedCost):
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
-        n = self._maybe_apply_bohm_zech_scaling(mu)
+        if self._bztrafo:
+            n, mu = self._bztrafo(mu)
+        else:
+            n = self._masked
         return poisson_chi2(n, mu)
 
 
@@ -1045,12 +1078,11 @@ class LeastSquares(MaskedCost):
 
     @x.setter
     def x(self, value):
-        d = self.data
         if self._ndim == 1:
-            d[:, 0] = _norm(value)
+            self.data[:, 0] = _norm(value)
         else:
-            d[:, : self._ndim] = _norm(value).T
-        self.data = d  # this also resets self.masked
+            self.data[:, : self._ndim] = _norm(value).T
+        self._update()
 
     @property
     def y(self):
@@ -1059,9 +1091,8 @@ class LeastSquares(MaskedCost):
 
     @y.setter
     def y(self, value):
-        d = self.data
-        d[:, self._ndim] = _norm(value)
-        self.data = d  # this also resets self.masked
+        self.data[:, self._ndim] = _norm(value)
+        self._update()
 
     @property
     def yerror(self):
@@ -1070,9 +1101,8 @@ class LeastSquares(MaskedCost):
 
     @yerror.setter
     def yerror(self, value):
-        d = self.data
-        d[:, self._ndim + 1] = _norm(value)
-        self.data = d
+        self.data[:, self._ndim + 1] = _norm(value)
+        self._update()
 
     @property
     def model(self):
@@ -1280,5 +1310,7 @@ def _normalize_model_output(x, msg="Model should return numpy array"):
             f"{msg}, but returns {type(x)}",
             PerformanceWarning,
         )
-        return np.array(x)
+        x = np.array(x)
+        if x.dtype.kind != "f":
+            return x.astype(float)
     return x
