@@ -486,7 +486,7 @@ def test_minos(grad):
     assert m.merrors[-1].upper == m.merrors["y"].upper
 
 
-@pytest.mark.parametrize("cl", (0.68, 0.90, 1, 2))
+@pytest.mark.parametrize("cl", (0.68, 0.90, 1, 1.5, 2))
 @pytest.mark.parametrize("k", (10, 1000))
 @pytest.mark.parametrize("limit", (False, True))
 def test_minos_cl(cl, k, limit):
@@ -1652,3 +1652,15 @@ def test_call_limit_reached_in_hesse():
     m.migrad(ncall=200)
     assert m.fmin.has_reached_call_limit
     assert m.fmin.nfcn < 205
+
+
+def test_bad_cl():
+    m = Minuit(func0, 1, 1)
+    m.migrad()
+
+    for cl in (0, -1):
+        with pytest.raises(ValueError):
+            m.minos(cl=cl)
+
+        with pytest.raises(ValueError):
+            m.mncontour("x", "y", cl=cl)
