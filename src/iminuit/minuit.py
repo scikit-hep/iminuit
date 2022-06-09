@@ -49,10 +49,10 @@ class Minuit:
     )
 
     LEAST_SQUARES = 1.0
-    """Set :attr:`errordef` to this constant for a least-squares cost function."""
+    """Set errordef to this for a least-squares cost function."""  # pragma: nocover
 
     LIKELIHOOD = 0.5
-    """Set :attr:`errordef` to this constant for a negative log-likelihood function."""
+    """Set errordef to this for a negated log-likelihood function."""  # pragma: nocover
 
     @property
     def fcn(self) -> FCN:
@@ -919,7 +919,7 @@ class Minuit:
                 NonlinearConstraint,
                 LinearConstraint,
             )
-        except ModuleNotFoundError as exc:  # pragma: no cover
+        except ImportError as exc:
             exc.msg += "\n\nPlease install scipy to use scipy minimizers in iminuit."
             raise
 
@@ -1345,25 +1345,21 @@ class Minuit:
         *parameters :
             Names of parameters to generate Minos errors for. If no positional
             arguments are given, Minos is run for each parameter.
-        cl :
-            Confidence level for the confidence interval. If None, a standard 68.3 %
-            confidence interval is produced (Default: None). Setting this to another
-            value requires the scipy module to be installed.
-        ncall :
+        cl : float or None, optional
+            Confidence level for the confidence interval. If not set or None, a
+            standard 68.3 % confidence interval is produced. Setting this to another
+            value requires the scipy module to be installed. If 0 < cl < 1, the value
+            is interpreted as the confidence level (a probability). If cl >= 1, it is
+            interpreted as number of standard deviations. For example, cl=3 produces a
+            3 sigma interval. Values other than 0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5
+            require the scipy module.
+        ncall : int or None, optional
             Limit the number of calls made by Minos. If None, an adaptive internal
             heuristic of the Minuit2 library is used (Default: None).
         """
         ncall = 0 if ncall is None else int(ncall)
 
-        if cl is None:
-            factor = 1.0
-        else:
-            try:
-                from scipy.stats import chi2
-            except ModuleNotFoundError as exc:  # pragma: no cover
-                exc.msg += "\nPlease install scipy to set the cl argument."
-                raise
-            factor = chi2(1).ppf(cl)
+        factor = _cl_to_errordef(cl, 1, 1.0)
 
         if self._fmin_does_not_exist_or_last_state_was_modified():
             self.hesse()  # creates self._fmin
@@ -1391,7 +1387,7 @@ class Minuit:
 
         t = mutil._Timer(self._fmin)
         with t:
-            with TemporaryErrordef(self._fcn, factor):
+            with _TemporaryErrordef(self._fcn, factor):
                 minos = MnMinos(self._fcn, fm, self.strategy)
                 for par in pars:
                     me = minos(self._var2pos[par], ncall, self._tolerance)
@@ -1801,9 +1797,11 @@ class Minuit:
         y : str
             Variable name of the second parameter.
         cl : float or None, optional
-            Confidence level of the contour. If None, a standard 68 % contour is computed
-            (default: None). Setting this to another value requires the scipy module to
-            be installed.
+            Confidence level of the contour. If not set or None, a standard 68 %
+            contour is computed (default). If 0 < cl < 1, the value is interpreted as the
+            confidence level (a probability). If cl >= 1, it is interpreted as number of
+            standard deviations. For example, cl=3 produces a 3 sigma contour. Values
+            other than 0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5 require the scipy module.
         size : int, optional
             Number of points on the contour to find (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
@@ -1814,22 +1812,14 @@ class Minuit:
             Contour points of the form [[x1, y1]...[xn, yn]].
             Note that the last point [xn, yn] is not identical to [x1, y1]. To draw a
             closed contour, please use a closed polygon, like matplotlib.patch.Polygon
-            with the closed=True option, or simulate a closed curve by appending the
+            with the closed=True option, or produce a closed curve by appending the
             first point at the end of the array.
 
         See Also
         --------
         contour, mnprofile
         """
-        if cl is None:
-            factor = 2.27886856637673  # chi2(2).ppf(0.68)
-        else:
-            try:
-                from scipy.stats import chi2
-
-                factor = chi2(2).ppf(float(cl))
-            except ImportError:  # pragma: no cover
-                raise ImportError("setting cl requires scipy")  # pragma: no cover
+        factor = _cl_to_errordef(cl, 2, 0.68)
 
         if self._fmin_does_not_exist_or_last_state_was_modified():
             self.hesse()  # creates self._fmin
@@ -1845,7 +1835,7 @@ class Minuit:
 
         ix = self._var2pos[x]
         iy = self._var2pos[y]
-        with TemporaryErrordef(self._fcn, factor):
+        with _TemporaryErrordef(self._fcn, factor):
             assert self._fmin is not None
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             ce = mnc(ix, iy, size)[2]
@@ -2105,7 +2095,7 @@ def _get_params(mps: MnUserParameterState, merrors: mutil.MErrors) -> mutil.Para
     )
 
 
-class TemporaryErrordef:
+class _TemporaryErrordef:
     def __init__(self, fcn: FCN, factor: float):
         self.saved = fcn._errordef
         self.fcn = fcn
@@ -2116,3 +2106,51 @@ class TemporaryErrordef:
 
     def __exit__(self, *args: object) -> None:
         self.fcn._errordef = self.saved
+
+
+def _cl_to_errordef(cl, npar, default):
+    assert 0 < npar < 3
+    cl = float(default if cl is None else cl)
+    if cl <= 0:
+        raise ValueError("cl must be positive")
+
+    if npar == 1:
+        if cl >= 1.0:
+            factor = cl**2
+        else:
+            factor = {
+                0.68: 0.988946481478023,  # chi2(1).ppf(0.68)
+                0.90: 2.705543454095404,  # chi2(1).ppf(0.9)
+                0.95: 3.841458820694124,  # chi2(1).ppf(0.95)
+                0.99: 6.634896601021215,  # chi2(1).ppf(0.99)
+            }.get(cl, 0.0)
+    else:
+        factor = {
+            0.68: 2.27886856637673,  # chi2(2).ppf(0.68)
+            0.90: 4.605170185988092,  # chi2(2).ppf(0.9)
+            0.95: 5.991464547107979,  # chi2(2).ppf(0.95)
+            0.99: 9.21034037197618,  # chi2(2).ppf(0.99)
+            1.0: 2.295748928898636,  # chi2(2).ppf(chi2(1).cdf(1))
+            2.0: 6.180074306244168,  # chi2(2).ppf(chi2(1).cdf(2 ** 2))
+            3.0: 11.829158081900795,  # chi2(2).ppf(chi2(1).cdf(3 ** 2))
+            4.0: 19.333908611934685,  # chi2(2).ppf(chi2(1).cdf(4 ** 2))
+            5.0: 28.743702426935496,  # chi2(2).ppf(chi2(1).cdf(5 ** 2))
+        }.get(cl, 0.0)
+
+    if factor == 0.0:
+        try:
+            from scipy.stats import chi2
+
+        except ImportError as exc:
+            exc.msg += (
+                "\n\n"
+                "You set an uncommon cl value, "
+                "scipy is needed to process it. Please install scipy."
+            )
+            raise
+
+        if cl >= 1.0:
+            cl = chi2(1).cdf(cl**2)  # convert sigmas into confidence level
+        factor = chi2(npar).ppf(cl)  # convert confidence level to errordef
+
+    return factor
