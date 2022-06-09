@@ -2141,11 +2141,13 @@ def _cl_to_errordef(cl, npar, default):
         try:
             from scipy.stats import chi2
 
-        except ImportError:
-            raise ImportError(
+        except ImportError as exc:
+            exc.msg += (
+                "\n\n"
                 "You set an uncommon cl value, "
                 "scipy is needed to process it. Please install scipy."
             )
+            raise
 
         if cl >= 1.0:
             cl = chi2(1).cdf(cl**2)  # convert sigmas into confidence level

@@ -29,7 +29,25 @@ def block_scipy_stats():
     class ImportRaiser:
         def find_spec(self, fullname, path, target=None):
             if fullname == name:
-                raise ImportError
+                raise ImportError("Module not found")
+
+    sys.meta_path.insert(0, ImportRaiser())
+    if name in sys.modules:
+        del sys.modules[name]
+    yield
+    del sys.meta_path[0]
+
+
+@pytest.fixture
+def block_scipy_optimize():
+    import sys
+
+    name = "scipy.optimize"
+
+    class ImportRaiser:
+        def find_spec(self, fullname, path, target=None):
+            if fullname == name:
+                raise ImportError("Module not found")
 
     sys.meta_path.insert(0, ImportRaiser())
     if name in sys.modules:
@@ -210,6 +228,12 @@ def test_minos_missing_scipy(block_scipy_stats):
 
     with pytest.raises(ImportError):
         m.minos(cl=0.1)
+
+
+def test_missing_scipy(block_scipy_optimize):
+    m = Minuit(func0, 1, 1)
+    with pytest.raises(ImportError):
+        m.scipy()
 
 
 def test_func0():  # check that providing gradient improves convergence
@@ -462,7 +486,7 @@ def test_minos(grad):
     assert m.merrors[-1].upper == m.merrors["y"].upper
 
 
-@pytest.mark.parametrize("cl", (0.68, 0.90))
+@pytest.mark.parametrize("cl", (0.68, 0.90, 1, 2))
 @pytest.mark.parametrize("k", (10, 1000))
 @pytest.mark.parametrize("limit", (False, True))
 def test_minos_cl(cl, k, limit):
@@ -474,10 +498,15 @@ def test_minos_cl(cl, k, limit):
 
     # find location of min + up by hand
     def crossing(x):
-        up = 0.5 * stats.chi2(1).ppf(cl)
         return nll(k + x) - (nll(k) + up)
 
-    bound = 1.5 * (stats.chi2(1).ppf(cl) * k) ** 0.5
+    if cl >= 1:
+        bound = cl * k**0.5
+        up = 0.5 * cl**2
+    else:
+        bound = (stats.chi2(1).ppf(cl) * k) ** 0.5
+        up = 0.5 * stats.chi2(1).ppf(cl)
+    bound *= 1.5
     upper = opt.root_scalar(crossing, bracket=(0, bound)).root
     lower = opt.root_scalar(crossing, bracket=(-bound, 0)).root
 
@@ -618,14 +647,18 @@ def test_initial_value():
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-@pytest.mark.parametrize("cl", (None, 0.5, 0.9))
+@pytest.mark.parametrize("cl", (None, 0.5, 0.9, 1, 2))
 def test_mncontour(grad, cl):
     stats = pytest.importorskip("scipy.stats")
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
     ctr = m.mncontour("x", "y", size=30, cl=cl)
 
-    factor = stats.chi2(2).ppf(0.68 if cl is None else cl)
+    if cl is None:
+        cl = 0.68
+    elif cl >= 1:
+        cl = stats.chi2(1).cdf(cl**2)
+    factor = stats.chi2(2).ppf(cl)
     cl2 = stats.chi2(1).cdf(factor)
     assert len(ctr) == 30
     assert len(ctr[0]) == 2
