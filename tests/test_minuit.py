@@ -20,6 +20,24 @@ def debug():
     MnPrint.show_prefix_stack(False)
 
 
+@pytest.fixture
+def block_scipy_stats():
+    import sys
+
+    name = "scipy.stats"
+
+    class ImportRaiser:
+        def find_spec(self, fullname, path, target=None):
+            if fullname == name:
+                raise ImportError
+
+    sys.meta_path.insert(0, ImportRaiser())
+    if name in sys.modules:
+        del sys.modules[name]
+    yield
+    del sys.meta_path[0]
+
+
 is_pypy = platform.python_implementation() == "PyPy"
 
 
@@ -170,6 +188,28 @@ def func_test_helper(f, grad=None, errordef=None):
     assert_allclose(err["x"], 1.0, rtol=1e-3)
     assert_allclose(err["y"], 2.0, rtol=1e-3)
     return m
+
+
+def test_mncontour_missing_scipy(block_scipy_stats):
+    m = Minuit(func0, 1, 1)
+    m.migrad()
+    m.mncontour("x", "y")
+    for cl in (0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5):
+        m.mncontour("x", "y", cl=cl)
+
+    with pytest.raises(ImportError):
+        m.mncontour("x", "y", cl=0.1)
+
+
+def test_minos_missing_scipy(block_scipy_stats):
+    m = Minuit(func0, 1, 1)
+    m.migrad()
+    m.minos()
+    for cl in (0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5):
+        m.minos(cl=cl)
+
+    with pytest.raises(ImportError):
+        m.minos(cl=0.1)
 
 
 def test_func0():  # check that providing gradient improves convergence
