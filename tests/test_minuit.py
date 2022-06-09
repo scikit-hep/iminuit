@@ -647,7 +647,7 @@ def test_initial_value():
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-@pytest.mark.parametrize("cl", (None, 0.5, 0.9, 1, 2))
+@pytest.mark.parametrize("cl", (None, 0.5, 0.9, 1, 1.5, 2))
 def test_mncontour(grad, cl):
     stats = pytest.importorskip("scipy.stats")
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)

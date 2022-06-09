@@ -49,10 +49,10 @@ class Minuit:
     )
 
     LEAST_SQUARES = 1.0
-    """Set :attr:`errordef` to this constant for a least-squares cost function."""
+    """Set errordef to this for a least-squares cost function."""  # pragma: nocover
 
     LIKELIHOOD = 0.5
-    """Set :attr:`errordef` to this constant for a negative log-likelihood function."""
+    """Set errordef to this for a negated log-likelihood function."""  # pragma: nocover
 
     @property
     def fcn(self) -> FCN:
