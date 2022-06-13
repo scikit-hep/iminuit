@@ -222,9 +222,9 @@ def poisson_chi2(n, mu):
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def barlow_beeston_lite_chi2(n, mu, mu_var):
+def barlow_beeston_lite_chi2_jsc(n, mu, mu_var):
     """
-    Compute asymptotically chi2-distributed cost for template fit.
+    Compute asymptotically chi2-distributed cost for a template fit.
 
     J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
 
@@ -233,10 +233,10 @@ def barlow_beeston_lite_chi2(n, mu, mu_var):
     n : array-like
         Observed counts.
     mu : array-like
-        Expected counts. This is the sum of the template components scaled
-        with the template fractions.
+        Expected counts. This is the sum of the normalised templates scaled with
+        the component yields. Must be positive everywhere.
     mu_var : array-like
-        Expected variance of expected counts.
+        Expected variance of mu. Must be positive everywhere.
 
     Returns
     -------
@@ -257,6 +257,33 @@ def barlow_beeston_lite_chi2(n, mu, mu_var):
     beta = 0.5 * (-p + np.sqrt(p**2 - 4 * q))
 
     return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
+
+
+def barlow_beeston_lite_chi2_hpd(n, mu, k):
+    """
+    Compute asymptotically chi2-distributed cost for a template fit.
+
+    Formula derived by H.P. Dembinski, see the Jupyter notebook on Template Fits
+    in the iminuit repository.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts. This is the sum of the normalised templates scaled
+        with the component yields.
+    k : array-like
+        Bin-wise sum over original component templates. Must be positive everywhere.
+
+    Returns
+    -------
+    float
+        Cost function value.
+    """
+    beta = (n + k) / (mu + k)
+
+    return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)
 
 
 # If numba is available, use it to accelerate computations in float32 and float64
@@ -752,24 +779,19 @@ class BinnedCost(MaskedCost):
         """See Cost.ndata."""
         return np.prod(self._masked.shape[: self._ndim])
 
-    def __init__(self, args, n, xe, verbose):
+    def __init__(self, args, n, xe, verbose, *updater):
         """For internal use."""
         if not isinstance(xe, _tp.Iterable):
             raise ValueError("xe must be iterable")
 
-        self._ndim = 1
-        if isinstance(xe[0], _tp.Iterable):
-            self._ndim = len(xe)
-
-        if self._ndim == 1:
-            self._xe = _norm(xe)
-        else:
-            self._xe = tuple(_norm(xei) for xei in xe)
+        shape = _shape_from_xe(xe)
+        self._ndim = len(shape)
+        self._xe = _norm(xe) if self._ndim == 1 else tuple(_norm(xei) for xei in xe)
 
         n = _norm(n)
         is_weighted = n.ndim > self._ndim
 
-        if n.ndim != (self._ndim + 1 if is_weighted else self._ndim):
+        if n.ndim != (self._ndim + int(is_weighted)):
             raise ValueError("n must either have same dimension as xe or one extra")
 
         for i, xei in enumerate([self._xe] if self._ndim == 1 else self._xe):
@@ -791,7 +813,7 @@ class BinnedCost(MaskedCost):
                 ma = _replace_none(self._mask, ...)
                 self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
 
-        super().__init__(args, n, verbose, up)
+        super().__init__(args, n, verbose, up, *updater)
 
 
 class BinnedCostWithModel(BinnedCost):
@@ -831,21 +853,24 @@ class BarlowBeestonLite(BinnedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
-    Compared to the original Beeston-Barlow method, the Lite method uses one nuisance
-    parameter per bin instead of one nuisance parameter per component per bin,
-    and replaces the Poisson constraint with a Gaussian on the multiplicative
-    nuisance parameter.
+    Compared to the original Beeston-Barlow method, the lite method uses one nuisance
+    parameter per bin instead of one nuisance parameter per component per bin.
 
     Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
     https://doi.org/10.1016/0010-4655(93)90005-W)
     J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
-    P. Mandrik, https://arxiv.org/abs/1708.07708
     """
 
-    __slots__ = ("_templates",)
+    __slots__ = "_bbl_data", "_call"
 
     def __init__(
-        self, n, xe, templates, name: _tp.Collection[str] = None, verbose: int = 0
+        self,
+        n,
+        xe,
+        templates,
+        name: _tp.Collection[str] = None,
+        verbose: int = 0,
+        method="hpd",
     ):
         """
         Initialize cost function with data and model.
@@ -871,6 +896,11 @@ class BarlowBeestonLite(BinnedCost):
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
+        method : {"jsc", "hpd"}, optional
+            Which version of the lite method to use. jsc: Method developed by
+            J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354.
+            hpd: Method developed by H.P. Dembinski. Default is "hpd", which seems to
+            perform slightly better on average.
         """
         M = len(templates)
         if M < 1:
@@ -881,45 +911,42 @@ class BarlowBeestonLite(BinnedCost):
             if len(name) != M:
                 raise ValueError("number of names must match number of templates")
 
-        super().__init__(name, n, xe, verbose)
-
-        self._prepare_templates(templates)
-
-    def _prepare_templates(self, templates):
-        assert self._xe is not None
-
-        self._templates = []
+        normalised_templates = []
         for t in templates:
             t = _norm(t)
-            shape = np.shape(self.xe)
-            if t.ndim > self._ndim:
+            shape = _shape_from_xe(xe)
+            ndim = len(shape)
+            if t.ndim > ndim:
                 # template is weighted
-                if t.ndim != self._ndim + 1 or t.shape[:-1] != shape:
+                if t.ndim != ndim + 1 or t.shape[:-1] != shape:
                     raise ValueError("shapes of n and templates do not match")
                 val = t[..., 0]
                 var = t[..., 1]
             else:
+                if t.ndim != ndim or t.shape != shape:
+                    raise ValueError("shapes of n and templates do not match")
                 val = t
                 var = t
-            ma = self.mask
-            norm = np.sum(val[ma] if ma is not None else val)
-            val = val / norm
-            var = var / norm**2
-            self._templates.append((val, var))
+            norm = np.sum(val)
+            normalised_templates.append((val / norm, var / norm**2))
 
-        # must mask away bins in which all templates have zero entries
-        ma = False
-        for v, _ in self._templates:
-            ma |= v > 0
-        if np.any(~ma):
-            self.mask = ma
+        if method == "jsc":
+            self._bbl_data = normalised_templates
+            self._call = self._call_jsc
+        elif method == "hpd":
+            self._bbl_data = (normalised_templates, np.sum(templates, axis=0))
+            self._call = self._call_hpd
 
-    def _call(self, args):
+        super().__init__(name, n, xe, verbose)
+
+    def _call_jsc(self, args):
+        ntemp = self._bbl_data
+
         mu = 0
         mu_var = 0
-        for a, (t, vt) in zip(args, self._templates):
-            mu += a * t
-            mu_var += a**2 * vt
+        for a, (nt, vnt) in zip(args, ntemp):
+            mu += a * nt
+            mu_var += a**2 * vnt
 
         ma = self.mask
         if ma is not None:
@@ -931,7 +958,27 @@ class BarlowBeestonLite(BinnedCost):
         else:
             n = self._masked
 
-        return barlow_beeston_lite_chi2(n, mu, mu_var)
+        ma = mu > 0
+        return barlow_beeston_lite_chi2_jsc(n[ma], mu[ma], mu_var[ma])
+
+    def _call_hpd(self, args):
+        ntemp, tsum = self._bbl_data
+
+        mu = 0
+        for a, (nt, _) in zip(args, ntemp):
+            mu += a * nt
+
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
+
+        if self._bztrafo:
+            n, mu = self._bztrafo(mu)
+        else:
+            n = self._masked
+
+        ma = tsum > 0
+        return barlow_beeston_lite_chi2_hpd(n[ma], mu[ma], tsum[ma])
 
 
 class BinnedNLL(BinnedCostWithModel):
@@ -1314,3 +1361,9 @@ def _normalize_model_output(x, msg="Model should return numpy array"):
         if x.dtype.kind != "f":
             return x.astype(float)
     return x
+
+
+def _shape_from_xe(xe):
+    if isinstance(xe[0], _tp.Iterable):
+        return tuple(len(xei) - 1 for xei in xe)
+    return (len(xe) - 1,)
