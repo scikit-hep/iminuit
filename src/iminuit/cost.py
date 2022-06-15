@@ -157,6 +157,8 @@ def multinominal_chi2(n, mu):
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
 
+    See Baker & Cousins, NIM 221 (1984) 437-442.
+
     Parameters
     ----------
     n : array-like
@@ -174,16 +176,6 @@ def multinominal_chi2(n, mu):
     The implementation makes the result asymptotically chi2-distributed and
     keeps the sum small near the minimum, which helps to maximise the numerical
     accuracy for Minuit.
-
-    The formula is derived from the likelihood ratio of a binomial model with respect
-    to a saturated model (which has mu = n):
-
-        Q = -2 (lnP - lnP')
-        lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
-        lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
-        Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
-        Q = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
-        Q = 2 sum_i k_i (ln(k_i) - ln(mu_i))
     """
     n, mu = np.atleast_1d(n, mu)
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
@@ -192,6 +184,8 @@ def multinominal_chi2(n, mu):
 def poisson_chi2(n, mu):
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
+
+    See Baker & Cousins, NIM 221 (1984) 437-442.
 
     Parameters
     ----------
@@ -209,14 +203,6 @@ def poisson_chi2(n, mu):
     -----
     The implementation makes the result asymptotically chi2-distributed,
     which helps to maximise the numerical accuracy for Minuit.
-
-    The formula is derived from the likelihood ratio with respect to a
-    saturated model (which has mu = n):
-
-        Q = -2 (lnP - lnP')
-        lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
-        lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
-        Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
     """
     n, mu = np.atleast_1d(n, mu)
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
@@ -911,40 +897,51 @@ class BarlowBeestonLite(BinnedCost):
             if len(name) != M:
                 raise ValueError("number of names must match number of templates")
 
-        normalised_templates = []
+        shape = _shape_from_xe(xe)
+        ndim = len(shape)
+        temp = []
+        temp_var = []
         for t in templates:
             t = _norm(t)
-            shape = _shape_from_xe(xe)
-            ndim = len(shape)
             if t.ndim > ndim:
                 # template is weighted
                 if t.ndim != ndim + 1 or t.shape[:-1] != shape:
                     raise ValueError("shapes of n and templates do not match")
-                val = t[..., 0]
-                var = t[..., 1]
+                temp.append(t[..., 0])
+                temp_var.append(t[..., 1])
             else:
                 if t.ndim != ndim or t.shape != shape:
                     raise ValueError("shapes of n and templates do not match")
-                val = t
-                var = t
-            norm = np.sum(val)
-            normalised_templates.append((val / norm, var / norm**2))
+                temp.append(t)
+                temp_var.append(t)
 
         if method == "jsc":
-            self._bbl_data = normalised_templates
+            nt = []
+            nt_var = []
+            for t, tv in zip(temp, temp_var):
+                f = 1 / np.sum(t)
+                nt.append(t * f)
+                nt_var.append(tv * f**2)
+            self._bbl_data = nt, nt_var
             self._call = self._call_jsc
         elif method == "hpd":
-            self._bbl_data = (normalised_templates, np.sum(templates, axis=0))
+            tsum = 0
+            nt = []
+            for t, tv in zip(temp, temp_var):
+                f = 1 / np.sum(t)
+                nt.append(t * f)
+                tsum += t**2 / (tv + 1e-323)
+            self._bbl_data = nt, tsum
             self._call = self._call_hpd
 
         super().__init__(name, n, xe, verbose)
 
     def _call_jsc(self, args):
-        ntemp = self._bbl_data
+        ntemp, ntemp_var = self._bbl_data
 
         mu = 0
         mu_var = 0
-        for a, (nt, vnt) in zip(args, ntemp):
+        for a, nt, vnt in zip(args, ntemp, ntemp_var):
             mu += a * nt
             mu_var += a**2 * vnt
 
@@ -965,7 +962,7 @@ class BarlowBeestonLite(BinnedCost):
         ntemp, tsum = self._bbl_data
 
         mu = 0
-        for a, (nt, _) in zip(args, ntemp):
+        for a, nt in zip(args, ntemp):
             mu += a * nt
 
         ma = self.mask

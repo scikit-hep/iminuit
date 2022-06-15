@@ -826,8 +826,9 @@ def test_BarlowBeestonLite(method):
     c = BarlowBeestonLite(n, xe, t, method=method)
     m = Minuit(c, 1, 1)
     m.migrad()
-    assert_allclose(m.fval, 0, atol=1e-9)
-    assert_allclose(m.values, [2, 4], atol=1e-3)
+    assert m.valid
+    assert_allclose(m.fval, 0, atol=1e-4)
+    assert_allclose(m.values, [2, 4], atol=1e-2)
 
 
 @pytest.mark.parametrize("method", ("jsc", "hpd"))
@@ -839,8 +840,9 @@ def test_BarlowBeestonLite_weighted_data(method):
     c = BarlowBeestonLite(n, xe, t, method=method)
     m = Minuit(c, 1, 1)
     m.migrad()
+    assert m.valid
     assert_allclose(m.fval, 0, atol=1e-4)
-    assert_allclose(m.values, [2, 4], atol=1e-2)
+    assert_allclose(m.values, [2, 4], rtol=2e-2)
     J = np.ones(2)
     var = np.einsum("i,j,ij", J, J, m.covariance)
     assert_allclose(var, np.sum(n), atol=0.02)
@@ -850,38 +852,48 @@ def test_BarlowBeestonLite_weighted_data(method):
     c = BarlowBeestonLite(n, xe, t)
     m = Minuit(c, 1, 1)
     m.migrad()
+    assert m.valid
     assert_allclose(m.fval, 0, atol=1e-5)
-    assert_allclose(m.values, [2, 4], atol=1e-2)
-    assert_allclose(np.power(m.errors, 2), 2 * var, atol=1e-3)
+    assert_allclose(m.values, [2, 4], rtol=0.01)
+    assert_allclose(np.power(m.errors, 2), 2 * var, rtol=0.03)
 
 
-# def test_BarlowBeestonLite_weighted_template():
-#     n = np.array([1, 2, 3]) * 1e6
-#     xe = np.array([0, 1, 2, 3])
-#     t = np.array([[1, 1, 0], [0, 1, 3]])
+@pytest.mark.parametrize("method", ("jsc", "hpd"))
+def test_BarlowBeestonLite_weighted_template(method):
+    n = np.array([1, 2, 3]) * 1e6
+    xe = np.array([0, 1, 2, 3])
+    t = np.array([[100, 100, 0], [0, 100, 300]])
 
-#     c = BarlowBeestonLite(n, xe, t)
-#     m = Minuit(c, 1, 1)
-#     m.migrad()
-#     assert_allclose(m.fval, 0, atol=1e-4)
-#     assert_allclose(m.values, [2, 4], atol=1e-2)
-#     J = np.ones(2)
-#     var = np.einsum("i,j,ij", J, J, m.covariance)
-#     assert_allclose(var, np.sum(n), atol=0.02)
+    c = BarlowBeestonLite(n, xe, t, method=method)
+    m = Minuit(c, 2e6, 4e6)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.fval, 0, atol=1e-3)
+    assert_allclose(m.values, [2e6, 4e6], rtol=5e-3)
 
-#     var = np.power(m.errors, 2)
-#     n = np.transpose((n, 2 * n))
-#     c = BarlowBeestonLite(n, xe, t)
-#     m = Minuit(c, 1, 1)
-#     m.migrad()
-#     assert_allclose(m.fval, 0, atol=1e-5)
-#     assert_allclose(m.values, [2, 4], atol=1e-2)
-#     assert_allclose(np.power(m.errors, 2), 2 * var, atol=1e-3)
+    var = np.power(m.errors, 2)
+    t2 = [np.transpose((ti, 1.1 * ti)) for ti in t]
+    c = BarlowBeestonLite(n, xe, t2)
+    m = Minuit(c, 2e6, 4e6)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.fval, 0, atol=1e-3)
+    assert_allclose(m.values, [2e6, 4e6], atol=1e-2)
+    assert_allclose(np.power(m.errors, 2), 1.1 * var, atol=1e-3)
 
 
-def test_BarlowBeestonLite_bad_input():
+@pytest.mark.parametrize("method", ("jsc", "hpd"))
+def test_BarlowBeestonLite_bad_input(method):
     with pytest.raises(ValueError):
-        BarlowBeestonLite([1, 2], [1, 2, 3], [])
+        BarlowBeestonLite([1, 2], [1, 2, 3], [], method=method)
 
     with pytest.raises(ValueError):
-        BarlowBeestonLite([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]])
+        BarlowBeestonLite([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]], method=method)
+
+    with pytest.raises(ValueError):
+        BarlowBeestonLite(
+            [1, 2],
+            [1, 2, 3],
+            [[[1, 2], [3, 4]], [[1, 2], [3, 4], [5, 6]]],
+            method=method,
+        )
