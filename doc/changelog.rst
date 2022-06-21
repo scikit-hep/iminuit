@@ -34,6 +34,7 @@ Other
 - More type correctness in API, better hiding of private objects in library
 - Option to use external pybind11, by @henryiii
 - Update to pybind11-v2.9.2, by @henryiii
+- Update to root-v6-25-02 plus our patches
 - Several minor cleanups and internal tool updates, by @henryiii
 
 2.11.2 (March 28, 2022)
