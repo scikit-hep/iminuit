@@ -940,7 +940,7 @@ class BarlowBeestonLite(BinnedCost):
             self._bbl_data = (nt, nt_var)
             self._call = self._call_jsc
         elif method == "hpd":
-            k = np.zeros_like(t[0])
+            k = np.zeros_like(temp[0])
             nt = []
             for t, tv in zip(temp, temp_var):
                 f = 1 / np.sum(t)
