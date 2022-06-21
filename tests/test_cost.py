@@ -832,53 +832,36 @@ def test_BarlowBeestonLite(method):
     assert_allclose(m.values, [2, 4], atol=1e-2)
 
 
-@pytest.mark.parametrize("method", ("jsc", "hpd"))
-def test_BarlowBeestonLite_weighted_data(method):
-    n = np.array([1, 2, 3])
-    xe = np.array([0, 1, 2, 3])
-    t = np.array([[1, 1, 0], [0, 1, 3]]) * 1e6
-
-    c = BarlowBeestonLite(n, xe, t, method=method)
-    m = Minuit(c, 1, 1)
-    m.migrad()
-    assert m.valid
-    assert_allclose(m.fval, 0, atol=1e-4)
-    assert_allclose(m.values, [2, 4], rtol=2e-2)
-    J = np.ones(2)
-    var = np.einsum("i,j,ij", J, J, m.covariance)
-    assert_allclose(var, np.sum(n), atol=0.02)
-
-    var = np.power(m.errors, 2)
-    n = np.transpose((n, 2 * n))
-    c = BarlowBeestonLite(n, xe, t)
-    m = Minuit(c, 1, 1)
-    m.migrad()
-    assert m.valid
-    assert_allclose(m.fval, 0, atol=1e-5)
-    assert_allclose(m.values, [2, 4], rtol=0.01)
-    assert_allclose(np.power(m.errors, 2), 2 * var, rtol=0.03)
-
-
-def generate(rng, nmc, truth, bins, f):
+def generate(rng, nmc, truth, bins, tf=1, df=1):
     xe = np.linspace(0, 2, bins + 1)
     b = np.diff(truncexpon(1, 0, 2).cdf(xe))
     s = np.diff(norm(1, 0.1).cdf(xe))
-    n = rng.poisson(b * truth[0]) + rng.poisson(s * truth[1])
-    t = [rng.poisson(b * nmc / f) * f, rng.poisson(s * nmc / f) * f]
-    return n, xe, t
+    n = b * truth[0] + s * truth[1]
+    t = b * nmc, s * nmc
+    if rng is not None:
+        n = rng.poisson(n / df) * df
+        if df != 1:
+            n = np.transpose((n, n * df))
+        t = [rng.poisson(ti / tf) * tf for ti in t]
+        if tf != 1:
+            t = [np.transpose((tj, tj * tf)) for tj in t]
+    return n, xe, np.array(t)
 
 
 @pytest.mark.parametrize("method", ("jsc", "hpd"))
-def test_BarlowBeestonLite_weighted_template(method):
+@pytest.mark.parametrize("with_mask", (False, True))
+@pytest.mark.parametrize("weighted_data", (False, True))
+def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
     rng = np.random.default_rng(1)
     truth = 750, 250
-    factor = 1.5
     z = []
     rng = np.random.default_rng(1)
     for itoy in range(100):
-        ni, xe, ti = generate(rng, 400, truth, 15, factor)
-        ti = [np.transpose((tj, tj * factor)) for tj in ti]
+        ni, xe, ti = generate(rng, 400, truth, 15, 1.5, 1.5 if weighted_data else 1)
         c = BarlowBeestonLite(ni, xe, ti, method=method)
+        if with_mask:
+            cx = 0.5 * (xe[1:] + xe[:-1])
+            c.mask = cx != 1.5
         m = Minuit(c, *truth)
         m.limits = (0, None)
         m.strategy = 0
@@ -889,7 +872,7 @@ def test_BarlowBeestonLite_weighted_template(method):
                 break
         assert m.valid
         z.append((m.values[1] - truth[1]) / m.errors[1])
-    assert_allclose(np.mean(z), 0, atol=0.15)
+    assert_allclose(np.mean(z), 0, atol=0.2)
     assert_allclose(np.std(z), 1, rtol=0.15)
 
 
@@ -898,13 +881,19 @@ def test_BarlowBeestonLite_bad_input(method):
     with pytest.raises(ValueError):
         BarlowBeestonLite([1, 2], [1, 2, 3], [], method=method)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="do not match"):
         BarlowBeestonLite([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]], method=method)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="do not match"):
         BarlowBeestonLite(
             [1, 2],
             [1, 2, 3],
             [[[1, 2], [3, 4]], [[1, 2], [3, 4], [5, 6]]],
             method=method,
         )
+
+    with pytest.raises(ValueError, match="not understood"):
+        BarlowBeestonLite([1], [1, 2], [[1]], method="foo")
+
+    with pytest.raises(ValueError, match="number of names"):
+        BarlowBeestonLite([1], [1, 2], [[1]], name=("b", "s"))

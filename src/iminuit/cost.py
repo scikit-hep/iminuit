@@ -839,8 +839,15 @@ class BarlowBeestonLite(BinnedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
-    Compared to the original Beeston-Barlow method, the lite method uses one nuisance
-    parameter per bin instead of one nuisance parameter per component per bin.
+    Compared to the original Beeston-Barlow method, the lite methods uses one nuisance
+    parameter per bin instead of one nuisance parameter per component per bin, which
+    is an approximation. This class offers two different lite methods. The default
+    method used is the one which performs better on average.
+
+    The cost function works for both weighted data and weighted templates. The cost
+    function assumes that the weights are independent of the data. This is not the
+    case for sWeights, and the uncertaintes for results obtained with sWeights will
+    only be approximately correct, see C. Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
 
     Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
     https://doi.org/10.1016/0010-4655(93)90005-W)
@@ -886,7 +893,10 @@ class BarlowBeestonLite(BinnedCost):
             Which version of the lite method to use. jsc: Method developed by
             J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354.
             hpd: Method developed by H.P. Dembinski. Default is "hpd", which seems to
-            perform slightly better on average.
+            perform slightly better on average. The default may change in the future
+            when more practical experience with both method is gained. Set this
+            parameter explicitly to ensure that a particular method is used now and
+            in the future.
         """
         M = len(templates)
         if M < 1:
@@ -925,14 +935,18 @@ class BarlowBeestonLite(BinnedCost):
             self._bbl_data = nt, nt_var
             self._call = self._call_jsc
         elif method == "hpd":
-            tsum = 0
+            k = 0
             nt = []
             for t, tv in zip(temp, temp_var):
                 f = 1 / np.sum(t)
                 nt.append(t * f)
-                tsum += t**2 / (tv + 1e-323)
-            self._bbl_data = nt, tsum
+                k += t**2 / (tv + 1e-323)
+            self._bbl_data = nt, k
             self._call = self._call_hpd
+        else:
+            raise ValueError(
+                f"method {method} is not understood, allowed values: {{'jsc', 'hpd'}}"
+            )
 
         super().__init__(name, n, xe, verbose)
 
@@ -959,7 +973,7 @@ class BarlowBeestonLite(BinnedCost):
         return barlow_beeston_lite_chi2_jsc(n[ma], mu[ma], mu_var[ma])
 
     def _call_hpd(self, args):
-        ntemp, tsum = self._bbl_data
+        ntemp, k = self._bbl_data
 
         mu = 0
         for a, nt in zip(args, ntemp):
@@ -968,14 +982,15 @@ class BarlowBeestonLite(BinnedCost):
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
+            k = k[ma]
 
         if self._bztrafo:
             n, mu = self._bztrafo(mu)
         else:
             n = self._masked
 
-        ma = tsum > 0
-        return barlow_beeston_lite_chi2_hpd(n[ma], mu[ma], tsum[ma])
+        ma = mu > 0
+        return barlow_beeston_lite_chi2_hpd(n[ma], mu[ma], k[ma])
 
 
 class BinnedNLL(BinnedCostWithModel):
@@ -1047,6 +1062,11 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
     Use this if shape and normalization of the fitted PDF are of interest and the data is
     binned. This cost function works with normal and weighted histograms. The histogram
     can be one- or multi-dimensional.
+
+    The cost function works for both weighted data. The cost function assumes that
+    the weights are independent of the data. This is not the case for sWeights, and
+    the uncertaintes for results obtained with sWeights will only be approximately
+    correct, see C. Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
 
     The cost function has a minimum value that is asymptotically chi2-distributed. It is
     constructed from the log-likelihood assuming a poisson distribution and using the
