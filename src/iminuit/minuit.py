@@ -605,7 +605,7 @@ class Minuit:
             fcn,
             getattr(fcn, "grad", grad),
             array_call,
-            getattr(fcn, "errordef", 0.0),
+            getattr(fcn, "errordef", 1.0),
         )
 
         self._init_state = _make_init_state(self._pos2var, start, kwds)

@@ -59,24 +59,12 @@ def block_scipy_optimize():
 is_pypy = platform.python_implementation() == "PyPy"
 
 
-def test_pedantic_warning_message():
-    with pytest.warns(IMinuitWarning, match=r"errordef not set, using 1"):
-        m = Minuit(lambda x: 0, x=0)
-        m.migrad()  # MARKER
-
-
 def test_version():
     import iminuit
 
     assert iminuit.__version__
 
 
-def lsq(func):
-    func.errordef = Minuit.LEAST_SQUARES
-    return func
-
-
-@lsq
 def func0(x, y):  # values = (2.0, 5.0), errors = (2.0, 1.0)
     return (x - 2.0) ** 2 / 4.0 + np.exp((y - 5.0) ** 2) + 10
 
@@ -104,7 +92,6 @@ class Func2:
         return func0(arg[0], arg[1]) * 4
 
 
-@lsq
 def func4(x, y, z):
     return 0.2 * (x - 2.0) ** 2 + 0.1 * (y - 5.0) ** 2 + 0.25 * (z - 7.0) ** 2 + 10
 
@@ -116,7 +103,6 @@ def func4_grad(x, y, z):
     return dfdx, dfdy, dfdz
 
 
-@lsq
 def func5(x, long_variable_name_really_long_why_does_it_has_to_be_this_long, z):
     return (
         (x - 1) ** 2
@@ -132,7 +118,6 @@ def func5_grad(x, long_variable_name_really_long_why_does_it_has_to_be_this_long
     return dfdx, dfdy, dfdz
 
 
-@lsq
 def func6(x, m, s, a):
     return a / ((x - m) ** 2 + s**2)
 
@@ -151,7 +136,6 @@ class Correlated:
         return np.dot(x.T, np.dot(self.cinv, x))
 
 
-@lsq
 def func_np(x):  # test numpy support
     return np.sum((x - 1) ** 2)
 
@@ -1382,7 +1366,6 @@ def test_migrad_iterate():
 
 
 def test_precision():
-    @lsq
     def fcn(x):
         return np.exp(x * x + 1)
 
@@ -1504,7 +1487,6 @@ def test_cfunc():
 
     c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
 
-    @lsq
     @nb.cfunc(c_sig)
     def fcn(n, x):
         x = nb.carray(x, (n,))
@@ -1608,7 +1590,7 @@ def test_pickle(grad):
 
 def test_minos_new_min():
     xref = [1.0]
-    m = Minuit(lsq(lambda x: (x - xref[0]) ** 2), x=0)
+    m = Minuit(lambda x: (x - xref[0]) ** 2, x=0)
     m.migrad()
     assert m.values[0] == approx(xref[0], abs=1e-3)
     m.minos()
@@ -1624,7 +1606,7 @@ def test_minos_new_min():
 
 
 def test_minos_without_migrad():
-    m = Minuit(lsq(lambda x, y: (x - 1) ** 2 + (y / 2) ** 2), 1.001, 0.001)
+    m = Minuit(lambda x, y: (x - 1) ** 2 + (y / 2) ** 2, 1.001, 0.001)
     m.minos()
     me = m.merrors["x"]
     assert me.is_valid
