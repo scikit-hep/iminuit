@@ -15,9 +15,6 @@ def f1(x, y):
     return (x - 2) ** 2 + (y - 1) ** 2 / 0.25 + 1
 
 
-f1.errordef = 1
-
-
 def test_color_1():
     g = _repr_html.ColorGradient((-1, 10, 10, 20), (2, 20, 20, 10))
     assert g.rgb(-1) == "rgb(10,10,20)"
@@ -219,7 +216,6 @@ def test_html_correlation_matrix():
 
 def test_html_minuit():
     m = Minuit(lambda x, y: x**2 + 4 * y**2, x=0, y=0)
-    m.errordef = 1
     assert m._repr_html_() == m.params._repr_html_()
     m.migrad()
     assert (
@@ -351,7 +347,6 @@ def test_text_matrix_difficult_values():
 
 def test_text_minuit():
     m = Minuit(lambda x, y: x**2 + 4 * y**2, x=0, y=0)
-    m.errordef = 1
     assert str(m) == str(m.params)
     m.migrad()
     assert str(m) == str(m.fmin) + "\n" + str(m.params) + "\n" + str(m.covariance)

@@ -11,9 +11,6 @@ def fcn(a, b):
     return a**2 + ((b - 1) / 2.0) ** 2 + 3
 
 
-fcn.errordef = 1
-
-
 def grad(a, b):
     return 2 * a, b - 1
 
@@ -49,7 +46,6 @@ def hessp(a, b, v):
 )
 def test_scipy_method(array_call, fixed, method):
     fn = (lambda par: fcn(*par)) if array_call else fcn
-    fn.errordef = 1
 
     gr = None
     he = None
@@ -197,7 +193,6 @@ def test_scipy_constraints_1(lb, fixed):
 
     m = Minuit(fcn, a=3, x=1, y=2)
     m.fixed["a"] = fixed
-    m.errordef = 1
     con_a = scopt.NonlinearConstraint(lambda a, x, y: a, lb, np.inf)
     con_x = scopt.NonlinearConstraint(lambda a, x, y: x, lb, np.inf)
     con_y = scopt.NonlinearConstraint(lambda a, x, y: y, lb, np.inf)
@@ -216,7 +211,6 @@ def test_scipy_constraints_2(fixed):
         return x**2 + y**2
 
     m = Minuit(fcn, x=1, y=2)
-    m.errordef = 1
     m.fixed["x"] = fixed
     con = scopt.LinearConstraint([1, 1], 0.1, np.inf)
     m.scipy(method="COBYLA", constraints=con)

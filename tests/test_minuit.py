@@ -123,8 +123,6 @@ def func6(x, m, s, a):
 
 
 class Correlated:
-    errordef = 1
-
     def __init__(self):
         sx = 2
         sy = 1
@@ -228,7 +226,7 @@ def test_func0():  # check that providing gradient improves convergence
 
 
 def test_lambda():
-    func_test_helper(lambda x, y: func0(x, y), errordef=1)
+    func_test_helper(lambda x, y: func0(x, y))
 
 
 def test_Func1():
@@ -243,8 +241,6 @@ def test_no_signature():
     def no_signature(*args):
         x, y = args
         return (x - 1) ** 2 + (y - 2) ** 2
-
-    no_signature.errordef = 1
 
     m = Minuit(no_signature, 3, 4)
     assert m.values == (3, 4)
@@ -352,7 +348,6 @@ def test_array_func_2():
 
 def test_wrong_use_of_array_init():
     m = Minuit(lambda a, b: a**2 + b**2, (1, 2))
-    m.errordef = Minuit.LEAST_SQUARES
     with pytest.raises(TypeError):
         m.migrad()
 
@@ -583,7 +578,6 @@ def test_minos_single_nonsense_variable():
 
 def test_minos_with_bad_fmin():
     m = Minuit(lambda x: 0, x=0)
-    m.errordef = 1
     m.migrad()
     with pytest.raises(RuntimeError):
         m.minos()
@@ -598,7 +592,6 @@ def test_fixing_long_variable_name(grad):
         x=0,
         z=0,
     )
-    m.errordef = 1
     m.fixed["long_variable_name_really_long_why_does_it_has_to_be_this_long"] = True
     m.migrad()
     assert_allclose(m.values, [1, 2, -1], atol=1e-3)
@@ -816,7 +809,6 @@ def test_mncontour_no_fmin():
 
 def test_mncontour_with_fixed_var():
     m = Minuit(func0, x=0, y=0)
-    m.errordef = 1
     m.fixed["x"] = True
     m.migrad()
     with pytest.raises(ValueError):
@@ -858,7 +850,6 @@ def test_mnprofile_array_func():
 
 def test_mnprofile_bad_func():
     m = Minuit(lambda x, y: 0, 0, 0)
-    m.errordef = 1
     with pytest.warns(IMinuitWarning):
         m.mnprofile("x")
 
@@ -932,7 +923,6 @@ def test_values(minuit):
 def test_fmin():
     m = Minuit(lambda x, s: (x * s) ** 2, x=1, s=1)
     m.fixed["s"] = True
-    m.errordef = 1
     m.migrad()
     fm1 = m.fmin
     assert fm1.is_valid
@@ -951,7 +941,6 @@ def test_chi2_fit():
         return (x - 1) ** 2 + ((y - 2) / 3) ** 2
 
     m = Minuit(chi2, x=0, y=0)
-    m.errordef = 1
     m.migrad()
     assert_allclose(m.values, (1, 2))
     assert_allclose(m.errors, (1, 3))
@@ -1028,7 +1017,6 @@ def test_oneside_outside():
 def test_migrad_ncall():
     class Func:
         nfcn = 0
-        errordef = 1
 
         def __call__(self, x):
             self.nfcn += 1
@@ -1057,7 +1045,6 @@ def test_migrad_ncall():
 
 def test_ngrad():
     class Func:
-        errordef = 1
         ngrad = 0
 
         def __call__(self, x):
@@ -1112,7 +1099,6 @@ def test_print_level():
 
 def test_params():
     m = Minuit(func0, x=1, y=2)
-    m.errordef = Minuit.LEAST_SQUARES
     m.errors = (3, 4)
     m.fixed["x"] = True
     m.limits["y"] = (None, 10)
@@ -1145,7 +1131,6 @@ def test_params():
 
 def test_non_analytical_function():
     class Func:
-        errordef = 1
         i = 0
 
         def __call__(self, a):
@@ -1160,7 +1145,6 @@ def test_non_analytical_function():
 
 def test_non_invertible():
     m = Minuit(lambda x, y: 0, 1, 2)
-    m.errordef = 1
     m.strategy = 0
     m.migrad()
     assert m.fmin.is_valid
@@ -1171,7 +1155,6 @@ def test_non_invertible():
 
 def test_function_without_local_minimum():
     m = Minuit(lambda a: -a, 0)
-    m.errordef = 1
     m.migrad()
     assert m.fmin.is_valid is False
     assert m.fmin.is_above_max_edm is True
@@ -1182,7 +1165,6 @@ def test_function_with_maximum():
         return -(a**2)
 
     m = Minuit(func, a=0)
-    m.errordef = 1
     m.migrad()
     assert m.fmin.is_valid is False
 
@@ -1192,7 +1174,6 @@ def test_perfect_correlation():
         return (a - b) ** 2
 
     m = Minuit(func, a=1, b=2)
-    m.errordef = 1
     m.migrad()
     assert m.fmin.is_valid is True
     assert m.fmin.has_accurate_covar is False
@@ -1241,7 +1222,6 @@ def test_hesse_without_migrad():
     assert m.fmin
 
     m = Minuit(lambda x: 0, 0)
-    m.errordef = 1
     m.hesse()
     assert not m.accurate
     assert m.fmin.hesse_failed
@@ -1282,7 +1262,6 @@ def returning_garbage(x):
 )
 def test_bad_functions(func, expected):
     m = Minuit(func, x=1)
-    m.errordef = 1
     m.throw_nan = True
     with pytest.raises(type(expected)) as excinfo:
         m.migrad()
@@ -1291,7 +1270,6 @@ def test_bad_functions(func, expected):
 
 def test_throw_nan():
     m = Minuit(returning_nan, x=1)
-    m.errordef = 1
     assert not m.throw_nan
     m.migrad()
     m.throw_nan = True
@@ -1324,7 +1302,6 @@ def returning_noniterable(x):
 )
 def test_bad_functions_np(func, expected):
     m = Minuit(lambda x: np.dot(x, x), (1, 1), grad=func)
-    m.errordef = 1
     m.throw_nan = True
     with pytest.raises(type(expected)) as excinfo:
         m.migrad()
@@ -1334,14 +1311,12 @@ def test_bad_functions_np(func, expected):
 @pytest.mark.parametrize("sign", (-1, 1))
 def test_parameter_at_limit(sign):
     m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0)
-    m.errordef = 1
     m.limits["x"] = (-1, 1)
     m.migrad()
     assert m.values["x"] == approx(sign * 1.0, abs=1e-3)
     assert m.fmin.has_parameters_at_limit is True
 
     m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0)
-    m.errordef = 1
     m.migrad()
     assert m.values["x"] == approx(sign * 1.2, abs=1e-3)
     assert m.fmin.has_parameters_at_limit is False
@@ -1353,14 +1328,12 @@ def test_inaccurate_fcn(iterate, valid):
         return abs(x) ** 10 + 1e7
 
     m = Minuit(f, x=2)
-    m.errordef = 1
     m.migrad(iterate=iterate)
     assert m.valid == valid
 
 
 def test_migrad_iterate():
     m = Minuit(lambda x: 0, x=2)
-    m.errordef = 1
     with pytest.raises(ValueError):
         m.migrad(iterate=0)
 
@@ -1619,18 +1592,12 @@ def test_minos_without_migrad():
 
 
 def test_missing_ndata():
-    def fcn(a):
-        return a
-
-    fcn.errordef = 1
-
-    m = Minuit(fcn, 1)
+    m = Minuit(lambda a: a, 1)
     assert_equal(m.ndof, np.nan)
 
 
 def test_call_limit_reached_in_hesse():
     m = Minuit(lambda x: ((x - 1.2) ** 4).sum(), np.ones(10) * 10)
-    m.errordef = 1
     m.migrad(ncall=200)
     assert m.fmin.has_reached_call_limit
     assert m.fmin.nfcn < 205
