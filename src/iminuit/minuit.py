@@ -497,7 +497,17 @@ class Minuit:
 
         Notes
         -----
-        *Accepted callables*
+        *Callables*
+
+        By default, Minuit assumes that the callable `fcn` behaves like chi-square
+        function, meaning that the function minimum in repeated identical random
+        experiments is chi-square distributed up to an arbitrary additive constant. This
+        is important for the correct error calculation. If `fcn` returns a log-likelihood,
+        one should multiply the result with -2 to adapt it. If the function returns the
+        negated log-likelihood, one can alternatively set the attribute
+        `fcn.errordef` = :attr:`Minuit.LIKELIHOOD` or
+        :attr:`Minuit.errordef` = :attr:`Minuit.LIKELIHOOD` after initialization to make
+        Minuit calculate errors properly.
 
         Minuit reads the function signature of `fcn` to detect the number and names of the
         function parameters. Two kinds of function signatures are understood.
@@ -526,11 +536,11 @@ class Minuit:
             an array-like type, e.g. a numpy array, tuple or list. For more details,
             see "Parameter Keyword Arguments" further down.
 
-        In some cases, the detection fails, for example for a function like this::
+        In some cases, the detection fails, for example, for a function like this::
 
                 def difficult_fcn(*args): ...
 
-        To use such a function, set `name`.
+        To use such a function, set the `name` keyword as described further below.
 
         *Parameter initialization*
 
@@ -605,7 +615,7 @@ class Minuit:
             fcn,
             getattr(fcn, "grad", grad),
             array_call,
-            getattr(fcn, "errordef", 0.0),
+            getattr(fcn, "errordef", 1.0),
         )
 
         self._init_state = _make_init_state(self._pos2var, start, kwds)

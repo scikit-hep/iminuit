@@ -13,9 +13,6 @@ def f1(x, y):
     return (1 - x) ** 2 + np.exp((y - 1) ** 2)
 
 
-f1.errordef = 1
-
-
 @pytest.fixture
 def minuit():
     m = Minuit(f1, x=0, y=0)

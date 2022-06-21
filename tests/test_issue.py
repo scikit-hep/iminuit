@@ -5,13 +5,7 @@ import pytest
 import numpy as np
 
 
-def lsq(func):
-    func.errordef = Minuit.LEAST_SQUARES
-    return func
-
-
 def test_issue_424():
-    @lsq
     def fcn(x, y, z):
         return (x - 1) ** 2 + (y - 4) ** 2 / 2 + (z - 9) ** 2 / 3
 
@@ -26,7 +20,6 @@ def test_issue_424():
 
 
 def test_issue_544():
-    @lsq
     def fcn(x, y):
         return x**2 + y**2
 
@@ -38,7 +31,6 @@ def test_issue_544():
 
 def test_issue_648():
     class F:
-        errordef = 1
         first = True
 
         def __call__(self, a, b):
@@ -53,7 +45,6 @@ def test_issue_648():
 
 
 def test_issue_643():
-    @lsq
     def fcn(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
@@ -73,7 +64,6 @@ def test_issue_643():
 
 
 def test_issue_669():
-    @lsq
     def fcn(x, y):
         return x**2 + (y / 2) ** 2
 
@@ -94,7 +84,6 @@ def test_issue_669():
         assert match
 
 
-@lsq
 def fcn(par):
     return np.sum(par**2)
 

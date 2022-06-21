@@ -47,16 +47,7 @@ std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
   return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))), x);
 }
 
-double FCN::Up() const {
-  if (errordef_ == 0) {
-    auto m = py::module_::import("warnings");
-    auto util = py::module_::import("iminuit.util");
-    m.attr("warn")("errordef not set, using 1 (appropriate for least-squares)",
-                   util.attr("IMinuitWarning"), 2);
-    errordef_ = 1.0;
-  }
-  return errordef_;
-}
+double FCN::Up() const { return errordef_; }
 
 void set_errordef(FCN& self, double value) {
   if (value > 0) {

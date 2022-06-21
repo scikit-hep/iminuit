@@ -7,8 +7,6 @@ Basic usage example::
     def fcn(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
-    fcn.errordef = Minuit.LEAST_SQUARES
-
     m = Minuit(fcn, x=0, y=0, z=0)
     m.migrad()
     m.hesse()
