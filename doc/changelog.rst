@@ -5,6 +5,37 @@
 Changelog
 =========
 
+2.12.0 (June 21, 2022)
+----------------------
+
+New features
+~~~~~~~~~~~~
+- New cost function ``cost.BarlowBeestonLite`` for template fits with templates obtained from simulation or sWeighted data
+- Formerly private chi2 utility cost functions (``cost.poisson_chi2``, etc.), are now part of public API
+- Support custom grid in ``Minuit.profile``, ``iminuit.mncontour``, ``iminuit.contour``
+- Handle common CL values in ``Minuit.mnprofile`` and ``Minuit.mncontour`` without scipy
+
+Fixes
+~~~~~
+- Skip tests that use ``np.float128`` on platforms where this type is not supported
+- ``Minuit.valid`` now returns ``False`` if EDM is NaN
+- ``subtract_min`` setting is no longer ignored by ``Minuit.draw_contour``
+
+Documentation
+~~~~~~~~~~~~~
+- New study about template fits
+
+Other
+~~~~~
+- ``Minuit`` no longer warns when a function is used that has no ``errordef``
+  attribute and ``Minuit.errordef`` is not explicitly set. The function is
+  assumed to be chi-square-like up to an arbitrary constant, unless ``errordef``
+  is explicitly set to something else.
+- More type correctness in API, better hiding of private objects in library
+- Option to use external pybind11, by @henryiii
+- Update to pybind11-v2.9.2, by @henryiii
+- Several minor cleanups and internal tool updates, by @henryiii
+
 2.11.2 (March 28, 2022)
 -----------------------
 

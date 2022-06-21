@@ -17,6 +17,9 @@ What to use when
     - Data are not binned: :class:`ExtendedUnbinnedNLL`
     - Data are binned: :class:`ExtendedBinnedNLL`, also supports histogram of weighted samples
 
+- Fit a template to binned data with bin-wise uncertainties on the template:
+  :class:`BarlowBeestonLite`, which also supports weighted data and weighted templates
+
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
   is one- or multi-dimensional, y is one-dimensional.
 
@@ -55,6 +58,8 @@ from collections.abc import Sequence
 import abc
 import typing as _tp
 import warnings
+
+_ArrayLike = _tp.Collection
 
 
 def _safe_log(x):
@@ -645,7 +650,7 @@ class UnbinnedNLL(UnbinnedCost):
 
     def __init__(
         self,
-        data,
+        data: _ArrayLike,
         pdf: _tp.Callable,
         verbose: int = 0,
         log: bool = False,
@@ -701,7 +706,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
     def __init__(
         self,
-        data,
+        data: _ArrayLike,
         scaled_pdf: _tp.Callable,
         verbose: int = 0,
         log: bool = False,
@@ -858,12 +863,12 @@ class BarlowBeestonLite(BinnedCost):
 
     def __init__(
         self,
-        n,
-        xe,
-        templates,
+        n: _ArrayLike,
+        xe: _ArrayLike,
+        templates: _tp.Sequence[_tp.Sequence],
         name: _tp.Collection[str] = None,
         verbose: int = 0,
-        method="hpd",
+        method: str = "hpd",
     ):
         """
         Initialize cost function with data and model.
@@ -911,8 +916,8 @@ class BarlowBeestonLite(BinnedCost):
         ndim = len(shape)
         temp = []
         temp_var = []
-        for t in templates:
-            t = _norm(t)
+        for ti in templates:
+            t = _norm(ti)
             if t.ndim > ndim:
                 # template is weighted
                 if t.ndim != ndim + 1 or t.shape[:-1] != shape:
@@ -932,16 +937,16 @@ class BarlowBeestonLite(BinnedCost):
                 f = 1 / np.sum(t)
                 nt.append(t * f)
                 nt_var.append(tv * f**2)
-            self._bbl_data = nt, nt_var
+            self._bbl_data = (nt, nt_var)
             self._call = self._call_jsc
         elif method == "hpd":
-            k = 0
+            k = np.zeros_like(t[0])
             nt = []
             for t, tv in zip(temp, temp_var):
                 f = 1 / np.sum(t)
                 nt.append(t * f)
                 k += t**2 / (tv + 1e-323)
-            self._bbl_data = nt, k
+            self._bbl_data = (nt, k)
             self._call = self._call_hpd
         else:
             raise ValueError(
@@ -1013,7 +1018,9 @@ class BinnedNLL(BinnedCostWithModel):
         """Get cumulative density function."""
         return self._model
 
-    def __init__(self, n, xe, cdf: _tp.Callable, verbose: int = 0):
+    def __init__(
+        self, n: _ArrayLike, xe: _ArrayLike, cdf: _tp.Callable, verbose: int = 0
+    ):
         """
         Initialize cost function with data and model.
 
@@ -1082,8 +1089,8 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
 
     def __init__(
         self,
-        n,
-        xe,
+        n: _ArrayLike,
+        xe: _ArrayLike,
         scaled_cdf: _tp.Callable,
         verbose: int = 0,
     ):
@@ -1200,9 +1207,9 @@ class LeastSquares(MaskedCost):
 
     def __init__(
         self,
-        x,
-        y,
-        yerror,
+        x: _ArrayLike,
+        y: _ArrayLike,
+        yerror: _ArrayLike,
         model: _tp.Callable,
         loss: _tp.Union[str, _tp.Callable] = "linear",
         verbose: int = 0,
@@ -1297,8 +1304,8 @@ class NormalConstraint(Cost):
     def __init__(
         self,
         args: _tp.Union[str, _tp.Iterable[str]],
-        value,
-        error,
+        value: _ArrayLike,
+        error: _ArrayLike,
     ):
         """
         Initialize the normal constraint with expected value(s) and error(s).
@@ -1356,7 +1363,7 @@ class NormalConstraint(Cost):
         return len(self._value)
 
 
-def _norm(value):
+def _norm(value: _ArrayLike) -> np.ndarray:
     value = np.atleast_1d(value)
     dtype = value.dtype
     if dtype.kind != "f":
