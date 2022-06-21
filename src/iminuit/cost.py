@@ -66,37 +66,9 @@ def _unbinned_nll(x):
     return -np.sum(_safe_log(x))
 
 
-def _multinominal_chi2(n, mu):
-    # This form makes the result asymptotically chi2 distributed and keeps the
-    # sum small, which helps to not loose accuracy in Minuit.
-    #
-    # Q = -2 (lnP - lnP')
-    # lnP = ln n! - sum_i k_i! + sum_i k_i ln(p_i)
-    # lnP' = ln n! - sum_i k_i! + sum_i k_i ln(k_i / n)
-    # Q = -2 sum_i k_i (ln(p_i) - ln(k_i / n))
-    #   = -2 sum_i k_i (ln(mu_i) - ln(n) - ln(k_i) + ln(n))
-    #   = 2 sum_i k_i (ln(k_i) - ln(mu_i))
-    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
-
-
-def _poisson_chi2(n, mu):
-    # This form makes the result asymptotically chi2 distributed and keeps the
-    # sum small, which helps to not loose accuracy in Minuit.
-    #
-    # Q = -2 (lnP - lnP')
-    # lnP = sum_i -mu_i + k_i ln(mu_i) - ln(k_i!)
-    # lnP' = sum_i -k_i + k_i ln(k_i) - ln(k_i!)
-    # Q = 2 sum_i mu_i - k_i + k_i (ln(k_i) - ln(mu_i))
-    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
-
-
 def _z_squared(y, ye, ym):
     z = (y - ym) / ye
     return z * z
-
-
-def _chi2(y, ye, ym):
-    return np.sum(_z_squared(y, ye, ym))
 
 
 def _soft_l1_loss(z_sqr):
@@ -105,6 +77,199 @@ def _soft_l1_loss(z_sqr):
 
 def _soft_l1_cost(y, ye, ym):
     return _soft_l1_loss(_z_squared(y, ye, ym))
+
+
+def _replace_none(x, replacement):
+    if x is None:
+        return replacement
+    return x
+
+
+class BohmZechTransform:
+    """
+    Apply Bohm-Zech transform.
+
+    See Bohm and Zech, NIMA 748 (2014) 1-6.
+    """
+
+    def __init__(self, val, var):
+        """
+        Initialize transformer with data value and variance.
+
+        Parameters
+        ----------
+        val : array-like
+            Observed values.
+        var : array-like
+            Estimated variance of observed values.
+        """
+        val, var = np.atleast_1d(val, var)
+        self._scale = val / (var + 1e-323)
+        self._obs = val * self._scale
+
+    def __call__(self, val, var=None):
+        """
+        Return precomputed scaled data and scaled prediction.
+
+        Parameters
+        ----------
+        val : array-like
+            Predicted values.
+        var : array-like, optional
+            Predicted variance.
+
+        Returns
+        -------
+        (obs, pred) or (obs, pred, pred_var)
+        """
+        s = self._scale
+        if var is None:
+            return self._obs, val * s
+        return self._obs, val * s, var * s**2
+
+
+def chi2(y, ye, ym):
+    """
+    Compute (potentially) chi2-distributed cost.
+
+    The value returned by this function is chi2-distributed, if the observed values are
+    normally distributed around the expected values with the provided standard deviations.
+
+    Parameters
+    ----------
+    y : array-like
+        Observed values.
+    ye : array-like
+        Uncertainties of values.
+    ym : array-like
+        Expected values.
+
+    Returns
+    -------
+    float
+        Const function value.
+    """
+    y, ye, ym = np.atleast_1d(y, ye, ym)
+    return np.sum(_z_squared(y, ye, ym))
+
+
+def multinominal_chi2(n, mu):
+    """
+    Compute asymptotically chi2-distributed cost for binomially-distributed data.
+
+    See Baker & Cousins, NIM 221 (1984) 437-442.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts per bin. Must satisfy sum(mu) == sum(n).
+
+    Returns
+    -------
+    float
+        Cost function value.
+
+    Notes
+    -----
+    The implementation makes the result asymptotically chi2-distributed and
+    keeps the sum small near the minimum, which helps to maximise the numerical
+    accuracy for Minuit.
+    """
+    n, mu = np.atleast_1d(n, mu)
+    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
+
+
+def poisson_chi2(n, mu):
+    """
+    Compute asymptotically chi2-distributed cost for Poisson-distributed data.
+
+    See Baker & Cousins, NIM 221 (1984) 437-442.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts.
+
+    Returns
+    -------
+    float
+        Cost function value.
+
+    Notes
+    -----
+    The implementation makes the result asymptotically chi2-distributed,
+    which helps to maximise the numerical accuracy for Minuit.
+    """
+    n, mu = np.atleast_1d(n, mu)
+    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
+
+
+def barlow_beeston_lite_chi2_jsc(n, mu, mu_var):
+    """
+    Compute asymptotically chi2-distributed cost for a template fit.
+
+    J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts. This is the sum of the normalised templates scaled with
+        the component yields. Must be positive everywhere.
+    mu_var : array-like
+        Expected variance of mu. Must be positive everywhere.
+
+    Returns
+    -------
+    float
+        Cost function value.
+
+    Notes
+    -----
+    The implementation deviates slightly from the paper by making the result
+    asymptotically chi2-distributed, which helps to maximise the numerical
+    accuracy for Minuit.
+    """
+    beta_var = mu_var / mu**2
+
+    # need to solve quadratic equation b^2 + (mu beta_var - 1) b - n beta_var = 0
+    p = mu * beta_var - 1
+    q = -n * beta_var
+    beta = 0.5 * (-p + np.sqrt(p**2 - 4 * q))
+
+    return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
+
+
+def barlow_beeston_lite_chi2_hpd(n, mu, k):
+    """
+    Compute asymptotically chi2-distributed cost for a template fit.
+
+    Formula derived by H.P. Dembinski, see the Jupyter notebook on Template Fits
+    in the iminuit repository.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts. This is the sum of the normalised templates scaled
+        with the component yields.
+    k : array-like
+        Bin-wise sum over original component templates. Must be positive everywhere.
+
+    Returns
+    -------
+    float
+        Cost function value.
+    """
+    beta = (n + k) / (mu + k)
+
+    return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)
 
 
 # If numba is available, use it to accelerate computations in float32 and float64
@@ -135,44 +300,50 @@ try:
         # fallback to numpy for float128
         return _unbinned_nll_np(x)
 
-    _multinominal_chi2_np = _multinominal_chi2
+    _multinominal_chi2_np = multinominal_chi2
     _multinominal_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_multinominal_chi2_np)
 
-    def _multinominal_chi2(n, mu):
-        if mu.dtype in (np.float32, np.float64):
-            return _multinominal_chi2_nb(n, mu)
+    def multinominal_chi2(n, p):  # noqa
+        if p.dtype in (np.float32, np.float64):
+            return _multinominal_chi2_nb(n, p)
         # fallback to numpy for float128
-        return _multinominal_chi2_np(n, mu)
+        return _multinominal_chi2_np(n, p)
 
-    _poisson_chi2_np = _poisson_chi2
+    multinominal_chi2.__doc__ = _multinominal_chi2_np.__doc__
+
+    _poisson_chi2_np = poisson_chi2
     _poisson_chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_poisson_chi2_np)
 
-    def _poisson_chi2(n, mu):
+    def poisson_chi2(n, mu):  # noqa
         if mu.dtype in (np.float32, np.float64):
             return _poisson_chi2_nb(n, mu)
         # fallback to numpy for float128
         return _poisson_chi2_np(n, mu)
 
-    _chi2_np = _chi2
+    poisson_chi2.__doc__ = _poisson_chi2_np.__doc__
+
+    _chi2_np = chi2
     _chi2_nb = _njit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_chi2_np)
 
-    def _chi2(y, ye, ym):
+    def chi2(y, ye, ym):  # noqa
         if ym.dtype in (np.float32, np.float64):
             return _chi2_nb(y, ye, ym)
         # fallback to numpy for float128
         return _chi2_np(y, ye, ym)
+
+    chi2.__doc__ = _chi2_np.__doc__
 
     _soft_l1_loss_np = _soft_l1_loss
     _soft_l1_loss_nb = _njit(
@@ -395,15 +566,20 @@ class CostSum(Cost, Sequence):
 class MaskedCost(Cost):
     """Base class for cost functions that support data masking."""
 
-    __slots__ = "_data", "_mask", "_masked"
+    __slots__ = "_data", "_mask", "_masked", "_updater"
 
-    def __init__(self, args, data, verbose):
+    def __init__(self, args, data, verbose, *updater):
         """For internal use."""
-        super().__init__(args, verbose)
-        if np.ndim(data) > 1:
-            self._data = np.transpose(data)
         self._data = data
-        self.mask = None  # triggers update of _masked, _ndata
+        self._mask = None
+
+        Cost.__init__(self, args, verbose)
+
+        def up():
+            self._masked = self._data[_replace_none(self._mask, ...)]
+
+        self._updater = (up,) + updater
+        self._update()
 
     @property
     def mask(self):
@@ -417,7 +593,7 @@ class MaskedCost(Cost):
     @mask.setter
     def mask(self, mask):
         self._mask = None if mask is None else np.asarray(mask)
-        self._update_masked()
+        self._update()
 
     @property
     def data(self):
@@ -427,10 +603,11 @@ class MaskedCost(Cost):
     @data.setter
     def data(self, value):
         self._data[...] = value
-        self._update_masked()
+        self._update()
 
-    def _update_masked(self):
-        self._masked = self._data if self._mask is None else self._data[self._mask]
+    def _update(self):
+        for up in self._updater:
+            up()
 
 
 class UnbinnedCost(MaskedCost):
@@ -448,7 +625,8 @@ class UnbinnedCost(MaskedCost):
         """For internal use."""
         self._model = model
         self._log = log
-        super().__init__(describe(model)[1:], _norm(data), verbose)
+        d = _norm(data)
+        super().__init__(describe(model)[1:], d, verbose)
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -573,30 +751,34 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 class BinnedCost(MaskedCost):
     """Base class for binned cost functions."""
 
-    __slots__ = "_xe", "_xe_shape", "_X", "_model", "_ndim"
+    __slots__ = "_xe", "_ndim", "_bztrafo"
 
-    def _is_weighted(self):
-        return self._data.ndim > self._ndim
+    n = MaskedCost.data
 
-    def _maybe_apply_bohm_zech_scaling(self, mu):
-        n = self._masked
-        if self._is_weighted():
-            # apply Bohm-Zech scaling, see Bohm and Zech, NIMA 748 (2014) 1-6
-            mu *= n[..., 3]
-            n = n[..., 2]
-        return n
+    @property
+    def xe(self):
+        """Access bin edges."""
+        return self._xe
 
-    def _prepare_data(self, value):
-        assert self._xe is not None
+    @Cost.ndata.getter  # type:ignore
+    def ndata(self):
+        """See Cost.ndata."""
+        return np.prod(self._masked.shape[: self._ndim])
 
-        n = _norm(value)
+    def __init__(self, args, n, xe, verbose, *updater):
+        """For internal use."""
+        if not isinstance(xe, _tp.Iterable):
+            raise ValueError("xe must be iterable")
 
-        if n.ndim == self._ndim:
-            is_weighted = False
-        else:
-            is_weighted = True
-            if n.ndim > self._ndim + 1 or n.ndim < self._ndim:
-                raise ValueError("n must either have same dimension as xe or one extra")
+        shape = _shape_from_xe(xe)
+        self._ndim = len(shape)
+        self._xe = _norm(xe) if self._ndim == 1 else tuple(_norm(xei) for xei in xe)
+
+        n = _norm(n)
+        is_weighted = n.ndim > self._ndim
+
+        if n.ndim != (self._ndim + int(is_weighted)):
+            raise ValueError("n must either have same dimension as xe or one extra")
 
         for i, xei in enumerate([self._xe] if self._ndim == 1 else self._xe):
             if len(xei) != n.shape[i] + 1:
@@ -608,16 +790,40 @@ class BinnedCost(MaskedCost):
         if is_weighted:
             if n.shape[-1] != 2:
                 raise ValueError("n must have shape (..., 2)")
-            # Scale factor from Bohm and Zech, NIMA 748 (2014) 1-6
-            v = n[..., 0]
-            var = n[..., 1]
-            s = v / (var + 1e-323)
-            return np.column_stack((v, var, v * s, s))
+            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])
+        else:
+            self._bztrafo = None
 
-        return n
+        def up():
+            if self._bztrafo:
+                ma = _replace_none(self._mask, ...)
+                self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
+
+        super().__init__(args, n, verbose, up, *updater)
+
+
+class BinnedCostWithModel(BinnedCost):
+    """Base class for binned cost functions."""
+
+    __slots__ = "_xe_shape", "_model", "_model_arg"
+
+    def __init__(self, n, xe, model, verbose):
+        """For internal use."""
+        self._model = model
+
+        super().__init__(describe(model)[1:], n, xe, verbose)
+
+        if self._ndim == 1:
+            self._xe_shape = None
+            self._model_arg = _norm(self.xe)
+        else:
+            self._xe_shape = tuple(len(xei) for xei in self.xe)
+            self._model_arg = np.row_stack(
+                [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
+            )
 
     def _pred(self, args):
-        d = self._model(self._X, *args)
+        d = self._model(self._model_arg, *args)
         d = _normalize_model_output(d)
         if self._xe_shape is not None:
             d = d.reshape(self._xe_shape)
@@ -628,55 +834,166 @@ class BinnedCost(MaskedCost):
         d[d < 0] = 0
         return d
 
-    @property
-    def data(self):
-        """Access bin counts."""
-        if self._is_weighted():
-            return self._data[..., :2]
-        return self._data
 
-    @data.setter
-    def data(self, value):
-        # calling the property's setter from the base class is clunky
-        super(__class__, self.__class__).data.__set__(self, self._prepare_data(value))
+class BarlowBeestonLite(BinnedCost):
+    """
+    Binned cost function for a template fit with uncertainties on the template.
 
-    n = data
+    Compared to the original Beeston-Barlow method, the lite methods uses one nuisance
+    parameter per bin instead of one nuisance parameter per component per bin, which
+    is an approximation. This class offers two different lite methods. The default
+    method used is the one which performs better on average.
 
-    @property
-    def xe(self):
-        """Access bin edges."""
-        return self._xe
+    The cost function works for both weighted data and weighted templates. The cost
+    function assumes that the weights are independent of the data. This is not the
+    case for sWeights, and the uncertaintes for results obtained with sWeights will
+    only be approximately correct, see C. Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        if self._is_weighted():
-            shape = self._masked.shape[:-1]
+    Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
+    https://doi.org/10.1016/0010-4655(93)90005-W)
+    J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
+    """
+
+    __slots__ = "_bbl_data", "_call"
+
+    def __init__(
+        self,
+        n,
+        xe,
+        templates,
+        name: _tp.Collection[str] = None,
+        verbose: int = 0,
+        method="hpd",
+    ):
+        """
+        Initialize cost function with data and model.
+
+        Parameters
+        ----------
+        n : array-like
+            Histogram counts. If this is an array with dimension D+1, where D is the
+            number of histogram axes, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
+        xe : array-like or collection of array-like
+            Bin edge locations, must be len(n) + 1, where n is the number of bins.
+            If the histogram has more than one axis, xe must be a collection of the
+            bin edge locations along each axis.
+        templates : collection of array-like
+            Collection of arrays, which contain the histogram counts of each template.
+            The template histograms must use the same axes as the data histogram. If
+            the counts are represented by an array with dimension D+1, where D is the
+            number of histogram axes, then the last dimension must have two elements
+            and is interpreted as pairs of sum of weights and sum of weights squared.
+        name : collection of str, optional
+            Optional name for the yield of each template. Must have length K.
+        verbose : int, optional
+            Verbosity level. 0: is no output (default).
+            1: print current args and negative log-likelihood value.
+        method : {"jsc", "hpd"}, optional
+            Which version of the lite method to use. jsc: Method developed by
+            J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354.
+            hpd: Method developed by H.P. Dembinski. Default is "hpd", which seems to
+            perform slightly better on average. The default may change in the future
+            when more practical experience with both method is gained. Set this
+            parameter explicitly to ensure that a particular method is used now and
+            in the future.
+        """
+        M = len(templates)
+        if M < 1:
+            raise ValueError("at least one template is required")
+        if name is None:
+            name = [f"x{i}" for i in range(M)]
         else:
-            shape = self._masked.shape
-        return np.prod(shape)
+            if len(name) != M:
+                raise ValueError("number of names must match number of templates")
 
-    def __init__(self, n, xe, model, verbose):
-        """For internal use."""
-        self._ndim = 1
-        if not isinstance(xe, _tp.Iterable):
-            raise ValueError("xe must be iterable")
-        if isinstance(xe[0], _tp.Iterable):
-            self._ndim = len(xe)
-        if self._ndim == 1:
-            self._xe = self._X = _norm(xe)
-            self._xe_shape = None
+        shape = _shape_from_xe(xe)
+        ndim = len(shape)
+        temp = []
+        temp_var = []
+        for t in templates:
+            t = _norm(t)
+            if t.ndim > ndim:
+                # template is weighted
+                if t.ndim != ndim + 1 or t.shape[:-1] != shape:
+                    raise ValueError("shapes of n and templates do not match")
+                temp.append(t[..., 0])
+                temp_var.append(t[..., 1])
+            else:
+                if t.ndim != ndim or t.shape != shape:
+                    raise ValueError("shapes of n and templates do not match")
+                temp.append(t)
+                temp_var.append(t)
+
+        if method == "jsc":
+            nt = []
+            nt_var = []
+            for t, tv in zip(temp, temp_var):
+                f = 1 / np.sum(t)
+                nt.append(t * f)
+                nt_var.append(tv * f**2)
+            self._bbl_data = nt, nt_var
+            self._call = self._call_jsc
+        elif method == "hpd":
+            k = 0
+            nt = []
+            for t, tv in zip(temp, temp_var):
+                f = 1 / np.sum(t)
+                nt.append(t * f)
+                k += t**2 / (tv + 1e-323)
+            self._bbl_data = nt, k
+            self._call = self._call_hpd
         else:
-            self._xe = tuple(_norm(xei) for xei in xe)
-            self._xe_shape = tuple(len(xei) for xei in xe)
-            self._X = np.row_stack(
-                [x.flatten() for x in np.meshgrid(*self._xe, indexing="ij")]
+            raise ValueError(
+                f"method {method} is not understood, allowed values: {{'jsc', 'hpd'}}"
             )
-        self._model = model
-        super().__init__(describe(model)[1:], self._prepare_data(n), verbose)
+
+        super().__init__(name, n, xe, verbose)
+
+    def _call_jsc(self, args):
+        ntemp, ntemp_var = self._bbl_data
+
+        mu = 0
+        mu_var = 0
+        for a, nt, vnt in zip(args, ntemp, ntemp_var):
+            mu += a * nt
+            mu_var += a**2 * vnt
+
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
+            mu_var = mu_var[ma]
+
+        if self._bztrafo:
+            n, mu, mu_var = self._bztrafo(mu, mu_var)
+        else:
+            n = self._masked
+
+        ma = mu > 0
+        return barlow_beeston_lite_chi2_jsc(n[ma], mu[ma], mu_var[ma])
+
+    def _call_hpd(self, args):
+        ntemp, k = self._bbl_data
+
+        mu = 0
+        for a, nt in zip(args, ntemp):
+            mu += a * nt
+
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
+            k = k[ma]
+
+        if self._bztrafo:
+            n, mu = self._bztrafo(mu)
+        else:
+            n = self._masked
+
+        ma = mu > 0
+        return barlow_beeston_lite_chi2_hpd(n[ma], mu[ma], k[ma])
 
 
-class BinnedNLL(BinnedCost):
+class BinnedNLL(BinnedCostWithModel):
     """
     Binned negative log-likelihood.
 
@@ -704,12 +1021,12 @@ class BinnedNLL(BinnedCost):
         ----------
         n : array-like
             Histogram counts. If this is an array with dimension D+1, where D is the
-            number of supplied axis edges, then the last dimension must have two elements
+            number of histogram axes, then the last dimension must have two elements
             and is interpreted as pairs of sum of weights and sum of weights squared.
         xe : array-like or collection of array-like
-            Bin edge locations, must be len(n) + 1. If the histogram has more than one
-            dimension, xe must be a collection of the bin edge locations along each
-            dimension.
+            Bin edge locations, must be len(n) + 1, where n is the number of bins.
+            If the histogram has more than one axis, xe must be a collection of the
+            bin edge locations along each axis.
         cdf : callable
             Cumulative density function of the form f(xe, par0, par1, ..., parN),
             where xe is a bin edge and par0, ... are model parameters. The corresponding
@@ -724,23 +1041,32 @@ class BinnedNLL(BinnedCost):
         super().__init__(n, xe, cdf, verbose)
 
     def _call(self, args):
-        prob = self._pred(args)
+        p = self._pred(args)
         ma = self.mask
         if ma is not None:
-            prob = prob[ma]
-            prob /= np.sum(prob)  # normalise probability
-        n = self._maybe_apply_bohm_zech_scaling(prob)
-        mu = prob * np.sum(n)
-        return _multinominal_chi2(n, mu)
+            p = p[ma]
+            p /= np.sum(p)  # normalise probability of remaining bins
+        if self._bztrafo:
+            mu = p * np.sum(self._masked[..., 0])
+            n, mu = self._bztrafo(mu)
+        else:
+            mu = p * np.sum(self._masked)
+            n = self._masked
+        return multinominal_chi2(n, mu)
 
 
-class ExtendedBinnedNLL(BinnedCost):
+class ExtendedBinnedNLL(BinnedCostWithModel):
     """
     Binned extended negative log-likelihood.
 
     Use this if shape and normalization of the fitted PDF are of interest and the data is
     binned. This cost function works with normal and weighted histograms. The histogram
     can be one- or multi-dimensional.
+
+    The cost function works for both weighted data. The cost function assumes that
+    the weights are independent of the data. This is not the case for sWeights, and
+    the uncertaintes for results obtained with sWeights will only be approximately
+    correct, see C. Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
 
     The cost function has a minimum value that is asymptotically chi2-distributed. It is
     constructed from the log-likelihood assuming a poisson distribution and using the
@@ -768,12 +1094,12 @@ class ExtendedBinnedNLL(BinnedCost):
         ----------
         n : array-like
             Histogram counts. If this is an array with dimension D+1, where D is the
-            number of supplied axis edges, then the last dimension must have two elements
+            number of histogram axes, then the last dimension must have two elements
             and is interpreted as pairs of sum of weights and sum of weights squared.
         xe : array-like or collection of array-like
-            Bin edge locations, must be len(n) + 1. If the histogram has more than one
-            dimension, xe must be a collection of the bin edge locations along each
-            dimension.
+            Bin edge locations, must be len(n) + 1, where n is the number of bins.
+            If the histogram has more than one axis, xe must be a collection of the
+            bin edge locations along each axis.
         scaled_cdf : callable
             Scaled Cumulative density function of the form f(xe, par0, [par1, ...]), where
             xe is a bin edge and par0, ... are model parameters.  If the model is
@@ -790,8 +1116,11 @@ class ExtendedBinnedNLL(BinnedCost):
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
-        n = self._maybe_apply_bohm_zech_scaling(mu)
-        return _poisson_chi2(n, mu)
+        if self._bztrafo:
+            n, mu = self._bztrafo(mu)
+        else:
+            n = self._masked
+        return poisson_chi2(n, mu)
 
 
 class LeastSquares(MaskedCost):
@@ -813,12 +1142,11 @@ class LeastSquares(MaskedCost):
 
     @x.setter
     def x(self, value):
-        d = self.data
         if self._ndim == 1:
-            d[:, 0] = _norm(value)
+            self.data[:, 0] = _norm(value)
         else:
-            d[:, : self._ndim] = _norm(value).T
-        self.data = d  # this also resets self.masked
+            self.data[:, : self._ndim] = _norm(value).T
+        self._update()
 
     @property
     def y(self):
@@ -827,9 +1155,8 @@ class LeastSquares(MaskedCost):
 
     @y.setter
     def y(self, value):
-        d = self.data
-        d[:, self._ndim] = _norm(value)
-        self.data = d  # this also resets self.masked
+        self.data[:, self._ndim] = _norm(value)
+        self._update()
 
     @property
     def yerror(self):
@@ -838,9 +1165,8 @@ class LeastSquares(MaskedCost):
 
     @yerror.setter
     def yerror(self, value):
-        d = self.data
-        d[:, self._ndim + 1] = _norm(value)
-        self.data = d
+        self.data[:, self._ndim + 1] = _norm(value)
+        self._update()
 
     @property
     def model(self):
@@ -857,7 +1183,7 @@ class LeastSquares(MaskedCost):
         self._loss = loss
         if isinstance(loss, str):
             if loss == "linear":
-                self._cost = _chi2
+                self._cost = chi2
             elif loss == "soft_l1":
                 self._cost = _soft_l1_cost
             else:
@@ -1048,5 +1374,13 @@ def _normalize_model_output(x, msg="Model should return numpy array"):
             f"{msg}, but returns {type(x)}",
             PerformanceWarning,
         )
-        return np.array(x)
+        x = np.array(x)
+        if x.dtype.kind != "f":
+            return x.astype(float)
     return x
+
+
+def _shape_from_xe(xe):
+    if isinstance(xe[0], _tp.Iterable):
+        return tuple(len(xei) - 1 for xei in xe)
+    return (len(xe) - 1,)
