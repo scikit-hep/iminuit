@@ -21,6 +21,7 @@ from collections.abc import Sequence
 
 stats = pytest.importorskip("scipy.stats")
 norm = stats.norm
+truncexpon = stats.truncexpon
 
 
 def mvnorm(mux, muy, sx, sy, rho):
@@ -858,28 +859,38 @@ def test_BarlowBeestonLite_weighted_data(method):
     assert_allclose(np.power(m.errors, 2), 2 * var, rtol=0.03)
 
 
+def generate(rng, nmc, truth, bins, f):
+    xe = np.linspace(0, 2, bins + 1)
+    b = np.diff(truncexpon(1, 0, 2).cdf(xe))
+    s = np.diff(norm(1, 0.1).cdf(xe))
+    n = rng.poisson(b * truth[0]) + rng.poisson(s * truth[1])
+    t = [rng.poisson(b * nmc / f) * f, rng.poisson(s * nmc / f) * f]
+    return n, xe, t
+
+
 @pytest.mark.parametrize("method", ("jsc", "hpd"))
 def test_BarlowBeestonLite_weighted_template(method):
-    n = np.array([1, 2, 3]) * 1e6
-    xe = np.array([0, 1, 2, 3])
-    t = np.array([[100, 100, 0], [0, 100, 300]])
-
-    c = BarlowBeestonLite(n, xe, t, method=method)
-    m = Minuit(c, 2e6, 4e6)
-    m.migrad()
-    assert m.valid
-    assert_allclose(m.fval, 0, atol=1e-3)
-    assert_allclose(m.values, [2e6, 4e6], rtol=5e-3)
-
-    var = np.power(m.errors, 2)
-    t2 = [np.transpose((ti, 1.1 * ti)) for ti in t]
-    c = BarlowBeestonLite(n, xe, t2)
-    m = Minuit(c, 2e6, 4e6)
-    m.migrad()
-    assert m.valid
-    assert_allclose(m.fval, 0, atol=1e-3)
-    assert_allclose(m.values, [2e6, 4e6], atol=1e-2)
-    assert_allclose(np.power(m.errors, 2), 1.1 * var, atol=1e-3)
+    rng = np.random.default_rng(1)
+    truth = 750, 250
+    factor = 1.5
+    z = []
+    rng = np.random.default_rng(1)
+    for itoy in range(100):
+        ni, xe, ti = generate(rng, 400, truth, 15, factor)
+        ti = [np.transpose((tj, tj * factor)) for tj in ti]
+        c = BarlowBeestonLite(ni, xe, ti, method=method)
+        m = Minuit(c, *truth)
+        m.limits = (0, None)
+        m.strategy = 0
+        for iter in range(10):
+            m.migrad(iterate=1)
+            m.hesse()
+            if m.valid and m.accurate:
+                break
+        assert m.valid
+        z.append((m.values[1] - truth[1]) / m.errors[1])
+    assert_allclose(np.mean(z), 0, atol=0.15)
+    assert_allclose(np.std(z), 1, rtol=0.15)
 
 
 @pytest.mark.parametrize("method", ("jsc", "hpd"))

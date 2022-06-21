@@ -1027,10 +1027,10 @@ class BinnedNLL(BinnedCostWithModel):
 
     def _call(self, args):
         p = self._pred(args)
-        ma = ... if self.mask is None else self.mask
+        ma = self.mask
         if ma is not None:
             p = p[ma]
-            p /= np.sum(p)  # normalise probability
+            p /= np.sum(p)  # normalise probability of remaining bins
         if self._bztrafo:
             mu = p * np.sum(self._masked[..., 0])
             n, mu = self._bztrafo(mu)
