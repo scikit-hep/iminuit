@@ -10,7 +10,7 @@ Changelog
 
 New features
 ~~~~~~~~~~~~
-- New cost function ``cost.BarlowBeestonLite`` for template fits with templates obtained from simulation or sWeighted data
+- New cost function ``cost.BarlowBeestonLite`` for template fits with correct uncertainty propagation for templates obtained from simulation or sWeighted data, written together with @AhmedAbdelmotteleb
 - Formerly private chi2 utility cost functions (``cost.poisson_chi2``, etc.), are now part of public API
 - Support custom grid in ``Minuit.profile``, ``iminuit.mncontour``, ``iminuit.contour``
 - Handle common CL values in ``Minuit.mnprofile`` and ``Minuit.mncontour`` without scipy
