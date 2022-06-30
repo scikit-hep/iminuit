@@ -254,8 +254,7 @@ def barlow_beeston_lite_chi2_hpd(n, mu, mu_var):
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
-    Formula derived by H.P. Dembinski, see the Jupyter notebook on Template Fits
-    in the iminuit repository.
+    H.P. Dembinski, https://doi.org/10.48550/arXiv.2206.12346
 
     Parameters
     ----------

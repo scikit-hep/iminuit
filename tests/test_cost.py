@@ -800,24 +800,6 @@ def test_update_data_with_mask(cls):
     assert c(1) == 0
 
 
-def test_barlow_beeston_lite_chi2_jsc():
-    n = np.array([1, 2, 3])
-    r = barlow_beeston_lite_chi2_jsc(n, n, n**2)
-    assert_allclose(r, 0)
-
-    n = np.array([1, 2, 3])
-    r = barlow_beeston_lite_chi2_jsc(n, n, 10 * n**2)
-    assert_allclose(r, 0)
-
-    mu = np.array([2, 2, 3])
-    r = barlow_beeston_lite_chi2_jsc(n, mu, mu**2)
-    assert r > 0
-
-    mu = np.array([0.999, 2, 3])
-    r = barlow_beeston_lite_chi2_jsc(n, mu, mu**2)
-    assert r > 0
-
-
 @pytest.mark.parametrize("method", ("jsc", "hpd"))
 def test_BarlowBeestonLite(method):
     n = np.array([1, 2, 3])
@@ -872,8 +854,8 @@ def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
                 break
         assert m.valid
         z.append((m.values[1] - truth[1]) / m.errors[1])
-    assert_allclose(np.mean(z), 0, atol=0.2)
-    assert_allclose(np.std(z), 1, rtol=0.15)
+    assert_allclose(np.mean(z), 0, atol=0.15)
+    assert_allclose(np.std(z), 1, rtol=0.1)
 
 
 @pytest.mark.parametrize("method", ("jsc", "hpd"))
