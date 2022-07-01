@@ -250,12 +250,11 @@ def barlow_beeston_lite_chi2_jsc(n, mu, mu_var):
     return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
 
 
-def barlow_beeston_lite_chi2_hpd(n, mu, k):
+def barlow_beeston_lite_chi2_hpd(n, mu, mu_var):
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
-    Formula derived by H.P. Dembinski, see the Jupyter notebook on Template Fits
-    in the iminuit repository.
+    H.P. Dembinski, https://doi.org/10.48550/arXiv.2206.12346
 
     Parameters
     ----------
@@ -264,16 +263,16 @@ def barlow_beeston_lite_chi2_hpd(n, mu, k):
     mu : array-like
         Expected counts. This is the sum of the normalised templates scaled
         with the component yields.
-    k : array-like
-        Bin-wise sum over original component templates. Must be positive everywhere.
+    mu_var : array-like
+        Expected variance of mu. Must be positive everywhere.
 
     Returns
     -------
     float
         Cost function value.
     """
+    k = mu**2 / mu_var
     beta = (n + k) / (mu + k)
-
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)
 
 
@@ -859,7 +858,7 @@ class BarlowBeestonLite(BinnedCost):
     J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
     """
 
-    __slots__ = "_bbl_data", "_call"
+    __slots__ = "_bbl_data", "_impl"
 
     def __init__(
         self,
@@ -930,24 +929,18 @@ class BarlowBeestonLite(BinnedCost):
                 temp.append(t)
                 temp_var.append(t)
 
+        nt = []
+        nt_var = []
+        for t, tv in zip(temp, temp_var):
+            f = 1 / np.sum(t)
+            nt.append(t * f)
+            nt_var.append(tv * f**2)
+        self._bbl_data = (nt, nt_var)
+
         if method == "jsc":
-            nt = []
-            nt_var = []
-            for t, tv in zip(temp, temp_var):
-                f = 1 / np.sum(t)
-                nt.append(t * f)
-                nt_var.append(tv * f**2)
-            self._bbl_data = (nt, nt_var)
-            self._call = self._call_jsc
+            self._impl = barlow_beeston_lite_chi2_jsc
         elif method == "hpd":
-            k = np.zeros_like(temp[0])
-            nt = []
-            for t, tv in zip(temp, temp_var):
-                f = 1 / np.sum(t)
-                nt.append(t * f)
-                k += t**2 / (tv + 1e-323)
-            self._bbl_data = (nt, k)
-            self._call = self._call_hpd
+            self._impl = barlow_beeston_lite_chi2_hpd
         else:
             raise ValueError(
                 f"method {method} is not understood, allowed values: {{'jsc', 'hpd'}}"
@@ -955,7 +948,7 @@ class BarlowBeestonLite(BinnedCost):
 
         super().__init__(name, n, xe, verbose)
 
-    def _call_jsc(self, args):
+    def _call(self, args):
         ntemp, ntemp_var = self._bbl_data
 
         mu = 0
@@ -975,27 +968,7 @@ class BarlowBeestonLite(BinnedCost):
             n = self._masked
 
         ma = mu > 0
-        return barlow_beeston_lite_chi2_jsc(n[ma], mu[ma], mu_var[ma])
-
-    def _call_hpd(self, args):
-        ntemp, k = self._bbl_data
-
-        mu = 0
-        for a, nt in zip(args, ntemp):
-            mu += a * nt
-
-        ma = self.mask
-        if ma is not None:
-            mu = mu[ma]
-            k = k[ma]
-
-        if self._bztrafo:
-            n, mu = self._bztrafo(mu)
-        else:
-            n = self._masked
-
-        ma = mu > 0
-        return barlow_beeston_lite_chi2_hpd(n[ma], mu[ma], k[ma])
+        return self._impl(n[ma], mu[ma], mu_var[ma])
 
 
 class BinnedNLL(BinnedCostWithModel):
