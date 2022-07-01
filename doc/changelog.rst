@@ -5,6 +5,13 @@
 Changelog
 =========
 
+2.12.1 (July 1, 2022)
+---------------------
+
+Fixes
+~~~~~
+- ``cost.BarlowBeestonLite``: method "hpd" has been modified to fix performance in cases where bins are not dominated by a single template
+
 2.12.0 (June 21, 2022)
 ----------------------
 

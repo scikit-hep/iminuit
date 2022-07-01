@@ -11,11 +11,9 @@ How to make a release
   - Update `doc/changelog.rst` to released version and add today's date
   - Note: A prerelease can be published simply by adding `.rcN` to `version`,
     where N is a number >= 0
-- Merge develop into master
-  - Option: do a `git rebase -i` to make history edits
-- Manually trigger wheels job to build wheels and upload to PyPI
-  - If there are problems with the wheels, commit fixes to a branch, squash-merge
-    branch to develop and develop to master
+- Merge develop into master, this triggers job to build wheels and upload to PyPI
+  - If there are problems with the wheels, commit fixes to a branch,
+    squash-merge to develop and then again develop to master
   - Note: Upload uses API tokens configured in PyPI and Github "Secrets"
 - Create release on Github
   - tag: vX.Y.Z (matching `src/iminuit/version.py`)
