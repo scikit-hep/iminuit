@@ -13,7 +13,6 @@ from iminuit.cost import (
     NormalConstraint,
     BarlowBeestonLite,
     multinominal_chi2,
-    barlow_beeston_lite_chi2_jsc,
     _soft_l1_loss,
     PerformanceWarning,
 )
