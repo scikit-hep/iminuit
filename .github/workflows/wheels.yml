@@ -23,8 +23,8 @@ jobs:
       - if: ${{ github.ref == 'refs/heads/master' }}
         run: python .ci/release_check.py
 
-      - id: tag
-        run: echo "::set-output name=$(python .ci/get_tag.py)"
+      # - id: tag
+      #   run: echo "::set-output name=$(python .ci/get_tag.py)"
 
   wheels:
     needs: release_check
@@ -111,20 +111,20 @@ jobs:
           user: __token__
           password: ${{secrets.pypi_password}}
 
-  release:
-    needs: [release_check, upload]
-    runs-on: ubuntu-latest
-    steps:
-      - if: ${{ github.ref == 'refs/heads/master' }}
-        uses: actions/checkout@v2
-      - if: ${{ github.ref == 'refs/heads/master' }}
-        uses: rickstaa/action-create-tag@v1
-        with:
-          tag: ${{ needs.release_check.outputs.tag }}
-      - uses: softprops/action-gh-release@v1
-        with:
-          body: "[Link to changelog](https://iminuit.readthedocs.io/en/stable/changelog.html)"
-          draft: ${{ github.ref != 'refs/heads/master' }}
-          name: ${{ needs.release_check.outputs.tag }}
-          tag_name: ${{ needs.release_check.outputs.tag }}
-          target_commitish: ${{ github.ref_name }}
+  # release:
+  #   needs: [release_check, upload]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - if: ${{ github.ref == 'refs/heads/master' }}
+  #       uses: actions/checkout@v2
+  #     - if: ${{ github.ref == 'refs/heads/master' }}
+  #       uses: rickstaa/action-create-tag@v1
+  #       with:
+  #         tag: ${{ needs.release_check.outputs.tag }}
+  #     - uses: softprops/action-gh-release@v1
+  #       with:
+  #         body: "[Link to changelog](https://iminuit.readthedocs.io/en/stable/changelog.html)"
+  #         draft: ${{ github.ref != 'refs/heads/master' }}
+  #         name: ${{ needs.release_check.outputs.tag }}
+  #         tag_name: ${{ needs.release_check.outputs.tag }}
+  #         target_commitish: ${{ github.ref_name }}
