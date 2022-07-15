@@ -12,6 +12,7 @@ import numpy as np
 import typing as _tp
 import abc
 from time import monotonic
+import warnings
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -138,6 +139,12 @@ class ErrorView(BasicView):
         return self._minuit._last_state[i].error  # type:ignore
 
     def _set(self, i: int, value: float) -> None:
+        if value <= 0:
+            warnings.warn(
+                "Assigned errors must be positive. "
+                "Non-positive values are replaced by a heuristic."
+            )
+            value = _guess_initial_step(value)
         self._minuit._last_state.set_error(i, value)
 
 
@@ -1289,7 +1296,7 @@ def _arguments_from_docstring(obj: _tp.Callable) -> _tp.List[str]:
 
 
 def _guess_initial_step(val: float) -> float:
-    return 1e-2 * val if val != 0 else 1e-1  # heuristic
+    return 1e-2 * abs(val) if val != 0 else 1e-1  # heuristic
 
 
 def _key2index_from_slice(var2pos: _tp.Dict[str, int], key: slice) -> _tp.List[int]:

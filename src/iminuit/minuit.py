@@ -237,10 +237,10 @@ class Minuit:
     def values(self) -> mutil.ValueView:
         """Access parameter values via an array-like view.
 
-        Use to read or write current parameter values based on the parameter index or the
-        parameter name as a string. If you change a parameter value and run :meth:`migrad`,
-        the minimization will start from that value, similar for :meth:`hesse` and
-        :meth:`minos`.
+        Use to read or write current parameter values based on the parameter index
+        or the parameter name as a string. If you change a parameter value and run
+        :meth:`migrad`, the minimization will start from that value, similar for
+        :meth:`hesse` and :meth:`minos`.
 
         See Also
         --------
@@ -256,8 +256,9 @@ class Minuit:
     def errors(self) -> mutil.ErrorView:
         """Access parameter parabolic errors via an array-like view.
 
-        Like :attr:`values`, but instead of reading or writing the values, you read or write
-        the errors (which double as step sizes for MINUITs numerical gradient estimation).
+        Like :attr:`values`, but instead of reading or writing the values, you read
+        or write the errors (which double as step sizes for MINUITs numerical gradient
+        estimation). Only positive values are accepted when assigning to errors.
 
         See Also
         --------
@@ -273,13 +274,13 @@ class Minuit:
     def fixed(self) -> mutil.FixedView:
         """Access whether parameters are fixed via an array-like view.
 
-        Use to read or write the fixation state of a parameter based on the parameter index
-        or the parameter name as a string. If you change the state and run :meth:`migrad`,
-        :meth:`hesse`, or :meth:`minos`, the new state is used.
+        Use to read or write the fixation state of a parameter based on the parameter
+        index or the parameter name as a string. If you change the state and run
+        :meth:`migrad`, :meth:`hesse`, or :meth:`minos`, the new state is used.
 
-        In case of complex fits, it can help to fix some parameters first and only minimize
-        the function with respect to the other parameters, then release the fixed parameters
-        and minimize again starting from that state.
+        In case of complex fits, it can help to fix some parameters first and only
+        minimize the function with respect to the other parameters, then release the
+        fixed parameters and minimize again starting from that state.
 
         See Also
         --------
@@ -296,8 +297,8 @@ class Minuit:
         """Access parameter limits via a array-like view.
 
         Use to read or write the limits of a parameter based on the parameter index
-        or the parameter name as a string. If you change the limits and run :meth:`migrad`,
-        :meth:`hesse`, or :meth:`minos`, the new state is used.
+        or the parameter name as a string. If you change the limits and run
+        :meth:`migrad`, :meth:`hesse`, or :meth:`minos`, the new state is used.
 
         In case of complex fits, it can help to limit some parameters first, run Migrad,
         then remove the limits and run Migrad again. Limits will bias the result only if

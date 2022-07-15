@@ -1613,3 +1613,18 @@ def test_bad_cl():
 
         with pytest.raises(ValueError):
             m.mncontour("x", "y", cl=cl)
+
+
+def test_negative_errors():
+    m = Minuit(func0, -1, -1)
+    assert np.all(np.array(m.errors) > 0)
+    with pytest.warns():
+        m.errors[0] = -1
+    assert m.errors[0] > 0
+    with pytest.warns():
+        m.errors = -2
+    assert np.all(np.array(m.errors) > 0)
+    m.errors = 10
+    assert_allclose(m.errors, 10)
+    m.errors = (1, 2)
+    assert_allclose(m.errors, (1, 2))
