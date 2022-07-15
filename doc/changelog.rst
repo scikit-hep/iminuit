@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.12.2 (July 15, 2022)
+----------------------
+- fix a bug in error heuristic when parameters have negative values and prevent assigning negative values to errors (#759)
+
 2.12.1 (July 1, 2022)
 ---------------------
 
