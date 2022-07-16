@@ -9,6 +9,10 @@ Changelog
 ------------------------
 - Minor improvements
 
+2.12.3b2 (July 16, 2022)
+------------------------
+- Minor improvements
+
 2.12.2 (July 15, 2022)
 ----------------------
 - fix a bug in error heuristic when parameters have negative values and prevent assigning negative values to errors (#759)
