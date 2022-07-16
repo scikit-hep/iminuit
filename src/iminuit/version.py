@@ -7,7 +7,8 @@
 # - Increase MAINTENANCE when fixing bugs without adding features
 # - During development, add suffix .devN with N >= 0
 # - For release candidates, add suffix .rcN with N >= 0
-version = "2.12.3.beta2"
+# - For beta releases, add suffix .betaN with N >= 0
+version = "2.12.3"
 
 # We list the corresponding ROOT version of the C++ Minuit2 library here
 root_version = "v6-25-02-1013-ga4bb8f3342"

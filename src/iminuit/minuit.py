@@ -1851,7 +1851,10 @@ class Minuit:
             mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
             ce = mnc(ix, iy, size)[2]
 
-        return np.array(ce)
+        pts = np.array(ce)
+        # add starting point at end to close the contour
+        pts = np.append(pts, pts[:1], axis=0)
+        return pts
 
     def draw_mncontour(
         self,
@@ -1912,9 +1915,6 @@ class Minuit:
         n_lineto = size - 2 if mpl_version < (3, 5) else size - 1
         for cl in cls:
             pts = self.mncontour(x, y, cl=cl, size=size)
-            # add extra point whose coordinates are ignored to close the contour
-            pts = np.append(pts, pts[:1], axis=0)
-
             c_val.append(cl if cl is not None else 0.68)
             c_pts.append([pts])  # level can have more than one contour in mpl
             codes.append([[Path.MOVETO] + [Path.LINETO] * n_lineto + [Path.CLOSEPOLY]])
