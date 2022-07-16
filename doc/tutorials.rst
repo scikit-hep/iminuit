@@ -11,11 +11,11 @@ Important for most users are only the first two entries.
 .. toctree::
     :maxdepth: 1
 
-    notebooks/basic_tutorial
+    notebooks/basic
     notebooks/cost_functions
     notebooks/simultaneous_fits
     notebooks/conditional_variable
     notebooks/scipy_and_constraints
     notebooks/external_minimizer
     notebooks/generic_least_squares
-    notebooks/cython_tutorial
+    notebooks/cython
