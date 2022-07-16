@@ -75,7 +75,7 @@ class BasicView(abc.ABC):
         return self._get(index)
 
     def __setitem__(self, key: _mtp.Key, value: _tp.Any) -> None:
-        """Assign a new value at key, which can be an index, a parameter name, or a slice."""
+        """Assign a new value at key, which can be an index, parameter name, or slice."""
         self._minuit._copy_state_if_needed()
         index = _key2index(self._minuit._var2pos, key)
         if isinstance(index, list):
@@ -218,7 +218,8 @@ class Matrix(np.ndarray):
     Enhanced Numpy ndarray.
 
     Works like a normal ndarray in computations, but also supports pretty printing in
-    ipython and Jupyter notebooks. Elements can be accessed via indices or parameter names.
+    ipython and Jupyter notebooks. Elements can be accessed via indices or parameter
+    names.
     """
 
     __slots__ = ("_var2pos",)
@@ -1020,13 +1021,13 @@ def propagate(
 
 class _Timer:
     def __init__(self, fmin):
-        self._prev = fmin.time if fmin else 0.0
+        self.value = fmin.time if fmin else 0.0
 
     def __enter__(self):
-        self.value = monotonic()
+        self.value += monotonic()
 
     def __exit__(self, *args):
-        self.value = monotonic() - self.value + self._prev
+        self.value = monotonic() - self.value
 
 
 def make_func_code(params: _tp.Collection[str]) -> Namespace:
