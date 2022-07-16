@@ -3,6 +3,7 @@ import re
 import subprocess as subp
 from pkg_resources import parse_version
 import datetime
+import warnings
 
 cwd = Path(__file__).parent
 
@@ -11,17 +12,22 @@ with open(cwd.parent / "src/iminuit/version.py") as f:
     exec(f.read(), version)
     new_version = parse_version(version["version"])
 
-latest_tag = next(
-    iter(
-        sorted(
-            (
-                parse_version(x)
-                for x in subp.check_output(["git", "tag"]).decode().strip().split("\n")
-            ),
-            reverse=True,
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    latest_tag = next(
+        iter(
+            sorted(
+                (
+                    parse_version(x)
+                    for x in subp.check_output(["git", "tag"])
+                    .decode()
+                    .strip()
+                    .split("\n")
+                ),
+                reverse=True,
+            )
         )
     )
-)
 
 with open(cwd / "changelog.rst") as f:
     content = f.read()
@@ -44,13 +50,16 @@ git_log = re.findall(
 
 today = datetime.date.today()
 header = f"{new_version} ({today.strftime('%B %d, %Y')})"
-content2 = f"""{content[:position]}{header}
-{'-' * len(header)}
-"""
-for x in git_log:
-    content2 += f"- {x}\n"
-content2 += "\n"
-content2 += content[position:]
+
+new_content = f"{header}\n{'-' * len(header)}\n"
+if git_log:
+    for x in git_log:
+        new_content += f"- {x}\n"
+else:
+    new_content += "- Minor improvements\n"
+new_content += "\n"
+
+print(new_content, end="")
 
 with open(cwd / "changelog.rst", "w") as f:
-    f.write(content2)
+    f.write(f"{content[:position]}{new_content}{content[position:]}")
