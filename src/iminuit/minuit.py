@@ -1821,10 +1821,8 @@ class Minuit:
         -------
         array of float (N x 2)
             Contour points of the form [[x1, y1]...[xn, yn]].
-            Note that the last point [xn, yn] is not identical to [x1, y1]. To draw a
-            closed contour, please use a closed polygon, like matplotlib.patch.Polygon
-            with the closed=True option, or produce a closed curve by appending the
-            first point at the end of the array.
+            Note that N = size + 1, the last point [xn, yn] is identical to [x1, y1].
+            This makes it easier to draw a closed contour.
 
         See Also
         --------
