@@ -637,7 +637,7 @@ def test_mncontour(grad, cl):
         cl = stats.chi2(1).cdf(cl**2)
     factor = stats.chi2(2).ppf(cl)
     cl2 = stats.chi2(1).cdf(factor)
-    assert len(ctr) == 30
+    assert len(ctr) == 31
     assert len(ctr[0]) == 2
 
     m.minos("x", "y", cl=cl2)
@@ -823,7 +823,7 @@ def test_mncontour_array_func():
 
     cl = stats.chi2(2).cdf(1)
     ctr = m.mncontour("x", "y", size=30, cl=cl)
-    assert len(ctr) == 30
+    assert len(ctr) == 31
     assert len(ctr[0]) == 2
 
     m.minos("x", "y")
