@@ -26,50 +26,50 @@ jobs:
       - id: tag
         run: echo "::set-output name=out::$(python .ci/get_tag.py)"
 
-  wheels:
-    needs: release_check
-    name: ${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        arch: [auto, aarch64]
-        py: [cp36, cp37, cp38, cp39, cp310]
-        include:
-          - os: macos-latest
-            py: cp38
-            arch: universal2
-          - os: macos-latest
-            py: cp39
-            arch: universal2
-          - os: macos-latest
-            py: cp310
-            arch: universal2
-        exclude:
-          - os: windows-latest
-            arch: aarch64
-          - os: macos-latest
-            arch: aarch64
-    env:
-      CIBW_BUILD: ${{ matrix.py }}-*
-      CIBW_ARCHS_LINUX: ${{ matrix.arch }}
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
+  # wheels:
+  #   needs: release_check
+  #   name: ${{ matrix.py }} ${{ matrix.os }} ${{ matrix.arch }}
+  #   runs-on: ${{ matrix.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu-latest, windows-latest, macos-latest]
+  #       arch: [auto, aarch64]
+  #       py: [cp36, cp37, cp38, cp39, cp310]
+  #       include:
+  #         - os: macos-latest
+  #           py: cp38
+  #           arch: universal2
+  #         - os: macos-latest
+  #           py: cp39
+  #           arch: universal2
+  #         - os: macos-latest
+  #           py: cp310
+  #           arch: universal2
+  #       exclude:
+  #         - os: windows-latest
+  #           arch: aarch64
+  #         - os: macos-latest
+  #           arch: aarch64
+  #   env:
+  #     CIBW_BUILD: ${{ matrix.py }}-*
+  #     CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         submodules: true
 
-      - if: ${{ matrix.arch == 'aarch64' }}
-        uses: docker/setup-qemu-action@v1
+  #     - if: ${{ matrix.arch == 'aarch64' }}
+  #       uses: docker/setup-qemu-action@v1
 
-      - uses: pypa/cibuildwheel@v2.3.1
-        env:
-          CIBW_BUILD: ${{ matrix.py }}-*
-          CIBW_ARCHS: ${{ matrix.arch }}
+  #     - uses: pypa/cibuildwheel@v2.3.1
+  #       env:
+  #         CIBW_BUILD: ${{ matrix.py }}-*
+  #         CIBW_ARCHS: ${{ matrix.arch }}
 
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
+  #     - uses: actions/upload-artifact@v2
+  #       with:
+  #         path: ./wheelhouse/*.whl
 
   sdist:
     needs: release_check
@@ -97,7 +97,8 @@ jobs:
           path: dist/*.tar.gz
 
   upload:
-    needs: [wheels, sdist]
+    # needs: [wheels, sdist]
+    needs: [sdist]
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/master' }}
     steps:
