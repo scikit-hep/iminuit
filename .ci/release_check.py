@@ -4,6 +4,7 @@ import subprocess as subp
 from pathlib import PurePath
 import urllib.request
 import json
+import warnings
 
 project_dir = PurePath(__file__).parent.parent
 version_fn = project_dir / "src/iminuit/version.py"
@@ -12,7 +13,10 @@ changelog_fn = project_dir / "doc/changelog.rst"
 with open(version_fn) as f:
     version = {}
     exec(f.read(), version)
-    iminuit_version = parse_version(version["version"])
+    with warnings.catch_warnings(record=True) as record:
+        iminuit_version = parse_version(version["version"])
+    if record:
+        raise ValueError(record[0].message)
     root_version = version["root_version"]
 
 print("iminuit version:", iminuit_version)
