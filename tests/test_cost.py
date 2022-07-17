@@ -18,9 +18,15 @@ from iminuit.cost import (
 )
 from collections.abc import Sequence
 
-norm = pytest.importorskip("scipy.stats.norm")
-truncexpon = pytest.importorskip("scipy.stats.truncexpon")
-multivariate_normal = pytest.importorskip("scipy.stats.multivariate_normal")
+try:
+    # pytest.importorskip does not work for scipy.stats;
+    # for some reason, import scipy or import scipy.stats succeeds
+    # even if scipy is not installed
+    from scipy.stats import norm, truncexpon, multivariate_normal
+
+    scipy_stats_available = True
+except ImportError:
+    scipy_stats_available = False
 
 
 def mvnorm(mux, muy, sx, sy, rho):
@@ -74,6 +80,7 @@ def test_Constant():
     assert c.ndata == 0
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
 def test_UnbinnedNLL(unbinned, verbose, model):
@@ -91,6 +98,7 @@ def test_UnbinnedNLL(unbinned, verbose, model):
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_UnbinnedNLL_2D():
     def model(x_y, mux, muy, sx, sy, rho):
         return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -108,6 +116,7 @@ def test_UnbinnedNLL_2D():
     assert_allclose(m.values, truth, atol=0.02)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
 def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
@@ -133,6 +142,7 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_ExtendedUnbinnedNLL_2D():
     def model(x_y, n, mux, muy, sx, sy, rho):
         return n * 1000, n * 1000 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -150,6 +160,7 @@ def test_ExtendedUnbinnedNLL_2D():
     assert_allclose(m.values, truth, atol=0.1)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_BinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -208,6 +219,7 @@ def test_BinnedNLL_bad_input_4():
         BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_BinnedNLL_ndof_zero():
     c = BinnedNLL([1, 2], [0, 1, 2], lambda x, loc, scale: norm.cdf(x, loc, scale))
     m = Minuit(c, loc=0, scale=1)
@@ -226,6 +238,7 @@ def test_BinnedNLL_bad_input_6():
         BinnedNLL(1, 2, lambda x, a: 0)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_BinnedNLL_2D():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
@@ -251,6 +264,7 @@ def test_BinnedNLL_2D():
     assert cost(*m.values) > m.fval
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_BinnedNLL_2D_with_zero_bins():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
@@ -270,6 +284,7 @@ def test_BinnedNLL_2D_with_zero_bins():
     assert_allclose(m.values, truth, atol=0.05)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -309,6 +324,7 @@ def test_ExtendedBinnedNLL_bad_input():
         ExtendedBinnedNLL([1], [1], lambda x, a: 0)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_ExtendedBinnedNLL_2D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
@@ -328,6 +344,7 @@ def test_ExtendedBinnedNLL_2D():
     assert_allclose(m.values, truth, atol=0.1)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_ExtendedBinnedNLL_3D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
     n = int(truth[0] * 10000)
@@ -829,6 +846,7 @@ def generate(rng, nmc, truth, bins, tf=1, df=1):
     return n, xe, np.array(t)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("method", ("jsc", "hpd"))
 @pytest.mark.parametrize("with_mask", (False, True))
 @pytest.mark.parametrize("weighted_data", (False, True))

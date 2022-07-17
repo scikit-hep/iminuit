@@ -4,6 +4,14 @@ import pickle
 import pytest
 import numpy as np
 
+try:
+    # see comment in test_cost.py why pytest.importorskip is not used
+    from scipy.stats import norm, expon
+
+    scipy_stats_available = True
+except ImportError:
+    scipy_stats_available = False
+
 
 def test_issue_424():
     def fcn(x, y, z):
@@ -107,9 +115,8 @@ def test_issue_687():
     assert s_m == s_m2
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_issue_694():
-    norm = pytest.importorskip("scipy.stats.norm")
-    expon = pytest.importorskip("scipy.stats.expon")
     from iminuit.cost import ExtendedUnbinnedNLL
 
     xmus = 1.0
