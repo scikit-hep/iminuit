@@ -644,11 +644,47 @@ def test_replace_none():
 
 
 def test_progressbar(capsys):
-    with util._ProgressBar(max_value=10) as bar:
-        for i in range(10):
+    with util._ProgressBar(max_value=4) as bar:
+        for i in range(4):
             bar += 1
     stdout, stderr = capsys.readouterr()
-    assert (
-        stdout
-        == "\r0 %\r10 %\r20 %\r30 %\r40 %\r50 %\r60 %\r70 %\r80 %\r90 %\r100 %\r     "
+    assert stdout == "\r0 %\r25 %\r50 %\r75 %\r100 %\r     "
+
+
+def test_progressbar_2(capsys):
+    import sys
+
+    m_iostream = pytest.importorskip("ipykernel.iostream")
+    m_display = pytest.importorskip("IPython.display")
+
+    class OutStream:
+        def write(self, s):
+            original_stdout.write(s)
+
+        def flush(self):
+            original_stdout.flush()
+
+    def display(msg, **kwargs):
+        sys.stdout.write(msg._repr_html_())
+
+    original_stdout = sys.stdout
+    sys.stdout = OutStream()
+
+    # monkey-patching our mockups
+    m_iostream.OutStream = OutStream
+    m_display.display = display
+
+    with util._ProgressBar(max_value=4) as bar:
+        for i in range(4):
+            bar += 1
+
+    sys.stdout = original_stdout
+    stdout, stderr = capsys.readouterr()
+
+    assert stdout == (
+        "<progress value='0' max='100'></progress> 0 %"
+        "<progress value='25' max='100'></progress> 25 %"
+        "<progress value='50' max='100'></progress> 50 %"
+        "<progress value='75' max='100'></progress> 75 %"
+        "<progress value='100' max='100'></progress> 100 %"
     )

@@ -127,7 +127,13 @@ def test_mnmatrix_5():
 
 
 def test_mnmatrix_6(fig, minuit):
-    # this generates an empty plot
     minuit.fixed = True
     with pytest.raises(RuntimeError, match="all parameters are fixed"):
         minuit.draw_mnmatrix()
+
+
+def test_mnmatrix_7(fig):
+    # provoke an mnprofile iteration on asymmetric profile
+    m = Minuit(lambda x: abs(x) ** 2 + x**4 + 10 * x, x=0)
+    m.migrad()
+    m.draw_mnmatrix(cl=[1, 3])

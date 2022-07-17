@@ -1997,7 +1997,7 @@ class Minuit:
                     y = y[ok]
                     if y[0] > fmax and y[-1] > fmax:
                         break
-                    bound *= 2
+                    bound *= 1.6
                 bar += 1
                 plt.plot(x, y, "k")
                 a, b = prange[par1]
@@ -2017,16 +2017,15 @@ class Minuit:
                     plt.plot(self.values[par2], self.values[par1], "+", color="k")
                     for k, cl in enumerate(cls):
                         pts = self.mncontour(par1, par2, cl=cl, size=size)
-                        if len(pts) == 0:
-                            continue
                         bar += 1
-                        x, y = np.transpose(pts)
-                        plt.plot(y, x, color=f"C{k}")
-                        for r, p in ((x, par1), (y, par2)):
-                            a, b = prange[p]
-                            a = min(np.min(r), a)
-                            b = max(np.max(r), b)
-                            prange[p] = (a, b)
+                        if len(pts) > 0:
+                            x, y = np.transpose(pts)
+                            plt.plot(y, x, color=f"C{k}")
+                            for r, p in ((x, par1), (y, par2)):
+                                a, b = prange[p]
+                                a = min(np.min(r), a)
+                                b = max(np.max(r), b)
+                                prange[p] = (a, b)
                     ax[j, i].set_visible(False)
 
         for i, par1 in enumerate(pars):
