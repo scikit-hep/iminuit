@@ -1887,6 +1887,7 @@ class Minuit:
         *,
         cl: _tp.Optional[_tp.Union[float, _ArrayLike[float]]] = None,
         size: int = 100,
+        interpolated: int = 0,
     ) -> _tp.Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
@@ -1923,9 +1924,11 @@ class Minuit:
         c_val = []
         c_pts = []
         codes = []
-        n_lineto = size - 2 if mpl_version < (3, 5) else size - 1
         for cl in cls:
-            pts = self.mncontour(x, y, cl=cl, size=size)
+            pts = self.mncontour(x, y, cl=cl, size=size, interpolated=interpolated)
+            n_lineto = len(pts) - 2
+            if mpl_version < (3, 5):
+                n_lineto -= 1
             c_val.append(cl)
             c_pts.append([pts])  # level can have more than one contour in mpl
             codes.append([[Path.MOVETO] + [Path.LINETO] * n_lineto + [Path.CLOSEPOLY]])

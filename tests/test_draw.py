@@ -81,6 +81,14 @@ def test_mncontour_3(fig, minuit):
     minuit.draw_mncontour("x", "y", cl=[0.68, 0.9])
 
 
+def test_mncontour_4(fig, minuit):
+    minuit.draw_mncontour("x", "y", size=20, interpolated=200)
+
+
+def test_mncontour_5(fig, minuit):
+    minuit.draw_mncontour("x", "y", size=20, interpolated=10)
+
+
 def test_contour_1(fig, minuit):
     minuit.draw_contour("x", "y")
 
