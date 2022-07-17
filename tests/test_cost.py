@@ -18,9 +18,9 @@ from iminuit.cost import (
 )
 from collections.abc import Sequence
 
-stats = pytest.importorskip("scipy.stats")
-norm = stats.norm
-truncexpon = stats.truncexpon
+norm = pytest.importorskip("scipy.stats.norm")
+truncexpon = pytest.importorskip("scipy.stats.truncexpon")
+multivariate_normal = pytest.importorskip("scipy.stats.multivariate_normal")
 
 
 def mvnorm(mux, muy, sx, sy, rho):
@@ -29,7 +29,7 @@ def mvnorm(mux, muy, sx, sy, rho):
     C[0, 1] = C[1, 0] = sx * sy * rho
     C[1, 1] = sy**2
     m = [mux, muy]
-    return stats.multivariate_normal(m, C)
+    return multivariate_normal(m, C)
 
 
 def expon_cdf(x, a):
