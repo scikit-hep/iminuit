@@ -631,3 +631,60 @@ def test_jacobi_divergence_2(capsys):
 
     np.testing.assert_allclose(y, 1e10)
     np.testing.assert_equal(jac, np.nan)
+
+
+def test_iterate():
+    assert list(util._iterate(1)) == [1]
+    assert list(util._iterate([1, 2])) == [1, 2]
+
+
+def test_replace_none():
+    assert util._replace_none(None, 2) == 2
+    assert util._replace_none(3, 2) == 3
+
+
+def test_progressbar(capsys):
+    with util._ProgressBar(max_value=4) as bar:
+        for i in range(4):
+            bar += 1
+    stdout, stderr = capsys.readouterr()
+    assert stdout == "\r0 %\r25 %\r50 %\r75 %\r100 %\r     "
+
+
+def test_progressbar_2(capsys):
+    import sys
+
+    m_iostream = pytest.importorskip("ipykernel.iostream")
+    m_display = pytest.importorskip("IPython.display")
+
+    class OutStream:
+        def write(self, s):
+            original_stdout.write(s)
+
+        def flush(self):
+            original_stdout.flush()
+
+    def display(msg, **kwargs):
+        sys.stdout.write(msg._repr_html_())
+
+    original_stdout = sys.stdout
+    sys.stdout = OutStream()
+
+    # monkey-patching our mockups
+    m_iostream.OutStream = OutStream
+    m_display.display = display
+
+    with util._ProgressBar(max_value=4) as bar:
+        for i in range(4):
+            bar += 1
+
+    sys.stdout = original_stdout
+    stdout, stderr = capsys.readouterr()
+
+    assert stdout == (
+        "<progress value='0' max='100'></progress> 0 %"
+        "<progress value='25' max='100'></progress> 25 %"
+        "<progress value='50' max='100'></progress> 50 %"
+        "<progress value='75' max='100'></progress> 75 %"
+        "<progress value='100' max='100'></progress> 100 %"
+    )

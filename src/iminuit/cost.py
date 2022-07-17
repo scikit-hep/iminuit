@@ -15,7 +15,8 @@ What to use when
 - Fit a density to data, density is not normalised
 
     - Data are not binned: :class:`ExtendedUnbinnedNLL`
-    - Data are binned: :class:`ExtendedBinnedNLL`, also supports histogram of weighted samples
+    - Data are binned: :class:`ExtendedBinnedNLL`, also supports
+      histogram of weighted samples
 
 - Fit a template to binned data with bin-wise uncertainties on the template:
   :class:`BarlowBeestonLite`, which also supports weighted data and weighted templates
@@ -26,7 +27,8 @@ What to use when
     - y values contain no outliers: :class:`LeastSquares`
     - y values contain outliers: :class:`LeastSquares` with loss function set to "soft_l1"
 
-- Include constraints from external fits or apply regularisation: :class:`NormalConstraint`
+- Include constraints from external fits or apply regularisation:
+  :class:`NormalConstraint`
 
 Combining cost functions
 ------------------------
@@ -285,11 +287,11 @@ try:
 
     @_overload(_safe_log, inline="always")
     def _ol_safe_log(x):
-        return _safe_log  # pragma: no cover
+        return _safe_log
 
     @_overload(_z_squared, inline="always")
     def _ol_z_squared(y, ye, ym):
-        return _z_squared  # pragma: no cover
+        return _z_squared
 
     _unbinned_nll_np = _unbinned_nll
     _unbinned_nll_nb = _njit(
@@ -364,7 +366,7 @@ try:
 
     @_overload(_soft_l1_loss, inline="always")
     def _ol_soft_l1_loss(z_sqr):
-        return _soft_l1_loss_np  # pragma: no cover
+        return _soft_l1_loss_np
 
     _soft_l1_cost_np = _soft_l1_cost
     _soft_l1_cost_nb = _njit(
@@ -379,7 +381,7 @@ try:
         # fallback to numpy for float128
         return _soft_l1_cost_np(y, ye, ym)
 
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     pass
 
 
@@ -407,7 +409,7 @@ class Cost(abc.ABC):
         Infinity is returned if the cost function is unbinned. This is used by Minuit to
         compute the reduced chi2, a goodness-of-fit estimate.
         """
-        ...  # pragma: no cover
+        NotImplemented  # pragma: no cover
 
     @property
     def verbose(self):

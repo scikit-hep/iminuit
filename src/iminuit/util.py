@@ -57,7 +57,7 @@ class BasicView(abc.ABC):
 
     @abc.abstractmethod
     def _set(self, idx: int, value: _tp.Any) -> None:
-        pass  # pragma: no cover
+        NotImplemented  # pragma: no cover
 
     def __getitem__(self, key: _mtp.Key) -> _tp.Any:
         """
@@ -1340,3 +1340,64 @@ def _address_of_cfunc(fcn: _tp.Any) -> int:
     if isinstance(fcn, c_sig):
         return cast(fcn, c_void_p).value  # type: ignore
     return 0
+
+
+def _iterate(x):
+    if not isinstance(x, _tp.Iterable):
+        yield x
+    else:
+        for xi in x:
+            yield xi
+
+
+def _replace_none(x, v):
+    if x is None:
+        return v
+    return x
+
+
+# poor-mans progressbar if progressbar2 is not available
+class _ProgressBar:
+    def _update(self, v):
+        self._out.write(f"\r{100 * v:.0f} %")
+        self._out.flush()
+
+    def _finish(self):
+        self._out.write("\r     ")
+        self._out.flush()
+
+    def __init__(self, max_value):
+        import sys
+
+        self.max_value = max_value
+        self._out = sys.stdout
+
+        try:
+            from ipykernel.iostream import OutStream
+
+            if isinstance(self._out, OutStream):
+                from IPython.display import display, HTML
+
+                self._update = lambda v: display(
+                    HTML(
+                        f"<progress value='{100 * v:.0f}' max='100'></progress> "
+                        f"{100 * v:.0f} %"
+                    ),
+                    clear=True,
+                )
+                self._finish = lambda: display(HTML(""), clear=True)
+        except ModuleNotFoundError:
+            pass
+
+    def __enter__(self, *args):
+        self.value = 0
+        self._update(0)
+        return self
+
+    def __exit__(self, *args):
+        self._finish()
+
+    def __add__(self, v):
+        self.value += v
+        self._update(self.value / self.max_value)
+        return self
