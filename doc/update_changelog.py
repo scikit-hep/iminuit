@@ -38,8 +38,7 @@ previous_version = parse_version(m.group(1))
 position = m.span(0)[0]
 
 # sanity checks
-assert previous_version == latest_tag
-assert new_version > previous_version
+assert new_version > previous_version, f"{new_version} > {previous_version}"
 
 git_log = re.findall(
     r"[a-z0-9]+ ([^\n]+ \(#[0-9]+\))",
@@ -54,7 +53,7 @@ header = f"{new_version} ({today.strftime('%B %d, %Y')})"
 new_content = f"{header}\n{'-' * len(header)}\n"
 if git_log:
     for x in git_log:
-        new_content += f"- {x}\n"
+        new_content += f"- {x.capitalize()}\n"
 else:
     new_content += "- Minor improvements\n"
 new_content += "\n"

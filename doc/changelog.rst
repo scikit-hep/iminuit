@@ -5,13 +5,12 @@
 Changelog
 =========
 
-2.12.3b1 (July 16, 2022)
-------------------------
-- Minor improvements
-
-2.12.3b2 (July 16, 2022)
-------------------------
-- Minor improvements
+2.13.0 (July 17, 2022)
+----------------------
+- Interpolated mncontour (#764)
+- Added mnmatrix plot (#763)
+- Close mncontour for convenience (#761)
+- Update tutorials (#760)
 
 2.12.2 (July 15, 2022)
 ----------------------
