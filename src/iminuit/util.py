@@ -57,7 +57,7 @@ class BasicView(abc.ABC):
 
     @abc.abstractmethod
     def _set(self, idx: int, value: _tp.Any) -> None:
-        pass  # pragma: no cover
+        NotImplemented  # pragma: no cover
 
     def __getitem__(self, key: _mtp.Key) -> _tp.Any:
         """
