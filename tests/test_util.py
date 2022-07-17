@@ -631,3 +631,24 @@ def test_jacobi_divergence_2(capsys):
 
     np.testing.assert_allclose(y, 1e10)
     np.testing.assert_equal(jac, np.nan)
+
+
+def test_iterate():
+    assert list(util._iterate(1)) == [1]
+    assert list(util._iterate([1, 2])) == [1, 2]
+
+
+def test_replace_none():
+    assert util._replace_none(None, 2) == 2
+    assert util._replace_none(3, 2) == 3
+
+
+def test_progressbar(capsys):
+    with util._ProgressBar(max_value=10) as bar:
+        for i in range(10):
+            bar += 1
+    stdout, stderr = capsys.readouterr()
+    assert (
+        stdout
+        == "\r0 %\r10 %\r20 %\r30 %\r40 %\r50 %\r60 %\r70 %\r80 %\r90 %\r100 %\r     "
+    )

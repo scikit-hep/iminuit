@@ -28,7 +28,7 @@ def fig(request):
     if not p.exists():
         p.mkdir()
     fig.savefig(p / (request.node.name + ".svg"))
-    del fig
+    plt.close()
 
 
 @pytest.mark.parametrize("arg", ("x", "y"))
@@ -99,3 +99,35 @@ def test_contour_4(fig, minuit):
 
 def test_contour_5(fig, minuit):
     minuit.draw_contour("x", "y", grid=(np.linspace(-0.5, 2.5), np.linspace(-1, 3)))
+
+
+def test_mnmatrix_1(fig, minuit):
+    minuit.draw_mnmatrix()
+
+
+def test_mnmatrix_2(fig, minuit):
+    minuit.draw_mnmatrix(cl=[0.68, 0.9])
+
+
+def test_mnmatrix_3(fig):
+    m = Minuit(lambda x: x**2, x=0)
+    m.migrad()
+    m.draw_mnmatrix()
+
+
+def test_mnmatrix_4(fig, minuit):
+    with pytest.raises(ValueError):
+        minuit.draw_mnmatrix(cl=[])
+
+
+def test_mnmatrix_5():
+    m = Minuit(lambda x: x**2, x=10)
+    with pytest.raises(RuntimeError, match="minimum is not valid"):
+        m.draw_mnmatrix()
+
+
+def test_mnmatrix_6(fig, minuit):
+    # this generates an empty plot
+    minuit.fixed = True
+    with pytest.raises(RuntimeError, match="all parameters are fixed"):
+        minuit.draw_mnmatrix()
