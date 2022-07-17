@@ -8,6 +8,13 @@ from pytest import approx
 from argparse import Namespace
 
 
+scipy_is_importable = True
+try:
+    import scipy  # noqa
+except ModuleNotFoundError:
+    scipy_is_importable = False
+
+
 @pytest.fixture
 def debug():
     from iminuit._core import MnPrint
@@ -18,24 +25,6 @@ def debug():
     yield
     MnPrint.global_level = prev
     MnPrint.show_prefix_stack(False)
-
-
-@pytest.fixture
-def block_scipy_stats():
-    import sys
-
-    name = "scipy.stats"
-
-    class ImportRaiser:
-        def find_spec(self, fullname, path, target=None):
-            if fullname == name:
-                raise ImportError("Module not found")
-
-    sys.meta_path.insert(0, ImportRaiser())
-    if name in sys.modules:
-        del sys.modules[name]
-    yield
-    del sys.meta_path[0]
 
 
 @pytest.fixture
@@ -190,7 +179,8 @@ def func_test_helper(f, grad=None, errordef=None):
     return m
 
 
-def test_mncontour_missing_scipy(block_scipy_stats):
+@pytest.mark.skipif(scipy_is_importable, reason="tests is for missing scipy")
+def test_mncontour_missing_scipy():
     m = Minuit(func0, 1, 1)
     m.migrad()
     m.mncontour("x", "y")
@@ -201,7 +191,8 @@ def test_mncontour_missing_scipy(block_scipy_stats):
         m.mncontour("x", "y", cl=0.1)
 
 
-def test_minos_missing_scipy(block_scipy_stats):
+@pytest.mark.skipif(scipy_is_importable, reason="tests is for missing scipy")
+def test_minos_missing_scipy():
     m = Minuit(func0, 1, 1)
     m.migrad()
     m.minos()
@@ -470,7 +461,7 @@ def test_minos(grad):
 @pytest.mark.parametrize("limit", (False, True))
 def test_minos_cl(cl, k, limit):
     opt = pytest.importorskip("scipy.optimize")
-    stats = pytest.importorskip("scipy.stats")
+    chi2 = pytest.importorskip("scipy.stats.chi2")
 
     def nll(lambd):
         return lambd - k * np.log(lambd)
@@ -483,8 +474,8 @@ def test_minos_cl(cl, k, limit):
         bound = cl * k**0.5
         up = 0.5 * cl**2
     else:
-        bound = (stats.chi2(1).ppf(cl) * k) ** 0.5
-        up = 0.5 * stats.chi2(1).ppf(cl)
+        bound = (chi2(1).ppf(cl) * k) ** 0.5
+        up = 0.5 * chi2(1).ppf(cl)
     bound *= 1.5
     upper = opt.root_scalar(crossing, bracket=(0, bound)).root
     lower = opt.root_scalar(crossing, bracket=(-bound, 0)).root
@@ -626,7 +617,7 @@ def test_initial_value():
 @pytest.mark.parametrize("grad", (None, func0_grad))
 @pytest.mark.parametrize("cl", (None, 0.5, 0.9, 1, 1.5, 2))
 def test_mncontour(grad, cl):
-    stats = pytest.importorskip("scipy.stats")
+    chi2 = pytest.importorskip("scipy.stats.chi2")
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
     ctr = m.mncontour("x", "y", size=30, cl=cl)
@@ -634,9 +625,9 @@ def test_mncontour(grad, cl):
     if cl is None:
         cl = 0.68
     elif cl >= 1:
-        cl = stats.chi2(1).cdf(cl**2)
-    factor = stats.chi2(2).ppf(cl)
-    cl2 = stats.chi2(1).cdf(factor)
+        cl = chi2(1).cdf(cl**2)
+    factor = chi2(2).ppf(cl)
+    cl2 = chi2(1).cdf(factor)
     assert len(ctr) == 31
     assert len(ctr[0]) == 2
 
@@ -816,12 +807,12 @@ def test_mncontour_with_fixed_var():
 
 
 def test_mncontour_array_func():
-    stats = pytest.importorskip("scipy.stats")
+    chi2 = pytest.importorskip("scipy.stats.chi2")
 
     m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
 
-    cl = stats.chi2(2).cdf(1)
+    cl = chi2(2).cdf(1)
     ctr = m.mncontour("x", "y", size=30, cl=cl)
     assert len(ctr) == 31
     assert len(ctr[0]) == 2
@@ -1475,12 +1466,12 @@ def test_cfunc():
 
 @pytest.mark.parametrize("cl", (0.5, None, 0.9))
 def test_confidence_level(cl):
-    stats = pytest.importorskip("scipy.stats")
+    multivariate_normal = pytest.importorskip("scipy.stats.multivariate_normal")
     mpath = pytest.importorskip("matplotlib.path")
 
     cov = ((1.0, 0.5), (0.5, 4.0))
     truth = (1.0, 2.0)
-    d = stats.multivariate_normal(truth, cov)
+    d = multivariate_normal(truth, cov)
 
     def nll(par):
         return -np.log(d.pdf(par))

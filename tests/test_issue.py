@@ -108,11 +108,9 @@ def test_issue_687():
 
 
 def test_issue_694():
+    norm = pytest.importorskip("scipy.stats.norm")
+    expon = pytest.importorskip("scipy.stats.expon")
     from iminuit.cost import ExtendedUnbinnedNLL
-
-    stats = pytest.importorskip("scipy.stats")
-    norm = stats.norm
-    expon = stats.expon
 
     xmus = 1.0
     xmub = 5.0
