@@ -1787,7 +1787,13 @@ class Minuit:
         return vx, vy, vz
 
     def mncontour(
-        self, x: str, y: str, *, cl: _tp.Optional[float] = None, size: int = 100
+        self,
+        x: str,
+        y: str,
+        *,
+        cl: _tp.Optional[float] = None,
+        size: int = 100,
+        interpolated: int = 0,
     ) -> np.ndarray:
         """
         Get 2D Minos confidence region.
@@ -1816,6 +1822,12 @@ class Minuit:
         size : int, optional
             Number of points on the contour to find (default: 100). Increasing this makes
             the contour smoother, but requires more computation time.
+        interpolated : int, optional
+            Number of interpolated points on the contour (default: 0). If you set this to
+            a value larger than size, cubic spline interpolation is used to generate a
+            smoother curve and the interpolated coordinates are returned. Values smaller
+            than size are ignored. Good results can be obtained with size=20,
+            interpolated=200. This requires scipy.
 
         Returns
         -------
@@ -1853,6 +1865,19 @@ class Minuit:
         # add starting point at end to close the contour
         pts = np.append(pts, pts[:1], axis=0)
 
+        if interpolated > size:
+            try:
+                from scipy.interpolate import CubicSpline
+
+                x = np.linspace(0, 1, len(pts))
+                spl = CubicSpline(x, pts, bc_type="periodic")
+                pts = spl(np.linspace(0, 1, interpolated))
+
+            except ModuleNotFoundError:
+                warnings.warn(
+                    "Interpolation requires scipy. Please install scipy.",
+                    mutil.IMinuitWarning,
+                )
         return pts
 
     def draw_mncontour(
