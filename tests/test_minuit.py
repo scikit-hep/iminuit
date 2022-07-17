@@ -175,6 +175,23 @@ def test_mncontour_missing_scipy():
         m.mncontour("x", "y", cl=0.1)
 
 
+def test_mncontour_interpolated():
+    m = Minuit(func0, 1, 1)
+    m.migrad()
+
+    # interpolated < size is ignored
+    pts = m.mncontour("x", "y", size=20, interpolated=10)
+    assert len(pts) == 21
+
+    if not scipy_available:
+        with pytest.warns(IMinuitWarning, match="Interpolation requires scipy"):
+            pts = m.mncontour("x", "y", size=20, interpolated=200)
+            assert len(pts) == 21
+    else:
+        pts = m.mncontour("x", "y", size=20, interpolated=200)
+        assert len(pts) == 200
+
+
 @pytest.mark.skipif(scipy_available, reason="scipy should be missing for this test")
 def test_minos_missing_scipy():
     m = Minuit(func0, 1, 1)
