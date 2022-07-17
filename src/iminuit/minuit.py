@@ -1928,7 +1928,7 @@ class Minuit:
             pts = self.mncontour(x, y, cl=cl, size=size, interpolated=interpolated)
             n_lineto = len(pts) - 2
             if mpl_version < (3, 5):
-                n_lineto -= 1
+                n_lineto -= 1  # pragma: no cover
             c_val.append(cl)
             c_pts.append([pts])  # level can have more than one contour in mpl
             codes.append([[Path.MOVETO] + [Path.LINETO] * n_lineto + [Path.CLOSEPOLY]])
