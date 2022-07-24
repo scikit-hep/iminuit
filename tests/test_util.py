@@ -688,3 +688,24 @@ def test_progressbar_2(capsys):
         "<progress value='75' max='100'></progress> 75 %"
         "<progress value='100' max='100'></progress> 100 %"
     )
+
+
+@pytest.mark.parametrize(
+    "mask_expected",
+    (
+        (None, [[0, 1, 2]]),
+        ([True, False], [[0]]),
+        ([False, True], [[1]]),
+        ([True, True, True, False, True, True, False, True], [[0, 1, 2], [4, 5], [7]]),
+    ),
+)
+def test_histogram_segments(mask_expected):
+    mask, expected = mask_expected
+    if mask is None:
+        xe = np.linspace(0, 1, 4)
+        masked = np.arange(3)
+    else:
+        xe = np.linspace(0, 1, len(mask))
+        masked = np.arange(len(mask))[np.array(mask)]
+    segments = util._histogram_segments(mask, xe, masked)
+    assert_equal([s[0] for s in segments], expected)

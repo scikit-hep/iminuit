@@ -1401,3 +1401,27 @@ class _ProgressBar:
         self.value += v
         self._update(self.value / self.max_value)
         return self
+
+
+def _histogram_segments(mask, xe, masked):
+    assert masked.ndim == 1
+
+    if mask is None:
+        return [(masked, xe)]
+
+    segments = []
+    a = 0
+    b = 0
+    am = 0
+    n = len(mask)
+    while a < n:
+        if not mask[a]:
+            a += 1
+            continue
+        b = a + 1
+        while b < n and mask[b]:
+            b += 1
+        segments.append((masked[am : am + b - a], xe[a : b + 1]))
+        am += b - a
+        a = b + 1
+    return segments

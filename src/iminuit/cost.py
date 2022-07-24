@@ -807,6 +807,36 @@ class BinnedCost(MaskedCost):
 
         super().__init__(args, n, verbose, up, *updater)
 
+    def visualize(self, *args):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        *args : float
+            Parameter values.
+        """
+        try:
+            from matplotlib import pyplot as plt
+        except ModuleNotFoundError as e:
+            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
+            raise
+
+        if self._ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        n = self._masked[..., 0] if self._bztrafo else self._masked
+        ne = (self._masked[..., 1] if self._bztrafo else self._masked) ** 0.5
+        xe = self.xe
+        cx = 0.5 * (xe[1:] + xe[:-1])
+        if self.mask is not None:
+            cx = cx[self.mask]
+        plt.errorbar(cx, n, ne, fmt="ok")
+        mu = self._pred(args)  # implemented in derived
+        plt.stairs(mu, xe, fill=True, color="C0")
+
 
 class BinnedCostWithModel(BinnedCost):
     """Base class for binned cost functions."""
@@ -950,14 +980,17 @@ class BarlowBeestonLite(BinnedCost):
 
         super().__init__(name, n, xe, verbose)
 
-    def _call(self, args):
+    def _pred(self, args):
         ntemp, ntemp_var = self._bbl_data
-
         mu = 0
         mu_var = 0
         for a, nt, vnt in zip(args, ntemp, ntemp_var):
             mu += a * nt
             mu_var += a**2 * vnt
+        return mu, mu_var
+
+    def _call(self, args):
+        mu, mu_var = self._pred(args)
 
         ma = self.mask
         if ma is not None:
@@ -971,6 +1004,39 @@ class BarlowBeestonLite(BinnedCost):
 
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
+
+    def visualize(self, *args):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        *args : float
+            Parameter values.
+        """
+        try:
+            from matplotlib import pyplot as plt
+        except ModuleNotFoundError as e:
+            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
+            raise
+
+        if self._ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        n = self._masked[..., 0] if self._bztrafo else self._masked
+        ne = (self._masked[..., 1] if self._bztrafo else self._masked) ** 0.5
+
+        xe = self.xe
+        cx = 0.5 * (xe[1:] + xe[:-1])
+        if self.mask is not None:
+            cx = cx[self.mask]
+        plt.errorbar(cx, n, ne, fmt="ok")
+
+        mu, mu_var = self._pred(args)
+        mu_err = mu_var**0.5
+        plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=True, color="C0")
 
 
 class BinnedNLL(BinnedCostWithModel):
@@ -1022,17 +1088,22 @@ class BinnedNLL(BinnedCostWithModel):
         """
         super().__init__(n, xe, cdf, verbose)
 
-    def _call(self, args):
-        p = self._pred(args)
+    def _pred(self, args):
+        p = super()._pred(args)
         ma = self.mask
         if ma is not None:
-            p = p[ma]
-            p /= np.sum(p)  # normalise probability of remaining bins
+            p /= np.sum(p[ma])  # normalise probability of remaining bins
+        scale = np.sum(self._masked[..., 0] if self._bztrafo else self._masked)
+        return p * scale
+
+    def _call(self, args):
+        mu = self._pred(args)
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
         if self._bztrafo:
-            mu = p * np.sum(self._masked[..., 0])
             n, mu = self._bztrafo(mu)
         else:
-            mu = p * np.sum(self._masked)
             n = self._masked
         return multinominal_chi2(n, mu)
 
@@ -1248,6 +1319,34 @@ class LeastSquares(MaskedCost):
         ym = self._model(x, *args)
         ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
+
+    def visualize(self, *args):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        *args : float
+            Parameter values.
+        """
+        try:
+            from matplotlib import pyplot as plt
+        except ModuleNotFoundError as e:
+            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
+            raise
+
+        if self._ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        x, y, ye = self._masked.T
+        plt.errorbar(x, y, ye, fmt="ok")
+        if x[0] > 0 and x[-1] / x[0] > 1e2:
+            xm = np.geomspace(x[0], x[-1])
+        else:
+            xm = np.linspace(x[0], x[-1])
+        plt.plot(xm, self.model(xm, *args))
 
 
 class NormalConstraint(Cost):
