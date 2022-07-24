@@ -61,6 +61,8 @@ import abc
 import typing as _tp
 import warnings
 
+# correct ArrayLike from numpy.typing generates horrible looking signatures
+# python's help(), so we use this as a workaround
 _ArrayLike = _tp.Collection
 
 
@@ -99,7 +101,7 @@ class BohmZechTransform:
     See Bohm and Zech, NIMA 748 (2014) 1-6.
     """
 
-    def __init__(self, val, var):
+    def __init__(self, val: _ArrayLike, var: _ArrayLike):
         """
         Initialize transformer with data value and variance.
 
@@ -114,7 +116,7 @@ class BohmZechTransform:
         self._scale = val / (var + 1e-323)
         self._obs = val * self._scale
 
-    def __call__(self, val, var=None):
+    def __call__(self, val: _ArrayLike, var: _tp.Optional[_ArrayLike] = None):
         """
         Return precomputed scaled data and scaled prediction.
 
@@ -135,7 +137,7 @@ class BohmZechTransform:
         return self._obs, val * s, var * s**2
 
 
-def chi2(y, ye, ym):
+def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike):
     """
     Compute (potentially) chi2-distributed cost.
 
@@ -160,7 +162,7 @@ def chi2(y, ye, ym):
     return np.sum(_z_squared(y, ye, ym))
 
 
-def multinominal_chi2(n, mu):
+def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
 
@@ -188,7 +190,7 @@ def multinominal_chi2(n, mu):
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def poisson_chi2(n, mu):
+def poisson_chi2(n: _ArrayLike, mu: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
 
@@ -215,7 +217,7 @@ def poisson_chi2(n, mu):
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def barlow_beeston_lite_chi2_jsc(n, mu, mu_var):
+def barlow_beeston_lite_chi2_jsc(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -252,7 +254,7 @@ def barlow_beeston_lite_chi2_jsc(n, mu, mu_var):
     return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
 
 
-def barlow_beeston_lite_chi2_hpd(n, mu, mu_var):
+def barlow_beeston_lite_chi2_hpd(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -807,7 +809,7 @@ class BinnedCost(MaskedCost):
 
         super().__init__(args, n, verbose, up, *updater)
 
-    def visualize(self, *args):
+    def visualize(self, args):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -815,7 +817,7 @@ class BinnedCost(MaskedCost):
 
         Parameters
         ----------
-        *args : float
+        args : array-like
             Parameter values.
         """
         try:
@@ -1005,7 +1007,7 @@ class BarlowBeestonLite(BinnedCost):
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
 
-    def visualize(self, *args):
+    def visualize(self, args):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1013,7 +1015,7 @@ class BarlowBeestonLite(BinnedCost):
 
         Parameters
         ----------
-        *args : float
+        args : array-like
             Parameter values.
         """
         try:
@@ -1320,7 +1322,7 @@ class LeastSquares(MaskedCost):
         ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
 
-    def visualize(self, *args):
+    def visualize(self, args):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1328,7 +1330,7 @@ class LeastSquares(MaskedCost):
 
         Parameters
         ----------
-        *args : float
+        args : array-like
             Parameter values.
         """
         try:

@@ -2079,10 +2079,10 @@ class Minuit:
         ----------
         plot, optional : Callable or None
             To visualize the fit, interactive tries to access the visualize method on
-            the cost function, which accepts the current model parameters as input and
-            draws a visualization into the current matplotlib axes. If your cost function
-            does not provide a visualize method or if you want to override it, pass the
-            function here.
+            the cost function, which accepts the current model parameters as an array-like
+            and draws a visualization into the current matplotlib axes. If the cost
+            function does not provide a visualize method or if you want to override it,
+            pass the function here.
         """
         try:
             from ipywidgets import HBox, VBox, Output, FloatSlider, Button, ToggleButton
@@ -2096,17 +2096,14 @@ class Minuit:
             )
             raise
 
-        cost = self.fcn._fcn
+        pyfcn = self.fcn._fcn
 
         if plot is None:
-            if hasattr(cost, "visualize"):
-
-                def plot(args):
-                    cost.visualize(*args)
-
+            if hasattr(pyfcn, "visualize"):
+                plot = pyfcn.visualize
             else:
                 raise ValueError(
-                    f"class {cost.__class__.__name__} has no visualize method, "
+                    f"class {pyfcn.__class__.__name__} has no visualize method, "
                     "please use the plot argument to pass a plotting function"
                 )
 
@@ -2141,25 +2138,34 @@ class Minuit:
             # show_inline_matplotlib_plots()
             with out:
                 clear_output(wait=True)
-                update(args)
+                update(args, False)
                 show_inline_matplotlib_plots()
 
-        def update(args, extra=None):
+        def update(args, from_fit):
             try:
                 plot(args)
             except Exception as e:
                 print(e)
             trans = plt.gca().transAxes
+            if from_fit:
+                fval = self.fmin.fval
+            else:
+                fval = self.fcn(args)
             plt.text(
                 0.05,
                 1.05,
-                f"FCN = {cost(*args):.3f}",
+                f"FCN = {fval:.3f}",
                 transform=trans,
                 fontsize="x-large",
             )
-            if extra:
+            if from_fit:
                 plt.text(
-                    0.95, 1.05, extra, transform=trans, fontsize="x-large", ha="right"
+                    0.95,
+                    1.05,
+                    f"{'success' if self.valid and self.accurate else 'FAILURE'}",
+                    transform=trans,
+                    fontsize="x-large",
+                    ha="right",
                 )
 
         for s in sliders:
@@ -2183,10 +2189,7 @@ class Minuit:
             out.block = False
             with out:
                 clear_output(wait=True)
-                update(
-                    self.values,
-                    f"{'success' if self.valid and self.accurate else 'FAILURE'}",
-                )
+                update(self.values, True)
                 show_inline_matplotlib_plots()
 
         def on_update_button_clicked(change):
