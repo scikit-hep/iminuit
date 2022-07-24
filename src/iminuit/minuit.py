@@ -2112,8 +2112,9 @@ class Minuit:
             val = self.values[par]
             step = mutil._guess_initial_step(val)
             a, b = self.limits[par]
-            a = np.nextafter(a, b) if np.isfinite(a) else val - 100 * step
-            b = np.nextafter(b, a) if np.isfinite(b) else val + 100 * step
+            # safety margin to avoid overflow warnings
+            a = a + 1e-300 if np.isfinite(a) else val - 100 * step
+            b = b - 1e-300 if np.isfinite(b) else val + 100 * step
             s = FloatSlider(
                 val, min=a, max=b, step=step, description=par, continuous_update=True
             )
@@ -2142,11 +2143,12 @@ class Minuit:
                 show_inline_matplotlib_plots()
 
         def update(args, from_fit):
-            try:
-                plot(args)
-            except Exception as e:
-                print(e)
             trans = plt.gca().transAxes
+            try:
+                with warnings.catch_warnings():
+                    plot(args)
+            except Exception as e:
+                plt.text(0.5, 0.5, e.msg, transform=trans)
             if from_fit:
                 fval = self.fmin.fval
             else:

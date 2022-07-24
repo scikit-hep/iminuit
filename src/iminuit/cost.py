@@ -633,8 +633,35 @@ class UnbinnedCost(MaskedCost):
         """For internal use."""
         self._model = model
         self._log = log
-        d = _norm(data)
-        super().__init__(describe(model)[1:], d, verbose)
+        super().__init__(describe(model)[1:], _norm(data), verbose)
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        try:
+            from matplotlib import pyplot as plt
+        except ModuleNotFoundError as e:
+            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
+            raise
+
+        if self.data.ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        n, xe = np.histogram(self.data, bins=50)
+        cx = 0.5 * (xe[1:] + xe[:-1])
+        plt.errorbar(cx, n, n**0.5, fmt="ok")
+        xm = np.linspace(xe[0], xe[-1])
+        dx = xe[1] - xe[0]
+        ym = self.scaled_pdf(xm, *args) * dx
+        plt.fill_between(xm, 0, ym, fc="C0")
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -649,7 +676,17 @@ class UnbinnedNLL(UnbinnedCost):
     @property
     def pdf(self):
         """Get probability density model."""
+        if self._log:
+            return lambda *args: np.exp(self._model(*args))
         return self._model
+
+    @property
+    def scaled_pdf(self):
+        """Get probability density model."""
+        scale = np.prod(self.data.shape)
+        if self._log:
+            return lambda *args: scale * np.exp(self._model(*args))
+        return lambda *args: scale * self._model(*args)
 
     def __init__(
         self,
@@ -703,9 +740,28 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
     __slots__ = ()
 
     @property
+    def pdf(self):
+        """Get probability density model."""
+        if self._log:
+
+            def fn(*args):
+                n, x = self._model(*args)
+                return np.exp(x) / n
+
+        else:
+
+            def fn(*args):
+                n, x = self._model(*args)
+                return x / n
+
+        return fn
+
+    @property
     def scaled_pdf(self):
         """Get density model."""
-        return self._model
+        if self._log:
+            return lambda *args: np.exp(self._model(*args)[1])
+        return lambda *args: self._model(*args)[1]
 
     def __init__(
         self,
@@ -809,7 +865,7 @@ class BinnedCost(MaskedCost):
 
         super().__init__(args, n, verbose, up, *updater)
 
-    def visualize(self, args):
+    def visualize(self, args: _ArrayLike):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1007,7 +1063,7 @@ class BarlowBeestonLite(BinnedCost):
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
 
-    def visualize(self, args):
+    def visualize(self, args: _ArrayLike):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1322,7 +1378,7 @@ class LeastSquares(MaskedCost):
         ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
 
-    def visualize(self, args):
+    def visualize(self, args: _ArrayLike):
         """
         Visualize data and model agreement (requires matplotlib).
 
