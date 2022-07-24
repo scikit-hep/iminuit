@@ -422,14 +422,29 @@ def test_UnbinnedNLL_mask():
     assert np.isnan(c(0)) == False
 
 
-def test_UnbinnedNLL_properties():
-    def pdf(x, a, b):
-        return 0
+@pytest.mark.parametrize("log", (False, True))
+def test_UnbinnedNLL_properties(log):
+    def logpdf(x, a, b):
+        return a + b * x
 
-    c = UnbinnedNLL([1, 2], pdf)
-    assert c.pdf is pdf
+    def pdf(x, a, b):
+        return np.exp(logpdf(x, a, b))
+
+    c = UnbinnedNLL([1, 2], logpdf if log else pdf, log=log)
+
+    x = np.linspace(0, 1)
+    expected = pdf(x, 1, 2)
+    assert_allclose(c.pdf(x, 1, 2), expected)
+
+    expected *= len(c.data)
+    assert_allclose(c.scaled_pdf(x, 1, 2), expected)
+
     with pytest.raises(AttributeError):
         c.pdf = None
+
+    with pytest.raises(AttributeError):
+        c.scaled_pdf = None
+
     assert_equal(c.data, [1, 2])
     c.data = [2, 3]
     assert_equal(c.data, [2, 3])
@@ -450,14 +465,30 @@ def test_ExtendedUnbinnedNLL_mask():
     assert c.ndata == np.inf
 
 
-def test_ExtendedUnbinnedNLL_properties():
-    def pdf(x, a, b):
-        return 0
+@pytest.mark.parametrize("log", (False, True))
+def test_ExtendedUnbinnedNLL_properties(log):
+    def log_model(x, a, b):
+        return 2.5, a + b * x
 
-    c = ExtendedUnbinnedNLL([1, 2], pdf)
-    assert c.scaled_pdf is pdf
+    def model(x, a, b):
+        n, y = log_model(x, a, b)
+        return n, np.exp(y)
+
+    c = ExtendedUnbinnedNLL([1, 2], log_model if log else model, log=log)
+
+    x = np.linspace(0, 1)
+
+    scale, expected = model(x, 1, 2)
+    assert_allclose(c.scaled_pdf(x, 1, 2), expected)
+
+    expected /= scale
+    assert_allclose(c.pdf(x, 1, 2), expected)
+
     with pytest.raises(AttributeError):
         c.scaled_pdf = None
+
+    with pytest.raises(AttributeError):
+        c.pdf = None
 
 
 def test_BinnedNLL_mask():
