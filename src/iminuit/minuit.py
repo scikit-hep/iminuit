@@ -2091,8 +2091,8 @@ class Minuit:
             from matplotlib import pyplot as plt
         except ModuleNotFoundError as e:
             e.msg += (
-                "\n\nPlease install ipywidgets, IPython, matplotlib to "
-                "enable interactive mode"
+                "\n\nPlease install ipywidgets, IPython, and matplotlib to "
+                "enable interactive"
             )
             raise
 
