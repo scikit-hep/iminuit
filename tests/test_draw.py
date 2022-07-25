@@ -3,7 +3,6 @@ from iminuit import Minuit
 from pathlib import Path
 import numpy as np
 
-
 mpl = pytest.importorskip("matplotlib")
 plt = pytest.importorskip("matplotlib.pyplot")
 mpl.use("Agg")
@@ -145,3 +144,28 @@ def test_mnmatrix_7(fig):
     m = Minuit(lambda x: abs(x) ** 2 + x**4 + 10 * x, x=0)
     m.migrad()
     m.draw_mnmatrix(cl=[1, 3])
+
+
+def test_interactive():
+    def cost(a, b):
+        return a**2 + b**2
+
+    def plot(args):
+        pass
+
+    cost.visualize = lambda self, args: plot(args)
+
+    m = Minuit(cost, 1, 1)
+
+    try:
+        import ipywidgets  # noqa
+        import IPython  # noqa
+
+        # warnings.simple_filter(DeprecationWarning, "ignore") #
+        assert isinstance(m.interactive(), ipywidgets.HBox)
+
+        assert isinstance(m.interactive(plot), ipywidgets.HBox)
+
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install"):
+            m.interactive()

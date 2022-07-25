@@ -13,6 +13,7 @@ import typing as _tp
 import abc
 from time import monotonic
 import warnings
+import sys
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -1425,3 +1426,29 @@ def _histogram_segments(mask, xe, masked):
         am += b - a
         a = b + 1
     return segments
+
+
+def _show_inline_matplotlib_plots():
+    # Code taken from ipywidgets/interactive.py
+    #
+    # See comments in the original why this is needed.
+    #
+    # Copyright (c) Jupyter Development Team.
+    # Distributed under the terms of the Modified BSD License.
+    #
+    # This version was modified to remove a deprecation warning.
+    if "matplotlib" not in sys.modules:
+        # matplotlib hasn't been imported, nothing to do.
+        return
+
+    try:
+        import matplotlib as mpl
+        from matplotlib_inline.backend_inline import flush_figures
+    except ImportError:
+        return
+
+    if (
+        mpl.get_backend() == "module://ipykernel.pylab.backend_inline"
+        or mpl.get_backend() == "module://matplotlib_inline.backend_inline"
+    ):
+        flush_figures()

@@ -29,6 +29,15 @@ except ImportError:
     scipy_stats_available = False
 
 
+def norm_logpdf(x, mu, sigma):
+    z = (x - mu) / sigma
+    return -0.5 * (np.log(2 * np.pi) + z**2) - np.log(sigma)
+
+
+def norm_pdf(x, mu, sigma):
+    return np.exp(norm_logpdf(x, mu, sigma))
+
+
 def mvnorm(mux, muy, sx, sy, rho):
     C = np.empty((2, 2))
     C[0, 0] = sx**2
@@ -59,11 +68,11 @@ def binned(unbinned):
 
 
 def logpdf(x, mu, sigma):
-    return norm(mu, sigma).logpdf(x)
+    return norm_logpdf(x, mu, sigma)
 
 
 def pdf(x, mu, sigma):
-    return norm(mu, sigma).pdf(x)
+    return norm_pdf(x, mu, sigma)
 
 
 def cdf(x, mu, sigma):
@@ -74,13 +83,24 @@ def scaled_cdf(x, n, mu, sigma):
     return n * norm(mu, sigma).cdf(x)
 
 
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+def test_norm_logpdf():
+    x = np.linspace(-3, 3)
+    assert_allclose(norm_logpdf(x, 3, 2), norm.logpdf(x, 3, 2))
+
+
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+def test_norm_pdf():
+    x = np.linspace(-3, 3)
+    assert_allclose(norm_pdf(x, 3, 2), norm.pdf(x, 3, 2))
+
+
 def test_Constant():
     c = Constant(2.5)
     assert c.value == 2.5
     assert c.ndata == 0
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
 def test_UnbinnedNLL(unbinned, verbose, model):
@@ -116,7 +136,76 @@ def test_UnbinnedNLL_2D():
     assert_allclose(m.values, truth, atol=0.02)
 
 
+def test_UnbinnedNLL_mask():
+    c = UnbinnedNLL([1, np.nan, 2], lambda x, a: x + a)
+    assert c.mask is None
+
+    assert np.isnan(c(0)) == True
+    c.mask = np.arange(3) != 1
+    assert_equal(c.mask, (True, False, True))
+    assert np.isnan(c(0)) == False
+
+
+@pytest.mark.parametrize("log", (False, True))
+def test_UnbinnedNLL_properties(log):
+    c = UnbinnedNLL([1, 2], norm_logpdf if log else norm_pdf, log=log)
+
+    x = np.linspace(0, 1)
+    expected = norm_pdf(x, 1, 2)
+    assert_allclose(c.pdf(x, 1, 2), expected)
+
+    expected *= len(c.data)
+    assert_allclose(c.scaled_pdf(x, 1, 2), expected)
+
+    with pytest.raises(AttributeError):
+        c.pdf = None
+
+    with pytest.raises(AttributeError):
+        c.scaled_pdf = None
+
+    assert_equal(c.data, [1, 2])
+    c.data = [2, 3]
+    assert_equal(c.data, [2, 3])
+    with pytest.raises(ValueError):
+        c.data = [1, 2, 3]
+    assert c.verbose == 0
+    c.verbose = 1
+    assert c.verbose == 1
+
+
+@pytest.mark.parametrize("log", (False, True))
+def test_UnbinnedNLL_visualize(log):
+    c = UnbinnedNLL([1, 2], norm_logpdf if log else norm_pdf, log=log)
+
+    try:
+        import matplotlib  # noqa
+
+        c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))
+
+
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+def test_UnbinnedNLL_visualize_2D():
+    def model(x_y, mux, muy, sx, sy, rho):
+        return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
+
+    truth = 0.1, 0.2, 0.3, 0.4, 0.5
+    x, y = mvnorm(*truth).rvs(size=10, random_state=1).T
+
+    c = UnbinnedNLL((x, y), model)
+
+    try:
+        import matplotlib  # noqa
+
+        with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
+            c.visualize(truth)
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize(truth)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
 def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
@@ -151,6 +240,7 @@ def test_ExtendedUnbinnedNLL_2D():
     x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
 
     cost = ExtendedUnbinnedNLL((x, y), model)
+
     m = Minuit(cost, *truth)
     m.limits["n", "sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
@@ -158,6 +248,85 @@ def test_ExtendedUnbinnedNLL_2D():
     assert m.valid
 
     assert_allclose(m.values, truth, atol=0.1)
+
+
+def test_ExtendedUnbinnedNLL_mask():
+    c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
+    assert c.ndata == np.inf
+
+    assert np.isnan(c(0)) == True
+    c.mask = np.arange(3) != 1
+    assert np.isnan(c(0)) == False
+    assert c.ndata == np.inf
+
+
+@pytest.mark.parametrize("log", (False, True))
+def test_ExtendedUnbinnedNLL_properties(log):
+    def log_model(x, s, mu, sigma):
+        return s, np.log(s) + norm_logpdf(x, mu, sigma)
+
+    def model(x, s, mu, sigma):
+        n, y = log_model(x, s, mu, sigma)
+        return n, np.exp(y)
+
+    c = ExtendedUnbinnedNLL([1, 2, 3], log_model if log else model, log=log)
+
+    x = np.linspace(0, 1)
+
+    scale, expected = model(x, 1, 2, 3)
+    assert_allclose(c.scaled_pdf(x, 1, 2, 3), expected)
+
+    expected /= scale
+    assert_allclose(c.pdf(x, 1, 2, 3), expected)
+
+    with pytest.raises(AttributeError):
+        c.scaled_pdf = None
+
+    with pytest.raises(AttributeError):
+        c.pdf = None
+
+
+@pytest.mark.parametrize("log", (False, True))
+def test_ExtendedUnbinnedNLL_visualize(log):
+    def log_model(x, s, mu, sigma):
+        return s, np.log(s) + norm_logpdf(x, mu, sigma)
+
+    def model(x, s, mu, sigma):
+        return s, s * norm_pdf(x, mu, sigma)
+
+    c = ExtendedUnbinnedNLL(
+        [1, 2, 3],
+        log_model if log else model,
+        log=log,
+    )
+
+    try:
+        import matplotlib  # noqa
+
+        c.visualize((1, 2, 3))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2, 3))
+
+
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+def test_ExtendedUnbinnedNLL_visualize_2D():
+    def model(x_y, n, mux, muy, sx, sy, rho):
+        return n * 100, n * 100 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
+
+    truth = 1.0, 0.1, 0.2, 0.3, 0.4, 0.5
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 100)).T
+
+    c = ExtendedUnbinnedNLL((x, y), model)
+
+    try:
+        import matplotlib  # noqa
+
+        with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
+            c.visualize(truth)
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize(truth)
 
 
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
@@ -179,7 +348,7 @@ def test_BinnedNLL(binned, verbose):
     assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
 
 
-def test_weighted_BinnedNLL():
+def test_BinnedNLL_weighted():
     xe = np.array([0, 1, 10])
     p = np.diff(expon_cdf(xe, 1))
     n = p * 1000
@@ -219,10 +388,9 @@ def test_BinnedNLL_bad_input_4():
         BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_BinnedNLL_ndof_zero():
-    c = BinnedNLL([1, 2], [0, 1, 2], lambda x, loc, scale: norm.cdf(x, loc, scale))
-    m = Minuit(c, loc=0, scale=1)
+    c = BinnedNLL([1], [0, 1], lambda x, scale: expon_cdf(x, scale))
+    m = Minuit(c, scale=1)
     m.migrad()
     assert c.ndata == m.nfit
     assert np.isnan(m.fmin.reduced_chi2)
@@ -284,6 +452,66 @@ def test_BinnedNLL_2D_with_zero_bins():
     assert_allclose(m.values, truth, atol=0.05)
 
 
+def test_BinnedNLL_mask():
+
+    c = BinnedNLL([5, 1000, 1], [0, 1, 2, 3], expon_cdf)
+    assert c.ndata == 3
+
+    c_unmasked = c(1)
+    c.mask = np.arange(3) != 1
+    assert c(1) < c_unmasked
+    assert c.ndata == 2
+
+
+def test_BinnedNLL_properties():
+    def cdf(x, a, b):
+        return 0
+
+    c = BinnedNLL([1], [1, 2], cdf)
+    assert c.cdf is cdf
+    with pytest.raises(AttributeError):
+        c.cdf = None
+    assert_equal(c.n, [1])
+    assert_equal(c.xe, [1, 2])
+    c.n = [2]
+    assert_equal(c.n, [2])
+    with pytest.raises(ValueError):
+        c.n = [1, 2]
+
+
+def test_BinnedNLL_visualize():
+    c = BinnedNLL([1], [1, 2], expon_cdf)
+
+    try:
+        import matplotlib  # noqa
+
+        c.visualize(1)
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize(1)
+
+
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+def test_BinnedNLL_visualize_2D():
+    truth = (0.1, 0.2, 0.3, 0.4, 0.5)
+    x, y = mvnorm(*truth).rvs(size=10, random_state=1).T
+    w, xe, ye = np.histogram2d(x, y, bins=(50, 100), range=((-5, 5), (-5, 5)))
+
+    def model(xy, mux, muy, sx, sy, rho):
+        return mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
+
+    c = BinnedNLL(w, (xe, ye), model)
+
+    try:
+        import matplotlib  # noqa
+
+        with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
+            c.visualize(truth)
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize(truth)
+
+
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
@@ -304,7 +532,7 @@ def test_ExtendedBinnedNLL(binned, verbose):
     assert_allclose(m.fmin.reduced_chi2, 1, 0.1)
 
 
-def test_weighted_ExtendedBinnedNLL():
+def test_ExtendedBinnedNLL_weighted():
     xe = np.array([0, 1, 10])
     n = np.diff(expon_cdf(xe, 1))
     m1 = Minuit(ExtendedBinnedNLL(n, xe, expon_cdf), 1)
@@ -372,6 +600,61 @@ def test_ExtendedBinnedNLL_3D():
     assert_allclose(m.values, truth, atol=0.05)
 
 
+def test_ExtendedBinnedNLL_mask():
+    c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], expon_cdf)
+    assert c.ndata == 3
+
+    c_unmasked = c(2)
+    c.mask = np.arange(3) != 1
+    assert c(2) < c_unmasked
+    assert c.ndata == 2
+
+
+def test_ExtendedBinnedNLL_properties():
+    def cdf(x, a):
+        return 0
+
+    c = ExtendedBinnedNLL([1], [1, 2], cdf)
+    assert c.scaled_cdf is cdf
+
+
+def test_ExtendedBinnedNLL_visualize():
+    def model(x, s, slope):
+        return s * expon_cdf(x, slope)
+
+    c = ExtendedBinnedNLL([1], [1, 2], model)
+
+    try:
+        import matplotlib  # noqa
+
+        c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))
+
+
+@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+def test_ExtendedBinnedNLL_visualize_2D():
+    truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
+
+    w, xe, ye = np.histogram2d(x, y, bins=(10, 20))
+
+    def model(xy, n, mux, muy, sx, sy, rho):
+        return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
+
+    c = ExtendedBinnedNLL(w, (xe, ye), model)
+
+    try:
+        import matplotlib  # noqa
+
+        with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
+            c.visualize(truth)
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize(truth)
+
+
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_LeastSquares(loss, verbose):
@@ -401,6 +684,30 @@ def test_LeastSquares(loss, verbose):
     assert_allclose(m.fmin.reduced_chi2, 1, atol=5e-2)
 
 
+def test_LeastSquares_2D():
+    x = np.array([1.0, 2.0, 3.0])
+    y = np.array([4.0, 5.0, 6.0])
+    z = 1.5 * x + 0.2 * y
+    ze = 1.5
+
+    def model(xy, a, b):
+        x, y = xy
+        return a * x + b * y
+
+    c = LeastSquares((x, y), z, ze, model)
+    assert_equal(c.x, (x, y))
+    assert_equal(c.y, z)
+    assert_equal(c.yerror, ze)
+    assert_allclose(c(1.5, 0.2), 0.0)
+    assert_allclose(c(2.5, 0.2), np.sum(((z - 2.5 * x - 0.2 * y) / ze) ** 2))
+    assert_allclose(c(1.5, 1.2), np.sum(((z - 1.5 * x - 1.2 * y) / ze) ** 2))
+
+    c.y = 2 * z
+    assert_equal(c.y, 2 * z)
+    c.x = (y, x)
+    assert_equal(c.x, (y, x))
+
+
 def test_LeastSquares_bad_input():
     with pytest.raises(ValueError):
         LeastSquares([1, 2], [], [1], lambda x, a: 0)
@@ -410,130 +717,6 @@ def test_LeastSquares_bad_input():
 
     with pytest.raises(ValueError):
         LeastSquares([1], [1], [1], lambda x, a: 0, loss="foo")
-
-
-def test_UnbinnedNLL_mask():
-    c = UnbinnedNLL([1, np.nan, 2], lambda x, a: x + a)
-    assert c.mask is None
-
-    assert np.isnan(c(0)) == True
-    c.mask = np.arange(3) != 1
-    assert_equal(c.mask, (True, False, True))
-    assert np.isnan(c(0)) == False
-
-
-@pytest.mark.parametrize("log", (False, True))
-def test_UnbinnedNLL_properties(log):
-    def logpdf(x, a, b):
-        return a + b * x
-
-    def pdf(x, a, b):
-        return np.exp(logpdf(x, a, b))
-
-    c = UnbinnedNLL([1, 2], logpdf if log else pdf, log=log)
-
-    x = np.linspace(0, 1)
-    expected = pdf(x, 1, 2)
-    assert_allclose(c.pdf(x, 1, 2), expected)
-
-    expected *= len(c.data)
-    assert_allclose(c.scaled_pdf(x, 1, 2), expected)
-
-    with pytest.raises(AttributeError):
-        c.pdf = None
-
-    with pytest.raises(AttributeError):
-        c.scaled_pdf = None
-
-    assert_equal(c.data, [1, 2])
-    c.data = [2, 3]
-    assert_equal(c.data, [2, 3])
-    with pytest.raises(ValueError):
-        c.data = [1, 2, 3]
-    assert c.verbose == 0
-    c.verbose = 1
-    assert c.verbose == 1
-
-
-def test_ExtendedUnbinnedNLL_mask():
-    c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
-    assert c.ndata == np.inf
-
-    assert np.isnan(c(0)) == True
-    c.mask = np.arange(3) != 1
-    assert np.isnan(c(0)) == False
-    assert c.ndata == np.inf
-
-
-@pytest.mark.parametrize("log", (False, True))
-def test_ExtendedUnbinnedNLL_properties(log):
-    def log_model(x, a, b):
-        return 2.5, a + b * x
-
-    def model(x, a, b):
-        n, y = log_model(x, a, b)
-        return n, np.exp(y)
-
-    c = ExtendedUnbinnedNLL([1, 2], log_model if log else model, log=log)
-
-    x = np.linspace(0, 1)
-
-    scale, expected = model(x, 1, 2)
-    assert_allclose(c.scaled_pdf(x, 1, 2), expected)
-
-    expected /= scale
-    assert_allclose(c.pdf(x, 1, 2), expected)
-
-    with pytest.raises(AttributeError):
-        c.scaled_pdf = None
-
-    with pytest.raises(AttributeError):
-        c.pdf = None
-
-
-def test_BinnedNLL_mask():
-
-    c = BinnedNLL([5, 1000, 1], [0, 1, 2, 3], expon_cdf)
-    assert c.ndata == 3
-
-    c_unmasked = c(1)
-    c.mask = np.arange(3) != 1
-    assert c(1) < c_unmasked
-    assert c.ndata == 2
-
-
-def test_BinnedNLL_properties():
-    def cdf(x, a, b):
-        return 0
-
-    c = BinnedNLL([1], [1, 2], cdf)
-    assert c.cdf is cdf
-    with pytest.raises(AttributeError):
-        c.cdf = None
-    assert_equal(c.n, [1])
-    assert_equal(c.xe, [1, 2])
-    c.n = [2]
-    assert_equal(c.n, [2])
-    with pytest.raises(ValueError):
-        c.n = [1, 2]
-
-
-def test_ExtendedBinnedNLL_mask():
-    c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], expon_cdf)
-    assert c.ndata == 3
-
-    c_unmasked = c(2)
-    c.mask = np.arange(3) != 1
-    assert c(2) < c_unmasked
-    assert c.ndata == 2
-
-
-def test_ExtendedBinnedNLL_properties():
-    def cdf(x, a):
-        return 0
-
-    c = ExtendedBinnedNLL([1], [1, 2], cdf)
-    assert c.scaled_cdf is cdf
 
 
 def test_LeastSquares_mask():
@@ -587,31 +770,38 @@ def test_LeastSquares_properties():
         c.yerror = [1, 2]
 
 
-def test_LeastSquares_2D():
-    x = np.array([1.0, 2.0, 3.0])
-    y = np.array([4.0, 5.0, 6.0])
-    z = 1.5 * x + 0.2 * y
-    ze = 1.5
+def test_LeastSquares_visualize():
+    def line(x, a, b):
+        return a + b * x
 
-    def model(xy, a, b):
-        x, y = xy
-        return a * x + b * y
+    c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
-    c = LeastSquares((x, y), z, ze, model)
-    assert_equal(c.x, (x, y))
-    assert_equal(c.y, z)
-    assert_equal(c.yerror, ze)
-    assert_allclose(c(1.5, 0.2), 0.0)
-    assert_allclose(c(2.5, 0.2), np.sum(((z - 2.5 * x - 0.2 * y) / ze) ** 2))
-    assert_allclose(c(1.5, 1.2), np.sum(((z - 1.5 * x - 1.2 * y) / ze) ** 2))
+    try:
+        import matplotlib  # noqa
 
-    c.y = 2 * z
-    assert_equal(c.y, 2 * z)
-    c.x = (y, x)
-    assert_equal(c.x, (y, x))
+        c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))
 
 
-def test_addable_cost_1():
+def test_LeastSquares_visualize_2D():
+    def line(x, a, b):
+        return a + b * x
+
+    c = LeastSquares([[1, 2]], [[2, 3]], 0.1, line)
+
+    try:
+        import matplotlib  # noqa
+
+        with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
+            c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))
+
+
+def test_CostSum_1():
     def model1(x, a):
         return a + x
 
@@ -668,7 +858,7 @@ def test_addable_cost_1():
     assert lsq31212.ndata == 6
 
 
-def test_addable_cost_2():
+def test_CostSum_2():
     ref = NormalConstraint("a", 1, 2), NormalConstraint(("b", "a"), (1, 1), (2, 2))
     cs = ref[0] + ref[1]
     assert cs.ndata == 3
@@ -683,17 +873,34 @@ def test_addable_cost_2():
     assert cs.count(ref[0]) == 1
 
 
-def test_addable_cost_3():
+def test_CostSum_3():
     def line_np(x, par):
         return par[0] + par[1] * x
 
     lsq = LeastSquares([1, 2, 3], [3, 4, 5], 1, line_np)
     con = NormalConstraint("par", (1, 1), (1, 1))
     cs = sum([lsq, con])
-    assert cs((1, 1)) == pytest.approx(3)
+    assert cs((1, 1)) == lsq((1, 1)) + con((1, 1))
 
     cs = 1.5 + lsq + con
-    assert cs((1, 1)) == pytest.approx(4.5)
+    assert cs((1, 1)) == lsq((1, 1)) + con((1, 1)) + 1.5
+
+
+def test_CostSum_visualize():
+    def line(x, a, b):
+        return a + b * x
+
+    lsq = LeastSquares([1, 2, 3], [3, 4, 5], 1, line)
+    con = NormalConstraint(("a", "b"), (1, 1), (1, 1))
+    c = lsq + con
+
+    try:
+        import matplotlib  # noqa
+
+        c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))
 
 
 def test_NormalConstraint_1():
@@ -757,6 +964,18 @@ def test_NormalConstraint_properties():
     nc.covariance = (1, 2)
     assert_equal(nc.value, (2, 3))
     assert_equal(nc.covariance, (1, 2))
+
+
+def test_NormalConstraint_visualize():
+    c = NormalConstraint(("a", "b"), (1, 2), (3, 4))
+
+    try:
+        import matplotlib  # noqa
+
+        c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))
 
 
 dtypes_to_test = [np.float32]
@@ -927,3 +1146,36 @@ def test_BarlowBeestonLite_bad_input(method):
 
     with pytest.raises(ValueError, match="number of names"):
         BarlowBeestonLite([1], [1, 2], [[1]], name=("b", "s"))
+
+
+def test_BarlowBeestonLite_visualize():
+    xe = [0, 1, 2]
+    n = [1, 2]
+    t = [[1, 2], [5, 4]]
+
+    c = BarlowBeestonLite(n, xe, t)
+
+    try:
+        import matplotlib  # noqa
+
+        c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))
+
+
+def test_BarlowBeestonLite_visualize_2D():
+    xe = ([0, 1, 2], [0, 1, 2])
+    n = [[1, 2], [3, 4]]
+    t = [[[1, 2], [1, 2]], [[5, 4], [5, 4]]]
+
+    c = BarlowBeestonLite(n, xe, t)
+
+    try:
+        import matplotlib  # noqa
+
+        with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
+            c.visualize((1, 2))
+    except ModuleNotFoundError:
+        with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
+            c.visualize((1, 2))

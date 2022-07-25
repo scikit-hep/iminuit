@@ -516,16 +516,9 @@ class CostSum(Cost, Sequence):
 
     Warnings
     --------
-    CostSum does not work very well with cost functions that accept arrays, because the
+    CostSum does not support cost functions that accept a parameter array, because the
     function signature does not allow one to determine how many parameters are accepted by
     the function and which parameters overlap between different cost functions.
-
-    CostSum works with cost functions that accept arrays only under the condition that all
-    cost functions accept the very same array parameter:
-
-    1) All array must have the same name in all constituent cost functions.
-    2) All arrays must have the same length.
-    3) The positions in each array must correspond to the same model parameters.
     """
 
     __slots__ = "_items", "_maps"
@@ -557,8 +550,8 @@ class CostSum(Cost, Sequence):
 
     def _call(self, args):
         r = 0.0
-        for c, cargs in self._split(args):
-            r += c._call(cargs)
+        for comp, cargs in self._split(args):
+            r += comp._call(cargs)
         return r
 
     @Cost.ndata.getter  # type:ignore
@@ -578,7 +571,10 @@ class CostSum(Cost, Sequence):
         """
         Visualize data and model agreement (requires matplotlib).
 
-        The visualization is drawn with matplotlib.pyplot into the current axes.
+        The visualization is drawn with matplotlib.pyplot into the current figure.
+        Subplots are created to visualize each part of the cost function, the figure
+        height is increased accordingly. Parts without a visualize method are silently
+        ignored.
 
         Parameters
         ----------
@@ -590,6 +586,8 @@ class CostSum(Cost, Sequence):
         except ModuleNotFoundError as e:
             e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
             raise
+
+        args = np.atleast_1d(args)
 
         n = sum(hasattr(comp, "visualize") for comp in self)
         fig = plt.gcf()
@@ -693,8 +691,8 @@ class UnbinnedCost(MaskedCost):
         plt.errorbar(cx, n, n**0.5, fmt="ok")
         xm = np.linspace(xe[0], xe[-1])
         dx = xe[1] - xe[0]
-        ym = self.scaled_pdf(xm, *args) * dx
-        plt.fill_between(xm, 0, ym, fc="C0")
+        ym = self.scaled_pdf(xm, *args)
+        plt.fill_between(xm, 0, ym * dx, fc="C0")
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -915,6 +913,8 @@ class BinnedCost(MaskedCost):
             e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
             raise
 
+        args = np.atleast_1d(args)
+
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
@@ -1115,6 +1115,8 @@ class BarlowBeestonLite(BinnedCost):
 
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        args = np.atleast_1d(args)
 
         n = self._masked[..., 0] if self._bztrafo else self._masked
         ne = (self._masked[..., 1] if self._bztrafo else self._masked) ** 0.5
@@ -1437,7 +1439,10 @@ class LeastSquares(MaskedCost):
             xm = np.geomspace(x[0], x[-1])
         else:
             xm = np.linspace(x[0], x[-1])
-        plt.plot(xm, self.model(xm, *args))
+
+        ym = self.model(xm, *args)
+
+        plt.plot(xm, ym)
 
 
 class NormalConstraint(Cost):
@@ -1543,6 +1548,8 @@ class NormalConstraint(Cost):
         except ModuleNotFoundError as e:
             e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
             raise
+
+        args = np.atleast_1d(args)
 
         par = self.func_code.co_varnames
         val = self.value

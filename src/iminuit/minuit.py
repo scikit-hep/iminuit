@@ -2086,7 +2086,6 @@ class Minuit:
         """
         try:
             from ipywidgets import HBox, VBox, Output, FloatSlider, Button, ToggleButton
-            from ipywidgets.widgets.interaction import show_inline_matplotlib_plots
             from IPython.display import clear_output
             from matplotlib import pyplot as plt
         except ModuleNotFoundError as e:
@@ -2140,7 +2139,7 @@ class Minuit:
             with out:
                 clear_output(wait=True)
                 update(args, False)
-                show_inline_matplotlib_plots()
+                mutil._show_inline_matplotlib_plots()
 
         def update(args, from_fit):
             trans = plt.gca().transAxes
@@ -2192,7 +2191,7 @@ class Minuit:
             with out:
                 clear_output(wait=True)
                 update(self.values, True)
-                show_inline_matplotlib_plots()
+                mutil._show_inline_matplotlib_plots()
 
         def on_update_button_clicked(change):
             for s in sliders:
