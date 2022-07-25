@@ -29,6 +29,14 @@ except ImportError:
     scipy_stats_available = False
 
 
+try:
+    import matplotlib  # noqa
+
+    matplotlib_available = True
+except ImportError:
+    matplotlib_available = False
+
+
 def norm_logpdf(x, mu, sigma):
     z = (x - mu) / sigma
     return -0.5 * (np.log(2 * np.pi) + z**2) - np.log(sigma)
@@ -320,12 +328,10 @@ def test_ExtendedUnbinnedNLL_visualize_2D():
 
     c = ExtendedUnbinnedNLL((x, y), model)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
             c.visualize(truth)
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize(truth)
 
@@ -483,15 +489,12 @@ def test_BinnedNLL_properties():
 def test_BinnedNLL_visualize():
     c = BinnedNLL([1, 2], [1, 2, 3], expon_cdf)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize(1)
 
         c.mask = np.array([False, True])
         c.visualize(1)
-
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize(1)
 
@@ -507,12 +510,10 @@ def test_BinnedNLL_visualize_2D():
 
     c = BinnedNLL(w, (xe, ye), model)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
             c.visualize(truth)
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize(truth)
 
@@ -629,11 +630,9 @@ def test_ExtendedBinnedNLL_visualize():
 
     c = ExtendedBinnedNLL([1], [1, 2], model)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize((1, 2))
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
 
@@ -650,12 +649,10 @@ def test_ExtendedBinnedNLL_visualize_2D():
 
     c = ExtendedBinnedNLL(w, (xe, ye), model)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
             c.visualize(truth)
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize(truth)
 
@@ -781,16 +778,13 @@ def test_LeastSquares_visualize():
 
     c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize((1, 2))
 
         # trigger use of log-spacing
         c = LeastSquares([1, 2000], [2, 3], 0.1, line)
         c.visualize((1, 2))
-
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
 
@@ -801,12 +795,10 @@ def test_LeastSquares_visualize_2D():
 
     c = LeastSquares([[1, 2]], [[2, 3]], 0.1, line)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
             c.visualize((1, 2))
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
 
@@ -904,11 +896,9 @@ def test_CostSum_visualize():
     con = NormalConstraint(("a", "b"), (1, 1), (1, 1))
     c = lsq + con
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize((1, 2))
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
 
@@ -979,11 +969,9 @@ def test_NormalConstraint_properties():
 def test_NormalConstraint_visualize():
     c = NormalConstraint(("a", "b"), (1, 2), (3, 4))
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize((1, 2))
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
 
@@ -1165,15 +1153,12 @@ def test_BarlowBeestonLite_visualize():
 
     c = BarlowBeestonLite(n, xe, t)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize((1, 2))
 
         c.mask = np.array([False, True])
         c.visualize((1, 2))
-
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
 
@@ -1185,11 +1170,9 @@ def test_BarlowBeestonLite_visualize_2D():
 
     c = BarlowBeestonLite(n, xe, t)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
             c.visualize((1, 2))
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
