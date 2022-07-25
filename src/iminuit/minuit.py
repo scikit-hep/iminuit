@@ -2068,6 +2068,140 @@ class Minuit:
 
         return fig, ax
 
+    def interactive(self, plot: _tp.Optional[_tp.Callable] = None):
+        """
+        Return fitting widget (requires ipywidgets, IPython, matplotlib).
+
+        A fitting widget is returned which can be displayed and manipulated in a
+        Jupyter notebook to find good starting parameters and to debug the fit.
+
+        Parameters
+        ----------
+        plot, optional : Callable or None
+            To visualize the fit, interactive tries to access the visualize method on
+            the cost function, which accepts the current model parameters as an array-like
+            and draws a visualization into the current matplotlib axes. If the cost
+            function does not provide a visualize method or if you want to override it,
+            pass the function here.
+        """
+        try:
+            from ipywidgets import HBox, VBox, Output, FloatSlider, Button, ToggleButton
+            from IPython.display import clear_output
+            from matplotlib import pyplot as plt
+        except ModuleNotFoundError as e:
+            e.msg += (
+                "\n\nPlease install ipywidgets, IPython, and matplotlib to "
+                "enable interactive"
+            )
+            raise
+
+        pyfcn = self.fcn._fcn
+
+        if plot is None:
+            if hasattr(pyfcn, "visualize"):
+                plot = pyfcn.visualize
+            else:
+                raise ValueError(
+                    f"class {pyfcn.__class__.__name__} has no visualize method, "
+                    "please use the plot argument to pass a plotting function"
+                )
+
+        sliders = []
+        for par in self.parameters:
+            val = self.values[par]
+            step = mutil._guess_initial_step(val)
+            a, b = self.limits[par]
+            # safety margin to avoid overflow warnings
+            a = a + 1e-300 if np.isfinite(a) else val - 100 * step
+            b = b - 1e-300 if np.isfinite(b) else val + 100 * step
+            s = FloatSlider(
+                val, min=a, max=b, step=step, description=par, continuous_update=True
+            )
+            sliders.append(s)
+
+        fit_button = Button(
+            description="Fit",
+        )
+        update_button = ToggleButton(
+            value=True,
+            description="Continuous",
+        )
+        ui = VBox([HBox([fit_button, update_button]), VBox(sliders)])
+
+        out = Output()
+        out.block = False
+
+        def observer(change):
+            if out.block:
+                return
+            args = [x.value for x in sliders]
+            # show_inline_matplotlib_plots()
+            with out:
+                clear_output(wait=True)
+                update(args, False)
+                mutil._show_inline_matplotlib_plots()
+
+        def update(args, from_fit):
+            trans = plt.gca().transAxes
+            try:
+                with warnings.catch_warnings():
+                    plot(args)
+            except Exception as e:
+                plt.text(0.5, 0.5, str(e), transform=trans)
+            if from_fit:
+                fval = self.fmin.fval
+            else:
+                fval = self.fcn(args)
+            plt.text(
+                0.05,
+                1.05,
+                f"FCN = {fval:.3f}",
+                transform=trans,
+                fontsize="x-large",
+            )
+            if from_fit:
+                plt.text(
+                    0.95,
+                    1.05,
+                    f"{'success' if self.valid and self.accurate else 'FAILURE'}",
+                    transform=trans,
+                    fontsize="x-large",
+                    ha="right",
+                )
+
+        for s in sliders:
+            s.observe(observer, "value")
+        # show_inline_matplotlib_plots()
+        observer(None)
+
+        def on_fit_button_clicked(change):
+            out.block = True
+            for s in sliders:
+                self.values[s.description] = s.value
+            self.migrad()
+            for s in sliders:
+                par = s.description
+                val = self.values[par]
+                if val < s.min:
+                    s.min = val
+                elif val > s.max:
+                    s.max = val
+                s.value = val
+            out.block = False
+            with out:
+                clear_output(wait=True)
+                update(self.values, True)
+                mutil._show_inline_matplotlib_plots()
+
+        def on_update_button_clicked(change):
+            for s in sliders:
+                s.continuous_update = not s.continuous_update
+
+        fit_button.on_click(on_fit_button_clicked)
+        update_button.observe(on_update_button_clicked)
+
+        return HBox([out, ui])
+
     def _free_parameters(self) -> _tp.Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)
 

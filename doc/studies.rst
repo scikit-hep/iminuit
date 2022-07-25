@@ -5,12 +5,12 @@
 Studies
 =======
 
-The following studies explore different aspects of the library, including its performance. These studies are not developed into tutorials, so are rather intended for
-an advanced audience.
+The following studies explore different aspects of the library, including its performance. This content is intended for an advanced audience.
 
 .. toctree::
     :maxdepth: 1
 
+    notebooks/interactive
     notebooks/binned_vs_unbinned
     notebooks/template_fits
     notebooks/hesse_and_minos

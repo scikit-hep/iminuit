@@ -11,7 +11,13 @@ test: build/done
 cov: build/done
 	# This only computes the coverage in pure Python.
 	rm -rf htmlcov
-	python3 -m pytest -x --ff --cov src/iminuit --cov-report term-missing --cov-report html
+	python -m pip install --prefer-binary -e .[test]
+	coverage run -m pytest
+	python -m pip uninstall --yes numba ipykernel ipywidgets
+	coverage run --append -m pytest
+	python -m pip uninstall --yes scipy matplotlib
+	coverage run --append -m pytest
+	coverage html -d htmlcov
 
 doc: build/done build/html/done
 

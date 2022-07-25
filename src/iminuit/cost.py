@@ -61,6 +61,8 @@ import abc
 import typing as _tp
 import warnings
 
+# correct ArrayLike from numpy.typing generates horrible looking signatures
+# python's help(), so we use this as a workaround
 _ArrayLike = _tp.Collection
 
 
@@ -99,7 +101,7 @@ class BohmZechTransform:
     See Bohm and Zech, NIMA 748 (2014) 1-6.
     """
 
-    def __init__(self, val, var):
+    def __init__(self, val: _ArrayLike, var: _ArrayLike):
         """
         Initialize transformer with data value and variance.
 
@@ -114,7 +116,7 @@ class BohmZechTransform:
         self._scale = val / (var + 1e-323)
         self._obs = val * self._scale
 
-    def __call__(self, val, var=None):
+    def __call__(self, val: _ArrayLike, var: _tp.Optional[_ArrayLike] = None):
         """
         Return precomputed scaled data and scaled prediction.
 
@@ -135,7 +137,7 @@ class BohmZechTransform:
         return self._obs, val * s, var * s**2
 
 
-def chi2(y, ye, ym):
+def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike):
     """
     Compute (potentially) chi2-distributed cost.
 
@@ -160,7 +162,7 @@ def chi2(y, ye, ym):
     return np.sum(_z_squared(y, ye, ym))
 
 
-def multinominal_chi2(n, mu):
+def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
 
@@ -188,7 +190,7 @@ def multinominal_chi2(n, mu):
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def poisson_chi2(n, mu):
+def poisson_chi2(n: _ArrayLike, mu: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
 
@@ -215,7 +217,7 @@ def poisson_chi2(n, mu):
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def barlow_beeston_lite_chi2_jsc(n, mu, mu_var):
+def barlow_beeston_lite_chi2_jsc(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -252,7 +254,7 @@ def barlow_beeston_lite_chi2_jsc(n, mu, mu_var):
     return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
 
 
-def barlow_beeston_lite_chi2_hpd(n, mu, mu_var):
+def barlow_beeston_lite_chi2_hpd(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike):
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -514,16 +516,9 @@ class CostSum(Cost, Sequence):
 
     Warnings
     --------
-    CostSum does not work very well with cost functions that accept arrays, because the
+    CostSum does not support cost functions that accept a parameter array, because the
     function signature does not allow one to determine how many parameters are accepted by
     the function and which parameters overlap between different cost functions.
-
-    CostSum works with cost functions that accept arrays only under the condition that all
-    cost functions accept the very same array parameter:
-
-    1) All array must have the same name in all constituent cost functions.
-    2) All arrays must have the same length.
-    3) The positions in each array must correspond to the same model parameters.
     """
 
     __slots__ = "_items", "_maps"
@@ -548,11 +543,15 @@ class CostSum(Cost, Sequence):
         args, self._maps = merge_signatures(self._items)
         super().__init__(args, max(c.verbose for c in self._items))
 
+    def _split(self, args):
+        for component, cmap in zip(self._items, self._maps):
+            component_args = tuple(args[i] for i in cmap)
+            yield component, component_args
+
     def _call(self, args):
         r = 0.0
-        for c, map in zip(self._items, self._maps):
-            c_args = tuple(args[i] for i in map)
-            r += c._call(c_args)
+        for comp, cargs in self._split(args):
+            r += comp._call(cargs)
         return r
 
     @Cost.ndata.getter  # type:ignore
@@ -567,6 +566,36 @@ class CostSum(Cost, Sequence):
     def __getitem__(self, key):
         """Get constituent cost function by index."""
         return self._items.__getitem__(key)
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current figure.
+        Subplots are created to visualize each part of the cost function, the figure
+        height is increased accordingly. Parts without a visualize method are silently
+        ignored.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        from matplotlib import pyplot as plt
+
+        args = np.atleast_1d(args)
+
+        n = sum(hasattr(comp, "visualize") for comp in self)
+        fig = plt.gcf()
+        if n > 1:
+            fig.set_figheight(n * fig.get_figheight())
+
+        i = 0
+        for (comp, cargs) in self._split(args):
+            if hasattr(comp, "visualize"):
+                i += 1
+                plt.subplot(n, 1, i)
+                comp.visualize(cargs)
 
 
 class MaskedCost(Cost):
@@ -631,8 +660,31 @@ class UnbinnedCost(MaskedCost):
         """For internal use."""
         self._model = model
         self._log = log
-        d = _norm(data)
-        super().__init__(describe(model)[1:], d, verbose)
+        super().__init__(describe(model)[1:], _norm(data), verbose)
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        from matplotlib import pyplot as plt
+
+        if self.data.ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        n, xe = np.histogram(self.data, bins=50)
+        cx = 0.5 * (xe[1:] + xe[:-1])
+        plt.errorbar(cx, n, n**0.5, fmt="ok")
+        xm = np.linspace(xe[0], xe[-1])
+        dx = xe[1] - xe[0]
+        ym = self.scaled_pdf(xm, *args)
+        plt.fill_between(xm, 0, ym * dx, fc="C0")
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -647,7 +699,17 @@ class UnbinnedNLL(UnbinnedCost):
     @property
     def pdf(self):
         """Get probability density model."""
+        if self._log:
+            return lambda *args: np.exp(self._model(*args))
         return self._model
+
+    @property
+    def scaled_pdf(self):
+        """Get probability density model."""
+        scale = np.prod(self.data.shape)
+        if self._log:
+            return lambda *args: scale * np.exp(self._model(*args))
+        return lambda *args: scale * self._model(*args)
 
     def __init__(
         self,
@@ -701,9 +763,28 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
     __slots__ = ()
 
     @property
+    def pdf(self):
+        """Get probability density model."""
+        if self._log:
+
+            def fn(*args):
+                n, x = self._model(*args)
+                return np.exp(x) / n
+
+        else:
+
+            def fn(*args):
+                n, x = self._model(*args)
+                return x / n
+
+        return fn
+
+    @property
     def scaled_pdf(self):
         """Get density model."""
-        return self._model
+        if self._log:
+            return lambda *args: np.exp(self._model(*args)[1])
+        return lambda *args: self._model(*args)[1]
 
     def __init__(
         self,
@@ -806,6 +887,34 @@ class BinnedCost(MaskedCost):
                 self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
 
         super().__init__(args, n, verbose, up, *updater)
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        from matplotlib import pyplot as plt
+
+        args = np.atleast_1d(args)
+
+        if self._ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        n = self._masked[..., 0] if self._bztrafo else self._masked
+        ne = (self._masked[..., 1] if self._bztrafo else self._masked) ** 0.5
+        xe = self.xe
+        cx = 0.5 * (xe[1:] + xe[:-1])
+        if self.mask is not None:
+            cx = cx[self.mask]
+        plt.errorbar(cx, n, ne, fmt="ok")
+        mu = self._pred(args)  # implemented in derived
+        plt.stairs(mu, xe, fill=True, color="C0")
 
 
 class BinnedCostWithModel(BinnedCost):
@@ -950,14 +1059,17 @@ class BarlowBeestonLite(BinnedCost):
 
         super().__init__(name, n, xe, verbose)
 
-    def _call(self, args):
+    def _pred(self, args):
         ntemp, ntemp_var = self._bbl_data
-
         mu = 0
         mu_var = 0
         for a, nt, vnt in zip(args, ntemp, ntemp_var):
             mu += a * nt
             mu_var += a**2 * vnt
+        return mu, mu_var
+
+    def _call(self, args):
+        mu, mu_var = self._pred(args)
 
         ma = self.mask
         if ma is not None:
@@ -971,6 +1083,37 @@ class BarlowBeestonLite(BinnedCost):
 
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        from matplotlib import pyplot as plt
+
+        if self._ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        args = np.atleast_1d(args)
+
+        n = self._masked[..., 0] if self._bztrafo else self._masked
+        ne = (self._masked[..., 1] if self._bztrafo else self._masked) ** 0.5
+
+        xe = self.xe
+        cx = 0.5 * (xe[1:] + xe[:-1])
+        if self.mask is not None:
+            cx = cx[self.mask]
+        plt.errorbar(cx, n, ne, fmt="ok")
+
+        mu, mu_var = self._pred(args)
+        mu_err = mu_var**0.5
+        plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=True, color="C0")
 
 
 class BinnedNLL(BinnedCostWithModel):
@@ -1022,17 +1165,22 @@ class BinnedNLL(BinnedCostWithModel):
         """
         super().__init__(n, xe, cdf, verbose)
 
-    def _call(self, args):
-        p = self._pred(args)
+    def _pred(self, args):
+        p = super()._pred(args)
         ma = self.mask
         if ma is not None:
-            p = p[ma]
-            p /= np.sum(p)  # normalise probability of remaining bins
+            p /= np.sum(p[ma])  # normalise probability of remaining bins
+        scale = np.sum(self._masked[..., 0] if self._bztrafo else self._masked)
+        return p * scale
+
+    def _call(self, args):
+        mu = self._pred(args)
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
         if self._bztrafo:
-            mu = p * np.sum(self._masked[..., 0])
             n, mu = self._bztrafo(mu)
         else:
-            mu = p * np.sum(self._masked)
             n = self._masked
         return multinominal_chi2(n, mu)
 
@@ -1249,6 +1397,33 @@ class LeastSquares(MaskedCost):
         ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
 
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        from matplotlib import pyplot as plt
+
+        if self._ndim > 1:
+            raise ValueError("visualize is not implemented for multi-dimensional data")
+
+        x, y, ye = self._masked.T
+        plt.errorbar(x, y, ye, fmt="ok")
+        if x[0] > 0 and x[-1] / x[0] > 1e2:
+            xm = np.geomspace(x[0], x[-1])
+        else:
+            xm = np.linspace(x[0], x[-1])
+
+        ym = self.model(xm, *args)
+
+        plt.plot(xm, ym)
+
 
 class NormalConstraint(Cost):
     """
@@ -1336,6 +1511,44 @@ class NormalConstraint(Cost):
     def ndata(self):
         """See Cost.ndata."""
         return len(self._value)
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        from matplotlib import pyplot as plt
+
+        args = np.atleast_1d(args)
+
+        par = self.func_code.co_varnames
+        val = self.value
+        cov = self.covariance
+        if cov.ndim == 2:
+            cov = np.diag(cov)
+        err = np.sqrt(cov)
+
+        n = len(par)
+
+        i = 0
+        max_pull = 0
+        for v, e, a in zip(val, err, args):
+            pull = (a - v) / e
+            max_pull = max(abs(pull), max_pull)
+            plt.errorbar(pull, -i, 0, 1, fmt="o", color="C0")
+            i += 1
+        plt.axvline(0, color="k")
+        plt.xlim(-max_pull - 1.1, max_pull + 1.1)
+        yaxis = plt.gca().yaxis
+        yaxis.set_ticks(-np.arange(n))
+        yaxis.set_ticklabels(par)
+        plt.ylim(-n + 0.5, 0.5)
 
 
 def _norm(value: _ArrayLike) -> np.ndarray:

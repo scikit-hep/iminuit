@@ -2,7 +2,7 @@ import pytest
 from iminuit import Minuit
 from pathlib import Path
 import numpy as np
-
+from numpy.testing import assert_allclose
 
 mpl = pytest.importorskip("matplotlib")
 plt = pytest.importorskip("matplotlib.pyplot")
@@ -145,3 +145,71 @@ def test_mnmatrix_7(fig):
     m = Minuit(lambda x: abs(x) ** 2 + x**4 + 10 * x, x=0)
     m.migrad()
     m.draw_mnmatrix(cl=[1, 3])
+
+
+def test_interactive():
+    def cost(a, b):
+        return a**2 + b**2
+
+    class Plot:
+        def __init__(self):
+            self.n = 0
+
+        def __call__(self, args):
+            self.n += 1
+            if self.n > 5:
+                raise ValueError("foo")
+
+    plot = Plot()
+
+    try:
+        import ipywidgets  # noqa
+        import IPython  # noqa
+
+        ipywidgets_available = True
+
+        m = Minuit(cost, 1, 1)
+        with pytest.raises(ValueError, match="no visualize method"):
+            m.interactive()
+
+        out1 = m.interactive(plot)
+        assert isinstance(out1, ipywidgets.HBox)
+        assert plot.n == 1
+
+        # manipulate state to also check this code
+        out1.children[1].children[0].children[0].click()  # click on Fit
+        assert_allclose(m.values, (0, 0), atol=1e-5)
+
+        out1.children[1].children[0].children[1].value = False  # toggle on Update
+        assert plot.n == 2
+        out1.children[1].children[1].children[0].value = 0.4  # change first slider
+        assert plot.n == 3
+
+        class Cost:
+            def visualize(self, args):
+                return plot(args)
+
+            def __call__(self, a, b):
+                return (a - 100) ** 2 + (b + 100) ** 2
+
+        c = Cost()
+        m = Minuit(c, 0, 0)
+        out2 = m.interactive()
+        assert plot.n == 4
+
+        # this should modify slider range
+        assert out2.children[1].children[1].children[0].max < 100
+        assert out2.children[1].children[1].children[1].min > -100
+        out2.children[1].children[0].children[0].click()  # click on Fit
+        assert_allclose(m.values, (100, -100), atol=1e-5)
+        assert plot.n == 5
+        # this should trigger an exception
+        out2.children[1].children[0].children[0].click()  # click on Fit
+
+    except ModuleNotFoundError:
+        ipywidgets_available = False
+
+    if not ipywidgets_available:
+        with pytest.raises(ModuleNotFoundError, match="Please install"):
+            m = Minuit(cost, 1, 1)
+            m.interactive()

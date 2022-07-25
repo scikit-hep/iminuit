@@ -13,6 +13,7 @@ import typing as _tp
 import abc
 from time import monotonic
 import warnings
+import sys
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -1367,8 +1368,6 @@ class _ProgressBar:
         self._out.flush()
 
     def __init__(self, max_value):
-        import sys
-
         self.max_value = max_value
         self._out = sys.stdout
 
@@ -1401,3 +1400,49 @@ class _ProgressBar:
         self.value += v
         self._update(self.value / self.max_value)
         return self
+
+
+def _histogram_segments(mask, xe, masked):
+    assert masked.ndim == 1
+
+    if mask is None:
+        return [(masked, xe)]
+
+    segments = []
+    a = 0
+    b = 0
+    am = 0
+    n = len(mask)
+    while a < n:
+        if not mask[a]:
+            a += 1
+            continue
+        b = a + 1
+        while b < n and mask[b]:
+            b += 1
+        segments.append((masked[am : am + b - a], xe[a : b + 1]))
+        am += b - a
+        a = b + 1
+    return segments
+
+
+def _show_inline_matplotlib_plots():
+    # Code taken from ipywidgets/interactive.py
+    #
+    # See comments in the original why this is needed.
+    #
+    # Copyright (c) Jupyter Development Team.
+    # Distributed under the terms of the Modified BSD License.
+    #
+    # This version was stripped down and modified to remove a deprecation warning.
+    try:
+        import matplotlib as mpl
+        from matplotlib_inline.backend_inline import flush_figures
+    except ImportError:  # pragma: no cover
+        return  # pragma: no cover
+
+    if (
+        mpl.get_backend() == "module://ipykernel.pylab.backend_inline"
+        or mpl.get_backend() == "module://matplotlib_inline.backend_inline"
+    ):
+        flush_figures()  # pragma: no cover
