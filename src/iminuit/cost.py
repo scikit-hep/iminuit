@@ -581,11 +581,7 @@ class CostSum(Cost, Sequence):
         args : array-like
             Parameter values.
         """
-        try:
-            from matplotlib import pyplot as plt
-        except ModuleNotFoundError as e:
-            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
-            raise
+        from matplotlib import pyplot as plt
 
         args = np.atleast_1d(args)
 
@@ -677,11 +673,7 @@ class UnbinnedCost(MaskedCost):
         args : array-like
             Parameter values.
         """
-        try:
-            from matplotlib import pyplot as plt
-        except ModuleNotFoundError as e:
-            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
-            raise
+        from matplotlib import pyplot as plt
 
         if self.data.ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
@@ -907,11 +899,7 @@ class BinnedCost(MaskedCost):
         args : array-like
             Parameter values.
         """
-        try:
-            from matplotlib import pyplot as plt
-        except ModuleNotFoundError as e:
-            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
-            raise
+        from matplotlib import pyplot as plt
 
         args = np.atleast_1d(args)
 
@@ -1107,11 +1095,7 @@ class BarlowBeestonLite(BinnedCost):
         args : array-like
             Parameter values.
         """
-        try:
-            from matplotlib import pyplot as plt
-        except ModuleNotFoundError as e:
-            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
-            raise
+        from matplotlib import pyplot as plt
 
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
@@ -1424,11 +1408,7 @@ class LeastSquares(MaskedCost):
         args : array-like
             Parameter values.
         """
-        try:
-            from matplotlib import pyplot as plt
-        except ModuleNotFoundError as e:
-            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
-            raise
+        from matplotlib import pyplot as plt
 
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
@@ -1543,11 +1523,7 @@ class NormalConstraint(Cost):
         args : array-like
             Parameter values.
         """
-        try:
-            from matplotlib import pyplot as plt
-        except ModuleNotFoundError as e:
-            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
-            raise
+        from matplotlib import pyplot as plt
 
         args = np.atleast_1d(args)
 
