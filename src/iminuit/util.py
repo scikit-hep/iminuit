@@ -1368,8 +1368,6 @@ class _ProgressBar:
         self._out.flush()
 
     def __init__(self, max_value):
-        import sys
-
         self.max_value = max_value
         self._out = sys.stdout
 
@@ -1436,19 +1434,15 @@ def _show_inline_matplotlib_plots():
     # Copyright (c) Jupyter Development Team.
     # Distributed under the terms of the Modified BSD License.
     #
-    # This version was modified to remove a deprecation warning.
-    if "matplotlib" not in sys.modules:
-        # matplotlib hasn't been imported, nothing to do.
-        return
-
+    # This version was stripped down and modified to remove a deprecation warning.
     try:
         import matplotlib as mpl
         from matplotlib_inline.backend_inline import flush_figures
-    except ImportError:
-        return
+    except ImportError:  # pragma: no cover
+        return  # pragma: no cover
 
     if (
         mpl.get_backend() == "module://ipykernel.pylab.backend_inline"
         or mpl.get_backend() == "module://matplotlib_inline.backend_inline"
     ):
-        flush_figures()
+        flush_figures()  # pragma: no cover

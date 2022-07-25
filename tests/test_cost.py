@@ -304,6 +304,7 @@ def test_ExtendedUnbinnedNLL_visualize(log):
         import matplotlib  # noqa
 
         c.visualize((1, 2, 3))
+
     except ModuleNotFoundError:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2, 3))
@@ -480,12 +481,16 @@ def test_BinnedNLL_properties():
 
 
 def test_BinnedNLL_visualize():
-    c = BinnedNLL([1], [1, 2], expon_cdf)
+    c = BinnedNLL([1, 2], [1, 2, 3], expon_cdf)
 
     try:
         import matplotlib  # noqa
 
         c.visualize(1)
+
+        c.mask = np.array([False, True])
+        c.visualize(1)
+
     except ModuleNotFoundError:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize(1)
@@ -780,6 +785,11 @@ def test_LeastSquares_visualize():
         import matplotlib  # noqa
 
         c.visualize((1, 2))
+
+        # trigger use of log-spacing
+        c = LeastSquares([1, 2000], [2, 3], 0.1, line)
+        c.visualize((1, 2))
+
     except ModuleNotFoundError:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
@@ -1159,6 +1169,10 @@ def test_BarlowBeestonLite_visualize():
         import matplotlib  # noqa
 
         c.visualize((1, 2))
+
+        c.mask = np.array([False, True])
+        c.visualize((1, 2))
+
     except ModuleNotFoundError:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
