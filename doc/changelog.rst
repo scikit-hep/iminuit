@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.14.0 (July 25, 2022)
+----------------------
+- Interactive fitting (#766)
+
 2.13.0 (July 17, 2022)
 ----------------------
 - Interpolated mncontour (#764)
