@@ -30,7 +30,7 @@ except ImportError:
 
 
 try:
-    import matplotlib  # noqa
+    from matplotlib import pyplot  # noqa
 
     matplotlib_available = True
 except ImportError:
@@ -185,11 +185,9 @@ def test_UnbinnedNLL_properties(log):
 def test_UnbinnedNLL_visualize(log):
     c = UnbinnedNLL([1, 2], norm_logpdf if log else norm_pdf, log=log)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize((1, 2))
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2))
 
@@ -204,12 +202,10 @@ def test_UnbinnedNLL_visualize_2D():
 
     c = UnbinnedNLL((x, y), model)
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
             c.visualize(truth)
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize(truth)
 
@@ -308,12 +304,9 @@ def test_ExtendedUnbinnedNLL_visualize(log):
         log=log,
     )
 
-    try:
-        import matplotlib  # noqa
-
+    if matplotlib_available:
         c.visualize((1, 2, 3))
-
-    except ModuleNotFoundError:
+    else:
         with pytest.raises(ModuleNotFoundError, match="Please install matplotlib"):
             c.visualize((1, 2, 3))
 
