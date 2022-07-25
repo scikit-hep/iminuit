@@ -1,6 +1,5 @@
 .. |iminuit| image:: _static/iminuit_logo.svg
    :alt: iminuit
-   :target: http://iminuit.readthedocs.io/en/latest
 
 |iminuit|
 =========
