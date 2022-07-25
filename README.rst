@@ -17,12 +17,15 @@
    :target: https://coveralls.io/github/scikit-hep/iminuit?branch=develop
 .. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
    :target: https://iminuit.readthedocs.io/en/stable
-.. image:: https://img.shields.io/pypi/l/iminuit
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
    :target: https://doi.org/10.5281/zenodo.3949207
 .. image:: https://img.shields.io/badge/ascl-2108.024-blue.svg?colorB=262255
    :target: https://ascl.net/2108.024
    :alt: ascl:2108.024
+.. image:: https://img.shields.io/gitter/room/Scikit-HEP/iminuit
+   :target: https://gitter.im/Scikit-HEP/iminuit
+.. image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 
 *iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
 
@@ -43,10 +46,7 @@ The iminuit package comes with additional features:
 - Support for SciPy minimisers as alternatives to Minuit's Migrad algorithm (optional)
 - Support for Numba accelerated functions (optional)
 
-Checkout our large and comprehensive list of `tutorials`_ that take you all the way from beginner to power user. For help and how-to questions, please use the `discussions`_ on GitHub.
-
-.. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
+Checkout our large and comprehensive list of `tutorials`_ that take you all the way from beginner to power user. For help and how-to questions, please use the `discussions`_ on GitHub or `gitter`_.
 
 In a nutshell
 -------------
@@ -92,5 +92,6 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 .. _changelog: https://iminuit.readthedocs.io/en/stable/changelog.html
 .. _tutorials: https://iminuit.readthedocs.io/en/stable/tutorials.html
 .. _discussions: https://github.com/scikit-hep/iminuit/discussions
+.. _gitter: https://gitter.im/Scikit-HEP/iminuit
 .. _jacobi: https://github.com/hdembinski/jacobi
 .. _numba_stats: https://github.com/HDembinski/numba-stats
