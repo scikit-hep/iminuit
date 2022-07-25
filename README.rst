@@ -60,15 +60,21 @@ iminuit is intended to be used with a user-provided negative log-likelihood func
     def cost_function(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
-    cost_function.errordef = Minuit.LEAST_SQUARES
-
     m = Minuit(cost_function, x=0, y=0, z=0)
 
     m.migrad()  # run optimiser
-    print(m.values)  # x: 2, y: 3, z: 4
-
     m.hesse()   # run covariance estimator
+
+    print(m.values)  # x: 2, y: 3, z: 4
     print(m.errors)  # x: 1, y: 1, z: 1
+
+Interactive fitting
+-------------------
+
+iminuit optionally supports an interactive fitting mode in Jupyter notebooks.
+
+.. image:: doc/_static/interactive_demo.gif
+   :alt: Animated demo of an interactive fit in a Jupyter notebook
 
 Partner projects
 ----------------
