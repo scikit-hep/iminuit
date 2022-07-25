@@ -2148,7 +2148,7 @@ class Minuit:
                 with warnings.catch_warnings():
                     plot(args)
             except Exception as e:
-                plt.text(0.5, 0.5, e.msg, transform=trans)
+                plt.text(0.5, 0.5, str(e), transform=trans)
             if from_fit:
                 fval = self.fmin.fval
             else:

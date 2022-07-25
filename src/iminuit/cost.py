@@ -550,11 +550,15 @@ class CostSum(Cost, Sequence):
         args, self._maps = merge_signatures(self._items)
         super().__init__(args, max(c.verbose for c in self._items))
 
+    def _split(self, args):
+        for component, cmap in zip(self._items, self._maps):
+            component_args = tuple(args[i] for i in cmap)
+            yield component, component_args
+
     def _call(self, args):
         r = 0.0
-        for c, map in zip(self._items, self._maps):
-            c_args = tuple(args[i] for i in map)
-            r += c._call(c_args)
+        for c, cargs in self._split(args):
+            r += c._call(cargs)
         return r
 
     @Cost.ndata.getter  # type:ignore
@@ -569,6 +573,35 @@ class CostSum(Cost, Sequence):
     def __getitem__(self, key):
         """Get constituent cost function by index."""
         return self._items.__getitem__(key)
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        try:
+            from matplotlib import pyplot as plt
+        except ModuleNotFoundError as e:
+            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
+            raise
+
+        n = sum(hasattr(comp, "visualize") for comp in self)
+        fig = plt.gcf()
+        if n > 1:
+            fig.set_figheight(n * fig.get_figheight())
+
+        i = 0
+        for (comp, cargs) in self._split(args):
+            if hasattr(comp, "visualize"):
+                i += 1
+                plt.subplot(n, 1, i)
+                comp.visualize(cargs)
 
 
 class MaskedCost(Cost):
@@ -1493,6 +1526,46 @@ class NormalConstraint(Cost):
     def ndata(self):
         """See Cost.ndata."""
         return len(self._value)
+
+    def visualize(self, args: _ArrayLike):
+        """
+        Visualize data and model agreement (requires matplotlib).
+
+        The visualization is drawn with matplotlib.pyplot into the current axes.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+        """
+        try:
+            from matplotlib import pyplot as plt
+        except ModuleNotFoundError as e:
+            e.msg += "\n\nvisualize requires matplotlib. Please install matplotlib."
+            raise
+
+        par = self.func_code.co_varnames
+        val = self.value
+        cov = self.covariance
+        if cov.ndim == 2:
+            cov = np.diag(cov)
+        err = np.sqrt(cov)
+
+        n = len(par)
+
+        i = 0
+        max_pull = 0
+        for v, e, a in zip(val, err, args):
+            pull = (a - v) / e
+            max_pull = max(abs(pull), max_pull)
+            plt.errorbar(pull, -i, 0, 1, fmt="o", color="C0")
+            i += 1
+        plt.axvline(0, color="k")
+        plt.xlim(-max_pull - 1.1, max_pull + 1.1)
+        yaxis = plt.gca().yaxis
+        yaxis.set_ticks(-np.arange(n))
+        yaxis.set_ticklabels(par)
+        plt.ylim(-n + 0.5, 0.5)
 
 
 def _norm(value: _ArrayLike) -> np.ndarray:
