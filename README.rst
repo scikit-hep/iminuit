@@ -1,11 +1,10 @@
 .. |iminuit| image:: doc/_static/iminuit_logo.svg
    :alt: iminuit
-   :target: http://iminuit.readthedocs.io/en/latest
 
 |iminuit|
 =========
 
-.. skip-marker-do-not-remove
+.. version-marker-do-not-remove
 
 .. image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
    :target: https://scikit-hep.org

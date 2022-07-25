@@ -1,0 +1,15 @@
+.. include:: bibliography.txt
+
+.. toctree::
+    :hidden:
+
+    about
+    install
+    reference
+    tutorials
+    studies
+    faq
+    changelog
+    benchmark
+    contribute
+    citation

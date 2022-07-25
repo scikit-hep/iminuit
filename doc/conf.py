@@ -20,6 +20,21 @@ from iminuit.version import version, root_version
 
 # release and version are special variables used by sphinx
 
+with open("../README.rst") as f:
+    readme_content = f.read()
+
+readme_content = readme_content.replace("doc/", "")
+readme_content = readme_content.replace(
+    ".. version-marker-do-not-remove",
+    "**These docs are for iminuit version:** |release|",
+)
+
+with open("index.rst.in") as f:
+    index_content = f.read()
+
+with open("index.rst", "w") as f:
+    f.write(readme_content + index_content)
+
 release = f"{version} compiled with ROOT-{root_version}"
 
 # http://read-the-docs.readthedocs.org/en/latest/theme.html#how-do-i-use-this-locally-and-on-read-the-docs
