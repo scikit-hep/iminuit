@@ -928,6 +928,9 @@ def test_NormalConstraint_visualize():
     c = NormalConstraint(("a", "b"), (1, 2), (3, 4))
     c.visualize((1, 2))
 
+    c = NormalConstraint(("a", "b"), (1, 2), np.eye(2))
+    c.visualize((1, 2))
+
 
 dtypes_to_test = [np.float32]
 if hasattr(np, "float128"):  # not available on all platforms

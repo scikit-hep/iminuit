@@ -32,6 +32,6 @@ jobs:
     - run: coverage run -m pytest
     - run: python -m pip uninstall --yes numba ipykernel
     - run: coverage run --append -m pytest
-    - run: python -m pip uninstall --yes scipy matplotlib
+    - run: python -m pip uninstall --yes scipy ipywidgets
     - run: coverage run --append -m pytest
     - uses: AndreMiras/coveralls-python-action@develop
