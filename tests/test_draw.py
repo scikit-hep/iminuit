@@ -166,6 +166,8 @@ def test_interactive():
         import ipywidgets  # noqa
         import IPython  # noqa
 
+        ipywidgets_available = True
+
         m = Minuit(cost, 1, 1)
         with pytest.raises(ValueError, match="no visualize method"):
             m.interactive()
@@ -205,5 +207,9 @@ def test_interactive():
         out2.children[1].children[0].children[0].click()  # click on Fit
 
     except ModuleNotFoundError:
+        ipywidgets_available = False
+
+    if not ipywidgets_available:
         with pytest.raises(ModuleNotFoundError, match="Please install"):
+            m = Minuit(cost, 1, 1)
             m.interactive()
