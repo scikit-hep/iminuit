@@ -157,7 +157,7 @@ def test_interactive():
 
         def __call__(self, args):
             self.n += 1
-            if self.n > 5:
+            if self.n > 6:
                 raise ValueError("foo")
 
     plot = Plot()
@@ -177,13 +177,19 @@ def test_interactive():
         assert plot.n == 1
 
         # manipulate state to also check this code
-        out1.children[1].children[0].children[0].click()  # click on Fit
+        ui = out1.children[1]
+        header, parameters = ui.children
+        fit_button, update_button = header.children
+        fit_button.click()  #
         assert_allclose(m.values, (0, 0), atol=1e-5)
-
-        out1.children[1].children[0].children[1].value = False  # toggle on Update
         assert plot.n == 2
-        out1.children[1].children[1].children[0].value = 0.4  # change first slider
+
+        update_button.value = False
+        parameters.children[0].slider.value = 0.4  # change first slider
         assert plot.n == 3
+        parameters.children[0].fix.value = True
+        parameters.children[0].opt.value = True
+        assert plot.n == 4
 
         class Cost:
             def visualize(self, args):
@@ -195,16 +201,19 @@ def test_interactive():
         c = Cost()
         m = Minuit(c, 0, 0)
         out2 = m.interactive()
-        assert plot.n == 4
+        assert plot.n == 5
 
         # this should modify slider range
-        assert out2.children[1].children[1].children[0].max < 100
-        assert out2.children[1].children[1].children[1].min > -100
-        out2.children[1].children[0].children[0].click()  # click on Fit
+        ui = out2.children[1]
+        header, parameters = ui.children
+        fit_button, update_button = header.children
+        assert parameters.children[0].slider.max < 100
+        assert parameters.children[1].slider.min > -100
+        fit_button.click()
         assert_allclose(m.values, (100, -100), atol=1e-5)
-        assert plot.n == 5
+        assert plot.n == 6
         # this should trigger an exception
-        out2.children[1].children[0].children[0].click()  # click on Fit
+        fit_button.click()
 
     except ModuleNotFoundError:
         ipywidgets_available = False

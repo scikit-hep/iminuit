@@ -567,7 +567,7 @@ class CostSum(Cost, Sequence):
         """Get constituent cost function by index."""
         return self._items.__getitem__(key)
 
-    def visualize(self, args: _ArrayLike, component_kwargs=None):
+    def visualize(self, args: _ArrayLike, component_kwargs=None, **kwargs):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -580,11 +580,12 @@ class CostSum(Cost, Sequence):
         ----------
         args : array-like
             Parameter values.
-
         component_kwargs : dict of dicts, optional
-            Optional dict that maps an index to dict of keyword arguments. This can be
+            Dict that maps an index to dict of keyword arguments. This can be
             used to pass keyword arguments to a visualize method of a component with
             that index.
+        **kwargs :
+            Other keyword arguments are forwarded to all components.
         """
         from matplotlib import pyplot as plt
 
@@ -602,8 +603,8 @@ class CostSum(Cost, Sequence):
             if hasattr(comp, "visualize"):
                 i += 1
                 plt.subplot(n, 1, i)
-                kwargs = component_kwargs.get(k, {})
-                comp.visualize(cargs, **kwargs)
+                kwargs2 = kwargs | component_kwargs.get(k, {})
+                comp.visualize(cargs, **kwargs2)
 
 
 class MaskedCost(Cost):
@@ -680,8 +681,8 @@ class UnbinnedCost(MaskedCost):
         ----------
         args : array-like
             Parameter values.
-        xmodel : array-like or None, optional
-            Where to evaluate the model.
+        model_points : int, optional
+            How many points to use to draw the model. Default is 50.
         """
         from matplotlib import pyplot as plt
 
@@ -1420,6 +1421,9 @@ class LeastSquares(MaskedCost):
         ----------
         args : array-like
             Parameter values.
+
+        model_points : int, optional
+            How many points to use to draw the model. Default is 50.
         """
         from matplotlib import pyplot as plt
 
