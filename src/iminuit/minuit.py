@@ -2133,10 +2133,10 @@ class Minuit:
                     continuous_update=True,
                 )
                 self.fix = ToggleButton(
-                    fix, description="Fixed", layout=Layout(width="5em")
+                    fix, description="Fix", layout=Layout(width="3.1em")
                 )
                 self.opt = ToggleButton(
-                    False, description="Opt", layout=self.fix.layout
+                    False, description="Opt", layout=Layout(width="3.5em")
                 )
                 self.opt.observe(self.on_opt_toggled, "value")
                 super().__init__([self.slider, self.fix, self.opt])
