@@ -1334,23 +1334,6 @@ class Minuit:
         (equivalently) the least-squares cost function around the minimum to construct a
         confidence interval.
 
-        Notes
-        -----
-        Asymptotically (large samples), the Minos interval has a coverage probability
-        equal to the given confidence level. The coverage probability is the probility for
-        the interval to contain the true value in repeated identical experiments.
-
-        The interval is invariant to transformations and thus not distorted by parameter
-        limits, unless the limits intersect with the confidence interval. As a
-        rule-of-thumb: when the confidence intervals computed with the Hesse and Minos
-        algorithms differ strongly, the Minos intervals are preferred. Otherwise, Hesse
-        intervals are preferred.
-
-        Running Minos is computationally expensive when there are many fit parameters.
-        Effectively, it scans over one parameter in small steps and runs a full
-        minimisation for all other parameters of the cost function for each scan point.
-        This requires many more function evaluations than running the Hesse algorithm.
-
         Parameters
         ----------
         *parameters :
@@ -1367,6 +1350,23 @@ class Minuit:
         ncall : int or None, optional
             Limit the number of calls made by Minos. If None, an adaptive internal
             heuristic of the Minuit2 library is used (Default: None).
+
+        Notes
+        -----
+        Asymptotically (large samples), the Minos interval has a coverage probability
+        equal to the given confidence level. The coverage probability is the probility for
+        the interval to contain the true value in repeated identical experiments.
+
+        The interval is invariant to transformations and thus not distorted by parameter
+        limits, unless the limits intersect with the confidence interval. As a
+        rule-of-thumb: when the confidence intervals computed with the Hesse and Minos
+        algorithms differ strongly, the Minos intervals are preferred. Otherwise, Hesse
+        intervals are preferred.
+
+        Running Minos is computationally expensive when there are many fit parameters.
+        Effectively, it scans over one parameter in small steps and runs a full
+        minimisation for all other parameters of the cost function for each scan point.
+        This requires many more function evaluations than running the Hesse algorithm.
         """
         ncall = 0 if ncall is None else int(ncall)
 
@@ -2068,7 +2068,7 @@ class Minuit:
 
         return fig, ax
 
-    def interactive(self, plot: _tp.Optional[_tp.Callable] = None):
+    def interactive(self, plot: _tp.Optional[_tp.Callable] = None, **kwargs):
         """
         Return fitting widget (requires ipywidgets, IPython, matplotlib).
 
@@ -2080,12 +2080,27 @@ class Minuit:
         plot, optional : Callable or None
             To visualize the fit, interactive tries to access the visualize method on
             the cost function, which accepts the current model parameters as an array-like
-            and draws a visualization into the current matplotlib axes. If the cost
-            function does not provide a visualize method or if you want to override it,
-            pass the function here.
+            and potentially further keyword arguments, and draws a visualization into the
+            current matplotlib axes. If the cost function does not provide a visualize
+            method or if you want to override it, pass the function here.
+        **kwargs :
+            Any other keyword arguments are forwarded to the plot function.
+
+        Examples
+        --------
+        .. plot:: plots/interactive.py
+            :include-source:
         """
         try:
-            from ipywidgets import HBox, VBox, Output, FloatSlider, Button, ToggleButton
+            from ipywidgets import (
+                HBox,
+                VBox,
+                Output,
+                FloatSlider,
+                Button,
+                ToggleButton,
+                Layout,
+            )
             from IPython.display import clear_output
             from matplotlib import pyplot as plt
         except ModuleNotFoundError as e:
@@ -2106,7 +2121,31 @@ class Minuit:
                     "please use the plot argument to pass a plotting function"
                 )
 
-        sliders = []
+        class ParameterBox(HBox):
+            def __init__(self, par, val, min, max, step, fix):
+                self.par = par
+                self.slider = FloatSlider(
+                    val,
+                    min=a,
+                    max=b,
+                    step=step,
+                    description=par,
+                    continuous_update=True,
+                )
+                self.fix = ToggleButton(
+                    fix, description="Fixed", layout=Layout(width="5em")
+                )
+                self.opt = ToggleButton(
+                    False, description="Opt", layout=self.fix.layout
+                )
+                self.opt.observe(self.on_opt_toggled, "value")
+                super().__init__([self.slider, self.fix, self.opt])
+
+            def on_opt_toggled(self, change):
+                self.slider.disabled = self.opt.value
+                on_slider_change(None)
+
+        parameters = []
         for par in self.parameters:
             val = self.values[par]
             step = mutil._guess_initial_step(val)
@@ -2114,38 +2153,36 @@ class Minuit:
             # safety margin to avoid overflow warnings
             a = a + 1e-300 if np.isfinite(a) else val - 100 * step
             b = b - 1e-300 if np.isfinite(b) else val + 100 * step
-            s = FloatSlider(
-                val, min=a, max=b, step=step, description=par, continuous_update=True
-            )
-            sliders.append(s)
+            parameters.append(ParameterBox(par, val, a, b, step, self.fixed[par]))
 
-        fit_button = Button(
-            description="Fit",
-        )
-        update_button = ToggleButton(
-            value=True,
-            description="Continuous",
-        )
-        ui = VBox([HBox([fit_button, update_button]), VBox(sliders)])
-
-        out = Output()
-        out.block = False
-
-        def observer(change):
+        def on_slider_change(change):
             if out.block:
                 return
-            args = [x.value for x in sliders]
-            # show_inline_matplotlib_plots()
+            args = [x.slider.value for x in parameters]
+            from_fit = False
+            if any(x.opt.value for x in parameters):
+                save = self.fixed[:]
+                self.fixed = [not x.opt.value for x in parameters]
+                self.values = args
+                self.migrad()
+                args = self.values[:]
+                out.block = True
+                for x, val in zip(parameters, args):
+                    x.slider.value = val
+                out.block = False
+                self.fixed = save
+                from_fit = True
+            # mutil._show_inline_matplotlib_plots()
             with out:
                 clear_output(wait=True)
-                update(args, False)
+                update_plot(args, from_fit)
                 mutil._show_inline_matplotlib_plots()
 
-        def update(args, from_fit):
+        def update_plot(args, from_fit):
             trans = plt.gca().transAxes
             try:
                 with warnings.catch_warnings():
-                    plot(args)
+                    plot(args, **kwargs)
             except Exception as e:
                 plt.text(0.5, 0.5, str(e), transform=trans)
             if from_fit:
@@ -2169,36 +2206,44 @@ class Minuit:
                     ha="right",
                 )
 
-        for s in sliders:
-            s.observe(observer, "value")
-        # show_inline_matplotlib_plots()
-        observer(None)
-
         def on_fit_button_clicked(change):
             out.block = True
-            for s in sliders:
-                self.values[s.description] = s.value
+            for x in parameters:
+                self.values[x.par] = x.slider.value
+                self.fixed[x.par] = x.fix.value
             self.migrad()
-            for s in sliders:
-                par = s.description
-                val = self.values[par]
-                if val < s.min:
-                    s.min = val
-                elif val > s.max:
-                    s.max = val
-                s.value = val
+            for x in parameters:
+                val = self.values[x.par]
+                if val < x.slider.min:
+                    x.slider.min = val
+                elif val > x.slider.max:
+                    x.slider.max = val
+                x.slider.value = val
             out.block = False
             with out:
                 clear_output(wait=True)
-                update(self.values, True)
+                update_plot(self.values, True)
                 mutil._show_inline_matplotlib_plots()
 
         def on_update_button_clicked(change):
-            for s in sliders:
-                s.continuous_update = not s.continuous_update
+            for x in parameters:
+                x.slider.continuous_update = not x.slider.continuous_update
 
+        fit_button = Button(description="Fit")
         fit_button.on_click(on_fit_button_clicked)
+
+        update_button = ToggleButton(True, description="Continuous")
         update_button.observe(on_update_button_clicked)
+
+        ui = VBox([HBox([fit_button, update_button]), VBox(parameters)])
+
+        out = Output()
+        out.block = False
+
+        for x in parameters:
+            x.slider.observe(on_slider_change, "value")
+        # mutil._show_inline_matplotlib_plots()
+        on_slider_change(None)
 
         return HBox([out, ui])
 

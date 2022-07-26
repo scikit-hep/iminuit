@@ -567,7 +567,7 @@ class CostSum(Cost, Sequence):
         """Get constituent cost function by index."""
         return self._items.__getitem__(key)
 
-    def visualize(self, args: _ArrayLike):
+    def visualize(self, args: _ArrayLike, component_kwargs=None):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -580,6 +580,11 @@ class CostSum(Cost, Sequence):
         ----------
         args : array-like
             Parameter values.
+
+        component_kwargs : dict of dicts, optional
+            Optional dict that maps an index to dict of keyword arguments. This can be
+            used to pass keyword arguments to a visualize method of a component with
+            that index.
         """
         from matplotlib import pyplot as plt
 
@@ -590,12 +595,15 @@ class CostSum(Cost, Sequence):
         if n > 1:
             fig.set_figheight(n * fig.get_figheight())
 
+        if component_kwargs is None:
+            component_kwargs = {}
         i = 0
-        for (comp, cargs) in self._split(args):
+        for k, (comp, cargs) in enumerate(self._split(args)):
             if hasattr(comp, "visualize"):
                 i += 1
                 plt.subplot(n, 1, i)
-                comp.visualize(cargs)
+                kwargs = component_kwargs.get(k, {})
+                comp.visualize(cargs, **kwargs)
 
 
 class MaskedCost(Cost):
@@ -662,7 +670,7 @@ class UnbinnedCost(MaskedCost):
         self._log = log
         super().__init__(describe(model)[1:], _norm(data), verbose)
 
-    def visualize(self, args: _ArrayLike):
+    def visualize(self, args: _ArrayLike, model_points: int = 50):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -672,16 +680,21 @@ class UnbinnedCost(MaskedCost):
         ----------
         args : array-like
             Parameter values.
+        xmodel : array-like or None, optional
+            Where to evaluate the model.
         """
         from matplotlib import pyplot as plt
 
         if self.data.ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
+        # TODO
+        # - use log-binning if data spans over many orders of magnitude
+        # - make this configurable
         n, xe = np.histogram(self.data, bins=50)
         cx = 0.5 * (xe[1:] + xe[:-1])
         plt.errorbar(cx, n, n**0.5, fmt="ok")
-        xm = np.linspace(xe[0], xe[-1])
+        xm = np.linspace(xe[0], xe[-1], model_points)
         dx = xe[1] - xe[0]
         ym = self.scaled_pdf(xm, *args)
         plt.fill_between(xm, 0, ym * dx, fc="C0")
@@ -1397,7 +1410,7 @@ class LeastSquares(MaskedCost):
         ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
 
-    def visualize(self, args: _ArrayLike):
+    def visualize(self, args: _ArrayLike, model_points: int = 50):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1413,15 +1426,16 @@ class LeastSquares(MaskedCost):
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
+        # TODO
+        # - make linear or log-spacing configurable
+
         x, y, ye = self._masked.T
         plt.errorbar(x, y, ye, fmt="ok")
         if x[0] > 0 and x[-1] / x[0] > 1e2:
-            xm = np.geomspace(x[0], x[-1])
+            xm = np.geomspace(x[0], x[-1], model_points)
         else:
-            xm = np.linspace(x[0], x[-1])
-
+            xm = np.linspace(x[0], x[-1], model_points)
         ym = self.model(xm, *args)
-
         plt.plot(xm, ym)
 
 
