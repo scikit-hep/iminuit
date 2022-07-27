@@ -1446,35 +1446,3 @@ def _show_inline_matplotlib_plots():
         or mpl.get_backend() == "module://matplotlib_inline.backend_inline"
     ):
         flush_figures()  # pragma: no cover
-
-
-def _smart_sampling(f, xmin, xmax, start=17, sub=3, atol=1e-3, rtol=np.inf):
-    from scipy.interpolate import interp1d
-
-    x = np.linspace(xmin, xmax, start)
-    y = {xi: f(xi) for xi in x}
-    x_intervals = [(x[i], x[i + 1]) for i in range(start - 1)]
-    while len(x_intervals):
-        if len(y) > 10000:
-            warnings.warn("Too many points", RuntimeWarning)
-            break
-        xint = x_intervals.pop()
-        xsub = np.linspace(*xint, sub)
-        xnew = xsub[1:-1]
-        ynew = f(xnew)
-        # TODO replace with custom interpolation
-        yint = interp1d(xint, [y[xi] for xi in xint])(xnew)
-        for xi, yi in zip(xnew, ynew):
-            y[xi] = yi
-        dy = ynew - yint
-        cond = True
-        if np.isfinite(atol):
-            cond &= np.abs(dy) > atol
-        if np.isfinite(rtol):
-            cond &= np.abs(dy) > rtol * np.abs(ynew)
-        if np.any(cond):
-            for i in range(sub - 1):
-                x_intervals.append((xsub[i], xsub[i + 1]))
-    xy = list(y.items())
-    xy.sort()
-    return np.transpose(xy)
