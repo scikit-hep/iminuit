@@ -567,7 +567,9 @@ class CostSum(Cost, Sequence):
         """Get constituent cost function by index."""
         return self._items.__getitem__(key)
 
-    def visualize(self, args: _ArrayLike, component_kwargs=None, **kwargs):
+    def visualize(
+        self, args: _ArrayLike, component_kwargs: _tp.Dict[int, _tp.Dict] = None
+    ):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -603,8 +605,8 @@ class CostSum(Cost, Sequence):
             if hasattr(comp, "visualize"):
                 i += 1
                 plt.subplot(n, 1, i)
-                kwargs2 = kwargs | component_kwargs.get(k, {})
-                comp.visualize(cargs, **kwargs2)
+                kwargs = component_kwargs.get(k, {})
+                comp.visualize(cargs, **kwargs)
 
 
 class MaskedCost(Cost):
