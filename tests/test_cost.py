@@ -185,7 +185,12 @@ def test_UnbinnedNLL_properties(log):
 @pytest.mark.parametrize("log", (False, True))
 def test_UnbinnedNLL_visualize(log):
     c = UnbinnedNLL([1, 2], norm_logpdf if log else norm_pdf, log=log)
-    c.visualize((1, 2))
+    c.visualize((1, 2))  # auto-sampling
+    c.visualize((1, 2), model_points=10)  # linear spacing
+
+    # trigger log-spacing
+    c = UnbinnedNLL([1, 1000], norm_logpdf if log else norm_pdf, log=log)
+    c.visualize((1, 2), model_points=10)
 
 
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
@@ -746,11 +751,12 @@ def test_LeastSquares_visualize():
 
     c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
-    c.visualize((1, 2))
+    c.visualize((1, 2))  # auto-sampling
+    c.visualize((1, 2), model_points=10)  # linear spacing
 
     # trigger use of log-spacing
     c = LeastSquares([1, 2000], [2, 3], 0.1, line)
-    c.visualize((1, 2))
+    c.visualize((1, 2), model_points=10)
 
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
