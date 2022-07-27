@@ -7,6 +7,7 @@ Changelog
 
 2.15.0 (July 27, 2022)
 ----------------------
+- Smart sampling (`#769 <https://github.com/scikit-hep/iminuit/pull/769>`_)
 - Enhance interactive (`#768 <https://github.com/scikit-hep/iminuit/pull/768>`_)
 
 2.14.0 (July 25, 2022)
