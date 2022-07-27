@@ -53,6 +53,9 @@ header = f"{new_version} ({today.strftime('%B %d, %Y')})"
 new_content = f"{header}\n{'-' * len(header)}\n"
 if git_log:
     for x in git_log:
+        x = re.sub(
+            "#([0-9]+)", r"`#\1 <https://github.com/scikit-hep/iminuit/pull/\1>`_", x
+        )
         new_content += f"- {x.capitalize()}\n"
 else:
     new_content += "- Minor improvements\n"

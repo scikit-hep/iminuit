@@ -5,20 +5,24 @@
 Changelog
 =========
 
+2.15.0 (July 27, 2022)
+----------------------
+- Enhance interactive (`#768 <https://github.com/scikit-hep/iminuit/pull/768>`_)
+
 2.14.0 (July 25, 2022)
 ----------------------
-- Interactive fitting (#766)
+- Interactive fitting (`#766 <https://github.com/scikit-hep/iminuit/pull/766>`_)
 
 2.13.0 (July 17, 2022)
 ----------------------
-- Interpolated mncontour (#764)
-- Added mnmatrix plot (#763)
-- Close mncontour for convenience (#761)
-- Update tutorials (#760)
+- Interpolated mncontour (`#764 <https://github.com/scikit-hep/iminuit/pull/764>`_)
+- Added mnmatrix plot (`#763 <https://github.com/scikit-hep/iminuit/pull/763>`_)
+- Close mncontour for convenience (`#761 <https://github.com/scikit-hep/iminuit/pull/761>`_)
+- Update tutorials (`#760 <https://github.com/scikit-hep/iminuit/pull/760>`_)
 
 2.12.2 (July 15, 2022)
 ----------------------
-- fix a bug in error heuristic when parameters have negative values and prevent assigning negative values to errors (#759)
+- fix a bug in error heuristic when parameters have negative values and prevent assigning negative values to errors (`#759 <https://github.com/scikit-hep/iminuit/pull/759>`_)
 
 2.12.1 (July 1, 2022)
 ---------------------
@@ -569,14 +573,14 @@ Other changes
 Fixes
 ~~~~~
 - Fixed a crash when throw_nan=True is used and the throw is triggered
-- Add python_requires (#496) by @henryiii
-- Fixed buggy display of text matrix if npar != 2 (#493)
+- Add python_requires (`#496 <https://github.com/scikit-hep/iminuit/pull/496>`_) by @henryiii
+- Fixed buggy display of text matrix if npar != 2 (`#493 <https://github.com/scikit-hep/iminuit/pull/493>`_)
 
 Other
 ~~~~~
-- Switch extern Minuit2 repo to official root repo (#500), ROOT state: a5d880a434
-- Add ngrad and ngrad_total to FMin display, rename ncalls to nfcn_total (#489)
-- Use __getattr__ to hide deprecated interface from Python help() (#491)
+- Switch extern Minuit2 repo to official root repo (`#500 <https://github.com/scikit-hep/iminuit/pull/500>`_), ROOT state: a5d880a434
+- Add ngrad and ngrad_total to FMin display, rename ncalls to nfcn_total (`#489 <https://github.com/scikit-hep/iminuit/pull/489>`_)
+- Use __getattr__ to hide deprecated interface from Python help() (`#491 <https://github.com/scikit-hep/iminuit/pull/491>`_)
 - Improvements to tutorials by @giammi56
 - Show number of gradient calls in FMin display (if nonzero) instead of errordef value
 
@@ -605,10 +609,10 @@ New features
 ~~~~~~~~~~~~
 - New more compact function minimum display with warning about parameters at limit
 - Colours adjusted in HTML display to enhance contrast for people with color blindness
-- Allow subclasses to use ``Minuit.from_array_func`` (#467) [contributed by @kratsg]
+- Allow subclasses to use ``Minuit.from_array_func`` (`#467 <https://github.com/scikit-hep/iminuit/pull/467>`_) [contributed by @kratsg]
 - Nicer tables on terminal thanks to unicode characters
 - Wrapped functions' parameters are now correctly recognized [contributed by Gonzalo]
-- Dark theme friendlier HTML style (#481) [based on patch by @l-althueser]
+- Dark theme friendlier HTML style (`#481 <https://github.com/scikit-hep/iminuit/pull/481>`_) [based on patch by @l-althueser]
 
 Bug-Fixes
 ~~~~~~~~~
@@ -618,7 +622,7 @@ Bug-Fixes
 
 Deprecated
 ~~~~~~~~~~
-- Removed ``nsplit`` option from ``Minuit.migrad`` (#462)
+- Removed ``nsplit`` option from ``Minuit.migrad`` (`#462 <https://github.com/scikit-hep/iminuit/pull/462>`_)
 
 1.4.9 (July, 18, 2020)
 ----------------------
