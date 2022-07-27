@@ -1457,9 +1457,9 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
     a = x[:-1]
     b = x[1:]
     while len(a):
-        if len(a) > 10000:
-            warnings.warn("Too many points", RuntimeWarning)
-            break
+        if len(y) > 10000:
+            warnings.warn("Too many points", RuntimeWarning)  # pragma: no cover
+            break  # pragma: no cover
         xnew = 0.5 * (a + b)
         ynew = f(xnew)
         ymin = min(ymin, np.min(ynew))
