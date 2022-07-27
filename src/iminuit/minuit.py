@@ -2127,8 +2127,19 @@ class Minuit:
             try:
                 with warnings.catch_warnings():
                     plot(args, **kwargs)
-            except Exception as e:
-                plt.text(0.5, 0.5, str(e), transform=trans)
+            except Exception:
+                import traceback
+
+                plt.figtext(
+                    0.01,
+                    0.5,
+                    traceback.format_exc(),
+                    ha="left",
+                    va="center",
+                    transform=trans,
+                    color="r",
+                )
+                return
             if from_fit:
                 fval = self.fmin.fval
             else:
@@ -2184,7 +2195,7 @@ class Minuit:
                 self.simplex()
                 return False
             else:
-                assert False  # should never happen
+                assert False  # pragma: no cover, should never happen
             return True
 
         def on_slider_change(change):
