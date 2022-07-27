@@ -54,6 +54,7 @@ from .util import (
     make_func_code,
     merge_signatures,
     PerformanceWarning,
+    # _smart_sampling,
 )
 import numpy as np
 from collections.abc import Sequence

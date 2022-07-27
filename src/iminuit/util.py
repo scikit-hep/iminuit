@@ -1446,3 +1446,41 @@ def _show_inline_matplotlib_plots():
         or mpl.get_backend() == "module://matplotlib_inline.backend_inline"
     ):
         flush_figures()  # pragma: no cover
+
+
+def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
+    x = np.linspace(xmin, xmax, start)
+    ynew = f(x)
+    ymin = np.min(ynew)
+    ymax = np.max(ynew)
+    y = {xi: yi for (xi, yi) in zip(x, ynew)}
+    a = x[:-1]
+    b = x[1:]
+    while len(a):
+        if len(a) > 10000:
+            warnings.warn("Too many points", RuntimeWarning)
+            break
+        xnew = 0.5 * (a + b)
+        ynew = f(xnew)
+        ymin = min(ymin, np.min(ynew))
+        ymax = max(ymax, np.max(ynew))
+        for xi, yi in zip(xnew, ynew):
+            y[xi] = yi
+        yint = 0.5 * (
+            np.fromiter((y[ai] for ai in a), float)
+            + np.fromiter((y[bi] for bi in b), float)
+        )
+        dy = np.abs(ynew - yint)
+
+        mask = dy > tol * (ymax - ymin)
+
+        # intervals which do not pass interpolation test
+        a = a[mask]
+        b = b[mask]
+        xnew = xnew[mask]
+        a = np.append(a, xnew)
+        b = np.append(xnew, b)
+
+    xy = list(y.items())
+    xy.sort()
+    return np.transpose(xy)
