@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.15.1 (July 28, 2022)
+----------------------
+- Fix pickling of all builtin cost functions (`#773 <https://github.com/scikit-hep/iminuit/pull/773>`_)
+
 2.15.0 (July 27, 2022)
 ----------------------
 - Smart sampling (`#769 <https://github.com/scikit-hep/iminuit/pull/769>`_)
