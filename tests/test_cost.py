@@ -16,7 +16,8 @@ from iminuit.cost import (
     _soft_l1_loss,
     PerformanceWarning,
 )
-from collections.abc import Sequence
+from typing import Sequence
+import pickle
 
 try:
     # pytest.importorskip does not work for scipy.stats;
@@ -89,6 +90,10 @@ def cdf(x, mu, sigma):
 
 def scaled_cdf(x, n, mu, sigma):
     return n * norm(mu, sigma).cdf(x)
+
+
+def line(x, a, b):
+    return a + b * x
 
 
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
@@ -208,6 +213,13 @@ def test_UnbinnedNLL_visualize_2D():
         c.visualize(truth)
 
 
+def test_UnbinnedNLL_pickle():
+    c = UnbinnedNLL([1, 2], norm_pdf)
+    b = pickle.dumps(c)
+    c2 = pickle.loads(b)
+    assert_equal(c.data, c2.data)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
 def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
@@ -319,6 +331,13 @@ def test_ExtendedUnbinnedNLL_visualize_2D():
 
     with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
         c.visualize(truth)
+
+
+def test_ExtendedUnbinnedNLL_pickle():
+    c = ExtendedUnbinnedNLL([1, 2], norm_pdf)
+    b = pickle.dumps(c)
+    c2 = pickle.loads(b)
+    assert_equal(c.data, c2.data)
 
 
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
@@ -497,6 +516,13 @@ def test_BinnedNLL_visualize_2D():
         c.visualize(truth)
 
 
+def test_BinnedNLL_pickle():
+    c = BinnedNLL([1], [1, 2], expon_cdf)
+    b = pickle.dumps(c)
+    c2 = pickle.loads(b)
+    assert_equal(c.data, c2.data)
+
+
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
@@ -629,6 +655,13 @@ def test_ExtendedBinnedNLL_visualize_2D():
         c.visualize(truth)
 
 
+def test_ExtendedBinnedNLL_pickle():
+    c = BinnedNLL([1], [1, 2], expon_cdf)
+    b = pickle.dumps(c)
+    c2 = pickle.loads(b)
+    assert_equal(c.data, c2.data)
+
+
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_LeastSquares(loss, verbose):
@@ -746,9 +779,6 @@ def test_LeastSquares_properties():
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_LeastSquares_visualize():
-    def line(x, a, b):
-        return a + b * x
-
     c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
     c.visualize((1, 2))  # auto-sampling
@@ -761,13 +791,20 @@ def test_LeastSquares_visualize():
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_LeastSquares_visualize_2D():
-    def line(x, a, b):
-        return a + b * x
-
     c = LeastSquares([[1, 2]], [[2, 3]], 0.1, line)
 
     with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
         c.visualize((1, 2))
+
+
+def test_LeastSquares_pickle():
+
+    c = LeastSquares([1, 2], [2, 3], 0.1, line)
+
+    b = pickle.dumps(c)
+    c2 = pickle.loads(b)
+    assert_equal(c.data, c2.data)
+    assert c.model is c2.model
 
 
 def test_CostSum_1():
@@ -857,9 +894,6 @@ def test_CostSum_3():
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_CostSum_visualize():
-    def line(x, a, b):
-        return a + b * x
-
     lsq = LeastSquares([1, 2, 3], [3, 4, 5], 1, line)
     con = NormalConstraint(("a", "b"), (1, 1), (1, 1))
     c = lsq + con
@@ -936,6 +970,15 @@ def test_NormalConstraint_visualize():
 
     c = NormalConstraint(("a", "b"), (1, 2), np.eye(2))
     c.visualize((1, 2))
+
+
+def test_NormalConstraint_pickle():
+    c = NormalConstraint(("a", "b"), (1, 2), (3, 4))
+    b = pickle.dumps(c)
+    c2 = pickle.loads(b)
+    assert c.func_code == c2.func_code
+    assert_equal(c.value, c2.value)
+    assert_equal(c.covariance, c2.covariance)
 
 
 dtypes_to_test = [np.float32]
@@ -1132,3 +1175,15 @@ def test_BarlowBeestonLite_visualize_2D():
 
     with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
         c.visualize((1, 2))
+
+
+def test_BarlowBeestonLite_pickle():
+    n = np.array([1, 2, 3])
+    xe = np.array([0, 1, 2, 3])
+    t = np.array([[1, 1, 0], [0, 1, 3]])
+
+    c = BarlowBeestonLite(n, xe, t)
+    b = pickle.dumps(c)
+    c2 = pickle.loads(b)
+
+    assert_equal(c.data, c2.data)

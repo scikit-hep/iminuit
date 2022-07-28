@@ -613,20 +613,14 @@ class CostSum(Cost, Sequence):
 class MaskedCost(Cost):
     """Base class for cost functions that support data masking."""
 
-    __slots__ = "_data", "_mask", "_masked", "_updater"
+    __slots__ = "_data", "_mask", "_masked"
 
-    def __init__(self, args, data, verbose, *updater):
+    def __init__(self, args, data, verbose):
         """For internal use."""
         self._data = data
         self._mask = None
-
+        self._update_cache()
         Cost.__init__(self, args, verbose)
-
-        def up():
-            self._masked = self._data[_replace_none(self._mask, ...)]
-
-        self._updater = (up,) + updater
-        self._update()
 
     @property
     def mask(self):
@@ -640,7 +634,7 @@ class MaskedCost(Cost):
     @mask.setter
     def mask(self, mask):
         self._mask = None if mask is None else np.asarray(mask)
-        self._update()
+        self._update_cache()
 
     @property
     def data(self):
@@ -650,11 +644,10 @@ class MaskedCost(Cost):
     @data.setter
     def data(self, value):
         self._data[...] = value
-        self._update()
+        self._update_cache()
 
-    def _update(self):
-        for up in self._updater:
-            up()
+    def _update_cache(self):
+        self._masked = self._data[_replace_none(self._mask, ...)]
 
 
 class UnbinnedCost(MaskedCost):
@@ -902,12 +895,13 @@ class BinnedCost(MaskedCost):
         else:
             self._bztrafo = None
 
-        def up():
-            if self._bztrafo:
-                ma = _replace_none(self._mask, ...)
-                self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
+        super().__init__(args, n, verbose)
 
-        super().__init__(args, n, verbose, up, *updater)
+    def _update_cache(self):
+        super()._update_cache()
+        if self._bztrafo:
+            ma = _replace_none(self._mask, ...)
+            self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
 
     def visualize(self, args: _ArrayLike):
         """
@@ -1297,7 +1291,7 @@ class LeastSquares(MaskedCost):
             self.data[:, 0] = _norm(value)
         else:
             self.data[:, : self._ndim] = _norm(value).T
-        self._update()
+        self._update_cache()
 
     @property
     def y(self):
@@ -1307,7 +1301,7 @@ class LeastSquares(MaskedCost):
     @y.setter
     def y(self, value):
         self.data[:, self._ndim] = _norm(value)
-        self._update()
+        self._update_cache()
 
     @property
     def yerror(self):
@@ -1317,7 +1311,7 @@ class LeastSquares(MaskedCost):
     @yerror.setter
     def yerror(self, value):
         self.data[:, self._ndim + 1] = _norm(value)
-        self._update()
+        self._update_cache()
 
     @property
     def model(self):
