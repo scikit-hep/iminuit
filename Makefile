@@ -2,16 +2,17 @@
 
 # default target
 build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
-	DEBUG=1 python3 setup.py develop
+	DEBUG=1 python -m pip install -v -e .
 	touch build/done
 
 test: build/done
-	python3 -m pytest -vv -r a --ff --pdb
+	python -m pytest -vv -r a --ff --pdb
 
 cov: build/done
-	# This only computes the coverage in pure Python.
+	# only computes the coverage in pure Python
 	rm -rf htmlcov
-	python -m pip install --prefer-binary -e .[test]
+	# (re-)install all test dependencies
+	python .ci/install_extra.py
 	coverage run -m pytest
 	python -m pip uninstall --yes numba ipykernel ipywidgets
 	coverage run --append -m pytest
