@@ -178,7 +178,7 @@ def test_interactive():
 
         m = Minuit(cost, 1, 1)
         with pytest.raises(ValueError, match="no visualize method"):
-            m.interactive()
+            m.interactive(raise_on_exception=True)
 
         with plot.assert_call():
             out1 = m.interactive(plot)
@@ -220,7 +220,7 @@ def test_interactive():
         c = Cost()
         m = Minuit(c, 0, 0)
         with plot.assert_call():
-            out = m.interactive()
+            out = m.interactive(raise_on_exception=True)
 
         # this should modify slider range
         ui = out.children[1]
@@ -243,3 +243,36 @@ def test_interactive():
         with pytest.raises(ModuleNotFoundError, match="Please install"):
             m = Minuit(cost, 1, 1)
             m.interactive()
+
+
+def test_interactive_raises():
+    pytest.importorskip("ipywidgets")
+
+    def raiser(args):
+        raise ValueError
+
+    m = Minuit(lambda x, y: 0, 0, 1)
+
+    # by default do not raise
+    m.interactive(raiser)
+
+    with pytest.raises(ValueError):
+        m.interactive(raiser, raise_on_exception=True)
+
+
+def test_interactive_with_array_func():
+    pytest.importorskip("ipywidgets")
+
+    def cost(par):
+        return par[0] ** 2 + (par[1] / 2) ** 2
+
+    class TraceArgs:
+        nargs = 0
+
+        def __call__(self, par):
+            self.nargs = len(par)
+
+    trace_args = TraceArgs()
+    m = Minuit(cost, (1, 2))
+    m.interactive(trace_args)
+    assert trace_args.nargs == 1
