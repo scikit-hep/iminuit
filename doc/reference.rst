@@ -36,16 +36,15 @@ Minuit
 .. autoclass:: Minuit
     :members:
 
+Scipy-like interface
+--------------------
+
+.. autofunction:: minimize
+
 Cost functions
 --------------
 
 .. automodule:: iminuit.cost
-    :members:
-
-Scipy-like interface
---------------------
-
-.. automodule:: iminuit.minimize
     :members:
 
 Utilities
