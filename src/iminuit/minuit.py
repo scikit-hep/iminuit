@@ -1057,7 +1057,7 @@ class Minuit:
             if not isinstance(constraints, _tp.Iterable):
                 constraints = [constraints]
 
-            for c in constraints:
+            for i, c in enumerate(constraints):
                 if isinstance(c, NonlinearConstraint):
                     c.fun = Wrapped(c.fun)
                 elif isinstance(c, LinearConstraint):
@@ -1065,9 +1065,10 @@ class Minuit:
                         x = cpar.copy()
                         x[cfree] = 0
                         shift = np.dot(c.A, x)
-                        c.lb -= shift
-                        c.ub -= shift
-                        c.A = np.atleast_1d(c.A)[cfree]
+                        lb = c.lb - shift
+                        ub = c.ub - shift
+                        A = np.atleast_1d(c.A)[:, cfree]
+                        constraints[i] = LinearConstraint(A, lb, ub, c.keep_feasible)
                 else:
                     raise ValueError(
                         "setting constraints with dicts is not supported, use "
@@ -1122,9 +1123,11 @@ class Minuit:
             "Powell",
         ):
             options["maxfev"] = ncall
+            del options["maxiter"]
 
-        if method == "L-BFGS-B":
+        if method in ("L-BFGS-B", "TNC"):
             options["maxfun"] = ncall
+            del options["maxiter"]
 
         if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
             constraints = ()
