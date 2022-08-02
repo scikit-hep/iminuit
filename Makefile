@@ -1,24 +1,28 @@
 # Makefile for developers with some convenient quick ways to do common things
 
 # default target
-build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
+build/done: build/deps $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
 	DEBUG=1 python -m pip install -v -e .
 	touch build/done
 
 test: build/done
 	python -m pytest -vv -r a --ff --pdb
 
+build/deps:
+	# (re-)install all test dependencies
+	python .ci/install_extra.py
+	touch build/deps
+
 cov: build/done
 	# only computes the coverage in pure Python
 	rm -rf htmlcov
-	# (re-)install all test dependencies
-	python .ci/install_extra.py
 	coverage run -m pytest
 	python -m pip uninstall --yes numba ipykernel ipywidgets
 	coverage run --append -m pytest
 	python -m pip uninstall --yes scipy matplotlib
 	coverage run --append -m pytest
 	coverage html -d htmlcov
+	rm build/deps
 
 doc: build/done build/html/done
 
