@@ -2068,7 +2068,12 @@ class Minuit:
 
         return fig, ax
 
-    def interactive(self, plot: _tp.Optional[_tp.Callable] = None, **kwargs):
+    def interactive(
+        self,
+        plot: _tp.Optional[_tp.Callable] = None,
+        raise_on_exception=False,
+        **kwargs,
+    ):
         """
         Return fitting widget (requires ipywidgets, IPython, matplotlib).
 
@@ -2083,6 +2088,10 @@ class Minuit:
             and potentially further keyword arguments, and draws a visualization into the
             current matplotlib axes. If the cost function does not provide a visualize
             method or if you want to override it, pass the function here.
+        raise_on_exception : bool, optional
+            The default is to catch exceptions in the plot function and convert them
+            into a plotted message. In unit tests, raise_on_exception should be set to
+            True to allow detecting errors.
         **kwargs :
             Any other keyword arguments are forwarded to the plot function.
 
@@ -2126,8 +2135,14 @@ class Minuit:
             trans = plt.gca().transAxes
             try:
                 with warnings.catch_warnings():
-                    plot(args, **kwargs)
+                    if self.fcn._array_call:
+                        plot([args], **kwargs)  # prevent unpacking of array
+                    else:
+                        plot(args, **kwargs)
             except Exception:
+                if raise_on_exception:
+                    raise
+
                 import traceback
 
                 plt.figtext(
