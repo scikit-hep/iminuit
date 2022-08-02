@@ -1,11 +1,4 @@
-"""
-Scipy interface for Minuit.
-
-The :func:`minimize` function provides the same interface as ``scipy.optimize.minimize``.
-If you are familiar with the latter, this allows you to use Minuit with a quick start.
-Eventually, you still may want to learn the interface of the :class:`Minuit` class, as it
-provides more functionality if you are interested in parameter uncertainties.
-"""
+"""Scipy interface for Minuit."""
 
 from .minuit import Minuit
 import warnings
@@ -29,32 +22,41 @@ def minimize(
     """
     Interface to MIGRAD using the ``scipy.optimize.minimize`` API.
 
-    For a general description of the arguments, see ``scipy.optimize.minimize``.
+    This function provides the same interface as ``scipy.optimize.minimize``.
+    If you are familiar with the latter, this allows you to use Minuit with a quick start.
+    Eventually, you still may want to learn the interface of the :class:`Minuit` class,
+    as it provides more functionality if you are interested in parameter uncertainties.
 
-    Allowed values for ``method`` are "migrad" or "simplex". Default: "migrad".
+    For a general description of the arguments of this function, see
+    ``scipy.optimize.minimize``. We list only a few in the following.
 
-    The ``options`` argument can be used to pass special settings to Minuit.
-    All are optional.
-
-    **Options:**
-
-      - *disp* (bool): Set to true to print convergence messages. Default: False.
-      - *stra* (int): Minuit strategy (0: fast/inaccurate, 1: balanced,
+    Parameters
+    ----------
+    method: str
+        Allowed values are "migrad" or "simplex". Default: "migrad".
+    options: dict
+        Can be used to pass special settings to Minuit. All are optional.
+        The following options are supported.
+        *disp* (bool): Set to true to print convergence messages. Default: False.
+        *stra* (int): Minuit strategy (0: fast/inaccurate, 1: balanced,
         2: slow/accurate). Default: 1.
-      - *maxfun* (int): Maximum allowed number of iterations. Default: None.
-      - *maxfev* (int): Deprecated alias for *maxfun*.
-      - *eps* (sequence): Initial step size to numerical compute derivative.
+        *maxfun* (int): Maximum allowed number of iterations. Default: None.
+        *maxfev* (int): Deprecated alias for *maxfun*.
+        *eps* (sequence): Initial step size to numerical compute derivative.
         Minuit automatically refines this in subsequent iterations and is very
         insensitive to the initial choice. Default: 1.
 
-    **Returns: OptimizeResult** (dict with attribute access)
-      - *x* (ndarray): Solution of optimization.
-      - *fun* (float): Value of objective function at minimum.
-      - *message* (str): Description of cause of termination.
-      - *hess_inv* (ndarray): Inverse of Hesse matrix at minimum (may not be exact).
-      - nfev (int): Number of function evaluations.
-      - njev (int): Number of jacobian evaluations.
-      - minuit (object): Minuit object internally used to do the minimization.
+    Returns
+    -------
+    OptimizeResult
+        Dict with attribute access that holds the result. It contains the following
+        lists of fields. *x* (ndarray): Solution of optimization.
+        *fun* (float): Value of objective function at minimum.
+        *message* (str): Description of cause of termination.
+        *hess_inv* (ndarray): Inverse of Hesse matrix at minimum (may not be exact).
+        *nfev* (int): Number of function evaluations.
+        *njev* (int): Number of jacobian evaluations.
+        *minuit* (Minuit): Minuit object internally used to do the minimization.
         Use this to extract more information about the parameter errors.
     """
     from scipy.optimize import OptimizeResult, Bounds
