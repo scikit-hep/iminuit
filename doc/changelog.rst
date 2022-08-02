@@ -5,6 +5,11 @@
 Changelog
 =========
 
+2.15.2 (August 03, 2022)
+------------------------
+- Improve docs for minimize (`#777 <https://github.com/scikit-hep/iminuit/pull/777>`_)
+- Fix for minuit.interactive when using an array-based function (`#776 <https://github.com/scikit-hep/iminuit/pull/776>`_)
+
 2.15.1 (July 28, 2022)
 ----------------------
 - Fix pickling of all builtin cost functions (`#773 <https://github.com/scikit-hep/iminuit/pull/773>`_)
