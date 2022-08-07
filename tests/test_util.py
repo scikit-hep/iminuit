@@ -76,6 +76,33 @@ def test_ValueView():
     assert_equal(v, (3, 2, 1))
 
 
+def test_FixedView_as_mask_for_other_views():
+    state = MnUserParameterState()
+    state.add("x", 1, 0.1)
+    state.add("y", 2, 0.1)
+    state.add("z", 3, 0.1)
+
+    fake_minuit = Namespace(
+        _var2pos={"x": 0, "y": 1, "z": 2},
+        _pos2var=("x", "y", "z"),
+        npar=3,
+        _last_state=state,
+        _copy_state_if_needed=lambda: None,
+    )
+
+    v = util.ValueView(fake_minuit)
+    f = util.FixedView(fake_minuit)
+    f[1] = True
+
+    assert_equal(f, [False, True, False])
+    assert_equal(v[f], [2])
+    assert_equal(v[~f], [1, 3])
+    v[f] = 5
+    assert_equal(v, [1, 5, 3])
+    v[~f] = [2, 4]
+    assert_equal(v, [2, 5, 4])
+
+
 def test_Matrix():
     m = util.Matrix(("a", "b"))
     m[:] = [[1, 2], [2, 8]]
