@@ -161,6 +161,10 @@ class FixedView(BasicView):
         else:
             self._minuit._last_state.release(i)
 
+    def __invert__(self) -> list:
+        """Return list with inverted elements."""
+        return [not self._get(i) for i in range(len(self))]
+
 
 class LimitView(BasicView):
     """Array-like view of parameter limits."""
@@ -1328,6 +1332,9 @@ def _key2index(
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
     if not isinstance(key, str) and isinstance(key, _tp.Iterable):
+        # convert boolean masks into list of indices
+        if isinstance(key[0], bool):
+            key = [k for k in range(len(var2pos)) if key[k]]
         return [_key2index_item(var2pos, k) for k in key]
     return _key2index_item(var2pos, key)
 
