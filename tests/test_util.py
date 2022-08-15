@@ -123,7 +123,8 @@ def test_FixedView_comparison_with_broadcasting():
 
     # broadcasting
     assert f == False
-    f.fixed[0] = True
+    f[0] = True
+    assert_equal(f, [True, False, False])
     assert f != False
 
 
