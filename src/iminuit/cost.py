@@ -138,7 +138,7 @@ class BohmZechTransform:
         return self._obs, val * s, var * s**2
 
 
-def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike) -> float:
+def chi2(y: _ArrayLike[float], ye: _ArrayLike[float], ym: _ArrayLike[float]) -> float:
     """
     Compute (potentially) chi2-distributed cost.
 
@@ -163,7 +163,7 @@ def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike) -> float:
     return np.sum(_z_squared(y, ye, ym))
 
 
-def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:
+def multinominal_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
 
@@ -191,7 +191,7 @@ def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def poisson_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:
+def poisson_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
 
@@ -219,7 +219,7 @@ def poisson_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:
 
 
 def barlow_beeston_lite_chi2_jsc(
-    n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike
+    n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
 ) -> float:
     """
     Compute asymptotically chi2-distributed cost for a template fit.
@@ -247,7 +247,7 @@ def barlow_beeston_lite_chi2_jsc(
     asymptotically chi2-distributed, which helps to maximise the numerical
     accuracy for Minuit.
     """
-    n, mu, mu_var = np.atleast_1d((n, mu, mu_var))
+    n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
 
     beta_var = mu_var / mu**2
 
@@ -256,7 +256,9 @@ def barlow_beeston_lite_chi2_jsc(
     q = -n * beta_var
     beta = 0.5 * (-p + np.sqrt(p**2 - 4 * q))
 
-    return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
+    return poisson_chi2(n, mu * beta) + np.sum(  # type:ignore
+        (beta - 1) ** 2 / beta_var
+    )
 
 
 def barlow_beeston_lite_chi2_hpd(
@@ -282,10 +284,10 @@ def barlow_beeston_lite_chi2_hpd(
     float
         Cost function value.
     """
-    n, mu, mu_var = np.atleast_1d((n, mu, mu_var))
+    n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
     k = mu**2 / mu_var
     beta = (n + k) / (mu + k)
-    return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)
+    return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)  # type:ignore
 
 
 # If numba is available, use it to accelerate computations in float32 and float64
@@ -323,8 +325,8 @@ try:
         error_model="numpy",
     )(_multinominal_chi2_np)
 
-    def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:  # noqa
-        n, mu = np.atleast_1d((n, mu))
+    def multinominal_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:  # noqa
+        n, mu = np.atleast_1d(n, mu)  # type:ignore
         if mu.dtype in (np.float32, np.float64):  # type:ignore
             return _multinominal_chi2_nb(n, mu)
         # fallback to numpy for float128
@@ -339,8 +341,8 @@ try:
         error_model="numpy",
     )(_poisson_chi2_np)
 
-    def poisson_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:  # noqa
-        n, mu = np.atleast_1d((n, mu))
+    def poisson_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:  # noqa
+        n, mu = np.atleast_1d(n, mu)  # type:ignore
         if mu.dtype in (np.float32, np.float64):  # type:ignore
             return _poisson_chi2_nb(n, mu)
         # fallback to numpy for float128
@@ -355,8 +357,10 @@ try:
         error_model="numpy",
     )(_chi2_np)
 
-    def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike) -> float:  # noqa
-        y, ye, ym = np.atleast_1d((y, ye, ym))
+    def chi2(
+        y: _ArrayLike[float], ye: _ArrayLike[float], ym: _ArrayLike[float]
+    ) -> float:  # noqa
+        y, ye, ym = np.atleast_1d(y, ye, ym)  # type:ignore
         if ym.dtype in (np.float32, np.float64):  # type:ignore
             return _chi2_nb(y, ye, ym)
         # fallback to numpy for float128
