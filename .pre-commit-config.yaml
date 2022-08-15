@@ -65,3 +65,12 @@ repos:
     additional_dependencies: [pyyaml]
     types: [file]
     files: (\.cmake|CMakeLists.txt)(.in)?$
+
+# Python type checking
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: 'v0.971'
+  hooks:
+  - id: mypy
+    additional_dependencies: [numpy]
+    args: [src]
+    pass_filenames: false

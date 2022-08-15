@@ -2,7 +2,7 @@
 
 # default target
 build/done: build/deps $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
-	DEBUG=1 python -m pip install -v -e .
+	DEBUG=1 python -m pip install --no-build-isolation -v -e .
 	touch build/done
 
 test: build/done
