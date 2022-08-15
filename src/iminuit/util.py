@@ -93,9 +93,11 @@ class BasicView(abc.ABC):
 
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
-        if isinstance(other, _tp.Iterable) and isinstance(other, _tp.Sized):
-            return len(self) == len(other) and all(x == y for x, y in zip(self, other))
-        return NotImplemented
+        try:
+            a, b = np.broadcast_arrays(self, other)
+            return np.all(a == b)
+        except Exception:
+            return NotImplemented
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
