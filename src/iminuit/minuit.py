@@ -20,7 +20,7 @@ import typing as _tp
 
 # Better use numpy.typing.ArrayLike in the future, but this
 # requires dropping Python-3.6 support
-_ArrayLike = _tp.Collection
+_ArrayLike = _tp.Sequence
 
 MnPrint.global_level = 0
 
@@ -47,6 +47,9 @@ class Minuit:
         "_init_state",
         "_last_state",
     )
+
+    _fmin: _tp.Optional[mutil.FMin]
+    _covariance: _tp.Optional[mutil.Matrix]
 
     LEAST_SQUARES = 1.0
     """Set errordef to this for a least-squares cost function."""  # pragma: nocover
@@ -468,8 +471,8 @@ class Minuit:
         self,
         fcn: _tp.Callable,
         *args: _tp.Union[float, _ArrayLike[float]],
-        grad: _tp.Optional[_tp.Callable] = None,
-        name: _tp.Optional[_tp.Collection[str]] = None,
+        grad: _tp.Callable = None,
+        name: _tp.Collection[str] = None,
         **kwds: float,
     ):
         """
@@ -586,7 +589,7 @@ class Minuit:
         migrad, hesse, minos, scan, simplex
         """
         array_call = False
-        if len(args) == 1 and isinstance(args[0], _tp.Collection):
+        if len(args) == 1 and isinstance(args[0], _tp.Iterable):
             array_call = True
             start = np.array(args[0])
         else:
@@ -637,14 +640,14 @@ class Minuit:
         :attr:`print_level` unchanged.
         """
         self._last_state = self._init_state
-        self._fmin: _tp.Optional[mutil.FMin] = None
+        self._fmin = None
         self._fcn._nfcn = 0
         self._fcn._ngrad = 0
         self._merrors = mutil.MErrors()
-        self._covariance: _tp.Optional[mutil.Matrix] = None
+        self._covariance: mutil.Matrix = None
         return self  # return self for method chaining and to autodisplay current state
 
-    def migrad(self, ncall: _tp.Optional[int] = None, iterate: int = 5) -> "Minuit":
+    def migrad(self, ncall: int = None, iterate: int = 5) -> "Minuit":
         """
         Run Migrad minimization.
 
@@ -707,7 +710,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall: _tp.Optional[int] = None) -> "Minuit":
+    def simplex(self, ncall: int = None) -> "Minuit":
         """
         Run Simplex minimization.
 
@@ -767,7 +770,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scan(self, ncall: _tp.Optional[int] = None) -> "Minuit":
+    def scan(self, ncall: int = None) -> "Minuit":
         """
         Brute-force minimization.
 
@@ -878,11 +881,11 @@ class Minuit:
 
     def scipy(
         self,
-        method: _tp.Optional[_tp.Union[str, _tp.Callable]] = None,
-        ncall: _tp.Optional[int] = None,
-        hess: _tp.Optional[_tp.Any] = None,
-        hessp: _tp.Optional[_tp.Any] = None,
-        constraints: _tp.Optional[_tp.Iterable[_tp.Any]] = None,
+        method: _tp.Union[str, _tp.Callable] = None,
+        ncall: int = None,
+        hess: _tp.Any = None,
+        hessp: _tp.Any = None,
+        constraints: _tp.Iterable = None,
     ) -> "Minuit":
         """
         Minimize with SciPy algorithms.
@@ -939,7 +942,7 @@ class Minuit:
 
         cfree = ~np.array(self.fixed[:], dtype=bool)
         cpar = np.array(self.values[:])
-        no_fixed_parameters = self.nfit == self.npar
+        no_fixed_parameters = np.all(cfree)
 
         if no_fixed_parameters:
 
@@ -1056,6 +1059,8 @@ class Minuit:
 
             if not isinstance(constraints, _tp.Iterable):
                 constraints = [constraints]
+            else:
+                constraints = list(constraints)
 
             for i, c in enumerate(constraints):
                 if isinstance(c, NonlinearConstraint):
@@ -1239,7 +1244,7 @@ class Minuit:
 
         return self
 
-    def hesse(self, ncall: _tp.Optional[int] = None) -> "Minuit":
+    def hesse(self, ncall: int = None) -> "Minuit":
         """
         Run Hesse algorithm to compute asymptotic errors.
 
@@ -1326,8 +1331,8 @@ class Minuit:
     def minos(
         self,
         *parameters: str,
-        cl: _tp.Optional[float] = None,
-        ncall: _tp.Optional[int] = None,
+        cl: float = None,
+        ncall: int = None,
     ) -> "Minuit":
         """
         Run Minos algorithm to compute confidence intervals.
@@ -1435,8 +1440,8 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: _tp.Union[float, _tp.Collection[float]] = 2,
-        grid: _tp.Optional[_ArrayLike[float]] = None,
+        bound: _tp.Union[float, _ArrayLike[float]] = 2,
+        grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1505,7 +1510,7 @@ class Minuit:
 
     def draw_mnprofile(
         self, vname: str, *, band: bool = True, text: bool = True, **kwargs
-    ) -> _tp.Tuple[_tp.Collection[float], _tp.Collection[float]]:
+    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         r"""
         Draw Minos profile over a specified interval (requires matplotlib).
 
@@ -1540,8 +1545,8 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: _tp.Union[float, _tp.Collection[float]] = 2,
-        grid: _tp.Optional[_ArrayLike[float]] = None,
+        bound: _tp.Union[float, _ArrayLike[float]] = 2,
+        grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray]:
         r"""
@@ -1670,7 +1675,7 @@ class Minuit:
         bound: _tp.Union[
             float, _tp.Tuple[_tp.Tuple[float, float], _tp.Tuple[float, float]]
         ] = 2,
-        grid: _tp.Optional[_tp.Tuple[_ArrayLike, _ArrayLike]] = None,
+        grid: _tp.Tuple[_ArrayLike, _ArrayLike] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1794,7 +1799,7 @@ class Minuit:
         x: str,
         y: str,
         *,
-        cl: _tp.Optional[float] = None,
+        cl: float = None,
         size: int = 100,
         interpolated: int = 0,
     ) -> np.ndarray:
@@ -1872,8 +1877,8 @@ class Minuit:
             try:
                 from scipy.interpolate import CubicSpline
 
-                x = np.linspace(0, 1, len(pts))
-                spl = CubicSpline(x, pts, bc_type="periodic")
+                xg = np.linspace(0, 1, len(pts))
+                spl = CubicSpline(xg, pts, bc_type="periodic")
                 pts = spl(np.linspace(0, 1, interpolated))
 
             except ModuleNotFoundError:
@@ -1888,7 +1893,7 @@ class Minuit:
         x: str,
         y: str,
         *,
-        cl: _tp.Optional[_tp.Union[float, _ArrayLike[float]]] = None,
+        cl: _tp.Union[float, _ArrayLike[float]] = None,
         size: int = 100,
         interpolated: int = 0,
     ) -> _tp.Any:
@@ -1946,7 +1951,7 @@ class Minuit:
     def draw_mnmatrix(
         self,
         *,
-        cl: _tp.Optional[_tp.Union[float, _ArrayLike[float]]] = None,
+        cl: _tp.Union[float, _ArrayLike[float]] = None,
         size: int = 100,
         figsize=None,
     ) -> _tp.Any:
@@ -1961,7 +1966,7 @@ class Minuit:
 
         Parameters
         ----------
-        cl : float or collection of floats, optional
+        cl : float or array-like of floats, optional
             See :meth:`mncontour`.
 
         size : int, optional
@@ -2046,8 +2051,8 @@ class Minuit:
                     par2 = pars[j]
                     plt.sca(ax[i, j])
                     plt.plot(self.values[par2], self.values[par1], "+", color="k")
-                    for k, cl in enumerate(cls):
-                        pts = self.mncontour(par1, par2, cl=cl, size=size)
+                    for k, cli in enumerate(cls):
+                        pts = self.mncontour(par1, par2, cl=cli, size=size)
                         bar += 1
                         if len(pts) > 0:
                             x, y = np.transpose(pts)
@@ -2073,7 +2078,7 @@ class Minuit:
 
     def interactive(
         self,
-        plot: _tp.Optional[_tp.Callable] = None,
+        plot: _tp.Callable = None,
         raise_on_exception=False,
         **kwargs,
     ):
@@ -2319,9 +2324,9 @@ class Minuit:
         return pr
 
     def _normalize_bound(
-        self, vname: str, bound: _tp.Union[float, _tp.Collection[float]]
+        self, vname: str, bound: _tp.Union[float, _ArrayLike[float]]
     ) -> _tp.Tuple[float, float]:
-        if isinstance(bound, _tp.Collection):
+        if isinstance(bound, _tp.Iterable):
             return mutil._normalize_limit(bound)
 
         if not self.accurate:

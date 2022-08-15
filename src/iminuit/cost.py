@@ -63,8 +63,8 @@ import typing as _tp
 import warnings
 
 # correct ArrayLike from numpy.typing generates horrible looking signatures
-# python's help(), so we use this as a workaround
-_ArrayLike = _tp.Collection
+# in python's help(), so we use this as a workaround
+_ArrayLike = _tp.Sequence
 
 
 def _safe_log(x):
@@ -138,7 +138,7 @@ class BohmZechTransform:
         return self._obs, val * s, var * s**2
 
 
-def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike):
+def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike) -> float:
     """
     Compute (potentially) chi2-distributed cost.
 
@@ -163,7 +163,7 @@ def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike):
     return np.sum(_z_squared(y, ye, ym))
 
 
-def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike):
+def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
 
@@ -191,7 +191,7 @@ def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike):
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def poisson_chi2(n: _ArrayLike, mu: _ArrayLike):
+def poisson_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
 
@@ -218,7 +218,9 @@ def poisson_chi2(n: _ArrayLike, mu: _ArrayLike):
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def barlow_beeston_lite_chi2_jsc(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike):
+def barlow_beeston_lite_chi2_jsc(
+    n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike
+) -> float:
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -245,6 +247,8 @@ def barlow_beeston_lite_chi2_jsc(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLi
     asymptotically chi2-distributed, which helps to maximise the numerical
     accuracy for Minuit.
     """
+    n, mu, mu_var = np.atleast_1d((n, mu, mu_var))
+
     beta_var = mu_var / mu**2
 
     # need to solve quadratic equation b^2 + (mu beta_var - 1) b - n beta_var = 0
@@ -255,7 +259,9 @@ def barlow_beeston_lite_chi2_jsc(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLi
     return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
 
 
-def barlow_beeston_lite_chi2_hpd(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLike):
+def barlow_beeston_lite_chi2_hpd(
+    n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
+) -> float:
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -276,6 +282,7 @@ def barlow_beeston_lite_chi2_hpd(n: _ArrayLike, mu: _ArrayLike, mu_var: _ArrayLi
     float
         Cost function value.
     """
+    n, mu, mu_var = np.atleast_1d((n, mu, mu_var))
     k = mu**2 / mu_var
     beta = (n + k) / (mu + k)
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)
@@ -316,11 +323,12 @@ try:
         error_model="numpy",
     )(_multinominal_chi2_np)
 
-    def multinominal_chi2(n, p):  # noqa
-        if p.dtype in (np.float32, np.float64):
-            return _multinominal_chi2_nb(n, p)
+    def multinominal_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:  # noqa
+        n, mu = np.atleast_1d((n, mu))
+        if mu.dtype in (np.float32, np.float64):  # type:ignore
+            return _multinominal_chi2_nb(n, mu)
         # fallback to numpy for float128
-        return _multinominal_chi2_np(n, p)
+        return _multinominal_chi2_np(n, mu)
 
     multinominal_chi2.__doc__ = _multinominal_chi2_np.__doc__
 
@@ -331,8 +339,9 @@ try:
         error_model="numpy",
     )(_poisson_chi2_np)
 
-    def poisson_chi2(n, mu):  # noqa
-        if mu.dtype in (np.float32, np.float64):
+    def poisson_chi2(n: _ArrayLike, mu: _ArrayLike) -> float:  # noqa
+        n, mu = np.atleast_1d((n, mu))
+        if mu.dtype in (np.float32, np.float64):  # type:ignore
             return _poisson_chi2_nb(n, mu)
         # fallback to numpy for float128
         return _poisson_chi2_np(n, mu)
@@ -346,8 +355,9 @@ try:
         error_model="numpy",
     )(_chi2_np)
 
-    def chi2(y, ye, ym):  # noqa
-        if ym.dtype in (np.float32, np.float64):
+    def chi2(y: _ArrayLike, ye: _ArrayLike, ym: _ArrayLike) -> float:  # noqa
+        y, ye, ym = np.atleast_1d((y, ye, ym))
+        if ym.dtype in (np.float32, np.float64):  # type:ignore
             return _chi2_nb(y, ye, ym)
         # fallback to numpy for float128
         return _chi2_np(y, ye, ym)
@@ -667,6 +677,16 @@ class UnbinnedCost(MaskedCost):
         self._log = log
         super().__init__(describe(model)[1:], _norm(data), verbose)
 
+    @abc.abstractproperty
+    def pdf(self):
+        """Get probability density model."""
+        ...
+
+    @abc.abstractproperty
+    def scaled_pdf(self):
+        """Get number density model."""
+        ...
+
     def visualize(self, args: _ArrayLike, model_points: int = 0):
         """
         Visualize data and model agreement (requires matplotlib).
@@ -719,7 +739,7 @@ class UnbinnedNLL(UnbinnedCost):
 
     @property
     def scaled_pdf(self):
-        """Get probability density model."""
+        """Get number density model."""
         scale = np.prod(self.data.shape)
         if self._log:
             return lambda *args: scale * np.exp(self._model(*args))
@@ -930,6 +950,10 @@ class BinnedCost(MaskedCost):
         plt.errorbar(cx, n, ne, fmt="ok")
         mu = self._pred(args)  # implemented in derived
         plt.stairs(mu, xe, fill=True, color="C0")
+
+    @abc.abstractmethod
+    def _pred(self, args: np.ndarray) -> np.ndarray:
+        ...
 
 
 class BinnedCostWithModel(BinnedCost):
@@ -1324,7 +1348,7 @@ class LeastSquares(MaskedCost):
         return self._loss
 
     @loss.setter
-    def loss(self, loss: _tp.Union[str, _tp.Callable]):
+    def loss(self, loss: _tp.Union[str, _tp.Callable[[np.ndarray], np.ndarray]]):
         self._loss = loss
         if isinstance(loss, str):
             if loss == "linear":
@@ -1574,7 +1598,7 @@ class NormalConstraint(Cost):
         plt.ylim(-n + 0.5, 0.5)
 
 
-def _norm(value: _ArrayLike) -> np.ndarray:
+def _norm(value: _ArrayLike[float]) -> np.ndarray:
     value = np.atleast_1d(value)
     dtype = value.dtype
     if dtype.kind != "f":

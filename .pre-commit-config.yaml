@@ -65,3 +65,12 @@ repos:
     additional_dependencies: [pyyaml]
     types: [file]
     files: (\.cmake|CMakeLists.txt)(.in)?$
+
+# Python type checking
+- repo: local
+  hooks:
+  - id: mypy
+    name: mypy
+    language: system
+    entry: python -m mypy
+    files: src
