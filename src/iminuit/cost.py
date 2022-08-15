@@ -684,12 +684,12 @@ class UnbinnedCost(MaskedCost):
     @abc.abstractproperty
     def pdf(self):
         """Get probability density model."""
-        ...
+        ...  # pragma: no cover
 
     @abc.abstractproperty
     def scaled_pdf(self):
         """Get number density model."""
-        ...
+        ...  # pragma: no cover
 
     def visualize(self, args: _ArrayLike, model_points: int = 0):
         """
@@ -957,7 +957,7 @@ class BinnedCost(MaskedCost):
 
     @abc.abstractmethod
     def _pred(self, args: np.ndarray) -> np.ndarray:
-        ...
+        ...  # pragma: no cover
 
 
 class BinnedCostWithModel(BinnedCost):
