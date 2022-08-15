@@ -15,6 +15,8 @@ from time import monotonic
 import warnings
 import sys
 
+_ArrayLike = _tp.Sequence
+
 
 class IMinuitWarning(RuntimeWarning):
     """Generic iminuit warning."""
@@ -93,11 +95,8 @@ class BasicView(abc.ABC):
 
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
-        try:
-            a, b = np.broadcast_arrays(self, other)  # type:ignore
-            return np.all(a == b)  # type:ignore # got _bool, expected bool
-        except Exception:
-            return NotImplemented
+        a, b = np.broadcast_arrays(self, other)  # type:ignore
+        return _tp.cast(bool, np.all(a == b))
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
