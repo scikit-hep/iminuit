@@ -494,10 +494,10 @@ def test_BinnedNLL_properties():
 def test_BinnedNLL_visualize():
     c = BinnedNLL([1, 2], [1, 2, 3], expon_cdf)
 
-    c.visualize(1)
+    c.visualize((1,))
 
     c.mask = np.array([False, True])
-    c.visualize(1)
+    c.visualize((1,))
 
 
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
