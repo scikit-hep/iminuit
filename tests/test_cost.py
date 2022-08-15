@@ -1003,7 +1003,7 @@ def test_multinominal_chi2():
     assert multinominal_chi2(zero, zero) == 0
     assert multinominal_chi2(zero, one) == 0
     assert multinominal_chi2(one, zero) == pytest.approx(1487, abs=1)
-    n = np.array([(0.0, 0.0)])
+    n = np.array([[0.0, 0.0]])
     assert_allclose(multinominal_chi2(n, zero), 0)
     assert_allclose(multinominal_chi2(n, one), 0)
 
