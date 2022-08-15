@@ -103,6 +103,31 @@ def test_FixedView_as_mask_for_other_views():
     assert_equal(v, [2, 5, 4])
 
 
+def test_FixedView_comparison_with_broadcasting():
+    state = MnUserParameterState()
+    state.add("x", 1, 0.1)
+    state.add("y", 2, 0.1)
+    state.add("z", 3, 0.1)
+
+    fake_minuit = Namespace(
+        _var2pos={"x": 0, "y": 1, "z": 2},
+        _pos2var=("x", "y", "z"),
+        npar=3,
+        _last_state=state,
+        _copy_state_if_needed=lambda: None,
+    )
+
+    f = util.FixedView(fake_minuit)
+
+    assert_equal(f, [False, False, False])
+
+    # broadcasting
+    assert f == False
+    f[0] = True
+    assert_equal(f, [True, False, False])
+    assert f != False
+
+
 def test_Matrix():
     m = util.Matrix(("a", "b"))
     m[:] = [[1, 2], [2, 8]]
