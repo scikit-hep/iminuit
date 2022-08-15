@@ -950,7 +950,7 @@ class BinnedCost(MaskedCost):
         if self.mask is not None:
             cx = cx[self.mask]
         plt.errorbar(cx, n, ne, fmt="ok")
-        mu = self._pred(args)  # implemented in derived
+        mu = self._pred(args)
         plt.stairs(mu, xe, fill=True, color="C0")
 
     @abc.abstractmethod
