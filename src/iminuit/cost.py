@@ -927,7 +927,7 @@ class BinnedCost(MaskedCost):
             ma = _replace_none(self._mask, ...)
             self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
 
-    def visualize(self, args: _ArrayLike):
+    def visualize(self, args: _tp.Sequence[float]):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -935,12 +935,10 @@ class BinnedCost(MaskedCost):
 
         Parameters
         ----------
-        args : array-like
+        args : sequence of float
             Parameter values.
         """
         from matplotlib import pyplot as plt
-
-        args = np.atleast_1d(args)
 
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
@@ -956,7 +954,7 @@ class BinnedCost(MaskedCost):
         plt.stairs(mu, xe, fill=True, color="C0")
 
     @abc.abstractmethod
-    def _pred(self, args: np.ndarray) -> np.ndarray:
+    def _pred(self, args: _tp.Sequence[float]) -> np.ndarray:
         ...  # pragma: no cover
 
 
@@ -980,7 +978,7 @@ class BinnedCostWithModel(BinnedCost):
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
 
-    def _pred(self, args):
+    def _pred(self, args: _tp.Sequence[float]):
         d = self._model(self._model_arg, *args)
         d = _normalize_model_output(d)
         if self._xe_shape is not None:
@@ -1102,7 +1100,7 @@ class BarlowBeestonLite(BinnedCost):
 
         super().__init__(name, n, xe, verbose)
 
-    def _pred(self, args):
+    def _pred(self, args: _tp.Sequence[float]):
         ntemp, ntemp_var = self._bbl_data
         mu = 0
         mu_var = 0
