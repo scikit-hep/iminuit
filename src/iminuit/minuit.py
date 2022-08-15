@@ -847,7 +847,7 @@ class Minuit:
                 r = self.fcn(x[: self.npar])
                 if r < x[self.npar]:
                     x[self.npar] = r
-                    self.values = x[: self.npar]
+                    self.values[:] = x[: self.npar]
                 return
             low, up = lims[ipar]
             if low == up:
@@ -1175,9 +1175,9 @@ class Minuit:
             matrix = r.hess
             needs_invert = True
         # hess_inv is a function, need to convert to full matrix
-        if isinstance(matrix, _tp.Callable):  # type:ignore
-            matrix = matrix(np.eye(self.nfit))  # type:ignore
-
+        if hasattr(matrix, "__call__"):
+            assert matrix is not None  # for mypy
+            matrix = matrix(np.eye(self.nfit))
         accurate_covar = bool(hess) or bool(hessp)
 
         # Newton-CG neither returns hessian nor inverted hessian
@@ -1190,7 +1190,7 @@ class Minuit:
                 needs_invert = True
 
         if needs_invert:
-            matrix = np.linalg.inv(matrix)
+            matrix = np.linalg.inv(matrix)  # type:ignore
 
         # Last resort: use parameter step sizes as "errors"
         if matrix is None:

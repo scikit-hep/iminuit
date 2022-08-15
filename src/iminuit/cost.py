@@ -1358,6 +1358,7 @@ class LeastSquares(MaskedCost):
             else:
                 raise ValueError("unknown loss type: " + loss)
         else:
+            assert hasattr(loss, "__call__")
             self._cost = lambda y, ye, ym: np.sum(
                 loss(_z_squared(y, ye, ym))  # type:ignore
             )

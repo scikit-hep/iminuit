@@ -249,7 +249,7 @@ class Matrix(np.ndarray):
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
-    def __getitem__(
+    def __getitem__(  # type:ignore # mypy complains about incompatible signatures
         self,
         key: _tp.Union[
             int,
@@ -259,7 +259,7 @@ class Matrix(np.ndarray):
             np.ndarray,
             slice,
         ],
-    ) -> _tp.Any:
+    ) -> np.ndarray:
         """Get matrix element at key."""
         import typing as _tp
 
@@ -277,15 +277,15 @@ class Matrix(np.ndarray):
         if isinstance(key, slice):
             # slice returns square matrix
             sl = trafo(key)
-            return super(Matrix, self).__getitem__((sl, sl))
+            return super().__getitem__((sl, sl))
         if isinstance(key, (str, tuple)):
-            return super(Matrix, self).__getitem__(trafo(key))
+            return super().__getitem__(trafo(key))
         if isinstance(key, _tp.Iterable) and not isinstance(key, np.ndarray):
             # iterable returns square matrix
             index2 = [trafo(k) for k in key]  # type:ignore
-            t = super(Matrix, self).__getitem__(index2).T
-            return super(Matrix, t).__getitem__(index2).T
-        return super(Matrix, self).__getitem__(key)
+            t = super().__getitem__(index2).T
+            return np.ndarray.__getitem__(t, index2).T
+        return super().__getitem__(key)
 
     def to_dict(self) -> _tp.Dict[_tp.Tuple[str, str], float]:
         """
@@ -298,7 +298,7 @@ class Matrix(np.ndarray):
         for i, pi in enumerate(names):
             for j in range(i, len(names)):
                 pj = names[j]
-                d[pi, pj] = self[i, j]
+                d[pi, pj] = float(self[i, j])
         return d
 
     def to_table(self) -> _tp.Tuple[_tp.List[_tp.List[str]], _tp.Tuple[str, ...]]:
