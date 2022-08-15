@@ -95,7 +95,7 @@ class BasicView(abc.ABC):
         """Return true if all values are equal."""
         try:
             a, b = np.broadcast_arrays(self, other)  # type:ignore
-            return np.all(a == b)  # type:ignore
+            return np.all(a == b)  # type:ignore # got _bool, expected bool
         except Exception:
             return NotImplemented
 
