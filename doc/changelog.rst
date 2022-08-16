@@ -5,6 +5,13 @@
 Changelog
 =========
 
+2.16.0 (August 16, 2022)
+------------------------
+- Fix corner case treatment of linear constraint (`#785 <https://github.com/scikit-hep/iminuit/pull/785>`_)
+- Comparison with broadcasting (`#784 <https://github.com/scikit-hep/iminuit/pull/784>`_)
+- Fix typing issues and enable mypy in pre-commit (`#783 <https://github.com/scikit-hep/iminuit/pull/783>`_)
+- Make fixedview act as mask for other views (`#781 <https://github.com/scikit-hep/iminuit/pull/781>`_)
+
 2.15.2 (August 03, 2022)
 ------------------------
 - Improve docs for minimize (`#777 <https://github.com/scikit-hep/iminuit/pull/777>`_)
