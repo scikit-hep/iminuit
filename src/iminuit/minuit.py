@@ -1072,7 +1072,7 @@ class Minuit:
                         shift = np.dot(c.A, x)
                         lb = c.lb - shift
                         ub = c.ub - shift
-                        A = np.atleast_1d(c.A)[:, cfree]
+                        A = np.atleast_2d(c.A)[:, cfree]
                         constraints[i] = LinearConstraint(A, lb, ub, c.keep_feasible)
                 else:
                     raise ValueError(
