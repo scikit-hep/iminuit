@@ -7,6 +7,7 @@ Changelog
 
 2.16.0 (August 16, 2022)
 ------------------------
+- Root update (`#786 <https://github.com/scikit-hep/iminuit/pull/786>`_)
 - Fix corner case treatment of linear constraint (`#785 <https://github.com/scikit-hep/iminuit/pull/785>`_)
 - Comparison with broadcasting (`#784 <https://github.com/scikit-hep/iminuit/pull/784>`_)
 - Fix typing issues and enable mypy in pre-commit (`#783 <https://github.com/scikit-hep/iminuit/pull/783>`_)

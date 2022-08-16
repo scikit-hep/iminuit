@@ -5,6 +5,7 @@ from pathlib import PurePath
 import urllib.request
 import json
 import warnings
+import sys
 
 project_dir = PurePath(__file__).parent.parent
 version_fn = project_dir / "src/iminuit/version.py"
@@ -17,27 +18,21 @@ with open(version_fn) as f:
         iminuit_version = parse_version(version["version"])
     if record:
         raise ValueError(record[0].message)
-    root_version = version["root_version"]
+    documented_root = version["root_version"]
 
 print("iminuit version:", iminuit_version)
-print("root    version:", root_version)
+print("root    version:", documented_root)
 
 # check that root version is up-to-date
-git_submodule = subp.check_output(
-    ["git", "submodule", "status"], cwd=project_dir
-).decode()
-for item in git_submodule.strip().split("\n"):
-    parts = item.split()
-    if PurePath(parts[1]) != PurePath("extern") / "root":
-        continue
+actual_root = (
+    subp.check_output([sys.executable, project_dir / ".ci" / "root_version.py"])
+    .decode()
+    .strip()
+)
 
-    assert len(parts) == 3, "module is not checked out"
-
-    this_root_version = parts[2][1:-1]  # strip braces
-
-    assert (
-        root_version == this_root_version
-    ), f"ROOT version does not match: {root_version} != {this_root_version}"
+assert (
+    documented_root == actual_root
+), f"ROOT version mismatch: {documented_root} != {actual_root}"
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:

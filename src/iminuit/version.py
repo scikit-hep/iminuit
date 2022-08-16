@@ -11,4 +11,4 @@
 version = "2.16.0"
 
 # We list the corresponding ROOT version of the C++ Minuit2 library here
-root_version = "v6-25-02-1013-ga4bb8f3342"
+root_version = "v6-25-02-2017-gd0b406db5e"
