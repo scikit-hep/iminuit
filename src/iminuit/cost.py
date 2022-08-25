@@ -267,7 +267,7 @@ def barlow_beeston_lite_chi2_hpd(
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
-    H.P. Dembinski, https://doi.org/10.48550/arXiv.2206.12346
+    H.P. Dembinski, A. Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
 
     Parameters
     ----------
@@ -288,6 +288,52 @@ def barlow_beeston_lite_chi2_hpd(
     k = mu**2 / mu_var
     beta = (n + k) / (mu + k)
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)  # type:ignore
+
+
+def barlow_beeston_lite_chi2_asy(
+    n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
+) -> float:
+    """
+    Compute asymptotically chi2-distributed cost for a template fit.
+
+    C. A. Argüelles, A. Schneider, T. Yuan, https://doi.org/10.1007/JHEP06(2019)030
+
+    Let L(k, mu, sigma) be Eq. 3.15 from the paper. We compute here
+    -2 * log(L(k, mu, sigma) / L(k, k, sigma)) to get an asymptotically chi-square
+    distributed test statistic, following Baker & Cousins, NIM 221 (1984) 437-442.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts. This is the sum of the normalised templates scaled
+        with the component yields.
+    mu_var : array-like
+        Expected variance of mu. Must be positive everywhere.
+
+    Returns
+    -------
+    float
+        Cost function value.
+    """
+    from scipy.special import loggamma as lg
+
+    n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
+
+    return -2 * np.sum(
+        mu**2 / mu_var * (np.log(mu) - np.log(mu_var) - np.log(mu / mu_var + 1))
+        - n**2 / mu_var * (np.log(n) - np.log(mu_var) - np.log(n / mu_var + 1))
+        + n * (np.log(n / mu_var + 1) - np.log(mu / mu_var + 1))
+        + np.log(mu)
+        - np.log(n)
+        - np.log(mu / mu_var + 1)
+        + np.log(n / mu_var + 1)
+        - lg(mu**2 / mu_var + 1)
+        + lg(n**2 / mu_var + 1)
+        + lg(mu**2 / mu_var + n + 1)
+        - lg(n**2 / mu_var + n + 1)
+    )
 
 
 # If numba is available, use it to accelerate computations in float32 and float64
@@ -995,10 +1041,10 @@ class BarlowBeestonLite(BinnedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
-    Compared to the original Beeston-Barlow method, the lite methods uses one nuisance
-    parameter per bin instead of one nuisance parameter per component per bin, which
-    is an approximation. This class offers two different lite methods. The default
-    method used is the one which performs better on average.
+    The original Beeston-Barlow method use one nuisance parameter per component
+    per bin, while the lite methods use only one nuisance parameter per bin. The
+    latter is an approximation. This class offers different lite methods. The default
+    method is the one which performs better on average and may change in the future.
 
     The cost function works for both weighted data and weighted templates. The cost
     function assumes that the weights are independent of the data. This is not the
@@ -1007,7 +1053,9 @@ class BarlowBeestonLite(BinnedCost):
 
     Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
     https://doi.org/10.1016/0010-4655(93)90005-W)
-    J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
+    Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
+    Argüelles, Schneider, and Yuan, https://doi.org/10.1007/JHEP06(2019)030
+    Dembinski and Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
     """
 
     __slots__ = "_bbl_data", "_impl"
@@ -1045,14 +1093,12 @@ class BarlowBeestonLite(BinnedCost):
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
-        method : {"jsc", "hpd"}, optional
-            Which version of the lite method to use. jsc: Method developed by
-            J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354.
-            hpd: Method developed by H.P. Dembinski. Default is "hpd", which seems to
-            perform slightly better on average. The default may change in the future
-            when more practical experience with both method is gained. Set this
-            parameter explicitly to ensure that a particular method is used now and
-            in the future.
+        method : {"jsc", "asy", "hpd"}, optional
+            Which lite method to use. jsc: Conway's method. asy: Method by Argüelles,
+            Schneider, and Yuan. hpd: Method by Dembinski and Abdelmotteleb. Default
+            is "hpd", which seems to perform slightly better on average. The default
+            may change in the future, so please set this parameter explicitly in code
+            that has to be stable.
         """
         M = len(templates)
         if M < 1:
@@ -1089,13 +1135,16 @@ class BarlowBeestonLite(BinnedCost):
             nt_var.append(tv * f**2)
         self._bbl_data = (nt, nt_var)
 
-        if method == "jsc":
-            self._impl = barlow_beeston_lite_chi2_jsc
-        elif method == "hpd":
-            self._impl = barlow_beeston_lite_chi2_hpd
-        else:
+        known_methods = {
+            "jsc": barlow_beeston_lite_chi2_jsc,
+            "asy": barlow_beeston_lite_chi2_asy,
+            "hpd": barlow_beeston_lite_chi2_hpd,
+        }
+        try:
+            self._impl = known_methods[method]
+        except KeyError:
             raise ValueError(
-                f"method {method} is not understood, allowed values: {{'jsc', 'hpd'}}"
+                f"method {method} is not understood, allowed values: {known_methods}"
             )
 
         super().__init__(name, n, xe, verbose)

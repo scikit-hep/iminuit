@@ -1069,7 +1069,7 @@ def test_update_data_with_mask(cls):
     assert c(1) == 0
 
 
-@pytest.mark.parametrize("method", ("jsc", "hpd"))
+@pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
 def test_BarlowBeestonLite(method):
     n = np.array([1, 2, 3])
     xe = np.array([0, 1, 2, 3])
@@ -1100,7 +1100,7 @@ def generate(rng, nmc, truth, bins, tf=1, df=1):
 
 
 @pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
-@pytest.mark.parametrize("method", ("jsc", "hpd"))
+@pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
 @pytest.mark.parametrize("with_mask", (False, True))
 @pytest.mark.parametrize("weighted_data", (False, True))
 def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
@@ -1128,7 +1128,7 @@ def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
     assert_allclose(np.std(z), 1, rtol=0.1)
 
 
-@pytest.mark.parametrize("method", ("jsc", "hpd"))
+@pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
 def test_BarlowBeestonLite_bad_input(method):
     with pytest.raises(ValueError):
         BarlowBeestonLite([1, 2], [1, 2, 3], [], method=method)
