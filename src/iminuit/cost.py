@@ -322,8 +322,8 @@ def barlow_beeston_lite_chi2_asy(
     n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
 
     return -2 * np.sum(
-        mu**2 / mu_var * (np.log(mu) - np.log(mu_var) - np.log(mu / mu_var + 1))
-        - n**2 / mu_var * (np.log(n) - np.log(mu_var) - np.log(n / mu_var + 1))
+        -(mu**2) / mu_var * np.log(1 + mu_var / mu)
+        + n**2 / mu_var * np.log(1 + mu_var / n)
         + n * (np.log(n / mu_var + 1) - np.log(mu / mu_var + 1))
         + np.log(mu)
         - np.log(n)
