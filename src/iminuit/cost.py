@@ -299,7 +299,7 @@ def barlow_beeston_lite_nll_asy(
     """
     Compute marginalized negative log-likelikihood for a template fit.
 
-    This is based on the paper by C. A. Argüelles, A. Schneider, T. Yuan,
+    This is based on the paper by C.A. Argüelles, A. Schneider, T. Yuan,
     https://doi.org/10.1007/JHEP06(2019)030.
 
     The authors use a Bayesian approach and integrate over the nuisance
@@ -554,9 +554,7 @@ class Constant(Cost):
         self.value = value
         super().__init__((), False)
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
+    def _ndata(self):
         return 0
 
     def _call(self, args):
@@ -621,9 +619,7 @@ class CostSum(Cost, Sequence):
             r += comp._call(cargs)
         return r
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
+    def _ndata(self):
         return sum(c.ndata for c in self._items)
 
     def __len__(self):
@@ -721,12 +717,6 @@ class UnbinnedCost(MaskedCost):
 
     __slots__ = "_model", "_log"
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        # unbinned likelihoods have infinite degrees of freedom
-        return np.inf
-
     def __init__(self, data, model: _tp.Callable, verbose: int, log: bool):
         """For internal use."""
         self._model = model
@@ -742,6 +732,10 @@ class UnbinnedCost(MaskedCost):
     def scaled_pdf(self):
         """Get number density model."""
         ...  # pragma: no cover
+
+    def _ndata(self):
+        # unbinned likelihoods have infinite degrees of freedom
+        return np.inf
 
     def visualize(self, args: _ArrayLike, model_points: int = 0):
         """
@@ -937,11 +931,6 @@ class BinnedCost(MaskedCost):
         """Access bin edges."""
         return self._xe
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        return np.prod(self._masked.shape[: self._ndim])
-
     def __init__(self, args, n, xe, verbose, *updater):
         """For internal use."""
         if not isinstance(xe, _tp.Iterable):
@@ -972,6 +961,9 @@ class BinnedCost(MaskedCost):
             self._bztrafo = None
 
         super().__init__(args, n, verbose)
+
+    def _ndata(self):
+        return np.prod(self._masked.shape[: self._ndim])
 
     def _update_cache(self):
         super()._update_cache()
@@ -1427,11 +1419,6 @@ class LeastSquares(MaskedCost):
                 loss(_z_squared(y, ye, ym))  # type:ignore
             )
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        return len(self._masked)
-
     def __init__(
         self,
         x: _ArrayLike,
@@ -1500,6 +1487,9 @@ class LeastSquares(MaskedCost):
         ym = self._model(x, *args)
         ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
+
+    def _ndata(self):
+        return len(self._masked)
 
     def visualize(self, args: _ArrayLike, model_points: int = 0):
         """
@@ -1619,9 +1609,7 @@ class NormalConstraint(Cost):
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
+    def _ndata(self):
         return len(self._value)
 
     def visualize(self, args: _ArrayLike):
