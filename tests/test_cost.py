@@ -57,7 +57,8 @@ def mvnorm(mux, muy, sx, sy, rho):
 
 
 def expon_cdf(x, a):
-    return 1 - np.exp(-x / a)
+    with np.errstate(over="ignore"):
+        return 1 - np.exp(-x / a)
 
 
 @pytest.fixture
