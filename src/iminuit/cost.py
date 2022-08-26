@@ -62,6 +62,9 @@ import abc
 import typing as _tp
 import warnings
 
+CHISQUARE = 1.0
+NEGATIVE_LOG_LIKELIHOOD = 0.5
+
 # correct ArrayLike from numpy.typing generates horrible looking signatures
 # in python's help(), so we use this as a workaround
 _ArrayLike = _tp.Sequence
@@ -239,7 +242,7 @@ def barlow_beeston_lite_chi2_jsc(
     Returns
     -------
     float
-        Cost function value.
+        Asymptotically chi-square-distributed test statistic.
 
     Notes
     -----
@@ -282,7 +285,7 @@ def barlow_beeston_lite_chi2_hpd(
     Returns
     -------
     float
-        Cost function value.
+        Asymptotically chi-square-distributed test statistic.
     """
     n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
     k = mu**2 / mu_var
@@ -290,17 +293,20 @@ def barlow_beeston_lite_chi2_hpd(
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)  # type:ignore
 
 
-def barlow_beeston_lite_chi2_asy(
+def barlow_beeston_lite_nll_asy(
     n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
 ) -> float:
     """
-    Compute asymptotically chi2-distributed cost for a template fit.
+    Compute marginalized negative log-likelikihood for a template fit.
 
-    C. A. Argüelles, A. Schneider, T. Yuan, https://doi.org/10.1007/JHEP06(2019)030
+    This is based on the paper by C. A. Argüelles, A. Schneider, T. Yuan,
+    https://doi.org/10.1007/JHEP06(2019)030.
 
-    Let L(k, mu, sigma) be Eq. 3.15 from the paper. We compute here
-    -2 * log(L(k, mu, sigma) / L(k, k, sigma)) to get an asymptotically chi-square
-    distributed test statistic, following Baker & Cousins, NIM 221 (1984) 437-442.
+    The authors use a Bayesian approach and integrate over the nuisance
+    parameters. Like the other Barlow-Beeston-lite methods, this is an
+    approximation. The resulting likelihood cannot be turned into an
+    asymptotically chi-square distributed test statistic as detailed
+    in Baker & Cousins, NIM 221 (1984) 437-442.
 
     Parameters
     ----------
@@ -315,24 +321,18 @@ def barlow_beeston_lite_chi2_asy(
     Returns
     -------
     float
-        Cost function value.
+        Negative log-likelihood function value.
     """
     from scipy.special import loggamma as lg
 
     n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
 
+    alpha = mu**2 / mu_var + 1
+    beta = mu / mu_var
     return -2 * np.sum(
-        -(mu**2) / mu_var * np.log(1 + mu_var / mu)
-        + n**2 / mu_var * np.log(1 + mu_var / n)
-        + n * (np.log(n / mu_var + 1) - np.log(mu / mu_var + 1))
-        + np.log(mu)
-        - np.log(n)
-        - np.log(mu / mu_var + 1)
-        + np.log(n / mu_var + 1)
-        - lg(mu**2 / mu_var + 1)
-        + lg(n**2 / mu_var + 1)
-        + lg(mu**2 / mu_var + n + 1)
-        - lg(n**2 / mu_var + n + 1)
+        alpha * np.log(beta)
+        + lg(n + alpha)
+        - (lg(n + 1) + (n + alpha) * np.log(1 + beta) + lg(alpha))
     )
 
 
@@ -456,7 +456,10 @@ class Cost(abc.ABC):
     @property
     def errordef(self):
         """For internal use."""
-        return 1.0
+        return self._errordef()
+
+    def _errordef(self):
+        return CHISQUARE
 
     @property
     def func_code(self):
@@ -464,7 +467,6 @@ class Cost(abc.ABC):
         return self._func_code
 
     @property
-    @abc.abstractmethod
     def ndata(self):
         """
         Return number of points in least-squares fits or bins in a binned fit.
@@ -472,6 +474,10 @@ class Cost(abc.ABC):
         Infinity is returned if the cost function is unbinned. This is used by Minuit to
         compute the reduced chi2, a goodness-of-fit estimate.
         """
+        return self._ndata()
+
+    @abc.abstractmethod
+    def _ndata(self):
         NotImplemented  # pragma: no cover
 
     @property
@@ -1094,11 +1100,11 @@ class BarlowBeestonLite(BinnedCost):
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
         method : {"jsc", "asy", "hpd"}, optional
-            Which lite method to use. jsc: Conway's method. asy: Method by Argüelles,
-            Schneider, and Yuan. hpd: Method by Dembinski and Abdelmotteleb. Default
-            is "hpd", which seems to perform slightly better on average. The default
-            may change in the future, so please set this parameter explicitly in code
-            that has to be stable.
+            Which lite method to use. jsc: Conway's method. hpd: Method by Dembinski
+            and Abdelmotteleb.asy: Method by Argüelles, Schneider, and Yuan. Default
+            is "hpd", which to current knowledge offers the best mix of features. The
+            default may change in the future. Please set this parameter explicitly
+            in code that has to be stable.
         """
         M = len(templates)
         if M < 1:
@@ -1137,8 +1143,8 @@ class BarlowBeestonLite(BinnedCost):
 
         known_methods = {
             "jsc": barlow_beeston_lite_chi2_jsc,
-            "asy": barlow_beeston_lite_chi2_asy,
             "hpd": barlow_beeston_lite_chi2_hpd,
+            "asy": barlow_beeston_lite_nll_asy,
         }
         try:
             self._impl = known_methods[method]
@@ -1173,6 +1179,13 @@ class BarlowBeestonLite(BinnedCost):
 
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
+
+    def _errordef(self):
+        return (
+            NEGATIVE_LOG_LIKELIHOOD
+            if self._impl is barlow_beeston_lite_nll_asy
+            else CHISQUARE
+        )
 
     def visualize(self, args: _ArrayLike):
         """

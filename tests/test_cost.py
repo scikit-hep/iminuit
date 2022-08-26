@@ -1071,16 +1071,25 @@ def test_update_data_with_mask(cls):
 
 @pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
 def test_BarlowBeestonLite(method):
-    n = np.array([1, 2, 3])
     xe = np.array([0, 1, 2, 3])
     t = np.array([[1, 1, 0], [0, 1, 3]])
+    n = t[0] + t[1]
 
     c = BarlowBeestonLite(n, xe, t, method=method)
     m = Minuit(c, 1, 1)
     m.migrad()
     assert m.valid
-    assert_allclose(m.fval, 0, atol=1e-4)
-    assert_allclose(m.values, [2, 4], atol=1e-2)
+    assert m.ndof == 1
+    if method == "asy":
+        assert c.errordef == 0.5
+        assert_equal(m.fmin.reduced_chi2, np.nan)
+        # asy produces values far away from truth in this case
+        assert_allclose(m.values, [1, 3], atol=0.2)
+    else:
+        assert c.errordef == 1.0
+        assert_allclose(m.fval, 0, atol=1e-4)
+        assert_allclose(m.fmin.reduced_chi2, 0, atol=1e-5)
+        assert_allclose(m.values, [2, 4], atol=1e-2)
 
 
 def generate(rng, nmc, truth, bins, tf=1, df=1):
@@ -1124,8 +1133,12 @@ def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
                 break
         assert m.valid
         z.append((m.values[1] - truth[1]) / m.errors[1])
-    assert_allclose(np.mean(z), 0, atol=0.15)
-    assert_allclose(np.std(z), 1, rtol=0.1)
+    if method != "asy":
+        assert_allclose(np.mean(z), 0, atol=0.15)
+        assert_allclose(np.std(z), 1, rtol=0.1)
+    else:
+        assert_allclose(np.mean(z), 0.2, atol=0.3)
+        assert_allclose(np.std(z), 1.3, rtol=0.1)
 
 
 @pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
