@@ -1138,12 +1138,8 @@ def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
                 break
         assert m.valid
         z.append((m.values[1] - truth[1]) / m.errors[1])
-    if method != "asy":
-        assert_allclose(np.mean(z), 0, atol=0.15)
-        assert_allclose(np.std(z), 1, rtol=0.1)
-    else:
-        assert_allclose(np.mean(z), 0.2, atol=0.3)
-        assert_allclose(np.std(z), 1.3, rtol=0.1)
+    assert_allclose(np.mean(z), 0, atol=0.3)
+    assert_allclose(np.std(z), 1, rtol=0.1)
 
 
 def test_BarlowBeestonLite_bad_input():

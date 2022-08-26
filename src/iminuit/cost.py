@@ -299,7 +299,8 @@ def barlow_beeston_lite_nll_asy(
     """
     Compute marginalized negative log-likelikihood for a template fit.
 
-    This is based on the paper by C.A. Argüelles, A. Schneider, T. Yuan,
+    This is the negative logarithm of equation 3.15 of the paper by
+    C.A. Argüelles, A. Schneider, T. Yuan,
     https://doi.org/10.1007/JHEP06(2019)030.
 
     The authors use a Bayesian approach and integrate over the nuisance
@@ -329,7 +330,7 @@ def barlow_beeston_lite_nll_asy(
 
     alpha = mu**2 / mu_var + 1
     beta = mu / mu_var
-    return -2 * np.sum(
+    return -np.sum(
         alpha * np.log(beta)
         + lg(n + alpha)
         - (lg(n + 1) + (n + alpha) * np.log(1 + beta) + lg(alpha))
