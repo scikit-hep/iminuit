@@ -25,9 +25,9 @@ try:
     # even if scipy is not installed
     from scipy.stats import norm, truncexpon, multivariate_normal
 
-    scipy_stats_available = True
+    scipy_available = True
 except ImportError:
-    scipy_stats_available = False
+    scipy_available = False
 
 
 try:
@@ -97,13 +97,13 @@ def line(x, a, b):
     return a + b * x
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_norm_logpdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_logpdf(x, 3, 2), norm.logpdf(x, 3, 2))
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_norm_pdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_pdf(x, 3, 2), norm.pdf(x, 3, 2))
@@ -132,7 +132,7 @@ def test_UnbinnedNLL(unbinned, verbose, model):
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_UnbinnedNLL_2D():
     def model(x_y, mux, muy, sx, sy, rho):
         return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -199,7 +199,7 @@ def test_UnbinnedNLL_visualize(log):
     c.visualize((1, 2), model_points=10)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_UnbinnedNLL_visualize_2D():
     def model(x_y, mux, muy, sx, sy, rho):
@@ -246,7 +246,7 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_ExtendedUnbinnedNLL_2D():
     def model(x_y, n, mux, muy, sx, sy, rho):
         return n * 1000, n * 1000 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -319,7 +319,7 @@ def test_ExtendedUnbinnedNLL_visualize(log):
     c.visualize((1, 2, 3))
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_ExtendedUnbinnedNLL_visualize_2D():
     def model(x_y, n, mux, muy, sx, sy, rho):
@@ -341,7 +341,7 @@ def test_ExtendedUnbinnedNLL_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_BinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -418,7 +418,7 @@ def test_BinnedNLL_bad_input_6():
         BinnedNLL(1, 2, lambda x, a: 0)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_BinnedNLL_2D():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
@@ -444,7 +444,7 @@ def test_BinnedNLL_2D():
     assert cost(*m.values) > m.fval
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_BinnedNLL_2D_with_zero_bins():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
@@ -501,7 +501,7 @@ def test_BinnedNLL_visualize():
     c.visualize((1,))
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_BinnedNLL_visualize_2D():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
@@ -524,7 +524,7 @@ def test_BinnedNLL_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -564,7 +564,7 @@ def test_ExtendedBinnedNLL_bad_input():
         ExtendedBinnedNLL([1], [1], lambda x, a: 0)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_ExtendedBinnedNLL_2D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
@@ -584,7 +584,7 @@ def test_ExtendedBinnedNLL_2D():
     assert_allclose(m.values, truth, atol=0.1)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_ExtendedBinnedNLL_3D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
     n = int(truth[0] * 10000)
@@ -639,7 +639,7 @@ def test_ExtendedBinnedNLL_visualize():
     c.visualize((1, 2))
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_ExtendedBinnedNLL_visualize_2D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
@@ -1072,6 +1072,8 @@ def test_update_data_with_mask(cls):
 
 @pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
 def test_BarlowBeestonLite(method):
+    if method == "asy" and not scipy_available:
+        pytest.skip(reason="scipy needed")
     xe = np.array([0, 1, 2, 3])
     t = np.array([[1, 1, 0], [0, 1, 3]])
     n = t[0] + t[1]
@@ -1109,11 +1111,13 @@ def generate(rng, nmc, truth, bins, tf=1, df=1):
     return n, xe, np.array(t)
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
 @pytest.mark.parametrize("with_mask", (False, True))
 @pytest.mark.parametrize("weighted_data", (False, True))
 def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
+    if method == "asy" and not scipy_available:
+        pytest.skip(reason="scipy needed")
     rng = np.random.default_rng(1)
     truth = 750, 250
     z = []
@@ -1142,20 +1146,18 @@ def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
         assert_allclose(np.std(z), 1.3, rtol=0.1)
 
 
-@pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
-def test_BarlowBeestonLite_bad_input(method):
+def test_BarlowBeestonLite_bad_input():
     with pytest.raises(ValueError):
-        BarlowBeestonLite([1, 2], [1, 2, 3], [], method=method)
+        BarlowBeestonLite([1, 2], [1, 2, 3], [])
 
     with pytest.raises(ValueError, match="do not match"):
-        BarlowBeestonLite([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]], method=method)
+        BarlowBeestonLite([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]])
 
     with pytest.raises(ValueError, match="do not match"):
         BarlowBeestonLite(
             [1, 2],
             [1, 2, 3],
             [[[1, 2], [3, 4]], [[1, 2], [3, 4], [5, 6]]],
-            method=method,
         )
 
     with pytest.raises(ValueError, match="not understood"):
