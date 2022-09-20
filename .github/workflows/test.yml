@@ -13,6 +13,8 @@ jobs:
 
     strategy:
       matrix:
+        python-version: ["3.11-dev"]
+        os: [windows-latest, macos-latest, ubuntu-latest]
         include:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
@@ -23,7 +25,7 @@ jobs:
             python-version: "pypy-3.7"
       fail-fast: false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
     - uses: actions/setup-python@v4
