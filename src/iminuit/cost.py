@@ -19,7 +19,7 @@ What to use when
       histogram of weighted samples
 
 - Fit a template to binned data with bin-wise uncertainties on the template:
-  :class:`BarlowBeestonLite`, which also supports weighted data and weighted templates
+  :class:`Template`, which also supports weighted data and weighted templates
 
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
   is one- or multi-dimensional, y is one-dimensional.
@@ -221,7 +221,7 @@ def poisson_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def barlow_beeston_lite_chi2_jsc(
+def template_chi2_jsc(
     n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
 ) -> float:
     """
@@ -264,7 +264,7 @@ def barlow_beeston_lite_chi2_jsc(
     )
 
 
-def barlow_beeston_lite_chi2_hpd(
+def template_chi2_da(
     n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
 ) -> float:
     """
@@ -293,7 +293,7 @@ def barlow_beeston_lite_chi2_hpd(
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)  # type:ignore
 
 
-def barlow_beeston_lite_nll_asy(
+def template_nll_asy(
     n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
 ) -> float:
     """
@@ -617,7 +617,7 @@ class CostSum(Cost, Sequence):
     def _call(self, args):
         r = 0.0
         for comp, cargs in self._split(args):
-            r += comp._call(cargs)
+            r += comp._call(cargs) / comp.errordef
         return r
 
     def _ndata(self):
@@ -664,13 +664,15 @@ class CostSum(Cost, Sequence):
 
         if component_kwargs is None:
             component_kwargs = {}
+
         i = 0
         for k, (comp, cargs) in enumerate(self._split(args)):
-            if hasattr(comp, "visualize"):
-                i += 1
-                plt.subplot(n, 1, i)
-                kwargs = component_kwargs.get(k, {})
-                comp.visualize(cargs, **kwargs)
+            if not hasattr(comp, "visualize"):
+                continue
+            i += 1
+            plt.subplot(n, 1, i)
+            kwargs = component_kwargs.get(k, {})
+            comp.visualize(cargs, **kwargs)
 
 
 class MaskedCost(Cost):
@@ -1036,25 +1038,50 @@ class BinnedCostWithModel(BinnedCost):
         return d
 
 
-class BarlowBeestonLite(BinnedCost):
+class Template(BinnedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
-    The original Beeston-Barlow method use one nuisance parameter per component
-    per bin, while the lite methods use only one nuisance parameter per bin. The
-    latter is an approximation. This class offers different lite methods. The default
-    method is the one which performs better on average and may change in the future.
+    This cost function is for a mixture model. Samples originate from two or more
+    components and we are interested in estimating the yield that originates from
+    each component. In high-energy physics, one component is often a peaking signal
+    over a smooth background component. Templates are shape estimates for these
+    components which are obtained from Monte-Carlo simulation. Even if the Monte-Carlo
+    simulation is exact, the templates introduce some uncertainty since the Monte-Carlo
+    simulation produces only a finite sample of events that contribute to each template.
+    This cost function takes that additional uncertainty into account.
 
-    The cost function works for both weighted data and weighted templates. The cost
-    function assumes that the weights are independent of the data. This is not the
-    case for sWeights, and the uncertaintes for results obtained with sWeights will
-    only be approximately correct, see C. Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
+    There are several ways to approach this problem. Barlow and Beeston [1] found an
+    exact likelihood for this problem, with one nuisance parameter per component per bin.
+    Solving this likelihood is somewhat challenging though. The Barlow-Beeston likelihood
+    also does not handle the additional uncertainty in weighted templates unless the
+    weights per bin are all equal.
 
-    Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
+    Other works [2-4] describe likelihoods that use only one nuisance parameter per bin,
+    which is an approximation. Some marginalize over the nuisance parameters with some
+    prior, while others profile over the nuisance parameter. This class implements
+    several of these methods. The default method is the one which performs best under
+    most conditions, according to current knowledge. The default may change if this
+    assessment changes.
+
+    The cost function returns an asymptotically chi-square distributed test statistic,
+    except for the method "asy", where it is the negative logarithm of the marginalised
+    likelihood instead. The standard transform [5] which we use convert likelihoods
+    into test statistics only works for (profiled) likelihoods, not for likelihoods
+    marginalized over a prior.
+
+    All methods implemented here have been generalized to work with both weighted data
+    and weighted templates, under the assumption that the weights are independent of the
+    data. This is not the case for sWeights, and the uncertaintes for results obtained
+    with sWeights will only be approximately correct [6].
+
+    [1] Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
     https://doi.org/10.1016/0010-4655(93)90005-W)
-    Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
-    Argüelles, Schneider, and Yuan, https://doi.org/10.1007/JHEP06(2019)030
-    Dembinski and Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
+    [2] Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
+    [3] Argüelles, Schneider, and Yuan, https://doi.org/10.1007/JHEP06(2019)030
+    [4] Dembinski and Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
+    [5] Baker and Cousins, NIM 221 (1984) 437-442.
+    [6] Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
     """
 
     __slots__ = "_bbl_data", "_impl"
@@ -1066,7 +1093,7 @@ class BarlowBeestonLite(BinnedCost):
         templates: _tp.Sequence[_tp.Sequence],
         name: _tp.Collection[str] = None,
         verbose: int = 0,
-        method: str = "hpd",
+        method: str = "da",
     ):
         """
         Initialize cost function with data and model.
@@ -1092,12 +1119,12 @@ class BarlowBeestonLite(BinnedCost):
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
-        method : {"jsc", "asy", "hpd"}, optional
-            Which lite method to use. jsc: Conway's method. hpd: Method by Dembinski
-            and Abdelmotteleb.asy: Method by Argüelles, Schneider, and Yuan. Default
-            is "hpd", which to current knowledge offers the best mix of features. The
-            default may change in the future. Please set this parameter explicitly
-            in code that has to be stable.
+        method : {"jsc", "asy", "da"}, optional
+            Which method to use. "jsc": Conway's method [2]. "asy": Method by Argüelles,
+            Schneider, and Yuan [3]. "da": Method by Dembinski and Abdelmotteleb [4].
+            Default is "da", which to current knowledge offers the best overall
+            performance. The default may change in the future, so please set this
+            parameter explicitly in code that has to be stable.
         """
         M = len(templates)
         if M < 1:
@@ -1135,15 +1162,23 @@ class BarlowBeestonLite(BinnedCost):
         self._bbl_data = (nt, nt_var)
 
         known_methods = {
-            "jsc": barlow_beeston_lite_chi2_jsc,
-            "hpd": barlow_beeston_lite_chi2_hpd,
-            "asy": barlow_beeston_lite_nll_asy,
+            "jsc": template_chi2_jsc,
+            "asy": template_nll_asy,
+            "hpd": template_chi2_da,
+            "da": template_chi2_da,
         }
         try:
             self._impl = known_methods[method]
         except KeyError:
             raise ValueError(
                 f"method {method} is not understood, allowed values: {known_methods}"
+            )
+
+        if method == "hpd":
+            warnings.warn(
+                "key 'hpd' is deprecated, please use 'da' instead",
+                category=np.VisibleDeprecationWarning,
+                stacklevel=2,
             )
 
         super().__init__(name, n, xe, verbose)
@@ -1174,11 +1209,7 @@ class BarlowBeestonLite(BinnedCost):
         return self._impl(n[ma], mu[ma], mu_var[ma])
 
     def _errordef(self):
-        return (
-            NEGATIVE_LOG_LIKELIHOOD
-            if self._impl is barlow_beeston_lite_nll_asy
-            else CHISQUARE
-        )
+        return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
 
     def visualize(self, args: _ArrayLike):
         """
@@ -1680,3 +1711,22 @@ def _shape_from_xe(xe):
     if isinstance(xe[0], _tp.Iterable):
         return tuple(len(xei) - 1 for xei in xe)
     return (len(xe) - 1,)
+
+
+def __getattr__(name: str) -> _tp.Any:
+    mapping = {
+        "BarlowBeestonLite": ("Template", Template),
+        "barlow_beeston_lite_chi2_jsc": ("template_chi2_jsc", template_chi2_jsc),
+        "barlow_beeston_lite_chi2_hpd": ("template_chi2_da", template_chi2_da),
+    }
+
+    if name in mapping:
+        new_name, obj = mapping[name]
+        warnings.warn(
+            f"{name} was renamed to {new_name}, please import {new_name} instead",
+            np.VisibleDeprecationWarning,
+            stacklevel=2,
+        )
+        return obj
+
+    raise AttributeError

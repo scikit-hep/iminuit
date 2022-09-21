@@ -11,7 +11,7 @@ from iminuit.cost import (
     LeastSquares,
     Constant,
     NormalConstraint,
-    BarlowBeestonLite,
+    Template,
     multinominal_chi2,
     _soft_l1_loss,
     PerformanceWarning,
@@ -893,6 +893,23 @@ def test_CostSum_3():
     assert cs((1, 1)) == lsq((1, 1)) + con((1, 1)) + 1.5
 
 
+def test_CostSum_4():
+
+    t = Template([1, 2], [1, 2, 3], [[1, 1], [0, 1]], method="asy")
+    assert t.errordef == Minuit.LIKELIHOOD
+
+    m1 = Minuit(t, 1, 1)
+    m1.migrad()
+
+    cs = CostSum(t)
+    assert cs.errordef == Minuit.LEAST_SQUARES
+
+    m2 = Minuit(cs, 1, 1)
+    m2.migrad()
+
+    assert_allclose(m1.errors, m2.errors)
+
+
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_CostSum_visualize():
     lsq = LeastSquares([1, 2, 3], [3, 4, 5], 1, line)
@@ -1070,15 +1087,15 @@ def test_update_data_with_mask(cls):
     assert c(1) == 0
 
 
-@pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
-def test_BarlowBeestonLite(method):
+@pytest.mark.parametrize("method", ("jsc", "asy", "da"))
+def test_Template(method):
     if method == "asy" and not scipy_available:
         pytest.skip(reason="scipy needed")
     xe = np.array([0, 1, 2, 3])
     t = np.array([[1, 1, 0], [0, 1, 3]])
     n = t[0] + t[1]
 
-    c = BarlowBeestonLite(n, xe, t, method=method)
+    c = Template(n, xe, t, method=method)
     m = Minuit(c, 1, 1)
     m.migrad()
     assert m.valid
@@ -1112,10 +1129,10 @@ def generate(rng, nmc, truth, bins, tf=1, df=1):
 
 
 @pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
-@pytest.mark.parametrize("method", ("jsc", "asy", "hpd"))
+@pytest.mark.parametrize("method", ("jsc", "asy", "da"))
 @pytest.mark.parametrize("with_mask", (False, True))
 @pytest.mark.parametrize("weighted_data", (False, True))
-def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
+def test_Template_weighted(method, with_mask, weighted_data):
     if method == "asy" and not scipy_available:
         pytest.skip(reason="scipy needed")
     rng = np.random.default_rng(1)
@@ -1124,7 +1141,7 @@ def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
     rng = np.random.default_rng(1)
     for itoy in range(100):
         ni, xe, ti = generate(rng, 400, truth, 15, 1.5, 1.5 if weighted_data else 1)
-        c = BarlowBeestonLite(ni, xe, ti, method=method)
+        c = Template(ni, xe, ti, method=method)
         if with_mask:
             cx = 0.5 * (xe[1:] + xe[:-1])
             c.mask = cx != 1.5
@@ -1142,34 +1159,34 @@ def test_BarlowBeestonLite_weighted(method, with_mask, weighted_data):
     assert_allclose(np.std(z), 1, rtol=0.1)
 
 
-def test_BarlowBeestonLite_bad_input():
+def test_Template_bad_input():
     with pytest.raises(ValueError):
-        BarlowBeestonLite([1, 2], [1, 2, 3], [])
+        Template([1, 2], [1, 2, 3], [])
 
     with pytest.raises(ValueError, match="do not match"):
-        BarlowBeestonLite([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]])
+        Template([1, 2], [1, 2, 3], [[1, 2, 3], [1, 2, 3]])
 
     with pytest.raises(ValueError, match="do not match"):
-        BarlowBeestonLite(
+        Template(
             [1, 2],
             [1, 2, 3],
             [[[1, 2], [3, 4]], [[1, 2], [3, 4], [5, 6]]],
         )
 
     with pytest.raises(ValueError, match="not understood"):
-        BarlowBeestonLite([1], [1, 2], [[1]], method="foo")
+        Template([1], [1, 2], [[1]], method="foo")
 
     with pytest.raises(ValueError, match="number of names"):
-        BarlowBeestonLite([1], [1, 2], [[1]], name=("b", "s"))
+        Template([1], [1, 2], [[1]], name=("b", "s"))
 
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
-def test_BarlowBeestonLite_visualize():
+def test_Template_visualize():
     xe = [0, 1, 2]
     n = [1, 2]
     t = [[1, 2], [5, 4]]
 
-    c = BarlowBeestonLite(n, xe, t)
+    c = Template(n, xe, t)
 
     c.visualize((1, 2))
 
@@ -1178,24 +1195,48 @@ def test_BarlowBeestonLite_visualize():
 
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
-def test_BarlowBeestonLite_visualize_2D():
+def test_Template_visualize_2D():
     xe = ([0, 1, 2], [0, 1, 2])
     n = [[1, 2], [3, 4]]
     t = [[[1, 2], [1, 2]], [[5, 4], [5, 4]]]
 
-    c = BarlowBeestonLite(n, xe, t)
+    c = Template(n, xe, t)
 
     with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
         c.visualize((1, 2))
 
 
-def test_BarlowBeestonLite_pickle():
+def test_Template_pickle():
     n = np.array([1, 2, 3])
     xe = np.array([0, 1, 2, 3])
     t = np.array([[1, 1, 0], [0, 1, 3]])
 
-    c = BarlowBeestonLite(n, xe, t)
+    c = Template(n, xe, t)
     b = pickle.dumps(c)
     c2 = pickle.loads(b)
 
     assert_equal(c.data, c2.data)
+
+
+def test_deprecated():
+    from iminuit import cost
+
+    with pytest.warns(np.VisibleDeprecationWarning):
+        from iminuit.cost import BarlowBeestonLite
+    assert BarlowBeestonLite is cost.Template
+
+    with pytest.warns(np.VisibleDeprecationWarning):
+        from iminuit.cost import barlow_beeston_lite_chi2_jsc
+    assert barlow_beeston_lite_chi2_jsc is cost.template_chi2_jsc
+
+    with pytest.warns(np.VisibleDeprecationWarning):
+        from iminuit.cost import barlow_beeston_lite_chi2_hpd
+    assert barlow_beeston_lite_chi2_hpd is cost.template_chi2_da
+
+
+def test_deprecated_Template_method():
+    from iminuit import cost
+
+    with pytest.warns(np.VisibleDeprecationWarning):
+        t = Template([1], [2, 3], [[1], [2]], method="hpd")
+        t._impl is cost.template_chi2_da
