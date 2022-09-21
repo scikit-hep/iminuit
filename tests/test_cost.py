@@ -916,7 +916,7 @@ def test_CostSum_4():
 def test_CostSum_visualize():
     lsq = LeastSquares([1, 2, 3], [3, 4, 5], 1, line)
     con = NormalConstraint(("a", "b"), (1, 1), (1, 1))
-    c = lsq + con
+    c = lsq + con + 1
     c.visualize((1, 2))
 
 
