@@ -658,9 +658,9 @@ class CostSum(Cost, Sequence):
         args = np.atleast_1d(args)
 
         n = sum(hasattr(comp, "visualize") for comp in self)
-        fig = plt.gcf()
-        if n > 1:
-            fig.set_figheight(n * fig.get_figheight())
+
+        w, h = plt.rcParams["figure.figsize"]
+        fig, ax = plt.subplots(1, n, figsize=(w, h * n))
 
         if component_kwargs is None:
             component_kwargs = {}
@@ -669,10 +669,10 @@ class CostSum(Cost, Sequence):
         for k, (comp, cargs) in enumerate(self._split(args)):
             if not hasattr(comp, "visualize"):
                 continue
-            i += 1
-            plt.subplot(n, 1, i)
             kwargs = component_kwargs.get(k, {})
+            plt.sca(ax[i])
             comp.visualize(cargs, **kwargs)
+            i += 1
 
 
 class MaskedCost(Cost):
@@ -1713,15 +1713,16 @@ def _shape_from_xe(xe):
     return (len(xe) - 1,)
 
 
-def __getattr__(name: str) -> _tp.Any:
-    mapping = {
-        "BarlowBeestonLite": ("Template", Template),
-        "barlow_beeston_lite_chi2_jsc": ("template_chi2_jsc", template_chi2_jsc),
-        "barlow_beeston_lite_chi2_hpd": ("template_chi2_da", template_chi2_da),
-    }
+_deprecated_content = {
+    "BarlowBeestonLite": ("Template", Template),
+    "barlow_beeston_lite_chi2_jsc": ("template_chi2_jsc", template_chi2_jsc),
+    "barlow_beeston_lite_chi2_hpd": ("template_chi2_da", template_chi2_da),
+}
 
-    if name in mapping:
-        new_name, obj = mapping[name]
+
+def __getattr__(name: str) -> _tp.Any:
+    if name in _deprecated_content:
+        new_name, obj = _deprecated_content[name]
         warnings.warn(
             f"{name} was renamed to {new_name}, please import {new_name} instead",
             np.VisibleDeprecationWarning,
