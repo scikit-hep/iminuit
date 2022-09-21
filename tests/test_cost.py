@@ -893,6 +893,7 @@ def test_CostSum_3():
     assert cs((1, 1)) == lsq((1, 1)) + con((1, 1)) + 1.5
 
 
+@pytest.mark.skipif(not scipy_available, reason="scipy is needed")
 def test_CostSum_4():
 
     t = Template([1, 2], [1, 2, 3], [[1, 1], [0, 1]], method="asy")
