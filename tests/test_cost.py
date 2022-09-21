@@ -18,6 +18,7 @@ from iminuit.cost import (
 )
 from typing import Sequence
 import pickle
+from sys import version_info as pyver
 
 try:
     # pytest.importorskip does not work for scipy.stats;
@@ -1219,6 +1220,7 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
+@pytest.mark.skipif(pyver < 3.7, reason="module getattr requires Python-3.7+")
 def test_deprecated():
     from iminuit import cost
 
