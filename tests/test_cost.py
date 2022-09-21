@@ -1220,7 +1220,7 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(pyver < 3.7, reason="module getattr requires Python-3.7+")
+@pytest.mark.skipif(pyver < (3, 7), reason="module getattr requires Python-3.7+")
 def test_deprecated():
     from iminuit import cost
 
