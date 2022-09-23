@@ -22,7 +22,8 @@ cov: build/done
 	python -m pip uninstall --yes scipy matplotlib
 	coverage run --append -m pytest
 	coverage html -d htmlcov
-	rm build/deps
+	python .ci/install_extra.py
+	python -m webbrowser -t htmlcov/index.html
 
 doc: build/done build/html/done
 
@@ -30,6 +31,7 @@ build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/*
 	mkdir -p build/html
 	sphinx-build -j3 -W -a -E -b html -d build/doctrees doc build/html
 	touch build/html/done
+	python -m webbrowser -t build/html/index.html
 
 tutorial: build/done build/tutorial_done
 

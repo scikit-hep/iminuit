@@ -346,11 +346,11 @@ try:
 
     @_overload(_safe_log, inline="always")
     def _ol_safe_log(x):
-        return _safe_log
+        return _safe_log  # pragma: no cover
 
     @_overload(_z_squared, inline="always")
     def _ol_z_squared(y, ye, ym):
-        return _z_squared
+        return _z_squared  # pragma: no cover
 
     _unbinned_nll_np = _unbinned_nll
     _unbinned_nll_nb = _njit(
@@ -430,7 +430,7 @@ try:
 
     @_overload(_soft_l1_loss, inline="always")
     def _ol_soft_l1_loss(z_sqr):
-        return _soft_l1_loss_np
+        return _soft_l1_loss_np  # pragma: no cover
 
     _soft_l1_cost_np = _soft_l1_cost
     _soft_l1_cost_nb = _njit(
@@ -1043,45 +1043,44 @@ class Template(BinnedCost):
     Binned cost function for a template fit with uncertainties on the template.
 
     This cost function is for a mixture model. Samples originate from two or more
-    components and we are interested in estimating the yield that originates from
-    each component. In high-energy physics, one component is often a peaking signal
-    over a smooth background component. Templates are shape estimates for these
-    components which are obtained from Monte-Carlo simulation. Even if the Monte-Carlo
-    simulation is exact, the templates introduce some uncertainty since the Monte-Carlo
-    simulation produces only a finite sample of events that contribute to each template.
-    This cost function takes that additional uncertainty into account.
+    components and we are interested in estimating the yield that originates from each
+    component. In high-energy physics, one component is often a peaking signal over a
+    smooth background component. Templates are shape estimates for these components which
+    are obtained from Monte-Carlo simulation. Even if the Monte-Carlo simulation is exact,
+    the templates introduce some uncertainty since the Monte-Carlo simulation produces
+    only a finite sample of events that contribute to each template. This cost function
+    takes that additional uncertainty into account.
 
-    There are several ways to approach this problem. Barlow and Beeston [1] found an
+    There are several ways to approach this problem. Barlow and Beeston [1]_ found an
     exact likelihood for this problem, with one nuisance parameter per component per bin.
     Solving this likelihood is somewhat challenging though. The Barlow-Beeston likelihood
     also does not handle the additional uncertainty in weighted templates unless the
     weights per bin are all equal.
 
-    Other works [2-4] describe likelihoods that use only one nuisance parameter per bin,
-    which is an approximation. Some marginalize over the nuisance parameters with some
-    prior, while others profile over the nuisance parameter. This class implements
-    several of these methods. The default method is the one which performs best under
-    most conditions, according to current knowledge. The default may change if this
-    assessment changes.
+    Other works [2]_ [3]_ [4]_ describe likelihoods that use only one nuisance parameter
+    per bin, which is an approximation. Some marginalize over the nuisance parameters with
+    some prior, while others profile over the nuisance parameter. This class implements
+    several of these methods. The default method is the one which performs best under most
+    conditions, according to current knowledge. The default may change if this assessment
+    changes.
 
     The cost function returns an asymptotically chi-square distributed test statistic,
     except for the method "asy", where it is the negative logarithm of the marginalised
-    likelihood instead. The standard transform [5] which we use convert likelihoods
-    into test statistics only works for (profiled) likelihoods, not for likelihoods
+    likelihood instead. The standard transform [5]_ which we use convert likelihoods into
+    test statistics only works for (profiled) likelihoods, not for likelihoods
     marginalized over a prior.
 
-    All methods implemented here have been generalized to work with both weighted data
-    and weighted templates, under the assumption that the weights are independent of the
-    data. This is not the case for sWeights, and the uncertaintes for results obtained
-    with sWeights will only be approximately correct [6].
+    All methods implemented here have been generalized to work with both weighted data and
+    weighted templates, under the assumption that the weights are independent of the data.
+    This is not the case for sWeights, and the uncertaintes for results obtained with
+    sWeights will only be approximately correct [6]_.
 
-    [1] Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
-    https://doi.org/10.1016/0010-4655(93)90005-W)
-    [2] Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
-    [3] Argüelles, Schneider, and Yuan, https://doi.org/10.1007/JHEP06(2019)030
-    [4] Dembinski and Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
-    [5] Baker and Cousins, NIM 221 (1984) 437-442.
-    [6] Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
+    .. [1] Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228
+    .. [2] Conway, PHYSTAT 2011 proceeding, https://doi.org/10.48550/arXiv.1103.0354
+    .. [3] Argüelles, Schneider, Yuan, JHEP 06 (2019) 030
+    .. [4] Dembinski and Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
+    .. [5] Baker and Cousins, NIM 221 (1984) 437-442
+    .. [6] Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393
     """
 
     __slots__ = "_bbl_data", "_impl"
