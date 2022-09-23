@@ -1101,29 +1101,29 @@ class Template(BinnedCost):
         ----------
         n : array-like
             Histogram counts. If this is an array with dimension D+1, where D is the
-            number of histogram axes, then the last dimension must have two elements
-            and is interpreted as pairs of sum of weights and sum of weights squared.
+            number of histogram axes, then the last dimension must have two elements and
+            is interpreted as pairs of sum of weights and sum of weights squared.
         xe : array-like or collection of array-like
-            Bin edge locations, must be len(n) + 1, where n is the number of bins.
-            If the histogram has more than one axis, xe must be a collection of the
-            bin edge locations along each axis.
+            Bin edge locations, must be len(n) + 1, where n is the number of bins. If the
+            histogram has more than one axis, xe must be a collection of the bin edge
+            locations along each axis.
         templates : collection of array-like
-            Collection of arrays, which contain the histogram counts of each template.
-            The template histograms must use the same axes as the data histogram. If
-            the counts are represented by an array with dimension D+1, where D is the
-            number of histogram axes, then the last dimension must have two elements
-            and is interpreted as pairs of sum of weights and sum of weights squared.
+            Collection of arrays, which contain the histogram counts of each template. The
+            template histograms must use the same axes as the data histogram. If the
+            counts are represented by an array with dimension D+1, where D is the number
+            of histogram axes, then the last dimension must have two elements and is
+            interpreted as pairs of sum of weights and sum of weights squared.
         name : collection of str, optional
             Optional name for the yield of each template. Must have length K.
         verbose : int, optional
-            Verbosity level. 0: is no output (default).
-            1: print current args and negative log-likelihood value.
+            Verbosity level. 0: is no output (default). 1: print current args and negative
+            log-likelihood value.
         method : {"jsc", "asy", "da"}, optional
-            Which method to use. "jsc": Conway's method [2]. "asy": Method by Argüelles,
-            Schneider, and Yuan [3]. "da": Method by Dembinski and Abdelmotteleb [4].
-            Default is "da", which to current knowledge offers the best overall
-            performance. The default may change in the future, so please set this
-            parameter explicitly in code that has to be stable.
+            Which method to use. "jsc": Conway's method [2]_. "asy": ASY method [3]_.
+            "da": DA method [4]_. Default is "da", which to current knowledge offers the
+            best overall performance. The default may change in the future, so please set
+            this parameter explicitly in code that has to be stable. For all methods
+            except the "asy" method, the minimum value is chi-square distributed.
         """
         M = len(templates)
         if M < 1:
