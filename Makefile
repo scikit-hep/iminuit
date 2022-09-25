@@ -22,9 +22,11 @@ cov: build/done
 	python -m pip uninstall --yes scipy matplotlib
 	coverage run --append -m pytest
 	coverage html -d htmlcov
-	rm build/deps
+	python .ci/install_extra.py
+	python -m webbrowser -t htmlcov/index.html
 
 doc: build/done build/html/done
+	python -m webbrowser -t build/html/index.html
 
 build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
 	mkdir -p build/html

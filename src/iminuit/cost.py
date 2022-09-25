@@ -19,7 +19,7 @@ What to use when
       histogram of weighted samples
 
 - Fit a template to binned data with bin-wise uncertainties on the template:
-  :class:`BarlowBeestonLite`, which also supports weighted data and weighted templates
+  :class:`Template`, which also supports weighted data and weighted templates
 
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
   is one- or multi-dimensional, y is one-dimensional.
@@ -61,6 +61,9 @@ from collections.abc import Sequence
 import abc
 import typing as _tp
 import warnings
+
+CHISQUARE = 1.0
+NEGATIVE_LOG_LIKELIHOOD = 0.5
 
 # correct ArrayLike from numpy.typing generates horrible looking signatures
 # in python's help(), so we use this as a workaround
@@ -114,10 +117,16 @@ class BohmZechTransform:
             Estimated variance of observed values.
         """
         val, var = np.atleast_1d(val, var)
-        self._scale = val / (var + 1e-323)
+
+        self._scale = np.ones_like(val)
+        np.divide(val, var, out=self._scale, where=var > 0)
         self._obs = val * self._scale
 
-    def __call__(self, val: _ArrayLike, var: _tp.Optional[_ArrayLike] = None):
+    def __call__(
+        self, val: _ArrayLike, var: _ArrayLike = None
+    ) -> _tp.Union[
+        _tp.Tuple[np.ndarray, np.ndarray], _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]
+    ]:
         """
         Return precomputed scaled data and scaled prediction.
 
@@ -218,7 +227,7 @@ def poisson_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def barlow_beeston_lite_chi2_jsc(
+def template_chi2_jsc(
     n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
 ) -> float:
     """
@@ -239,7 +248,7 @@ def barlow_beeston_lite_chi2_jsc(
     Returns
     -------
     float
-        Cost function value.
+        Asymptotically chi-square-distributed test statistic.
 
     Notes
     -----
@@ -251,23 +260,22 @@ def barlow_beeston_lite_chi2_jsc(
 
     beta_var = mu_var / mu**2
 
-    # need to solve quadratic equation b^2 + (mu beta_var - 1) b - n beta_var = 0
-    p = mu * beta_var - 1
-    q = -n * beta_var
-    beta = 0.5 * (-p + np.sqrt(p**2 - 4 * q))
+    # Eq. 15 from https://doi.org/10.48550/arXiv.2206.12346
+    p = 0.5 - 0.5 * mu * beta_var
+    beta = p + np.sqrt(p**2 + n * beta_var)
 
     return poisson_chi2(n, mu * beta) + np.sum(  # type:ignore
         (beta - 1) ** 2 / beta_var
     )
 
 
-def barlow_beeston_lite_chi2_hpd(
+def template_chi2_da(
     n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
 ) -> float:
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
-    H.P. Dembinski, https://doi.org/10.48550/arXiv.2206.12346
+    H.P. Dembinski, A. Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
 
     Parameters
     ----------
@@ -282,12 +290,56 @@ def barlow_beeston_lite_chi2_hpd(
     Returns
     -------
     float
-        Cost function value.
+        Asymptotically chi-square-distributed test statistic.
     """
     n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
     k = mu**2 / mu_var
     beta = (n + k) / (mu + k)
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)  # type:ignore
+
+
+def template_nll_asy(
+    n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
+) -> float:
+    """
+    Compute marginalized negative log-likelikihood for a template fit.
+
+    This is the negative logarithm of equation 3.15 of the paper by
+    C.A. Argüelles, A. Schneider, T. Yuan,
+    https://doi.org/10.1007/JHEP06(2019)030.
+
+    The authors use a Bayesian approach and integrate over the nuisance
+    parameters. Like the other Barlow-Beeston-lite methods, this is an
+    approximation. The resulting likelihood cannot be turned into an
+    asymptotically chi-square distributed test statistic as detailed
+    in Baker & Cousins, NIM 221 (1984) 437-442.
+
+    Parameters
+    ----------
+    n : array-like
+        Observed counts.
+    mu : array-like
+        Expected counts. This is the sum of the normalised templates scaled
+        with the component yields.
+    mu_var : array-like
+        Expected variance of mu. Must be positive everywhere.
+
+    Returns
+    -------
+    float
+        Negative log-likelihood function value.
+    """
+    from scipy.special import loggamma as lg
+
+    n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
+
+    alpha = mu**2 / mu_var + 1
+    beta = mu / mu_var
+    return -np.sum(
+        alpha * np.log(beta)
+        + lg(n + alpha)
+        - (lg(n + 1) + (n + alpha) * np.log(1 + beta) + lg(alpha))
+    )
 
 
 # If numba is available, use it to accelerate computations in float32 and float64
@@ -299,11 +351,11 @@ try:
 
     @_overload(_safe_log, inline="always")
     def _ol_safe_log(x):
-        return _safe_log
+        return _safe_log  # pragma: no cover
 
     @_overload(_z_squared, inline="always")
     def _ol_z_squared(y, ye, ym):
-        return _z_squared
+        return _z_squared  # pragma: no cover
 
     _unbinned_nll_np = _unbinned_nll
     _unbinned_nll_nb = _njit(
@@ -383,7 +435,7 @@ try:
 
     @_overload(_soft_l1_loss, inline="always")
     def _ol_soft_l1_loss(z_sqr):
-        return _soft_l1_loss_np
+        return _soft_l1_loss_np  # pragma: no cover
 
     _soft_l1_cost_np = _soft_l1_cost
     _soft_l1_cost_nb = _njit(
@@ -410,7 +462,10 @@ class Cost(abc.ABC):
     @property
     def errordef(self):
         """For internal use."""
-        return 1.0
+        return self._errordef()
+
+    def _errordef(self):
+        return CHISQUARE
 
     @property
     def func_code(self):
@@ -418,7 +473,6 @@ class Cost(abc.ABC):
         return self._func_code
 
     @property
-    @abc.abstractmethod
     def ndata(self):
         """
         Return number of points in least-squares fits or bins in a binned fit.
@@ -426,6 +480,10 @@ class Cost(abc.ABC):
         Infinity is returned if the cost function is unbinned. This is used by Minuit to
         compute the reduced chi2, a goodness-of-fit estimate.
         """
+        return self._ndata()
+
+    @abc.abstractmethod
+    def _ndata(self):
         NotImplemented  # pragma: no cover
 
     @property
@@ -502,9 +560,7 @@ class Constant(Cost):
         self.value = value
         super().__init__((), False)
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
+    def _ndata(self):
         return 0
 
     def _call(self, args):
@@ -566,12 +622,10 @@ class CostSum(Cost, Sequence):
     def _call(self, args):
         r = 0.0
         for comp, cargs in self._split(args):
-            r += comp._call(cargs)
+            r += comp._call(cargs) / comp.errordef
         return r
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
+    def _ndata(self):
         return sum(c.ndata for c in self._items)
 
     def __len__(self):
@@ -609,19 +663,21 @@ class CostSum(Cost, Sequence):
         args = np.atleast_1d(args)
 
         n = sum(hasattr(comp, "visualize") for comp in self)
-        fig = plt.gcf()
-        if n > 1:
-            fig.set_figheight(n * fig.get_figheight())
+
+        w, h = plt.rcParams["figure.figsize"]
+        fig, ax = plt.subplots(1, n, figsize=(w, h * n))
 
         if component_kwargs is None:
             component_kwargs = {}
+
         i = 0
         for k, (comp, cargs) in enumerate(self._split(args)):
-            if hasattr(comp, "visualize"):
-                i += 1
-                plt.subplot(n, 1, i)
-                kwargs = component_kwargs.get(k, {})
-                comp.visualize(cargs, **kwargs)
+            if not hasattr(comp, "visualize"):
+                continue
+            kwargs = component_kwargs.get(k, {})
+            plt.sca(ax[i])
+            comp.visualize(cargs, **kwargs)
+            i += 1
 
 
 class MaskedCost(Cost):
@@ -669,12 +725,6 @@ class UnbinnedCost(MaskedCost):
 
     __slots__ = "_model", "_log"
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        # unbinned likelihoods have infinite degrees of freedom
-        return np.inf
-
     def __init__(self, data, model: _tp.Callable, verbose: int, log: bool):
         """For internal use."""
         self._model = model
@@ -690,6 +740,10 @@ class UnbinnedCost(MaskedCost):
     def scaled_pdf(self):
         """Get number density model."""
         ...  # pragma: no cover
+
+    def _ndata(self):
+        # unbinned likelihoods have infinite degrees of freedom
+        return np.inf
 
     def visualize(self, args: _ArrayLike, model_points: int = 0):
         """
@@ -885,11 +939,6 @@ class BinnedCost(MaskedCost):
         """Access bin edges."""
         return self._xe
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        return np.prod(self._masked.shape[: self._ndim])
-
     def __init__(self, args, n, xe, verbose, *updater):
         """For internal use."""
         if not isinstance(xe, _tp.Iterable):
@@ -920,6 +969,9 @@ class BinnedCost(MaskedCost):
             self._bztrafo = None
 
         super().__init__(args, n, verbose)
+
+    def _ndata(self):
+        return np.prod(self._masked.shape[: self._ndim])
 
     def _update_cache(self):
         super()._update_cache()
@@ -991,23 +1043,49 @@ class BinnedCostWithModel(BinnedCost):
         return d
 
 
-class BarlowBeestonLite(BinnedCost):
+class Template(BinnedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
-    Compared to the original Beeston-Barlow method, the lite methods uses one nuisance
-    parameter per bin instead of one nuisance parameter per component per bin, which
-    is an approximation. This class offers two different lite methods. The default
-    method used is the one which performs better on average.
+    This cost function is for a mixture model. Samples originate from two or more
+    components and we are interested in estimating the yield that originates from each
+    component. In high-energy physics, one component is often a peaking signal over a
+    smooth background component. Templates are shape estimates for these components which
+    are obtained from Monte-Carlo simulation. Even if the Monte-Carlo simulation is exact,
+    the templates introduce some uncertainty since the Monte-Carlo simulation produces
+    only a finite sample of events that contribute to each template. This cost function
+    takes that additional uncertainty into account.
 
-    The cost function works for both weighted data and weighted templates. The cost
-    function assumes that the weights are independent of the data. This is not the
-    case for sWeights, and the uncertaintes for results obtained with sWeights will
-    only be approximately correct, see C. Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393.
+    There are several ways to approach this problem. Barlow and Beeston [1]_ found an
+    exact likelihood for this problem, with one nuisance parameter per component per bin.
+    Solving this likelihood is somewhat challenging though. The Barlow-Beeston likelihood
+    also does not handle the additional uncertainty in weighted templates unless the
+    weights per bin are all equal.
 
-    Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228,
-    https://doi.org/10.1016/0010-4655(93)90005-W)
-    J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354
+    Other works [2]_ [3]_ [4]_ describe likelihoods that use only one nuisance parameter
+    per bin, which is an approximation. Some marginalize over the nuisance parameters with
+    some prior, while others profile over the nuisance parameter. This class implements
+    several of these methods. The default method is the one which performs best under most
+    conditions, according to current knowledge. The default may change if this assessment
+    changes.
+
+    The cost function returns an asymptotically chi-square distributed test statistic,
+    except for the method "asy", where it is the negative logarithm of the marginalised
+    likelihood instead. The standard transform [5]_ which we use convert likelihoods into
+    test statistics only works for (profiled) likelihoods, not for likelihoods
+    marginalized over a prior.
+
+    All methods implemented here have been generalized to work with both weighted data and
+    weighted templates, under the assumption that the weights are independent of the data.
+    This is not the case for sWeights, and the uncertaintes for results obtained with
+    sWeights will only be approximately correct [6]_.
+
+    .. [1] Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228
+    .. [2] Conway, PHYSTAT 2011 proceeding, https://doi.org/10.48550/arXiv.1103.0354
+    .. [3] Argüelles, Schneider, Yuan, JHEP 06 (2019) 030
+    .. [4] Dembinski and Abdelmotteleb, https://doi.org/10.48550/arXiv.2206.12346
+    .. [5] Baker and Cousins, NIM 221 (1984) 437-442
+    .. [6] Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393
     """
 
     __slots__ = "_bbl_data", "_impl"
@@ -1019,7 +1097,7 @@ class BarlowBeestonLite(BinnedCost):
         templates: _tp.Sequence[_tp.Sequence],
         name: _tp.Collection[str] = None,
         verbose: int = 0,
-        method: str = "hpd",
+        method: str = "da",
     ):
         """
         Initialize cost function with data and model.
@@ -1028,31 +1106,29 @@ class BarlowBeestonLite(BinnedCost):
         ----------
         n : array-like
             Histogram counts. If this is an array with dimension D+1, where D is the
-            number of histogram axes, then the last dimension must have two elements
-            and is interpreted as pairs of sum of weights and sum of weights squared.
+            number of histogram axes, then the last dimension must have two elements and
+            is interpreted as pairs of sum of weights and sum of weights squared.
         xe : array-like or collection of array-like
-            Bin edge locations, must be len(n) + 1, where n is the number of bins.
-            If the histogram has more than one axis, xe must be a collection of the
-            bin edge locations along each axis.
+            Bin edge locations, must be len(n) + 1, where n is the number of bins. If the
+            histogram has more than one axis, xe must be a collection of the bin edge
+            locations along each axis.
         templates : collection of array-like
-            Collection of arrays, which contain the histogram counts of each template.
-            The template histograms must use the same axes as the data histogram. If
-            the counts are represented by an array with dimension D+1, where D is the
-            number of histogram axes, then the last dimension must have two elements
-            and is interpreted as pairs of sum of weights and sum of weights squared.
+            Collection of arrays, which contain the histogram counts of each template. The
+            template histograms must use the same axes as the data histogram. If the
+            counts are represented by an array with dimension D+1, where D is the number
+            of histogram axes, then the last dimension must have two elements and is
+            interpreted as pairs of sum of weights and sum of weights squared.
         name : collection of str, optional
             Optional name for the yield of each template. Must have length K.
         verbose : int, optional
-            Verbosity level. 0: is no output (default).
-            1: print current args and negative log-likelihood value.
-        method : {"jsc", "hpd"}, optional
-            Which version of the lite method to use. jsc: Method developed by
-            J.S. Conway, PHYSTAT 2011, https://doi.org/10.48550/arXiv.1103.0354.
-            hpd: Method developed by H.P. Dembinski. Default is "hpd", which seems to
-            perform slightly better on average. The default may change in the future
-            when more practical experience with both method is gained. Set this
-            parameter explicitly to ensure that a particular method is used now and
-            in the future.
+            Verbosity level. 0: is no output (default). 1: print current args and negative
+            log-likelihood value.
+        method : {"jsc", "asy", "da"}, optional
+            Which method to use. "jsc": Conway's method [2]_. "asy": ASY method [3]_.
+            "da": DA method [4]_. Default is "da", which to current knowledge offers the
+            best overall performance. The default may change in the future, so please set
+            this parameter explicitly in code that has to be stable. For all methods
+            except the "asy" method, the minimum value is chi-square distributed.
         """
         M = len(templates)
         if M < 1:
@@ -1089,13 +1165,24 @@ class BarlowBeestonLite(BinnedCost):
             nt_var.append(tv * f**2)
         self._bbl_data = (nt, nt_var)
 
-        if method == "jsc":
-            self._impl = barlow_beeston_lite_chi2_jsc
-        elif method == "hpd":
-            self._impl = barlow_beeston_lite_chi2_hpd
-        else:
+        known_methods = {
+            "jsc": template_chi2_jsc,
+            "asy": template_nll_asy,
+            "hpd": template_chi2_da,
+            "da": template_chi2_da,
+        }
+        try:
+            self._impl = known_methods[method]
+        except KeyError:
             raise ValueError(
-                f"method {method} is not understood, allowed values: {{'jsc', 'hpd'}}"
+                f"method {method} is not understood, allowed values: {known_methods}"
+            )
+
+        if method == "hpd":
+            warnings.warn(
+                "key 'hpd' is deprecated, please use 'da' instead",
+                category=np.VisibleDeprecationWarning,
+                stacklevel=2,
             )
 
         super().__init__(name, n, xe, verbose)
@@ -1124,6 +1211,9 @@ class BarlowBeestonLite(BinnedCost):
 
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
+
+    def _errordef(self):
+        return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
 
     def visualize(self, args: _ArrayLike):
         """
@@ -1365,11 +1455,6 @@ class LeastSquares(MaskedCost):
                 loss(_z_squared(y, ye, ym))  # type:ignore
             )
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
-        return len(self._masked)
-
     def __init__(
         self,
         x: _ArrayLike,
@@ -1438,6 +1523,9 @@ class LeastSquares(MaskedCost):
         ym = self._model(x, *args)
         ym = _normalize_model_output(ym)
         return self._cost(y, yerror, ym)
+
+    def _ndata(self):
+        return len(self._masked)
 
     def visualize(self, args: _ArrayLike, model_points: int = 0):
         """
@@ -1557,9 +1645,7 @@ class NormalConstraint(Cost):
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
-    @Cost.ndata.getter  # type:ignore
-    def ndata(self):
-        """See Cost.ndata."""
+    def _ndata(self):
         return len(self._value)
 
     def visualize(self, args: _ArrayLike):
@@ -1629,3 +1715,23 @@ def _shape_from_xe(xe):
     if isinstance(xe[0], _tp.Iterable):
         return tuple(len(xei) - 1 for xei in xe)
     return (len(xe) - 1,)
+
+
+_deprecated_content = {
+    "BarlowBeestonLite": ("Template", Template),
+    "barlow_beeston_lite_chi2_jsc": ("template_chi2_jsc", template_chi2_jsc),
+    "barlow_beeston_lite_chi2_hpd": ("template_chi2_da", template_chi2_da),
+}
+
+
+def __getattr__(name: str) -> _tp.Any:
+    if name in _deprecated_content:
+        new_name, obj = _deprecated_content[name]
+        warnings.warn(
+            f"{name} was renamed to {new_name}, please import {new_name} instead",
+            np.VisibleDeprecationWarning,
+            stacklevel=2,
+        )
+        return obj
+
+    raise AttributeError

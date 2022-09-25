@@ -321,11 +321,12 @@ def test_MErrors():
     assert repr(mes) == f"<MErrors\n  {mes['x']!r}\n>"
 
 
-def test_FMin():
+@pytest.mark.parametrize("errordef", (0.5, 1.0))
+def test_FMin(errordef):
     fm = Namespace(
         fval=1.23456e-10,
         edm=1.23456e-10,
-        errordef=0.5,
+        errordef=errordef,
         is_valid=True,
         has_valid_parameters=True,
         has_accurate_covar=True,
@@ -371,13 +372,19 @@ def test_FMin():
     assert fmin != util.FMin(fm, "bar", 1, 2, 1, 0.1, 1.2)
     assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.5)
 
+    if errordef == 1:
+        reduced_chi2 = fmin.fval
+    else:
+        reduced_chi2 = np.nan
+
     assert repr(fmin) == (
-        "<FMin algorithm='foo' edm=1.23456e-10 edm_goal=0.1 errordef=0.5 fval=1.23456e-10"
+        f"<FMin algorithm='foo' edm=1.23456e-10 edm_goal=0.1 errordef={errordef}"
+        " fval=1.23456e-10"
         " has_accurate_covar=True has_covariance=True has_made_posdef_covar=False"
         " has_parameters_at_limit=False has_posdef_covar=True"
         " has_reached_call_limit=False has_valid_parameters=True"
         " hesse_failed=False is_above_max_edm=False is_valid=True"
-        " nfcn=1 ngrad=2 reduced_chi2=2.46912e-10 time=1.2>"
+        f" nfcn=1 ngrad=2 reduced_chi2={reduced_chi2} time=1.2>"
     )
 
 

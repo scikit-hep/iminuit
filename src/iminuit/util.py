@@ -470,11 +470,11 @@ class FMin:
         """
         Get chi2/ndof of the fit.
 
-        This returns NaN if the cost function is unbinned or does not support
-        reporting the degrees of freedom.
+        This returns NaN if the cost function is unbinned, errordef is not 1,
+        or if the cost function does not report the degrees of freedom.
         """
-        if np.isfinite(self._ndof) and self._ndof > 0:
-            return self.fval / self.errordef / self._ndof
+        if np.isfinite(self._ndof) and self._ndof > 0 and self.errordef == 1:
+            return self.fval / self._ndof
         return np.nan
 
     @property
