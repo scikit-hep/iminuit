@@ -117,10 +117,16 @@ class BohmZechTransform:
             Estimated variance of observed values.
         """
         val, var = np.atleast_1d(val, var)
-        self._scale = val / (var + 1e-323)
+
+        self._scale = np.ones_like(val)
+        np.divide(val, var, out=self._scale, where=var > 0)
         self._obs = val * self._scale
 
-    def __call__(self, val: _ArrayLike, var: _tp.Optional[_ArrayLike] = None):
+    def __call__(
+        self, val: _ArrayLike, var: _ArrayLike = None
+    ) -> _tp.Union[
+        _tp.Tuple[np.ndarray, np.ndarray], _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]
+    ]:
         """
         Return precomputed scaled data and scaled prediction.
 
@@ -254,10 +260,9 @@ def template_chi2_jsc(
 
     beta_var = mu_var / mu**2
 
-    # need to solve quadratic equation b^2 + (mu beta_var - 1) b - n beta_var = 0
-    p = mu * beta_var - 1
-    q = -n * beta_var
-    beta = 0.5 * (-p + np.sqrt(p**2 - 4 * q))
+    # Eq. 15 from https://doi.org/10.48550/arXiv.2206.12346
+    p = 0.5 - 0.5 * mu * beta_var
+    beta = p + np.sqrt(p**2 + n * beta_var)
 
     return poisson_chi2(n, mu * beta) + np.sum(  # type:ignore
         (beta - 1) ** 2 / beta_var

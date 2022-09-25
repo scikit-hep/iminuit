@@ -1672,9 +1672,7 @@ class Minuit:
         y: str,
         *,
         size: int = 50,
-        bound: _tp.Union[
-            float, _tp.Tuple[_tp.Tuple[float, float], _tp.Tuple[float, float]]
-        ] = 2,
+        bound: _tp.Union[float, _tp.Iterable[_tp.Tuple[float, float]]] = 2,
         grid: _tp.Tuple[_ArrayLike, _ArrayLike] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -1731,7 +1729,7 @@ class Minuit:
             if xv.ndim != 1 or yv.ndim != 1:
                 raise ValueError("grid per parameter must be 1D array-like")
         else:
-            if isinstance(bound, tuple):
+            if isinstance(bound, _tp.Iterable):
                 xb, yb = bound
                 xrange = self._normalize_bound(x, xb)
                 yrange = self._normalize_bound(y, yb)
