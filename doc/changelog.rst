@@ -5,6 +5,12 @@
 Changelog
 =========
 
+2.17.0 (September 26, 2022)
+---------------------------
+- Add python 3.11, drop 3.6 (`#792 <https://github.com/scikit-hep/iminuit/pull/792>`_)
+- Add Template fitting method from Argüelles, Schneider, Yuan (`#789 <https://github.com/scikit-hep/iminuit/pull/789>`_)
+- Deprecate `iminuit.cost.BarlowBeestonLite` in favour of `iminuit.cost.Template`
+
 2.16.0 (August 16, 2022)
 ------------------------
 - Root update (`#786 <https://github.com/scikit-hep/iminuit/pull/786>`_)
