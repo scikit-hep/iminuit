@@ -346,7 +346,7 @@ New features
 
 Other
 ~~~~~
-- Upgrade Minuit2 C++ code in ROOT to latest master with following improvements
+- Upgrade Minuit2 C++ code in ROOT to latest version with following improvements
 
    - improvement of seed when using an analytical gradient
    - fix of last minimum state added twice to vector of minimum states in some cases

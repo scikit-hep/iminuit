@@ -100,5 +100,5 @@ To check your ``iminuit`` version number and install location:
 .. _miniconda: https://conda.io/en/latest/miniconda.html
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/scikit-hep/iminuit
-.. _Makefile: https://github.com/scikit-hep/iminuit/blob/master/Makefile
-.. _doc/README.md: https://github.com/scikit-hep/iminuit/blob/master/doc/README.md
+.. _Makefile: https://github.com/scikit-hep/iminuit/blob/main/Makefile
+.. _doc/README.md: https://github.com/scikit-hep/iminuit/blob/main/doc/README.md

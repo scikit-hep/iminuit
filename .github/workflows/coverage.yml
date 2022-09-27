@@ -8,7 +8,7 @@ on:
       - '*.rst'
   push:
     branches:
-      - master
+      - main
       - develop
       - beta/*
     paths-ignore:
