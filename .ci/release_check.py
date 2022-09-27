@@ -36,7 +36,7 @@ assert (
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:
-    assert str(iminuit_version) in f.read(), "changelog entry missing"
+    assert iminuit_version.base_version in f.read(), "changelog entry missing"
 
 # make sure that version is not already tagged
 tags = subp.check_output(["git", "tag"]).decode().strip().split("\n")
