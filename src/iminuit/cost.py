@@ -103,6 +103,8 @@ class BohmZechTransform:
     Apply Bohm-Zech transform.
 
     See Bohm and Zech, NIMA 748 (2014) 1-6.
+
+    :meta private:
     """
 
     def __init__(self, val: _ArrayLike, var: _ArrayLike):
@@ -455,13 +457,21 @@ except ModuleNotFoundError:
 
 
 class Cost(abc.ABC):
-    """Base class for all cost functions."""
+    """
+    Base class for all cost functions.
+
+    :meta private:
+    """
 
     __slots__ = ("_func_code", "_verbose")
 
     @property
     def errordef(self):
-        """For internal use."""
+        """
+        For internal use.
+
+        :meta private:
+        """
         return self._errordef()
 
     def _errordef(self):
@@ -469,7 +479,11 @@ class Cost(abc.ABC):
 
     @property
     def func_code(self):
-        """For internal use."""
+        """
+        For internal use.
+
+        :meta private:
+        """
         return self._func_code
 
     @property
@@ -681,7 +695,11 @@ class CostSum(Cost, Sequence):
 
 
 class MaskedCost(Cost):
-    """Base class for cost functions that support data masking."""
+    """
+    Base class for cost functions that support data masking.
+
+    :meta private:
+    """
 
     __slots__ = "_data", "_mask", "_masked"
 
@@ -721,7 +739,11 @@ class MaskedCost(Cost):
 
 
 class UnbinnedCost(MaskedCost):
-    """Base class for unbinned cost functions."""
+    """
+    Base class for unbinned cost functions.
+
+    :meta private:
+    """
 
     __slots__ = "_model", "_log"
 
@@ -928,7 +950,11 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
 
 class BinnedCost(MaskedCost):
-    """Base class for binned cost functions."""
+    """
+    Base class for binned cost functions.
+
+    :meta private:
+    """
 
     __slots__ = "_xe", "_ndim", "_bztrafo"
 
@@ -1011,7 +1037,11 @@ class BinnedCost(MaskedCost):
 
 
 class BinnedCostWithModel(BinnedCost):
-    """Base class for binned cost functions."""
+    """
+    Base class for binned cost functions with parametric model.
+
+    :meta private:
+    """
 
     __slots__ = "_xe_shape", "_model", "_model_arg"
 

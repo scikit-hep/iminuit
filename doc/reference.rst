@@ -46,9 +46,15 @@ Cost functions
 
 .. automodule:: iminuit.cost
     :members:
+    :inherited-members:
 
 Utilities
 ---------
 
 .. automodule:: iminuit.util
+    :exclude-members: Matrix
+    :inherited-members:
+
+.. autoclass:: iminuit.util.Matrix
     :members:
+    :no-inherited-members:

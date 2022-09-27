@@ -36,6 +36,8 @@ class BasicView(abc.ABC):
 
     Derived classes need to implement methods _set and _get to access
     specific properties of the parameter state.
+
+    :meta private:
     """
 
     __slots__ = ("_minuit", "_ndim")

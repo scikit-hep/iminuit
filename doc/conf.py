@@ -40,10 +40,13 @@ nbsphinx_execute_arguments = [
     "--InlineBackend.figure_formats={'svg', 'pdf'}",
     "--InlineBackend.rc=figure.dpi=96",
 ]
-# nbsphinx_execute = "never"  # uncomment this to speed up doc build
+# use FAST=1 to speed up doc build
+if bool(os.environ.get("FAST", False)):
+    nbsphinx_execute = "never"
 
 autoclass_content = "both"
 autosummary_generate = True
+autodoc_member_order = "groupwise"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
