@@ -1,6 +1,7 @@
 """Minuit class."""
 
 import warnings
+import cost
 from . import util as mutil
 from ._core import (
     FCN,
@@ -647,6 +648,7 @@ class Minuit:
         self._covariance: mutil.Matrix = None
         return self  # return self for method chaining and to autodisplay current state
 
+
     def migrad(self, ncall: int = None, iterate: int = 5) -> "Minuit":
         """
         Run Migrad minimization.
@@ -1243,6 +1245,13 @@ class Minuit:
                 self.hesse()
 
         return self
+
+    def visualize(self):
+        if hasattr(cost, self._fcn):
+            return cost.visualize(self._values)
+        # else return an exception
+        raise Exception("The function call of cost.visualize() does not exist")
+
 
     def hesse(self, ncall: int = None) -> "Minuit":
         """
