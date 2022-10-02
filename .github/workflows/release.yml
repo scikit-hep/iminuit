@@ -12,7 +12,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.out }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: 0
@@ -55,7 +55,7 @@ jobs:
       CIBW_BUILD: ${{ matrix.py }}-*
       CIBW_ARCHS_LINUX: ${{ matrix.arch }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
 
@@ -76,7 +76,7 @@ jobs:
     name: source package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
 
@@ -116,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: softprops/action-gh-release@v1
         with:
           name: v${{ needs.release_check.outputs.tag }}
