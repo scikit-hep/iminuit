@@ -17,7 +17,7 @@ jobs:
         include:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
-            python-version: "3.11-dev"
+            python-version: "3.11"
           - os: macos-latest
             python-version: "3.7"
           - os: ubuntu-latest
