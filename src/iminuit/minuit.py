@@ -2240,7 +2240,9 @@ class Minuit:
             with out:
                 clear_output(wait=True)
                 plot_with_frame(args, from_fit, report_success)
-                show_inline_matplotlib_plots()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    show_inline_matplotlib_plots()
 
         def on_fit_button_clicked(change):
             for x in parameters:
@@ -2259,7 +2261,9 @@ class Minuit:
             with out:
                 clear_output(wait=True)
                 plot_with_frame(self.values, True, report_success)
-                show_inline_matplotlib_plots()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    show_inline_matplotlib_plots()
 
         def on_update_button_clicked(change):
             for x in parameters:
@@ -2307,7 +2311,9 @@ class Minuit:
         for x in parameters:
             x.slider.observe(on_slider_change, "value")
 
-        show_inline_matplotlib_plots()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            show_inline_matplotlib_plots()
         on_slider_change(None)
 
         return HBox([out, ui])
