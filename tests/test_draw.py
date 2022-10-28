@@ -177,7 +177,7 @@ def test_interactive():
         ipywidgets_available = True
 
         m = Minuit(cost, 1, 1)
-        with pytest.raises(ValueError, match="no visualize method"):
+        with pytest.raises(AttributeError, match="no visualize method"):
             m.interactive(raise_on_exception=True)
 
         with plot.assert_call():

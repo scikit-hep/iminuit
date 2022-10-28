@@ -1244,6 +1244,14 @@ class Minuit:
 
         return self
 
+    def visualize(self, plot=None):
+        """Visualize agreement of current model with data.
+
+        This raises an AttributeError if the cost function has no visualize
+        method.
+        """
+        return self._visualize(plot)(self.values)
+
     def hesse(self, ncall: int = None) -> "Minuit":
         """
         Run Hesse algorithm to compute asymptotic errors.
@@ -2117,6 +2125,7 @@ class Minuit:
                 Layout,
                 Dropdown,
             )
+            from ipywidgets.widgets.interaction import show_inline_matplotlib_plots
             from IPython.display import clear_output
             from matplotlib import pyplot as plt
         except ModuleNotFoundError as e:
@@ -2126,16 +2135,7 @@ class Minuit:
             )
             raise
 
-        pyfcn = self.fcn._fcn
-
-        if plot is None:
-            if hasattr(pyfcn, "visualize"):
-                plot = pyfcn.visualize
-            else:
-                raise ValueError(
-                    f"class {pyfcn.__class__.__name__} has no visualize method, "
-                    "please use the plot argument to pass a visualization function"
-                )
+        plot = self._visualize(plot)
 
         def plot_with_frame(args, from_fit, report_success):
             trans = plt.gca().transAxes
@@ -2237,11 +2237,12 @@ class Minuit:
                 out.block = False
                 self.fixed = save
                 from_fit = True
-            # mutil._show_inline_matplotlib_plots()
             with out:
                 clear_output(wait=True)
                 plot_with_frame(args, from_fit, report_success)
-                mutil._show_inline_matplotlib_plots()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    show_inline_matplotlib_plots()
 
         def on_fit_button_clicked(change):
             for x in parameters:
@@ -2260,7 +2261,9 @@ class Minuit:
             with out:
                 clear_output(wait=True)
                 plot_with_frame(self.values, True, report_success)
-                mutil._show_inline_matplotlib_plots()
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    show_inline_matplotlib_plots()
 
         def on_update_button_clicked(change):
             for x in parameters:
@@ -2307,7 +2310,10 @@ class Minuit:
 
         for x in parameters:
             x.slider.observe(on_slider_change, "value")
-        # mutil._show_inline_matplotlib_plots()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            show_inline_matplotlib_plots()
         on_slider_change(None)
 
         return HBox([out, ui])
@@ -2433,6 +2439,18 @@ class Minuit:
             p.text("<Minuit ...>")
         else:
             p.text(str(self))
+
+    def _visualize(self, plot):
+        pyfcn = self.fcn._fcn
+        if plot is None:
+            if hasattr(pyfcn, "visualize"):
+                plot = pyfcn.visualize
+            else:
+                raise AttributeError(
+                    f"class {pyfcn.__class__.__name__} has no visualize method, "
+                    "please use the plot argument to pass a visualization function"
+                )
+        return plot
 
 
 def _make_init_state(

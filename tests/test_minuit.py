@@ -1619,3 +1619,14 @@ def test_negative_errors():
     assert_allclose(m.errors, 10)
     m.errors = (1, 2)
     assert_allclose(m.errors, (1, 2))
+
+
+def test_visualize():
+    m = Minuit(func0, 1, 1)
+    m.migrad()
+    with pytest.raises(AttributeError):
+        m.visualize()
+
+    func0.visualize = lambda args: None
+    m.visualize()
+    del func0.visualize
