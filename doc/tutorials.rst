@@ -13,7 +13,10 @@ Important for most users are only the first two entries.
 
     notebooks/basic
     notebooks/cost_functions
+    notebooks/error_bands
+    notebooks/interactive
     notebooks/simultaneous_fits
+    notebooks/template_fits
     notebooks/conditional_variable
     notebooks/scipy_and_constraints
     notebooks/external_minimizer
