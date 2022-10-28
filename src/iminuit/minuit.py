@@ -1,7 +1,6 @@
 """Minuit class."""
 
 import warnings
-import cost
 from . import util as mutil
 from ._core import (
     FCN,
@@ -648,7 +647,6 @@ class Minuit:
         self._covariance: mutil.Matrix = None
         return self  # return self for method chaining and to autodisplay current state
 
-
     def migrad(self, ncall: int = None, iterate: int = 5) -> "Minuit":
         """
         Run Migrad minimization.
@@ -1246,12 +1244,13 @@ class Minuit:
 
         return self
 
-    def visualize(self):
-        if hasattr(cost, self._fcn):
-            return cost.visualize(self._values)
-        # else return an exception
-        raise Exception("The function call of cost.visualize() does not exist")
+    def visualize(self, plot=None):
+        """Visualize agreement of current model with data.
 
+        This raises an AttributeError if the cost function has no visualize
+        method.
+        """
+        return self._visualize(plot)(self.values)
 
     def hesse(self, ncall: int = None) -> "Minuit":
         """
@@ -2135,16 +2134,7 @@ class Minuit:
             )
             raise
 
-        pyfcn = self.fcn._fcn
-
-        if plot is None:
-            if hasattr(pyfcn, "visualize"):
-                plot = pyfcn.visualize
-            else:
-                raise ValueError(
-                    f"class {pyfcn.__class__.__name__} has no visualize method, "
-                    "please use the plot argument to pass a visualization function"
-                )
+        plot = self._visualize(plot)
 
         def plot_with_frame(args, from_fit, report_success):
             trans = plt.gca().transAxes
@@ -2442,6 +2432,18 @@ class Minuit:
             p.text("<Minuit ...>")
         else:
             p.text(str(self))
+
+    def _visualize(self, plot):
+        pyfcn = self.fcn._fcn
+        if plot is None:
+            if hasattr(pyfcn, "visualize"):
+                plot = pyfcn.visualize
+            else:
+                raise AttributeError(
+                    f"class {pyfcn.__class__.__name__} has no visualize method, "
+                    "please use the plot argument to pass a visualization function"
+                )
+        return plot
 
 
 def _make_init_state(
