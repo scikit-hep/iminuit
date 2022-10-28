@@ -2125,6 +2125,7 @@ class Minuit:
                 Layout,
                 Dropdown,
             )
+            from ipywidgets.widgets.interaction import show_inline_matplotlib_plots
             from IPython.display import clear_output
             from matplotlib import pyplot as plt
         except ModuleNotFoundError as e:
@@ -2236,11 +2237,10 @@ class Minuit:
                 out.block = False
                 self.fixed = save
                 from_fit = True
-            # mutil._show_inline_matplotlib_plots()
             with out:
                 clear_output(wait=True)
                 plot_with_frame(args, from_fit, report_success)
-                mutil._show_inline_matplotlib_plots()
+                show_inline_matplotlib_plots()
 
         def on_fit_button_clicked(change):
             for x in parameters:
@@ -2259,7 +2259,7 @@ class Minuit:
             with out:
                 clear_output(wait=True)
                 plot_with_frame(self.values, True, report_success)
-                mutil._show_inline_matplotlib_plots()
+                show_inline_matplotlib_plots()
 
         def on_update_button_clicked(change):
             for x in parameters:
@@ -2306,7 +2306,8 @@ class Minuit:
 
         for x in parameters:
             x.slider.observe(on_slider_change, "value")
-        # mutil._show_inline_matplotlib_plots()
+
+        show_inline_matplotlib_plots()
         on_slider_change(None)
 
         return HBox([out, ui])

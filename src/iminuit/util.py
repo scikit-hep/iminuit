@@ -1436,28 +1436,6 @@ def _histogram_segments(mask, xe, masked):
     return segments
 
 
-def _show_inline_matplotlib_plots():
-    # Code taken from ipywidgets/interactive.py
-    #
-    # See comments in the original why this is needed.
-    #
-    # Copyright (c) Jupyter Development Team.
-    # Distributed under the terms of the Modified BSD License.
-    #
-    # This version was stripped down and modified to remove a deprecation warning.
-    try:
-        import matplotlib as mpl
-        from matplotlib_inline.backend_inline import flush_figures
-    except ImportError:  # pragma: no cover
-        return  # pragma: no cover
-
-    if (
-        mpl.get_backend() == "module://ipykernel.pylab.backend_inline"
-        or mpl.get_backend() == "module://matplotlib_inline.backend_inline"
-    ):
-        flush_figures()  # pragma: no cover
-
-
 def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
     x = np.linspace(xmin, xmax, start)
     ynew = f(x)
