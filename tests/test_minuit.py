@@ -211,11 +211,13 @@ def test_missing_scipy():
         m.scipy()
 
 
-def test_func0():  # check that providing gradient improves convergence
+def test_func0():
     m1 = func_test_helper(func0)
     m2 = func_test_helper(func0, grad=func0_grad)
     assert m1.ngrad == 0
     assert m2.ngrad > 0
+    # check that providing gradient improves convergence
+    assert m2.nfcn < m1.nfcn
 
 
 def test_lambda():
@@ -330,6 +332,7 @@ def test_array_func_2():
     assert m.fixed == (False, True)
     assert m.limits["a"] == (0, 2)
     m.migrad()
+    assert m.fmin.ngrad > 0
     assert_allclose(m.values, (1, 1), rtol=1e-2)
     c = m.covariance
     assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)
@@ -1034,20 +1037,23 @@ def test_migrad_ncall():
     assert m.nfcn < ncalls_without_limit
 
 
-def test_ngrad():
+@pytest.mark.parametrize("arg", (1, np.array([1.0, 2.0])))
+def test_ngrad(arg):
     class Func:
         ngrad = 0
 
         def __call__(self, x):
-            return x**2
+            return np.sum(x**2)
 
         def grad(self, x):
             self.ngrad += 1
+            if np.ndim(x) == 1:
+                return 2 * x
             return [2 * x]
 
     # check that counting is accurate
     fcn = Func()
-    m = Minuit(fcn, 1)
+    m = Minuit(fcn, arg)
     m.migrad()
     assert m.ngrad > 0
     assert m.ngrad == fcn.ngrad
@@ -1060,6 +1066,15 @@ def test_ngrad():
     before = m.ngrad
     m.hesse()
     assert m.ngrad == before
+
+    m.reset()
+    m.migrad()
+    m2 = Minuit(lambda x: fcn(x), arg)
+    m2.migrad()
+    assert m.ngrad > 0
+    assert m2.ngrad == 0
+    # apparently this is not always the case:
+    # assert m2.nfcn > m.nfcn
 
 
 def test_errordef():
