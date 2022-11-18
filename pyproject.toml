@@ -1,9 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "cmake",
-]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core[pyproject]", "pybind11"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "iminuit"
