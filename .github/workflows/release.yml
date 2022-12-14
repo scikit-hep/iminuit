@@ -46,6 +46,9 @@ jobs:
           - os: macos-latest
             py: cp310
             arch: universal2
+          - os: macos-latest
+            py: cp311
+            arch: universal2
         exclude:
           - os: windows-latest
             arch: aarch64
