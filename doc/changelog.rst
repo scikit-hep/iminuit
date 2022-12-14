@@ -5,11 +5,18 @@
 Changelog
 =========
 
+2.18.0 (December 14, 2022)
+--------------------------
+- Add more checks for gradients (`#810 <https://github.com/scikit-hep/iminuit/pull/810>`_)
+- Bump pypa/cibuildwheel from 2.10.2 to 2.11.2 (`#808 <https://github.com/scikit-hep/iminuit/pull/808>`_)
+- Added visualize function to minuit (`#799 <https://github.com/scikit-hep/iminuit/pull/799>`_)
+- Move tutorials (`#806 <https://github.com/scikit-hep/iminuit/pull/806>`_)
+
 2.17.0 (September 26, 2022)
 ---------------------------
 - Add python 3.11, drop 3.6 (`#792 <https://github.com/scikit-hep/iminuit/pull/792>`_)
 - Add Template fitting method from Argüelles, Schneider, Yuan (`#789 <https://github.com/scikit-hep/iminuit/pull/789>`_)
-- Deprecate `iminuit.cost.BarlowBeestonLite` in favour of `iminuit.cost.Template`
+- Deprecate `iminuit.cost.BarlowBeestonLite` in favor of `iminuit.cost.Template`
 
 2.16.0 (August 16, 2022)
 ------------------------
