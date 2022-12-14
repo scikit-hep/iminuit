@@ -24,7 +24,7 @@ jobs:
         run: python .ci/release_check.py
 
       - id: tag
-        run: echo "::set-output name=out::$(python .ci/get_tag.py)"
+        run: echo "out=$(python .ci/get_tag.py) >> $GITHUB_OUTPUT"
 
   wheels:
     needs: release_check
