@@ -767,7 +767,7 @@ class UnbinnedCost(MaskedCost):
         # unbinned likelihoods have infinite degrees of freedom
         return np.inf
 
-    def visualize(self, args: _ArrayLike, model_points: int = 0, nbins = 50):
+    def visualize(self, args: _ArrayLike, model_points: int = 0, nbins: int = 50):
         """
         Visualize data and model agreement (requires matplotlib).
 
