@@ -19,7 +19,7 @@ cov: build/done
 	python -m pip uninstall --yes scipy matplotlib
 	coverage run --append -m pytest
 	coverage html -d htmlcov
-	python .ci/install_extra.py
+	pip install numba ipykernel ipywidgets scipy matplotlib
 	python -m webbrowser -t htmlcov/index.html
 
 doc: build/done build/html/done
@@ -27,7 +27,7 @@ doc: build/done build/html/done
 
 build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
 	mkdir -p build/html
-	sphinx-build -vv -W -b html -d build/doctrees doc build/html
+	sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done
 
 tutorial: build/done build/tutorial_done
