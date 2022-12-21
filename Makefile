@@ -4,7 +4,7 @@
 build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
 	mkdir -p build
 	python .ci/install_build_env.py
-	DEBUG=1 CMAKE_PARALLEL_INSTALL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python -m pip install --no-build-isolation --prefer-binary -v .[test,doc]
+	DEBUG=1 CMAKE_PARALLEL_INSTALL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python -m pip install --no-build-isolation --prefer-binary -v -e .[test,doc]
 	touch build/done
 
 test: build/done
@@ -20,10 +20,10 @@ cov: build/done
 	coverage run --append -m pytest
 	coverage html -d htmlcov
 	pip install numba ipykernel ipywidgets scipy matplotlib
-	python -m webbrowser -t htmlcov/index.html
+	@echo htmlcov/index.html
 
 doc: build/done build/html/done
-	echo build/html/index.html
+	@echo build/html/index.html
 
 build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
 	mkdir -p build/html

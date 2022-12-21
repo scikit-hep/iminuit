@@ -25,9 +25,9 @@ from .minimize import minimize
 from .util import describe
 
 if sys.version_info >= (3, 8):
-    from importlib import metadata
+    from importlib import metadata  # pragma: no cover
 else:
-    import importlib_metadata as metadata
+    import importlib_metadata as metadata  # pragma: no cover
 
 __version__ = metadata.version("iminuit")
 
