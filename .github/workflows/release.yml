@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  # Latest Jupyter requires this to acknowledge deprecation
+  JUPYTER_PLATFORM_DIRS: 1
+
 jobs:
   release_check:
     runs-on: ubuntu-latest
@@ -78,13 +82,7 @@ jobs:
         with:
           submodules: true
 
-      - uses: actions/setup-python@v4
-        name: Install Python
-        with:
-          python-version: '3.9'
-
-      - run: python -m pip install --upgrade pip wheel
-      - run: python setup.py sdist
+      - run: pipx run build --sdist
 
       - run: python -m pip install dist/iminuit-*
       - run: python -m pip install pytest

@@ -148,6 +148,7 @@ def test_mnmatrix_7(fig):
     m.draw_mnmatrix(cl=[1, 3])
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive():
     def cost(a, b):
         return a**2 + b**2
@@ -245,6 +246,7 @@ def test_interactive():
             m.interactive()
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_raises():
     pytest.importorskip("ipywidgets")
 
@@ -260,6 +262,7 @@ def test_interactive_raises():
         m.interactive(raiser, raise_on_exception=True)
 
 
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_with_array_func():
     pytest.importorskip("ipywidgets")
 
