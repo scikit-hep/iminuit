@@ -2,6 +2,7 @@ import subprocess as subp
 from pathlib import Path
 
 packages = [
+    "tomli",
     "wheel",
     "pip",
     "numpy",

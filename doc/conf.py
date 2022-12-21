@@ -38,6 +38,7 @@ extensions = [
     # 'matplotlib.sphinxext.only_directives',
     "matplotlib.sphinxext.plot_directive",
     "nbsphinx",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 nbsphinx_kernel_name = "python3"
@@ -45,6 +46,7 @@ nbsphinx_execute_arguments = [
     "--InlineBackend.figure_formats={'svg', 'pdf'}",
     "--InlineBackend.rc=figure.dpi=96",
 ]
+nbsphinx_execute = "auto"
 # use FAST=1 to speed up doc build
 if bool(os.environ.get("FAST", False)):
     nbsphinx_execute = "never"

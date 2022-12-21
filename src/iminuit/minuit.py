@@ -1244,11 +1244,21 @@ class Minuit:
 
         return self
 
-    def visualize(self, plot=None):
-        """Visualize agreement of current model with data.
+    def visualize(self, plot: _tp.Callable = None):
+        """Visualize agreement of current model with data (requires matplotlib).
 
-        This raises an AttributeError if the cost function has no visualize
-        method.
+        This generates a plot of the data/model agreement, using the current
+        parameter values, if the likelihood function supports this, otherwise
+        AttributeError is raised.
+
+        Parameters
+        ----------
+        plot : Callable, optional
+            This function tries to call the visualize method on the cost function, which
+            accepts the current model parameters as an array-like and potentially further
+            keyword arguments, and draws a visualization into the current matplotlib axes.
+            If the cost function does not provide a visualize method or if you want to
+            override it, pass the function here.
         """
         return self._visualize(plot)(self.values)
 
@@ -1906,11 +1916,8 @@ class Minuit:
         """
         Draw 2D Minos confidence region (requires matplotlib).
 
-        See :meth:`mncontour` for details on the interpretation of the region.
-
-        Parameters
-        ----------
-        See :meth:`mncontour`.
+        See :meth:`mncontour` for details on the interpretation of the region
+        and for the parameters accepted by this function.
 
         Examples
         --------
@@ -2096,7 +2103,7 @@ class Minuit:
 
         Parameters
         ----------
-        plot, optional : Callable or None
+        plot : Callable, optional
             To visualize the fit, interactive tries to access the visualize method on
             the cost function, which accepts the current model parameters as an array-like
             and potentially further keyword arguments, and draws a visualization into the
