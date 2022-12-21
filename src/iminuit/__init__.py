@@ -19,15 +19,16 @@ Further information:
 * Code: https://github.com/scikit-hep/iminuit
 * Docs: https://iminuit.readthedocs.io
 """
+import sys
+from .minuit import Minuit
+from .minimize import minimize
+from .util import describe
+
+if sys.version_info >= (3, 8):
+    from importlib import metadata
+else:
+    import importlib_metadata as metadata
+
+__version__ = metadata.version("iminuit")
 
 __all__ = ["Minuit", "minimize", "describe", "__version__"]
-
-from .version import version as __version__
-
-try:
-    # make iminuit importable even if it is not installed yet for setup.cfg
-    from .minuit import Minuit
-    from .minimize import minimize
-    from .util import describe
-except ImportError:  # pragma: no cover
-    pass  # pragma: no cover

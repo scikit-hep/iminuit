@@ -1,5 +1,10 @@
 name: Coverage
 
+env:
+  CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+  # Latest Jupyter requires this to acknowledge deprecation
+  JUPYTER_PLATFORM_DIRS: 1
+
 on:
   pull_request:
     paths-ignore:
@@ -24,14 +29,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: true
+    - uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
     - uses: actions/setup-python@v4
       with:
         python-version: "3.9"
-    - run: python -m pip install --upgrade pip
-    - run: python -m pip install --prefer-binary -e .[test]
-    - run: coverage run -m pytest
-    - run: python -m pip uninstall --yes numba ipykernel
-    - run: coverage run --append -m pytest
-    - run: python -m pip uninstall --yes scipy ipywidgets
-    - run: coverage run --append -m pytest
+    - run: make cov
     - uses: AndreMiras/coveralls-python-action@develop

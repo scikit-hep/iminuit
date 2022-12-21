@@ -5,6 +5,11 @@ on:
     paths-ignore:
       - '.ci/**'
 
+env:
+  CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+  # Latest Jupyter requires this to acknowledge deprecation
+  JUPYTER_PLATFORM_DIRS: 1
+
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -13,14 +18,11 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: true
+    - uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
     - uses: actions/setup-python@v4
       with:
         python-version: "3.9"
     - run: sudo apt-get install pandoc
-    - run: python -m pip install --upgrade pip wheel
-    - run: python -m pip install --prefer-binary -v .[doc,test]
-    - run: python -m ipykernel install --user --name python3
-    - name: sphinx-build
-      run: |
-        mkdir -p build/html
-        sphinx-build -j3 -W -a -E -b html -d build/doctrees doc build/html
+    - run: make doc

@@ -1,22 +1,19 @@
 # Makefile for developers with some convenient quick ways to do common things
 
 # default target
-build/done: build/deps $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
-	DEBUG=1 python -m pip install --no-build-isolation -v -e .
+build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
+	mkdir -p build
+	python .ci/install_build_env.py
+	DEBUG=1 CMAKE_PARALLEL_INSTALL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python -m pip install --no-build-isolation --prefer-binary -v .[test,doc]
 	touch build/done
 
 test: build/done
-	python -m pytest -vv -r a --ff --pdb
-
-build/deps:
-	# (re-)install all test dependencies
-	python .ci/install_extra.py
-	touch build/deps
+	JUPYTER_PLATFORM_DIRS=1 python -m pytest -vv -r a --ff --pdb
 
 cov: build/done
 	# only computes the coverage in pure Python
 	rm -rf htmlcov
-	coverage run -m pytest
+	JUPYTER_PLATFORM_DIRS=1 coverage run -m pytest
 	python -m pip uninstall --yes numba ipykernel ipywidgets
 	coverage run --append -m pytest
 	python -m pip uninstall --yes scipy matplotlib
@@ -26,7 +23,7 @@ cov: build/done
 	python -m webbrowser -t htmlcov/index.html
 
 doc: build/done build/html/done
-	python -m webbrowser -t build/html/index.html
+	echo build/html/index.html
 
 build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
 	mkdir -p build/html

@@ -2114,209 +2114,210 @@ class Minuit:
         .. plot:: plots/interactive.py
             :include-source:
         """
-        try:
-            from ipywidgets import (
-                HBox,
-                VBox,
-                Output,
-                FloatSlider,
-                Button,
-                ToggleButton,
-                Layout,
-                Dropdown,
-            )
-            from ipywidgets.widgets.interaction import show_inline_matplotlib_plots
-            from IPython.display import clear_output
-            from matplotlib import pyplot as plt
-        except ModuleNotFoundError as e:
-            e.msg += (
-                "\n\nPlease install ipywidgets, IPython, and matplotlib to "
-                "enable interactive"
-            )
-            raise
-
-        plot = self._visualize(plot)
-
-        def plot_with_frame(args, from_fit, report_success):
-            trans = plt.gca().transAxes
+        with warnings.catch_warnings():
+            # ipywidgets produces deprecation warnings through use of internal APIs :(
+            warnings.simplefilter("ignore")
             try:
-                with warnings.catch_warnings():
-                    if self.fcn._array_call:
-                        plot([args], **kwargs)  # prevent unpacking of array
-                    else:
-                        plot(args, **kwargs)
-            except Exception:
-                if raise_on_exception:
-                    raise
-
-                import traceback
-
-                plt.figtext(
-                    0.01,
-                    0.5,
-                    traceback.format_exc(),
-                    ha="left",
-                    va="center",
-                    transform=trans,
-                    color="r",
+                from ipywidgets import (
+                    HBox,
+                    VBox,
+                    Output,
+                    FloatSlider,
+                    Button,
+                    ToggleButton,
+                    Layout,
+                    Dropdown,
                 )
-                return
-            if from_fit:
-                fval = self.fmin.fval
-            else:
-                fval = self.fcn(args)
-            plt.text(
-                0.05,
-                1.05,
-                f"FCN = {fval:.3f}",
-                transform=trans,
-                fontsize="x-large",
-            )
-            if from_fit and report_success:
+                from ipywidgets.widgets.interaction import show_inline_matplotlib_plots
+                from IPython.display import clear_output
+                from matplotlib import pyplot as plt
+            except ModuleNotFoundError as e:
+                e.msg += (
+                    "\n\nPlease install ipywidgets, IPython, and matplotlib to "
+                    "enable interactive"
+                )
+                raise
+
+            plot = self._visualize(plot)
+
+            def plot_with_frame(args, from_fit, report_success):
+                trans = plt.gca().transAxes
+                try:
+                    with warnings.catch_warnings():
+                        if self.fcn._array_call:
+                            plot([args], **kwargs)  # prevent unpacking of array
+                        else:
+                            plot(args, **kwargs)
+                except Exception:
+                    if raise_on_exception:
+                        raise
+
+                    import traceback
+
+                    plt.figtext(
+                        0.01,
+                        0.5,
+                        traceback.format_exc(),
+                        ha="left",
+                        va="center",
+                        transform=trans,
+                        color="r",
+                    )
+                    return
+                if from_fit:
+                    fval = self.fmin.fval
+                else:
+                    fval = self.fcn(args)
                 plt.text(
-                    0.95,
+                    0.05,
                     1.05,
-                    f"{'success' if self.valid and self.accurate else 'FAILURE'}",
+                    f"FCN = {fval:.3f}",
                     transform=trans,
                     fontsize="x-large",
-                    ha="right",
                 )
+                if from_fit and report_success:
+                    plt.text(
+                        0.95,
+                        1.05,
+                        f"{'success' if self.valid and self.accurate else 'FAILURE'}",
+                        transform=trans,
+                        fontsize="x-large",
+                        ha="right",
+                    )
 
-        class ParameterBox(HBox):
-            def __init__(self, par, val, min, max, step, fix):
-                self.par = par
-                self.slider = FloatSlider(
-                    val,
-                    min=a,
-                    max=b,
-                    step=step,
-                    description=par,
-                    continuous_update=True,
-                    layout=Layout(min_width="70%"),
-                )
-                self.fix = ToggleButton(
-                    fix, description="Fix", layout=Layout(width="3.1em")
-                )
-                self.opt = ToggleButton(
-                    False, description="Opt", layout=Layout(width="3.5em")
-                )
-                self.opt.observe(self.on_opt_toggled, "value")
-                super().__init__([self.slider, self.fix, self.opt])
+            class ParameterBox(HBox):
+                def __init__(self, par, val, min, max, step, fix):
+                    self.par = par
+                    self.slider = FloatSlider(
+                        val,
+                        min=a,
+                        max=b,
+                        step=step,
+                        description=par,
+                        continuous_update=True,
+                        layout=Layout(min_width="70%"),
+                    )
+                    self.fix = ToggleButton(
+                        fix, description="Fix", layout=Layout(width="3.1em")
+                    )
+                    self.opt = ToggleButton(
+                        False, description="Opt", layout=Layout(width="3.5em")
+                    )
+                    self.opt.observe(self.on_opt_toggled, "value")
+                    super().__init__([self.slider, self.fix, self.opt])
 
-            def on_opt_toggled(self, change):
-                self.slider.disabled = self.opt.value
-                on_slider_change(None)
+                def on_opt_toggled(self, change):
+                    self.slider.disabled = self.opt.value
+                    on_slider_change(None)
 
-        def fit():
-            if algo_choice.value == "Migrad":
-                self.migrad()
-            elif algo_choice.value == "Scipy":
-                self.scipy()
-            elif algo_choice.value == "Simplex":
-                self.simplex()
-                return False
-            else:
-                assert False  # pragma: no cover, should never happen
-            return True
+            def fit():
+                if algo_choice.value == "Migrad":
+                    self.migrad()
+                elif algo_choice.value == "Scipy":
+                    self.scipy()
+                elif algo_choice.value == "Simplex":
+                    self.simplex()
+                    return False
+                else:
+                    assert False  # pragma: no cover, should never happen
+                return True
 
-        def on_slider_change(change):
-            if out.block:
-                return
-            args = [x.slider.value for x in parameters]
-            from_fit = False
-            report_success = False
-            if any(x.opt.value for x in parameters):
-                save = self.fixed[:]
-                self.fixed = [not x.opt.value for x in parameters]
-                self.values = args
+            def on_slider_change(change):
+                if out.block:
+                    return
+                args = [x.slider.value for x in parameters]
+                from_fit = False
+                report_success = False
+                if any(x.opt.value for x in parameters):
+                    save = self.fixed[:]
+                    self.fixed = [not x.opt.value for x in parameters]
+                    self.values = args
+                    report_success = fit()
+                    args = self.values[:]
+                    out.block = True
+                    for x, val in zip(parameters, args):
+                        x.slider.value = val
+                    out.block = False
+                    self.fixed = save
+                    from_fit = True
+                with out:
+                    clear_output(wait=True)
+                    plot_with_frame(args, from_fit, report_success)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        show_inline_matplotlib_plots()
+
+            def on_fit_button_clicked(change):
+                for x in parameters:
+                    self.values[x.par] = x.slider.value
+                    self.fixed[x.par] = x.fix.value
                 report_success = fit()
-                args = self.values[:]
                 out.block = True
-                for x, val in zip(parameters, args):
+                for x in parameters:
+                    val = self.values[x.par]
+                    if val < x.slider.min:
+                        x.slider.min = val
+                    elif val > x.slider.max:
+                        x.slider.max = val
                     x.slider.value = val
                 out.block = False
-                self.fixed = save
-                from_fit = True
-            with out:
-                clear_output(wait=True)
-                plot_with_frame(args, from_fit, report_success)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
+                with out:
+                    clear_output(wait=True)
+                    plot_with_frame(self.values, True, report_success)
                     show_inline_matplotlib_plots()
 
-        def on_fit_button_clicked(change):
-            for x in parameters:
-                self.values[x.par] = x.slider.value
-                self.fixed[x.par] = x.fix.value
-            report_success = fit()
-            out.block = True
-            for x in parameters:
-                val = self.values[x.par]
-                if val < x.slider.min:
-                    x.slider.min = val
-                elif val > x.slider.max:
-                    x.slider.max = val
-                x.slider.value = val
-            out.block = False
-            with out:
-                clear_output(wait=True)
-                plot_with_frame(self.values, True, report_success)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    show_inline_matplotlib_plots()
+            def on_update_button_clicked(change):
+                for x in parameters:
+                    x.slider.continuous_update = not x.slider.continuous_update
 
-        def on_update_button_clicked(change):
-            for x in parameters:
-                x.slider.continuous_update = not x.slider.continuous_update
+            def on_reset_button_clicked(change):
+                self.reset()
+                out.block = True
+                for x in parameters:
+                    x.slider.value = self.values[x.par]
+                out.block = False
+                on_slider_change(None)
 
-        def on_reset_button_clicked(change):
-            self.reset()
-            out.block = True
-            for x in parameters:
-                x.slider.value = self.values[x.par]
+            parameters = []
+            for par in self.parameters:
+                val = self.values[par]
+                step = mutil._guess_initial_step(val)
+                a, b = self.limits[par]
+                # safety margin to avoid overflow warnings
+                a = a + 1e-300 if np.isfinite(a) else val - 100 * step
+                b = b - 1e-300 if np.isfinite(b) else val + 100 * step
+                parameters.append(ParameterBox(par, val, a, b, step, self.fixed[par]))
+
+            fit_button = Button(description="Fit")
+            fit_button.on_click(on_fit_button_clicked)
+
+            update_button = ToggleButton(True, description="Continuous")
+            update_button.observe(on_update_button_clicked)
+
+            reset_button = Button(description="Reset")
+            reset_button.on_click(on_reset_button_clicked)
+
+            algo_choice = Dropdown(
+                options=["Migrad", "Scipy", "Simplex"], value="Migrad"
+            )
+
+            ui = VBox(
+                [
+                    HBox([fit_button, update_button, reset_button, algo_choice]),
+                    VBox(parameters),
+                ]
+            )
+
+            out = Output()
             out.block = False
+
+            for x in parameters:
+                x.slider.observe(on_slider_change, "value")
+
+            show_inline_matplotlib_plots()
             on_slider_change(None)
 
-        parameters = []
-        for par in self.parameters:
-            val = self.values[par]
-            step = mutil._guess_initial_step(val)
-            a, b = self.limits[par]
-            # safety margin to avoid overflow warnings
-            a = a + 1e-300 if np.isfinite(a) else val - 100 * step
-            b = b - 1e-300 if np.isfinite(b) else val + 100 * step
-            parameters.append(ParameterBox(par, val, a, b, step, self.fixed[par]))
-
-        fit_button = Button(description="Fit")
-        fit_button.on_click(on_fit_button_clicked)
-
-        update_button = ToggleButton(True, description="Continuous")
-        update_button.observe(on_update_button_clicked)
-
-        reset_button = Button(description="Reset")
-        reset_button.on_click(on_reset_button_clicked)
-
-        algo_choice = Dropdown(options=["Migrad", "Scipy", "Simplex"], value="Migrad")
-
-        ui = VBox(
-            [
-                HBox([fit_button, update_button, reset_button, algo_choice]),
-                VBox(parameters),
-            ]
-        )
-
-        out = Output()
-        out.block = False
-
-        for x in parameters:
-            x.slider.observe(on_slider_change, "value")
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            show_inline_matplotlib_plots()
-        on_slider_change(None)
-
-        return HBox([out, ui])
+            return HBox([out, ui])
 
     def _free_parameters(self) -> _tp.Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)

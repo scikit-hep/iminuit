@@ -1,5 +1,10 @@
 import os
-from iminuit.version import version, root_version
+from iminuit import __version__ as version
+import sys
+
+sys.path.append(".")
+
+from root_version import root_version  # noqa
 
 # release and version are special variables used by sphinx
 
@@ -21,7 +26,7 @@ with open("index.rst", "w") as f:
 release = f"{version} compiled with ROOT-{root_version}"
 
 project = "iminuit"
-copyright = "2020, Hans Dembinski and the iminuit team"
+copyright = "2022, Hans Dembinski and the iminuit team"
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
