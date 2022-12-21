@@ -1,5 +1,10 @@
 import os
-from iminuit.version import version, root_version
+from iminuit import __version__ as version
+import sys
+
+sys.path.append(".")
+
+from root_version import root_version  # noqa
 
 # release and version are special variables used by sphinx
 
@@ -21,7 +26,7 @@ with open("index.rst", "w") as f:
 release = f"{version} compiled with ROOT-{root_version}"
 
 project = "iminuit"
-copyright = "2020, Hans Dembinski and the iminuit team"
+copyright = "2022, Hans Dembinski and the iminuit team"
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -33,6 +38,7 @@ extensions = [
     # 'matplotlib.sphinxext.only_directives',
     "matplotlib.sphinxext.plot_directive",
     "nbsphinx",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 nbsphinx_kernel_name = "python3"
@@ -40,6 +46,7 @@ nbsphinx_execute_arguments = [
     "--InlineBackend.figure_formats={'svg', 'pdf'}",
     "--InlineBackend.rc=figure.dpi=96",
 ]
+nbsphinx_execute = "auto"
 # use FAST=1 to speed up doc build
 if bool(os.environ.get("FAST", False)):
     nbsphinx_execute = "never"
