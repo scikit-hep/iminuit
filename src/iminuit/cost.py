@@ -1248,6 +1248,31 @@ class Template(BinnedCost):
     def _errordef(self):
         return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
 
+    def prediction(self, args: _tp.Sequence[float]):
+        """
+        Return the fitted template and its standard deviation.
+
+        This returns the prediction from the templates, the sum over the products of the
+        template yields with the normalized templates. The standard deviation is returned
+        as the second argument, this is the estimated uncertainty of the fitted template
+        alone. It is obtained via error propagation, taking the statistical uncertainty
+        in the template into account, but regarding the yields as parameters without
+        uncertainty.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+
+        Returns
+        -------
+        y, yerr : np.ndarray, np.array
+            Template prediction and its standard deviation, based on the statistical
+            uncertainty of the template only.
+        """
+        mu, mu_var = self._pred(args)
+        return mu, np.sqrt(mu_var)
+
     def visualize(self, args: _ArrayLike):
         """
         Visualize data and model agreement (requires matplotlib).
@@ -1275,8 +1300,7 @@ class Template(BinnedCost):
             cx = cx[self.mask]
         plt.errorbar(cx, n, ne, fmt="ok")
 
-        mu, mu_var = self._pred(args)
-        mu_err = mu_var**0.5
+        mu, mu_err = self.prediction(args)
         plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=True, color="C0")
 
 
