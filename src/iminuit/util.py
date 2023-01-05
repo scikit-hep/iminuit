@@ -1382,7 +1382,10 @@ class _ProgressBar:
         self._out = sys.stdout
 
         try:
-            from ipykernel.iostream import OutStream
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                # DeprecationWarning: Jupyter is migrating its paths ...
+                from ipykernel.iostream import OutStream
 
             if isinstance(self._out, OutStream):
                 from IPython.display import display, HTML
