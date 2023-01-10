@@ -49,7 +49,7 @@ Checkout our large and comprehensive list of `tutorials`_ that take you all the 
 
 Lecture by Glen Cowan
 ^^^^^^^^^^^^^^^^^^^^^
-`Glen Cowan <https://scholar.google.com/citations?hl=en&user=ljQwt8QAAAAJ&view_op=list_works>`_ is a well-known for his papers on statistics in particle physics, his international lectures, and as author of the popular book `Statistical Data Analysis <https://www.pp.rhul.ac.uk/~cowan/sda/>`_
+`Glen Cowan <https://scholar.google.com/citations?hl=en&user=ljQwt8QAAAAJ&view_op=list_works>`_ is a well-known for his papers on statistics in particle physics, his international lectures, and as author of the popular book `Statistical Data Analysis <https://www.pp.rhul.ac.uk/~cowan/sda/>`_.
 
 `In the exercises to his lecture for the KMISchool 2022 <https://github.com/KMISchool2022>`_, he shows how to solve statistical problems in Python with iminuit. You can find the lectures and exercises on the Github page, which covers both frequentist and Bayesian methods.
 
