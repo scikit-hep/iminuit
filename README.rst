@@ -45,10 +45,12 @@ The iminuit package comes with additional features:
 - Support for SciPy minimisers as alternatives to Minuit's Migrad algorithm (optional)
 - Support for Numba accelerated functions (optional)
 
+Documentation
+-------------
+
 Checkout our large and comprehensive list of `tutorials`_ that take you all the way from beginner to power user. For help and how-to questions, please use the `discussions`_ on GitHub or `gitter`_.
 
-Lecture by Glen Cowan
----------------------
+**Lecture by Glen Cowan**
 
 `Glen Cowan <https://scholar.google.com/citations?hl=en&user=ljQwt8QAAAAJ&view_op=list_works>`_ is a well-known for his papers on statistics in particle physics, his international lectures, and as author of the popular book `Statistical Data Analysis <https://www.pp.rhul.ac.uk/~cowan/sda/>`_.
 
