@@ -78,6 +78,7 @@ iminuit optionally supports an interactive fitting mode in Jupyter notebooks.
 Partner projects
 ----------------
 
+* `boost-histogram` from Scikit-HEP provides fast generalized histograms that you can use with the builtin cost functions.
 * `numba_stats`_ provides faster implementations of probability density functions than scipy, and a few specific ones used in particle physics that are not in scipy.
 * `jacobi`_ provides a robust, fast, and accurate calculation of the Jacobi matrix of any transformation function and building a function for generic error propagation.
 
