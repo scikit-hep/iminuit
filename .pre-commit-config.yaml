@@ -40,7 +40,7 @@ repos:
 
 # Python docstring formatting
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 6.2.3
+  rev: 6.3.0
   hooks:
   - id: pydocstyle
     files: src/iminuit/[^_].*\.py
@@ -54,7 +54,7 @@ repos:
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v15.0.6
+  rev: v15.0.7
   hooks:
   - id: clang-format
 
