@@ -470,7 +470,6 @@ def test_BinnedNLL_2D_with_zero_bins():
 
 
 def test_BinnedNLL_mask():
-
     c = BinnedNLL([5, 1000, 1], [0, 1, 2, 3], expon_cdf)
     assert c.ndata == 3
 
@@ -804,7 +803,6 @@ def test_LeastSquares_visualize_2D():
 
 
 def test_LeastSquares_pickle():
-
     c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
     b = pickle.dumps(c)
@@ -900,7 +898,6 @@ def test_CostSum_3():
 
 @pytest.mark.skipif(not scipy_available, reason="scipy is needed")
 def test_CostSum_4():
-
     t = Template([1, 2], [1, 2, 3], [[1, 1], [0, 1]], method="asy")
     assert t.errordef == Minuit.LIKELIHOOD
 
