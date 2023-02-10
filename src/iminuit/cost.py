@@ -1062,7 +1062,7 @@ class BinnedCostWithModel(BinnedCost):
     :meta private:
     """
 
-    __slots__ = "_xe_shape", "_model", "_model_arg"
+    __slots__ = "_xe_shape", "_model", "_model_xe"
 
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
@@ -1072,15 +1072,15 @@ class BinnedCostWithModel(BinnedCost):
 
         if self._ndim == 1:
             self._xe_shape = None
-            self._model_arg = _norm(self.xe)
+            self._model_xe = _norm(self.xe)
         else:
             self._xe_shape = tuple(len(xei) for xei in self.xe)
-            self._model_arg = np.row_stack(
+            self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
 
     def _pred(self, args: _tp.Sequence[float]):
-        d = self._model(self._model_arg, *args)
+        d = self._model(self._model_xe, *args)
         d = _normalize_model_output(d)
         if self._xe_shape is not None:
             d = d.reshape(self._xe_shape)
@@ -1099,11 +1099,14 @@ class Template(BinnedCost):
     This cost function is for a mixture model. Samples originate from two or more
     components and we are interested in estimating the yield that originates from each
     component. In high-energy physics, one component is often a peaking signal over a
-    smooth background component. Templates are shape estimates for these components which
-    are obtained from Monte-Carlo simulation. Even if the Monte-Carlo simulation is exact,
-    the templates introduce some uncertainty since the Monte-Carlo simulation produces
-    only a finite sample of events that contribute to each template. This cost function
-    takes that additional uncertainty into account.
+    smooth background component. A component can be described by a parametric model or a
+    template.
+
+    Templates are shape estimates for these components which are obtained from Monte-Carlo
+    simulation. Even if the Monte-Carlo simulation is exact, the templates introduce some
+    uncertainty since the Monte-Carlo simulation produces only a finite sample of events
+    that contribute to each template. This cost function takes that additional uncertainty
+    into account.
 
     There are several ways to approach this problem. Barlow and Beeston [1]_ found an
     exact likelihood for this problem, with one nuisance parameter per component per bin.
@@ -1137,13 +1140,15 @@ class Template(BinnedCost):
     .. [6] Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393
     """
 
-    __slots__ = "_bbl_data", "_impl"
+    __slots__ = "_model_data", "_model_xe", "_xe_shape", "_impl"
 
     def __init__(
         self,
         n: _ArrayLike,
         xe: _ArrayLike,
-        templates: _tp.Sequence[_tp.Sequence],
+        template_or_model: _tp.Collection[
+            _tp.Union[_tp.Sequence, _tp.Callable[[], np.ndarray]]
+        ],
         name: _tp.Collection[str] = None,
         verbose: int = 0,
         method: str = "da",
@@ -1161,14 +1166,17 @@ class Template(BinnedCost):
             Bin edge locations, must be len(n) + 1, where n is the number of bins. If the
             histogram has more than one axis, xe must be a collection of the bin edge
             locations along each axis.
-        templates : collection of array-like
-            Collection of arrays, which contain the histogram counts of each template. The
-            template histograms must use the same axes as the data histogram. If the
-            counts are represented by an array with dimension D+1, where D is the number
-            of histogram axes, then the last dimension must have two elements and is
-            interpreted as pairs of sum of weights and sum of weights squared.
+        template_or_model : collection of array-like or callable
+            Collection of arrays or callables. Arrays contain the histogram counts of each
+            template. The template histograms must use the same axes as the data
+            histogram. If the counts are represented by an array with dimension D+1, where
+            D is the number of histogram axes, then the last dimension must have two
+            elements and is interpreted as pairs of sum of weights and sum of weights
+            squared. Callables must return the model cdf evaluated as xe.
         name : collection of str, optional
-            Optional name for the yield of each template. Must have length K.
+            Optional name for the yield of each template and the parameter of each model
+            (in order). Must have the same length as there are templates and model
+            parameters in templates_or_model.
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and negative
             log-likelihood value.
@@ -1179,40 +1187,49 @@ class Template(BinnedCost):
             this parameter explicitly in code that has to be stable. For all methods
             except the "asy" method, the minimum value is chi-square distributed.
         """
-        M = len(templates)
+        M = len(template_or_model)
         if M < 1:
-            raise ValueError("at least one template is required")
-        if name is None:
-            name = [f"x{i}" for i in range(M)]
-        else:
-            if len(name) != M:
-                raise ValueError("number of names must match number of templates")
+            raise ValueError("at least one template or model is required")
 
         shape = _shape_from_xe(xe)
         ndim = len(shape)
-        temp = []
-        temp_var = []
-        for ti in templates:
-            t = _norm(ti)
-            if t.ndim > ndim:
-                # template is weighted
-                if t.ndim != ndim + 1 or t.shape[:-1] != shape:
-                    raise ValueError("shapes of n and templates do not match")
-                temp.append(t[..., 0])
-                temp_var.append(t[..., 1])
-            else:
-                if t.ndim != ndim or t.shape != shape:
-                    raise ValueError("shapes of n and templates do not match")
-                temp.append(t)
-                temp_var.append(t)
 
-        nt = []
-        nt_var = []
-        for t, tv in zip(temp, temp_var):
-            f = 1 / np.sum(t)
-            nt.append(t * f)
-            nt_var.append(tv * f**2)
-        self._bbl_data = (nt, nt_var)
+        npar = 0
+        args = []
+        self._model_data = []
+        for i, t in enumerate(template_or_model):
+            if isinstance(t, _tp.Collection):
+                tt = _norm(t)
+                if tt.ndim > ndim:
+                    # template is weighted
+                    if tt.ndim != ndim + 1 or tt.shape[:-1] != shape:
+                        raise ValueError("shapes of n and templates do not match")
+                    t1 = tt[..., 0]
+                    t2 = tt[..., 1]
+                else:
+                    if tt.ndim != ndim or tt.shape != shape:
+                        raise ValueError("shapes of n and templates do not match")
+                    t1 = tt
+                    t2 = tt
+                # normalize to unity
+                f = 1 / np.sum(t1)
+                t1 *= f
+                t2 *= f**2
+                self._model_data.append((t1, t2))
+                args.append(f"c{i}")
+            else:
+                par = describe(t)
+                npar = len(par)
+                self._model_data.append((t, npar))  # type:ignore
+                args += [f"c{i}_{x}" for x in par]
+
+        if name is None:
+            name = args
+        else:
+            if len(args) != len(name):
+                raise ValueError(
+                    "number of names must match number of templates and model parameters"
+                )
 
         known_methods = {
             "jsc": template_chi2_jsc,
@@ -1236,13 +1253,39 @@ class Template(BinnedCost):
 
         super().__init__(name, n, xe, verbose)
 
+        if self._ndim == 1:
+            self._xe_shape = None
+            self._model_xe = _norm(self.xe)
+        else:
+            self._xe_shape = tuple(len(xei) for xei in self.xe)
+            self._model_xe = np.row_stack(
+                [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
+            )
+
     def _pred(self, args: _tp.Sequence[float]):
-        ntemp, ntemp_var = self._bbl_data
         mu = 0
         mu_var = 0
-        for a, nt, vnt in zip(args, ntemp, ntemp_var):
-            mu += a * nt
-            mu_var += a**2 * vnt
+        i = 0
+        for t1, t2 in self._model_data:
+            if isinstance(t2, int):  # paramtric model
+                d = self._model(self._model_xe, *args[i : i + t2])
+                d = _normalize_model_output(d)
+                if self._xe_shape is not None:
+                    d = d.reshape(self._xe_shape)
+                for i in range(self._ndim):
+                    d = np.diff(d, axis=i)
+                # differences can come out negative due to round-off error in subtraction,
+                # we set negative values to zero
+                d[d < 0] = 0
+                mu += d
+                i += t2
+            else:
+                assert isinstance(t1, np.ndarray)
+                assert isinstance(t2, np.ndarray)
+                a = args[i]
+                mu += a * t1  # type:ignore
+                mu_var += a**2 * t2  # type:ignore
+                i += 1
         return mu, mu_var
 
     def _call(self, args):
