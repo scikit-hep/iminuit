@@ -5,6 +5,15 @@
 Changelog
 =========
 
+2.19.0 (February 10, 2023)
+--------------------------
+- Remove setup.cfg (`#833 <https://github.com/scikit-hep/iminuit/pull/833>`_)
+- Fix typo "probility" to "probability" in minos doc (`#832 <https://github.com/scikit-hep/iminuit/pull/832>`_)
+- Prediction for all binned likelihoods (`#831 <https://github.com/scikit-hep/iminuit/pull/831>`_)
+- Template prediction (`#820 <https://github.com/scikit-hep/iminuit/pull/820>`_)
+- Upgrade old build and ci (`#817 <https://github.com/scikit-hep/iminuit/pull/817>`_)
+- Add configurable number of bins for extended/unbinnednll (`#815 <https://github.com/scikit-hep/iminuit/pull/815>`_)
+
 2.18.0 (December 14, 2022)
 --------------------------
 - Add more checks for gradients (`#810 <https://github.com/scikit-hep/iminuit/pull/810>`_)
