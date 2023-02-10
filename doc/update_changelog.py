@@ -1,18 +1,18 @@
-from pathlib import PurePath as Path
+from pathlib import Path
 import re
 import subprocess as subp
 from pkg_resources import parse_version
 from pkg_resources.extern.packaging.version import InvalidVersion
 import datetime
 import warnings
-import tomli
+import sys
 
 cwd = Path(__file__).parent
 
-with open(cwd.parent / "pyproject.toml", "rb") as f:
-    data = tomli.load(f)
-    version = data["project"]["version"]
-    new_version = parse_version(version)
+version = (
+    subp.check_output([sys.executable, cwd.parent / "version.py"]).strip().decode()
+)
+new_version = parse_version(version)
 
 
 def parse_version_with_fallback(x):

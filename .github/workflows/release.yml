@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
       - if: ${{ github.ref == 'refs/heads/main' }}
         run: python .ci/release_check.py

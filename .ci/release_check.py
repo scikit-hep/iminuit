@@ -5,13 +5,17 @@ from pathlib import PurePath
 import urllib.request
 import json
 import warnings
-from get_version import version
+import sys
+
 
 project_dir = PurePath(__file__).parent.parent
 changelog_fn = project_dir / "doc/changelog.rst"
+version_fn = project_dir / "version.py"
+
+version = subp.check_output([sys.executable, version_fn]).strip().decode()
 
 with warnings.catch_warnings(record=True) as record:
-    iminuit_version = parse_version(version())
+    iminuit_version = parse_version(version)
 if record:
     raise ValueError(record[0].message)
 
