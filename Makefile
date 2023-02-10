@@ -28,7 +28,7 @@ doc: build/done build/html/done
 	@echo build/html/index.html
 
 build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
-	python .ci/install_deps.py doc
+	python .ci/install_deps.py test doc
 	mkdir -p build/html
 	sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done
