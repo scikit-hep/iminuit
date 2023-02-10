@@ -1380,7 +1380,7 @@ class Minuit:
         Notes
         -----
         Asymptotically (large samples), the Minos interval has a coverage probability
-        equal to the given confidence level. The coverage probability is the probility for
+        equal to the given confidence level. The coverage probability is the probability for
         the interval to contain the true value in repeated identical experiments.
 
         The interval is invariant to transformations and thus not distorted by parameter
