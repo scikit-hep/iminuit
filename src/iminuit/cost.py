@@ -1002,11 +1002,31 @@ class BinnedCost(MaskedCost):
     def _ndata(self):
         return np.prod(self._masked.shape[: self._ndim])
 
+    @abc.abstractmethod
+    def _pred(self, args: _tp.Sequence[float]) -> np.ndarray:
+        ...  # pragma: no cover
+
     def _update_cache(self):
         super()._update_cache()
         if self._bztrafo:
             ma = _replace_none(self._mask, ...)
             self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
+
+    def prediction(self, args: _tp.Sequence[float]) -> np.ndarray:
+        """
+        Return the bin expectation for the fitted model.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+
+        Returns
+        -------
+        np.ndarray
+            Model prediction for each bin.
+        """
+        return self._pred(args)
 
     def visualize(self, args: _tp.Sequence[float]):
         """
@@ -1031,12 +1051,8 @@ class BinnedCost(MaskedCost):
         if self.mask is not None:
             cx = cx[self.mask]
         plt.errorbar(cx, n, ne, fmt="ok")
-        mu = self._pred(args)
+        mu = self.prediction(args)
         plt.stairs(mu, xe, fill=True, color="C0")
-
-    @abc.abstractmethod
-    def _pred(self, args: _tp.Sequence[float]) -> np.ndarray:
-        ...  # pragma: no cover
 
 
 class BinnedCostWithModel(BinnedCost):
