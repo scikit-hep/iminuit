@@ -35,6 +35,7 @@ pip-wheel-metadata
 .ipynb_checkpoints
 .eggs
 .pytest_cache
+.mypy_cache
 
 Untitled*.ipynb
 Untitled*.py
