@@ -14,7 +14,7 @@ jobs:
   release_check:
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.tag.outputs.out }}
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -28,7 +28,7 @@ jobs:
         run: python .ci/release_check.py
 
       - id: tag
-        run: echo "out=$(python version.py) >> $GITHUB_OUTPUT"
+        run: echo "tag=$(python version.py)" >> $GITHUB_OUTPUT
 
   wheels:
     needs: release_check
