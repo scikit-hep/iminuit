@@ -5,19 +5,15 @@ from pathlib import PurePath
 import urllib.request
 import json
 import warnings
-import tomli
+from get_version import version
 
 project_dir = PurePath(__file__).parent.parent
-version_fn = project_dir / "pyproject.toml"
 changelog_fn = project_dir / "doc/changelog.rst"
 
-with open(version_fn, "rb") as f:
-    data = tomli.load(f)
-    version = data["project"]["version"]
-    with warnings.catch_warnings(record=True) as record:
-        iminuit_version = parse_version(version)
-    if record:
-        raise ValueError(record[0].message)
+with warnings.catch_warnings(record=True) as record:
+    iminuit_version = parse_version(version())
+if record:
+    raise ValueError(record[0].message)
 
 print("iminuit version:", iminuit_version)
 

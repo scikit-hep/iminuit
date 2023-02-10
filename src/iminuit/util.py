@@ -930,6 +930,18 @@ class MErrors(OrderedDict):
         return OrderedDict.__getitem__(self, key)
 
 
+class classproperty:
+    """Decorator for a readonly class property."""
+
+    def __init__(self, f):
+        """Construct decorator."""
+        self.f = f
+
+    def __get__(self, obj, owner):
+        """Return result of class method."""
+        return self.f(owner)
+
+
 def _jacobi(
     fn: _tp.Callable, x: np.ndarray, dx: np.ndarray, tol: float, debug: bool = False
 ) -> _tp.Tuple[np.ndarray, np.ndarray]:
