@@ -43,11 +43,13 @@ jobs:
         exclude:
           - os: windows-latest
             arch: aarch64
+          - os: windows-latest
+            arch: universal2
           - os: macos-latest
             arch: aarch64
+          - os: macos-latest
+            arch: auto
           - os: ubuntu-latest
-            arch: universal2
-          - os: windows-latest
             arch: universal2
 
     env:
