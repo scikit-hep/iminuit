@@ -85,7 +85,7 @@ def test_issue_669():
     # needs better way to compare polygons
     for x, y in xy1:
         match = False
-        for (y2, x2) in xy2:
+        for y2, x2 in xy2:
             if abs(x - x2) < 1e-3 and abs(y - y2) < 1e-3:
                 match = True
                 break
@@ -101,7 +101,6 @@ def grad(par):
 
 
 def test_issue_687():
-
     start = np.zeros(3)
     m = Minuit(fcn, start)
 

@@ -103,7 +103,7 @@ class BasicView(abc.ABC):
     def __repr__(self) -> str:
         """Get detailed text representation."""
         s = f"<{self.__class__.__name__}"
-        for (k, v) in zip(self._minuit._pos2var, self):
+        for k, v in zip(self._minuit._pos2var, self):
             s += f" {k}={v}"
         s += ">"
         return s
