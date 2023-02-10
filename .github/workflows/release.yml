@@ -81,8 +81,7 @@ jobs:
 
       - run: pipx run build --sdist
 
-      - run: python -m pip install dist/iminuit-*
-      - run: python -m pip install pytest
+      - run: python -m pip install -v $(echo dist/iminuit-*)[test]
       - run: python -m pytest
 
       - uses: actions/upload-artifact@v3
