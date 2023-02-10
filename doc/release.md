@@ -4,7 +4,7 @@ How to make a release
 - Sync local `main` and `develop` with Github
   - `for x in main develop; git checkout $x; git pull`
 - On `develop` branch
-  - Update `src/iminuit/version.py` to the release version
+  - Update version in `pyproject.toml`
     - For a beta release, add `.betaN`, where N is a number >= 0
     - For a release candidate, add `.rcN`
   - Run `python3 doc/update_changelog.py` or update `doc/changelog.rst` manually

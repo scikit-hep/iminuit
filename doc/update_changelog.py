@@ -2,15 +2,25 @@ from pathlib import PurePath as Path
 import re
 import subprocess as subp
 from pkg_resources import parse_version
+from pkg_resources.extern.packaging.version import InvalidVersion
 import datetime
 import warnings
+import tomli
 
 cwd = Path(__file__).parent
 
-with open(cwd.parent / "src/iminuit/version.py") as f:
-    version = {}
-    exec(f.read(), version)
-    new_version = parse_version(version["version"])
+with open(cwd.parent / "pyproject.toml", "rb") as f:
+    data = tomli.load(f)
+    version = data["project"]["version"]
+    new_version = parse_version(version)
+
+
+def parse_version_with_fallback(x):
+    try:
+        return parse_version(x)
+    except InvalidVersion:
+        return parse_version("0.0.1")
+
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -18,7 +28,7 @@ with warnings.catch_warnings():
         iter(
             sorted(
                 (
-                    parse_version(x)
+                    parse_version_with_fallback(x)
                     for x in subp.check_output(["git", "tag"])
                     .decode()
                     .strip()
