@@ -3,14 +3,16 @@
 # default target
 build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
 	mkdir -p build
-	python .ci/install_build_env.py
-	DEBUG=1 CMAKE_PARALLEL_INSTALL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python setup.py develop[test,doc]
+	python .ci/install_deps.py build
+	DEBUG=1 CMAKE_PARALLEL_INSTALL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python setup.py develop
 	touch build/done
 
 test: build/done
+	python .ci/install_deps.py test
 	JUPYTER_PLATFORM_DIRS=1 python -m pytest -vv -r a --ff --pdb
 
 cov: build/done
+	python .ci/install_deps.py test
 	# only computes the coverage in pure Python
 	rm -rf htmlcov
 	JUPYTER_PLATFORM_DIRS=1 coverage run -m pytest
@@ -26,6 +28,7 @@ doc: build/done build/html/done
 	@echo build/html/index.html
 
 build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
+	python .ci/install_deps.py doc
 	mkdir -p build/html
 	sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done
