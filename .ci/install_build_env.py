@@ -5,7 +5,7 @@ packages = [
     "tomli",
     "wheel",
     "pip",
-    "numpy",
+    "numpy<1.24",
     "cmake",
     "importlib_metadata",
 ]
