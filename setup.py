@@ -1,6 +1,6 @@
+import sys
 from pathlib import Path
 from setuptools import setup
-import sys
 
 cwd = Path(__file__).parent
 

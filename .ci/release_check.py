@@ -5,34 +5,17 @@ from pathlib import PurePath
 import urllib.request
 import json
 import warnings
-import sys
+from get_version import version
 
 project_dir = PurePath(__file__).parent.parent
-version_fn = project_dir / "src/iminuit/version.py"
 changelog_fn = project_dir / "doc/changelog.rst"
 
-with open(version_fn) as f:
-    version = {}
-    exec(f.read(), version)
-    with warnings.catch_warnings(record=True) as record:
-        iminuit_version = parse_version(version["version"])
-    if record:
-        raise ValueError(record[0].message)
-    documented_root = version["root_version"]
+with warnings.catch_warnings(record=True) as record:
+    iminuit_version = parse_version(version())
+if record:
+    raise ValueError(record[0].message)
 
 print("iminuit version:", iminuit_version)
-print("root    version:", documented_root)
-
-# check that root version is up-to-date
-actual_root = (
-    subp.check_output([sys.executable, project_dir / ".ci" / "root_version.py"])
-    .decode()
-    .strip()
-)
-
-assert (
-    documented_root == actual_root
-), f"ROOT version mismatch: {documented_root} != {actual_root}"
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:

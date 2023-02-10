@@ -51,11 +51,11 @@ class Minuit:
     _fmin: _tp.Optional[mutil.FMin]
     _covariance: _tp.Optional[mutil.Matrix]
 
+    # Set errordef to this for a least-squares cost function.
     LEAST_SQUARES = 1.0
-    """Set errordef to this for a least-squares cost function."""  # pragma: nocover
 
+    # Set errordef to this for a negated log-likelihood function.
     LIKELIHOOD = 0.5
-    """Set errordef to this for a negated log-likelihood function."""  # pragma: nocover
 
     @property
     def fcn(self) -> FCN:

@@ -24,9 +24,9 @@ jobs:
           - os: windows-latest
             python-version: "3.11"
           - os: macos-latest
-            python-version: "3.7"
+            python-version: "3.8"
           - os: ubuntu-latest
-            python-version: "pypy-3.7"
+            python-version: "pypy-3.8"
       fail-fast: false
     steps:
     - uses: actions/checkout@v3

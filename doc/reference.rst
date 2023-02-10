@@ -35,6 +35,7 @@ Minuit
 
 .. autoclass:: Minuit
     :members:
+    :undoc-members:
 
 Scipy-like interface
 --------------------

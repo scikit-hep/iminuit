@@ -19,15 +19,10 @@ Further information:
 * Code: https://github.com/scikit-hep/iminuit
 * Docs: https://iminuit.readthedocs.io
 """
-import sys
 from .minuit import Minuit
 from .minimize import minimize
 from .util import describe
-
-if sys.version_info >= (3, 8):
-    from importlib import metadata  # pragma: no cover
-else:
-    import importlib_metadata as metadata  # pragma: no cover
+from importlib import metadata
 
 __version__ = metadata.version("iminuit")
 

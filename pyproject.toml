@@ -5,6 +5,72 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "iminuit"
+description = "Jupyter-friendly Python frontend for MINUIT2 in C++"
+version = "2.19.0"
+maintainers = [
+    { name = "Hans Dembinski" },
+    { email = "hans.dembinski@gmail.com" },
+]
+readme = "README.rst"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+]
+dependencies = ["numpy"]
+
+[project.urls]
+repository = "http://github.com/scikit-hep/iminuit"
+documentation = "https://iminuit.readthedocs.io"
+
+[project.optional-dependencies]
+test = [
+    "coverage",
+    "cython",
+    "ipywidgets",
+    "joblib",
+    "jacobi",
+    "matplotlib",
+    "numba",
+    "numba-stats",
+    "pytest",
+    "scipy",
+    "tabulate",
+    "boost_histogram",
+    "resample>=1.5"
+]
+doc = [
+    "sphinx~=5.3.0",
+    "sphinx-rtd-theme",
+    "nbsphinx",
+    "nbconvert",
+    "nbformat",
+    "jupyter_client",
+    "ipykernel",
+    # There are some problems with current jax versions
+    "jax~=0.4.1",
+    "jaxlib~=0.4.1"
+]
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-q -ra --ff"
@@ -13,6 +79,17 @@ filterwarnings = [
     "error::numpy.VisibleDeprecationWarning",
     "error::DeprecationWarning",
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
+allow_redefinition = true
+plugins = "numpy.typing.mypy_plugin"
+pretty = true
+files = ["src"]
+no_implicit_optional = false
+
+[tool.pydocstyle]
+convention = "numpy"
 
 [tool.cibuildwheel]
 # update skip when numpy wheels become available
