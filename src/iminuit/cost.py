@@ -1142,11 +1142,11 @@ class Template(BinnedCost):
     a peaking signal over a smooth background component. A component can be described by a
     parametric model or a template.
 
-    An accepted parametric model is a scaled cumulative density function, while a template
-    is a non-parametric shape estimate obtained by histogramming a Monte-Carlo simulation.
-    Even if the Monte-Carlo simulation is asymptotically correct, estimating the shape
-    from a finite simulation sample introduces some uncertainty. This cost function takes
-    that additional uncertainty into account.
+    A parametric model is accepted in form of a scaled cumulative density function, while
+    a template is a non-parametric shape estimate obtained by histogramming a Monte-Carlo
+    simulation. Even if the Monte-Carlo simulation is asymptotically correct, estimating
+    the shape from a finite simulation sample introduces some uncertainty. This cost
+    function takes that additional uncertainty into account.
 
     There are several ways to fit templates and take the sampling uncertainty into
     account. Barlow and Beeston [1]_ found an exact likelihood for this problem, with one
