@@ -1262,7 +1262,7 @@ class Template(BinnedCost):
                 self._model_data.append((t1, t2))
                 args.append(f"c{i}")
             else:
-                par = describe(t)
+                par = describe(t)[1:]
                 npar = len(par)
                 self._model_data.append((t, npar))
                 args += [f"c{i}_{x}" for x in par]
@@ -1313,8 +1313,14 @@ class Template(BinnedCost):
         mu_var: np.ndarray = 0  # type:ignore
         i = 0
         for t1, t2 in self._model_data:
-            if isinstance(t2, int):  # paramtric model
-                d = self._model(self._model_xe, *args[i : i + t2])
+            if isinstance(t1, np.ndarray) and isinstance(t2, np.ndarray):
+                a = args[i]
+                mu += a * t1
+                mu_var += a**2 * t2
+                i += 1
+            else:
+                assert isinstance(t2, int)
+                d = t1(self._model_xe, *args[i : i + t2])
                 d = _normalize_model_output(d)
                 if self._xe_shape is not None:
                     d = d.reshape(self._xe_shape)
@@ -1325,13 +1331,6 @@ class Template(BinnedCost):
                 d[d < 0] = 0
                 mu += d
                 i += t2
-            else:
-                assert isinstance(t1, np.ndarray)
-                assert isinstance(t2, np.ndarray)
-                a = args[i]
-                mu += a * t1  # type:ignore
-                mu_var += a**2 * t2  # type:ignore
-                i += 1
         return mu, mu_var
 
     def _call(self, args: ArrayLike[float]) -> float:

@@ -16,6 +16,7 @@ from iminuit.cost import (
     _soft_l1_loss,
     PerformanceWarning,
 )
+from iminuit.util import describe
 from typing import Sequence
 import pickle
 from sys import version_info as pyver
@@ -1222,12 +1223,18 @@ def test_Template_pickle():
 
 
 def test_Template_mixed_with_model():
-    n = np.array([1, 2, 3])
+    n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
-    t = np.array([1, 1, 0])
+    t = np.array([0.1, 0.1, 1])
 
     c = Template(n, xe, (t, scaled_cdf))
-    c.visualize([1, 2, 3, 4])
+    assert describe(c) == ["c0", "c1_n", "c1_mu", "c1_sigma"]
+
+    m = Minuit(c, 1, 1, 0.5, 1)
+    m.limits["c0", "c1_n", "c1_sigma"] = (0, None)
+    m.limits["c1_mu"] = (xe[0], xe[-1])
+    m.migrad()
+    assert m.valid
 
 
 @pytest.mark.skipif(pyver < (3, 7), reason="module getattr requires Python-3.7+")
