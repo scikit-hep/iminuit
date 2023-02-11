@@ -38,7 +38,7 @@ For users
 
 If you need the latest unreleased version, you can download and install directly from Github. The easiest way is to use pip.
 
-    pip install git+https://github.com/scikit-hep/iminuit@develop#egg=iminuit
+    pip install iminuit@git+https://github.com/scikit-hep/iminuit@develop
 
 This requires a C++ compiler with C++14 support.
 
