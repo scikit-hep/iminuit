@@ -1221,6 +1221,15 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
+def test_Template_mixed_with_model():
+    n = np.array([1, 2, 3])
+    xe = np.array([0, 1, 2, 3])
+    t = np.array([1, 1, 0])
+
+    c = Template(n, xe, (t, scaled_cdf))
+    c.visualize([1, 2, 3, 4])
+
+
 @pytest.mark.skipif(pyver < (3, 7), reason="module getattr requires Python-3.7+")
 def test_deprecated():
     from iminuit import cost

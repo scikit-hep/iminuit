@@ -48,7 +48,6 @@ The binned versions of the log-likelihood fits support weighted samples. For eac
 the histogram, the sum of weights and the sum of squared weights is needed then, see class
 documentation for details.
 """
-
 from .util import (
     describe,
     make_func_code,
@@ -56,18 +55,46 @@ from .util import (
     PerformanceWarning,
     _smart_sampling,
 )
+from .typing import Model, ArrayLike, LossFunction
 import numpy as np
-from collections.abc import Sequence
+from collections.abc import Sequence as ABCSequence
 import abc
-import typing as _tp
+from typing import (
+    List,
+    Tuple,
+    Union,
+    Sequence,
+    Collection,
+    Dict,
+    Any,
+    Iterable,
+    Optional,
+)
 import warnings
+
+__all__ = [
+    "CHISQUARE",
+    "NEGATIVE_LOG_LIKELIHOOD",
+    "BohmZechTransform",
+    "chi2",
+    "multinominal_chi2",
+    "poisson_chi2",
+    "template_chi2_jsc",
+    "template_chi2_da",
+    "template_nll_asy",
+    "Cost",
+    "CostSum",
+    "Constant",
+    "BinnedNLL",
+    "UnbinnedNLL",
+    "ExtendedBinnedNLL",
+    "ExtendedUnbinnedNLL",
+    "Template",
+    "LeastSquares",
+]
 
 CHISQUARE = 1.0
 NEGATIVE_LOG_LIKELIHOOD = 0.5
-
-# correct ArrayLike from numpy.typing generates horrible looking signatures
-# in python's help(), so we use this as a workaround
-_ArrayLike = _tp.Sequence
 
 
 def _safe_log(x):
@@ -107,7 +134,7 @@ class BohmZechTransform:
     :meta private:
     """
 
-    def __init__(self, val: _ArrayLike, var: _ArrayLike):
+    def __init__(self, val: ArrayLike, var: ArrayLike):
         """
         Initialize transformer with data value and variance.
 
@@ -125,9 +152,9 @@ class BohmZechTransform:
         self._obs = val * self._scale
 
     def __call__(
-        self, val: _ArrayLike, var: _ArrayLike = None
-    ) -> _tp.Union[
-        _tp.Tuple[np.ndarray, np.ndarray], _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]
+        self, val: ArrayLike, var: Optional[ArrayLike] = None
+    ) -> Union[
+        Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]
     ]:
         """
         Return precomputed scaled data and scaled prediction.
@@ -149,7 +176,7 @@ class BohmZechTransform:
         return self._obs, val * s, var * s**2
 
 
-def chi2(y: _ArrayLike[float], ye: _ArrayLike[float], ym: _ArrayLike[float]) -> float:
+def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:
     """
     Compute (potentially) chi2-distributed cost.
 
@@ -174,7 +201,7 @@ def chi2(y: _ArrayLike[float], ye: _ArrayLike[float], ym: _ArrayLike[float]) -> 
     return np.sum(_z_squared(y, ye, ym))
 
 
-def multinominal_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
+def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
 
@@ -202,7 +229,7 @@ def multinominal_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def poisson_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
+def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
 
@@ -229,9 +256,7 @@ def poisson_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def template_chi2_jsc(
-    n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
-) -> float:
+def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -271,9 +296,7 @@ def template_chi2_jsc(
     )
 
 
-def template_chi2_da(
-    n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
-) -> float:
+def template_chi2_da(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike[float]) -> float:
     """
     Compute asymptotically chi2-distributed cost for a template fit.
 
@@ -300,9 +323,7 @@ def template_chi2_da(
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)  # type:ignore
 
 
-def template_nll_asy(
-    n: _ArrayLike[float], mu: _ArrayLike[float], mu_var: _ArrayLike[float]
-) -> float:
+def template_nll_asy(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
     """
     Compute marginalized negative log-likelikihood for a template fit.
 
@@ -348,19 +369,19 @@ def template_nll_asy(
 # precision. Fall back to plain numpy for float128 which is not currently supported
 # by numba.
 try:
-    from numba import njit as _njit
-    from numba.extending import overload as _overload
+    from numba import njit as jit
+    from numba.extending import overload as nb_overload
 
-    @_overload(_safe_log, inline="always")
+    @nb_overload(_safe_log, inline="always")
     def _ol_safe_log(x):
         return _safe_log  # pragma: no cover
 
-    @_overload(_z_squared, inline="always")
+    @nb_overload(_z_squared, inline="always")
     def _ol_z_squared(y, ye, ym):
         return _z_squared  # pragma: no cover
 
     _unbinned_nll_np = _unbinned_nll
-    _unbinned_nll_nb = _njit(
+    _unbinned_nll_nb = jit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -373,13 +394,13 @@ try:
         return _unbinned_nll_np(x)
 
     _multinominal_chi2_np = multinominal_chi2
-    _multinominal_chi2_nb = _njit(
+    _multinominal_chi2_nb = jit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_multinominal_chi2_np)
 
-    def multinominal_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:  # noqa
+    def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:  # noqa
         n, mu = np.atleast_1d(n, mu)  # type:ignore
         if mu.dtype in (np.float32, np.float64):  # type:ignore
             return _multinominal_chi2_nb(n, mu)
@@ -389,13 +410,13 @@ try:
     multinominal_chi2.__doc__ = _multinominal_chi2_np.__doc__
 
     _poisson_chi2_np = poisson_chi2
-    _poisson_chi2_nb = _njit(
+    _poisson_chi2_nb = jit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_poisson_chi2_np)
 
-    def poisson_chi2(n: _ArrayLike[float], mu: _ArrayLike[float]) -> float:  # noqa
+    def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:  # noqa
         n, mu = np.atleast_1d(n, mu)  # type:ignore
         if mu.dtype in (np.float32, np.float64):  # type:ignore
             return _poisson_chi2_nb(n, mu)
@@ -405,15 +426,13 @@ try:
     poisson_chi2.__doc__ = _poisson_chi2_np.__doc__
 
     _chi2_np = chi2
-    _chi2_nb = _njit(
+    _chi2_nb = jit(
         nogil=True,
         cache=True,
         error_model="numpy",
     )(_chi2_np)
 
-    def chi2(
-        y: _ArrayLike[float], ye: _ArrayLike[float], ym: _ArrayLike[float]
-    ) -> float:  # noqa
+    def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:  # noqa
         y, ye, ym = np.atleast_1d(y, ye, ym)  # type:ignore
         if ym.dtype in (np.float32, np.float64):  # type:ignore
             return _chi2_nb(y, ye, ym)
@@ -423,7 +442,7 @@ try:
     chi2.__doc__ = _chi2_np.__doc__
 
     _soft_l1_loss_np = _soft_l1_loss
-    _soft_l1_loss_nb = _njit(
+    _soft_l1_loss_nb = jit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -435,12 +454,12 @@ try:
         # fallback to numpy for float128
         return _soft_l1_loss_np(z_sqr)
 
-    @_overload(_soft_l1_loss, inline="always")
+    @nb_overload(_soft_l1_loss, inline="always")
     def _ol_soft_l1_loss(z_sqr):
         return _soft_l1_loss_np  # pragma: no cover
 
     _soft_l1_cost_np = _soft_l1_cost
-    _soft_l1_cost_nb = _njit(
+    _soft_l1_cost_nb = jit(
         nogil=True,
         cache=True,
         error_model="numpy",
@@ -513,7 +532,7 @@ class Cost(abc.ABC):
     def verbose(self, value: int):
         self._verbose = value
 
-    def __init__(self, args: _tp.Tuple[str, ...], verbose: int):
+    def __init__(self, args: Sequence[str], verbose: int):
         """For internal use."""
         self._func_code = make_func_code(args)
         self._verbose = verbose
@@ -538,7 +557,7 @@ class Cost(abc.ABC):
         """
         return CostSum(lhs, self)
 
-    def __call__(self, *args):
+    def __call__(self, *args: float) -> float:
         """
         Evaluate the cost function.
 
@@ -557,6 +576,10 @@ class Cost(abc.ABC):
         if self.verbose >= 1:
             print(args, "->", r)
         return r
+
+    @abc.abstractmethod
+    def _call(self, args: ArrayLike[float]) -> float:
+        ...
 
 
 class Constant(Cost):
@@ -577,11 +600,11 @@ class Constant(Cost):
     def _ndata(self):
         return 0
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         return self.value
 
 
-class CostSum(Cost, Sequence):
+class CostSum(Cost, ABCSequence):
     """Sum of cost functions.
 
     Users do not need to create objects of this class themselves. They should just add
@@ -608,7 +631,7 @@ class CostSum(Cost, Sequence):
 
     __slots__ = "_items", "_maps"
 
-    def __init__(self, *items):
+    def __init__(self, *items: Union[Cost, float]):
         """Initialize with cost functions.
 
         Parameters
@@ -616,11 +639,11 @@ class CostSum(Cost, Sequence):
         *items : Cost
             Cost functions. May also be other CostSum functions.
         """
-        self._items = []
+        self._items: List[Cost] = []
         for item in items:
             if isinstance(item, CostSum):
                 self._items += item._items
-            elif isinstance(item, (int, float)):
+            elif isinstance(item, float):  # also matches int
                 if item != 0:
                     self._items.append(Constant(item))
             else:
@@ -628,12 +651,12 @@ class CostSum(Cost, Sequence):
         args, self._maps = merge_signatures(self._items)
         super().__init__(args, max(c.verbose for c in self._items))
 
-    def _split(self, args):
+    def _split(self, args: ArrayLike[float]):
         for component, cmap in zip(self._items, self._maps):
             component_args = tuple(args[i] for i in cmap)
             yield component, component_args
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         r = 0.0
         for comp, cargs in self._split(args):
             r += comp._call(cargs) / comp.errordef
@@ -651,7 +674,7 @@ class CostSum(Cost, Sequence):
         return self._items.__getitem__(key)
 
     def visualize(
-        self, args: _ArrayLike, component_kwargs: _tp.Dict[int, _tp.Dict] = None
+        self, args: ArrayLike[float], component_kwargs: Dict[int, Dict[str, Any]] = None
     ):
         """
         Visualize data and model agreement (requires matplotlib).
@@ -673,8 +696,6 @@ class CostSum(Cost, Sequence):
             Other keyword arguments are forwarded to all components.
         """
         from matplotlib import pyplot as plt
-
-        args = np.atleast_1d(args)
 
         n = sum(hasattr(comp, "visualize") for comp in self)
 
@@ -703,7 +724,9 @@ class MaskedCost(Cost):
 
     __slots__ = "_data", "_mask", "_masked"
 
-    def __init__(self, args, data, verbose):
+    _mask: Optional[np.ndarray]
+
+    def __init__(self, args: Sequence[str], data: np.ndarray, verbose: int):
         """For internal use."""
         self._data = data
         self._mask = None
@@ -720,7 +743,7 @@ class MaskedCost(Cost):
         return self._mask
 
     @mask.setter
-    def mask(self, mask):
+    def mask(self, mask: Optional[ArrayLike]):
         self._mask = None if mask is None else np.asarray(mask)
         self._update_cache()
 
@@ -730,7 +753,7 @@ class MaskedCost(Cost):
         return self._data
 
     @data.setter
-    def data(self, value):
+    def data(self, value: ArrayLike):
         self._data[...] = value
         self._update_cache()
 
@@ -747,7 +770,7 @@ class UnbinnedCost(MaskedCost):
 
     __slots__ = "_model", "_log"
 
-    def __init__(self, data, model: _tp.Callable, verbose: int, log: bool):
+    def __init__(self, data, model: Model, verbose: int, log: bool):
         """For internal use."""
         self._model = model
         self._log = log
@@ -767,7 +790,7 @@ class UnbinnedCost(MaskedCost):
         # unbinned likelihoods have infinite degrees of freedom
         return np.inf
 
-    def visualize(self, args: _ArrayLike, model_points: int = 0, nbins: int = 50):
+    def visualize(self, args: ArrayLike[float], model_points: int = 0, nbins: int = 50):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -830,8 +853,8 @@ class UnbinnedNLL(UnbinnedCost):
 
     def __init__(
         self,
-        data: _ArrayLike,
-        pdf: _tp.Callable,
+        data: ArrayLike[float],
+        pdf: Model,
         verbose: int = 0,
         log: bool = False,
     ):
@@ -861,7 +884,7 @@ class UnbinnedNLL(UnbinnedCost):
         """
         super().__init__(data, pdf, verbose, log)
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         data = self._masked
         x = self._model(data, *args)
         x = _normalize_model_output(x)
@@ -905,8 +928,8 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
     def __init__(
         self,
-        data: _ArrayLike,
-        scaled_pdf: _tp.Callable,
+        data: ArrayLike[float],
+        scaled_pdf: Model,
         verbose: int = 0,
         log: bool = False,
     ):
@@ -941,7 +964,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         """
         super().__init__(data, scaled_pdf, verbose, log)
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         data = self._masked
         ns, x = self._model(data, *args)
         x = _normalize_model_output(
@@ -961,6 +984,10 @@ class BinnedCost(MaskedCost):
 
     __slots__ = "_xe", "_ndim", "_bztrafo"
 
+    _xe: Union[np.ndarray, Tuple[np.ndarray, ...]]
+    _ndim: int
+    _bztrafo: Optional[BohmZechTransform]
+
     n = MaskedCost.data
 
     @property
@@ -968,14 +995,24 @@ class BinnedCost(MaskedCost):
         """Access bin edges."""
         return self._xe
 
-    def __init__(self, args, n, xe, verbose, *updater):
+    def __init__(
+        self,
+        args: Sequence[str],
+        n: ArrayLike[float],
+        xe: Union[Sequence[float], Sequence[Sequence[float]]],
+        verbose: int,
+        *updater,
+    ):
         """For internal use."""
-        if not isinstance(xe, _tp.Iterable):
+        if not isinstance(xe, Iterable):
             raise ValueError("xe must be iterable")
 
         shape = _shape_from_xe(xe)
         self._ndim = len(shape)
-        self._xe = _norm(xe) if self._ndim == 1 else tuple(_norm(xei) for xei in xe)
+        if self._ndim == 1:
+            self._xe = _norm(xe)  # type:ignore
+        else:
+            self._xe = tuple(_norm(xei) for xei in xe)  # type:ignore
 
         n = _norm(n)
         is_weighted = n.ndim > self._ndim
@@ -983,7 +1020,10 @@ class BinnedCost(MaskedCost):
         if n.ndim != (self._ndim + int(is_weighted)):
             raise ValueError("n must either have same dimension as xe or one extra")
 
-        for i, xei in enumerate([self._xe] if self._ndim == 1 else self._xe):
+        xei: np.ndarray
+        for i, xei in enumerate(
+            [self._xe] if self._ndim == 1 else self._xe  # type:ignore
+        ):
             if len(xei) != n.shape[i] + 1:
                 raise ValueError(
                     f"n and xe have incompatible shapes along dimension {i}, "
@@ -993,7 +1033,7 @@ class BinnedCost(MaskedCost):
         if is_weighted:
             if n.shape[-1] != 2:
                 raise ValueError("n must have shape (..., 2)")
-            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])
+            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])  # type:ignore
         else:
             self._bztrafo = None
 
@@ -1003,7 +1043,7 @@ class BinnedCost(MaskedCost):
         return np.prod(self._masked.shape[: self._ndim])
 
     @abc.abstractmethod
-    def _pred(self, args: _tp.Sequence[float]) -> np.ndarray:
+    def _pred(self, args: ArrayLike[float]) -> np.ndarray:
         ...  # pragma: no cover
 
     def _update_cache(self):
@@ -1012,7 +1052,7 @@ class BinnedCost(MaskedCost):
             ma = _replace_none(self._mask, ...)
             self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
 
-    def prediction(self, args: _tp.Sequence[float]) -> np.ndarray:
+    def prediction(self, args: ArrayLike[float]) -> np.ndarray:
         """
         Return the bin expectation for the fitted model.
 
@@ -1028,7 +1068,7 @@ class BinnedCost(MaskedCost):
         """
         return self._pred(args)
 
-    def visualize(self, args: _tp.Sequence[float]):
+    def visualize(self, args: ArrayLike[float]):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1079,7 +1119,7 @@ class BinnedCostWithModel(BinnedCost):
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
 
-    def _pred(self, args: _tp.Sequence[float]):
+    def _pred(self, args: ArrayLike[float]):
         d = self._model(self._model_xe, *args)
         d = _normalize_model_output(d)
         if self._xe_shape is not None:
@@ -1096,23 +1136,23 @@ class Template(BinnedCost):
     """
     Binned cost function for a template fit with uncertainties on the template.
 
-    This cost function is for a mixture model. Samples originate from two or more
-    components and we are interested in estimating the yield that originates from each
-    component. In high-energy physics, one component is often a peaking signal over a
-    smooth background component. A component can be described by a parametric model or a
-    template.
+    This cost function is for a mixture of components. Use this if the sample originate
+    from two or more components and you are interested in estimating the yield that
+    originates from one or more components. In high-energy physics, one component is often
+    a peaking signal over a smooth background component. A component can be described by a
+    parametric model or a template.
 
-    Templates are shape estimates for these components which are obtained from Monte-Carlo
-    simulation. Even if the Monte-Carlo simulation is exact, the templates introduce some
-    uncertainty since the Monte-Carlo simulation produces only a finite sample of events
-    that contribute to each template. This cost function takes that additional uncertainty
-    into account.
+    An accepted parametric model is a scaled cumulative density function, while a template
+    is a non-parametric shape estimate obtained by histogramming a Monte-Carlo simulation.
+    Even if the Monte-Carlo simulation is asymptotically correct, estimating the shape
+    from a finite simulation sample introduces some uncertainty. This cost function takes
+    that additional uncertainty into account.
 
-    There are several ways to approach this problem. Barlow and Beeston [1]_ found an
-    exact likelihood for this problem, with one nuisance parameter per component per bin.
-    Solving this likelihood is somewhat challenging though. The Barlow-Beeston likelihood
-    also does not handle the additional uncertainty in weighted templates unless the
-    weights per bin are all equal.
+    There are several ways to fit templates and take the sampling uncertainty into
+    account. Barlow and Beeston [1]_ found an exact likelihood for this problem, with one
+    nuisance parameter per component per bin. Solving this likelihood is somewhat
+    challenging though. The Barlow-Beeston likelihood also does not handle the additional
+    uncertainty in weighted templates unless the weights per bin are all equal.
 
     Other works [2]_ [3]_ [4]_ describe likelihoods that use only one nuisance parameter
     per bin, which is an approximation. Some marginalize over the nuisance parameters with
@@ -1130,7 +1170,8 @@ class Template(BinnedCost):
     All methods implemented here have been generalized to work with both weighted data and
     weighted templates, under the assumption that the weights are independent of the data.
     This is not the case for sWeights, and the uncertaintes for results obtained with
-    sWeights will only be approximately correct [6]_.
+    sWeights will only be approximately correct [6]_. The methods have been further
+    generalized to allow fitting a mixture of parametric models and templates.
 
     .. [1] Barlow and Beeston, Comput.Phys.Commun. 77 (1993) 219-228
     .. [2] Conway, PHYSTAT 2011 proceeding, https://doi.org/10.48550/arXiv.1103.0354
@@ -1144,12 +1185,10 @@ class Template(BinnedCost):
 
     def __init__(
         self,
-        n: _ArrayLike,
-        xe: _ArrayLike,
-        template_or_model: _tp.Collection[
-            _tp.Union[_tp.Sequence, _tp.Callable[[], np.ndarray]]
-        ],
-        name: _tp.Collection[str] = None,
+        n: ArrayLike[float],
+        xe: ArrayLike,
+        model_or_template: Collection[Union[Model, ArrayLike]],
+        name: Optional[Sequence[str]] = None,
         verbose: int = 0,
         method: str = "da",
     ):
@@ -1166,8 +1205,8 @@ class Template(BinnedCost):
             Bin edge locations, must be len(n) + 1, where n is the number of bins. If the
             histogram has more than one axis, xe must be a collection of the bin edge
             locations along each axis.
-        template_or_model : collection of array-like or callable
-            Collection of arrays or callables. Arrays contain the histogram counts of each
+        model_or_template : collection of array-like or callable
+            Collection of models or arrays. An array represent the histogram counts of a
             template. The template histograms must use the same axes as the data
             histogram. If the counts are represented by an array with dimension D+1, where
             D is the number of histogram axes, then the last dimension must have two
@@ -1187,7 +1226,7 @@ class Template(BinnedCost):
             this parameter explicitly in code that has to be stable. For all methods
             except the "asy" method, the minimum value is chi-square distributed.
         """
-        M = len(template_or_model)
+        M = len(model_or_template)
         if M < 1:
             raise ValueError("at least one template or model is required")
 
@@ -1196,9 +1235,14 @@ class Template(BinnedCost):
 
         npar = 0
         args = []
-        self._model_data = []
-        for i, t in enumerate(template_or_model):
-            if isinstance(t, _tp.Collection):
+        self._model_data: List[
+            Union[
+                Tuple[np.ndarray, np.ndarray],
+                Tuple[Model, float],
+            ]
+        ] = []
+        for i, t in enumerate(model_or_template):
+            if isinstance(t, Collection):
                 tt = _norm(t)
                 if tt.ndim > ndim:
                     # template is weighted
@@ -1220,7 +1264,7 @@ class Template(BinnedCost):
             else:
                 par = describe(t)
                 npar = len(par)
-                self._model_data.append((t, npar))  # type:ignore
+                self._model_data.append((t, npar))
                 args += [f"c{i}_{x}" for x in par]
 
         if name is None:
@@ -1262,9 +1306,11 @@ class Template(BinnedCost):
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
 
-    def _pred(self, args: _tp.Sequence[float]):
-        mu = 0
-        mu_var = 0
+    def _pred(  # type:ignore
+        self, args: ArrayLike[float]
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        mu: np.ndarray = 0  # type:ignore
+        mu_var: np.ndarray = 0  # type:ignore
         i = 0
         for t1, t2 in self._model_data:
             if isinstance(t2, int):  # paramtric model
@@ -1288,7 +1334,7 @@ class Template(BinnedCost):
                 i += 1
         return mu, mu_var
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         mu, mu_var = self._pred(args)
 
         ma = self.mask
@@ -1297,17 +1343,19 @@ class Template(BinnedCost):
             mu_var = mu_var[ma]
 
         if self._bztrafo:
-            n, mu, mu_var = self._bztrafo(mu, mu_var)
+            n, mu, mu_var = self._bztrafo(mu, mu_var)  # type:ignore
         else:
             n = self._masked
 
         ma = mu > 0
-        return self._impl(n[ma], mu[ma], mu_var[ma])
+        return self._impl(n[ma], mu[ma], mu_var[ma])  # type:ignore
 
-    def _errordef(self):
+    def _errordef(self) -> float:
         return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
 
-    def prediction(self, args: _tp.Sequence[float]):
+    def prediction(  # type:ignore
+        self, args: ArrayLike[float]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the fitted template and its standard deviation.
 
@@ -1332,7 +1380,7 @@ class Template(BinnedCost):
         mu, mu_var = self._pred(args)
         return mu, np.sqrt(mu_var)
 
-    def visualize(self, args: _ArrayLike):
+    def visualize(self, args: ArrayLike[float]):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1359,7 +1407,7 @@ class Template(BinnedCost):
             cx = cx[self.mask]
         plt.errorbar(cx, n, ne, fmt="ok")
 
-        mu, mu_err = self.prediction(args)
+        mu, mu_err = self.prediction(args)  # type: ignore
         plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=True, color="C0")
 
 
@@ -1383,9 +1431,7 @@ class BinnedNLL(BinnedCostWithModel):
         """Get cumulative density function."""
         return self._model
 
-    def __init__(
-        self, n: _ArrayLike, xe: _ArrayLike, cdf: _tp.Callable, verbose: int = 0
-    ):
+    def __init__(self, n: ArrayLike, xe: ArrayLike, cdf: Model, verbose: int = 0):
         """
         Initialize cost function with data and model.
 
@@ -1412,7 +1458,7 @@ class BinnedNLL(BinnedCostWithModel):
         """
         super().__init__(n, xe, cdf, verbose)
 
-    def _pred(self, args):
+    def _pred(self, args: ArrayLike[float]):
         p = super()._pred(args)
         ma = self.mask
         if ma is not None:
@@ -1420,16 +1466,16 @@ class BinnedNLL(BinnedCostWithModel):
         scale = np.sum(self._masked[..., 0] if self._bztrafo else self._masked)
         return p * scale
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         mu = self._pred(args)
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
         if self._bztrafo:
-            n, mu = self._bztrafo(mu)
+            n, mu = self._bztrafo(mu)  # type:ignore
         else:
             n = self._masked
-        return multinominal_chi2(n, mu)
+        return multinominal_chi2(n, mu)  # type:ignore
 
 
 class ExtendedBinnedNLL(BinnedCostWithModel):
@@ -1459,9 +1505,9 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
 
     def __init__(
         self,
-        n: _ArrayLike,
-        xe: _ArrayLike,
-        scaled_cdf: _tp.Callable,
+        n: ArrayLike,
+        xe: ArrayLike,
+        scaled_cdf: Model,
         verbose: int = 0,
     ):
         """
@@ -1488,16 +1534,17 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         """
         super().__init__(n, xe, scaled_cdf, verbose)
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         mu = self._pred(args)
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
         if self._bztrafo:
-            n, mu = self._bztrafo(mu)
+            n, mu = self._bztrafo(mu)  # type:ignore
         else:
             n = self._masked
-        return poisson_chi2(n, mu)
+        assert isinstance(n, np.ndarray)
+        return poisson_chi2(n, mu)  # type:ignore
 
 
 class LeastSquares(MaskedCost):
@@ -1556,7 +1603,7 @@ class LeastSquares(MaskedCost):
         return self._loss
 
     @loss.setter
-    def loss(self, loss: _tp.Union[str, _tp.Callable[[np.ndarray], np.ndarray]]):
+    def loss(self, loss: Union[str, LossFunction]):
         self._loss = loss
         if isinstance(loss, str):
             if loss == "linear":
@@ -1573,11 +1620,11 @@ class LeastSquares(MaskedCost):
 
     def __init__(
         self,
-        x: _ArrayLike,
-        y: _ArrayLike,
-        yerror: _ArrayLike,
-        model: _tp.Callable,
-        loss: _tp.Union[str, _tp.Callable] = "linear",
+        x: ArrayLike,
+        y: ArrayLike,
+        yerror: ArrayLike,
+        model: Model,
+        loss: Union[str, LossFunction] = "linear",
         verbose: int = 0,
     ):
         """
@@ -1633,7 +1680,7 @@ class LeastSquares(MaskedCost):
 
         super().__init__(describe(self._model)[1:], data, verbose)
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
         y, yerror = self._masked.T[self._ndim :]
         ym = self._model(x, *args)
@@ -1643,7 +1690,7 @@ class LeastSquares(MaskedCost):
     def _ndata(self):
         return len(self._masked)
 
-    def visualize(self, args: _ArrayLike, model_points: int = 0):
+    def visualize(self, args: ArrayLike, model_points: int = 0):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1707,9 +1754,9 @@ class NormalConstraint(Cost):
 
     def __init__(
         self,
-        args: _tp.Union[str, _tp.Iterable[str]],
-        value: _ArrayLike,
-        error: _ArrayLike,
+        args: Union[str, Iterable[str]],
+        value: ArrayLike,
+        error: ArrayLike,
     ):
         """
         Initialize the normal constraint with expected value(s) and error(s).
@@ -1755,7 +1802,7 @@ class NormalConstraint(Cost):
     def value(self, value):
         self._value[:] = value
 
-    def _call(self, args):
+    def _call(self, args: ArrayLike[float]) -> float:
         delta = self._value - args
         if self._covinv.ndim < 2:
             return np.sum(delta**2 * self._covinv)
@@ -1764,7 +1811,7 @@ class NormalConstraint(Cost):
     def _ndata(self):
         return len(self._value)
 
-    def visualize(self, args: _ArrayLike):
+    def visualize(self, args: ArrayLike):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1803,7 +1850,7 @@ class NormalConstraint(Cost):
         plt.ylim(-n + 0.5, 0.5)
 
 
-def _norm(value: _ArrayLike[float]) -> np.ndarray:
+def _norm(value: ArrayLike[float]) -> np.ndarray:
     value = np.atleast_1d(value)
     dtype = value.dtype
     if dtype.kind != "f":
@@ -1828,7 +1875,7 @@ def _normalize_model_output(x, msg="Model should return numpy array"):
 
 
 def _shape_from_xe(xe):
-    if isinstance(xe[0], _tp.Iterable):
+    if isinstance(xe[0], Iterable):
         return tuple(len(xei) - 1 for xei in xe)
     return (len(xe) - 1,)
 
@@ -1840,7 +1887,7 @@ _deprecated_content = {
 }
 
 
-def __getattr__(name: str) -> _tp.Any:
+def __getattr__(name: str) -> Any:
     if name in _deprecated_content:
         new_name, obj = _deprecated_content[name]
         warnings.warn(
