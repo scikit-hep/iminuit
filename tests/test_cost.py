@@ -1222,17 +1222,32 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
-def test_Template_mixed_with_model():
+def test_Template_with_model_template_mix():
     n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
-    t = np.array([0.1, 0.1, 1])
+    t = np.array([0.1, 0, 1])
 
     c = Template(n, xe, (t, scaled_cdf))
     assert describe(c) == ["c0", "c1_n", "c1_mu", "c1_sigma"]
 
     m = Minuit(c, 1, 1, 0.5, 1)
-    m.limits["c0", "c1_n", "c1_sigma"] = (0, None)
+    m.limits["c0", "c1_n"] = (0, None)
+    m.limits["c1_sigma"] = (0.1, None)
     m.limits["c1_mu"] = (xe[0], xe[-1])
+    m.migrad()
+    assert m.valid
+
+
+def test_Template_with_models():
+    n = np.array([3, 2, 3])
+    xe = np.array([0, 1, 2, 3])
+
+    c = Template(n, xe, (lambda x, n, mu: n * expon_cdf(x, mu), scaled_cdf))
+    assert describe(c) == ["c0_n", "c0_mu", "c1_n", "c1_mu", "c1_sigma"]
+
+    m = Minuit(c, 1, 0.5, 1, 0.5, 1)
+    m.limits["c0_n", "c1_n", "c1_sigma"] = (0, None)
+    m.limits["c0_mu", "c1_mu"] = (xe[0], xe[-1])
     m.migrad()
     assert m.valid
 

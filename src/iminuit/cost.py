@@ -1254,18 +1254,18 @@ class Template(BinnedCost):
                     if tt.ndim != ndim or tt.shape != shape:
                         raise ValueError("shapes of n and templates do not match")
                     t1 = tt
-                    t2 = tt
+                    t2 = tt.copy()
                 # normalize to unity
                 f = 1 / np.sum(t1)
                 t1 *= f
                 t2 *= f**2
                 self._model_data.append((t1, t2))
-                args.append(f"c{i}")
+                args.append(f"x{i}")
             else:
                 par = describe(t)[1:]
                 npar = len(par)
                 self._model_data.append((t, npar))
-                args += [f"c{i}_{x}" for x in par]
+                args += [f"x{i}_{x}" for x in par]
 
         if name is None:
             name = args
@@ -1330,6 +1330,7 @@ class Template(BinnedCost):
                 # we set negative values to zero
                 d[d < 0] = 0
                 mu += d
+                mu_var += np.ones_like(mu) * 1e-300
                 i += t2
         return mu, mu_var
 
@@ -1407,7 +1408,10 @@ class Template(BinnedCost):
         plt.errorbar(cx, n, ne, fmt="ok")
 
         mu, mu_err = self.prediction(args)  # type: ignore
-        plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=True, color="C0")
+        plt.stairs(mu, xe, color="C0")
+        plt.stairs(
+            mu + mu_err, xe, baseline=mu - mu_err, fill=True, color="C0", alpha=0.8
+        )
 
 
 class BinnedNLL(BinnedCostWithModel):
