@@ -17,6 +17,7 @@ Important for most users are only the first two entries.
     notebooks/interactive
     notebooks/simultaneous_fits
     notebooks/template_fits
+    notebooks/template_model_mix
     notebooks/conditional_variable
     notebooks/scipy_and_constraints
     notebooks/external_minimizer
