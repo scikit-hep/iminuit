@@ -16,9 +16,9 @@ from iminuit.cost import (
     _soft_l1_loss,
     PerformanceWarning,
 )
+from iminuit.util import describe
 from typing import Sequence
 import pickle
-from sys import version_info as pyver
 
 try:
     # pytest.importorskip does not work for scipy.stats;
@@ -46,6 +46,14 @@ def norm_logpdf(x, mu, sigma):
 
 def norm_pdf(x, mu, sigma):
     return np.exp(norm_logpdf(x, mu, sigma))
+
+
+def norm_cdf(x, mu, sigma):
+    from math import erf
+
+    z = (x - mu) / (np.sqrt(2) * sigma)
+
+    return (1 + np.vectorize(erf)(z)) * 0.5
 
 
 def mvnorm(mux, muy, sx, sy, rho):
@@ -87,11 +95,11 @@ def pdf(x, mu, sigma):
 
 
 def cdf(x, mu, sigma):
-    return norm(mu, sigma).cdf(x)
+    return norm_cdf(x, mu, sigma)
 
 
 def scaled_cdf(x, n, mu, sigma):
-    return n * norm(mu, sigma).cdf(x)
+    return n * norm_cdf(x, mu, sigma)
 
 
 def line(x, a, b):
@@ -108,6 +116,12 @@ def test_norm_logpdf():
 def test_norm_pdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_pdf(x, 3, 2), norm.pdf(x, 3, 2))
+
+
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
+def test_norm_cdf():
+    x = np.linspace(-3, 3)
+    assert_allclose(norm_cdf(x, 3, 2), norm.cdf(x, 3, 2))
 
 
 def test_Constant():
@@ -346,7 +360,6 @@ def test_ExtendedUnbinnedNLL_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_BinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -528,7 +541,6 @@ def test_BinnedNLL_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -1221,7 +1233,36 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(pyver < (3, 7), reason="module getattr requires Python-3.7+")
+def test_Template_with_model_template_mix():
+    n = np.array([3, 2, 3])
+    xe = np.array([0, 1, 2, 3])
+    t = np.array([0.1, 0, 1])
+
+    c = Template(n, xe, (t, scaled_cdf))
+    assert describe(c) == ["x0", "x1_n", "x1_mu", "x1_sigma"]
+
+    m = Minuit(c, 1, 1, 0.5, 1)
+    m.limits["x0", "x1_n"] = (0, None)
+    m.limits["x1_sigma"] = (0.1, None)
+    m.limits["x1_mu"] = (xe[0], xe[-1])
+    m.migrad()
+    assert m.valid
+
+
+def test_Template_with_models():
+    n = np.array([3, 2, 3])
+    xe = np.array([0, 1, 2, 3])
+
+    c = Template(n, xe, (lambda x, n, mu: n * expon_cdf(x, mu), scaled_cdf))
+    assert describe(c) == ["x0_n", "x0_mu", "x1_n", "x1_mu", "x1_sigma"]
+
+    m = Minuit(c, 1, 0.5, 1, 0.5, 1)
+    m.limits["x0_n", "x1_n", "x1_sigma"] = (0, None)
+    m.limits["x0_mu", "x1_mu"] = (xe[0], xe[-1])
+    m.migrad()
+    assert m.valid
+
+
 def test_deprecated():
     from iminuit import cost
 
