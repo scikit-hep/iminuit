@@ -48,6 +48,14 @@ def norm_pdf(x, mu, sigma):
     return np.exp(norm_logpdf(x, mu, sigma))
 
 
+def norm_cdf(x, mu, sigma):
+    from math import erf
+
+    z = (x - mu) / (np.sqrt(2) * sigma)
+
+    return (1 + np.vectorize(erf)(z)) * 0.5
+
+
 def mvnorm(mux, muy, sx, sy, rho):
     C = np.empty((2, 2))
     C[0, 0] = sx**2
@@ -87,11 +95,11 @@ def pdf(x, mu, sigma):
 
 
 def cdf(x, mu, sigma):
-    return norm(mu, sigma).cdf(x)
+    return norm_cdf(x, mu, sigma)
 
 
 def scaled_cdf(x, n, mu, sigma):
-    return n * norm(mu, sigma).cdf(x)
+    return n * norm_cdf(x, mu, sigma)
 
 
 def line(x, a, b):
@@ -108,6 +116,12 @@ def test_norm_logpdf():
 def test_norm_pdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_pdf(x, 3, 2), norm.pdf(x, 3, 2))
+
+
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
+def test_norm_cdf():
+    x = np.linspace(-3, 3)
+    assert_allclose(norm_cdf(x, 3, 2), norm.cdf(x, 3, 2))
 
 
 def test_Constant():
@@ -346,7 +360,6 @@ def test_ExtendedUnbinnedNLL_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_BinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -528,7 +541,6 @@ def test_BinnedNLL_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("verbose", (0, 1))
 def test_ExtendedBinnedNLL(binned, verbose):
     mle, nx, xe = binned
@@ -1221,7 +1233,6 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
-@pytest.mark.skipif(not scipy_available)
 def test_Template_with_model_template_mix():
     n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
@@ -1238,7 +1249,6 @@ def test_Template_with_model_template_mix():
     assert m.valid
 
 
-@pytest.mark.skipif(not scipy_available)
 def test_Template_with_models():
     n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
