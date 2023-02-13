@@ -1633,7 +1633,7 @@ class LeastSquares(MaskedCost):
             elif loss == "soft_l1":
                 self._cost = _soft_l1_cost
             else:
-                raise ValueError("unknown loss type: " + loss)
+                raise ValueError(f"unknown loss {loss!r}")
         elif isinstance(loss, LossFunction):
             self._cost = lambda y, ye, ym: np.sum(
                 loss(_z_squared(y, ye, ym))  # type:ignore

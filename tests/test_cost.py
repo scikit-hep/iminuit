@@ -733,14 +733,17 @@ def test_LeastSquares_2D():
 
 
 def test_LeastSquares_bad_input():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="shape mismatch"):
         LeastSquares([1, 2], [], [1], lambda x, a: 0)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="shape mismatch"):
         LeastSquares([1, 2], [3, 4, 5], [1], lambda x, a: 0)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="unknown loss"):
         LeastSquares([1], [1], [1], lambda x, a: 0, loss="foo")
+
+    with pytest.raises(ValueError, match="loss must be str or LossFunction"):
+        LeastSquares([1], [1], [1], lambda x, a: 0, loss=[1, 2, 3])
 
 
 def test_LeastSquares_mask():
@@ -1193,6 +1196,9 @@ def test_Template_bad_input():
 
     with pytest.raises(ValueError, match="number of names"):
         Template([1], [1, 2], [[1]], name=("b", "s"))
+
+    with pytest.raises(ValueError, match="model_or_template"):
+        Template([1], [1, 2], [[1], None])
 
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
