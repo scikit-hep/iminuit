@@ -1409,8 +1409,8 @@ class Template(BinnedCost):
 
         mu, mu_err = self.prediction(args)  # type: ignore
         # need fill and line so that bins with mu_err=0 show up
-        plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=True, color="C0")
-        plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, color="C0")
+        for fill in (False, True):
+            plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=fill, color="C0")
 
 
 class BinnedNLL(BinnedCostWithModel):
