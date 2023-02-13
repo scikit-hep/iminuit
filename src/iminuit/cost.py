@@ -643,7 +643,7 @@ class CostSum(Cost, ABCSequence):
         for item in items:
             if isinstance(item, CostSum):
                 self._items += item._items
-            elif isinstance(item, float):  # also matches int
+            elif isinstance(item, (int, float)):
                 if item != 0:
                     self._items.append(Constant(item))
             else:

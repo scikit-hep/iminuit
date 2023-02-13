@@ -1228,12 +1228,12 @@ def test_Template_with_model_template_mix():
     t = np.array([0.1, 0, 1])
 
     c = Template(n, xe, (t, scaled_cdf))
-    assert describe(c) == ["c0", "c1_n", "c1_mu", "c1_sigma"]
+    assert describe(c) == ["x0", "x1_n", "x1_mu", "x1_sigma"]
 
     m = Minuit(c, 1, 1, 0.5, 1)
-    m.limits["c0", "c1_n"] = (0, None)
-    m.limits["c1_sigma"] = (0.1, None)
-    m.limits["c1_mu"] = (xe[0], xe[-1])
+    m.limits["x0", "x1_n"] = (0, None)
+    m.limits["x1_sigma"] = (0.1, None)
+    m.limits["x1_mu"] = (xe[0], xe[-1])
     m.migrad()
     assert m.valid
 
@@ -1243,11 +1243,11 @@ def test_Template_with_models():
     xe = np.array([0, 1, 2, 3])
 
     c = Template(n, xe, (lambda x, n, mu: n * expon_cdf(x, mu), scaled_cdf))
-    assert describe(c) == ["c0_n", "c0_mu", "c1_n", "c1_mu", "c1_sigma"]
+    assert describe(c) == ["x0_n", "x0_mu", "x1_n", "x1_mu", "x1_sigma"]
 
     m = Minuit(c, 1, 0.5, 1, 0.5, 1)
-    m.limits["c0_n", "c1_n", "c1_sigma"] = (0, None)
-    m.limits["c0_mu", "c1_mu"] = (xe[0], xe[-1])
+    m.limits["x0_n", "x1_n", "x1_sigma"] = (0, None)
+    m.limits["x0_mu", "x1_mu"] = (xe[0], xe[-1])
     m.migrad()
     assert m.valid
 
