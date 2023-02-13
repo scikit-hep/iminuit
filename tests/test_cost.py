@@ -19,7 +19,6 @@ from iminuit.cost import (
 from iminuit.util import describe
 from typing import Sequence
 import pickle
-from sys import version_info as pyver
 
 try:
     # pytest.importorskip does not work for scipy.stats;
@@ -1222,6 +1221,7 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
+@pytest.mark.skipif(not scipy_available)
 def test_Template_with_model_template_mix():
     n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
@@ -1238,6 +1238,7 @@ def test_Template_with_model_template_mix():
     assert m.valid
 
 
+@pytest.mark.skipif(not scipy_available)
 def test_Template_with_models():
     n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
@@ -1252,7 +1253,6 @@ def test_Template_with_models():
     assert m.valid
 
 
-@pytest.mark.skipif(pyver < (3, 7), reason="module getattr requires Python-3.7+")
 def test_deprecated():
     from iminuit import cost
 
