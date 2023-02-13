@@ -158,13 +158,13 @@ class BohmZechTransform:
 
     @overload
     def __call__(self, val: ArrayLike) -> Tuple[NDArray, NDArray]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __call__(
         self, val: ArrayLike, var: ArrayLike
     ) -> Tuple[NDArray, NDArray, NDArray]:
-        ...
+        ...  # pragma: no cover
 
     def __call__(self, val, var=None):
         """
@@ -181,11 +181,10 @@ class BohmZechTransform:
         -------
         (obs, pred) or (obs, pred, pred_var)
         """
+        val, var = np.atleast1d(val, var)
         s = self._scale
-        assert isinstance(val, np.ndarray)
         if var is None:
             return self._obs, val * s
-        assert isinstance(var, np.ndarray)
         return self._obs, val * s, var * s**2
 
 
@@ -590,7 +589,7 @@ class Cost(abc.ABC):
 
     @abc.abstractmethod
     def _call(self, args: Sequence[float]) -> float:
-        ...
+        ...  # pragma: no cover
 
 
 class Constant(Cost):
