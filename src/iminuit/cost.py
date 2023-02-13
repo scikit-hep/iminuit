@@ -181,7 +181,7 @@ class BohmZechTransform:
         -------
         (obs, pred) or (obs, pred, pred_var)
         """
-        val, var = np.atleast1d(val, var)
+        val, var = np.atleast_1d(val, var)
         s = self._scale
         if var is None:
             return self._obs, val * s
