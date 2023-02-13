@@ -1272,12 +1272,16 @@ class Template(BinnedCost):
                 t2 *= f**2
                 self._model_data.append((t1, t2))
                 args.append(f"x{i}")
-            else:
-                assert isinstance(t, Model)
+            elif isinstance(t, Model):
                 par = describe(t)[1:]
                 npar = len(par)
                 self._model_data.append((t, npar))
                 args += [f"x{i}_{x}" for x in par]
+            else:
+                raise ValueError(
+                    "model_or_template must be a collection of array-likes "
+                    "and/or Model types"
+                )
 
         if name is None:
             name = args
@@ -1334,8 +1338,8 @@ class Template(BinnedCost):
                 d = _normalize_model_output(d)
                 if self._xe_shape is not None:
                     d = d.reshape(self._xe_shape)
-                for i in range(self._ndim):
-                    d = np.diff(d, axis=i)
+                for j in range(self._ndim):
+                    d = np.diff(d, axis=j)
                 # differences can come out negative due to round-off error in subtraction,
                 # we set negative values to zero
                 d[d < 0] = 0
