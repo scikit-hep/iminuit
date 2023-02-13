@@ -5,6 +5,12 @@
 Changelog
 =========
 
+2.20.0 (February 13, 2023)
+--------------------------
+- Fix coverage, typing, template for 2d models (`#836 <https://github.com/scikit-hep/iminuit/pull/836>`_)
+- Template mix (`#835 <https://github.com/scikit-hep/iminuit/pull/835>`_)
+- Docs: use 'req@url' syntax to install from remote vcs (`#834 <https://github.com/scikit-hep/iminuit/pull/834>`_)
+
 2.19.0 (February 10, 2023)
 --------------------------
 - Remove setup.cfg (`#833 <https://github.com/scikit-hep/iminuit/pull/833>`_)
