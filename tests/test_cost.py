@@ -733,14 +733,17 @@ def test_LeastSquares_2D():
 
 
 def test_LeastSquares_bad_input():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="shape mismatch"):
         LeastSquares([1, 2], [], [1], lambda x, a: 0)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="shape mismatch"):
         LeastSquares([1, 2], [3, 4, 5], [1], lambda x, a: 0)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="unknown loss"):
         LeastSquares([1], [1], [1], lambda x, a: 0, loss="foo")
+
+    with pytest.raises(ValueError, match="loss must be str or LossFunction"):
+        LeastSquares([1], [1], [1], lambda x, a: 0, loss=[1, 2, 3])
 
 
 def test_LeastSquares_mask():
@@ -1194,6 +1197,9 @@ def test_Template_bad_input():
     with pytest.raises(ValueError, match="number of names"):
         Template([1], [1, 2], [[1]], name=("b", "s"))
 
+    with pytest.raises(ValueError, match="model_or_template"):
+        Template([1], [1, 2], [[1], None])
+
 
 @pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_Template_visualize():
@@ -1233,7 +1239,7 @@ def test_Template_pickle():
     assert_equal(c.data, c2.data)
 
 
-def test_Template_with_model_template_mix():
+def test_Template_with_model():
     n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
     t = np.array([0.1, 0, 1])
@@ -1249,7 +1255,34 @@ def test_Template_with_model_template_mix():
     assert m.valid
 
 
-def test_Template_with_models():
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
+def test_Template_with_model_2D():
+    truth1 = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
+    x1, y1 = mvnorm(*truth1[1:]).rvs(size=int(truth1[0] * 1000), random_state=1).T
+    truth2 = (1.0, 0.2, 0.1, 0.4, 0.3, 0.0)
+    x2, y2 = mvnorm(*truth2[1:]).rvs(size=int(truth2[0] * 1000), random_state=1).T
+
+    x = np.append(x1, x2)
+    y = np.append(y1, y2)
+    w, xe, ye = np.histogram2d(x, y, bins=(3, 5))
+
+    def model(xy, n, mux, muy, sx, sy, rho):
+        return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
+
+    x3, y3 = mvnorm(*truth2[1:]).rvs(size=int(truth2[0] * 10000), random_state=2).T
+    template = np.histogram2d(x3, y3, bins=(xe, ye))[0]
+
+    cost = Template(w, (xe, ye), (model, template))
+    assert cost.ndata == np.prod(w.shape)
+    m = Minuit(cost, *truth1, 1)
+    m.limits["x0_n", "x0_sx", "x0_sy"] = (0, None)
+    m.limits["x0_rho"] = (-1, 1)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.values, truth1 + (1e3,), rtol=0.1)
+
+
+def test_Template_with_only_models():
     n = np.array([3, 2, 3])
     xe = np.array([0, 1, 2, 3])
 

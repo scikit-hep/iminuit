@@ -158,13 +158,13 @@ class BohmZechTransform:
 
     @overload
     def __call__(self, val: ArrayLike) -> Tuple[NDArray, NDArray]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __call__(
         self, val: ArrayLike, var: ArrayLike
     ) -> Tuple[NDArray, NDArray, NDArray]:
-        ...
+        ...  # pragma: no cover
 
     def __call__(self, val, var=None):
         """
@@ -181,11 +181,11 @@ class BohmZechTransform:
         -------
         (obs, pred) or (obs, pred, pred_var)
         """
+        val = np.atleast_1d(val)
         s = self._scale
-        assert isinstance(val, np.ndarray)
         if var is None:
             return self._obs, val * s
-        assert isinstance(var, np.ndarray)
+        var = np.atleast_1d(var)
         return self._obs, val * s, var * s**2
 
 
@@ -590,7 +590,7 @@ class Cost(abc.ABC):
 
     @abc.abstractmethod
     def _call(self, args: Sequence[float]) -> float:
-        ...
+        ...  # pragma: no cover
 
 
 class Constant(Cost):
@@ -1272,12 +1272,16 @@ class Template(BinnedCost):
                 t2 *= f**2
                 self._model_data.append((t1, t2))
                 args.append(f"x{i}")
-            else:
-                assert isinstance(t, Model)
+            elif isinstance(t, Model):
                 par = describe(t)[1:]
                 npar = len(par)
                 self._model_data.append((t, npar))
                 args += [f"x{i}_{x}" for x in par]
+            else:
+                raise ValueError(
+                    "model_or_template must be a collection of array-likes "
+                    "and/or Model types"
+                )
 
         if name is None:
             name = args
@@ -1334,8 +1338,8 @@ class Template(BinnedCost):
                 d = _normalize_model_output(d)
                 if self._xe_shape is not None:
                     d = d.reshape(self._xe_shape)
-                for i in range(self._ndim):
-                    d = np.diff(d, axis=i)
+                for j in range(self._ndim):
+                    d = np.diff(d, axis=j)
                 # differences can come out negative due to round-off error in subtraction,
                 # we set negative values to zero
                 d[d < 0] = 0
@@ -1629,7 +1633,7 @@ class LeastSquares(MaskedCost):
             elif loss == "soft_l1":
                 self._cost = _soft_l1_cost
             else:
-                raise ValueError("unknown loss type: " + loss)
+                raise ValueError(f"unknown loss {loss!r}")
         elif isinstance(loss, LossFunction):
             self._cost = lambda y, ye, ym: np.sum(
                 loss(_z_squared(y, ye, ym))  # type:ignore
