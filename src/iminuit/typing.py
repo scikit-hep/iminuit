@@ -5,17 +5,16 @@ These are used by mypy and similar tools.
 
 from typing import (
     Protocol,
-    Callable,
     Optional,
     Collection,
     List,
     Union,
     runtime_checkable,
 )
+from numpy.typing import NDArray
 import numpy as np
 
-# Used by LeastSquares class
-LossFunction = Callable[[np.ndarray], np.ndarray]
+# LossFunction = Callable[[np.ndarray], np.ndarray]
 
 # Used by Minuit
 UserBound = Optional[Collection[Optional[float]]]
@@ -30,4 +29,13 @@ class Model(Protocol):
 
     def __call__(self, x: np.ndarray, *args: float) -> np.ndarray:
         """Evaluate model at locations x and return results as an array."""
-        ...
+        ...  # pragma: no cover
+
+
+@runtime_checkable
+class LossFunction(Protocol):
+    """Type for user-defined loss function for LeastSquares clas."""
+
+    def __call__(self, z: NDArray) -> NDArray:
+        """Evaluate loss function on values."""
+        ...  # pragma: no cover

@@ -70,6 +70,7 @@ from typing import (
     Any,
     Iterable,
     Optional,
+    overload,
 )
 import warnings
 
@@ -155,9 +156,17 @@ class BohmZechTransform:
         np.divide(val, var, out=self._scale, where=var > 0)
         self._obs = val * self._scale
 
+    @overload
+    def __call__(self, val: ArrayLike) -> Tuple[NDArray, NDArray]:
+        ...
+
+    @overload
     def __call__(
-        self, val: ArrayLike, var: Optional[ArrayLike] = None
-    ) -> Union[Tuple[NDArray, NDArray], Tuple[NDArray, NDArray, NDArray]]:
+        self, val: ArrayLike, var: ArrayLike
+    ) -> Tuple[NDArray, NDArray, NDArray]:
+        ...
+
+    def __call__(self, val, var=None):
         """
         Return precomputed scaled data and scaled prediction.
 
@@ -295,9 +304,7 @@ def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
     p = 0.5 - 0.5 * mu * beta_var
     beta = p + np.sqrt(p**2 + n * beta_var)
 
-    return poisson_chi2(n, mu * beta) + np.sum(  # type:ignore
-        (beta - 1) ** 2 / beta_var
-    )
+    return poisson_chi2(n, mu * beta) + np.sum((beta - 1) ** 2 / beta_var)
 
 
 def template_chi2_da(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
@@ -324,7 +331,7 @@ def template_chi2_da(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
     n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
     k = mu**2 / mu_var
     beta = (n + k) / (mu + k)
-    return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)  # type:ignore
+    return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)
 
 
 def template_nll_asy(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
@@ -405,8 +412,8 @@ try:
     )(_multinominal_chi2_np)
 
     def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:  # noqa
-        n, mu = np.atleast_1d(n, mu)  # type:ignore
-        if mu.dtype in (np.float32, np.float64):  # type:ignore
+        n, mu = np.atleast_1d(n, mu)
+        if mu.dtype in (np.float32, np.float64):
             return _multinominal_chi2_nb(n, mu)
         # fallback to numpy for float128
         return _multinominal_chi2_np(n, mu)
@@ -421,8 +428,8 @@ try:
     )(_poisson_chi2_np)
 
     def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:  # noqa
-        n, mu = np.atleast_1d(n, mu)  # type:ignore
-        if mu.dtype in (np.float32, np.float64):  # type:ignore
+        n, mu = np.atleast_1d(n, mu)
+        if mu.dtype in (np.float32, np.float64):
             return _poisson_chi2_nb(n, mu)
         # fallback to numpy for float128
         return _poisson_chi2_np(n, mu)
@@ -437,8 +444,8 @@ try:
     )(_chi2_np)
 
     def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:  # noqa
-        y, ye, ym = np.atleast_1d(y, ye, ym)  # type:ignore
-        if ym.dtype in (np.float32, np.float64):  # type:ignore
+        y, ye, ym = np.atleast_1d(y, ye, ym)
+        if ym.dtype in (np.float32, np.float64):
             return _chi2_nb(y, ye, ym)
         # fallback to numpy for float128
         return _chi2_np(y, ye, ym)
@@ -1016,7 +1023,7 @@ class BinnedCost(MaskedCost):
         if self._ndim == 1:
             self._xe = _norm(xe)  # type:ignore
         else:
-            self._xe = tuple(_norm(xei) for xei in xe)  # type:ignore
+            self._xe = tuple(_norm(xei) for xei in xe)
 
         n = _norm(n)
         is_weighted = n.ndim > self._ndim
@@ -1025,9 +1032,7 @@ class BinnedCost(MaskedCost):
             raise ValueError("n must either have same dimension as xe or one extra")
 
         xei: NDArray
-        for i, xei in enumerate(
-            [self._xe] if self._ndim == 1 else self._xe  # type:ignore
-        ):
+        for i, xei in enumerate([self._xe] if self._ndim == 1 else self._xe):
             if len(xei) != n.shape[i] + 1:
                 raise ValueError(
                     f"n and xe have incompatible shapes along dimension {i}, "
@@ -1037,7 +1042,7 @@ class BinnedCost(MaskedCost):
         if is_weighted:
             if n.shape[-1] != 2:
                 raise ValueError("n must have shape (..., 2)")
-            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])  # type:ignore
+            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])
         else:
             self._bztrafo = None
 
@@ -1047,7 +1052,7 @@ class BinnedCost(MaskedCost):
         return np.prod(self._masked.shape[: self._ndim])
 
     @abc.abstractmethod
-    def _pred(self, args: Sequence[float]) -> NDArray:
+    def _pred(self, args: Sequence[float]) -> Union[NDArray, Tuple[NDArray, NDArray]]:
         ...  # pragma: no cover
 
     def _update_cache(self):
@@ -1056,7 +1061,9 @@ class BinnedCost(MaskedCost):
             ma = _replace_none(self._mask, ...)
             self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
 
-    def prediction(self, args: Sequence[float]) -> NDArray:
+    def prediction(
+        self, args: Sequence[float]
+    ) -> Union[NDArray, Tuple[NDArray, NDArray]]:
         """
         Return the bin expectation for the fitted model.
 
@@ -1123,7 +1130,7 @@ class BinnedCostWithModel(BinnedCost):
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
 
-    def _pred(self, args: Sequence[float]):
+    def _pred(self, args: Sequence[float]) -> NDArray:
         d = self._model(self._model_xe, *args)
         d = _normalize_model_output(d)
         if self._xe_shape is not None:
@@ -1311,9 +1318,7 @@ class Template(BinnedCost):
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
 
-    def _pred(  # type:ignore
-        self, args: Sequence[float]
-    ) -> Tuple[NDArray, NDArray]:
+    def _pred(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
         mu: NDArray = 0  # type:ignore
         mu_var: NDArray = 0  # type:ignore
         i = 0
@@ -1348,19 +1353,17 @@ class Template(BinnedCost):
             mu_var = mu_var[ma]
 
         if self._bztrafo:
-            n, mu, mu_var = self._bztrafo(mu, mu_var)  # type:ignore
+            n, mu, mu_var = self._bztrafo(mu, mu_var)
         else:
             n = self._masked
 
         ma = mu > 0
-        return self._impl(n[ma], mu[ma], mu_var[ma])  # type:ignore
+        return self._impl(n[ma], mu[ma], mu_var[ma])
 
     def _errordef(self) -> float:
         return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
 
-    def prediction(  # type:ignore
-        self, args: Sequence[float]
-    ) -> Tuple[NDArray, NDArray]:
+    def prediction(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
         """
         Return the fitted template and its standard deviation.
 
@@ -1471,7 +1474,7 @@ class BinnedNLL(BinnedCostWithModel):
         """
         super().__init__(n, xe, cdf, verbose)
 
-    def _pred(self, args: Sequence[float]):
+    def _pred(self, args: Sequence[float]) -> NDArray:
         p = super()._pred(args)
         ma = self.mask
         if ma is not None:
@@ -1485,10 +1488,10 @@ class BinnedNLL(BinnedCostWithModel):
         if ma is not None:
             mu = mu[ma]
         if self._bztrafo:
-            n, mu = self._bztrafo(mu)  # type:ignore
+            n, mu = self._bztrafo(mu)
         else:
             n = self._masked
-        return multinominal_chi2(n, mu)  # type:ignore
+        return multinominal_chi2(n, mu)
 
 
 class ExtendedBinnedNLL(BinnedCostWithModel):
@@ -1553,11 +1556,11 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         if ma is not None:
             mu = mu[ma]
         if self._bztrafo:
-            n, mu = self._bztrafo(mu)  # type:ignore
+            n, mu = self._bztrafo(mu)
         else:
             n = self._masked
-        assert isinstance(n, np.ndarray)
-        return poisson_chi2(n, mu)  # type:ignore
+        # assert isinstance(n, np.ndarray)
+        return poisson_chi2(n, mu)
 
 
 class LeastSquares(MaskedCost):
@@ -1569,6 +1572,8 @@ class LeastSquares(MaskedCost):
     """
 
     __slots__ = "_loss", "_cost", "_model", "_ndim"
+
+    _loss: Union[str, LossFunction]
 
     @property
     def x(self):
@@ -1625,11 +1630,12 @@ class LeastSquares(MaskedCost):
                 self._cost = _soft_l1_cost
             else:
                 raise ValueError("unknown loss type: " + loss)
-        else:
-            assert hasattr(loss, "__call__")
+        elif isinstance(loss, LossFunction):
             self._cost = lambda y, ye, ym: np.sum(
                 loss(_z_squared(y, ye, ym))  # type:ignore
             )
+        else:
+            raise ValueError("loss must be str or LossFunction")
 
     def __init__(
         self,
