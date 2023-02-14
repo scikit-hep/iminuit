@@ -1380,8 +1380,8 @@ class Minuit:
         Notes
         -----
         Asymptotically (large samples), the Minos interval has a coverage probability
-        equal to the given confidence level. The coverage probability is the probability for
-        the interval to contain the true value in repeated identical experiments.
+        equal to the given confidence level. The coverage probability is the probability
+        for the interval to contain the true value in repeated identical experiments.
 
         The interval is invariant to transformations and thus not distorted by parameter
         limits, unless the limits intersect with the confidence interval. As a
@@ -2440,6 +2440,11 @@ class Minuit:
             s += self.merrors._repr_html_()
         if self.covariance is not None:
             s += self.covariance._repr_html_()
+        if self.fmin is not None:
+            try:
+                s += self.visualize()._repr_html_()
+            except (AttributeError, ValueError):
+                pass
         return s
 
     def _repr_pretty_(self, p, cycle):
