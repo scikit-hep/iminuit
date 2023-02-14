@@ -6,16 +6,35 @@ You can look up the interface of data classes that iminuit uses here.
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
-from . import _repr_html, _repr_text, _deprecated
-from . import typing as _mtp
+from iminuit import _repr_html, _repr_text, _deprecated
+from iminuit.typing import Key, UserBound
 import numpy as np
-import typing as _tp
+from numpy.typing import NDArray
+from typing import (
+    overload,
+    Any,
+    List,
+    Union,
+    Dict,
+    Iterable,
+    Generator,
+    Tuple,
+    Optional,
+    Callable,
+    Collection,
+)
 import abc
 from time import monotonic
 import warnings
 import sys
 
-_ArrayLike = _tp.Sequence
+
+__all__ = (
+    "IMinuitWarning",
+    "HesseFailedWarning",
+    "PerformanceWarning",
+    "BasicView",
+)
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -42,12 +61,12 @@ class BasicView(abc.ABC):
 
     __slots__ = ("_minuit", "_ndim")
 
-    def __init__(self, minuit: _tp.Any, ndim: int = 0):
+    def __init__(self, minuit: Any, ndim: int = 0):
         """Not to be initialized by users."""
         self._minuit = minuit
         self._ndim = ndim
 
-    def __iter__(self) -> _tp.Generator:
+    def __iter__(self) -> Generator:
         """Get iterator over values."""
         for i in range(len(self)):
             yield self._get(i)
@@ -57,14 +76,14 @@ class BasicView(abc.ABC):
         return self._minuit.npar  # type: ignore
 
     @abc.abstractmethod
-    def _get(self, idx: int) -> _tp.Any:
+    def _get(self, idx: int) -> Any:
         return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod
-    def _set(self, idx: int, value: _tp.Any) -> None:
+    def _set(self, idx: int, value: Any) -> None:
         NotImplemented  # pragma: no cover
 
-    def __getitem__(self, key: _mtp.Key) -> _tp.Any:
+    def __getitem__(self, key: Key) -> Any:
         """
         Get values of the view.
 
@@ -79,7 +98,7 @@ class BasicView(abc.ABC):
             return [self._get(i) for i in index]
         return self._get(index)
 
-    def __setitem__(self, key: _mtp.Key, value: _tp.Any) -> None:
+    def __setitem__(self, key: Key, value: Any) -> None:
         """Assign a new value at key, which can be an index, parameter name, or slice."""
         self._minuit._copy_state_if_needed()
         index = _key2index(self._minuit._var2pos, key)
@@ -98,7 +117,7 @@ class BasicView(abc.ABC):
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
         a, b = np.broadcast_arrays(self, other)  # type:ignore
-        return _tp.cast(bool, np.all(a == b))
+        return bool(np.all(a == b))
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
@@ -108,14 +127,14 @@ class BasicView(abc.ABC):
         s += ">"
         return s
 
-    def to_dict(self) -> _tp.Dict[str, float]:
+    def to_dict(self) -> Dict[str, float]:
         """Obtain dict representation."""
         return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
 
-def _ndim(obj: _tp.Iterable) -> int:
+def _ndim(obj: Iterable) -> int:
     nd = 0
-    while isinstance(obj, _tp.Iterable):
+    while isinstance(obj, Iterable):
         nd += 1
         for x in obj:
             if x is not None:
@@ -172,18 +191,18 @@ class FixedView(BasicView):
 class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
-    def __init__(self, minuit: _tp.Any):
+    def __init__(self, minuit: Any):
         """Not to be initialized by users."""
         super(LimitView, self).__init__(minuit, 1)
 
-    def _get(self, i: int) -> _tp.Tuple[float, float]:
+    def _get(self, i: int) -> Tuple[float, float]:
         p = self._minuit._last_state[i]
         return (
             p.lower_limit if p.has_lower_limit else -np.inf,
             p.upper_limit if p.has_upper_limit else np.inf,
         )
 
-    def _set(self, i: int, arg: _mtp.UserBound) -> None:
+    def _set(self, i: int, arg: UserBound) -> None:
         state = self._minuit._last_state
         val = state[i].value
         err = state[i].error
@@ -208,7 +227,7 @@ class LimitView(BasicView):
         state.set_error(i, err)
 
 
-def _normalize_limit(lim: _mtp.UserBound) -> _tp.Tuple[float, float]:
+def _normalize_limit(lim: UserBound) -> Tuple[float, float]:
     if lim is None:
         return (-np.inf, np.inf)
     a, b = lim
@@ -232,7 +251,7 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, parameters: _tp.Union[_tp.Dict, _tp.Tuple]) -> _tp.Any:
+    def __new__(cls, parameters: Union[Dict, Tuple]) -> Any:
         """Not to be initialized by users."""
         if isinstance(parameters, dict):
             var2pos = parameters
@@ -245,27 +264,25 @@ class Matrix(np.ndarray):
         obj._var2pos = var2pos
         return obj
 
-    def __array_finalize__(self, obj: _tp.Any) -> None:
+    def __array_finalize__(self, obj: Any) -> None:
         """For internal use."""
         if obj is None:
-            self._var2pos: _tp.Dict[str, int] = {}
+            self._var2pos: Dict[str, int] = {}
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
     def __getitem__(  # type:ignore # mypy complains about incompatible signatures
         self,
-        key: _tp.Union[
+        key: Union[
             int,
             str,
-            _tp.Tuple[_tp.Union[int, str], _tp.Union[int, str]],
-            _tp.Iterable[_tp.Union[int, str]],
-            np.ndarray,
+            Tuple[Union[int, str], Union[int, str]],
+            Iterable[Union[int, str]],
+            NDArray,
             slice,
         ],
-    ) -> np.ndarray:
+    ) -> NDArray:
         """Get matrix element at key."""
-        import typing as _tp
-
         var2pos = self._var2pos
 
         def trafo(key):
@@ -283,14 +300,14 @@ class Matrix(np.ndarray):
             return super().__getitem__((sl, sl))
         if isinstance(key, (str, tuple)):
             return super().__getitem__(trafo(key))
-        if isinstance(key, _tp.Iterable) and not isinstance(key, np.ndarray):
+        if isinstance(key, Iterable) and not isinstance(key, np.ndarray):
             # iterable returns square matrix
             index2 = [trafo(k) for k in key]  # type:ignore
             t = super().__getitem__(index2).T
             return np.ndarray.__getitem__(t, index2).T
         return super().__getitem__(key)
 
-    def to_dict(self) -> _tp.Dict[_tp.Tuple[str, str], float]:
+    def to_dict(self) -> Dict[Tuple[str, str], float]:
         """
         Convert matrix to dict.
 
@@ -304,7 +321,7 @@ class Matrix(np.ndarray):
                 d[pi, pj] = float(self[i, j])
         return d
 
-    def to_table(self) -> _tp.Tuple[_tp.List[_tp.List[str]], _tp.Tuple[str, ...]]:
+    def to_table(self) -> Tuple[List[List[str]], Tuple[str, ...]]:
         """
         Convert matrix to tabular format.
 
@@ -408,7 +425,7 @@ class FMin:
 
     def __init__(
         self,
-        fmin: _tp.Any,
+        fmin: Any,
         algorithm: str,
         nfcn: int,
         ngrad: int,
@@ -655,7 +672,7 @@ class FMin:
     def _repr_html_(self) -> str:
         return _repr_html.fmin(self)  # type:ignore
 
-    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("<FMin ...>")
         else:
@@ -679,7 +696,7 @@ class Param:
 
     def __init__(
         self,
-        *args: _tp.Union[int, str, float, _tp.Optional[_tp.Tuple[float, float]], bool],
+        *args: Union[int, str, float, Optional[Tuple[float, float]], bool],
     ):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
@@ -717,7 +734,7 @@ class Param:
         """Get user-friendly text representation."""
         return _repr_text.params([self])  # type:ignore
 
-    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("Param(...)")
         else:
@@ -861,7 +878,7 @@ class MError:
         "min",
     )
 
-    def __init__(self, *args: _tp.Union[int, str, float, bool]):
+    def __init__(self, *args: Union[int, str, float, bool]):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
@@ -887,7 +904,7 @@ class MError:
     def _repr_html_(self) -> str:
         return _repr_html.merrors({None: self})  # type:ignore
 
-    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("<MError ...>")
         else:
@@ -931,8 +948,8 @@ class MErrors(OrderedDict):
 
 
 def _jacobi(
-    fn: _tp.Callable, x: np.ndarray, dx: np.ndarray, tol: float, debug: bool = False
-) -> _tp.Tuple[np.ndarray, np.ndarray]:
+    fn: Callable, x: NDArray, dx: NDArray, tol: float, debug: bool = False
+) -> Tuple[NDArray, NDArray]:
     assert x.ndim == 1
     assert dx.ndim == 1
     assert np.all(dx >= 0)
@@ -986,10 +1003,10 @@ def _jacobi(
 
 @_deprecated.deprecated("use jacobi.propagate instead from jacobi library")
 def propagate(
-    fn: _tp.Callable,
-    x: _tp.Collection[float],
-    cov: _tp.Collection[_tp.Collection[float]],
-) -> _tp.Tuple[np.ndarray, np.ndarray]:
+    fn: Callable,
+    x: Collection[float],
+    cov: Collection[Collection[float]],
+) -> Tuple[NDArray, NDArray]:
     """
     Numerically propagates the covariance into a new space.
 
@@ -1038,7 +1055,7 @@ class _Timer:
         self.value = monotonic() - self.value
 
 
-def make_func_code(params: _tp.Collection[str]) -> Namespace:
+def make_func_code(params: Collection[str]) -> Namespace:
     """
     Make a func_code object to fake a function signature.
 
@@ -1052,8 +1069,8 @@ def make_func_code(params: _tp.Collection[str]) -> Namespace:
 
 
 def make_with_signature(
-    callable: _tp.Callable, *varnames: str, **replacements: str
-) -> _tp.Callable:
+    callable: Callable, *varnames: str, **replacements: str
+) -> Callable:
     """
     Return new callable with altered signature.
 
@@ -1087,7 +1104,7 @@ def make_with_signature(
             raise ValueError("number of parameters do not match")
 
     class Caller:
-        def __init__(self, varnames: _tp.Tuple[str, ...]):
+        def __init__(self, varnames: Tuple[str, ...]):
             self.func_code = make_func_code(varnames)  # type:ignore
 
         def __call__(self, *args: object) -> object:
@@ -1097,8 +1114,8 @@ def make_with_signature(
 
 
 def merge_signatures(
-    callables: _tp.Iterable[_tp.Callable],
-) -> _tp.Tuple[_tp.List[str], _tp.List[_tp.Tuple[int, ...]]]:
+    callables: Iterable[Callable],
+) -> Tuple[List[str], List[Tuple[int, ...]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1124,8 +1141,6 @@ def merge_signatures(
         mapping contains the mapping of parameters indices from the merged signature to
         the original signatures.
     """
-    from typing import List
-
     args: List[str] = []
     mapping = []
 
@@ -1142,18 +1157,31 @@ def merge_signatures(
     return args, mapping
 
 
-def describe(callable: _tp.Callable) -> _tp.List[str]:
+@overload
+def describe(callable: Callable) -> List[str]:
+    ...  # pragma: no cover
+
+
+@overload
+def describe(callable: Callable, annotations: bool) -> Tuple[List[str], List[Any]]:
+    ...  # pragma: no cover
+
+
+def describe(callable, annotations=False):
     """
-    Attempt to extract the function argument names.
+    Attempt to extract the function argument names and annotations.
 
     Parameters
     ----------
     callable : callable
         Callable whose parameters should be extracted.
+    annotations : bool, optional
+        Whether to also extract annotations. Default is false.
 
     Returns
     -------
-    list
+    list or list, list
+        If describe is successful, return
         Returns a list of strings with the parameters names if successful and an empty
         list otherwise.
 
@@ -1208,7 +1236,7 @@ def describe(callable: _tp.Callable) -> _tp.List[str]:
     )
 
 
-def _arguments_from_func_code(obj: _tp.Any) -> _tp.List[str]:
+def _arguments_from_func_code(obj: Any) -> List[str]:
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(obj, "func_code"):
         fc = obj.func_code
@@ -1216,7 +1244,7 @@ def _arguments_from_func_code(obj: _tp.Any) -> _tp.List[str]:
     return []
 
 
-def _arguments_from_inspect(obj: _tp.Callable) -> _tp.List[str]:
+def _arguments_from_inspect(obj: Callable) -> List[str]:
     try:
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(obj)
@@ -1235,7 +1263,7 @@ def _arguments_from_inspect(obj: _tp.Callable) -> _tp.List[str]:
     return args
 
 
-def _arguments_from_docstring(obj: _tp.Callable) -> _tp.List[str]:
+def _arguments_from_docstring(obj: Callable) -> List[str]:
     doc = inspect.getdoc(obj)
 
     if doc is None:
@@ -1308,14 +1336,14 @@ def _guess_initial_step(val: float) -> float:
     return 1e-2 * abs(val) if val != 0 else 1e-1  # heuristic
 
 
-def _key2index_from_slice(var2pos: _tp.Dict[str, int], key: slice) -> _tp.List[int]:
+def _key2index_from_slice(var2pos: Dict[str, int], key: slice) -> List[int]:
     start = var2pos[key.start] if isinstance(key.start, str) else key.start
     stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
     start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
     return list(range(start, stop, step))
 
 
-def _key2index_item(var2pos: _tp.Dict[str, int], key: _tp.Union[str, int]) -> int:
+def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
     if isinstance(key, str):
         return var2pos[key]
     i = key
@@ -1327,14 +1355,12 @@ def _key2index_item(var2pos: _tp.Dict[str, int], key: _tp.Union[str, int]) -> in
 
 
 def _key2index(
-    var2pos: _tp.Dict[str, int],
-    key: _mtp.Key,
-) -> _tp.Union[int, _tp.List[int]]:
-    import typing as _tp
-
+    var2pos: Dict[str, int],
+    key: Key,
+) -> Union[int, List[int]]:
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
-    if not isinstance(key, str) and isinstance(key, _tp.Iterable):
+    if not isinstance(key, str) and isinstance(key, Iterable):
         # convert boolean masks into list of indices
         if isinstance(key[0], bool):
             key = [k for k in range(len(var2pos)) if key[k]]
@@ -1342,19 +1368,26 @@ def _key2index(
     return _key2index_item(var2pos, key)
 
 
-def _address_of_cfunc(fcn: _tp.Any) -> int:
-    from ctypes import c_void_p, c_double, c_uint32, POINTER, CFUNCTYPE, cast
+def _address_of_cfunc(fcn: Any) -> int:
+    from ctypes import (
+        c_void_p,
+        c_double,
+        c_uint32,
+        POINTER,
+        CFUNCTYPE,
+        cast as ctypes_cast,
+    )
 
     c_sig = CFUNCTYPE(c_double, c_uint32, POINTER(c_double))
 
     fcn = getattr(fcn, "ctypes", None)
     if isinstance(fcn, c_sig):
-        return cast(fcn, c_void_p).value  # type: ignore
+        return ctypes_cast(fcn, c_void_p).value  # type: ignore
     return 0
 
 
 def _iterate(x):
-    if not isinstance(x, _tp.Iterable):
+    if not isinstance(x, Iterable):
         yield x
     else:
         for xi in x:
