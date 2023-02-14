@@ -7,12 +7,14 @@ build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/
 	DEBUG=1 CMAKE_PARALLEL_INSTALL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python setup.py develop
 	touch build/done
 
-test: build/done
+build/testdep: build/done
 	python .ci/install_deps.py test
+	touch build/testdep
+
+test: build/done build/testdep
 	JUPYTER_PLATFORM_DIRS=1 python -m pytest -vv -r a --ff --pdb
 
-cov: build/done
-	python .ci/install_deps.py test
+cov: build/done build/testdep
 	# only computes the coverage in pure Python
 	rm -rf htmlcov
 	JUPYTER_PLATFORM_DIRS=1 coverage run -m pytest
@@ -20,15 +22,19 @@ cov: build/done
 	coverage run --append -m pytest
 	python -m pip uninstall --yes scipy matplotlib
 	coverage run --append -m pytest
-	coverage html -d htmlcov
 	pip install numba ipykernel ipywidgets scipy matplotlib
+	coverage html -d htmlcov
+	coverage report
 	@echo htmlcov/index.html
 
 doc: build/done build/html/done
 	@echo build/html/index.html
 
-build/html/done: doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
+build/docdep: build/done
 	python .ci/install_deps.py test doc
+	touch build/docdep
+
+build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
 	mkdir -p build/html
 	sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done

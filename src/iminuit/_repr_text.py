@@ -52,8 +52,7 @@ def fmin_fields(fm):
         s_ncall += f", Ngrad = {fm.ngrad}"
     return [
         f"{fm.algorithm}",
-        f"FCN = {fm.fval:.4g}"
-        + (f" (chi2/ndof = {rc:.1f})" if not np.isnan(rc) else ""),
+        f"FCN = {fm.fval:.4g}" + (f" (χ²/ndof = {rc:.1f})" if not np.isnan(rc) else ""),
         s_ncall,
         f"EDM = {fm.edm:.3g} (Goal: {fm.edm_goal:.3g})",
         f"time = {fm.time:.1f} sec" if fm.time >= 0.1 else "",

@@ -470,7 +470,7 @@ class FMin:
     @property
     def reduced_chi2(self) -> float:
         """
-        Get chi2/ndof of the fit.
+        Get χ²/ndof of the fit.
 
         This returns NaN if the cost function is unbinned, errordef is not 1,
         or if the cost function does not report the degrees of freedom.

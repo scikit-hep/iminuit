@@ -16,7 +16,6 @@ __pycache__
 *.pyxbldc
 *.root
 *.so
-*.html
 *.pyc
 *.o
 *.pkl
