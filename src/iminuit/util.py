@@ -1164,6 +1164,7 @@ def merge_signatures(
                 amap.append(args.index(k))
             else:
                 amap.append(len(args))
+                args.append(k)
                 anns.append(ann)
         mapping.append(tuple(amap))
 
