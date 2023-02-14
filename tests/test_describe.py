@@ -2,6 +2,7 @@ from iminuit.util import describe, make_func_code
 from math import ldexp
 import platform
 from functools import wraps
+import pytest
 
 is_pypy = platform.python_implementation() == "PyPy"
 
@@ -180,3 +181,38 @@ def test_from_bad_docstring_2():
         pass
 
     assert describe(foo) == []
+
+
+def test_with_type_hints_1():
+    try:
+        from typing import get_type_hints, NamedTuple  # noqa
+    except ImportError:
+        pytest.skip(reason="could not import typing.get_type_hints")
+
+    from typing import Annotated
+    from numpy.typing import NDArray
+    from iminuit.typing import ValueRange
+
+    def foo(x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float):
+        ...
+
+    r = describe(foo, annotations=True)
+    assert r == [("x", None), ("a", ValueRange(0, 1)), ("b", None)]
+
+
+def test_with_type_hints_2():
+    try:
+        from typing import get_type_hints, NamedTuple  # noqa
+    except ImportError:
+        pytest.skip(reason="could not import typing.get_type_hints")
+
+    from typing import Annotated
+    from numpy.typing import NDArray
+    from iminuit.typing import ValueRange
+
+    class Foo:
+        def __call__(self, x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float):
+            ...
+
+    r = describe(Foo(), annotations=True)
+    assert r == [("x", None), ("a", ValueRange(0, 1)), ("b", None)]

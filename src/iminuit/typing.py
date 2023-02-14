@@ -9,6 +9,7 @@ from typing import (
     Collection,
     List,
     Union,
+    NamedTuple,
     runtime_checkable,
 )
 from numpy.typing import NDArray
@@ -39,3 +40,10 @@ class LossFunction(Protocol):
     def __call__(self, z: NDArray) -> NDArray:
         """Evaluate loss function on values."""
         ...  # pragma: no cover
+
+
+class ValueRange(NamedTuple):
+    """Annotation for the allowed value range of a model parameter."""
+
+    min: float
+    max: float

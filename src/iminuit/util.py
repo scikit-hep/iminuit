@@ -7,7 +7,7 @@ import inspect
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
-from iminuit.typing import Key, UserBound
+from iminuit.typing import Key, UserBound, ValueRange
 import numpy as np
 from numpy.typing import NDArray
 from typing import (
@@ -1163,7 +1163,7 @@ def describe(callable: Callable) -> List[str]:
 
 
 @overload
-def describe(callable: Callable, annotations: bool) -> Tuple[List[str], List[Any]]:
+def describe(callable: Callable, annotations: bool) -> List[Tuple[str, Any]]:
     ...  # pragma: no cover
 
 
@@ -1180,10 +1180,10 @@ def describe(callable, annotations=False):
 
     Returns
     -------
-    list or list, list
-        If describe is successful, return
-        Returns a list of strings with the parameters names if successful and an empty
-        list otherwise.
+    list
+        If annotate is False, return list of strings with the parameters names if
+        successful and an empty list otherwise. If annotations is True, return list of
+        tuples of a string and the type annotation for each parameter.
 
     Notes
     -----
@@ -1229,29 +1229,58 @@ def describe(callable, annotations=False):
     """
     if _address_of_cfunc(callable) != 0:
         return []
-    return (
-        _arguments_from_func_code(callable)
-        or _arguments_from_inspect(callable)
-        or _arguments_from_docstring(callable)
+
+    r = (
+        _describe_func_code(callable)
+        or _describe_type_hints(callable)
+        or _describe_inspect(callable)
+        or _describe_docstring(callable)
     )
 
+    if not annotations:
+        return [x[0] for x in r]
+    return r
 
-def _arguments_from_func_code(obj: Any) -> List[str]:
+
+def _describe_func_code(callable):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
-    if hasattr(obj, "func_code"):
-        fc = obj.func_code
-        return list(fc.co_varnames[: fc.co_argcount])
+    if hasattr(callable, "func_code"):
+        fc = callable.func_code
+        return [(x, None) for x in fc.co_varnames[: fc.co_argcount]]
     return []
 
 
-def _arguments_from_inspect(obj: Callable) -> List[str]:
+def _describe_type_hints(callable):
+    try:
+        # requires Python-3.9+
+        from typing import get_type_hints, Annotated  # noqa
+    except ImportError:
+        return []
+
+    try:
+        raw = get_type_hints(callable, include_extras=True)
+    except TypeError:
+        return []
+
+    r = []
+    for name, ann in raw.items():
+        md = None
+        for x in getattr(ann, "__metadata__", ()):
+            if isinstance(x, ValueRange):
+                md = x
+                break
+        r.append((name, md))
+    return r
+
+
+def _describe_inspect(callable):
     try:
         # fails for builtin on Windows and OSX in Python 3.6
-        signature = inspect.signature(obj)
+        signature = inspect.signature(callable)
     except ValueError:
         return []
 
-    args = []
+    r = []
     for name, par in signature.parameters.items():
         # stop when variable number of arguments is encountered
         if par.kind is inspect.Parameter.VAR_POSITIONAL:
@@ -1259,12 +1288,12 @@ def _arguments_from_inspect(obj: Callable) -> List[str]:
         # stop when keyword argument is encountered
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
-        args.append(name)
-    return args
+        r.append((name, None))
+    return r
 
 
-def _arguments_from_docstring(obj: Callable) -> List[str]:
-    doc = inspect.getdoc(obj)
+def _describe_docstring(callable):
+    doc = inspect.getdoc(callable)
 
     if doc is None:
         return []
@@ -1277,7 +1306,7 @@ def _arguments_from_docstring(obj: Callable) -> List[str]:
     try:
         # function wrapper functools.partial does not offer __name__,
         # we cannot extract the signature in this case
-        name = obj.__name__
+        name = callable.__name__
     except AttributeError:
         return []
 
@@ -1297,6 +1326,7 @@ def _arguments_from_docstring(obj: Callable) -> List[str]:
             break
     items = [x.strip(" []") for x in doc[start : start + ich].split(",")]
 
+    # strip self if callable is a class method
     if items[0] == "self":
         items = items[1:]
 
@@ -1323,13 +1353,10 @@ def _arguments_from_docstring(obj: Callable) -> List[str]:
             b = len(s)
         return s[a:b].strip()
 
-    items = [extract(x) for x in items if x != "*"]
-
     #   "iterable", "default", "key"
     #   "arg1", "arg2", "key"
     #   "ncall_me", "resume", "nsplit"
-
-    return items
+    return [(extract(x), None) for x in items if x != "*"]
 
 
 def _guess_initial_step(val: float) -> float:
