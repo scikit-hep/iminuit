@@ -1081,7 +1081,7 @@ def make_func_code(params: Collection[str]) -> Namespace:
 
 
 def make_with_signature(
-    callable: Callable, *varnames: str, annotations: bool = False, **replacements: str
+    callable: Callable, *varnames: str, **replacements: str
 ) -> Callable:
     """
     Return new callable with altered signature.
@@ -1090,14 +1090,14 @@ def make_with_signature(
     ----------
     *varnames: sequence of str
         Replace the first N argument names with these.
-    **replacements: mapping of str to str
+    **replacements: mapping of str to str, optional
         Replace old argument name (key) with new argument name (value).
 
     Returns
     -------
     callable with new argument names.
     """
-    d = describe(callable, annotations=annotations)
+    d = describe(callable, annotations=True)
     if d:
         old_names = [k[0] for k in d]
         n = len(varnames)
@@ -1116,7 +1116,7 @@ def make_with_signature(
 
     class Caller:
         def __init__(self, signature):
-            self.func_code = make_func_code([k[0] for k in signature])
+            self.func_code = make_func_code([s[0] for s in signature])
             self._annotated_args = signature
 
         def __call__(self, *args: object) -> object:
@@ -1153,19 +1153,22 @@ def merge_signatures(
         mapping contains the mapping of parameters indices from the merged signature to
         the original signatures.
     """
-    args: List = []
+    args: List[str] = []
+    anns: List[Optional[ValueRange]] = []
     mapping = []
 
     for f in callables:
-        map = []
+        amap = []
         for i, (k, ann) in enumerate(describe(f, annotations=True)):
             if k in args:
-                map.append(args.index(k))
+                amap.append(args.index(k))
             else:
-                map.append(len(args))
-                args.append((k, ann))
-        mapping.append(tuple(map))
+                amap.append(len(args))
+                anns.append(ann)
+        mapping.append(tuple(amap))
 
+    if annotations:
+        return list(zip(args, anns)), mapping
     return args, mapping
 
 
@@ -1269,19 +1272,19 @@ def _describe_type_hints(callable):
         return []
 
     if hasattr(callable, "_annotated_args"):
-        raw = callable._annotated_args
-    else:
-        raw = {}
-        # if callable is functor, need to check __call__ first
-        for c in (callable.__call__, callable):
-            try:
-                raw = get_type_hints(c, include_extras=True)
-                if raw:
-                    break
-            except TypeError:
-                pass
-        args = _describe_func_code(callable) or _describe_inspect(callable)
-        raw = {k: raw.get(k, None) for k in args}
+        return callable._annotated_args
+
+    raw = {}
+    # if callable is functor, need to check __call__ first
+    for c in (callable.__call__, callable):
+        try:
+            raw = get_type_hints(c, include_extras=True)
+            if raw:
+                break
+        except TypeError:
+            pass
+    args = _describe_func_code(callable) or _describe_inspect(callable)
+    raw = {k: raw.get(k, None) for k in args}
 
     r = []
     for name, ann in raw.items():
