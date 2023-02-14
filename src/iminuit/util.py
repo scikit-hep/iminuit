@@ -33,7 +33,19 @@ __all__ = (
     "IMinuitWarning",
     "HesseFailedWarning",
     "PerformanceWarning",
-    "BasicView",
+    "ValueView",
+    "FixedView",
+    "LimitView",
+    "Matrix",
+    "FMin",
+    "Param",
+    "Params",
+    "MError",
+    "MErrors",
+    "make_func_code",
+    "make_with_signature",
+    "merge_signatures",
+    "describe",
 )
 
 
@@ -1069,7 +1081,7 @@ def make_func_code(params: Collection[str]) -> Namespace:
 
 
 def make_with_signature(
-    callable: Callable, *varnames: str, **replacements: str
+    callable: Callable, *varnames: str, annotations: bool = False, **replacements: str
 ) -> Callable:
     """
     Return new callable with altered signature.
@@ -1085,37 +1097,37 @@ def make_with_signature(
     -------
     callable with new argument names.
     """
-    if replacements:
-        d = describe(callable)
-        if d:
-            n = len(varnames)
-            if n > len(d):
-                raise ValueError("varnames longer than original signature")
-            d[:n] = varnames
-        for k, v in replacements.items():
-            d[d.index(k)] = v
-        vars = tuple(d)
-    else:
-        vars = varnames
+    d = describe(callable, annotations=annotations)
+    if d:
+        old_names = [k[0] for k in d]
+        n = len(varnames)
+        if n > len(d):
+            raise ValueError("varnames longer than original signature")
+        for i, new in enumerate(varnames):
+            d[i] = (new, d[i][1])
+        for old, new in replacements.items():
+            i = old_names.index(old)
+            d[i] = (new, d[i][1])
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
-        if c.co_argcount != len(vars):
+        if c.co_argcount != len(d):
             raise ValueError("number of parameters do not match")
 
     class Caller:
-        def __init__(self, varnames: Tuple[str, ...]):
-            self.func_code = make_func_code(varnames)  # type:ignore
+        def __init__(self, signature):
+            self.func_code = make_func_code([k[0] for k in signature])
+            self._annotated_args = signature
 
         def __call__(self, *args: object) -> object:
             return callable(*args)
 
-    return Caller(vars)
+    return Caller(d)
 
 
 def merge_signatures(
-    callables: Iterable[Callable],
-) -> Tuple[List[str], List[Tuple[int, ...]]]:
+    callables: Iterable[Callable], annotations: bool = False
+) -> Tuple[List, List[Tuple[int, ...]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1141,17 +1153,17 @@ def merge_signatures(
         mapping contains the mapping of parameters indices from the merged signature to
         the original signatures.
     """
-    args: List[str] = []
+    args: List = []
     mapping = []
 
     for f in callables:
         map = []
-        for i, k in enumerate(describe(f)):
+        for i, (k, ann) in enumerate(describe(f, annotations=True)):
             if k in args:
                 map.append(args.index(k))
             else:
                 map.append(len(args))
-                args.append(k)
+                args.append((k, ann))
         mapping.append(tuple(map))
 
     return args, mapping
@@ -1167,7 +1179,7 @@ def describe(callable: Callable, annotations: bool) -> List[Tuple[str, Any]]:
     ...  # pragma: no cover
 
 
-def describe(callable, annotations=False):
+def describe(callable, *, annotations=False):
     """
     Attempt to extract the function argument names and annotations.
 
@@ -1231,10 +1243,9 @@ def describe(callable, annotations=False):
         return []
 
     r = (
-        _describe_func_code(callable)
-        or _describe_type_hints(callable)
-        or _describe_inspect(callable)
-        or _describe_docstring(callable)
+        _describe_type_hints(callable)
+        or [(k, None) for k in _describe_inspect(callable)]
+        or [(k, None) for k in _describe_docstring(callable)]
     )
 
     if not annotations:
@@ -1246,7 +1257,7 @@ def _describe_func_code(callable):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(callable, "func_code"):
         fc = callable.func_code
-        return [(x, None) for x in fc.co_varnames[: fc.co_argcount]]
+        return [x for x in fc.co_varnames[: fc.co_argcount]]
     return []
 
 
@@ -1257,10 +1268,20 @@ def _describe_type_hints(callable):
     except ImportError:
         return []
 
-    try:
-        raw = get_type_hints(callable, include_extras=True)
-    except TypeError:
-        return []
+    if hasattr(callable, "_annotated_args"):
+        raw = callable._annotated_args
+    else:
+        raw = {}
+        # if callable is functor, need to check __call__ first
+        for c in (callable.__call__, callable):
+            try:
+                raw = get_type_hints(c, include_extras=True)
+                if raw:
+                    break
+            except TypeError:
+                pass
+        args = _describe_func_code(callable) or _describe_inspect(callable)
+        raw = {k: raw.get(k, None) for k in args}
 
     r = []
     for name, ann in raw.items():
@@ -1288,7 +1309,7 @@ def _describe_inspect(callable):
         # stop when keyword argument is encountered
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
-        r.append((name, None))
+        r.append(name)
     return r
 
 
@@ -1356,7 +1377,7 @@ def _describe_docstring(callable):
     #   "iterable", "default", "key"
     #   "arg1", "arg2", "key"
     #   "ncall_me", "resume", "nsplit"
-    return [(extract(x), None) for x in items if x != "*"]
+    return [extract(x) for x in items if x != "*"]
 
 
 def _guess_initial_step(val: float) -> float:
