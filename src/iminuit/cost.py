@@ -1332,8 +1332,7 @@ class Template(BinnedCost):
                 mu += a * t1
                 mu_var += a**2 * t2
                 i += 1
-            else:
-                assert isinstance(t2, int)
+            elif isinstance(t1, Model) and isinstance(t2, int):
                 d = t1(self._model_xe, *args[i : i + t2])
                 d = _normalize_model_output(d)
                 if self._xe_shape is not None:
@@ -1346,6 +1345,8 @@ class Template(BinnedCost):
                 mu += d
                 mu_var += np.ones_like(mu) * 1e-300
                 i += t2
+            else:
+                assert False  # never arrive here
         return mu, mu_var
 
     def _call(self, args: Sequence[float]) -> float:
