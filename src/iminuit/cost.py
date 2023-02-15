@@ -1345,8 +1345,8 @@ class Template(BinnedCost):
                 mu += d
                 mu_var += np.ones_like(mu) * 1e-300
                 i += t2
-            else:
-                assert False  # never arrive here
+            else:  # never arrive here
+                assert False  # pragma: no cover
         return mu, mu_var
 
     def _call(self, args: Sequence[float]) -> float:

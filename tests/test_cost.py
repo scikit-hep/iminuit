@@ -1149,6 +1149,8 @@ def test_Template(method):
 
     c = Template(n, xe, t, method=method)
     m = Minuit(c, 1, 1)
+    assert m.limits[0] == (0, np.inf)
+    assert m.limits[1] == (0, np.inf)
     m.migrad()
     assert m.valid
     assert m.ndof == 1
@@ -1285,6 +1287,13 @@ def test_Template_with_model():
     m.limits["x0", "x1_n"] = (0, None)
     m.limits["x1_sigma"] = (0.1, None)
     m.limits["x1_mu"] = (xe[0], xe[-1])
+    m.migrad()
+    assert m.valid
+
+    c2 = Template(n, xe, (t, scaled_cdf), name=("a", "b", "c", "d"))
+    assert describe(c2) == ["a", "b", "c", "d"]
+    m = Minuit(c2, 1, 1, 0.5, 1)
+    m.limits["d"] = (0.1, None)
     m.migrad()
     assert m.valid
 
