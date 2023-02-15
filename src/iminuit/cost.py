@@ -50,7 +50,6 @@ documentation for details.
 """
 from .util import (
     describe,
-    make_func_code,
     merge_signatures,
     PerformanceWarning,
     _smart_sampling,
@@ -493,7 +492,10 @@ class Cost(abc.ABC):
     :meta private:
     """
 
-    __slots__ = ("_func_code", "_limits", "_verbose")
+    __slots__ = ("_parameters", "_verbose")
+
+    _parameters: Dict[str, Optional[Tuple[float, float]]]
+    _verbose: int
 
     @property
     def errordef(self):
@@ -506,15 +508,6 @@ class Cost(abc.ABC):
 
     def _errordef(self):
         return CHISQUARE
-
-    @property
-    def func_code(self):
-        """
-        For internal use.
-
-        :meta private:
-        """
-        return self._func_code
 
     @property
     def ndata(self):
@@ -547,8 +540,7 @@ class Cost(abc.ABC):
         self, parameters: Dict[str, Optional[Tuple[float, float]]], verbose: int
     ):
         """For internal use."""
-        self._func_code = make_func_code(parameters)
-        self._limits = parameters
+        self._parameters = parameters
         self._verbose = verbose
 
     def __add__(self, rhs):
@@ -1857,7 +1849,7 @@ class NormalConstraint(Cost):
 
         args = np.atleast_1d(args)
 
-        par = self.func_code.co_varnames
+        par = self._parameters
         val = self.value
         cov = self.covariance
         if cov.ndim == 2:

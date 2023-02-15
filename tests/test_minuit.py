@@ -229,7 +229,8 @@ def test_Func1():
 
 
 def test_Func2():
-    func_test_helper(Func2())
+    with pytest.warns(np.VisibleDeprecationWarning):
+        func_test_helper(Func2())
 
 
 def test_no_signature():

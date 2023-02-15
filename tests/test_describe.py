@@ -4,6 +4,7 @@ import platform
 from functools import wraps
 import pytest
 from sys import version_info as pyver
+import numpy as np
 
 is_pypy = platform.python_implementation() == "PyPy"
 
@@ -92,7 +93,8 @@ def test_generic_functor_with_fake_func():
         def __call__(self, *args):
             pass
 
-    assert describe(A()) == ["x", "y"]
+    with pytest.warns(np.VisibleDeprecationWarning):
+        assert describe(A()) == ["x", "y"]
 
 
 def test_decorated_function():

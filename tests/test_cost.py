@@ -861,20 +861,20 @@ def test_CostSum_1():
         return c
 
     lsq1 = LeastSquares(1, 2, 3, model1)
-    assert lsq1.func_code.co_varnames == ("a",)
+    assert describe(lsq1) == ["a"]
 
     lsq2 = LeastSquares(1, 3, 4, model2)
-    assert lsq2.func_code.co_varnames == ("b", "a")
+    assert describe(lsq2) == ["b", "a"]
 
     lsq3 = LeastSquares(1, 1, 1, model3)
-    assert lsq3.func_code.co_varnames == ("c",)
+    assert describe(lsq3) == ["c"]
 
     lsq12 = lsq1 + lsq2
     assert lsq12._items == [lsq1, lsq2]
     assert isinstance(lsq12, CostSum)
     assert isinstance(lsq1, LeastSquares)
     assert isinstance(lsq2, LeastSquares)
-    assert lsq12.func_code.co_varnames == ("a", "b")
+    assert describe(lsq12) == ["a", "b"]
     assert lsq12.ndata == 2
 
     assert lsq12(1, 2) == lsq1(1) + lsq2(2, 1)
@@ -888,22 +888,22 @@ def test_CostSum_1():
 
     lsq121 = lsq12 + lsq1
     assert lsq121._items == [lsq1, lsq2, lsq1]
-    assert lsq121.func_code.co_varnames == ("a", "b")
+    assert describe(lsq121) == ["a", "b"]
     assert lsq121.ndata == 3
 
     lsq312 = lsq3 + lsq12
     assert lsq312._items == [lsq3, lsq1, lsq2]
-    assert lsq312.func_code.co_varnames == ("c", "a", "b")
+    assert describe(lsq312) == ["c", "a", "b"]
     assert lsq312.ndata == 3
 
     lsq31212 = lsq312 + lsq12
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2]
-    assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+    assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 5
 
     lsq31212 += lsq1
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
-    assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+    assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 6
 
 
@@ -966,8 +966,8 @@ def test_NormalConstraint_1():
 
     lsq1 = LeastSquares(0, 1, 1, model)
     lsq2 = lsq1 + NormalConstraint("a", 1, 0.1)
-    assert lsq1.func_code.co_varnames == ("a",)
-    assert lsq2.func_code.co_varnames == ("a",)
+    assert describe(lsq1) == ["a"]
+    assert describe(lsq2) == ["a"]
     assert lsq1.ndata == 1
     assert lsq2.ndata == 2
 
@@ -990,9 +990,9 @@ def test_NormalConstraint_2():
     rho = 0.5
     cov = ((sa**2, rho * sa * sb), (rho * sa * sb, sb**2))
     lsq3 = lsq1 + NormalConstraint(("a", "b"), (1, 2), cov)
-    assert lsq1.func_code.co_varnames == ("a", "b")
-    assert lsq2.func_code.co_varnames == ("a", "b")
-    assert lsq3.func_code.co_varnames == ("a", "b")
+    assert describe(lsq1) == ["a", "b"]
+    assert describe(lsq2) == ["a", "b"]
+    assert describe(lsq3) == ["a", "b"]
     assert lsq1.ndata == 2
     assert lsq2.ndata == 4
 
@@ -1036,7 +1036,7 @@ def test_NormalConstraint_pickle():
     c = NormalConstraint(("a", "b"), (1, 2), (3, 4))
     b = pickle.dumps(c)
     c2 = pickle.loads(b)
-    assert c.func_code == c2.func_code
+    assert describe(c) == describe(c2) and describe(c) == ["a", "b"]
     assert_equal(c.value, c2.value)
     assert_equal(c.covariance, c2.covariance)
 

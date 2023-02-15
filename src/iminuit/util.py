@@ -177,7 +177,8 @@ class ErrorView(BasicView):
         if value <= 0:
             warnings.warn(
                 "Assigned errors must be positive. "
-                "Non-positive values are replaced by a heuristic."
+                "Non-positive values are replaced by a heuristic.",
+                IMinuitWarning,
             )
             value = _guess_initial_step(value)
         self._minuit._last_state.set_error(i, value)
@@ -1067,6 +1068,10 @@ class _Timer:
         self.value = monotonic() - self.value
 
 
+@_deprecated.deprecated(
+    "Use of `func_code` attribute to declare parameters is deprecated. "
+    "Use `_parameters` instead, which is a dict of parameter names to limits."
+)
 def make_func_code(params: Collection[str]) -> Namespace:
     """
     Make a func_code object to fake a function signature.
@@ -1097,9 +1102,9 @@ def make_with_signature(
     -------
     callable with new argument names.
     """
-    ann = describe(callable, annotations=True)
-    if ann:
-        args = list(ann)
+    pars = describe(callable, annotations=True)
+    if pars:
+        args = list(pars)
         n = len(varnames)
         if n > len(args):
             raise ValueError("varnames longer than original signature")
@@ -1107,22 +1112,21 @@ def make_with_signature(
         for old, new in replacements.items():
             i = args.index(old)
             args[i] = new
-        ann = {new: ann[old] for (new, old) in zip(args, ann)}
+        pars = {new: pars[old] for (new, old) in zip(args, pars)}
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
-        if c.co_argcount != len(ann):
+        if c.co_argcount != len(pars):
             raise ValueError("number of parameters do not match")
 
     class Caller:
-        def __init__(self, ann):
-            self.func_code = make_func_code(list(ann))
-            self._value_range_annotations = ann
+        def __init__(self, parameters):
+            self._parameters = parameters
 
         def __call__(self, *args: object) -> object:
             return callable(*args)
 
-    return Caller(ann)
+    return Caller(pars)
 
 
 def merge_signatures(
@@ -1251,6 +1255,7 @@ def describe(callable, *, annotations=False):
 
     args = (
         _arguments_from_func_code(callable)
+        or getattr(callable, "_parameters", {})
         or _parameters_from_inspect(callable)
         or _arguments_from_docstring(callable)
     )
@@ -1258,10 +1263,7 @@ def describe(callable, *, annotations=False):
     is_parameters = isinstance(args, dict)
 
     if annotations:
-        limits = getattr(callable, "_limits", {})
-        if not limits and is_parameters:
-            return args
-        return {k: limits.get(k, None) for k in args}
+        return args if is_parameters else {k: None for k in args}
     # for backward-compatibility
     return list(args)
 
@@ -1269,6 +1271,12 @@ def describe(callable, *, annotations=False):
 def _arguments_from_func_code(callable):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(callable, "func_code"):
+        warnings.warn(
+            "Using the `func_code` attribute to dynamically declare parameter names is "
+            "deprecated, use the attribute `_parameters` instead (a tuple of strings)",
+            np.VisibleDeprecationWarning,
+            stacklevel=1,
+        )
         fc = callable.func_code
         return [x for x in fc.co_varnames[: fc.co_argcount]]
     return []

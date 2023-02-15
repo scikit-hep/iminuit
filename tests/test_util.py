@@ -441,11 +441,13 @@ def test_address_of_cfunc_bad_signature():
 
 
 def test_make_func_code():
-    fc = util.make_func_code(["a", "b"])
+    with pytest.warns(np.VisibleDeprecationWarning):
+        fc = util.make_func_code(["a", "b"])
     assert fc.co_varnames == ("a", "b")
     assert fc.co_argcount == 2
 
-    fc = util.make_func_code(("x",))
+    with pytest.warns(np.VisibleDeprecationWarning):
+        fc = util.make_func_code(("x",))
     assert fc.co_varnames == ("x",)
     assert fc.co_argcount == 1
 
