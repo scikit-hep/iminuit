@@ -7,7 +7,7 @@ import inspect
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
-from iminuit.typing import Key, UserBound, ValueRange
+from iminuit.typing import Key, UserBound
 import numpy as np
 from numpy.typing import NDArray
 from typing import (
@@ -1293,8 +1293,8 @@ def _get_limit(annotation):
 
     lim = None
     for x in getattr(annotation, "__metadata__", ()):
-        if isinstance(x, ValueRange):
-            lim = (x.min, x.max)
+        if x.__class__.__name__ == "ValueRange":
+            a, b = x
             break
     return lim
 
