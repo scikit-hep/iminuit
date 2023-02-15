@@ -19,9 +19,9 @@ Further information:
 * Code: https://github.com/scikit-hep/iminuit
 * Docs: https://iminuit.readthedocs.io
 """
-from .minuit import Minuit
-from .minimize import minimize
-from .util import describe
+from iminuit.minuit import Minuit
+from iminuit.minimize import minimize
+from iminuit.util import describe
 from importlib import metadata
 
 __version__ = metadata.version("iminuit")

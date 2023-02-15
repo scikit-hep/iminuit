@@ -15,7 +15,6 @@ from iminuit._core import (
     MnUserParameterState,
     FunctionMinimum,
 )
-from iminuit.typing import ValueRange
 import numpy as np
 import typing as _tp
 
@@ -597,17 +596,13 @@ class Minuit:
             start = np.array(args)
         del args
 
-        signature = mutil.describe(fcn, annotations=True)
-        limits: _tp.List[_tp.Optional[ValueRange]] = []
+        annotated = mutil.describe(fcn, annotations=True)
         if name is None:
-            name = [v[0] for v in signature]
+            name = list(annotated)
             if len(name) == 0 or (array_call and len(name) == 1):
                 name = tuple(f"x{i}" for i in range(len(start)))
-                limits = []
-            else:
-                limits = [v[1] for v in signature]
-        elif len(name) == len(signature):
-            limits = [v[1] for v in signature]
+        elif len(name) == len(annotated):
+            annotated = {new: annotated[old] for (old, new) in zip(annotated, name)}
 
         if len(start) == 0 and len(kwds) == 0:
             raise RuntimeError(
@@ -640,10 +635,9 @@ class Minuit:
 
         self.reset()
 
-        assert not limits or len(limits) == len(name)
-        for i, lim in enumerate(limits):
+        for k, lim in annotated.items():
             if lim is not None:
-                self.limits[i] = lim
+                self.limits[k] = lim
 
     def reset(self) -> "Minuit":  # requires from __future__ import annotations
         """

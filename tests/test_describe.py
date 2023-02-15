@@ -3,6 +3,7 @@ from math import ldexp
 import platform
 from functools import wraps
 import pytest
+from sys import version_info as pyver
 
 is_pypy = platform.python_implementation() == "PyPy"
 
@@ -183,12 +184,8 @@ def test_from_bad_docstring_2():
     assert describe(foo) == []
 
 
-def test_with_type_hints_1():
-    try:
-        from typing import get_type_hints, NamedTuple  # noqa
-    except ImportError:
-        pytest.skip(reason="could not import typing.get_type_hints")
-
+@pytest.mark.skipif(pyver < (3, 9), reason="Annotated required Python-3.9")
+def test_with_type_hints():
     from typing import Annotated
     from numpy.typing import NDArray
     from iminuit.typing import ValueRange
@@ -197,22 +194,14 @@ def test_with_type_hints_1():
         ...
 
     r = describe(foo, annotations=True)
-    assert r == [("x", None), ("a", ValueRange(0, 1)), ("b", None)]
-
-
-def test_with_type_hints_2():
-    try:
-        from typing import get_type_hints, NamedTuple  # noqa
-    except ImportError:
-        pytest.skip(reason="could not import typing.get_type_hints")
-
-    from typing import Annotated
-    from numpy.typing import NDArray
-    from iminuit.typing import ValueRange
+    assert r == {"x": None, "a": (0, 1), "b": None}
 
     class Foo:
         def __call__(self, x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float):
             ...
 
+    r = describe(Foo.__call__, annotations=True)
+    assert r == {"self": None, "x": None, "a": (0, 1), "b": None}
+
     r = describe(Foo(), annotations=True)
-    assert r == [("x", None), ("a", ValueRange(0, 1)), ("b", None)]
+    assert r == {"x": None, "a": (0, 1), "b": None}

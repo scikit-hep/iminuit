@@ -1097,37 +1097,37 @@ def make_with_signature(
     -------
     callable with new argument names.
     """
-    d = describe(callable, annotations=True)
-    if d:
-        old_names = [k[0] for k in d]
+    ann = describe(callable, annotations=True)
+    if ann:
+        args = list(ann)
         n = len(varnames)
-        if n > len(d):
+        if n > len(args):
             raise ValueError("varnames longer than original signature")
-        for i, new in enumerate(varnames):
-            d[i] = (new, d[i][1])
+        args[:n] = varnames
         for old, new in replacements.items():
-            i = old_names.index(old)
-            d[i] = (new, d[i][1])
+            i = args.index(old)
+            args[i] = new
+        ann = {new: ann[old] for (new, old) in zip(args, ann)}
 
     if hasattr(callable, "__code__"):
         c = callable.__code__
-        if c.co_argcount != len(d):
+        if c.co_argcount != len(ann):
             raise ValueError("number of parameters do not match")
 
     class Caller:
-        def __init__(self, signature):
-            self.func_code = make_func_code([s[0] for s in signature])
-            self._annotated_args = signature
+        def __init__(self, ann):
+            self.func_code = make_func_code(list(ann))
+            self._value_range_annotations = ann
 
         def __call__(self, *args: object) -> object:
             return callable(*args)
 
-    return Caller(d)
+    return Caller(ann)
 
 
 def merge_signatures(
     callables: Iterable[Callable], annotations: bool = False
-) -> Tuple[List, List[Tuple[int, ...]]]:
+) -> Tuple[Any, List[Tuple[int, ...]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1154,12 +1154,12 @@ def merge_signatures(
         the original signatures.
     """
     args: List[str] = []
-    anns: List[Optional[ValueRange]] = []
+    anns: List[Optional[Tuple[float, float]]] = []
     mapping = []
 
     for f in callables:
         amap = []
-        for i, (k, ann) in enumerate(describe(f, annotations=True)):
+        for i, (k, ann) in enumerate(describe(f, annotations=True).items()):
             if k in args:
                 amap.append(args.index(k))
             else:
@@ -1169,7 +1169,7 @@ def merge_signatures(
         mapping.append(tuple(amap))
 
     if annotations:
-        return list(zip(args, anns)), mapping
+        return {k: a for (k, a) in zip(args, anns)}, mapping
     return args, mapping
 
 
@@ -1179,7 +1179,9 @@ def describe(callable: Callable) -> List[str]:
 
 
 @overload
-def describe(callable: Callable, annotations: bool) -> List[Tuple[str, Any]]:
+def describe(
+    callable: Callable, annotations: bool
+) -> Dict[str, Optional[Tuple[float, float]]]:
     ...  # pragma: no cover
 
 
@@ -1196,10 +1198,11 @@ def describe(callable, *, annotations=False):
 
     Returns
     -------
-    list
+    list or dict
         If annotate is False, return list of strings with the parameters names if
-        successful and an empty list otherwise. If annotations is True, return list of
-        tuples of a string and the type annotation for each parameter.
+        successful and an empty list otherwise. If annotations is True, return a dict,
+        which maps parameter names to ValueRange annotations. For parameters without
+        ValueRange annotations, the dict maps to None.
 
     Notes
     -----
@@ -1244,20 +1247,26 @@ def describe(callable, *, annotations=False):
         def fcn(a, b, c=1): ...
     """
     if _address_of_cfunc(callable) != 0:
-        return []
+        return {} if annotations else []
 
-    r = (
-        _describe_type_hints(callable)
-        or [(k, None) for k in _describe_inspect(callable)]
-        or [(k, None) for k in _describe_docstring(callable)]
+    args = (
+        _arguments_from_func_code(callable)
+        or _parameters_from_inspect(callable)
+        or _arguments_from_docstring(callable)
     )
 
-    if not annotations:
-        return [x[0] for x in r]
-    return r
+    is_parameters = isinstance(args, dict)
+
+    if annotations:
+        limits = getattr(callable, "_limits", {})
+        if not limits and is_parameters:
+            return args
+        return {k: limits.get(k, None) for k in args}
+    # for backward-compatibility
+    return list(args)
 
 
-def _describe_func_code(callable):
+def _arguments_from_func_code(callable):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(callable, "func_code"):
         fc = callable.func_code
@@ -1265,47 +1274,25 @@ def _describe_func_code(callable):
     return []
 
 
-def _describe_type_hints(callable):
-    try:
-        # requires Python-3.9+
-        from typing import get_type_hints, Annotated  # noqa
-    except ImportError:
-        return []
-
-    if hasattr(callable, "_annotated_args"):
-        return callable._annotated_args
-
-    raw = {}
-    # if callable is functor, need to check __call__ first
-    for c in (callable.__call__, callable):
-        try:
-            raw = get_type_hints(c, include_extras=True)
-            if raw:
-                break
-        except TypeError:
-            pass
-    args = _describe_func_code(callable) or _describe_inspect(callable)
-    raw = {k: raw.get(k, None) for k in args}
-
-    r = []
-    for name, ann in raw.items():
-        md = None
-        for x in getattr(ann, "__metadata__", ()):
-            if isinstance(x, ValueRange):
-                md = x
-                break
-        r.append((name, md))
-    return r
+def _get_limit(annotation):
+    if annotation is inspect.Parameter.empty:
+        return None
+    lim = None
+    for x in getattr(annotation, "__metadata__", ()):
+        if isinstance(x, ValueRange):
+            lim = (x.min, x.max)
+            break
+    return lim
 
 
-def _describe_inspect(callable):
+def _parameters_from_inspect(callable):
     try:
         # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(callable)
     except ValueError:
         return []
 
-    r = []
+    r = {}
     for name, par in signature.parameters.items():
         # stop when variable number of arguments is encountered
         if par.kind is inspect.Parameter.VAR_POSITIONAL:
@@ -1313,11 +1300,11 @@ def _describe_inspect(callable):
         # stop when keyword argument is encountered
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
-        r.append(name)
+        r[name] = _get_limit(par.annotation)
     return r
 
 
-def _describe_docstring(callable):
+def _arguments_from_docstring(callable):
     doc = inspect.getdoc(callable)
 
     if doc is None:
@@ -1560,3 +1547,21 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
     xy = list(y.items())
     xy.sort()
     return np.transpose(xy)
+
+
+def _get_annotations(obj: Any) -> Dict[str, Any]:
+    # Compatibility wrapper for CPython < 3.10,
+    # see https://docs.python.org/3/howto/annotations.html
+    #
+    # Returns a dict that maps parameter names to annotations.
+    # If a type is not annotated, it is ommitted.
+    try:
+        from inspect import get_annotations  # type:ignore
+
+        return get_annotations(obj)
+    except ImportError:
+        if isinstance(obj, type):
+            d = getattr(obj, "__dict__", {})
+            return d.get("__annotations__", {})
+        else:
+            return getattr(obj, "__annotations__", {})
