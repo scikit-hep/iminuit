@@ -17,6 +17,7 @@ from iminuit._core import (
 )
 import numpy as np
 import typing as _tp
+from iminuit.typing import UserBound
 
 # Better use numpy.typing.ArrayLike in the future, but this
 # requires dropping Python-3.6 support
@@ -1465,7 +1466,7 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: _tp.Union[float, _ArrayLike[float]] = 2,
+        bound: _tp.Union[float, UserBound] = 2,
         grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -1570,7 +1571,7 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: _tp.Union[float, _ArrayLike[float]] = 2,
+        bound: _tp.Union[float, UserBound] = 2,
         grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray]:
@@ -2343,7 +2344,7 @@ class Minuit:
         return pr
 
     def _normalize_bound(
-        self, vname: str, bound: _tp.Union[float, _ArrayLike[float]]
+        self, vname: str, bound: _tp.Union[float, UserBound, _tp.Tuple[float, float]]
     ) -> _tp.Tuple[float, float]:
         if isinstance(bound, _tp.Iterable):
             return mutil._normalize_limit(bound)

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import platform
 import pytest
 import numpy as np
@@ -1646,3 +1647,14 @@ def test_visualize():
     func0.visualize = lambda args: None
     m.visualize()
     del func0.visualize
+
+
+def test_annotated_cost_function():
+    def cost(a, b: Annotated[float, ValueRange(0.1, 1)]):  # noqa
+        return a**2 + b**2
+
+    m = Minuit(cost, 0.5, 0.5)
+    assert m.limits[0] == (-np.inf, np.inf)
+    assert m.limits[1] == (0.1, 1.0)
+    m.migrad()
+    assert_allclose(m.values, (0, 0.1), atol=1e-2)

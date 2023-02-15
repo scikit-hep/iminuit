@@ -28,7 +28,6 @@ from time import monotonic
 import warnings
 import sys
 
-
 __all__ = (
     "IMinuitWarning",
     "HesseFailedWarning",
@@ -249,7 +248,7 @@ def _normalize_limit(lim: UserBound) -> Tuple[float, float]:
     if b is None:
         b = np.inf
     if a > b:
-        raise ValueError("limit " + str(lim) + " is invalid")
+        raise ValueError(f"limit {lim!r} is invalid")
     return a, b
 
 
@@ -1285,6 +1284,13 @@ def _arguments_from_func_code(callable):
 def _get_limit(annotation):
     if annotation is inspect.Parameter.empty:
         return None
+
+    if isinstance(annotation, str):
+        import re
+
+        m = re.search(r"ValueRange\(([^\)]+)\)", annotation)
+        return eval(m.group(1)) if m else None
+
     lim = None
     for x in getattr(annotation, "__metadata__", ()):
         if isinstance(x, ValueRange):

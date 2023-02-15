@@ -6,7 +6,6 @@ These are used by mypy and similar tools.
 from typing import (
     Protocol,
     Optional,
-    Collection,
     List,
     Union,
     NamedTuple,
@@ -14,11 +13,6 @@ from typing import (
 )
 from numpy.typing import NDArray
 import numpy as np
-
-# LossFunction = Callable[[np.ndarray], np.ndarray]
-
-# Used by Minuit
-UserBound = Optional[Collection[Optional[float]]]
 
 # Key for ValueView, ErrorView, etc.
 Key = Union[int, str, slice, List[Union[int, str]]]
@@ -47,3 +41,10 @@ class ValueRange(NamedTuple):
 
     min: float
     max: float
+
+
+class UserBound(NamedTuple):
+    """Type for user-defined limit."""
+
+    min: Optional[float]
+    max: Optional[float]

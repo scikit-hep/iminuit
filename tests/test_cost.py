@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
@@ -19,7 +20,6 @@ from iminuit.cost import (
 from iminuit.util import describe
 from typing import Sequence
 import pickle
-from sys import version_info as pyver
 
 try:
     # pytest.importorskip does not work for scipy.stats;
@@ -125,18 +125,14 @@ def test_norm_cdf():
     assert_allclose(norm_cdf(x, 3, 2), norm.cdf(x, 3, 2))
 
 
-@pytest.mark.skipif(pyver < (3, 9), reason="Annotated requires Python-3.9")
 def test_describe():
-    from typing import Annotated
-    from iminuit.typing import ValueRange
-
     c = Constant(2.5)
     assert describe(c, annotations=True) == {}
 
     c = NormalConstraint("foo", 1.5, 0.1)
     assert describe(c, annotations=True) == {"foo": None}
 
-    def model(x, foo: Annotated[float, ValueRange(1, 2)], bar):
+    def model(x, foo: Annotated[float, ValueRange(1, 2)], bar):  # noqa
         return x
 
     assert describe(model, annotations=True) == {"x": None, "foo": (1, 2), "bar": None}
@@ -144,8 +140,8 @@ def test_describe():
     c = UnbinnedNLL([], model)
     assert describe(c, annotations=True) == {"foo": (1, 2), "bar": None}
 
-    c = UnbinnedNLL([], pdf)
-    assert describe(c, annotations=True) == {"mu": None, "sigma": None}
+    c = BinnedNLL([], [1], model)
+    assert describe(c, annotations=True) == {"foo": (1, 2), "bar": None}
 
 
 def test_Constant():
@@ -262,6 +258,20 @@ def test_UnbinnedNLL_pickle():
     b = pickle.dumps(c)
     c2 = pickle.loads(b)
     assert_equal(c.data, c2.data)
+
+
+def test_UnbinnedNLL_annotated():
+    def model(
+        x: NDArray,  # noqa
+        mu: float,
+        sigma: Annotated[float, ValueRange(0, np.inf)],  # noqa
+    ) -> NDArray:  # noqa
+        return norm_pdf(x, mu, sigma)
+
+    c = UnbinnedNLL([], model)
+    m = Minuit(c, mu=1, sigma=1.5)
+    assert m.limits[0] == (-np.inf, np.inf)
+    assert m.limits[1] == (0, np.inf)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))

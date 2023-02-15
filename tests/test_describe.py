@@ -1,9 +1,9 @@
+from __future__ import annotations
 from iminuit.util import describe, make_func_code
 from math import ldexp
 import platform
 from functools import wraps
 import pytest
-from sys import version_info as pyver
 import numpy as np
 
 is_pypy = platform.python_implementation() == "PyPy"
@@ -186,20 +186,17 @@ def test_from_bad_docstring_2():
     assert describe(foo) == []
 
 
-@pytest.mark.skipif(pyver < (3, 9), reason="Annotated required Python-3.9")
 def test_with_type_hints():
-    from typing import Annotated
-    from numpy.typing import NDArray
-    from iminuit.typing import ValueRange
-
-    def foo(x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float):
+    def foo(x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float):  # noqa
         ...
 
     r = describe(foo, annotations=True)
     assert r == {"x": None, "a": (0, 1), "b": None}
 
     class Foo:
-        def __call__(self, x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float):
+        def __call__(
+            self, x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float  # noqa
+        ):
             ...
 
     r = describe(Foo.__call__, annotations=True)
