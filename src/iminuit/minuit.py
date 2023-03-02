@@ -1,8 +1,8 @@
 """Minuit class."""
 
 import warnings
-from . import util as mutil
-from ._core import (
+from iminuit import util as mutil
+from iminuit._core import (
     FCN,
     MnContours,
     MnHesse,
@@ -17,6 +17,7 @@ from ._core import (
 )
 import numpy as np
 import typing as _tp
+from iminuit.typing import UserBound
 
 # Better use numpy.typing.ArrayLike in the future, but this
 # requires dropping Python-3.6 support
@@ -596,10 +597,13 @@ class Minuit:
             start = np.array(args)
         del args
 
+        annotated = mutil.describe(fcn, annotations=True)
         if name is None:
-            name = mutil.describe(fcn)
+            name = list(annotated)
             if len(name) == 0 or (array_call and len(name) == 1):
                 name = tuple(f"x{i}" for i in range(len(start)))
+        elif len(name) == len(annotated):
+            annotated = {new: annotated[old] for (old, new) in zip(annotated, name)}
 
         if len(start) == 0 and len(kwds) == 0:
             raise RuntimeError(
@@ -631,6 +635,10 @@ class Minuit:
         self.precision = getattr(fcn, "precision", None)
 
         self.reset()
+
+        for k, lim in annotated.items():
+            if lim is not None:
+                self.limits[k] = lim
 
     def reset(self) -> "Minuit":  # requires from __future__ import annotations
         """
@@ -1458,7 +1466,7 @@ class Minuit:
         vname: str,
         *,
         size: int = 30,
-        bound: _tp.Union[float, _ArrayLike[float]] = 2,
+        bound: _tp.Union[float, UserBound] = 2,
         grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -1563,7 +1571,7 @@ class Minuit:
         vname: str,
         *,
         size: int = 100,
-        bound: _tp.Union[float, _ArrayLike[float]] = 2,
+        bound: _tp.Union[float, UserBound] = 2,
         grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
     ) -> _tp.Tuple[np.ndarray, np.ndarray]:
@@ -2336,7 +2344,7 @@ class Minuit:
         return pr
 
     def _normalize_bound(
-        self, vname: str, bound: _tp.Union[float, _ArrayLike[float]]
+        self, vname: str, bound: _tp.Union[float, UserBound, _tp.Tuple[float, float]]
     ) -> _tp.Tuple[float, float]:
         if isinstance(bound, _tp.Iterable):
             return mutil._normalize_limit(bound)

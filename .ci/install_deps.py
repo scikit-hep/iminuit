@@ -6,8 +6,7 @@ def install(packages):
     import subprocess as subp
 
     subp.check_call(
-        ["python", "-m", "pip", "install", "--upgrade", "--prefer-binary"] + packages,
-        stdout=subp.DEVNULL,
+        ["python", "-m", "pip", "install", "--upgrade", "--prefer-binary"] + packages
     )
 
 

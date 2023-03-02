@@ -3,19 +3,55 @@ Data classes and utilities used by :class:`iminuit.Minuit`.
 
 You can look up the interface of data classes that iminuit uses here.
 """
+from __future__ import annotations
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
-from . import _repr_html, _repr_text, _deprecated
-from . import typing as _mtp
+from iminuit import _repr_html, _repr_text, _deprecated
+from iminuit.typing import Key, UserBound
 import numpy as np
-import typing as _tp
+from numpy.typing import NDArray
+from typing import (
+    overload,
+    Any,
+    List,
+    Union,
+    Dict,
+    Iterable,
+    Generator,
+    Tuple,
+    Optional,
+    Callable,
+    Collection,
+)
 import abc
 from time import monotonic
 import warnings
 import sys
 
-_ArrayLike = _tp.Sequence
+if sys.version_info < (3, 9):
+    from typing_extensions import Annotated, get_args, get_origin  # pragma: no cover
+else:
+    from typing import Annotated, get_args, get_origin  # pragma: no cover
+
+__all__ = (
+    "IMinuitWarning",
+    "HesseFailedWarning",
+    "PerformanceWarning",
+    "ValueView",
+    "FixedView",
+    "LimitView",
+    "Matrix",
+    "FMin",
+    "Param",
+    "Params",
+    "MError",
+    "MErrors",
+    "make_func_code",
+    "make_with_signature",
+    "merge_signatures",
+    "describe",
+)
 
 
 class IMinuitWarning(RuntimeWarning):
@@ -42,12 +78,12 @@ class BasicView(abc.ABC):
 
     __slots__ = ("_minuit", "_ndim")
 
-    def __init__(self, minuit: _tp.Any, ndim: int = 0):
+    def __init__(self, minuit: Any, ndim: int = 0):
         """Not to be initialized by users."""
         self._minuit = minuit
         self._ndim = ndim
 
-    def __iter__(self) -> _tp.Generator:
+    def __iter__(self) -> Generator:
         """Get iterator over values."""
         for i in range(len(self)):
             yield self._get(i)
@@ -57,14 +93,14 @@ class BasicView(abc.ABC):
         return self._minuit.npar  # type: ignore
 
     @abc.abstractmethod
-    def _get(self, idx: int) -> _tp.Any:
+    def _get(self, idx: int) -> Any:
         return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod
-    def _set(self, idx: int, value: _tp.Any) -> None:
+    def _set(self, idx: int, value: Any) -> None:
         NotImplemented  # pragma: no cover
 
-    def __getitem__(self, key: _mtp.Key) -> _tp.Any:
+    def __getitem__(self, key: Key) -> Any:
         """
         Get values of the view.
 
@@ -79,7 +115,7 @@ class BasicView(abc.ABC):
             return [self._get(i) for i in index]
         return self._get(index)
 
-    def __setitem__(self, key: _mtp.Key, value: _tp.Any) -> None:
+    def __setitem__(self, key: Key, value: Any) -> None:
         """Assign a new value at key, which can be an index, parameter name, or slice."""
         self._minuit._copy_state_if_needed()
         index = _key2index(self._minuit._var2pos, key)
@@ -98,7 +134,7 @@ class BasicView(abc.ABC):
     def __eq__(self, other: object) -> bool:
         """Return true if all values are equal."""
         a, b = np.broadcast_arrays(self, other)  # type:ignore
-        return _tp.cast(bool, np.all(a == b))
+        return bool(np.all(a == b))
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
@@ -108,14 +144,14 @@ class BasicView(abc.ABC):
         s += ">"
         return s
 
-    def to_dict(self) -> _tp.Dict[str, float]:
+    def to_dict(self) -> Dict[str, float]:
         """Obtain dict representation."""
         return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
 
-def _ndim(obj: _tp.Iterable) -> int:
+def _ndim(obj: Iterable) -> int:
     nd = 0
-    while isinstance(obj, _tp.Iterable):
+    while isinstance(obj, Iterable):
         nd += 1
         for x in obj:
             if x is not None:
@@ -146,7 +182,8 @@ class ErrorView(BasicView):
         if value <= 0:
             warnings.warn(
                 "Assigned errors must be positive. "
-                "Non-positive values are replaced by a heuristic."
+                "Non-positive values are replaced by a heuristic.",
+                IMinuitWarning,
             )
             value = _guess_initial_step(value)
         self._minuit._last_state.set_error(i, value)
@@ -172,18 +209,18 @@ class FixedView(BasicView):
 class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
-    def __init__(self, minuit: _tp.Any):
+    def __init__(self, minuit: Any):
         """Not to be initialized by users."""
         super(LimitView, self).__init__(minuit, 1)
 
-    def _get(self, i: int) -> _tp.Tuple[float, float]:
+    def _get(self, i: int) -> Tuple[float, float]:
         p = self._minuit._last_state[i]
         return (
             p.lower_limit if p.has_lower_limit else -np.inf,
             p.upper_limit if p.has_upper_limit else np.inf,
         )
 
-    def _set(self, i: int, arg: _mtp.UserBound) -> None:
+    def _set(self, i: int, arg: UserBound) -> None:
         state = self._minuit._last_state
         val = state[i].value
         err = state[i].error
@@ -208,7 +245,7 @@ class LimitView(BasicView):
         state.set_error(i, err)
 
 
-def _normalize_limit(lim: _mtp.UserBound) -> _tp.Tuple[float, float]:
+def _normalize_limit(lim: UserBound) -> Tuple[float, float]:
     if lim is None:
         return (-np.inf, np.inf)
     a, b = lim
@@ -217,7 +254,7 @@ def _normalize_limit(lim: _mtp.UserBound) -> _tp.Tuple[float, float]:
     if b is None:
         b = np.inf
     if a > b:
-        raise ValueError("limit " + str(lim) + " is invalid")
+        raise ValueError(f"limit {lim!r} is invalid")
     return a, b
 
 
@@ -232,7 +269,7 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, parameters: _tp.Union[_tp.Dict, _tp.Tuple]) -> _tp.Any:
+    def __new__(cls, parameters: Union[Dict, Tuple]) -> Any:
         """Not to be initialized by users."""
         if isinstance(parameters, dict):
             var2pos = parameters
@@ -245,27 +282,25 @@ class Matrix(np.ndarray):
         obj._var2pos = var2pos
         return obj
 
-    def __array_finalize__(self, obj: _tp.Any) -> None:
+    def __array_finalize__(self, obj: Any) -> None:
         """For internal use."""
         if obj is None:
-            self._var2pos: _tp.Dict[str, int] = {}
+            self._var2pos: Dict[str, int] = {}
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
     def __getitem__(  # type:ignore # mypy complains about incompatible signatures
         self,
-        key: _tp.Union[
+        key: Union[
             int,
             str,
-            _tp.Tuple[_tp.Union[int, str], _tp.Union[int, str]],
-            _tp.Iterable[_tp.Union[int, str]],
-            np.ndarray,
+            Tuple[Union[int, str], Union[int, str]],
+            Iterable[Union[int, str]],
+            NDArray,
             slice,
         ],
-    ) -> np.ndarray:
+    ) -> NDArray:
         """Get matrix element at key."""
-        import typing as _tp
-
         var2pos = self._var2pos
 
         def trafo(key):
@@ -283,14 +318,14 @@ class Matrix(np.ndarray):
             return super().__getitem__((sl, sl))
         if isinstance(key, (str, tuple)):
             return super().__getitem__(trafo(key))
-        if isinstance(key, _tp.Iterable) and not isinstance(key, np.ndarray):
+        if isinstance(key, Iterable) and not isinstance(key, np.ndarray):
             # iterable returns square matrix
             index2 = [trafo(k) for k in key]  # type:ignore
             t = super().__getitem__(index2).T
             return np.ndarray.__getitem__(t, index2).T
         return super().__getitem__(key)
 
-    def to_dict(self) -> _tp.Dict[_tp.Tuple[str, str], float]:
+    def to_dict(self) -> Dict[Tuple[str, str], float]:
         """
         Convert matrix to dict.
 
@@ -304,7 +339,7 @@ class Matrix(np.ndarray):
                 d[pi, pj] = float(self[i, j])
         return d
 
-    def to_table(self) -> _tp.Tuple[_tp.List[_tp.List[str]], _tp.Tuple[str, ...]]:
+    def to_table(self) -> Tuple[List[List[str]], Tuple[str, ...]]:
         """
         Convert matrix to tabular format.
 
@@ -408,7 +443,7 @@ class FMin:
 
     def __init__(
         self,
-        fmin: _tp.Any,
+        fmin: Any,
         algorithm: str,
         nfcn: int,
         ngrad: int,
@@ -655,7 +690,7 @@ class FMin:
     def _repr_html_(self) -> str:
         return _repr_html.fmin(self)  # type:ignore
 
-    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("<FMin ...>")
         else:
@@ -679,7 +714,7 @@ class Param:
 
     def __init__(
         self,
-        *args: _tp.Union[int, str, float, _tp.Optional[_tp.Tuple[float, float]], bool],
+        *args: Union[int, str, float, Optional[Tuple[float, float]], bool],
     ):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
@@ -717,7 +752,7 @@ class Param:
         """Get user-friendly text representation."""
         return _repr_text.params([self])  # type:ignore
 
-    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("Param(...)")
         else:
@@ -861,7 +896,7 @@ class MError:
         "min",
     )
 
-    def __init__(self, *args: _tp.Union[int, str, float, bool]):
+    def __init__(self, *args: Union[int, str, float, bool]):
         """Not to be initialized by users."""
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
@@ -887,7 +922,7 @@ class MError:
     def _repr_html_(self) -> str:
         return _repr_html.merrors({None: self})  # type:ignore
 
-    def _repr_pretty_(self, p: _tp.Any, cycle: bool) -> None:
+    def _repr_pretty_(self, p: Any, cycle: bool) -> None:
         if cycle:
             p.text("<MError ...>")
         else:
@@ -931,8 +966,8 @@ class MErrors(OrderedDict):
 
 
 def _jacobi(
-    fn: _tp.Callable, x: np.ndarray, dx: np.ndarray, tol: float, debug: bool = False
-) -> _tp.Tuple[np.ndarray, np.ndarray]:
+    fn: Callable, x: NDArray, dx: NDArray, tol: float, debug: bool = False
+) -> Tuple[NDArray, NDArray]:
     assert x.ndim == 1
     assert dx.ndim == 1
     assert np.all(dx >= 0)
@@ -986,10 +1021,10 @@ def _jacobi(
 
 @_deprecated.deprecated("use jacobi.propagate instead from jacobi library")
 def propagate(
-    fn: _tp.Callable,
-    x: _tp.Collection[float],
-    cov: _tp.Collection[_tp.Collection[float]],
-) -> _tp.Tuple[np.ndarray, np.ndarray]:
+    fn: Callable,
+    x: Collection[float],
+    cov: Collection[Collection[float]],
+) -> Tuple[NDArray, NDArray]:
     """
     Numerically propagates the covariance into a new space.
 
@@ -1038,7 +1073,11 @@ class _Timer:
         self.value = monotonic() - self.value
 
 
-def make_func_code(params: _tp.Collection[str]) -> Namespace:
+@_deprecated.deprecated(
+    "Use of `func_code` attribute to declare parameters is deprecated. "
+    "Use `_parameters` instead, which is a dict of parameter names to limits."
+)
+def make_func_code(params: Collection[str]) -> Namespace:
     """
     Make a func_code object to fake a function signature.
 
@@ -1052,8 +1091,8 @@ def make_func_code(params: _tp.Collection[str]) -> Namespace:
 
 
 def make_with_signature(
-    callable: _tp.Callable, *varnames: str, **replacements: str
-) -> _tp.Callable:
+    callable: Callable, *varnames: str, **replacements: str
+) -> Callable:
     """
     Return new callable with altered signature.
 
@@ -1061,44 +1100,38 @@ def make_with_signature(
     ----------
     *varnames: sequence of str
         Replace the first N argument names with these.
-    **replacements: mapping of str to str
+    **replacements: mapping of str to str, optional
         Replace old argument name (key) with new argument name (value).
 
     Returns
     -------
     callable with new argument names.
     """
-    if replacements:
-        d = describe(callable)
-        if d:
-            n = len(varnames)
-            if n > len(d):
-                raise ValueError("varnames longer than original signature")
-            d[:n] = varnames
-        for k, v in replacements.items():
-            d[d.index(k)] = v
-        vars = tuple(d)
-    else:
-        vars = varnames
-
-    if hasattr(callable, "__code__"):
-        c = callable.__code__
-        if c.co_argcount != len(vars):
-            raise ValueError("number of parameters do not match")
+    pars = describe(callable, annotations=True)
+    if pars:
+        args = list(pars)
+        n = len(varnames)
+        if n > len(args):
+            raise ValueError("varnames longer than original signature")
+        args[:n] = varnames
+        for old, new in replacements.items():
+            i = args.index(old)
+            args[i] = new
+        pars = {new: pars[old] for (new, old) in zip(args, pars)}
 
     class Caller:
-        def __init__(self, varnames: _tp.Tuple[str, ...]):
-            self.func_code = make_func_code(varnames)  # type:ignore
+        def __init__(self, parameters):
+            self._parameters = parameters
 
         def __call__(self, *args: object) -> object:
             return callable(*args)
 
-    return Caller(vars)
+    return Caller(pars)
 
 
 def merge_signatures(
-    callables: _tp.Iterable[_tp.Callable],
-) -> _tp.Tuple[_tp.List[str], _tp.List[_tp.Tuple[int, ...]]]:
+    callables: Iterable[Callable], annotations: bool = False
+) -> Tuple[Any, List[Tuple[int, ...]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1124,69 +1157,118 @@ def merge_signatures(
         mapping contains the mapping of parameters indices from the merged signature to
         the original signatures.
     """
-    from typing import List
-
     args: List[str] = []
+    anns: List[Optional[Tuple[float, float]]] = []
     mapping = []
 
     for f in callables:
-        map = []
-        for i, k in enumerate(describe(f)):
+        amap = []
+        for i, (k, ann) in enumerate(describe(f, annotations=True).items()):
             if k in args:
-                map.append(args.index(k))
+                amap.append(args.index(k))
             else:
-                map.append(len(args))
+                amap.append(len(args))
                 args.append(k)
-        mapping.append(tuple(map))
+                anns.append(ann)
+        mapping.append(tuple(amap))
 
+    if annotations:
+        return {k: a for (k, a) in zip(args, anns)}, mapping
     return args, mapping
 
 
-def describe(callable: _tp.Callable) -> _tp.List[str]:
+@overload
+def describe(callable: Callable) -> List[str]:
+    ...  # pragma: no cover
+
+
+@overload
+def describe(
+    callable: Callable, annotations: bool
+) -> Dict[str, Optional[Tuple[float, float]]]:
+    ...  # pragma: no cover
+
+
+def describe(callable, *, annotations=False):
     """
-    Attempt to extract the function argument names.
+    Attempt to extract the function argument names and annotations.
 
     Parameters
     ----------
     callable : callable
         Callable whose parameters should be extracted.
+    annotations : bool, optional
+        Whether to also extract annotations. Default is false.
 
     Returns
     -------
-    list
-        Returns a list of strings with the parameters names if successful and an empty
-        list otherwise.
+    list or dict
+        If annotate is False, return list of strings with the parameters names if
+        successful and an empty list otherwise. If annotations is True, return a dict,
+        which maps parameter names to annotations. For parameters without annotations,
+        the dict maps to None.
 
     Notes
     -----
     Parameter names are extracted with the following three methods, which are attempted
     in order. The first to succeed determines the result.
 
-    1. Using ``obj.func_code``. If an objects has a ``func_code`` attribute, it is used
-       to detect the parameters. Examples::
+    1.  Using ``obj._parameters``, which is a dict that makes parameter names to parameter
+        limits or None if the parameter has to limits. Users are encouraged to use this
+        mechanism to provide signatures for objects that otherwise would not have a
+        detectable signature. Example::
 
-           def f(*args): # no signature
-               x, y = args
-               return (x - 2) ** 2 + (y - 3) ** 2
+            def f(*args):  # no signature
+                x, y = args
+                return (x - 2) ** 2 + (y - 3) ** 2
 
-           f.func_code = make_func_code(("x", "y"))
+            f._parameters = {"x": None, "y": (1, 4)}
 
-       Users are encouraged to use this mechanism to provide signatures for objects that
-       otherwise would not have a detectable signature. The function
-       :func:`make_func_code` can be used to generate an appropriate func_code object.
-       An example where this is useful is shown in one of the tutorials.
+        Here, the first parameter is declared to have no limits (values from minus to plus
+        infinity are allowed), while the second parameter is declared to have limits, it
+        cannot be smaller than 1 or larger than 4.
 
-    2. Using :func:`inspect.signature`. The :mod:`inspect` module provides a general
-       function to extract the signature of a Python callable. It works on most
-       callables, including Functors like this::
+        Note: In the past, the ``func_code`` attribute was used for a similar purpose as
+        ``_parameters``. It is still supported for legacy code, but should not be used
+        anymore in new code, since it does not support declaring parameter limits.
 
-        class MyLeastSquares:
-            def __call__(self, a, b):
-                # ...
+        If an objects has a ``func_code`` attribute, it is used to detect the parameters.
+        Example::
 
-    3. Using the docstring. The docstring is textually parsed to detect the parameter
-       names. This requires that a docstring is present which follows the Python
-       standard formatting for function signatures.
+            from iminuit.util import make_func_code
+
+            def f(*args): # no signature
+                x, y = args
+                return (x - 2) ** 2 + (y - 3) ** 2
+
+            # deprecated, make_func_code will raise a warning
+            f.func_code = make_func_code(("x", "y"))
+
+    2.  Using :func:`inspect.signature`. The :mod:`inspect` module provides a general
+        function to extract the signature of a Python callable. It works on most
+        callables, including Functors like this::
+
+            class MyLeastSquares:
+                def __call__(self, a, b):
+                    ...
+
+        Limits are supported via annotations, using the Annotated type that was introduced
+        in Python-3.9 and can be obtained from the external package typing_extensions in
+        Python-3.8. In the following example, the second parameter has a lower limit at
+        0, because it must be positive::
+
+            from typing import Annotated
+
+            def my_cost_function(a: float, b: Annotated[float, 0:]):
+                ...
+
+        There are no standard annotations yet at the time of this writing. iminuit
+        supports the annotations Gt, Ge, Lt, Le from the external package annotated-types,
+        and interprets slice notation as limits.
+
+    3.  Using the docstring. The docstring is textually parsed to detect the parameter
+        names. This requires that a docstring is present which follows the Python
+        standard formatting for function signatures.
 
     Ambiguous cases with positional and keyword argument are handled in the following
     way::
@@ -1198,32 +1280,80 @@ def describe(callable: _tp.Callable) -> _tp.List[str]:
         # describe returns [a, b, c];
         # positional arguments with default values are detected
         def fcn(a, b, c=1): ...
+
     """
     if _address_of_cfunc(callable) != 0:
-        return []
-    return (
-        _arguments_from_func_code(callable)
-        or _arguments_from_inspect(callable)
+        return {} if annotations else []
+
+    args = (
+        getattr(callable, "_parameters", {})
+        or _arguments_from_func_code(callable)
+        or _parameters_from_inspect(callable)
         or _arguments_from_docstring(callable)
     )
 
+    if annotations:
+        return args
+    # for backward-compatibility
+    return list(args)
 
-def _arguments_from_func_code(obj: _tp.Any) -> _tp.List[str]:
+
+def _arguments_from_func_code(callable):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
-    if hasattr(obj, "func_code"):
-        fc = obj.func_code
-        return list(fc.co_varnames[: fc.co_argcount])
-    return []
+    if hasattr(callable, "func_code"):
+        warnings.warn(
+            "Using the `func_code` attribute to dynamically declare parameter names is "
+            "deprecated, use the attribute `_parameters` instead (a dict of strings "
+            "to limits)",
+            np.VisibleDeprecationWarning,
+            stacklevel=1,
+        )
+        fc = callable.func_code
+        return {x: None for x in fc.co_varnames[: fc.co_argcount]}
+    return {}
 
 
-def _arguments_from_inspect(obj: _tp.Callable) -> _tp.List[str]:
+def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
+    from iminuit import typing
+
+    if isinstance(annotation, str):
+        annotation = eval(annotation, None, typing.__dict__)
+
+    if annotation == inspect.Parameter.empty:
+        return None
+
+    if get_origin(annotation) is not Annotated:
+        return None
+
+    tp, *constraints = get_args(annotation)
+    assert tp is float
+    lim = [-np.inf, np.inf]
+    for c in constraints:
+        if isinstance(c, slice):
+            if c.start is not None:
+                lim[0] = c.start
+            if c.stop is not None:
+                lim[1] = c.stop
+        # Minuit does not distinguish between closed and open intervals
+        elif hasattr(c, "gt"):
+            lim[0] = c.gt
+        elif hasattr(c, "ge"):
+            lim[0] = c.ge
+        elif hasattr(c, "lt"):
+            lim[1] = c.lt
+        elif hasattr(c, "le"):
+            lim[1] = c.le
+    return tuple(lim)
+
+
+def _parameters_from_inspect(callable):
+    # TODO use eval_str when Python-3.10 becomes minimum supported version
     try:
-        # fails for builtin on Windows and OSX in Python 3.6
-        signature = inspect.signature(obj)
-    except ValueError:
-        return []
+        signature = inspect.signature(callable)
+    except ValueError:  # raised when used on built-in function
+        return {}
 
-    args = []
+    r = {}
     for name, par in signature.parameters.items():
         # stop when variable number of arguments is encountered
         if par.kind is inspect.Parameter.VAR_POSITIONAL:
@@ -1231,15 +1361,15 @@ def _arguments_from_inspect(obj: _tp.Callable) -> _tp.List[str]:
         # stop when keyword argument is encountered
         if par.kind is inspect.Parameter.VAR_KEYWORD:
             break
-        args.append(name)
-    return args
+        r[name] = _get_limit(par.annotation)
+    return r
 
 
-def _arguments_from_docstring(obj: _tp.Callable) -> _tp.List[str]:
-    doc = inspect.getdoc(obj)
+def _arguments_from_docstring(callable):
+    doc = inspect.getdoc(callable)
 
     if doc is None:
-        return []
+        return {}
 
     # Examples of strings we want to parse:
     #   min(iterable, *[, default=obj, key=func]) -> value
@@ -1249,14 +1379,14 @@ def _arguments_from_docstring(obj: _tp.Callable) -> _tp.List[str]:
     try:
         # function wrapper functools.partial does not offer __name__,
         # we cannot extract the signature in this case
-        name = obj.__name__
+        name = callable.__name__
     except AttributeError:
-        return []
+        return {}
 
     token = name + "("
     start = doc.find(token)
     if start < 0:
-        return []
+        return {}
     start += len(token)
 
     nbrace = 1
@@ -1269,6 +1399,7 @@ def _arguments_from_docstring(obj: _tp.Callable) -> _tp.List[str]:
             break
     items = [x.strip(" []") for x in doc[start : start + ich].split(",")]
 
+    # strip self if callable is a class method
     if items[0] == "self":
         items = items[1:]
 
@@ -1295,27 +1426,24 @@ def _arguments_from_docstring(obj: _tp.Callable) -> _tp.List[str]:
             b = len(s)
         return s[a:b].strip()
 
-    items = [extract(x) for x in items if x != "*"]
-
     #   "iterable", "default", "key"
     #   "arg1", "arg2", "key"
     #   "ncall_me", "resume", "nsplit"
-
-    return items
+    return {extract(x): None for x in items if x != "*"}
 
 
 def _guess_initial_step(val: float) -> float:
     return 1e-2 * abs(val) if val != 0 else 1e-1  # heuristic
 
 
-def _key2index_from_slice(var2pos: _tp.Dict[str, int], key: slice) -> _tp.List[int]:
+def _key2index_from_slice(var2pos: Dict[str, int], key: slice) -> List[int]:
     start = var2pos[key.start] if isinstance(key.start, str) else key.start
     stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
     start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
     return list(range(start, stop, step))
 
 
-def _key2index_item(var2pos: _tp.Dict[str, int], key: _tp.Union[str, int]) -> int:
+def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
     if isinstance(key, str):
         return var2pos[key]
     i = key
@@ -1327,14 +1455,12 @@ def _key2index_item(var2pos: _tp.Dict[str, int], key: _tp.Union[str, int]) -> in
 
 
 def _key2index(
-    var2pos: _tp.Dict[str, int],
-    key: _mtp.Key,
-) -> _tp.Union[int, _tp.List[int]]:
-    import typing as _tp
-
+    var2pos: Dict[str, int],
+    key: Key,
+) -> Union[int, List[int]]:
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
-    if not isinstance(key, str) and isinstance(key, _tp.Iterable):
+    if not isinstance(key, str) and isinstance(key, Iterable):
         # convert boolean masks into list of indices
         if isinstance(key[0], bool):
             key = [k for k in range(len(var2pos)) if key[k]]
@@ -1342,19 +1468,26 @@ def _key2index(
     return _key2index_item(var2pos, key)
 
 
-def _address_of_cfunc(fcn: _tp.Any) -> int:
-    from ctypes import c_void_p, c_double, c_uint32, POINTER, CFUNCTYPE, cast
+def _address_of_cfunc(fcn: Any) -> int:
+    from ctypes import (
+        c_void_p,
+        c_double,
+        c_uint32,
+        POINTER,
+        CFUNCTYPE,
+        cast as ctypes_cast,
+    )
 
     c_sig = CFUNCTYPE(c_double, c_uint32, POINTER(c_double))
 
     fcn = getattr(fcn, "ctypes", None)
     if isinstance(fcn, c_sig):
-        return cast(fcn, c_void_p).value  # type: ignore
+        return ctypes_cast(fcn, c_void_p).value  # type: ignore
     return 0
 
 
 def _iterate(x):
-    if not isinstance(x, _tp.Iterable):
+    if not isinstance(x, Iterable):
         yield x
     else:
         for xi in x:

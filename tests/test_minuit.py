@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
 from iminuit.util import Param, IMinuitWarning, make_func_code
+from iminuit.typing import Annotated
 from pytest import approx
 from argparse import Namespace
 
@@ -229,7 +230,8 @@ def test_Func1():
 
 
 def test_Func2():
-    func_test_helper(Func2())
+    with pytest.warns(np.VisibleDeprecationWarning):
+        func_test_helper(Func2())
 
 
 def test_no_signature():
@@ -1645,3 +1647,20 @@ def test_visualize():
     func0.visualize = lambda args: None
     m.visualize()
     del func0.visualize
+
+
+def test_annotated_cost_function():
+    def cost(a, b: Annotated[float, 0.1:1]):
+        return a**2 + b**2
+
+    m = Minuit(cost, 0.5, 0.5)
+    assert m.limits[0] == (-np.inf, np.inf)
+    assert m.limits[1] == (0.1, 1.0)
+    m.migrad()
+    assert_allclose(m.values, (0, 0.1), atol=1e-2)
+
+    m2 = Minuit(cost, 0.5, 0.5, name=("x", "y"))
+    assert m2.limits["x"] == (-np.inf, np.inf)
+    assert m2.limits["y"] == (0.1, 1.0)
+    m.migrad()
+    assert_allclose(m.values, (0, 0.1), atol=1e-2)

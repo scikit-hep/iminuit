@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
@@ -17,6 +18,7 @@ from iminuit.cost import (
     PerformanceWarning,
 )
 from iminuit.util import describe
+from iminuit.typing import Annotated, Gt, Lt
 from typing import Sequence
 import pickle
 
@@ -122,6 +124,40 @@ def test_norm_pdf():
 def test_norm_cdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_cdf(x, 3, 2), norm.cdf(x, 3, 2))
+
+
+def test_describe():
+    c = Constant(2.5)
+    assert describe(c, annotations=True) == {}
+
+    c = NormalConstraint("foo", 1.5, 0.1)
+    assert describe(c, annotations=True) == {"foo": None}
+
+    def model(
+        x, foo: Annotated[float, Gt(1), Lt(2)], bar: float, baz: Annotated[float, 0:]
+    ):
+        return x
+
+    assert describe(model, annotations=True) == {
+        "x": None,
+        "foo": (1, 2),
+        "bar": None,
+        "baz": (0, np.inf),
+    }
+
+    c = UnbinnedNLL([], model)
+    assert describe(c, annotations=True) == {
+        "foo": (1, 2),
+        "bar": None,
+        "baz": (0, np.inf),
+    }
+
+    c = BinnedNLL([], [1], model)
+    assert describe(c, annotations=True) == {
+        "foo": (1, 2),
+        "bar": None,
+        "baz": (0, np.inf),
+    }
 
 
 def test_Constant():
@@ -238,6 +274,20 @@ def test_UnbinnedNLL_pickle():
     b = pickle.dumps(c)
     c2 = pickle.loads(b)
     assert_equal(c.data, c2.data)
+
+
+def test_UnbinnedNLL_annotated():
+    def model(
+        x: NDArray,  # noqa
+        mu: float,
+        sigma: Annotated[float, 0 : np.inf],
+    ) -> NDArray:  # noqa
+        return norm_pdf(x, mu, sigma)
+
+    c = UnbinnedNLL([], model)
+    m = Minuit(c, mu=1, sigma=1.5)
+    assert m.limits[0] == (-np.inf, np.inf)
+    assert m.limits[1] == (0, np.inf)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -837,20 +887,20 @@ def test_CostSum_1():
         return c
 
     lsq1 = LeastSquares(1, 2, 3, model1)
-    assert lsq1.func_code.co_varnames == ("a",)
+    assert describe(lsq1) == ["a"]
 
     lsq2 = LeastSquares(1, 3, 4, model2)
-    assert lsq2.func_code.co_varnames == ("b", "a")
+    assert describe(lsq2) == ["b", "a"]
 
     lsq3 = LeastSquares(1, 1, 1, model3)
-    assert lsq3.func_code.co_varnames == ("c",)
+    assert describe(lsq3) == ["c"]
 
     lsq12 = lsq1 + lsq2
     assert lsq12._items == [lsq1, lsq2]
     assert isinstance(lsq12, CostSum)
     assert isinstance(lsq1, LeastSquares)
     assert isinstance(lsq2, LeastSquares)
-    assert lsq12.func_code.co_varnames == ("a", "b")
+    assert describe(lsq12) == ["a", "b"]
     assert lsq12.ndata == 2
 
     assert lsq12(1, 2) == lsq1(1) + lsq2(2, 1)
@@ -864,22 +914,22 @@ def test_CostSum_1():
 
     lsq121 = lsq12 + lsq1
     assert lsq121._items == [lsq1, lsq2, lsq1]
-    assert lsq121.func_code.co_varnames == ("a", "b")
+    assert describe(lsq121) == ["a", "b"]
     assert lsq121.ndata == 3
 
     lsq312 = lsq3 + lsq12
     assert lsq312._items == [lsq3, lsq1, lsq2]
-    assert lsq312.func_code.co_varnames == ("c", "a", "b")
+    assert describe(lsq312) == ["c", "a", "b"]
     assert lsq312.ndata == 3
 
     lsq31212 = lsq312 + lsq12
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2]
-    assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+    assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 5
 
     lsq31212 += lsq1
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
-    assert lsq31212.func_code.co_varnames == ("c", "a", "b")
+    assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 6
 
 
@@ -942,8 +992,8 @@ def test_NormalConstraint_1():
 
     lsq1 = LeastSquares(0, 1, 1, model)
     lsq2 = lsq1 + NormalConstraint("a", 1, 0.1)
-    assert lsq1.func_code.co_varnames == ("a",)
-    assert lsq2.func_code.co_varnames == ("a",)
+    assert describe(lsq1) == ["a"]
+    assert describe(lsq2) == ["a"]
     assert lsq1.ndata == 1
     assert lsq2.ndata == 2
 
@@ -966,9 +1016,9 @@ def test_NormalConstraint_2():
     rho = 0.5
     cov = ((sa**2, rho * sa * sb), (rho * sa * sb, sb**2))
     lsq3 = lsq1 + NormalConstraint(("a", "b"), (1, 2), cov)
-    assert lsq1.func_code.co_varnames == ("a", "b")
-    assert lsq2.func_code.co_varnames == ("a", "b")
-    assert lsq3.func_code.co_varnames == ("a", "b")
+    assert describe(lsq1) == ["a", "b"]
+    assert describe(lsq2) == ["a", "b"]
+    assert describe(lsq3) == ["a", "b"]
     assert lsq1.ndata == 2
     assert lsq2.ndata == 4
 
@@ -1012,7 +1062,7 @@ def test_NormalConstraint_pickle():
     c = NormalConstraint(("a", "b"), (1, 2), (3, 4))
     b = pickle.dumps(c)
     c2 = pickle.loads(b)
-    assert c.func_code == c2.func_code
+    assert describe(c) == describe(c2) and describe(c) == ["a", "b"]
     assert_equal(c.value, c2.value)
     assert_equal(c.covariance, c2.covariance)
 
@@ -1115,6 +1165,8 @@ def test_Template(method):
 
     c = Template(n, xe, t, method=method)
     m = Minuit(c, 1, 1)
+    assert m.limits[0] == (0, np.inf)
+    assert m.limits[1] == (0, np.inf)
     m.migrad()
     assert m.valid
     assert m.ndof == 1
@@ -1251,6 +1303,13 @@ def test_Template_with_model():
     m.limits["x0", "x1_n"] = (0, None)
     m.limits["x1_sigma"] = (0.1, None)
     m.limits["x1_mu"] = (xe[0], xe[-1])
+    m.migrad()
+    assert m.valid
+
+    c2 = Template(n, xe, (t, scaled_cdf), name=("a", "b", "c", "d"))
+    assert describe(c2) == ["a", "b", "c", "d"]
+    m = Minuit(c2, 1, 1, 0.5, 1)
+    m.limits["d"] = (0.1, None)
     m.migrad()
     assert m.valid
 

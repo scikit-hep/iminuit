@@ -1,7 +1,11 @@
 from iminuit.util import describe, make_func_code
+from iminuit.typing import Annotated, Gt, Lt, Ge, Le
 from math import ldexp
 import platform
 from functools import wraps
+import pytest
+import numpy as np
+from numpy.typing import NDArray
 
 is_pypy = platform.python_implementation() == "PyPy"
 
@@ -90,7 +94,8 @@ def test_generic_functor_with_fake_func():
         def __call__(self, *args):
             pass
 
-    assert describe(A()) == ["x", "y"]
+    with pytest.warns(np.VisibleDeprecationWarning):
+        assert describe(A()) == ["x", "y"]
 
 
 def test_decorated_function():
@@ -180,3 +185,35 @@ def test_from_bad_docstring_2():
         pass
 
     assert describe(foo) == []
+
+
+def test_with_type_hints():
+    def foo(
+        x: NDArray,
+        a: Annotated[float, Gt(0), Lt(1)],
+        b: float,
+        c: Annotated[float, 0:],
+        d: Annotated[float, Ge(1)],
+        e: Annotated[float, Le(2)],
+    ):
+        ...
+
+    r = describe(foo, annotations=True)
+    assert r == {
+        "x": None,
+        "a": (0, 1),
+        "b": None,
+        "c": (0, np.inf),
+        "d": (1, np.inf),
+        "e": (-np.inf, 2),
+    }
+
+    class Foo:
+        def __call__(self, x: NDArray, a: Annotated[float, Gt(0), Lt(1)], b: float):
+            ...
+
+    r = describe(Foo.__call__, annotations=True)
+    assert r == {"self": None, "x": None, "a": (0, 1), "b": None}
+
+    r = describe(Foo(), annotations=True)
+    assert r == {"x": None, "a": (0, 1), "b": None}

@@ -50,7 +50,6 @@ documentation for details.
 """
 from .util import (
     describe,
-    make_func_code,
     merge_signatures,
     PerformanceWarning,
     _smart_sampling,
@@ -493,7 +492,10 @@ class Cost(abc.ABC):
     :meta private:
     """
 
-    __slots__ = ("_func_code", "_verbose")
+    __slots__ = ("_parameters", "_verbose")
+
+    _parameters: Dict[str, Optional[Tuple[float, float]]]
+    _verbose: int
 
     @property
     def errordef(self):
@@ -506,15 +508,6 @@ class Cost(abc.ABC):
 
     def _errordef(self):
         return CHISQUARE
-
-    @property
-    def func_code(self):
-        """
-        For internal use.
-
-        :meta private:
-        """
-        return self._func_code
 
     @property
     def ndata(self):
@@ -543,9 +536,11 @@ class Cost(abc.ABC):
     def verbose(self, value: int):
         self._verbose = value
 
-    def __init__(self, args: Sequence[str], verbose: int):
+    def __init__(
+        self, parameters: Dict[str, Optional[Tuple[float, float]]], verbose: int
+    ):
         """For internal use."""
-        self._func_code = make_func_code(args)
+        self._parameters = parameters
         self._verbose = verbose
 
     def __add__(self, rhs):
@@ -606,7 +601,7 @@ class Constant(Cost):
     def __init__(self, value: float):
         """Initialize constant with a value."""
         self.value = value
-        super().__init__((), False)
+        super().__init__({}, False)
 
     def _ndata(self):
         return 0
@@ -659,8 +654,8 @@ class CostSum(Cost, ABCSequence):
                     self._items.append(Constant(item))
             else:
                 self._items.append(item)
-        args, self._maps = merge_signatures(self._items)
-        super().__init__(args, max(c.verbose for c in self._items))
+        signatures, self._maps = merge_signatures(self._items, annotations=True)
+        super().__init__(signatures, max(c.verbose for c in self._items))
 
     def _split(self, args: Sequence[float]):
         for component, cmap in zip(self._items, self._maps):
@@ -737,7 +732,12 @@ class MaskedCost(Cost):
 
     _mask: Optional[NDArray]
 
-    def __init__(self, args: Sequence[str], data: NDArray, verbose: int):
+    def __init__(
+        self,
+        args: Dict[str, Optional[Tuple[float, float]]],
+        data: NDArray,
+        verbose: int,
+    ):
         """For internal use."""
         self._data = data
         self._mask = None
@@ -785,7 +785,7 @@ class UnbinnedCost(MaskedCost):
         """For internal use."""
         self._model = model
         self._log = log
-        super().__init__(describe(model)[1:], _norm(data), verbose)
+        super().__init__(_model_parameters(model), _norm(data), verbose)
 
     @abc.abstractproperty
     def pdf(self):
@@ -1008,7 +1008,7 @@ class BinnedCost(MaskedCost):
 
     def __init__(
         self,
-        args: Sequence[str],
+        parameters: Dict[str, Optional[Tuple[float, float]]],
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         verbose: int,
@@ -1046,7 +1046,7 @@ class BinnedCost(MaskedCost):
         else:
             self._bztrafo = None
 
-        super().__init__(args, n, verbose)
+        super().__init__(parameters, n, verbose)
 
     def _ndata(self):
         return np.prod(self._masked.shape[: self._ndim])
@@ -1119,7 +1119,7 @@ class BinnedCostWithModel(BinnedCost):
         """For internal use."""
         self._model = model
 
-        super().__init__(describe(model)[1:], n, xe, verbose)
+        super().__init__(_model_parameters(model), n, xe, verbose)
 
         if self._ndim == 1:
             self._xe_shape = None
@@ -1245,7 +1245,7 @@ class Template(BinnedCost):
         ndim = len(shape)
 
         npar = 0
-        args = []
+        annotated: Dict[str, Optional[Tuple[float, float]]] = {}
         self._model_data: List[
             Union[
                 Tuple[NDArray, NDArray],
@@ -1271,25 +1271,25 @@ class Template(BinnedCost):
                 t1 *= f
                 t2 *= f**2
                 self._model_data.append((t1, t2))
-                args.append(f"x{i}")
+                annotated[f"x{i}"] = (0.0, np.inf)
             elif isinstance(t, Model):
-                par = describe(t)[1:]
-                npar = len(par)
+                ann = _model_parameters(t)
+                npar = len(ann)
                 self._model_data.append((t, npar))
-                args += [f"x{i}_{x}" for x in par]
+                for k in ann:
+                    annotated[f"x{i}_{k}"] = ann[k]
             else:
                 raise ValueError(
                     "model_or_template must be a collection of array-likes "
                     "and/or Model types"
                 )
 
-        if name is None:
-            name = args
-        else:
-            if len(args) != len(name):
+        if name is not None:
+            if len(annotated) != len(name):
                 raise ValueError(
                     "number of names must match number of templates and model parameters"
                 )
+            annotated = {new: annotated[old] for (old, new) in zip(annotated, name)}
 
         known_methods = {
             "jsc": template_chi2_jsc,
@@ -1311,7 +1311,7 @@ class Template(BinnedCost):
                 stacklevel=2,
             )
 
-        super().__init__(name, n, xe, verbose)
+        super().__init__(annotated, n, xe, verbose)
 
         if self._ndim == 1:
             self._xe_shape = None
@@ -1345,8 +1345,8 @@ class Template(BinnedCost):
                 mu += d
                 mu_var += np.ones_like(mu) * 1e-300
                 i += t2
-            else:
-                assert False  # never arrive here
+            else:  # never arrive here
+                assert False  # pragma: no cover
         return mu, mu_var
 
     def _call(self, args: Sequence[float]) -> float:
@@ -1701,8 +1701,7 @@ class LeastSquares(MaskedCost):
 
         x = np.atleast_2d(x)
         data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
-
-        super().__init__(describe(self._model)[1:], data, verbose)
+        super().__init__(_model_parameters(self._model), data, verbose)
 
     def _call(self, args: Sequence[float]) -> float:
         x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
@@ -1801,7 +1800,7 @@ class NormalConstraint(Cost):
             self._cov **= 2
         self._covinv = _covinv(self._cov)
         tp_args = (args,) if isinstance(args, str) else tuple(args)
-        super().__init__(tp_args, False)
+        super().__init__({k: None for k in tp_args}, False)
 
     @property
     def covariance(self):
@@ -1850,7 +1849,7 @@ class NormalConstraint(Cost):
 
         args = np.atleast_1d(args)
 
-        par = self.func_code.co_varnames
+        par = self._parameters
         val = self.value
         cov = self.covariance
         if cov.ndim == 2:
@@ -1902,6 +1901,14 @@ def _shape_from_xe(xe):
     if isinstance(xe[0], Iterable):
         return tuple(len(xei) - 1 for xei in xe)
     return (len(xe) - 1,)
+
+
+def _model_parameters(model):
+    # strip first argument from model
+    ann = describe(model, annotations=True)
+    args = iter(ann)
+    next(args)
+    return {k: ann[k] for k in args}
 
 
 _deprecated_content = {

@@ -24,7 +24,7 @@ cov: build/done build/testdep
 	coverage run --append -m pytest
 	pip install numba ipykernel ipywidgets scipy matplotlib
 	coverage html -d htmlcov
-	coverage report
+	coverage report -m
 	@echo htmlcov/index.html
 
 doc: build/done build/html/done
