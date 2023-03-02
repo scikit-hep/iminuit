@@ -30,9 +30,9 @@ import warnings
 import sys
 
 if sys.version_info < (3, 9):
-    from typing_extensions import Annotated, get_args, get_origin
+    from typing_extensions import Annotated, get_args, get_origin  # pragma: no cover
 else:
-    from typing import Annotated, get_args, get_origin
+    from typing import Annotated, get_args, get_origin  # pragma: no cover
 
 __all__ = (
     "IMinuitWarning",

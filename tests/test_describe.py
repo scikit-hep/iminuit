@@ -1,5 +1,5 @@
 from iminuit.util import describe, make_func_code
-from iminuit.typing import Annotated, Gt, Lt
+from iminuit.typing import Annotated, Gt, Lt, Ge, Le
 from math import ldexp
 import platform
 from functools import wraps
@@ -189,31 +189,31 @@ def test_from_bad_docstring_2():
 
 def test_with_type_hints():
     def foo(
-        x: NDArray, a: Annotated[float, Gt(0), Lt(1)], b: float, c: Annotated[float, 0:]
-    ):  # noqa
+        x: NDArray,
+        a: Annotated[float, Gt(0), Lt(1)],
+        b: float,
+        c: Annotated[float, 0:],
+        d: Annotated[float, Ge(1)],
+        e: Annotated[float, Le(2)],
+    ):
         ...
 
     r = describe(foo, annotations=True)
-    assert r == {"x": None, "a": (0, 1), "b": None, "c": (0, np.inf)}
+    assert r == {
+        "x": None,
+        "a": (0, 1),
+        "b": None,
+        "c": (0, np.inf),
+        "d": (1, np.inf),
+        "e": (-np.inf, 2),
+    }
 
     class Foo:
-        def __call__(
-            self,
-            x: NDArray,
-            a: Annotated[float, Gt(0), Lt(1)],
-            b: float,
-            c: Annotated[float, 0:],
-        ):  # noqa
+        def __call__(self, x: NDArray, a: Annotated[float, Gt(0), Lt(1)], b: float):
             ...
 
     r = describe(Foo.__call__, annotations=True)
-    assert r == {"self": None, "x": None, "a": (0, 1), "b": None, "c": (0, np.inf)}
+    assert r == {"self": None, "x": None, "a": (0, 1), "b": None}
 
     r = describe(Foo(), annotations=True)
-    assert r == {"x": None, "a": (0, 1), "b": None, "c": (0, np.inf)}
-
-    def line(x, a: float, b: Annotated[float, 0:]):
-        return a + b * x
-
-    r = describe(line, annotations=True)
-    assert r == {"x": None, "a": None, "b": (0, np.inf)}
+    assert r == {"x": None, "a": (0, 1), "b": None}

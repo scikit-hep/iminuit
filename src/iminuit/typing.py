@@ -10,9 +10,9 @@ import dataclasses
 import sys
 
 if sys.version_info < (3, 9):
-    from typing_extensions import Annotated  # noqa
+    from typing_extensions import Annotated  # noqa pragma: no cover
 else:
-    from typing import Annotated  # noqa
+    from typing import Annotated  # noqa pragma: no cover
 
 
 # Key for ValueView, ErrorView, etc.

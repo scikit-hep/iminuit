@@ -1658,3 +1658,9 @@ def test_annotated_cost_function():
     assert m.limits[1] == (0.1, 1.0)
     m.migrad()
     assert_allclose(m.values, (0, 0.1), atol=1e-2)
+
+    m2 = Minuit(cost, 0.5, 0.5, name=("x", "y"))
+    assert m2.limits["x"] == (-np.inf, np.inf)
+    assert m2.limits["y"] == (0.1, 1.0)
+    m.migrad()
+    assert_allclose(m.values, (0, 0.1), atol=1e-2)
