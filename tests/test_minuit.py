@@ -1,10 +1,10 @@
-from __future__ import annotations
 import platform
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
 from iminuit.util import Param, IMinuitWarning, make_func_code
+from iminuit.typing import Annotated
 from pytest import approx
 from argparse import Namespace
 
@@ -1650,7 +1650,7 @@ def test_visualize():
 
 
 def test_annotated_cost_function():
-    def cost(a, b: Annotated[float, ValueRange(0.1, 1)]):  # noqa
+    def cost(a, b: Annotated[float, 0.1:1]):
         return a**2 + b**2
 
     m = Minuit(cost, 0.5, 0.5)
