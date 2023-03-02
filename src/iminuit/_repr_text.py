@@ -180,7 +180,7 @@ def matrix(arr):
     names = tuple(arr._var2pos)
 
     n = len(arr)
-    nums = matrix_format(arr.flatten())
+    nums = matrix_format(arr)
 
     def row_fmt(args):
         s = "│ " + args[0] + " │"
@@ -209,6 +209,13 @@ def matrix(arr):
     return "\n".join(lines)
 
 
-def matrix_format(values):
-    s = [f"{v:.3g}" % v for v in values]
-    return _strip(s)
+def matrix_format(matrix):
+    r = []
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if i == j:
+                r.append(f"{matrix[i, i]:.3g}")
+            else:
+                x = pdg_format(matrix[i, j], matrix[i, i], matrix[j, j])[0]
+                r.append(x)
+    return r
