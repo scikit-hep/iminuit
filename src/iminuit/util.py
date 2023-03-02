@@ -1234,6 +1234,7 @@ def describe(callable, *, annotations=False):
 
         If an objects has a ``func_code`` attribute, it is used to detect the parameters.
         Example::
+
             from iminuit.util import make_func_code
 
             def f(*args): # no signature
@@ -1265,9 +1266,9 @@ def describe(callable, *, annotations=False):
         supports the annotations Gt, Ge, Lt, Le from the external package annotated-types,
         and interprets slice notation as limits.
 
-    3. Using the docstring. The docstring is textually parsed to detect the parameter
-       names. This requires that a docstring is present which follows the Python
-       standard formatting for function signatures.
+    3.  Using the docstring. The docstring is textually parsed to detect the parameter
+        names. This requires that a docstring is present which follows the Python
+        standard formatting for function signatures.
 
     Ambiguous cases with positional and keyword argument are handled in the following
     way::
@@ -1279,6 +1280,7 @@ def describe(callable, *, annotations=False):
         # describe returns [a, b, c];
         # positional arguments with default values are detected
         def fcn(a, b, c=1): ...
+
     """
     if _address_of_cfunc(callable) != 0:
         return {} if annotations else []
