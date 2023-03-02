@@ -3,6 +3,7 @@ Data classes and utilities used by :class:`iminuit.Minuit`.
 
 You can look up the interface of data classes that iminuit uses here.
 """
+from __future__ import annotations
 import inspect
 from collections import OrderedDict
 from argparse import Namespace
@@ -27,6 +28,11 @@ import abc
 from time import monotonic
 import warnings
 import sys
+
+if sys.version_info < (3, 9):
+    from typing_extensions import Annotated, get_args, get_origin
+else:
+    from typing import Annotated, get_args, get_origin
 
 __all__ = (
     "IMinuitWarning",
@@ -1204,35 +1210,65 @@ def describe(callable, *, annotations=False):
     list or dict
         If annotate is False, return list of strings with the parameters names if
         successful and an empty list otherwise. If annotations is True, return a dict,
-        which maps parameter names to ValueRange annotations. For parameters without
-        ValueRange annotations, the dict maps to None.
+        which maps parameter names to annotations. For parameters without annotations,
+        the dict maps to None.
 
     Notes
     -----
     Parameter names are extracted with the following three methods, which are attempted
     in order. The first to succeed determines the result.
 
-    1. Using ``obj.func_code``. If an objects has a ``func_code`` attribute, it is used
-       to detect the parameters. Examples::
+    1.  Using ``obj._parameters``, which is a dict that makes parameter names to parameter
+        limits or None if the parameter has to limits. Users are encouraged to use this
+        mechanism to provide signatures for objects that otherwise would not have a
+        detectable signature. Example::
 
-           def f(*args): # no signature
-               x, y = args
-               return (x - 2) ** 2 + (y - 3) ** 2
+            def f(*args):  # no signature
+                x, y = args
+                return (x - 2) ** 2 + (y - 3) ** 2
 
-           f.func_code = make_func_code(("x", "y"))
+            f._parameters = {"x": None, "y": (1, 4)}
 
-       Users are encouraged to use this mechanism to provide signatures for objects that
-       otherwise would not have a detectable signature. The function
-       :func:`make_func_code` can be used to generate an appropriate func_code object.
-       An example where this is useful is shown in one of the tutorials.
+        Here, the first parameter is declared to have no limits (values from minus to plus
+        infinity are allowed), while the second parameter is declared to have limits, it
+        cannot be smaller than 1 or larger than 4.
 
-    2. Using :func:`inspect.signature`. The :mod:`inspect` module provides a general
-       function to extract the signature of a Python callable. It works on most
-       callables, including Functors like this::
+        Note: In the past, the ``func_code`` attribute was used for a similar purpose as
+        ``_parameters``. It is still supported for legacy code, but should not be used
+        anymore in new code, since it does not support declaring parameter limits.
 
-        class MyLeastSquares:
-            def __call__(self, a, b):
-                # ...
+        If an objects has a ``func_code`` attribute, it is used to detect the parameters.
+        Example::
+            from iminuit.util import make_func_code
+
+            def f(*args): # no signature
+                x, y = args
+                return (x - 2) ** 2 + (y - 3) ** 2
+
+            # deprecated, make_func_code will raise a warning
+            f.func_code = make_func_code(("x", "y"))
+
+    2.  Using :func:`inspect.signature`. The :mod:`inspect` module provides a general
+        function to extract the signature of a Python callable. It works on most
+        callables, including Functors like this::
+
+            class MyLeastSquares:
+                def __call__(self, a, b):
+                    ...
+
+        Limits are supported via annotations, using the Annotated type that was introduced
+        in Python-3.9 and can be obtained from the external package typing_extensions in
+        Python-3.8. In the following example, the second parameter has a lower limit at
+        0, because it must be positive::
+
+            from typing import Annotated
+
+            def my_cost_function(a: float, b: Annotated[float, 0:]):
+                ...
+
+        There are no standard annotations yet at the time of this writing. iminuit
+        supports the annotations Gt, Ge, Lt, Le from the external package annotated-types,
+        and interprets slice notation as limits.
 
     3. Using the docstring. The docstring is textually parsed to detect the parameter
        names. This requires that a docstring is present which follows the Python
@@ -1253,16 +1289,14 @@ def describe(callable, *, annotations=False):
         return {} if annotations else []
 
     args = (
-        _arguments_from_func_code(callable)
-        or getattr(callable, "_parameters", {})
+        getattr(callable, "_parameters", {})
+        or _arguments_from_func_code(callable)
         or _parameters_from_inspect(callable)
         or _arguments_from_docstring(callable)
     )
 
-    is_parameters = isinstance(args, dict)
-
     if annotations:
-        return args if is_parameters else {k: None for k in args}
+        return args
     # for backward-compatibility
     return list(args)
 
@@ -1277,34 +1311,49 @@ def _arguments_from_func_code(callable):
             stacklevel=1,
         )
         fc = callable.func_code
-        return [x for x in fc.co_varnames[: fc.co_argcount]]
-    return []
+        return {x: None for x in fc.co_varnames[: fc.co_argcount]}
+    return {}
 
 
-def _get_limit(annotation):
-    if annotation is inspect.Parameter.empty:
-        return None
+def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
+    from iminuit import typing
 
     if isinstance(annotation, str):
-        import re
+        annotation = eval(annotation, None, typing.__dict__)
 
-        m = re.search(r"ValueRange\(([^\)]+)\)", annotation)
-        return eval(m.group(1)) if m else None
+    if annotation == inspect.Parameter.empty:
+        return None
 
-    lim = None
-    for x in getattr(annotation, "__metadata__", ()):
-        if x.__class__.__name__ == "ValueRange":
-            a, b = x
-            break
-    return lim
+    if get_origin(annotation) is not Annotated:
+        return None
+
+    tp, *constraints = get_args(annotation)
+    assert tp is float
+    lim = [-np.inf, np.inf]
+    for c in constraints:
+        if isinstance(c, slice):
+            if c.start is not None:
+                lim[0] = c.start
+            if c.stop is not None:
+                lim[1] = c.stop
+        # Minuit does not distinguish between closed and open intervals
+        elif hasattr(c, "gt"):
+            lim[0] = c.gt
+        elif hasattr(c, "ge"):
+            lim[0] = c.ge
+        elif hasattr(c, "lt"):
+            lim[1] = c.lt
+        elif hasattr(c, "le"):
+            lim[1] = c.le
+    return tuple(lim)
 
 
 def _parameters_from_inspect(callable):
+    # TODO use eval_str when Python-3.10 becomes minimum supported version
     try:
-        # fails for builtin on Windows and OSX in Python 3.6
         signature = inspect.signature(callable)
-    except ValueError:
-        return []
+    except ValueError:  # raised when used on built-in function
+        return {}
 
     r = {}
     for name, par in signature.parameters.items():
@@ -1322,7 +1371,7 @@ def _arguments_from_docstring(callable):
     doc = inspect.getdoc(callable)
 
     if doc is None:
-        return []
+        return {}
 
     # Examples of strings we want to parse:
     #   min(iterable, *[, default=obj, key=func]) -> value
@@ -1334,12 +1383,12 @@ def _arguments_from_docstring(callable):
         # we cannot extract the signature in this case
         name = callable.__name__
     except AttributeError:
-        return []
+        return {}
 
     token = name + "("
     start = doc.find(token)
     if start < 0:
-        return []
+        return {}
     start += len(token)
 
     nbrace = 1
@@ -1382,7 +1431,7 @@ def _arguments_from_docstring(callable):
     #   "iterable", "default", "key"
     #   "arg1", "arg2", "key"
     #   "ncall_me", "resume", "nsplit"
-    return [extract(x) for x in items if x != "*"]
+    return {extract(x): None for x in items if x != "*"}
 
 
 def _guess_initial_step(val: float) -> float:
@@ -1561,21 +1610,3 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
     xy = list(y.items())
     xy.sort()
     return np.transpose(xy)
-
-
-def _get_annotations(obj: Any) -> Dict[str, Any]:
-    # Compatibility wrapper for CPython < 3.10,
-    # see https://docs.python.org/3/howto/annotations.html
-    #
-    # Returns a dict that maps parameter names to annotations.
-    # If a type is not annotated, it is ommitted.
-    try:
-        from inspect import get_annotations  # type:ignore
-
-        return get_annotations(obj)
-    except ImportError:
-        if isinstance(obj, type):
-            d = getattr(obj, "__dict__", {})
-            return d.get("__annotations__", {})
-        else:
-            return getattr(obj, "__annotations__", {})

@@ -18,6 +18,7 @@ from iminuit.cost import (
     PerformanceWarning,
 )
 from iminuit.util import describe
+from iminuit.typing import Annotated, Gt, Lt
 from typing import Sequence
 import pickle
 
@@ -132,16 +133,31 @@ def test_describe():
     c = NormalConstraint("foo", 1.5, 0.1)
     assert describe(c, annotations=True) == {"foo": None}
 
-    def model(x, foo: Annotated[float, ValueRange(1, 2)], bar):  # noqa
+    def model(
+        x, foo: Annotated[float, Gt(1), Lt(2)], bar: float, baz: Annotated[float, 0:]
+    ):
         return x
 
-    assert describe(model, annotations=True) == {"x": None, "foo": (1, 2), "bar": None}
+    assert describe(model, annotations=True) == {
+        "x": None,
+        "foo": (1, 2),
+        "bar": None,
+        "baz": (0, np.inf),
+    }
 
     c = UnbinnedNLL([], model)
-    assert describe(c, annotations=True) == {"foo": (1, 2), "bar": None}
+    assert describe(c, annotations=True) == {
+        "foo": (1, 2),
+        "bar": None,
+        "baz": (0, np.inf),
+    }
 
     c = BinnedNLL([], [1], model)
-    assert describe(c, annotations=True) == {"foo": (1, 2), "bar": None}
+    assert describe(c, annotations=True) == {
+        "foo": (1, 2),
+        "bar": None,
+        "baz": (0, np.inf),
+    }
 
 
 def test_Constant():
@@ -264,7 +280,7 @@ def test_UnbinnedNLL_annotated():
     def model(
         x: NDArray,  # noqa
         mu: float,
-        sigma: Annotated[float, ValueRange(0, np.inf)],  # noqa
+        sigma: Annotated[float, 0 : np.inf],
     ) -> NDArray:  # noqa
         return norm_pdf(x, mu, sigma)
 

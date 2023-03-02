@@ -1,10 +1,11 @@
-from __future__ import annotations
 from iminuit.util import describe, make_func_code
+from iminuit.typing import Annotated, Gt, Lt
 from math import ldexp
 import platform
 from functools import wraps
 import pytest
 import numpy as np
+from numpy.typing import NDArray
 
 is_pypy = platform.python_implementation() == "PyPy"
 
@@ -187,20 +188,32 @@ def test_from_bad_docstring_2():
 
 
 def test_with_type_hints():
-    def foo(x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float):  # noqa
+    def foo(
+        x: NDArray, a: Annotated[float, Gt(0), Lt(1)], b: float, c: Annotated[float, 0:]
+    ):  # noqa
         ...
 
     r = describe(foo, annotations=True)
-    assert r == {"x": None, "a": (0, 1), "b": None}
+    assert r == {"x": None, "a": (0, 1), "b": None, "c": (0, np.inf)}
 
     class Foo:
         def __call__(
-            self, x: NDArray, a: Annotated[float, ValueRange(0, 1)], b: float  # noqa
-        ):
+            self,
+            x: NDArray,
+            a: Annotated[float, Gt(0), Lt(1)],
+            b: float,
+            c: Annotated[float, 0:],
+        ):  # noqa
             ...
 
     r = describe(Foo.__call__, annotations=True)
-    assert r == {"self": None, "x": None, "a": (0, 1), "b": None}
+    assert r == {"self": None, "x": None, "a": (0, 1), "b": None, "c": (0, np.inf)}
 
     r = describe(Foo(), annotations=True)
-    assert r == {"x": None, "a": (0, 1), "b": None}
+    assert r == {"x": None, "a": (0, 1), "b": None, "c": (0, np.inf)}
+
+    def line(x, a: float, b: Annotated[float, 0:]):
+        return a + b * x
+
+    r = describe(line, annotations=True)
+    assert r == {"x": None, "a": None, "b": (0, np.inf)}

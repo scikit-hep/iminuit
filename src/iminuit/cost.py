@@ -1906,7 +1906,8 @@ def _shape_from_xe(xe):
 def _model_parameters(model):
     # strip first argument from model
     ann = describe(model, annotations=True)
-    args = list(ann)[1:]
+    args = iter(ann)
+    next(args)
     return {k: ann[k] for k in args}
 
 
