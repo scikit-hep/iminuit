@@ -1306,7 +1306,8 @@ def _arguments_from_func_code(callable):
     if hasattr(callable, "func_code"):
         warnings.warn(
             "Using the `func_code` attribute to dynamically declare parameter names is "
-            "deprecated, use the attribute `_parameters` instead (a tuple of strings)",
+            "deprecated, use the attribute `_parameters` instead (a dict of strings "
+            "to limits)",
             np.VisibleDeprecationWarning,
             stacklevel=1,
         )
