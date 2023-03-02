@@ -1119,11 +1119,6 @@ def make_with_signature(
             args[i] = new
         pars = {new: pars[old] for (new, old) in zip(args, pars)}
 
-    if hasattr(callable, "__code__"):
-        c = callable.__code__
-        if c.co_argcount != len(pars):
-            raise ValueError("number of parameters do not match")
-
     class Caller:
         def __init__(self, parameters):
             self._parameters = parameters
