@@ -5,6 +5,12 @@
 Changelog
 =========
 
+2.21.0 (March 03, 2023)
+-----------------------
+- Fix of matrix_format (`#843 <https://github.com/scikit-hep/iminuit/pull/843>`_)
+- Support annotated model parameters (`#839 <https://github.com/scikit-hep/iminuit/pull/839>`_)
+- Visualize fit in minuit._repr_html_ (`#838 <https://github.com/scikit-hep/iminuit/pull/838>`_)
+
 2.20.0 (February 13, 2023)
 --------------------------
 - Fix coverage, typing, template for 2d models (`#836 <https://github.com/scikit-hep/iminuit/pull/836>`_)

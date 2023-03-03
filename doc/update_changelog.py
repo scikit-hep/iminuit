@@ -63,6 +63,8 @@ header = f"{new_version} ({today.strftime('%B %d, %Y')})"
 new_content = f"{header}\n{'-' * len(header)}\n"
 if git_log:
     for x in git_log:
+        if x.startswith("[pre-commit.ci]"):
+            continue
         x = re.sub(
             "#([0-9]+)", r"`#\1 <https://github.com/scikit-hep/iminuit/pull/\1>`_", x
         )
