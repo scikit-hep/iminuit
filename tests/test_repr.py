@@ -80,23 +80,23 @@ def test_pdg_format():
 
 def test_matrix_format():
     def a(*args):
-        return np.array(args)
+        return np.reshape(args, (2, 2))
 
     assert _repr_text.matrix_format(a(1e1, 2e2, -3e3, -4e4)) == [
         "10",
         "200",
-        "-3e+03",
+        "-3.00e3",
         "-4e+04",
     ]
-    assert _repr_text.matrix_format(a(nan, 2e2, -nan, -4e4)) == [
-        "nan",
+    assert _repr_text.matrix_format(a(2e2, nan, -nan, -4e4)) == [
         "200",
         "nan",
+        "nan",
         "-4e+04",
     ]
-    assert _repr_text.matrix_format(a(inf, 2e2, -nan, -4e4)) == [
+    assert _repr_text.matrix_format(a(2e2, inf, -nan, -4e4)) == [
+        "200",
         "inf",
-        "200",
         "nan",
         "-4e+04",
     ]

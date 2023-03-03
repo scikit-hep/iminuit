@@ -289,16 +289,9 @@ class Matrix(np.ndarray):
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
-    def __getitem__(  # type:ignore # mypy complains about incompatible signatures
+    def __getitem__(  # type:ignore
         self,
-        key: Union[
-            int,
-            str,
-            Tuple[Union[int, str], Union[int, str]],
-            Iterable[Union[int, str]],
-            NDArray,
-            slice,
-        ],
+        key: Union[Key, Tuple[Key, Key], Iterable[Key], NDArray],
     ) -> NDArray:
         """Get matrix element at key."""
         var2pos = self._var2pos
@@ -358,7 +351,7 @@ class Matrix(np.ndarray):
         y    -0    4
         """
         names = tuple(self._var2pos)  # type:ignore
-        nums = _repr_text.matrix_format(self.flatten())  # type:ignore
+        nums = _repr_text.matrix_format(self)
         tab = []
         n = len(self)
         for i, name in enumerate(names):

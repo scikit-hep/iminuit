@@ -283,7 +283,7 @@ def matrix(arr):
 
     n = len(names)
 
-    nums = matrix_format(arr.flatten())
+    nums = matrix_format(arr)
 
     grad = ColorGradient(
         (-1.0, 120.0, 120.0, 250.0),

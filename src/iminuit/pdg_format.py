@@ -159,6 +159,7 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
 
 
 def _strip(items: List[str]) -> List[str]:
+    assert all("e" not in x for x in items)
     # ignore inf and nan
     mask = tuple(i for (i, s) in enumerate(items) if "." in s)
     if mask:
