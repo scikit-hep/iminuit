@@ -5,6 +5,11 @@
 Changelog
 =========
 
+2.21.1 (March 18, 2023)
+-----------------------
+- Fix string annotations (`#849 <https://github.com/scikit-hep/iminuit/pull/849>`_)
+- Specifiy minimum required numpy version (`#848 <https://github.com/scikit-hep/iminuit/pull/848>`_)
+
 2.21.0 (March 03, 2023)
 -----------------------
 - Fix of matrix_format (`#843 <https://github.com/scikit-hep/iminuit/pull/843>`_)
