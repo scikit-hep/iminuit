@@ -1310,7 +1310,17 @@ def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
     from iminuit import typing
 
     if isinstance(annotation, str):
-        annotation = eval(annotation, None, typing.__dict__)
+        # This provides limited support for string annotations, which
+        # have a lot of problems, see https://peps.python.org/pep-0649.
+        try:
+            annotation = eval(annotation, None, typing.__dict__)
+        except NameError:
+            # We ignore unknown annotations to fix issue #846.
+            # I cannot replicate here what inspect.signature(..., eval_str=True) does.
+            # I need a dict with the global objects at the call site of describe, but
+            # it is not globals(). Anyway, when using strings, only the annotations
+            # from the package annotated-types are supported.
+            pass
 
     if annotation == inspect.Parameter.empty:
         return None
@@ -1340,7 +1350,6 @@ def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
 
 
 def _parameters_from_inspect(callable):
-    # TODO use eval_str when Python-3.10 becomes minimum supported version
     try:
         signature = inspect.signature(callable)
     except ValueError:  # raised when used on built-in function
