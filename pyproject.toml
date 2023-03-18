@@ -37,7 +37,7 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 dependencies = [
-    "numpy",
+    "numpy >= 1.21",
     "typing_extensions;python_version < '3.9'"
 ]
 
