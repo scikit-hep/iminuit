@@ -217,3 +217,28 @@ def test_with_type_hints():
 
     r = describe(Foo(), annotations=True)
     assert r == {"x": None, "a": (0, 1), "b": None}
+
+
+class Foo(float):
+    pass
+
+
+def test_string_annotation_1():
+    def f(x, mu: "Foo"):
+        pass
+
+    assert describe(f, annotations=True) == {"x": None, "mu": None}
+
+
+def test_string_annotation_2():
+    def f(x, mu: "Annotated[float, Gt(1)]"):
+        pass
+
+    assert describe(f, annotations=True) == {"x": None, "mu": (1, np.inf)}
+
+
+def test_string_annotation_3():
+    def f(x, mu: "Bar"):  # noqa
+        pass
+
+    assert describe(f, annotations=True) == {"x": None, "mu": None}
