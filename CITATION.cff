@@ -1,0 +1,30 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: iminuit
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Hans
+    family-names: Dembinski
+    email: hans.dembinski@gmail.com
+    affiliation: TU Dortmund
+    orcid: 'https://orcid.org/0000-0003-3337-3850'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.7695764
+repository-code: 'https://github.com/scikit-hep/iminuit'
+url: 'https://iminuit.readthedocs.io/en/stable/'
+abstract: >-
+  iminuit is a Jupyter-friendly Python interface for the
+  Minuit2 C++ library maintained by CERN’s ROOT team.
+keywords:
+  - Python
+  - Fitting
+  - Optimization
+  - C++
+  - Scikit-HEP
+license: LGPL-2.0
