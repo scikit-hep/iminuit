@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.21.2 (March 19, 2023)
+-----------------------
+- Fix CITATION.CFF
+
 2.21.1 (March 18, 2023)
 -----------------------
 - Fix string annotations (`#849 <https://github.com/scikit-hep/iminuit/pull/849>`_)
