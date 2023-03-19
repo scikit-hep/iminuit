@@ -2,10 +2,14 @@
 # Visit https://bit.ly/cffinit to generate yours today!
 
 cff-version: 1.2.0
-title: iminuit
+title: scikit-hep/iminuit
 message: >-
   If you use this software, please cite it using the
-  metadata from this file.
+  metadata from this file and the MINUIT paper at
+  https://doi.org/10.1016/0010-4655(75)90039-9.
+
+  This software includes source code under other
+  licenses, see LICENSE in the repository for details.
 type: software
 authors:
   - given-names: Hans
@@ -13,6 +17,48 @@ authors:
     email: hans.dembinski@gmail.com
     affiliation: TU Dortmund
     orcid: 'https://orcid.org/0000-0003-3337-3850'
+  - given-names: Piti
+    family-names: Ongmongkolkul
+  - given-names: Christoph
+    family-names: Deil
+  - given-names: Henry
+    family-names: Schreiner
+  - given-names: Matthew
+    family-names: Feickert
+  - given-names: Chris
+    family-names: Burr
+  - given-names: Jason
+    family-names: Watson
+  - given-names: Fabian
+    family-names: Rost
+  - given-names: Alex
+    family-names: Pearce
+  - given-names: Lukas
+    family-names: Geiger
+  - given-names: Ahmed
+    family-names: Abdelmotteleb
+  - given-names: Aman
+    family-names: Desai
+  - given-names: Bernhard M.
+    family-names: Wiedemann
+  - given-names: Christoph
+    family-names: Gohlke
+  - given-names: Jeremy
+    family-names: Sanders
+  - given-names: Jonas
+    family-names: Drotleff
+  - given-names: Jonas
+    family-names: Eschle
+  - given-names: Ludwig
+    family-names: Neste
+  - given-names: Marco Edward
+    family-names: Gorelli
+  - given-names: Max
+    family-names: Baak
+  - given-names: Michael
+    family-names: Eliachevitch
+  - given-names: Omar
+    family-names: Zapata
 identifiers:
   - type: doi
     value: 10.5281/zenodo.7695764
@@ -20,11 +66,13 @@ repository-code: 'https://github.com/scikit-hep/iminuit'
 url: 'https://iminuit.readthedocs.io/en/stable/'
 abstract: >-
   iminuit is a Jupyter-friendly Python interface for the
-  Minuit2 C++ library maintained by CERN’s ROOT team.
+  Minuit2 C++ library maintained by CERN's ROOT team.
 keywords:
   - Python
-  - Fitting
-  - Optimization
   - C++
+  - fitting
+  - optimization
+  - statistics
+  - data analysis
   - Scikit-HEP
-license: LGPL-2.0
+license: MIT
