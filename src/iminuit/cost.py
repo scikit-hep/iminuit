@@ -38,6 +38,19 @@ or several parameters with different data sets and using different statistical m
 each data set. Gaussian penalty terms can also be added to the cost function to introduce
 external knowledge about a parameter.
 
+Model parameter limits
+----------------------
+The Minuit algorithms support box constrains in parameter space. A user-defined model can
+declare that a parameter is only valid over an interval on the real line with the
+``Annotated`` type annotation, see :class:`iminuit.Minuit` for details. A typical example
+is the sigma parameter of a normal distribution, which must be positive. The cost
+functions defined here propagate this information to :class:`iminuit.Minuit`.
+
+Note: The :class:`Template` declares that the template amplitudes must be non-negative,
+which is usually the right choice, however, it may be desirable to fit templates which can
+have negative amplitudes. To achieve this, simply reset the limits with
+:attr:`iminuit.Minuit.limits` after creating the Minuit instance.
+
 Notes
 -----
 The cost functions defined here have been optimized with knowledge about implementation
