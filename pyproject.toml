@@ -50,6 +50,7 @@ test = [
     "coverage",
     "cython",
     "ipywidgets",
+    "ipykernel",  # needed by ipywidgets 8.0.6
     "joblib",
     "jacobi",
     "matplotlib",
