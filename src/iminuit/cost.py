@@ -1272,12 +1272,12 @@ class Template(BinnedCost):
                     # template is weighted
                     if tt.ndim != ndim + 1 or tt.shape[:-1] != shape:
                         raise ValueError("shapes of n and templates do not match")
-                    t1 = tt[..., 0]
-                    t2 = tt[..., 1]
+                    t1 = tt[..., 0].copy()
+                    t2 = tt[..., 1].copy()
                 else:
                     if tt.ndim != ndim or tt.shape != shape:
                         raise ValueError("shapes of n and templates do not match")
-                    t1 = tt
+                    t1 = tt.copy()
                     t2 = tt.copy()
                 # normalize to unity
                 f = 1 / np.sum(t1)

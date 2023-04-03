@@ -1182,6 +1182,27 @@ def test_Template(method):
         assert_allclose(m.values, [2, 4], atol=1e-2)
 
 
+@pytest.mark.parametrize(
+    "template",
+    (
+        (np.array([1.0, 1.0, 0.0]), np.array([0.0, 1.0, 3.0])),
+        (
+            np.array([[1.0, 1.0], [1.0, 1.0], [0.0, 0.0]]),
+            np.array([[0.0, 0.0], [1.0, 1.0], [3.0, 3.0]]),
+        ),
+    ),
+)
+def test_Template_does_not_modify_inputs(template):
+    from copy import deepcopy
+
+    xe = np.array([0, 1, 2, 3])
+    template_copy = deepcopy(template)
+    n = template[0] + template[1]
+
+    Template(n, xe, template, method="da")
+    assert_equal(template, template_copy)
+
+
 def generate(rng, nmc, truth, bins, tf=1, df=1):
     xe = np.linspace(0, 2, bins + 1)
     b = np.diff(truncexpon(1, 0, 2).cdf(xe))
