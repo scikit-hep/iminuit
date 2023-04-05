@@ -4,6 +4,7 @@ from argparse import Namespace
 from numpy.testing import assert_equal, assert_allclose
 import numpy as np
 from iminuit._core import MnUserParameterState
+from iminuit._optional_dependencies import optional_module_for
 import pickle
 
 
@@ -784,3 +785,28 @@ def test_smart_sampling_1(fn_expected):
 def test_smart_sampling_2():
     with pytest.warns(RuntimeWarning):
         util._smart_sampling(np.log, 1e-10, 1, tol=1e-10)
+
+
+def test_optional_module_for_1():
+    with optional_module_for("foo"):
+        import iminuit  # noqa
+
+
+def test_optional_module_for_2():
+    from iminuit.warnings import OptionalDependencyWarning
+
+    with pytest.warns(
+        OptionalDependencyWarning, match="foo requires optional package 'foobarbaz'"
+    ):
+        with optional_module_for("foo"):
+            import foobarbaz  # noqa
+
+
+def test_optional_module_for_3():
+    from iminuit.warnings import OptionalDependencyWarning
+
+    with pytest.warns(
+        OptionalDependencyWarning, match="foo requires optional package 'foo'"
+    ):
+        with optional_module_for("foo", replace={"foobarbaz": "foo"}):
+            import foobarbaz  # noqa

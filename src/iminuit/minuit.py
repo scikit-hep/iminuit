@@ -18,6 +18,7 @@ from iminuit._core import (
 import numpy as np
 import typing as _tp
 from iminuit.typing import UserBound
+from iminuit._optional_dependencies import optional_module_for
 
 # Better use numpy.typing.ArrayLike in the future, but this
 # requires dropping Python-3.6 support
@@ -1898,18 +1899,12 @@ class Minuit:
         pts = np.append(pts, pts[:1], axis=0)
 
         if interpolated > size:
-            try:
+            with optional_module_for("interpolation"):
                 from scipy.interpolate import CubicSpline
 
                 xg = np.linspace(0, 1, len(pts))
                 spl = CubicSpline(xg, pts, bc_type="periodic")
                 pts = spl(np.linspace(0, 1, interpolated))
-
-            except ModuleNotFoundError:
-                warnings.warn(
-                    "Interpolation requires scipy. Please install scipy.",
-                    mutil.IMinuitWarning,
-                )
         return pts
 
     def draw_mncontour(

@@ -3,7 +3,8 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
-from iminuit.util import Param, IMinuitWarning, make_func_code
+from iminuit.util import Param, make_func_code
+from iminuit.warnings import IMinuitWarning, OptionalDependencyWarning
 from iminuit.typing import Annotated
 from pytest import approx
 from argparse import Namespace
@@ -185,7 +186,10 @@ def test_mncontour_interpolated():
     assert len(pts) == 21
 
     if not scipy_available:
-        with pytest.warns(IMinuitWarning, match="Interpolation requires scipy"):
+        with pytest.warns(
+            OptionalDependencyWarning,
+            match="interpolation requires optional package 'scipy'",
+        ):
             pts = m.mncontour("x", "y", size=20, interpolated=200)
             assert len(pts) == 21
     else:
