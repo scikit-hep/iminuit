@@ -32,40 +32,24 @@ def fig(request):
     plt.close()
 
 
-@pytest.mark.parametrize("arg", ("x", "y"))
+@pytest.mark.parametrize("arg", ("x", 1))
 def test_profile_1(fig, minuit, arg):
-    # plots with hesse errors
     minuit.draw_profile(arg)
     plt.ylim(0, 5)
 
 
-@pytest.mark.parametrize("arg", ("x", "y"))
-def test_profile_2(fig, minuit, arg):
-    # plots with minos errors
-    minuit.draw_profile(arg)
-    plt.ylim(0, 5)
-
-
-def test_profile_3(fig, minuit):
+def test_profile_2(fig, minuit):
     minuit.draw_profile("x", grid=np.linspace(0, 5))
 
 
-@pytest.mark.parametrize("arg", ("x", "y"))
+@pytest.mark.parametrize("arg", ("x", 1))
 def test_mnprofile_1(fig, minuit, arg):
     # plots with hesse errors
     minuit.draw_mnprofile(arg)
     plt.ylim(0, 5)
 
 
-@pytest.mark.parametrize("arg", ("x", "y"))
-def test_mnprofile_2(fig, minuit, arg):
-    # plots with minos errors
-    minuit.minos()
-    minuit.draw_mnprofile(arg)
-    plt.ylim(0, 5)
-
-
-def test_mnprofile_3(fig, minuit):
+def test_mnprofile_2(fig, minuit):
     minuit.minos()
     minuit.draw_mnprofile("x", grid=np.linspace(0, 5))
 
@@ -75,7 +59,8 @@ def test_mncontour_1(fig, minuit):
 
 
 def test_mncontour_2(fig, minuit):
-    minuit.draw_mncontour("x", "y", cl=0.68)
+    # use 0, 1 instead of "x", "y"
+    minuit.draw_mncontour(0, 1, cl=0.68)
 
 
 def test_mncontour_3(fig, minuit):
@@ -95,7 +80,8 @@ def test_contour_1(fig, minuit):
 
 
 def test_contour_2(fig, minuit):
-    minuit.draw_contour("x", "y", size=20, bound=2)
+    # use 0, 1 instead of "x", "y"
+    minuit.draw_contour(0, 1, size=20, bound=2)
 
 
 def test_contour_3(fig, minuit):

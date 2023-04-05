@@ -1368,7 +1368,7 @@ class Minuit:
 
     def minos(
         self,
-        *parameters: str,
+        *parameters: Union[int, str],
         cl: float = None,
         ncall: int = None,
     ) -> "Minuit":
@@ -1432,7 +1432,9 @@ class Minuit:
         else:
             pars = []
             for par in parameters:
-                if par not in self._var2pos:
+                if isinstance(par, int):
+                    par = self._pos2var[par]
+                elif par not in self._var2pos:
                     raise RuntimeError(f"Unknown parameter {par}")
                 if self.fixed[par]:
                     warnings.warn(

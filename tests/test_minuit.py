@@ -544,7 +544,7 @@ def test_minos_single_fixed():
     m = Minuit(func0, x=0, y=0)
     m.fixed["x"] = True
     m.migrad()
-    m.minos("y")
+    m.minos(1)
     assert len(m.merrors) == 1
     me = m.merrors["y"]
     assert me.name == "y"
@@ -750,7 +750,8 @@ def test_mnprofile(grad):
 
     assert_allclose(v, v2)
 
-    y, v3, _ = m.mnprofile("y", size=10, subtract_min=True)
+    # use 1 instead of "y"
+    y, v3, _ = m.mnprofile(1, size=10, subtract_min=True)
     assert np.min(v3) == 0
     assert_allclose(v - np.min(v), v3)
 
@@ -785,7 +786,8 @@ def test_contour_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
     m.migrad()
     v = m.contour("x", "y", subtract_min=False)[2]
-    v2 = m.contour("x", "y", subtract_min=True)[2]
+    # use 0 and 1 instead "x", "y"
+    v2 = m.contour(0, 1, subtract_min=True)[2]
     assert np.min(v2) == 0
     assert_allclose(v - np.min(v), v2)
 
@@ -798,7 +800,8 @@ def test_mncontour_no_fmin():
 
     # succeeds
     m.values = (2, 5)
-    c = m.mncontour("x", "y", size=10)
+    # use 0, 1 instead of "x", "y"
+    c = m.mncontour(0, 1, size=10)
 
     # compute reference to compare with
     m2 = Minuit(func0, x=0, y=0)
@@ -839,13 +842,17 @@ def test_mncontour_array_func():
 def test_profile_array_func():
     m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
-    m.profile("y")
+    a = m.profile("y")
+    b = m.profile(1)
+    assert_equal(a, b)
 
 
 def test_mnprofile_array_func():
     m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
-    m.mnprofile("y")
+    a = m.mnprofile("y")
+    b = m.mnprofile(1)
+    assert_equal(a, b)
 
 
 def test_mnprofile_bad_func():
