@@ -1075,7 +1075,7 @@ class Minuit:
                 if isinstance(c, NonlinearConstraint):
                     c.fun = Wrapped(c.fun)
                 elif isinstance(c, LinearConstraint):
-                    if no_fixed_parameters == False:
+                    if not no_fixed_parameters:
                         x = cpar.copy()
                         x[cfree] = 0
                         shift = np.dot(c.A, x)

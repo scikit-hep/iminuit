@@ -205,10 +205,10 @@ def test_UnbinnedNLL_mask():
     c = UnbinnedNLL([1, np.nan, 2], lambda x, a: x + a)
     assert c.mask is None
 
-    assert np.isnan(c(0)) == True
+    assert np.isnan(c(0))
     c.mask = np.arange(3) != 1
     assert_equal(c.mask, (True, False, True))
-    assert np.isnan(c(0)) == False
+    assert not np.isnan(c(0))
 
 
 @pytest.mark.parametrize("log", (False, True))
@@ -338,9 +338,9 @@ def test_ExtendedUnbinnedNLL_mask():
     c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
     assert c.ndata == np.inf
 
-    assert np.isnan(c(0)) == True
+    assert np.isnan(c(0))
     c.mask = np.arange(3) != 1
-    assert np.isnan(c(0)) == False
+    assert not np.isnan(c(0))
     assert c.ndata == np.inf
 
 
@@ -799,7 +799,7 @@ def test_LeastSquares_bad_input():
 def test_LeastSquares_mask():
     c = LeastSquares([1, 2, 3], [3, np.nan, 4], [1, 1, 1], lambda x, a: x + a)
     assert c.ndata == 3
-    assert np.isnan(c(0)) == True
+    assert np.isnan(c(0))
 
     m = Minuit(c, 1)
     assert m.ndof == 2
@@ -807,7 +807,7 @@ def test_LeastSquares_mask():
     assert not m.valid
 
     c.mask = np.arange(3) != 1
-    assert np.isnan(c(0)) == False
+    assert not np.isnan(c(0))
     assert c.ndata == 2
 
     assert m.ndof == 1

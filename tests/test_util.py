@@ -123,10 +123,10 @@ def test_FixedView_comparison_with_broadcasting():
     assert_equal(f, [False, False, False])
 
     # broadcasting
-    assert f == False
+    assert f == False  # noqa
     f[0] = True
     assert_equal(f, [True, False, False])
-    assert f != False
+    assert f != False  # noqa
 
 
 def test_Matrix():
@@ -206,11 +206,11 @@ def test_Param():
     assert p.value == 1.2
     assert p.error == 3.4
     assert p.merror is None
-    assert p.is_const == False
-    assert p.is_fixed == False
-    assert p.has_limits == True
-    assert p.has_lower_limit is True
-    assert p.has_upper_limit is False
+    assert not p.is_const
+    assert not p.is_fixed
+    assert p.has_limits
+    assert p.has_lower_limit
+    assert not p.has_upper_limit
     assert p.lower_limit == 42
     assert p.upper_limit is None
 
@@ -365,7 +365,7 @@ def test_FMin(errordef):
     assert fmin.algorithm == "foo"
     assert fmin.edm == 1.23456e-10
     assert fmin.edm_goal == 0.1
-    assert fmin.has_parameters_at_limit == False
+    assert not fmin.has_parameters_at_limit
     assert fmin.time == 1.2
 
     assert fmin == util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.2)
