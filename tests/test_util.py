@@ -123,7 +123,7 @@ def test_FixedView_comparison_with_broadcasting():
     assert_equal(f, [False, False, False])
 
     # broadcasting
-    assert not f
+    assert f == False  # noqa
     f[0] = True
     assert_equal(f, [True, False, False])
     assert f != False  # noqa
