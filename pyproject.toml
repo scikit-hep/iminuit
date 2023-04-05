@@ -64,7 +64,8 @@ test = [
     "scipy",
     "tabulate",
     "boost_histogram",
-    "resample>=1.5"
+    "resample",
+    "unicodeit"
 ]
 doc = [
     "sphinx~=5.3.0",
