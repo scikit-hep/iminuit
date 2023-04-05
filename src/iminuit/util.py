@@ -9,6 +9,7 @@ from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
 from iminuit.typing import Key, UserBound
+from iminuit.warnings import IMinuitWarning, HesseFailedWarning, PerformanceWarning
 import numpy as np
 from numpy.typing import NDArray
 from typing import (
@@ -52,18 +53,6 @@ __all__ = (
     "merge_signatures",
     "describe",
 )
-
-
-class IMinuitWarning(RuntimeWarning):
-    """Generic iminuit warning."""
-
-
-class HesseFailedWarning(IMinuitWarning):
-    """HESSE failed warning."""
-
-
-class PerformanceWarning(UserWarning):
-    """Warning about performance issues."""
 
 
 class BasicView(abc.ABC):
