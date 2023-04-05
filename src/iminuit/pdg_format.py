@@ -145,7 +145,7 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
             s += fmt_pe % si
         else:
             s += fmt_se % si
-        if liter and asym is False:
+        if liter and not asym:
             y = next(liter)
             if y[0] in r"_\^<":
                 s += y
@@ -200,7 +200,7 @@ def _is_asym(value):
 
 def _unpack(values):
     assert len(values) > 0
-    assert _is_asym(values[0]) is False
+    assert not _is_asym(values[0])
     result = [values[0]]
     for v in values[1:]:
         if _is_asym(v):
@@ -220,7 +220,7 @@ def _unpacked_index(values, index):
 
 def _round(values, leader, n_exp_extern):
     assert len(values) >= 1
-    assert _is_asym(values[0]) is False
+    assert not _is_asym(values[0])
     values = _unpack(values)
 
     if leader is None:

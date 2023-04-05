@@ -1151,8 +1151,8 @@ def test_non_analytical_function():
 
     m = Minuit(Func(), 0)
     m.migrad()
-    assert m.fmin.is_valid is False
-    assert m.fmin.is_above_max_edm is True
+    assert not m.fmin.is_valid
+    assert m.fmin.is_above_max_edm
 
 
 def test_non_invertible():
@@ -1168,8 +1168,8 @@ def test_non_invertible():
 def test_function_without_local_minimum():
     m = Minuit(lambda a: -a, 0)
     m.migrad()
-    assert m.fmin.is_valid is False
-    assert m.fmin.is_above_max_edm is True
+    assert not m.fmin.is_valid
+    assert m.fmin.is_above_max_edm
 
 
 def test_function_with_maximum():
@@ -1178,7 +1178,7 @@ def test_function_with_maximum():
 
     m = Minuit(func, a=0)
     m.migrad()
-    assert m.fmin.is_valid is False
+    assert not m.fmin.is_valid
 
 
 def test_perfect_correlation():
@@ -1187,10 +1187,10 @@ def test_perfect_correlation():
 
     m = Minuit(func, a=1, b=2)
     m.migrad()
-    assert m.fmin.is_valid is True
-    assert m.fmin.has_accurate_covar is False
-    assert m.fmin.has_posdef_covar is False
-    assert m.fmin.has_made_posdef_covar is True
+    assert m.fmin.is_valid
+    assert not m.fmin.has_accurate_covar
+    assert not m.fmin.has_posdef_covar
+    assert m.fmin.has_made_posdef_covar
 
 
 def test_modify_param_state():
@@ -1326,12 +1326,12 @@ def test_parameter_at_limit(sign):
     m.limits["x"] = (-1, 1)
     m.migrad()
     assert m.values["x"] == approx(sign * 1.0, abs=1e-3)
-    assert m.fmin.has_parameters_at_limit is True
+    assert m.fmin.has_parameters_at_limit
 
     m = Minuit(lambda x: (x - sign * 1.2) ** 2, x=0)
     m.migrad()
     assert m.values["x"] == approx(sign * 1.2, abs=1e-3)
-    assert m.fmin.has_parameters_at_limit is False
+    assert not m.fmin.has_parameters_at_limit
 
 
 @pytest.mark.parametrize("iterate,valid", ((1, False), (5, True)))
