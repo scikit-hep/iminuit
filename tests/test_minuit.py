@@ -573,7 +573,7 @@ def test_minos_single_no_migrad():
 def test_minos_single_nonsense_variable():
     m = Minuit(func0, x=0, y=0)
     m.migrad()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         m.minos("nonsense")
 
 

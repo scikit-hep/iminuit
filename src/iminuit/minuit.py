@@ -1428,28 +1428,26 @@ class Minuit:
             raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
         if len(parameters) == 0:
-            pars = [par for par in self.parameters if not self.fixed[par]]
+            ipars = [ipar for ipar in range(self.npar) if not self.fixed[ipar]]
         else:
-            pars = []
+            ipars = []
             for par in parameters:
-                if isinstance(par, int):
-                    par = self._pos2var[par]
-                elif par not in self._var2pos:
-                    raise RuntimeError(f"Unknown parameter {par}")
-                if self.fixed[par]:
+                ip, pname = self._normalize_key(par)
+                if self.fixed[ip]:
                     warnings.warn(
-                        f"Cannot scan over fixed parameter {par}",
+                        f"Cannot scan over fixed parameter {pname!r}",
                         mutil.IMinuitWarning,
                     )
                 else:
-                    pars.append(par)
+                    ipars.append(ip)
 
         t = mutil._Timer(self._fmin)
         with t:
             with _TemporaryErrordef(self._fcn, factor):
                 minos = MnMinos(self._fcn, fm, self.strategy)
-                for par in pars:
-                    me = minos(self._var2pos[par], ncall, self._tolerance)
+                for ipar in ipars:
+                    par = self._pos2var[ipar]
+                    me = minos(ipar, ncall, self._tolerance)
                     self._merrors[par] = mutil.MError(
                         me.number,
                         par,
@@ -1492,7 +1490,7 @@ class Minuit:
 
         Parameters
         ----------
-        vname : str
+        vname : int or str
             Parameter to scan over.
         size : int, optional
             Number of scanning points (Default: 100). Ignored if grid is set.
@@ -1515,24 +1513,21 @@ class Minuit:
         array of bool
             Whether minimisation in each point succeeded or not.
         """
-        if isinstance(vname, int):
-            vname = self._pos2var[vname]
-        elif vname not in self._pos2var:
-            raise ValueError("Unknown parameter %s" % vname)
+        ipar, pname = self._normalize_key(vname)
+        del vname
 
         if grid is not None:
             x = np.array(grid, dtype=float)
             if x.ndim != 1:
                 raise ValueError("grid must be 1D array-like")
         else:
-            a, b = self._normalize_bound(vname, bound)
+            a, b = self._normalize_bound(pname, bound)
             x = np.linspace(a, b, size, dtype=float)
 
         y = np.empty_like(x)
         status = np.empty(len(x), dtype=bool)
 
         state = MnUserParameterState(self._last_state)  # copy
-        ipar = self._var2pos[vname]
         state.fix(ipar)
         for i, v in enumerate(x):
             state.set_value(ipar, v)
@@ -1540,7 +1535,7 @@ class Minuit:
             fm = migrad(0, self._tolerance)
             if not fm.is_valid:
                 warnings.warn(
-                    f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning
+                    f"MIGRAD fails to converge for {pname}={v}", mutil.IMinuitWarning
                 )
             status[i] = fm.is_valid
             y[i] = fm.fval
@@ -1577,12 +1572,12 @@ class Minuit:
         --------
         mnprofile, profile, draw_profile
         """
-        if isinstance(vname, int):
-            vname = self._pos2var[vname]
+        ipar, pname = self._normalize_key(vname)
+        del vname
         if "subtract_min" not in kwargs:
             kwargs["subtract_min"] = True
-        x, y, _ = self.mnprofile(vname, **kwargs)
-        return self._draw_profile(vname, x, y, band, text)
+        x, y, _ = self.mnprofile(ipar, **kwargs)
+        return self._draw_profile(ipar, x, y, band, text)
 
     def profile(
         self,
@@ -1602,7 +1597,7 @@ class Minuit:
 
         Parameters
         ----------
-        vname : str
+        vname : int or str
             Parameter to scan over.
         size : int, optional
             Number of scanning points (Default: 100). Ignored if grid is set.
@@ -1627,20 +1622,19 @@ class Minuit:
         --------
         mnprofile
         """
-        if isinstance(vname, int):
-            vname = self._pos2var[vname]
+        ipar, par = self._normalize_key(vname)
+        del vname
 
         if grid is not None:
             x = np.array(grid, dtype=float)
             if x.ndim != 1:
                 raise ValueError("grid must be 1D array-like")
         else:
-            a, b = self._normalize_bound(vname, bound)
+            a, b = self._normalize_bound(par, bound)
             x = np.linspace(a, b, size, dtype=float)
 
         y = np.empty_like(x)
         values = np.array(self.values)
-        ipar = self._var2pos[vname]
         for i, vi in enumerate(x):
             values[ipar] = vi
             y[i] = self.fcn(values)
@@ -1672,16 +1666,17 @@ class Minuit:
         --------
         profile, mnprofile, draw_mnprofile
         """
-        if isinstance(vname, int):
-            vname = self._pos2var[vname]
+        ipar, pname = self._normalize_key(vname)
+        del vname
+
         if "subtract_min" not in kwargs:
             kwargs["subtract_min"] = True
-        x, y = self.profile(vname, **kwargs)
-        return self._draw_profile(vname, x, y, band, text)
+        x, y = self.profile(ipar, **kwargs)
+        return self._draw_profile(ipar, x, y, band, text)
 
     def _draw_profile(
         self,
-        vname: str,
+        ipar: int,
         x: np.ndarray,
         y: np.ndarray,
         band: bool,
@@ -1689,31 +1684,32 @@ class Minuit:
     ) -> Tuple[np.ndarray, np.ndarray]:
         from matplotlib import pyplot as plt
 
+        pname = self._pos2var[ipar]
         plt.plot(x, y)
-        plt.xlabel(vname)
+        plt.xlabel(pname)
         plt.ylabel("FCN")
 
-        v = self.values[vname]
+        v = self.values[ipar]
         plt.axvline(v, color="k", linestyle="--")
 
         vmin = None
         vmax = None
-        if vname in self.merrors:
-            vmin = v + self.merrors[vname].lower
-            vmax = v + self.merrors[vname].upper
+        if pname in self.merrors:
+            vmin = v + self.merrors[pname].lower
+            vmax = v + self.merrors[pname].upper
         else:
-            vmin = v - self.errors[vname]
-            vmax = v + self.errors[vname]
+            vmin = v - self.errors[ipar]
+            vmax = v + self.errors[ipar]
 
         if vmin is not None and band:
             plt.axvspan(vmin, vmax, facecolor="0.8")
 
         if text:
             plt.title(
-                (f"{vname} = {v:.3g}")
+                (f"{pname} = {v:.3g}")
                 if vmin is None
                 else (
-                    "{} = {:.3g} - {:.3g} + {:.3g}".format(vname, v, v - vmin, vmax - v)
+                    "{} = {:.3g} - {:.3g} + {:.3g}".format(pname, v, v - vmin, vmax - v)
                 ),
                 fontsize="large",
             )
@@ -1776,10 +1772,10 @@ class Minuit:
         --------
         mncontour, mnprofile
         """
-        if isinstance(x, int):
-            x = self._pos2var[x]
-        if isinstance(y, int):
-            y = self._pos2var[y]
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
+        del x
+        del y
 
         if grid is not None:
             xg, yg = grid
@@ -1790,12 +1786,12 @@ class Minuit:
         else:
             if isinstance(bound, Iterable):
                 xb, yb = bound
-                xrange = self._normalize_bound(x, xb)
-                yrange = self._normalize_bound(y, yb)
+                xrange = self._normalize_bound(xname, xb)
+                yrange = self._normalize_bound(yname, yb)
             else:
                 n = float(bound)
-                xrange = self._normalize_bound(x, n)
-                yrange = self._normalize_bound(y, n)
+                xrange = self._normalize_bound(xname, n)
+                yrange = self._normalize_bound(yname, n)
             if isinstance(size, Iterable):
                 xsize, ysize = size
             else:
@@ -1805,13 +1801,11 @@ class Minuit:
             yv = np.linspace(yrange[0], yrange[1], ysize)
         zv = np.empty((len(xv), len(yv)), dtype=float)
 
-        ipar = self._var2pos[x]
-        jpar = self._var2pos[y]
         values = np.array(self.values)
         for i, xi in enumerate(xv):
-            values[ipar] = xi
+            values[ix] = xi
             for j, yi in enumerate(yv):
-                values[jpar] = yi
+                values[iy] = yi
                 zv[i, j] = self._fcn(values)
 
         if subtract_min:
@@ -1837,23 +1831,23 @@ class Minuit:
         """
         from matplotlib import pyplot as plt
 
-        if isinstance(x, int):
-            x = self._pos2var[x]
-        if isinstance(y, int):
-            y = self._pos2var[y]
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
+        del x
+        del y
 
         if "subtract_min" not in kwargs:
             kwargs["subtract_min"] = True
-        vx, vy, vz = self.contour(x, y, **kwargs)
+        vx, vy, vz = self.contour(ix, iy, **kwargs)
 
         v = [self.errordef * (i + 1) for i in range(4)]
 
         CS = plt.contour(vx, vy, vz.T, v)
         plt.clabel(CS, v)
-        plt.xlabel(x)
-        plt.ylabel(y)
-        plt.axhline(self.values[y], color="k", ls="--")
-        plt.axvline(self.values[x], color="k", ls="--")
+        plt.xlabel(xname)
+        plt.ylabel(yname)
+        plt.axhline(self.values[iy], color="k", ls="--")
+        plt.axvline(self.values[ix], color="k", ls="--")
         return vx, vy, vz
 
     def mncontour(
@@ -1910,16 +1904,10 @@ class Minuit:
         --------
         contour, mnprofile
         """
-        if isinstance(x, int):
-            ix = x
-            x = self._pos2var[x]
-        else:
-            ix = self._var2pos[x]
-        if isinstance(y, int):
-            iy = y
-            y = self._pos2var[y]
-        else:
-            iy = self._var2pos[y]
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
+        del x
+        del y
 
         factor = _cl_to_errordef(cl, 2, 0.68)
 
@@ -1929,7 +1917,7 @@ class Minuit:
         if not self.valid:
             raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
-        pars = set((x, y)) - self._free_parameters()
+        pars = {xname, yname} - self._free_parameters()
         if pars:
             raise ValueError(
                 f"mncontour can only be run on free parameters, not on {pars}"
@@ -1987,10 +1975,8 @@ class Minuit:
         from matplotlib.path import Path
         from matplotlib.contour import ContourSet
 
-        if isinstance(x, int):
-            x = self._pos2var[x]
-        if isinstance(y, int):
-            y = self._pos2var[y]
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
 
         mpl_version = tuple(map(int, mpl_version.split(".")))
 
@@ -2000,7 +1986,7 @@ class Minuit:
         c_pts = []
         codes = []
         for cl in cls:
-            pts = self.mncontour(x, y, cl=cl, size=size, interpolated=interpolated)
+            pts = self.mncontour(ix, iy, cl=cl, size=size, interpolated=interpolated)
             n_lineto = len(pts) - 2
             if mpl_version < (3, 5):
                 n_lineto -= 1  # pragma: no cover
@@ -2010,8 +1996,8 @@ class Minuit:
         assert len(c_val) == len(codes), f"{len(c_val)} {len(codes)}"
         cs = ContourSet(plt.gca(), c_val, c_pts, codes)
         plt.clabel(cs)
-        plt.xlabel(x)
-        plt.ylabel(y)
+        plt.xlabel(xname)
+        plt.ylabel(yname)
 
         return cs
 
@@ -2388,6 +2374,15 @@ class Minuit:
         if self._precision is not None:
             pr.eps = self._precision
         return pr
+
+    def _normalize_key(self, key: Union[int, str]) -> Tuple[int, str]:
+        if isinstance(key, int):
+            if key >= self.npar:
+                raise ValueError(f"parameter {key} is out of range (max: {self.npar})")
+            return key, self._pos2var[key]
+        if key not in self._var2pos:
+            raise ValueError(f"unknown parameter {key!r}")
+        return self._var2pos[key], key
 
     def _normalize_bound(
         self, vname: str, bound: Union[float, UserBound, Tuple[float, float]]
