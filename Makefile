@@ -23,8 +23,8 @@ cov: build/done build/testdep
 	python -m pip uninstall --yes scipy matplotlib unicodeit
 	coverage run --append -m pytest
 	coverage html -d htmlcov
-	coverage report -m
 	python .ci/install_deps.py test
+	coverage report -m
 	@echo htmlcov/index.html
 
 doc: build/done build/html/done
