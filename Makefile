@@ -4,7 +4,7 @@
 build/done: $(wildcard *.py src/*.cpp extern/root/math/minuit2/src/*.cxx extern/root/math/minuit2/inc/*.h) CMakeLists.txt
 	mkdir -p build
 	python .ci/install_deps.py build
-	DEBUG=1 CMAKE_PARALLEL_INSTALL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python -m pip install --no-build-isolation --prefer-binary -v .[test,doc]
+	DEBUG=1 CMAKE_BUILD_PARALLEL_LEVEL=8 CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=ccache" python -m pip install --no-build-isolation -v -e .
 	touch build/done
 
 build/testdep: build/done
