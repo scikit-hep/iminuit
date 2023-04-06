@@ -2585,11 +2585,11 @@ class Minuit:
             # find bracket
             a = 0.5
             while scan(a) > 0 and a > 1e-7:
-                a *= 0.5
+                a *= 0.5  # pragma: no cover
 
             if a < 1e-7:
-                ce.append(args(a))
-                continue
+                ce.append((np.nan, np.nan))  # pragma: no cover
+                continue  # pragma: no cover
 
             b = 1.2
             while scan(b) < 0 and b < 8:
