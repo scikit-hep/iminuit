@@ -2562,7 +2562,14 @@ class Minuit:
                     z * s[0] * np.cos(phi),
                     z * s[1] * np.sin(phi),
                 )
-                return r[0] + center[0], r[1] + center[1]
+                x = r[0] + center[0]
+                lim = self.limits[ix]
+                if lim is not None:
+                    x = max(lim[0], min(x, lim[1]))
+                y = r[1] + center[1]
+                if lim is not None:
+                    y = max(lim[0], min(y, lim[1]))
+                return x, y
 
             def scan(z):
                 state = MnUserParameterState(self._last_state)  # copy
