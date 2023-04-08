@@ -23,7 +23,7 @@ def test_issue_424():
     m.fixed["x"] = True
     m.errors["x"] = 2
     m.hesse()  # this used to release x
-    assert m.fixed["x"] is True
+    assert m.fixed["x"]
     assert m.errors["x"] == 2
 
 
@@ -144,8 +144,8 @@ def test_issue_694():
         m.migrad()
 
         if np.isnan(m.fmin.edm):
-            assert m.valid is False
-            assert m.fmin.is_above_max_edm is True
+            assert not m.valid
+            assert m.fmin.is_above_max_edm
             break
     else:
         assert False

@@ -1,4 +1,4 @@
-from ._repr_text import pdg_format, matrix_format, fmin_fields
+from ._repr_text import pdg_format, matrix_format, fmin_fields, _parse_latex
 
 good_style = "background-color:#92CCA6;color:black"
 bad_style = "background-color:#c15ef7;color:black"
@@ -201,7 +201,7 @@ def params(mps):
         rows.append(
             tr(
                 th(str(i)),
-                td(mp.name),
+                td(_parse_latex(mp.name)),
                 td(v),
                 td(e),
                 td(mem),
@@ -243,7 +243,7 @@ def merrors(mes):
     for me in mes:
         header.append(
             th(
-                me.name,
+                _parse_latex(me.name),
                 colspan=2,
                 title="Parameter name",
                 style="text-align:center",
@@ -279,7 +279,7 @@ def merrors(mes):
 
 
 def matrix(arr):
-    names = tuple(arr._var2pos)
+    names = [_parse_latex(x) for x in arr._var2pos]
 
     n = len(names)
 
@@ -316,3 +316,29 @@ def matrix(arr):
         rows.append(tr(*cols))
 
     return to_str(table(tr(td(), *[th(v) for v in names]), *rows))
+
+
+# def _parse_latex(s):
+#     if s.startswith("$") and s.endswith("$"):
+#         with optional_module_for("displaying LaTeX"):
+#             from matplotlib.backends.backend_svg import RendererSVG
+#             from matplotlib.font_manager import FontProperties
+#             from io import StringIO
+
+#             fp = FontProperties(size=9)
+#             # get bounding box of rendered text
+#             r = RendererSVG(0, 0, StringIO())
+#             w, h, _ = r.get_text_width_height_descent(s, fp, ismath=True)
+
+#             with StringIO() as f:
+#                 # render LaTeX as path
+#                 r = RendererSVG(w, h, f)
+#                 r.draw_text(r.new_gc(), 0, h, s, fp, angle=0, ismath=True)
+#                 f.seek(0)
+#                 svg = f.read()
+
+#             # strip preamble
+#             svg = svg[svg.index("<svg") + 4 :]
+#             return f'<svg role="img" style="fill:#f0f0f0" {svg}'
+
+#     return s

@@ -16,12 +16,25 @@ from iminuit._core import (
     FunctionMinimum,
 )
 import numpy as np
-import typing as _tp
+from typing import (
+    Union,
+    Sequence,
+    Optional,
+    Callable,
+    Tuple,
+    List,
+    Dict,
+    Iterable,
+    Any,
+    Collection,
+    Set,
+)
 from iminuit.typing import UserBound
+from iminuit._optional_dependencies import optional_module_for
 
 # Better use numpy.typing.ArrayLike in the future, but this
 # requires dropping Python-3.6 support
-_ArrayLike = _tp.Sequence
+_ArrayLike = Sequence
 
 MnPrint.global_level = 0
 
@@ -49,8 +62,8 @@ class Minuit:
         "_last_state",
     )
 
-    _fmin: _tp.Optional[mutil.FMin]
-    _covariance: _tp.Optional[mutil.Matrix]
+    _fmin: Optional[mutil.FMin]
+    _covariance: Optional[mutil.Matrix]
 
     # Set errordef to this for a least-squares cost function.
     LEAST_SQUARES = 1.0
@@ -64,22 +77,22 @@ class Minuit:
         return self._fcn
 
     @property
-    def grad(self) -> _tp.Callable[[np.ndarray], np.ndarray]:
+    def grad(self) -> Callable[[np.ndarray], np.ndarray]:
         """Get gradient function of the cost function."""
         return self._fcn.gradient  # type:ignore
 
     @property
-    def pos2var(self) -> _tp.Tuple[str, ...]:
+    def pos2var(self) -> Tuple[str, ...]:
         """Map variable index to name."""
         return self._pos2var
 
     @property
-    def var2pos(self) -> _tp.Dict[str, int]:
+    def var2pos(self) -> Dict[str, int]:
         """Map variable name to index."""
         return self._var2pos
 
     @property
-    def parameters(self) -> _tp.Tuple[str, ...]:
+    def parameters(self) -> Tuple[str, ...]:
         """
         Get tuple of parameter names.
 
@@ -116,7 +129,7 @@ class Minuit:
             self._fmin._src.errordef = value
 
     @property
-    def precision(self) -> _tp.Optional[float]:
+    def precision(self) -> Optional[float]:
         """
         Access estimated precision of the cost function.
 
@@ -128,7 +141,7 @@ class Minuit:
         return self._precision
 
     @precision.setter
-    def precision(self, value: _tp.Optional[float]) -> None:
+    def precision(self, value: Optional[float]) -> None:
         if value is not None and not (value > 0):
             raise ValueError("precision must be a positive number or None")
         self._precision = value
@@ -167,7 +180,7 @@ class Minuit:
         return self._tolerance
 
     @tol.setter
-    def tol(self, value: _tp.Optional[float]) -> None:
+    def tol(self, value: Optional[float]) -> None:
         if value is None:  # used to reset tolerance
             value = 0.1
         elif value < 0:
@@ -253,7 +266,7 @@ class Minuit:
         return self._values
 
     @values.setter
-    def values(self, args: _tp.Iterable) -> None:
+    def values(self, args: Iterable) -> None:
         self._values[:] = args
 
     @property
@@ -271,7 +284,7 @@ class Minuit:
         return self._errors
 
     @errors.setter
-    def errors(self, args: _tp.Iterable) -> None:
+    def errors(self, args: Iterable) -> None:
         self._errors[:] = args
 
     @property
@@ -293,7 +306,7 @@ class Minuit:
         return self._fixed
 
     @fixed.setter
-    def fixed(self, args: _tp.Iterable) -> None:
+    def fixed(self, args: Iterable) -> None:
         self._fixed[:] = args
 
     @property
@@ -318,7 +331,7 @@ class Minuit:
         return self._limits
 
     @limits.setter
-    def limits(self, args: _tp.Iterable) -> None:
+    def limits(self, args: Iterable) -> None:
         self._limits[:] = args
 
     @property
@@ -336,7 +349,7 @@ class Minuit:
         return self._merrors
 
     @property
-    def covariance(self) -> _tp.Optional[mutil.Matrix]:
+    def covariance(self) -> Optional[mutil.Matrix]:
         r"""
         Return covariance matrix.
 
@@ -386,7 +399,7 @@ class Minuit:
         return self._fcn._ndata() - self.nfit  # type: ignore
 
     @property
-    def fmin(self) -> _tp.Optional[mutil.FMin]:
+    def fmin(self) -> Optional[mutil.FMin]:
         """
         Get function minimum data object.
 
@@ -397,7 +410,7 @@ class Minuit:
         return self._fmin
 
     @property
-    def fval(self) -> _tp.Optional[float]:
+    def fval(self) -> Optional[float]:
         """
         Get function value at minimum.
 
@@ -470,10 +483,10 @@ class Minuit:
 
     def __init__(
         self,
-        fcn: _tp.Callable,
-        *args: _tp.Union[float, _ArrayLike[float]],
-        grad: _tp.Callable = None,
-        name: _tp.Collection[str] = None,
+        fcn: Callable,
+        *args: Union[float, _ArrayLike[float]],
+        grad: Callable = None,
+        name: Collection[str] = None,
         **kwds: float,
     ):
         """
@@ -590,7 +603,7 @@ class Minuit:
         migrad, hesse, minos, scan, simplex
         """
         array_call = False
-        if len(args) == 1 and isinstance(args[0], _tp.Iterable):
+        if len(args) == 1 and isinstance(args[0], Iterable):
             array_call = True
             start = np.array(args[0])
         else:
@@ -889,11 +902,11 @@ class Minuit:
 
     def scipy(
         self,
-        method: _tp.Union[str, _tp.Callable] = None,
+        method: Union[str, Callable] = None,
         ncall: int = None,
-        hess: _tp.Any = None,
-        hessp: _tp.Any = None,
-        constraints: _tp.Iterable = None,
+        hess: Any = None,
+        hessp: Any = None,
+        constraints: Iterable = None,
     ) -> "Minuit":
         """
         Minimize with SciPy algorithms.
@@ -1065,7 +1078,7 @@ class Minuit:
             if isinstance(constraints, dict):
                 raise ValueError("setting constraints with dicts is not supported")
 
-            if not isinstance(constraints, _tp.Iterable):
+            if not isinstance(constraints, Iterable):
                 constraints = [constraints]
             else:
                 constraints = list(constraints)
@@ -1074,7 +1087,7 @@ class Minuit:
                 if isinstance(c, NonlinearConstraint):
                     c.fun = Wrapped(c.fun)
                 elif isinstance(c, LinearConstraint):
-                    if no_fixed_parameters == False:
+                    if not no_fixed_parameters:
                         x = cpar.copy()
                         x[cfree] = 0
                         shift = np.dot(c.A, x)
@@ -1252,7 +1265,7 @@ class Minuit:
 
         return self
 
-    def visualize(self, plot: _tp.Callable = None):
+    def visualize(self, plot: Callable = None):
         """Visualize agreement of current model with data (requires matplotlib).
 
         This generates a plot of the data/model agreement, using the current
@@ -1356,7 +1369,7 @@ class Minuit:
 
     def minos(
         self,
-        *parameters: str,
+        *parameters: Union[int, str],
         cl: float = None,
         ncall: int = None,
     ) -> "Minuit":
@@ -1416,26 +1429,26 @@ class Minuit:
             raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
         if len(parameters) == 0:
-            pars = [par for par in self.parameters if not self.fixed[par]]
+            ipars = [ipar for ipar in range(self.npar) if not self.fixed[ipar]]
         else:
-            pars = []
+            ipars = []
             for par in parameters:
-                if par not in self._var2pos:
-                    raise RuntimeError(f"Unknown parameter {par}")
-                if self.fixed[par]:
+                ip, pname = self._normalize_key(par)
+                if self.fixed[ip]:
                     warnings.warn(
-                        f"Cannot scan over fixed parameter {par}",
+                        f"Cannot scan over fixed parameter {pname!r}",
                         mutil.IMinuitWarning,
                     )
                 else:
-                    pars.append(par)
+                    ipars.append(ip)
 
         t = mutil._Timer(self._fmin)
         with t:
             with _TemporaryErrordef(self._fcn, factor):
                 minos = MnMinos(self._fcn, fm, self.strategy)
-                for par in pars:
-                    me = minos(self._var2pos[par], ncall, self._tolerance)
+                for ipar in ipars:
+                    par = self._pos2var[ipar]
+                    me = minos(ipar, ncall, self._tolerance)
                     self._merrors[par] = mutil.MError(
                         me.number,
                         par,
@@ -1463,13 +1476,13 @@ class Minuit:
 
     def mnprofile(
         self,
-        vname: str,
+        vname: Union[int, str],
         *,
         size: int = 30,
-        bound: _tp.Union[float, UserBound] = 2,
+        bound: Union[float, UserBound] = 2,
         grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
-    ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get Minos profile over a specified interval.
 
@@ -1478,7 +1491,7 @@ class Minuit:
 
         Parameters
         ----------
-        vname : str
+        vname : int or str
             Parameter to scan over.
         size : int, optional
             Number of scanning points (Default: 100). Ignored if grid is set.
@@ -1501,22 +1514,21 @@ class Minuit:
         array of bool
             Whether minimisation in each point succeeded or not.
         """
-        if vname not in self._pos2var:
-            raise ValueError("Unknown parameter %s" % vname)
+        ipar, pname = self._normalize_key(vname)
+        del vname
 
         if grid is not None:
             x = np.array(grid, dtype=float)
             if x.ndim != 1:
                 raise ValueError("grid must be 1D array-like")
         else:
-            a, b = self._normalize_bound(vname, bound)
+            a, b = self._normalize_bound(pname, bound)
             x = np.linspace(a, b, size, dtype=float)
 
         y = np.empty_like(x)
         status = np.empty(len(x), dtype=bool)
 
         state = MnUserParameterState(self._last_state)  # copy
-        ipar = self._var2pos[vname]
         state.fix(ipar)
         for i, v in enumerate(x):
             state.set_value(ipar, v)
@@ -1524,7 +1536,7 @@ class Minuit:
             fm = migrad(0, self._tolerance)
             if not fm.is_valid:
                 warnings.warn(
-                    f"MIGRAD fails to converge for {vname}={v}", mutil.IMinuitWarning
+                    f"MIGRAD fails to converge for {pname}={v}", mutil.IMinuitWarning
                 )
             status[i] = fm.is_valid
             y[i] = fm.fval
@@ -1535,8 +1547,8 @@ class Minuit:
         return x, y, status
 
     def draw_mnprofile(
-        self, vname: str, *, band: bool = True, text: bool = True, **kwargs
-    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
+        self, vname: Union[int, str], *, band: bool = True, text: bool = True, **kwargs
+    ) -> Tuple[np.ndarray, np.ndarray]:
         r"""
         Draw Minos profile over a specified interval (requires matplotlib).
 
@@ -1561,20 +1573,22 @@ class Minuit:
         --------
         mnprofile, profile, draw_profile
         """
+        ipar, pname = self._normalize_key(vname)
+        del vname
         if "subtract_min" not in kwargs:
             kwargs["subtract_min"] = True
-        x, y, _ = self.mnprofile(vname, **kwargs)
-        return self._draw_profile(vname, x, y, band, text)
+        x, y, _ = self.mnprofile(ipar, **kwargs)
+        return self._draw_profile(ipar, x, y, band, text)
 
     def profile(
         self,
-        vname: str,
+        vname: Union[int, str],
         *,
         size: int = 100,
-        bound: _tp.Union[float, UserBound] = 2,
+        bound: Union[float, UserBound] = 2,
         grid: _ArrayLike[float] = None,
         subtract_min: bool = False,
-    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         r"""
         Calculate 1D cost function profile over a range.
 
@@ -1584,7 +1598,7 @@ class Minuit:
 
         Parameters
         ----------
-        vname : str
+        vname : int or str
             Parameter to scan over.
         size : int, optional
             Number of scanning points (Default: 100). Ignored if grid is set.
@@ -1609,17 +1623,19 @@ class Minuit:
         --------
         mnprofile
         """
+        ipar, par = self._normalize_key(vname)
+        del vname
+
         if grid is not None:
             x = np.array(grid, dtype=float)
             if x.ndim != 1:
                 raise ValueError("grid must be 1D array-like")
         else:
-            a, b = self._normalize_bound(vname, bound)
+            a, b = self._normalize_bound(par, bound)
             x = np.linspace(a, b, size, dtype=float)
 
         y = np.empty_like(x)
         values = np.array(self.values)
-        ipar = self._var2pos[vname]
         for i, vi in enumerate(x):
             values[ipar] = vi
             y[i] = self.fcn(values)
@@ -1630,8 +1646,8 @@ class Minuit:
         return x, y
 
     def draw_profile(
-        self, vname: str, *, band: bool = True, text: bool = True, **kwargs
-    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
+        self, vname: Union[int, str], *, band: bool = True, text: bool = True, **kwargs
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Draw 1D cost function profile over a range (requires matplotlib).
 
@@ -1651,41 +1667,50 @@ class Minuit:
         --------
         profile, mnprofile, draw_mnprofile
         """
+        ipar, pname = self._normalize_key(vname)
+        del vname
+
         if "subtract_min" not in kwargs:
             kwargs["subtract_min"] = True
-        x, y = self.profile(vname, **kwargs)
-        return self._draw_profile(vname, x, y, band, text)
+        x, y = self.profile(ipar, **kwargs)
+        return self._draw_profile(ipar, x, y, band, text)
 
     def _draw_profile(
-        self, vname: str, x: np.ndarray, y: np.ndarray, band: bool, text: bool
-    ) -> _tp.Tuple[np.ndarray, np.ndarray]:
+        self,
+        ipar: int,
+        x: np.ndarray,
+        y: np.ndarray,
+        band: bool,
+        text: bool,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         from matplotlib import pyplot as plt
 
+        pname = self._pos2var[ipar]
         plt.plot(x, y)
-        plt.xlabel(vname)
+        plt.xlabel(pname)
         plt.ylabel("FCN")
 
-        v = self.values[vname]
+        v = self.values[ipar]
         plt.axvline(v, color="k", linestyle="--")
 
         vmin = None
         vmax = None
-        if vname in self.merrors:
-            vmin = v + self.merrors[vname].lower
-            vmax = v + self.merrors[vname].upper
+        if pname in self.merrors:
+            vmin = v + self.merrors[pname].lower
+            vmax = v + self.merrors[pname].upper
         else:
-            vmin = v - self.errors[vname]
-            vmax = v + self.errors[vname]
+            vmin = v - self.errors[ipar]
+            vmax = v + self.errors[ipar]
 
         if vmin is not None and band:
             plt.axvspan(vmin, vmax, facecolor="0.8")
 
         if text:
             plt.title(
-                (f"{vname} = {v:.3g}")
+                (f"{pname} = {v:.3g}")
                 if vmin is None
                 else (
-                    "{} = {:.3g} - {:.3g} + {:.3g}".format(vname, v, v - vmin, vmax - v)
+                    "{} = {:.3g} - {:.3g} + {:.3g}".format(pname, v, v - vmin, vmax - v)
                 ),
                 fontsize="large",
             )
@@ -1694,14 +1719,14 @@ class Minuit:
 
     def contour(
         self,
-        x: str,
-        y: str,
+        x: Union[int, str],
+        y: Union[int, str],
         *,
         size: int = 50,
-        bound: _tp.Union[float, _tp.Iterable[_tp.Tuple[float, float]]] = 2,
-        grid: _tp.Tuple[_ArrayLike, _ArrayLike] = None,
+        bound: Union[float, Iterable[Tuple[float, float]]] = 2,
+        grid: Tuple[_ArrayLike, _ArrayLike] = None,
         subtract_min: bool = False,
-    ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get a 2D contour of the function around the minimum.
 
@@ -1717,9 +1742,9 @@ class Minuit:
 
         Parameters
         ----------
-        x : str
+        x : int or str
             First parameter for scan.
-        y : str
+        y : int or str
             Second parameter for scan.
         size : int or tuple of int, optional
             Number of scanning points per parameter (Default: 50). A tuple is
@@ -1748,6 +1773,11 @@ class Minuit:
         --------
         mncontour, mnprofile
         """
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
+        del x
+        del y
+
         if grid is not None:
             xg, yg = grid
             xv = np.array(xg, dtype=float)
@@ -1755,15 +1785,15 @@ class Minuit:
             if xv.ndim != 1 or yv.ndim != 1:
                 raise ValueError("grid per parameter must be 1D array-like")
         else:
-            if isinstance(bound, _tp.Iterable):
+            if isinstance(bound, Iterable):
                 xb, yb = bound
-                xrange = self._normalize_bound(x, xb)
-                yrange = self._normalize_bound(y, yb)
+                xrange = self._normalize_bound(xname, xb)
+                yrange = self._normalize_bound(yname, yb)
             else:
                 n = float(bound)
-                xrange = self._normalize_bound(x, n)
-                yrange = self._normalize_bound(y, n)
-            if isinstance(size, _tp.Iterable):
+                xrange = self._normalize_bound(xname, n)
+                yrange = self._normalize_bound(yname, n)
+            if isinstance(size, Iterable):
                 xsize, ysize = size
             else:
                 xsize = size
@@ -1772,13 +1802,11 @@ class Minuit:
             yv = np.linspace(yrange[0], yrange[1], ysize)
         zv = np.empty((len(xv), len(yv)), dtype=float)
 
-        ipar = self._var2pos[x]
-        jpar = self._var2pos[y]
         values = np.array(self.values)
         for i, xi in enumerate(xv):
-            values[ipar] = xi
+            values[ix] = xi
             for j, yi in enumerate(yv):
-                values[jpar] = yi
+                values[iy] = yi
                 zv[i, j] = self._fcn(values)
 
         if subtract_min:
@@ -1788,10 +1816,10 @@ class Minuit:
 
     def draw_contour(
         self,
-        x: str,
-        y: str,
+        x: Union[int, str],
+        y: Union[int, str],
         **kwargs,
-    ) -> _tp.Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Draw 2D contour around minimum (requires matplotlib).
 
@@ -1804,28 +1832,34 @@ class Minuit:
         """
         from matplotlib import pyplot as plt
 
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
+        del x
+        del y
+
         if "subtract_min" not in kwargs:
             kwargs["subtract_min"] = True
-        vx, vy, vz = self.contour(x, y, **kwargs)
+        vx, vy, vz = self.contour(ix, iy, **kwargs)
 
         v = [self.errordef * (i + 1) for i in range(4)]
 
         CS = plt.contour(vx, vy, vz.T, v)
         plt.clabel(CS, v)
-        plt.xlabel(x)
-        plt.ylabel(y)
-        plt.axhline(self.values[y], color="k", ls="--")
-        plt.axvline(self.values[x], color="k", ls="--")
+        plt.xlabel(xname)
+        plt.ylabel(yname)
+        plt.axhline(self.values[iy], color="k", ls="--")
+        plt.axvline(self.values[ix], color="k", ls="--")
         return vx, vy, vz
 
     def mncontour(
         self,
-        x: str,
-        y: str,
+        x: Union[int, str],
+        y: Union[int, str],
         *,
         cl: float = None,
         size: int = 100,
         interpolated: int = 0,
+        experimental: bool = False,
     ) -> np.ndarray:
         """
         Get 2D Minos confidence region.
@@ -1860,6 +1894,12 @@ class Minuit:
             smoother curve and the interpolated coordinates are returned. Values smaller
             than size are ignored. Good results can be obtained with size=20,
             interpolated=200. This requires scipy.
+        experimental : bool, optional
+            If true, use experimental implementation to compute contour, otherwise use
+            MnContour from the Minuit2 library. The experimental implementation was found
+            to succeed in cases where MnContour produced no reasonable result, but is
+            slower and not yet well tested in practice. Use with caution and report back
+            any issues via Github.
 
         Returns
         -------
@@ -1872,6 +1912,11 @@ class Minuit:
         --------
         contour, mnprofile
         """
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
+        del x
+        del y
+
         factor = _cl_to_errordef(cl, 2, 0.68)
 
         if self._fmin_does_not_exist_or_last_state_was_modified():
@@ -1880,47 +1925,43 @@ class Minuit:
         if not self.valid:
             raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")
 
-        pars = set((x, y)) - self._free_parameters()
+        pars = {xname, yname} - self._free_parameters()
         if pars:
             raise ValueError(
                 f"mncontour can only be run on free parameters, not on {pars}"
             )
 
-        ix = self._var2pos[x]
-        iy = self._var2pos[y]
-        with _TemporaryErrordef(self._fcn, factor):
-            assert self._fmin is not None
-            mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
-            ce = mnc(ix, iy, size)[2]
+        if experimental:
+            ce = self._experimental_mncontour(factor, ix, iy, size)
+        else:
+            with _TemporaryErrordef(self._fcn, factor):
+                assert self._fmin is not None
+                mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
+                ce = mnc(ix, iy, size)[2]
 
-        pts = np.array(ce)
+        pts = np.asarray(ce)
         # add starting point at end to close the contour
         pts = np.append(pts, pts[:1], axis=0)
 
         if interpolated > size:
-            try:
+            with optional_module_for("interpolation"):
                 from scipy.interpolate import CubicSpline
 
                 xg = np.linspace(0, 1, len(pts))
                 spl = CubicSpline(xg, pts, bc_type="periodic")
                 pts = spl(np.linspace(0, 1, interpolated))
-
-            except ModuleNotFoundError:
-                warnings.warn(
-                    "Interpolation requires scipy. Please install scipy.",
-                    mutil.IMinuitWarning,
-                )
         return pts
 
     def draw_mncontour(
         self,
-        x: str,
-        y: str,
+        x: Union[int, str],
+        y: Union[int, str],
         *,
-        cl: _tp.Union[float, _ArrayLike[float]] = None,
+        cl: Union[float, _ArrayLike[float]] = None,
         size: int = 100,
         interpolated: int = 0,
-    ) -> _tp.Any:
+        experimental: bool = False,
+    ) -> Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
 
@@ -1946,6 +1987,9 @@ class Minuit:
         from matplotlib.path import Path
         from matplotlib.contour import ContourSet
 
+        ix, xname = self._normalize_key(x)
+        iy, yname = self._normalize_key(y)
+
         mpl_version = tuple(map(int, mpl_version.split(".")))
 
         cls = [mutil._replace_none(x, 0.68) for x in mutil._iterate(cl)]
@@ -1954,7 +1998,14 @@ class Minuit:
         c_pts = []
         codes = []
         for cl in cls:
-            pts = self.mncontour(x, y, cl=cl, size=size, interpolated=interpolated)
+            pts = self.mncontour(
+                ix,
+                iy,
+                cl=cl,
+                size=size,
+                interpolated=interpolated,
+                experimental=experimental,
+            )
             n_lineto = len(pts) - 2
             if mpl_version < (3, 5):
                 n_lineto -= 1  # pragma: no cover
@@ -1964,18 +2015,19 @@ class Minuit:
         assert len(c_val) == len(codes), f"{len(c_val)} {len(codes)}"
         cs = ContourSet(plt.gca(), c_val, c_pts, codes)
         plt.clabel(cs)
-        plt.xlabel(x)
-        plt.ylabel(y)
+        plt.xlabel(xname)
+        plt.ylabel(yname)
 
         return cs
 
     def draw_mnmatrix(
         self,
         *,
-        cl: _tp.Union[float, _ArrayLike[float]] = None,
+        cl: Union[float, _ArrayLike[float]] = None,
         size: int = 100,
+        experimental: bool = False,
         figsize=None,
-    ) -> _tp.Any:
+    ) -> Any:
         """
         Draw matrix of Minos scans (requires matplotlib).
 
@@ -1989,9 +2041,12 @@ class Minuit:
         ----------
         cl : float or array-like of floats, optional
             See :meth:`mncontour`.
-
         size : int, optional
             See :meth:`mncontour`
+        experimental : bool, optional
+            See :meth:`mncontour`
+        figsize : (float, float) or None, optional
+            Width and height of figure in inches.
 
         Examples
         --------
@@ -2073,7 +2128,9 @@ class Minuit:
                     plt.sca(ax[i, j])
                     plt.plot(self.values[par2], self.values[par1], "+", color="k")
                     for k, cli in enumerate(cls):
-                        pts = self.mncontour(par1, par2, cl=cli, size=size)
+                        pts = self.mncontour(
+                            par1, par2, cl=cli, size=size, experimental=experimental
+                        )
                         bar += 1
                         if len(pts) > 0:
                             x, y = np.transpose(pts)
@@ -2099,7 +2156,7 @@ class Minuit:
 
     def interactive(
         self,
-        plot: _tp.Callable = None,
+        plot: Callable = None,
         raise_on_exception=False,
         **kwargs,
     ):
@@ -2334,7 +2391,7 @@ class Minuit:
 
             return HBox([out, ui])
 
-    def _free_parameters(self) -> _tp.Set[str]:
+    def _free_parameters(self) -> Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)
 
     def _mnprecision(self) -> MnMachinePrecision:
@@ -2343,10 +2400,19 @@ class Minuit:
             pr.eps = self._precision
         return pr
 
+    def _normalize_key(self, key: Union[int, str]) -> Tuple[int, str]:
+        if isinstance(key, int):
+            if key >= self.npar:
+                raise ValueError(f"parameter {key} is out of range (max: {self.npar})")
+            return key, self._pos2var[key]
+        if key not in self._var2pos:
+            raise ValueError(f"unknown parameter {key!r}")
+        return self._var2pos[key], key
+
     def _normalize_bound(
-        self, vname: str, bound: _tp.Union[float, UserBound, _tp.Tuple[float, float]]
-    ) -> _tp.Tuple[float, float]:
-        if isinstance(bound, _tp.Iterable):
+        self, vname: str, bound: Union[float, UserBound, Tuple[float, float]]
+    ) -> Tuple[float, float]:
+        if isinstance(bound, Iterable):
             return mutil._normalize_limit(bound)
 
         if not self.accurate:
@@ -2473,9 +2539,74 @@ class Minuit:
                 )
         return plot
 
+    def _experimental_mncontour(
+        self, factor: float, ix: int, iy: int, size: int
+    ) -> List[Tuple[float, float]]:
+        from scipy.optimize import root_scalar
+
+        center = self.values[[ix, iy]]
+        assert self.covariance is not None
+        t, u = np.linalg.eig(
+            [
+                [self.covariance[ix, ix], self.covariance[ix, iy]],
+                [self.covariance[ix, iy], self.covariance[iy, iy]],
+            ]
+        )
+        s = (t * factor) ** 0.5
+
+        ce = []
+        for phi in np.linspace(-np.pi, np.pi, size, endpoint=False):
+
+            def args(z):
+                r = u @ (
+                    z * s[0] * np.cos(phi),
+                    z * s[1] * np.sin(phi),
+                )
+                x = r[0] + center[0]
+                lim = self.limits[ix]
+                if lim is not None:
+                    x = max(lim[0], min(x, lim[1]))
+                y = r[1] + center[1]
+                if lim is not None:
+                    y = max(lim[0], min(y, lim[1]))
+                return x, y
+
+            def scan(z):
+                state = MnUserParameterState(self._last_state)  # copy
+                state.fix(ix)
+                state.fix(iy)
+                xy = args(z)
+                state.set_value(ix, xy[0])
+                state.set_value(iy, xy[1])
+                migrad = MnMigrad(self._fcn, state, max(0, self.strategy.strategy - 1))
+                fm = migrad(0, self._tolerance)
+                return fm.fval - self.fval - factor * self._fcn._errordef
+
+            # find bracket
+            a = 0.5
+            while scan(a) > 0 and a > 1e-7:
+                a *= 0.5  # pragma: no cover
+
+            if a < 1e-7:
+                ce.append((np.nan, np.nan))  # pragma: no cover
+                continue  # pragma: no cover
+
+            b = 1.2
+            while scan(b) < 0 and b < 8:
+                b *= 1.1
+
+            if b > 8:
+                ce.append(args(b))
+                continue
+
+            # low xtol was found to be sufficient in experimental trials
+            r = root_scalar(scan, bracket=(a, b), xtol=1e-3)
+            ce.append(args(r.root) if r.converged else (np.nan, np.nan))
+        return ce
+
 
 def _make_init_state(
-    pos2var: _tp.Tuple[str, ...], args: np.ndarray, kwds: _tp.Dict[str, float]
+    pos2var: Tuple[str, ...], args: np.ndarray, kwds: Dict[str, float]
 ) -> MnUserParameterState:
     nargs = len(args)
     # check kwds
@@ -2507,7 +2638,7 @@ def _make_init_state(
 
 
 def _get_params(mps: MnUserParameterState, merrors: mutil.MErrors) -> mutil.Params:
-    def get_me(name: str) -> _tp.Optional[_tp.Tuple[float, float]]:
+    def get_me(name: str) -> Optional[Tuple[float, float]]:
         if name in merrors:
             me = merrors[name]
             return me.lower, me.upper

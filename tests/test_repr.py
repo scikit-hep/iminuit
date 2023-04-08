@@ -244,6 +244,24 @@ def test_text_params(minuit):
     assert _repr_text.params(minuit.params) == ref("params.txt")
 
 
+def test_text_params_with_latex_names():
+    m = Minuit(lambda x: x**2, 1, name=[r"$\alpha$"])
+
+    try:
+        import unicodeit  # noqa
+
+        assert _repr_text.params(m.params) == ref("params_latex_1.txt")
+
+    except ModuleNotFoundError:
+        from iminuit.warnings import OptionalDependencyWarning
+
+        with pytest.warns(
+            OptionalDependencyWarning,
+            match="rendering simple LaTeX requires optional package 'unicodeit'",
+        ):
+            assert _repr_text.params(m.params) == ref("params_latex_2.txt")
+
+
 def test_text_params_with_long_names():
     mps = [
         Param(

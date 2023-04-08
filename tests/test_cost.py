@@ -205,10 +205,10 @@ def test_UnbinnedNLL_mask():
     c = UnbinnedNLL([1, np.nan, 2], lambda x, a: x + a)
     assert c.mask is None
 
-    assert np.isnan(c(0)) == True
+    assert np.isnan(c(0))
     c.mask = np.arange(3) != 1
     assert_equal(c.mask, (True, False, True))
-    assert np.isnan(c(0)) == False
+    assert not np.isnan(c(0))
 
 
 @pytest.mark.parametrize("log", (False, True))
@@ -338,9 +338,9 @@ def test_ExtendedUnbinnedNLL_mask():
     c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
     assert c.ndata == np.inf
 
-    assert np.isnan(c(0)) == True
+    assert np.isnan(c(0))
     c.mask = np.arange(3) != 1
-    assert np.isnan(c(0)) == False
+    assert not np.isnan(c(0))
     assert c.ndata == np.inf
 
 
@@ -799,7 +799,7 @@ def test_LeastSquares_bad_input():
 def test_LeastSquares_mask():
     c = LeastSquares([1, 2, 3], [3, np.nan, 4], [1, 1, 1], lambda x, a: x + a)
     assert c.ndata == 3
-    assert np.isnan(c(0)) == True
+    assert np.isnan(c(0))
 
     m = Minuit(c, 1)
     assert m.ndof == 2
@@ -807,7 +807,7 @@ def test_LeastSquares_mask():
     assert not m.valid
 
     c.mask = np.arange(3) != 1
-    assert np.isnan(c(0)) == False
+    assert not np.isnan(c(0))
     assert c.ndata == 2
 
     assert m.ndof == 1
@@ -1180,6 +1180,27 @@ def test_Template(method):
         assert_allclose(m.fval, 0, atol=1e-4)
         assert_allclose(m.fmin.reduced_chi2, 0, atol=1e-5)
         assert_allclose(m.values, [2, 4], atol=1e-2)
+
+
+@pytest.mark.parametrize(
+    "template",
+    (
+        (np.array([1.0, 1.0, 0.0]), np.array([0.0, 1.0, 3.0])),
+        (
+            np.array([[1.0, 1.0], [1.0, 1.0], [0.0, 0.0]]),
+            np.array([[0.0, 0.0], [1.0, 1.0], [3.0, 3.0]]),
+        ),
+    ),
+)
+def test_Template_does_not_modify_inputs(template):
+    from copy import deepcopy
+
+    xe = np.array([0, 1, 2, 3])
+    template_copy = deepcopy(template)
+    n = template[0] + template[1]
+
+    Template(n, xe, template, method="da")
+    assert_equal(template, template_copy)
 
 
 def generate(rng, nmc, truth, bins, tf=1, df=1):

@@ -48,9 +48,9 @@ def test_find_smallest_nonzero_abs_value():
 
 
 def test_is_asym():
-    assert _is_asym((1, 2)) is True
-    assert _is_asym(1) is False
-    assert _is_asym([1, 2]) is True
+    assert _is_asym((1, 2))
+    assert not _is_asym(1)
+    assert _is_asym([1, 2])
     with pytest.raises(ValueError):
         _is_asym([])
     with pytest.raises(ValueError):

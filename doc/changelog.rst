@@ -5,6 +5,11 @@
 Changelog
 =========
 
+2.21.3 (April 03, 2023)
+-----------------------
+- Fix template input modification bug in template class (`#856 <https://github.com/scikit-hep/iminuit/pull/856>`_)
+- Better docs for limits from annotated model parameters (`#853 <https://github.com/scikit-hep/iminuit/pull/853>`_)
+
 2.21.2 (March 19, 2023)
 -----------------------
 - Fix CITATION.CFF

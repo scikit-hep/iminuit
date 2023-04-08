@@ -20,10 +20,10 @@ cov: build/done build/testdep
 	JUPYTER_PLATFORM_DIRS=1 coverage run -m pytest
 	python -m pip uninstall --yes numba ipykernel ipywidgets
 	coverage run --append -m pytest
-	python -m pip uninstall --yes scipy matplotlib
+	python -m pip uninstall --yes scipy matplotlib unicodeit
 	coverage run --append -m pytest
-	pip install numba ipykernel ipywidgets scipy matplotlib
 	coverage html -d htmlcov
+	python .ci/install_deps.py test
 	coverage report -m
 	@echo htmlcov/index.html
 
