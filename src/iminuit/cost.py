@@ -555,7 +555,6 @@ class Cost(abc.ABC):
         """For internal use."""
         self._parameters = parameters
         self._verbose = verbose
-
     def __add__(self, rhs):
         """
         Add two cost functions to form a combined cost function.
@@ -1571,6 +1570,8 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
     def _call(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
         ma = self.mask
+        if len(mu) != len(args):
+            raise ValueError(f"Expected model to return an array of size {len(args)}, but it returns array of size {len(mu)}")
         if ma is not None:
             mu = mu[ma]
         if self._bztrafo:
