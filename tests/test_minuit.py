@@ -627,10 +627,11 @@ def test_initial_value():
 @pytest.mark.skipif(not scipy_available, reason="scipy.stats needed")
 @pytest.mark.parametrize("grad", (None, func0_grad))
 @pytest.mark.parametrize("cl", (None, 0.5, 0.9, 1, 1.5, 2))
-def test_mncontour(grad, cl):
+@pytest.mark.parametrize("experimental", (False, True))
+def test_mncontour(grad, cl, experimental):
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
-    ctr = m.mncontour("x", "y", size=30, cl=cl)
+    ctr = m.mncontour("x", "y", size=30, cl=cl, experimental=experimental)
 
     if cl is None:
         cl = 0.68
@@ -649,8 +650,72 @@ def test_mncontour(grad, cl):
     cmax = np.max(ctr, axis=0)
 
     x, y = m.values
-    assert_allclose((x + xm.lower, y + ym.lower), cmin)
-    assert_allclose((x + xm.upper, y + ym.upper), cmax)
+    assert_allclose((x + xm.lower, y + ym.lower), cmin, atol=1e-2)
+    assert_allclose((x + xm.upper, y + ym.upper), cmax, atol=1e-2)
+
+
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats needed")
+@pytest.mark.parametrize("experimental", (False, True))
+def test_mncontour_limits(experimental):
+    def cost(x, y):
+        return x**2 + y**2
+
+    m = Minuit(cost, x=0.5, y=0.5)
+    m.limits = (0, 2)
+    m.migrad()
+    cont = m.mncontour(0, 1, size=30, experimental=experimental)
+
+    assert np.all(cont[:, 0] >= 0)
+    assert np.all(cont[:, 1] >= 0)
+
+
+def test_mncontour_no_fmin():
+    m = Minuit(func0, x=0, y=0)
+
+    with pytest.raises(RuntimeError):
+        # fails, because this is not a minimum
+        m.mncontour("x", "y")
+
+    # succeeds
+    m.values = (2, 5)
+    # use 0, 1 instead of "x", "y"
+    c = m.mncontour(0, 1, size=10)
+
+    # compute reference to compare with
+    m2 = Minuit(func0, x=0, y=0)
+    m2.migrad()
+    c2 = m.mncontour("x", "y", size=10)
+
+    assert_allclose(c, c2)
+
+
+def test_mncontour_with_fixed_var():
+    m = Minuit(func0, x=0, y=0)
+    m.fixed["x"] = True
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.mncontour("x", "y")
+
+
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats needed")
+@pytest.mark.parametrize("experimental", (False, True))
+def test_mncontour_array_func(experimental):
+    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
+    m.migrad()
+
+    cl = chi2(2).cdf(1)
+    ctr = m.mncontour("x", "y", size=30, cl=cl, experimental=experimental)
+    assert len(ctr) == 31
+    assert len(ctr[0]) == 2
+
+    m.minos("x", "y")
+    x, y = m.values
+    xm = m.merrors["x"]
+    ym = m.merrors["y"]
+    cmin = np.min(ctr, axis=0)
+    cmax = np.max(ctr, axis=0)
+    assert_allclose((x + xm.lower, y + ym.lower), cmin, atol=1e-2)
+    assert_allclose((x + xm.upper, y + ym.upper), cmax, atol=1e-2)
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
@@ -790,53 +855,6 @@ def test_contour_subtract():
     v2 = m.contour(0, 1, subtract_min=True)[2]
     assert np.min(v2) == 0
     assert_allclose(v - np.min(v), v2)
-
-
-def test_mncontour_no_fmin():
-    m = Minuit(func0, x=0, y=0)
-
-    with pytest.raises(RuntimeError):
-        m.mncontour("x", "y")  # fails, because this is not a minimum
-
-    # succeeds
-    m.values = (2, 5)
-    # use 0, 1 instead of "x", "y"
-    c = m.mncontour(0, 1, size=10)
-
-    # compute reference to compare with
-    m2 = Minuit(func0, x=0, y=0)
-    m2.migrad()
-    c2 = m.mncontour("x", "y", size=10)
-
-    assert_allclose(c, c2)
-
-
-def test_mncontour_with_fixed_var():
-    m = Minuit(func0, x=0, y=0)
-    m.fixed["x"] = True
-    m.migrad()
-    with pytest.raises(ValueError):
-        m.mncontour("x", "y")
-
-
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats needed")
-def test_mncontour_array_func():
-    m = Minuit(Correlated(), (0, 0), name=("x", "y"))
-    m.migrad()
-
-    cl = chi2(2).cdf(1)
-    ctr = m.mncontour("x", "y", size=30, cl=cl)
-    assert len(ctr) == 31
-    assert len(ctr[0]) == 2
-
-    m.minos("x", "y")
-    x, y = m.values
-    xm = m.merrors["x"]
-    ym = m.merrors["y"]
-    cmin = np.min(ctr, axis=0)
-    cmax = np.max(ctr, axis=0)
-    assert_allclose((x + xm.lower, y + ym.lower), cmin)
-    assert_allclose((x + xm.upper, y + ym.upper), cmax)
 
 
 def test_profile_array_func():
@@ -1494,7 +1512,8 @@ def test_cfunc():
 
 @pytest.mark.skipif(not scipy_available, reason="scipy.stats needed")
 @pytest.mark.parametrize("cl", (0.5, None, 0.9))
-def test_confidence_level(cl):
+@pytest.mark.parametrize("experimental", (False, True))
+def test_confidence_level(cl, experimental):
     mpath = pytest.importorskip("matplotlib.path")
 
     cov = ((1.0, 0.5), (0.5, 4.0))
@@ -1515,7 +1534,7 @@ def test_confidence_level(cl):
     r = d.rvs(n, random_state=1)
 
     # check that mncontour indeed contains fraction of random points equal to CL
-    pts = m.mncontour("x0", "x1", cl=cl)
+    pts = m.mncontour("x0", "x1", cl=cl, experimental=experimental)
     p = mpath.Path(pts)
     cl2 = np.sum(p.contains_points(r)) / n
     assert cl2 == approx(cl_ref, abs=0.01)

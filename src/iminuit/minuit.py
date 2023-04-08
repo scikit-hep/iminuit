@@ -22,6 +22,7 @@ from typing import (
     Optional,
     Callable,
     Tuple,
+    List,
     Dict,
     Iterable,
     Any,
@@ -1858,6 +1859,7 @@ class Minuit:
         cl: float = None,
         size: int = 100,
         interpolated: int = 0,
+        experimental: bool = False,
     ) -> np.ndarray:
         """
         Get 2D Minos confidence region.
@@ -1892,6 +1894,12 @@ class Minuit:
             smoother curve and the interpolated coordinates are returned. Values smaller
             than size are ignored. Good results can be obtained with size=20,
             interpolated=200. This requires scipy.
+        experimental : bool, optional
+            If true, use experimental implementation to compute contour, otherwise use
+            MnContour from the Minuit2 library. The experimental implementation was found
+            to succeed in cases where MnContour produced no reasonable result, but is
+            slower and not yet well tested in practice. Use with caution and report back
+            any issues via Github.
 
         Returns
         -------
@@ -1923,12 +1931,15 @@ class Minuit:
                 f"mncontour can only be run on free parameters, not on {pars}"
             )
 
-        with _TemporaryErrordef(self._fcn, factor):
-            assert self._fmin is not None
-            mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
-            ce = mnc(ix, iy, size)[2]
+        if experimental:
+            ce = self._experimental_mncontour(factor, ix, iy, size)
+        else:
+            with _TemporaryErrordef(self._fcn, factor):
+                assert self._fmin is not None
+                mnc = MnContours(self._fcn, self._fmin._src, self.strategy)
+                ce = mnc(ix, iy, size)[2]
 
-        pts = np.array(ce)
+        pts = np.asarray(ce)
         # add starting point at end to close the contour
         pts = np.append(pts, pts[:1], axis=0)
 
@@ -1949,6 +1960,7 @@ class Minuit:
         cl: Union[float, _ArrayLike[float]] = None,
         size: int = 100,
         interpolated: int = 0,
+        experimental: bool = False,
     ) -> Any:
         """
         Draw 2D Minos confidence region (requires matplotlib).
@@ -1986,7 +1998,14 @@ class Minuit:
         c_pts = []
         codes = []
         for cl in cls:
-            pts = self.mncontour(ix, iy, cl=cl, size=size, interpolated=interpolated)
+            pts = self.mncontour(
+                ix,
+                iy,
+                cl=cl,
+                size=size,
+                interpolated=interpolated,
+                experimental=experimental,
+            )
             n_lineto = len(pts) - 2
             if mpl_version < (3, 5):
                 n_lineto -= 1  # pragma: no cover
@@ -2006,6 +2025,7 @@ class Minuit:
         *,
         cl: Union[float, _ArrayLike[float]] = None,
         size: int = 100,
+        experimental: bool = False,
         figsize=None,
     ) -> Any:
         """
@@ -2021,9 +2041,12 @@ class Minuit:
         ----------
         cl : float or array-like of floats, optional
             See :meth:`mncontour`.
-
         size : int, optional
             See :meth:`mncontour`
+        experimental : bool, optional
+            See :meth:`mncontour`
+        figsize : (float, float) or None, optional
+            Width and height of figure in inches.
 
         Examples
         --------
@@ -2105,7 +2128,9 @@ class Minuit:
                     plt.sca(ax[i, j])
                     plt.plot(self.values[par2], self.values[par1], "+", color="k")
                     for k, cli in enumerate(cls):
-                        pts = self.mncontour(par1, par2, cl=cli, size=size)
+                        pts = self.mncontour(
+                            par1, par2, cl=cli, size=size, experimental=experimental
+                        )
                         bar += 1
                         if len(pts) > 0:
                             x, y = np.transpose(pts)
@@ -2513,6 +2538,71 @@ class Minuit:
                     "please use the plot argument to pass a visualization function"
                 )
         return plot
+
+    def _experimental_mncontour(
+        self, factor: float, ix: int, iy: int, size: int
+    ) -> List[Tuple[float, float]]:
+        from scipy.optimize import root_scalar
+
+        center = self.values[[ix, iy]]
+        assert self.covariance is not None
+        t, u = np.linalg.eig(
+            [
+                [self.covariance[ix, ix], self.covariance[ix, iy]],
+                [self.covariance[ix, iy], self.covariance[iy, iy]],
+            ]
+        )
+        s = (t * factor) ** 0.5
+
+        ce = []
+        for phi in np.linspace(-np.pi, np.pi, size, endpoint=False):
+
+            def args(z):
+                r = u @ (
+                    z * s[0] * np.cos(phi),
+                    z * s[1] * np.sin(phi),
+                )
+                x = r[0] + center[0]
+                lim = self.limits[ix]
+                if lim is not None:
+                    x = max(lim[0], min(x, lim[1]))
+                y = r[1] + center[1]
+                if lim is not None:
+                    y = max(lim[0], min(y, lim[1]))
+                return x, y
+
+            def scan(z):
+                state = MnUserParameterState(self._last_state)  # copy
+                state.fix(ix)
+                state.fix(iy)
+                xy = args(z)
+                state.set_value(ix, xy[0])
+                state.set_value(iy, xy[1])
+                migrad = MnMigrad(self._fcn, state, max(0, self.strategy.strategy - 1))
+                fm = migrad(0, self._tolerance)
+                return fm.fval - self.fval - factor * self._fcn._errordef
+
+            # find bracket
+            a = 0.5
+            while scan(a) > 0 and a > 1e-7:
+                a *= 0.5  # pragma: no cover
+
+            if a < 1e-7:
+                ce.append((np.nan, np.nan))  # pragma: no cover
+                continue  # pragma: no cover
+
+            b = 1.2
+            while scan(b) < 0 and b < 8:
+                b *= 1.1
+
+            if b > 8:
+                ce.append(args(b))
+                continue
+
+            # low xtol was found to be sufficient in experimental trials
+            r = root_scalar(scan, bracket=(a, b), xtol=1e-3)
+            ce.append(args(r.root) if r.converged else (np.nan, np.nan))
+        return ce
 
 
 def _make_init_state(
