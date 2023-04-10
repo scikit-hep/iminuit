@@ -1577,6 +1577,11 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
             n, mu = self._bztrafo(mu)
         else:
             n = self._masked
+        if len(n) != len(mu):
+            raise ValueError(
+                f"Expected model to return an array of size {len(n)},"
+                f"but it returns an array of size {len(mu)}"
+            )
         # assert isinstance(n, np.ndarray)
         return poisson_chi2(n, mu)
 
