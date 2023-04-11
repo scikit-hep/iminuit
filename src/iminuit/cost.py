@@ -1126,12 +1126,12 @@ class BinnedCostWithModel(BinnedCost):
     :meta private:
     """
 
-    __slots__ = "_xe_shape", "_model", "_model_xe"
+    __slots__ = "_xe_shape", "_model", "_model_xe", "_n"
 
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
         self._model = model
-
+        self._n = n
         super().__init__(_model_parameters(model), n, xe, verbose)
 
         if self._ndim == 1:
@@ -1153,6 +1153,11 @@ class BinnedCostWithModel(BinnedCost):
         # differences can come out negative due to round-off error in subtraction,
         # we set negative values to zero
         d[d < 0] = 0
+        if len(self._n) != len(d):
+            raise ValueError(
+                f"Expected model to return an array of size {len(self._n)},"
+                f"but it returns an array of size {len(d)}"
+            )
         return d
 
 
@@ -1577,11 +1582,6 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
             n, mu = self._bztrafo(mu)
         else:
             n = self._masked
-        if len(n) != len(mu):
-            raise ValueError(
-                f"Expected model to return an array of size {len(n)},"
-                f"but it returns an array of size {len(mu)}"
-            )
         # assert isinstance(n, np.ndarray)
         return poisson_chi2(n, mu)
 
