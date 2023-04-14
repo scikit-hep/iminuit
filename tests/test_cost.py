@@ -1398,3 +1398,23 @@ def test_deprecated_Template_method():
     with pytest.warns(np.VisibleDeprecationWarning):
         t = Template([1], [2, 3], [[1], [2]], method="hpd")
         t._impl is cost.template_chi2_da
+
+
+def test_check():
+    from iminuit import cost
+    import numpy as np
+    from scipy.stats import norm
+
+    n = [1, 2, 3, 4, 5]
+    edges = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+
+    def model(x, n, a, b):
+        x1 = n * np.diff(norm.cdf(x, a, b))
+        x2 = n * norm.cdf(x, a, b)
+        print(x1.shape)
+        print(x2.shape)
+        return x1
+
+    c = cost.ExtendedBinnedNLL(n, edges, model, verbose=1)
+    with pytest.raises(ValueError):
+        c(1, 2, 3)
