@@ -1142,6 +1142,8 @@ class BinnedCostWithModel(BinnedCost):
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
+            if len(self._xe_shape) != len(self._model_xe):
+                raise ValueError("Variable shapes do not match")
 
     def _pred(self, args: Sequence[float]) -> NDArray:
         d = self._model(self._model_xe, *args)
