@@ -1400,7 +1400,8 @@ def test_deprecated_Template_method():
         t._impl is cost.template_chi2_da
 
 
-def test_check():
+@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
+def test_error_message_cost():
     from iminuit import cost
     import numpy as np
     from scipy.stats import norm
