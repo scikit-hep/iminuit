@@ -1040,6 +1040,7 @@ class BinnedCost(MaskedCost):
 
         n = _norm(n)
         is_weighted = n.ndim > self._ndim
+
         if n.ndim != (self._ndim + int(is_weighted)):
             raise ValueError("n must either have same dimension as xe or one extra")
 
@@ -1130,6 +1131,7 @@ class BinnedCostWithModel(BinnedCost):
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
         self._model = model
+
         super().__init__(_model_parameters(model), n, xe, verbose)
 
         if self._ndim == 1:
