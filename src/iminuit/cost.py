@@ -1040,7 +1040,6 @@ class BinnedCost(MaskedCost):
 
         n = _norm(n)
         is_weighted = n.ndim > self._ndim
-
         if n.ndim != (self._ndim + int(is_weighted)):
             raise ValueError("n must either have same dimension as xe or one extra")
 
@@ -1141,8 +1140,6 @@ class BinnedCostWithModel(BinnedCost):
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
-            if len(self._xe_shape) != len(self._model_xe):
-                raise ValueError("Variable shapes do not match")
 
     def _pred(self, args: Sequence[float]) -> NDArray:
         d = self._model(self._model_xe, *args)
@@ -1154,10 +1151,10 @@ class BinnedCostWithModel(BinnedCost):
         # differences can come out negative due to round-off error in subtraction,
         # we set negative values to zero
         d[d < 0] = 0
-        if len(self._data) != len(d):
+        if self._data.shape != d.shape:
             raise ValueError(
-                f"Expected model to return an array of size {len(self._data)},"
-                f"but it returns an array of size {len(d)}"
+                f"Expected model to return an array of shape {self._data.shape}, "
+                f"but it returns an array of shape {d.shape}"
             )
         return d
 

@@ -1400,21 +1400,17 @@ def test_deprecated_Template_method():
         t._impl is cost.template_chi2_da
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_error_message_cost():
     from iminuit import cost
     import numpy as np
-    from scipy.stats import norm
 
     n = [1, 2, 3, 4, 5]
     edges = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
     def model(x, n, a, b):
-        x1 = n * np.diff(norm.cdf(x, a, b))
-        x2 = n * norm.cdf(x, a, b)
-        print(x1.shape)
-        print(x2.shape)
-        return x1
+        x1 = n * (a * x + b)
+        x2 = np.diff(x1)
+        return x2
 
     c = cost.ExtendedBinnedNLL(n, edges, model, verbose=1)
     with pytest.raises(ValueError):
