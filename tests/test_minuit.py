@@ -584,6 +584,13 @@ def test_minos_with_bad_fmin():
         m.minos()
 
 
+def test_minos_bad_index():
+    m = Minuit(func0, 1, 1)
+    m.migrad()
+    with pytest.raises(ValueError):
+        m.minos(2)
+
+
 @pytest.mark.parametrize("grad", (None, func5_grad))
 def test_fixing_long_variable_name(grad):
     m = Minuit(

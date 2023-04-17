@@ -1128,6 +1128,9 @@ class BinnedCostWithModel(BinnedCost):
 
     __slots__ = "_xe_shape", "_model", "_model_xe"
 
+    _model_xe: np.ndarray
+    _xe_shape: Union[Tuple[int], Tuple[int, ...]]
+
     def __init__(self, n, xe, model, verbose):
         """For internal use."""
         self._model = model
@@ -1135,7 +1138,7 @@ class BinnedCostWithModel(BinnedCost):
         super().__init__(_model_parameters(model), n, xe, verbose)
 
         if self._ndim == 1:
-            self._xe_shape = None
+            self._xe_shape = (len(self.xe),)
             self._model_xe = _norm(self.xe)
         else:
             self._xe_shape = tuple(len(xei) for xei in self.xe)
@@ -1146,18 +1149,19 @@ class BinnedCostWithModel(BinnedCost):
     def _pred(self, args: Sequence[float]) -> NDArray:
         d = self._model(self._model_xe, *args)
         d = _normalize_model_output(d)
-        if self._xe_shape is not None:
+        expected_shape = (np.prod(self._xe_shape),)
+        if d.shape != expected_shape:
+            raise ValueError(
+                f"Expected model to return an array of shape {expected_shape}, "
+                f"but it returns an array of shape {d.shape}"
+            )
+        if self._ndim > 1:
             d = d.reshape(self._xe_shape)
         for i in range(self._ndim):
             d = np.diff(d, axis=i)
         # differences can come out negative due to round-off error in subtraction,
         # we set negative values to zero
         d[d < 0] = 0
-        if self._data.shape != d.shape:
-            raise ValueError(
-                f"Expected model to return an array of shape {self._data.shape}, "
-                f"but it returns an array of shape {d.shape}"
-            )
         return d
 
 
@@ -1212,6 +1216,15 @@ class Template(BinnedCost):
 
     __slots__ = "_model_data", "_model_xe", "_xe_shape", "_impl"
 
+    _model_data: List[
+        Union[
+            Tuple[NDArray, NDArray],
+            Tuple[Model, float],
+        ]
+    ]
+    _model_xe: np.ndarray
+    _xe_shape: Union[Tuple[int], Tuple[int, ...]]
+
     def __init__(
         self,
         n: ArrayLike,
@@ -1264,12 +1277,7 @@ class Template(BinnedCost):
 
         npar = 0
         annotated: Dict[str, Optional[Tuple[float, float]]] = {}
-        self._model_data: List[
-            Union[
-                Tuple[NDArray, NDArray],
-                Tuple[Model, float],
-            ]
-        ] = []
+        self._model_data = []
         for i, t in enumerate(model_or_template):
             if isinstance(t, Collection):
                 tt = _norm(t)
@@ -1332,7 +1340,7 @@ class Template(BinnedCost):
         super().__init__(annotated, n, xe, verbose)
 
         if self._ndim == 1:
-            self._xe_shape = None
+            self._xe_shape = (len(self.xe),)
             self._model_xe = _norm(self.xe)
         else:
             self._xe_shape = tuple(len(xei) for xei in self.xe)
@@ -1353,7 +1361,7 @@ class Template(BinnedCost):
             elif isinstance(t1, Model) and isinstance(t2, int):
                 d = t1(self._model_xe, *args[i : i + t2])
                 d = _normalize_model_output(d)
-                if self._xe_shape is not None:
+                if self._ndim > 1:
                     d = d.reshape(self._xe_shape)
                 for j in range(self._ndim):
                     d = np.diff(d, axis=j)
