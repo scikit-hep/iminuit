@@ -1425,12 +1425,11 @@ def test_binned_cost_with_model_shape_error_message_2D(cost):
     n = [[1, 2, 3], [4, 5, 6]]
     edges = [0.5, 0.6, 0.7], [0.1, 0.2, 0.3, 0.4]
 
-    # model should return len(xye) items
-    def model(xye, a):
+    def cdf(xye, a):
         # xye has shape (2, N), returned array should be (N,)
         return np.ones(xye.shape[1] - 1)
 
-    c = cost(n, edges, model)
+    c = cost(n, edges, cdf)
     with pytest.raises(
         ValueError,
         match=(
