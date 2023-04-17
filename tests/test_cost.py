@@ -278,10 +278,10 @@ def test_UnbinnedNLL_pickle():
 
 def test_UnbinnedNLL_annotated():
     def model(
-        x: NDArray,  # noqa
+        x: np.ndarray,
         mu: float,
         sigma: Annotated[float, 0 : np.inf],
-    ) -> NDArray:  # noqa
+    ) -> np.ndarray:
         return norm_pdf(x, mu, sigma)
 
     c = UnbinnedNLL([], model)
@@ -1398,3 +1398,31 @@ def test_deprecated_Template_method():
     with pytest.warns(np.VisibleDeprecationWarning):
         t = Template([1], [2, 3], [[1], [2]], method="hpd")
         t._impl is cost.template_chi2_da
+
+
+@pytest.mark.parametrize("cost", (BinnedNLL, ExtendedBinnedNLL))
+def test_binned_cost_with_model_shape_error_message_1D(cost):
+    n = [1, 2]
+    edges = [0.1, 0.2, 0.3]
+
+    # cdf should return same length as xe, not same length as n
+    def cdf(xe, a):
+        return xe[:-1]
+
+    c = cost(n, edges, cdf)
+    with pytest.raises(ValueError):
+        c(1)
+
+
+@pytest.mark.parametrize("cost", (BinnedNLL, ExtendedBinnedNLL))
+def test_binned_cost_with_model_shape_error_message_2D(cost):
+    n = [[1, 2, 3], [4, 5, 6]]
+    edges = [0.5, 0.6, 0.7], [0.1, 0.2, 0.3, 0.4]
+
+    # model should return same shape as xye
+    def model(xye, a):
+        return xye
+
+    c = cost(n, edges, model)
+    with pytest.raises(ValueError):
+        c(1)
