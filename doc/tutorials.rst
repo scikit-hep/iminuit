@@ -20,6 +20,7 @@ Important for most users are only the first two entries.
     notebooks/template_model_mix
     notebooks/conditional_variable
     notebooks/scipy_and_constraints
+    notebooks/roofit
     notebooks/external_minimizer
     notebooks/generic_least_squares
     notebooks/cython
