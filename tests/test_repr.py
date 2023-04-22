@@ -248,7 +248,7 @@ def test_text_params_with_latex_names():
     m = Minuit(lambda x: x**2, 1, name=[r"$\alpha$"])
 
     try:
-        import unicodeit  # noqa
+        import unicodeitplus  # noqa
 
         assert _repr_text.params(m.params) == ref("params_latex_1.txt")
 
@@ -257,7 +257,7 @@ def test_text_params_with_latex_names():
 
         with pytest.warns(
             OptionalDependencyWarning,
-            match="rendering simple LaTeX requires optional package 'unicodeit'",
+            match="rendering simple LaTeX requires optional package 'unicodeitplus'",
         ):
             assert _repr_text.params(m.params) == ref("params_latex_2.txt")
 
