@@ -4,9 +4,9 @@ from pathlib import Path
 import numpy as np
 from numpy.testing import assert_allclose
 import contextlib
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
-mpl = pytest.importorskip("matplotlib")
-plt = pytest.importorskip("matplotlib.pyplot")
 mpl.use("Agg")
 
 
@@ -234,8 +234,6 @@ def test_interactive():
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_raises():
-    pytest.importorskip("ipywidgets")
-
     def raiser(args):
         raise ValueError
 
@@ -250,8 +248,6 @@ def test_interactive_raises():
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_with_array_func():
-    pytest.importorskip("ipywidgets")
-
     def cost(par):
         return par[0] ** 2 + (par[1] / 2) ** 2
 

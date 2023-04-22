@@ -21,24 +21,7 @@ from iminuit.util import describe
 from iminuit.typing import Annotated, Gt, Lt
 from typing import Sequence
 import pickle
-
-try:
-    # pytest.importorskip does not work for scipy.stats;
-    # for some reason, import scipy or import scipy.stats succeeds
-    # even if scipy is not installed
-    from scipy.stats import norm, truncexpon, multivariate_normal
-
-    scipy_available = True
-except ImportError:
-    scipy_available = False
-
-
-try:
-    from matplotlib import pyplot  # noqa
-
-    matplotlib_available = True
-except ImportError:
-    matplotlib_available = False
+from scipy.stats import norm, truncexpon, multivariate_normal
 
 
 def norm_logpdf(x, mu, sigma):
@@ -108,19 +91,16 @@ def line(x, a, b):
     return a + b * x
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_norm_logpdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_logpdf(x, 3, 2), norm.logpdf(x, 3, 2))
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_norm_pdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_pdf(x, 3, 2), norm.pdf(x, 3, 2))
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_norm_cdf():
     x = np.linspace(-3, 3)
     assert_allclose(norm_cdf(x, 3, 2), norm.cdf(x, 3, 2))
@@ -183,7 +163,6 @@ def test_UnbinnedNLL(unbinned, verbose, model):
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_UnbinnedNLL_2D():
     def model(x_y, mux, muy, sx, sy, rho):
         return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -238,7 +217,6 @@ def test_UnbinnedNLL_properties(log):
     assert c.verbose == 1
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 @pytest.mark.parametrize("log", (False, True))
 def test_UnbinnedNLL_visualize(log):
     c = UnbinnedNLL([1, 2], norm_logpdf if log else norm_pdf, log=log)
@@ -254,8 +232,6 @@ def test_UnbinnedNLL_visualize(log):
     c.visualize((1, 2), model_points=10, nbins=20)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_UnbinnedNLL_visualize_2D():
     def model(x_y, mux, muy, sx, sy, rho):
         return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -315,7 +291,6 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_ExtendedUnbinnedNLL_2D():
     def model(x_y, n, mux, muy, sx, sy, rho):
         return n * 1000, n * 1000 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -371,7 +346,6 @@ def test_ExtendedUnbinnedNLL_properties(log):
 
 
 @pytest.mark.parametrize("log", (False, True))
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_ExtendedUnbinnedNLL_visualize(log):
     def log_model(x, s, mu, sigma):
         return s, np.log(s) + norm_logpdf(x, mu, sigma)
@@ -388,8 +362,6 @@ def test_ExtendedUnbinnedNLL_visualize(log):
     c.visualize((1, 2, 3))
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_ExtendedUnbinnedNLL_visualize_2D():
     def model(x_y, n, mux, muy, sx, sy, rho):
         return n * 100, n * 100 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
@@ -486,7 +458,6 @@ def test_BinnedNLL_bad_input_6():
         BinnedNLL(1, 2, lambda x, a: 0)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_BinnedNLL_2D():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
@@ -512,7 +483,6 @@ def test_BinnedNLL_2D():
     assert cost(*m.values) > m.fval
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_BinnedNLL_2D_with_zero_bins():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
@@ -558,7 +528,6 @@ def test_BinnedNLL_properties():
         c.n = [1, 2]
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_BinnedNLL_visualize():
     c = BinnedNLL([1, 2], [1, 2, 3], expon_cdf)
 
@@ -568,8 +537,6 @@ def test_BinnedNLL_visualize():
     c.visualize((1,))
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_BinnedNLL_visualize_2D():
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=10, random_state=1).T
@@ -630,7 +597,6 @@ def test_ExtendedBinnedNLL_bad_input():
         ExtendedBinnedNLL([1], [1], lambda x, a: 0)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_ExtendedBinnedNLL_2D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
@@ -650,7 +616,6 @@ def test_ExtendedBinnedNLL_2D():
     assert_allclose(m.values, truth, atol=0.1)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_ExtendedBinnedNLL_3D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
     n = int(truth[0] * 10000)
@@ -696,7 +661,6 @@ def test_ExtendedBinnedNLL_properties():
     assert c.scaled_cdf is cdf
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_ExtendedBinnedNLL_visualize():
     def model(x, s, slope):
         return s * expon_cdf(x, slope)
@@ -705,8 +669,6 @@ def test_ExtendedBinnedNLL_visualize():
     c.visualize((1, 2))
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_ExtendedBinnedNLL_visualize_2D():
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
@@ -847,7 +809,6 @@ def test_LeastSquares_properties():
         c.yerror = [1, 2]
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_LeastSquares_visualize():
     c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
@@ -859,7 +820,6 @@ def test_LeastSquares_visualize():
     c.visualize((1, 2), model_points=10)
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_LeastSquares_visualize_2D():
     c = LeastSquares([[1, 2]], [[2, 3]], 0.1, line)
 
@@ -961,7 +921,6 @@ def test_CostSum_3():
     assert cs((1, 1)) == lsq((1, 1)) + con((1, 1)) + 1.5
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy is needed")
 def test_CostSum_4():
     t = Template([1, 2], [1, 2, 3], [[1, 1], [0, 1]], method="asy")
     assert t.errordef == Minuit.LIKELIHOOD
@@ -978,7 +937,6 @@ def test_CostSum_4():
     assert_allclose(m1.errors, m2.errors)
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_CostSum_visualize():
     lsq = LeastSquares([1, 2, 3], [3, 4, 5], 1, line)
     con = NormalConstraint(("a", "b"), (1, 1), (1, 1))
@@ -1049,7 +1007,6 @@ def test_NormalConstraint_properties():
     assert_equal(nc.covariance, (1, 2))
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_NormalConstraint_visualize():
     c = NormalConstraint(("a", "b"), (1, 2), (3, 4))
     c.visualize((1, 2))
@@ -1157,8 +1114,6 @@ def test_update_data_with_mask(cls):
 
 @pytest.mark.parametrize("method", ("jsc", "asy", "da"))
 def test_Template(method):
-    if method == "asy" and not scipy_available:
-        pytest.skip(reason="scipy needed")
     xe = np.array([0, 1, 2, 3])
     t = np.array([[1, 1, 0], [0, 1, 3]])
     n = t[0] + t[1]
@@ -1219,13 +1174,10 @@ def generate(rng, nmc, truth, bins, tf=1, df=1):
     return n, xe, np.array(t)
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 @pytest.mark.parametrize("method", ("jsc", "asy", "da"))
 @pytest.mark.parametrize("with_mask", (False, True))
 @pytest.mark.parametrize("weighted_data", (False, True))
 def test_Template_weighted(method, with_mask, weighted_data):
-    if method == "asy" and not scipy_available:
-        pytest.skip(reason="scipy needed")
     rng = np.random.default_rng(1)
     truth = 750, 250
     z = []
@@ -1274,7 +1226,6 @@ def test_Template_bad_input():
         Template([1], [1, 2], [[1], None])
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_Template_visualize():
     xe = [0, 1, 2]
     n = [1, 2]
@@ -1288,7 +1239,6 @@ def test_Template_visualize():
     c.visualize((1, 2))
 
 
-@pytest.mark.skipif(not matplotlib_available, reason="matplotlib is needed")
 def test_Template_visualize_2D():
     xe = ([0, 1, 2], [0, 1, 2])
     n = [[1, 2], [3, 4]]
@@ -1335,7 +1285,6 @@ def test_Template_with_model():
     assert m.valid
 
 
-@pytest.mark.skipif(not scipy_available, reason="scipy.stats is needed")
 def test_Template_with_model_2D():
     truth1 = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
     x1, y1 = mvnorm(*truth1[1:]).rvs(size=int(truth1[0] * 1000), random_state=1).T
