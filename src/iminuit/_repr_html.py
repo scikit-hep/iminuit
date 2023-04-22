@@ -114,7 +114,9 @@ def fmin(fm):
                     ff[2],
                     colspan=3,
                     style="text-align:center",
-                    title="Total number of function and (optional) gradient evaluations",
+                    title=(
+                        "Total number of function and (optional) gradient evaluations"
+                    ),
                 ),
             ),
             tr(

@@ -11,14 +11,15 @@
 # provided with the distribution.
 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
-# THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-# THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+# SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+# WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+# DAMAGE.
 
 """
 PDG formatting of numbers with uncertainties.
@@ -27,17 +28,19 @@ The PDG uses a special rounding rule for quantities with uncertainties. The desc
 quoted from M. Tanabashi et al. (Particle Data Group), Phys. Rev. D 98, 030001 (2018),
 https://doi.org/10.1103/PhysRevD.98.030001:
 
-"The basic rule states that if the three highest order digits of the error lie between 100
-and 354, we round to two significant digits. If they lie between 355 and 949, we round to
-one significant digit. Finally, if they lie between 950 and 999, we round up to 1000 and
-keep two significant digits. In all cases, the central value is given with a precision
-that matches that of the error. So, for example, the result (coming from an average) 0.827
-+- 0.119 would appear as 0.83 +- 0.12, while 0.827 +- 0.367 would turn into 0.8 +- 0.4."
+"The basic rule states that if the three highest order digits of the error lie between
+100 and 354, we round to two significant digits. If they lie between 355 and 949, we
+round to one significant digit. Finally, if they lie between 950 and 999, we round up to
+1000 and keep two significant digits. In all cases, the central value is given with a
+precision that matches that of the error. So, for example, the result (coming from an
+average) 0.827 +- 0.119 would appear as 0.83 +- 0.12, while 0.827 +- 0.367 would turn
+into 0.8 +- 0.4."
 
 In addition, the LHCb Editorial Board declared that in case of several errors, the most
 precise one defines the number of digits shown.
 
-This module offers functions that convert values and errors into a string representation.
+This module offers functions that convert values and errors into a string
+representation.
 
 Documentation follows these guidelines:
 https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
@@ -60,7 +63,8 @@ latex = (
 
 
 def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp=None):
-    r"""Return formatted value with uncertainties according to PDG rules.
+    r"""
+    Return formatted value with uncertainties according to PDG rules.
 
     Examples
     --------
@@ -82,15 +86,15 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
     value : float
         Estimated value.
     error : float or tuple of floats
-        Uncertainty of value. A positive number is interpreted as a symmetric uncertainty
-        (value +- error). Asymmetric uncertainties are passed as a tuple of positive
-        numbers (x - xmin, xmax - x) OR as a negative number xmin - x immediately
-        followed by a positive number xmax - x.
+        Uncertainty of value. A positive number is interpreted as a symmetric
+        uncertainty (value +- error). Asymmetric uncertainties are passed as a tuple of
+        positive numbers (x - xmin, xmax - x) OR as a negative number xmin - x
+        immediately followed by a positive number xmax - x.
     *errors
         Optional further uncertainties.
     labels : sequence of str, optional
-        Optional labels for the different uncertainties (e.g. 'sys', 'stat', 'lumi').
-        A label that starts with one of the characters '_\^<' is used verbatim, otherwise
+        Optional labels for the different uncertainties (e.g. 'sys', 'stat', 'lumi'). A
+        label that starts with one of the characters '_\^<' is used verbatim, otherwise
         it is wrapped according to the format spec for labels.
     format : tuple, optional
         Formatting specification. Structure: (
@@ -103,13 +107,13 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
             <tuple of str OR None: replacement for 'nan' and 'inf'>
         )
     leader : int, optional
-        Index of uncertainty that should be used to determine the number of digits shown,
-        if there are several uncertainties. Default is to use the smallest uncertainty.
-        If asymmetric uncertainties are passed as tuples or subsequent pairs of negative
-        and positive numbers, the index is that of the pair.
+        Index of uncertainty that should be used to determine the number of digits
+        shown, if there are several uncertainties. Default is to use the smallest
+        uncertainty. If asymmetric uncertainties are passed as tuples or subsequent
+        pairs of negative and positive numbers, the index is that of the pair.
     exp : int, optional
-        Exponent to use for scientific notation. If omitted, a heuristic algorithm selects
-        a suitable exponent.
+        Exponent to use for scientific notation. If omitted, a heuristic algorithm
+        selects a suitable exponent.
 
     Returns
     -------

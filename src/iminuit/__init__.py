@@ -1,4 +1,5 @@
-"""Jupyter-friendly Python interface for the Minuit2 library in C++.
+"""
+Jupyter-friendly Python interface for the Minuit2 library in C++.
 
 Basic usage example::
 

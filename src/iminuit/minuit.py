@@ -103,12 +103,12 @@ class Minuit:
     @property
     def errordef(self) -> float:
         """
-        Access FCN increment above the minimum that corresponds to one standard deviation.
+        Access FCN increment above minimum that corresponds to one standard deviation.
 
-        Default value is 1.0. `errordef` should be 1.0 for a least-squares cost
-        function and 0.5 for a negative log-likelihood function. See section 1.5.1 on page
-        6 of the :download:`MINUIT2 User's Guide <mnusersguide.pdf>`. This parameter is
-        also called *UP* in MINUIT documents.
+        Default value is 1.0. `errordef` should be 1.0 for a least-squares cost function
+        and 0.5 for a negative log-likelihood function. See section 1.5.1 on page 6 of
+        the :download:`MINUIT2 User's Guide <mnusersguide.pdf>`. This parameter is also
+        called *UP* in MINUIT documents.
 
         To make user code more readable, we provided two named constants::
 
@@ -194,18 +194,18 @@ class Minuit:
 
         You can assign an integer:
 
-        - 0: Fast. Does not check a user-provided gradient. Does not improve Hesse matrix
-          at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always needed
-          for good error estimates. If you pass a user-provided gradient to MINUIT,
-          convergence is **faster**.
-        - 1: Default. Checks user-provided gradient against numerical gradient. Checks and
-          usually improves Hesse matrix at minimum. Extra call to :meth:`hesse` after
-          :meth:`migrad` is usually superfluous. If you pass a user-provided gradient to
-          MINUIT, convergence is **slower**.
-        - 2: Careful. Like 1, but does extra checks of intermediate Hessian matrix during
-          minimization. The effect in benchmarks is a somewhat improved accuracy at the
-          cost of more function evaluations. A similar effect can be achieved by reducing
-          the tolerance :attr:`tol` for convergence at any strategy level.
+        - 0: Fast. Does not check a user-provided gradient. Does not improve Hesse
+          matrix at minimum. Extra call to :meth:`hesse` after :meth:`migrad` is always
+          needed for good error estimates. If you pass a user-provided gradient to
+          MINUIT, convergence is **faster**.
+        - 1: Default. Checks user-provided gradient against numerical gradient. Checks
+          and usually improves Hesse matrix at minimum. Extra call to :meth:`hesse`
+          after :meth:`migrad` is usually superfluous. If you pass a user-provided
+          gradient to MINUIT, convergence is **slower**.
+        - 2: Careful. Like 1, but does extra checks of intermediate Hessian matrix
+          during minimization. The effect in benchmarks is a somewhat improved accuracy
+          at the cost of more function evaluations. A similar effect can be achieved by
+          reducing the tolerance :attr:`tol` for convergence at any strategy level.
         """
         return self._strategy
 
@@ -252,7 +252,8 @@ class Minuit:
 
     @property
     def values(self) -> mutil.ValueView:
-        """Access parameter values via an array-like view.
+        """
+        Access parameter values via an array-like view.
 
         Use to read or write current parameter values based on the parameter index
         or the parameter name as a string. If you change a parameter value and run
@@ -271,7 +272,8 @@ class Minuit:
 
     @property
     def errors(self) -> mutil.ErrorView:
-        """Access parameter parabolic errors via an array-like view.
+        """
+        Access parameter parabolic errors via an array-like view.
 
         Like :attr:`values`, but instead of reading or writing the values, you read
         or write the errors (which double as step sizes for MINUITs numerical gradient
@@ -289,7 +291,8 @@ class Minuit:
 
     @property
     def fixed(self) -> mutil.FixedView:
-        """Access whether parameters are fixed via an array-like view.
+        """
+        Access whether parameters are fixed via an array-like view.
 
         Use to read or write the fixation state of a parameter based on the parameter
         index or the parameter name as a string. If you change the state and run
@@ -311,7 +314,8 @@ class Minuit:
 
     @property
     def limits(self) -> mutil.LimitView:
-        """Access parameter limits via a array-like view.
+        """
+        Access parameter limits via a array-like view.
 
         Use to read or write the limits of a parameter based on the parameter index
         or the parameter name as a string. If you change the limits and run
@@ -319,9 +323,9 @@ class Minuit:
 
         In case of complex fits, it can help to limit some parameters first, run Migrad,
         then remove the limits and run Migrad again. Limits will bias the result only if
-        the best fit value is outside the limits, not if it is inside. Limits will affect
-        the estimated Hesse uncertainties if the parameter is close to a limit. They do
-        not affect the Minos uncertainties, because those are invariant to
+        the best fit value is outside the limits, not if it is inside. Limits will
+        affect the estimated Hesse uncertainties if the parameter is close to a limit.
+        They do not affect the Minos uncertainties, because those are invariant to
         transformations and limits are implemented via a variable transformation.
 
         See Also
@@ -359,11 +363,11 @@ class Minuit:
         covariance matrix with k^2.
 
         The submatrix formed by two parameters describes an ellipse. The asymptotic
-        coverage probabilty of the standard ellipse is lower than 68 %. It can be computed
-        from the :math:`\chi^2` distribution with 2 degrees of freedom. In general, to
-        obtain a (hyper-)ellipsoid with coverage probability CL, one has to multiply the
-        submatrix of the corresponding k parameters with a factor. For k = 1,2,3 and
-        CL = 0.99 ::
+        coverage probabilty of the standard ellipse is lower than 68 %. It can be
+        computed from the :math:`\chi^2` distribution with 2 degrees of freedom. In
+        general, to obtain a (hyper-)ellipsoid with coverage probability CL, one has to
+        multiply the submatrix of the corresponding k parameters with a factor. For k =
+        1,2,3 and CL = 0.99 ::
 
             from scipy.stats import chi2
 
@@ -504,9 +508,9 @@ class Minuit:
             Starting values for the minimization as positional arguments.
             See notes for details on how to set starting values.
         grad :
-            Function that calculates the gradient and returns an iterable object with one
-            entry for each parameter, which is the derivative for that parameter.
-            If None (default), Minuit will calculate the gradient numerically.
+            Function that calculates the gradient and returns an iterable object with
+            one entry for each parameter, which is the derivative for that parameter. If
+            None (default), Minuit will calculate the gradient numerically.
         name :
             If it is set, it overrides iminuit's function signature detection.
         **kwds :
@@ -520,15 +524,15 @@ class Minuit:
         By default, Minuit assumes that the callable `fcn` behaves like chi-square
         function, meaning that the function minimum in repeated identical random
         experiments is chi-square distributed up to an arbitrary additive constant. This
-        is important for the correct error calculation. If `fcn` returns a log-likelihood,
-        one should multiply the result with -2 to adapt it. If the function returns the
-        negated log-likelihood, one can alternatively set the attribute
-        `fcn.errordef` = :attr:`Minuit.LIKELIHOOD` or
-        :attr:`Minuit.errordef` = :attr:`Minuit.LIKELIHOOD` after initialization to make
-        Minuit calculate errors properly.
+        is important for the correct error calculation. If `fcn` returns a
+        log-likelihood, one should multiply the result with -2 to adapt it. If the
+        function returns the negated log-likelihood, one can alternatively set the
+        attribute `fcn.errordef` = :attr:`Minuit.LIKELIHOOD` or :attr:`Minuit.errordef`
+        = :attr:`Minuit.LIKELIHOOD` after initialization to make Minuit calculate errors
+        properly.
 
-        Minuit reads the function signature of `fcn` to detect the number and names of the
-        function parameters. Two kinds of function signatures are understood.
+        Minuit reads the function signature of `fcn` to detect the number and names of
+        the function parameters. Two kinds of function signatures are understood.
 
         a) Function with positional arguments.
 
@@ -673,9 +677,10 @@ class Minuit:
         Run Migrad minimization.
 
         Migrad from the Minuit2 library is a robust minimisation algorithm which earned
-        its reputation in 40+ years of almost exclusive usage in high-energy physics. How
-        Migrad works is described in the `Minuit paper`_. It uses first and approximate
-        second derivatives to achieve quadratic convergence near the minimum.
+        its reputation in 40+ years of almost exclusive usage in high-energy physics.
+        How Migrad works is described in the `Minuit paper`_. It uses first and
+        approximate second derivatives to achieve quadratic convergence near the
+        minimum.
 
         Parameters
         ----------
@@ -735,9 +740,9 @@ class Minuit:
         """
         Run Simplex minimization.
 
-        Simplex from the Minuit2 C++ library is a variant of the Nelder-Mead algorithm to
-        find the minimum of a function. It does not make use of derivatives.
-        `The Wikipedia has a good article on the Nelder-Mead method
+        Simplex from the Minuit2 C++ library is a variant of the Nelder-Mead algorithm
+        to find the minimum of a function. It does not make use of derivatives. `The
+        Wikipedia has a good article on the Nelder-Mead method
         <https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method>`_.
 
         Parameters
@@ -751,12 +756,12 @@ class Minuit:
 
         Notes
         -----
-        The Simplex method usually converges more slowly than Migrad, but performs better
-        in certain cases, the Rosenbrock function is a notable example. Unlike Migrad, the
-        Simplex method does not have quadratic convergence near the minimum, so it is a
-        good approach to run Migrad after Simplex to obtain an accurate solution in fewer
-        steps. Simplex may also be useful to get close to the minimum from an unsuitable
-        starting point.
+        The Simplex method usually converges more slowly than Migrad, but performs
+        better in certain cases, the Rosenbrock function is a notable example. Unlike
+        Migrad, the Simplex method does not have quadratic convergence near the minimum,
+        so it is a good approach to run Migrad after Simplex to obtain an accurate
+        solution in fewer steps. Simplex may also be useful to get close to the minimum
+        from an unsuitable starting point.
 
         The convergence criterion for Simplex is also based on EDM, but the threshold
         is much more lax than that of Migrad (see :attr:`Minuit.tol` for details).
@@ -797,10 +802,10 @@ class Minuit:
 
         Scans the function on a regular hypercube grid, whose bounds are defined either
         by parameter limits if present or by Minuit.values +/- Minuit.errors.
-        Minuit.errors are initialized to very small values by default, too small for this
-        scan. They should be increased before running scan or limits should be set. The
-        scan evaluates the function exactly at the limit boundary, so the function should
-        be defined there.
+        Minuit.errors are initialized to very small values by default, too small for
+        this scan. They should be increased before running scan or limits should be set.
+        The scan evaluates the function exactly at the limit boundary, so the function
+        should be defined there.
 
         Parameters
         ----------
@@ -818,12 +823,13 @@ class Minuit:
         accurate, since the tolerance is very lax. One should always run :meth:`migrad`
         after the scan.
 
-        This implementation here does a full scan of the hypercube in Python. Originally,
-        this was supposed to use MnScan from C++ Minuit2, but MnScan is unsuitable.
-        It does a 1D scan with 41 steps (not configurable) for each parameter in sequence,
-        so it is not actually scanning the full hypercube. It first scans one parameter,
-        then starts the scan of the second parameter from the best value of the first and
-        so on. This fails easily when the parameters are correlated.
+        This implementation here does a full scan of the hypercube in Python.
+        Originally, this was supposed to use MnScan from C++ Minuit2, but MnScan is
+        unsuitable. It does a 1D scan with 41 steps (not configurable) for each
+        parameter in sequence, so it is not actually scanning the full hypercube. It
+        first scans one parameter, then starts the scan of the second parameter from the
+        best value of the first and so on. This fails easily when the parameters are
+        correlated.
         """
         # Implementation notes:
         # Returning a valid FunctionMinimum object was a major challenge, because C++
@@ -928,11 +934,12 @@ class Minuit:
             argument which is an arbitrary vector.
         constraints : scipy.optimize.LinearConstraint or
                       scipy.optimize.NonlinearConstraint, optional
-            Linear or non-linear constraints, see docs of :func:`scipy.optimize.minimize`
-            look for the `constraints` parameter. The function used in the constraint
-            must use the exact same calling convention as the original fcn, see hess
-            parameter for details. No parameters may be omitted in the signature, even
-            if those parameters are not used in the constraint.
+            Linear or non-linear constraints, see docs of
+            :func:`scipy.optimize.minimize` look for the `constraints` parameter. The
+            function used in the constraint must use the exact same calling convention
+            as the original fcn, see hess parameter for details. No parameters may be
+            omitted in the signature, even if those parameters are not used in the
+            constraint.
 
         Notes
         -----
@@ -1266,7 +1273,8 @@ class Minuit:
         return self
 
     def visualize(self, plot: Callable = None, **kwargs):
-        """Visualize agreement of current model with data (requires matplotlib).
+        """
+        Visualize agreement of current model with data (requires matplotlib).
 
         This generates a plot of the data/model agreement, using the current
         parameter values, if the likelihood function supports this, otherwise
@@ -1276,10 +1284,10 @@ class Minuit:
         ----------
         plot : Callable, optional
             This function tries to call the visualize method on the cost function, which
-            accepts the current model parameters as an array-like and potentially further
-            keyword arguments, and draws a visualization into the current matplotlib axes.
-            If the cost function does not provide a visualize method or if you want to
-            override it, pass the function here.
+            accepts the current model parameters as an array-like and potentially
+            further keyword arguments, and draws a visualization into the current
+            matplotlib axes. If the cost function does not provide a visualize method or
+            if you want to override it, pass the function here.
         kwargs :
             Other keyword arguments are forwarded to the
             plot function.
@@ -1305,11 +1313,11 @@ class Minuit:
 
         Notes
         -----
-        The covariance matrix is asymptotically (in large samples) valid. By valid we mean
-        that confidence intervals constructed from the errors contain the true value with
-        a well-known coverage probability (68 % for each interval). In finite samples,
-        this is likely to be true if your cost function looks like a hyperparabola around
-        the minimum.
+        The covariance matrix is asymptotically (in large samples) valid. By valid we
+        mean that confidence intervals constructed from the errors contain the true
+        value with a well-known coverage probability (68 % for each interval). In finite
+        samples, this is likely to be true if your cost function looks like a
+        hyperparabola around the minimum.
 
         In practice, the errors very likely have correct coverage if the results from
         Minos and Hesse methods agree. It is possible to construct artifical functions
@@ -1596,8 +1604,8 @@ class Minuit:
         Calculate 1D cost function profile over a range.
 
         A 1D scan of the cost function around the minimum, useful to inspect the
-        minimum. For a fit with several free parameters this is not the same as the Minos
-        profile computed by :meth:`mncontour`.
+        minimum. For a fit with several free parameters this is not the same as the
+        Minos profile computed by :meth:`mncontour`.
 
         Parameters
         ----------
@@ -1826,8 +1834,8 @@ class Minuit:
         """
         Draw 2D contour around minimum (requires matplotlib).
 
-        See :meth:`contour` for details on parameters and interpretation. Please also read
-        the docs of :meth:`mncontour` to understand the difference between the two.
+        See :meth:`contour` for details on parameters and interpretation. Please also
+        read the docs of :meth:`mncontour` to understand the difference between the two.
 
         See Also
         --------
@@ -1883,26 +1891,26 @@ class Minuit:
         y : str
             Variable name of the second parameter.
         cl : float or None, optional
-            Confidence level of the contour. If not set or None, a standard 68 %
-            contour is computed (default). If 0 < cl < 1, the value is interpreted as the
+            Confidence level of the contour. If not set or None, a standard 68 % contour
+            is computed (default). If 0 < cl < 1, the value is interpreted as the
             confidence level (a probability). If cl >= 1, it is interpreted as number of
             standard deviations. For example, cl=3 produces a 3 sigma contour. Values
             other than 0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5 require the scipy module.
         size : int, optional
-            Number of points on the contour to find (default: 100). Increasing this makes
-            the contour smoother, but requires more computation time.
+            Number of points on the contour to find (default: 100). Increasing this
+            makes the contour smoother, but requires more computation time.
         interpolated : int, optional
-            Number of interpolated points on the contour (default: 0). If you set this to
-            a value larger than size, cubic spline interpolation is used to generate a
-            smoother curve and the interpolated coordinates are returned. Values smaller
-            than size are ignored. Good results can be obtained with size=20,
+            Number of interpolated points on the contour (default: 0). If you set this
+            to a value larger than size, cubic spline interpolation is used to generate
+            a smoother curve and the interpolated coordinates are returned. Values
+            smaller than size are ignored. Good results can be obtained with size=20,
             interpolated=200. This requires scipy.
         experimental : bool, optional
             If true, use experimental implementation to compute contour, otherwise use
-            MnContour from the Minuit2 library. The experimental implementation was found
-            to succeed in cases where MnContour produced no reasonable result, but is
-            slower and not yet well tested in practice. Use with caution and report back
-            any issues via Github.
+            MnContour from the Minuit2 library. The experimental implementation was
+            found to succeed in cases where MnContour produced no reasonable result, but
+            is slower and not yet well tested in practice. Use with caution and report
+            back any issues via Github.
 
         Returns
         -------
@@ -2173,10 +2181,11 @@ class Minuit:
         ----------
         plot : Callable, optional
             To visualize the fit, interactive tries to access the visualize method on
-            the cost function, which accepts the current model parameters as an array-like
-            and potentially further keyword arguments, and draws a visualization into the
-            current matplotlib axes. If the cost function does not provide a visualize
-            method or if you want to override it, pass the function here.
+            the cost function, which accepts the current model parameters as an
+            array-like and potentially further keyword arguments, and draws a
+            visualization into the current matplotlib axes. If the cost function does
+            not provide a visualize method or if you want to override it, pass the
+            function here.
         raise_on_exception : bool, optional
             The default is to catch exceptions in the plot function and convert them
             into a plotted message. In unit tests, raise_on_exception should be set to
