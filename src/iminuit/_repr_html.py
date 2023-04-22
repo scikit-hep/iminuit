@@ -316,29 +316,3 @@ def matrix(arr):
         rows.append(tr(*cols))
 
     return to_str(table(tr(td(), *[th(v) for v in names]), *rows))
-
-
-# def _parse_latex(s):
-#     if s.startswith("$") and s.endswith("$"):
-#         with optional_module_for("displaying LaTeX"):
-#             from matplotlib.backends.backend_svg import RendererSVG
-#             from matplotlib.font_manager import FontProperties
-#             from io import StringIO
-
-#             fp = FontProperties(size=9)
-#             # get bounding box of rendered text
-#             r = RendererSVG(0, 0, StringIO())
-#             w, h, _ = r.get_text_width_height_descent(s, fp, ismath=True)
-
-#             with StringIO() as f:
-#                 # render LaTeX as path
-#                 r = RendererSVG(w, h, f)
-#                 r.draw_text(r.new_gc(), 0, h, s, fp, angle=0, ismath=True)
-#                 f.seek(0)
-#                 svg = f.read()
-
-#             # strip preamble
-#             svg = svg[svg.index("<svg") + 4 :]
-#             return f'<svg role="img" style="fill:#f0f0f0" {svg}'
-
-#     return s

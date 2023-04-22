@@ -85,6 +85,7 @@ from typing import (
     overload,
 )
 import warnings
+from ._deprecated import deprecated_parameter
 
 __all__ = [
     "CHISQUARE",
@@ -814,7 +815,8 @@ class UnbinnedCost(MaskedCost):
         # unbinned likelihoods have infinite degrees of freedom
         return np.inf
 
-    def visualize(self, args: Sequence[float], model_points: int = 0, nbins: int = 50):
+    @deprecated_parameter(bins="nbins")
+    def visualize(self, args: Sequence[float], model_points: int = 0, bins: int = 50):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -827,7 +829,7 @@ class UnbinnedCost(MaskedCost):
         model_points : int, optional
             How many points to use to draw the model. Default is 0, in this case
             an smart sampling algorithm selects the number of points.
-        nbins : int, optional
+        bins : int, optional
             number of bins. Default is 50 bins.
 
         """
@@ -836,7 +838,7 @@ class UnbinnedCost(MaskedCost):
         if self.data.ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
-        n, xe = np.histogram(self.data, bins=nbins)
+        n, xe = np.histogram(self.data, bins=bins)
         cx = 0.5 * (xe[1:] + xe[:-1])
         plt.errorbar(cx, n, n**0.5, fmt="ok")
         if model_points > 0:
