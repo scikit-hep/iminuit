@@ -226,7 +226,7 @@ def matrix_format(matrix):
 def _parse_latex(s):
     if s.startswith("$") and s.endswith("$"):
         with optional_module_for("rendering simple LaTeX"):
-            import unicodeit
+            import unicodeitplus
 
-            return unicodeit.replace(s[1:-1])
+            return unicodeitplus.parse(s)
     return s

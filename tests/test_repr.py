@@ -254,7 +254,7 @@ def test_text_params_with_latex_names():
 
         with pytest.warns(
             OptionalDependencyWarning,
-            match="rendering simple LaTeX requires optional package 'unicodeit'",
+            match="rendering simple LaTeX requires optional package 'unicodeitplus'",
         ):
             assert _repr_text.params(m.params) == ref("params_latex_2.txt")
 
