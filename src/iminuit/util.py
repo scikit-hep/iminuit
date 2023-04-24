@@ -1498,10 +1498,19 @@ def _replace_none(x, v):
     return x
 
 
-# poor-mans progressbar if progressbar2 is not available
-class _ProgressBar:
-    def _update(self, v):
-        self._out.write(f"\r{100 * v:.0f} %")
+# poor-mans progressbar
+class ProgressBar:
+    """
+    Simple progress bar.
+
+    Renders as nice HTML progressbar in Jupyter notebooks.
+    """
+
+    value: int = 0
+    max_value: int
+
+    def _update(self, fraction):
+        self._out.write(f"\r{100 * fraction:.0f} %")
         self._out.flush()
 
     def _finish(self):
@@ -1509,6 +1518,14 @@ class _ProgressBar:
         self._out.flush()
 
     def __init__(self, max_value):
+        """
+        Initialize bar.
+
+        Parameters
+        ----------
+        max_value: int
+            Total number of entries.
+        """
         self.max_value = max_value
         self._out = sys.stdout
 
@@ -1532,15 +1549,18 @@ class _ProgressBar:
         except ModuleNotFoundError:
             pass
 
+        self._update(self.value)
+
     def __enter__(self, *args):
-        self.value = 0
-        self._update(0)
+        """Noop."""
         return self
 
     def __exit__(self, *args):
+        """Clean up the bar."""
         self._finish()
 
     def __add__(self, v):
+        """Increment progress."""
         self.value += v
         self._update(self.value / self.max_value)
         return self

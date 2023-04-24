@@ -482,7 +482,7 @@ try:
 
     @nb_overload(_soft_l1_loss, inline="always")
     def _ol_soft_l1_loss(z_sqr):
-        return _soft_l1_loss_np  # pragma: no cover
+        return _soft_l1_loss_np
 
     _soft_l1_cost_np = _soft_l1_cost
     _soft_l1_cost_nb = jit(

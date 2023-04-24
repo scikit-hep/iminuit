@@ -6,6 +6,7 @@ from numpy.testing import assert_allclose
 import contextlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from iminuit._hide_modules import hide_modules
 
 mpl.use("Agg")
 
@@ -136,6 +137,8 @@ def test_mnmatrix_7(fig):
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive():
+    import ipywidgets
+
     def cost(a, b):
         return a**2 + b**2
 
@@ -157,76 +160,67 @@ def test_interactive():
 
     plot = Plot()
 
-    try:
-        import ipywidgets  # noqa
-        import IPython  # noqa
+    m = Minuit(cost, 1, 1)
+    with pytest.raises(AttributeError, match="no visualize method"):
+        m.interactive(raise_on_exception=True)
 
-        ipywidgets_available = True
+    with plot.assert_call():
+        out1 = m.interactive(plot)
+    assert isinstance(out1, ipywidgets.HBox)
 
-        m = Minuit(cost, 1, 1)
-        with pytest.raises(AttributeError, match="no visualize method"):
-            m.interactive(raise_on_exception=True)
+    # manipulate state to also check this code
+    ui = out1.children[1]
+    header, parameters = ui.children
+    fit_button, update_button, reset_button, algo_select = header.children
+    with plot.assert_call():
+        fit_button.click()
+    assert_allclose(m.values, (0, 0), atol=1e-5)
+    with plot.assert_call():
+        reset_button.click()
+    assert_allclose(m.values, (1, 1), atol=1e-5)
 
-        with plot.assert_call():
-            out1 = m.interactive(plot)
-        assert isinstance(out1, ipywidgets.HBox)
+    algo_select.value = "Scipy"
+    with plot.assert_call():
+        fit_button.click()
 
-        # manipulate state to also check this code
-        ui = out1.children[1]
-        header, parameters = ui.children
-        fit_button, update_button, reset_button, algo_select = header.children
-        with plot.assert_call():
-            fit_button.click()
-        assert_allclose(m.values, (0, 0), atol=1e-5)
-        with plot.assert_call():
-            reset_button.click()
-        assert_allclose(m.values, (1, 1), atol=1e-5)
+    algo_select.value = "Simplex"
+    with plot.assert_call():
+        fit_button.click()
 
-        algo_select.value = "Scipy"
-        with plot.assert_call():
-            fit_button.click()
+    update_button.value = False
+    with plot.assert_call():
+        parameters.children[0].slider.value = 0.4  # change first slider
+    parameters.children[0].fix.value = True
+    with plot.assert_call():
+        parameters.children[0].opt.value = True
 
-        algo_select.value = "Simplex"
-        with plot.assert_call():
-            fit_button.click()
+    class Cost:
+        def visualize(self, args):
+            return plot(args)
 
-        update_button.value = False
-        with plot.assert_call():
-            parameters.children[0].slider.value = 0.4  # change first slider
-        parameters.children[0].fix.value = True
-        with plot.assert_call():
-            parameters.children[0].opt.value = True
+        def __call__(self, a, b):
+            return (a - 100) ** 2 + (b + 100) ** 2
 
-        class Cost:
-            def visualize(self, args):
-                return plot(args)
+    c = Cost()
+    m = Minuit(c, 0, 0)
+    with plot.assert_call():
+        out = m.interactive(raise_on_exception=True)
 
-            def __call__(self, a, b):
-                return (a - 100) ** 2 + (b + 100) ** 2
+    # this should modify slider range
+    ui = out.children[1]
+    header, parameters = ui.children
+    fit_button, update_button, reset_button, algo_select = header.children
+    assert parameters.children[0].slider.max < 100
+    assert parameters.children[1].slider.min > -100
+    with plot.assert_call():
+        fit_button.click()
+    assert_allclose(m.values, (100, -100), atol=1e-5)
+    # this should trigger an exception
+    plot.raises = True
+    with plot.assert_call():
+        fit_button.click()
 
-        c = Cost()
-        m = Minuit(c, 0, 0)
-        with plot.assert_call():
-            out = m.interactive(raise_on_exception=True)
-
-        # this should modify slider range
-        ui = out.children[1]
-        header, parameters = ui.children
-        fit_button, update_button, reset_button, algo_select = header.children
-        assert parameters.children[0].slider.max < 100
-        assert parameters.children[1].slider.min > -100
-        with plot.assert_call():
-            fit_button.click()
-        assert_allclose(m.values, (100, -100), atol=1e-5)
-        # this should trigger an exception
-        plot.raises = True
-        with plot.assert_call():
-            fit_button.click()
-
-    except ModuleNotFoundError:
-        ipywidgets_available = False
-
-    if not ipywidgets_available:
+    with hide_modules("ipywidgets"):
         with pytest.raises(ModuleNotFoundError, match="Please install"):
             m = Minuit(cost, 1, 1)
             m.interactive()

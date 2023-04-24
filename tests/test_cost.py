@@ -17,7 +17,6 @@ from iminuit.cost import (
     _soft_l1_loss,
     PerformanceWarning,
 )
-from iminuit._hide_modules import hide_modules
 from iminuit.util import describe
 from iminuit.typing import Annotated, Gt, Lt
 from typing import Sequence
@@ -231,7 +230,9 @@ def test_UnbinnedNLL_visualize(log):
     c = UnbinnedNLL([1, 1000], norm_logpdf if log else norm_pdf, log=log)
     c.visualize((1, 2), model_points=10)
     c.visualize((1, 2), model_points=10, bins=20)
-    with pytest.raises(np.VisibleDeprecationWarning):
+    with pytest.raises(
+        np.VisibleDeprecationWarning, match="keyword 'nbins' is deprecated"
+    ):
         c.visualize((1, 2), nbins=20)
 
 
@@ -1390,15 +1391,3 @@ def test_binned_cost_with_model_shape_error_message_2D(cost):
         ),
     ):
         c(1)
-
-
-def test_no_numba_safe_log():
-    from iminuit.cost import _safe_log
-
-    x = [1.2, 0]
-    expected = [_safe_log(xi) for xi in x]
-
-    with hide_modules("numba"):
-        got = [_safe_log(xi) for xi in x]
-
-    assert_allclose(got, expected)
