@@ -961,7 +961,7 @@ class Minuit:
                 NonlinearConstraint,
                 LinearConstraint,
             )
-        except ImportError as exc:
+        except ModuleNotFoundError as exc:
             exc.msg += "\n\nPlease install scipy to use scipy minimizers in iminuit."
             raise
 
@@ -2715,7 +2715,7 @@ def _cl_to_errordef(cl, npar, default):
         try:
             from scipy.stats import chi2
 
-        except ImportError as exc:
+        except ModuleNotFoundError as exc:
             exc.msg += (
                 "\n\n"
                 "You set an uncommon cl value, "

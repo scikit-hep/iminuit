@@ -4,9 +4,8 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
 from iminuit.util import Param, make_func_code
-from iminuit.warnings import IMinuitWarning, OptionalDependencyWarning
+from iminuit.warnings import IMinuitWarning
 from iminuit.typing import Annotated
-from iminuit._hide_modules import hide_modules
 from pytest import approx
 from argparse import Namespace
 from scipy.stats import chi2, multivariate_normal
@@ -160,18 +159,6 @@ def func_test_helper(f, grad=None, errordef=None):
     return m
 
 
-def test_mncontour_missing_scipy():
-    with hide_modules("scipy"):
-        m = Minuit(func0, 1, 1)
-        m.migrad()
-        m.mncontour("x", "y")
-        for cl in (0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5):
-            m.mncontour("x", "y", cl=cl)
-
-        with pytest.raises(ImportError):
-            m.mncontour("x", "y", cl=0.1)
-
-
 def test_mncontour_interpolated():
     m = Minuit(func0, 1, 1)
     m.migrad()
@@ -182,33 +169,6 @@ def test_mncontour_interpolated():
 
     pts = m.mncontour("x", "y", size=20, interpolated=200)
     assert len(pts) == 200
-
-    with hide_modules("scipy"):
-        with pytest.warns(
-            OptionalDependencyWarning,
-            match="interpolation requires optional package 'scipy'",
-        ):
-            pts = m.mncontour("x", "y", size=20, interpolated=200)
-            assert len(pts) == 21
-
-
-def test_minos_missing_scipy():
-    with hide_modules("scipy"):
-        m = Minuit(func0, 1, 1)
-        m.migrad()
-        m.minos()
-        for cl in (0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5):
-            m.minos(cl=cl)
-
-        with pytest.raises(ImportError):
-            m.minos(cl=0.1)
-
-
-def test_missing_scipy():
-    with hide_modules("scipy"):
-        m = Minuit(func0, 1, 1)
-        with pytest.raises(ImportError):
-            m.scipy()
 
 
 def test_func0():

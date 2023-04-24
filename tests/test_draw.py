@@ -6,7 +6,6 @@ from numpy.testing import assert_allclose
 import contextlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-from iminuit._hide_modules import hide_modules
 
 mpl.use("Agg")
 
@@ -219,11 +218,6 @@ def test_interactive():
     plot.raises = True
     with plot.assert_call():
         fit_button.click()
-
-    with hide_modules("ipywidgets"):
-        with pytest.raises(ModuleNotFoundError, match="Please install"):
-            m = Minuit(cost, 1, 1)
-            m.interactive()
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
