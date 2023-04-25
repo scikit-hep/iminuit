@@ -1272,7 +1272,7 @@ class Minuit:
 
         return self
 
-    def visualize(self, plot: Callable = None, **kwargs):
+    def visualize(self, plot: Callable = None):
         """
         Visualize agreement of current model with data (requires matplotlib).
 
@@ -1288,11 +1288,8 @@ class Minuit:
             further keyword arguments, and draws a visualization into the current
             matplotlib axes. If the cost function does not provide a visualize method or
             if you want to override it, pass the function here.
-        kwargs :
-            Other keyword arguments are forwarded to the
-            plot function.
         """
-        return self._visualize(plot)(self.values, **kwargs)
+        return self._visualize(plot)(self.values)
 
     def hesse(self, ncall: int = None) -> "Minuit":
         """
