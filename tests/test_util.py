@@ -705,8 +705,8 @@ def test_replace_none():
     assert util._replace_none(3, 2) == 3
 
 
-def test_progressbar(capsys):
-    with util._ProgressBar(max_value=4) as bar:
+def test_progressbar_1(capsys):
+    with util.ProgressBar(max_value=4) as bar:
         for i in range(4):
             bar += 1
     stdout, stderr = capsys.readouterr()
@@ -736,7 +736,7 @@ def test_progressbar_2(capsys):
     m_iostream.OutStream = OutStream
     m_display.display = display
 
-    with util._ProgressBar(max_value=4) as bar:
+    with util.ProgressBar(max_value=4) as bar:
         for i in range(4):
             bar += 1
 
