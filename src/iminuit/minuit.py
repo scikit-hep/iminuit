@@ -2093,14 +2093,9 @@ class Minuit:
             squeeze=False,
         )
 
-        try:
-            from progressbar import ProgressBar
-        except ModuleNotFoundError:
-            ProgressBar = mutil._ProgressBar
-
         prange = {p: (np.inf, -np.inf) for p in pars}
 
-        with ProgressBar(
+        with mutil.ProgressBar(
             max_value=npar + (npar * (npar + 1) // 2 - npar) * len(cls)
         ) as bar:
             for i, par1 in enumerate(pars):
