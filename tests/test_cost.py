@@ -233,7 +233,11 @@ def test_UnbinnedNLL_visualize(log):
     # trigger log-spacing
     c = UnbinnedNLL([1, 1000], norm_logpdf if log else norm_pdf, log=log)
     c.visualize((1, 2), model_points=10)
-    c.visualize((1, 2), model_points=10, nbins=20)
+    c.visualize((1, 2), model_points=10, bins=20)
+    with pytest.raises(
+        np.VisibleDeprecationWarning, match="keyword 'nbins' is deprecated"
+    ):
+        c.visualize((1, 2), nbins=20)
 
 
 def test_UnbinnedNLL_visualize_2D():
