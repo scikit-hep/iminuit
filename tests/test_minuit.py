@@ -1644,8 +1644,13 @@ def test_visualize():
     with pytest.raises(AttributeError):
         m.visualize()
 
-    func0.visualize = lambda args: None
-    m.visualize()
+    kwargs = {}
+
+    func0.visualize = lambda args, **kw: kwargs.update(kw)
+    m.visualize(foo="bar")
+
+    assert kwargs == {"foo": "bar"}
+
     del func0.visualize
 
 
