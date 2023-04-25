@@ -2523,8 +2523,19 @@ class Minuit:
             s += self.covariance._repr_html_()
         if self.fmin is not None:
             try:
-                s += self.visualize()._repr_html_()
-            except (AttributeError, ValueError):
+                import matplotlib as mpl
+                import matplotlib.pyplot as plt
+                import io
+
+                with mpl.rc_context({"interactive": False}):
+                    plt.figure()
+                    self.visualize()
+                    with io.StringIO() as io:
+                        plt.savefig(io, format="svg")
+                        io.seek(0)
+                        s += io.read()
+
+            except (ModuleNotFoundError, AttributeError, ValueError):
                 pass
         return s
 
@@ -2542,7 +2553,7 @@ class Minuit:
             else:
                 raise AttributeError(
                     f"class {pyfcn.__class__.__name__} has no visualize method, "
-                    "please use the plot argument to pass a visualization function"
+                    "please use the 'plot' keyword to pass a visualization function"
                 )
         return plot
 

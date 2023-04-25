@@ -29,7 +29,7 @@ class deprecated_parameter:
             for new, old in self._replacements.items():
                 if old in kwargs:
                     warnings.warn(
-                        f"keyword {old!r} is deprecated, , please use {new!r}",
+                        f"keyword {old!r} is deprecated, please use {new!r}",
                         category=VisibleDeprecationWarning,
                         stacklevel=2,
                     )
