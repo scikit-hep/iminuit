@@ -1272,7 +1272,7 @@ class Minuit:
 
         return self
 
-    def visualize(self, plot: Callable = None, **kwargs):
+    def visualize(self, plot: Callable = None):
         """
         Visualize agreement of current model with data (requires matplotlib).
 
@@ -1288,11 +1288,8 @@ class Minuit:
             further keyword arguments, and draws a visualization into the current
             matplotlib axes. If the cost function does not provide a visualize method or
             if you want to override it, pass the function here.
-        kwargs :
-            Other keyword arguments are forwarded to the
-            plot function.
         """
-        return self._visualize(plot)(self.values, **kwargs)
+        return self._visualize(plot)(self.values)
 
     def hesse(self, ncall: int = None) -> "Minuit":
         """
@@ -2096,9 +2093,14 @@ class Minuit:
             squeeze=False,
         )
 
+        try:
+            from progressbar import ProgressBar
+        except ModuleNotFoundError:
+            ProgressBar = mutil._ProgressBar
+
         prange = {p: (np.inf, -np.inf) for p in pars}
 
-        with mutil.ProgressBar(
+        with ProgressBar(
             max_value=npar + (npar * (npar + 1) // 2 - npar) * len(cls)
         ) as bar:
             for i, par1 in enumerate(pars):
@@ -2523,18 +2525,8 @@ class Minuit:
             s += self.covariance._repr_html_()
         if self.fmin is not None:
             try:
-                import matplotlib as mpl
-                import matplotlib.pyplot as plt
-                import io
-
-                with mpl.rc_context({"interactive": False}):
-                    with _TemporaryFigure():
-                        self.visualize()
-                        with io.StringIO() as io:
-                            plt.savefig(io, format="svg")
-                            io.seek(0)
-                            s += io.read()
-            except (ModuleNotFoundError, AttributeError, ValueError):
+                s += self.visualize()._repr_html_()
+            except (AttributeError, ValueError):
                 pass
         return s
 
@@ -2690,20 +2682,6 @@ class _TemporaryErrordef:
 
     def __exit__(self, *args: object) -> None:
         self.fcn._errordef = self.saved
-
-
-class _TemporaryFigure:
-    def __init__(self):
-        from matplotlib import pyplot as plt
-
-        self.plt = plt
-        self.plt.figure()
-
-    def __enter__(self) -> None:
-        pass
-
-    def __exit__(self, *args: object) -> None:
-        self.plt.close()
 
 
 def _cl_to_errordef(cl, npar, default):

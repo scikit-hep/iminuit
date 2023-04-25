@@ -1,5 +1,7 @@
 from iminuit import Minuit
-import tabulate as tab
+import pytest
+
+tab = pytest.importorskip("tabulate")
 
 
 def framed(s):

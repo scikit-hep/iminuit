@@ -6,7 +6,6 @@ import pytest
 from argparse import Namespace
 from pathlib import Path
 import numpy as np
-from iminuit._hide_modules import hide_modules
 
 nan = float("nan")
 inf = float("infinity")
@@ -247,9 +246,13 @@ def test_text_params(minuit):
 
 def test_text_params_with_latex_names():
     m = Minuit(lambda x: x**2, 1, name=[r"$\alpha$"])
-    assert _repr_text.params(m.params) == ref("params_latex_1.txt")
 
-    with hide_modules("unicodeitplus"):
+    try:
+        import unicodeitplus  # noqa
+
+        assert _repr_text.params(m.params) == ref("params_latex_1.txt")
+
+    except ModuleNotFoundError:
         from iminuit.warnings import OptionalDependencyWarning
 
         with pytest.warns(
