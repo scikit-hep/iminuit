@@ -83,7 +83,7 @@ iminuit is intended to be used with a user-provided negative log-likelihood func
     m.migrad()  # run optimiser
     m.hesse()   # run covariance estimator
 
-.. raw::html
+.. raw:: html
 
    <table>
       <tr>
