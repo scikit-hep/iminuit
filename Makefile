@@ -18,7 +18,12 @@ cov: build/done build/testdep
 	# only computes the coverage in pure Python
 	rm -rf htmlcov
 	JUPYTER_PLATFORM_DIRS=1 coverage run -m pytest
+	python -m pip uninstall --yes numba ipykernel ipywidgets
+	coverage run --append -m pytest
+	python -m pip uninstall --yes scipy matplotlib unicodeit
+	coverage run --append -m pytest
 	coverage html -d htmlcov
+	python .ci/install_deps.py test
 	coverage report -m
 	@echo htmlcov/index.html
 
