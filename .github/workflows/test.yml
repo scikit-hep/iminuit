@@ -39,8 +39,9 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - run: python -m pip install --upgrade pip
-    - run: python -m pip install -v .[test]
+    - run: python -m pip install --upgrade pip wheel
+    # python -m pip install .[test] is not used here to test minimum (faster)
+    - run: python -m pip install -v . pytest
     - run: python -m pytest
 
   # The aarch64 test is very slow, that's why we do not run it
