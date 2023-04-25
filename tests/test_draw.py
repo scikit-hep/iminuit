@@ -4,8 +4,9 @@ from pathlib import Path
 import numpy as np
 from numpy.testing import assert_allclose
 import contextlib
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+
+mpl = pytest.importorskip("matplotlib")
+plt = pytest.importorskip("matplotlib.pyplot")
 
 mpl.use("Agg")
 

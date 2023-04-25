@@ -3,6 +3,8 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
+pytest.importorskip("numba")
+
 
 def npa(*args, **kwargs):
     return np.array(args, **kwargs)

@@ -8,9 +8,6 @@ from iminuit.warnings import IMinuitWarning
 from iminuit.typing import Annotated
 from pytest import approx
 from argparse import Namespace
-from scipy.stats import chi2, multivariate_normal
-from scipy import optimize as opt
-from matplotlib import path as mpath
 
 
 @pytest.fixture
@@ -159,13 +156,20 @@ def func_test_helper(f, grad=None, errordef=None):
     return m
 
 
-def test_mncontour_interpolated():
+def test_mncontour_interpolated_1():
     m = Minuit(func0, 1, 1)
     m.migrad()
 
     # interpolated < size is ignored
     pts = m.mncontour("x", "y", size=20, interpolated=10)
     assert len(pts) == 21
+
+
+def test_mncontour_interpolated_2():
+    pytest.importorskip("scipy.interpolate")
+
+    m = Minuit(func0, 1, 1)
+    m.migrad()
 
     pts = m.mncontour("x", "y", size=20, interpolated=200)
     assert len(pts) == 200
@@ -426,6 +430,9 @@ def test_minos(grad):
 @pytest.mark.parametrize("k", (10, 1000))
 @pytest.mark.parametrize("limit", (False, True))
 def test_minos_cl(cl, k, limit):
+    opt = pytest.importorskip("scipy.optimize")
+    stats = pytest.importorskip("scipy.stats")
+
     def nll(lambd):
         return lambd - k * np.log(lambd)
 
@@ -437,8 +444,8 @@ def test_minos_cl(cl, k, limit):
         bound = cl * k**0.5
         up = 0.5 * cl**2
     else:
-        bound = (chi2(1).ppf(cl) * k) ** 0.5
-        up = 0.5 * chi2(1).ppf(cl)
+        bound = (stats.chi2(1).ppf(cl) * k) ** 0.5
+        up = 0.5 * stats.chi2(1).ppf(cl)
     bound *= 1.5
     upper = opt.root_scalar(crossing, bracket=(0, bound)).root
     lower = opt.root_scalar(crossing, bracket=(-bound, 0)).root
@@ -588,6 +595,8 @@ def test_initial_value():
 @pytest.mark.parametrize("cl", (None, 0.5, 0.9, 1, 1.5, 2))
 @pytest.mark.parametrize("experimental", (False, True))
 def test_mncontour(grad, cl, experimental):
+    stats = pytest.importorskip("scipy.stats")
+
     m = Minuit(func0, grad=grad, x=1.0, y=2.0)
     m.migrad()
     ctr = m.mncontour("x", "y", size=30, cl=cl, experimental=experimental)
@@ -595,9 +604,9 @@ def test_mncontour(grad, cl, experimental):
     if cl is None:
         cl = 0.68
     elif cl >= 1:
-        cl = chi2(1).cdf(cl**2)
-    factor = chi2(2).ppf(cl)
-    cl2 = chi2(1).cdf(factor)
+        cl = stats.chi2(1).cdf(cl**2)
+    factor = stats.chi2(2).ppf(cl)
+    cl2 = stats.chi2(1).cdf(factor)
     assert len(ctr) == 31
     assert len(ctr[0]) == 2
 
@@ -615,6 +624,8 @@ def test_mncontour(grad, cl, experimental):
 
 @pytest.mark.parametrize("experimental", (False, True))
 def test_mncontour_limits(experimental):
+    pytest.importorskip("scipy.optimize")
+
     def cost(x, y):
         return x**2 + y**2
 
@@ -657,10 +668,12 @@ def test_mncontour_with_fixed_var():
 
 @pytest.mark.parametrize("experimental", (False, True))
 def test_mncontour_array_func(experimental):
+    stats = pytest.importorskip("scipy.stats")
+
     m = Minuit(Correlated(), (0, 0), name=("x", "y"))
     m.migrad()
 
-    cl = chi2(2).cdf(1)
+    cl = stats.chi2(2).cdf(1)
     ctr = m.mncontour("x", "y", size=30, cl=cl, experimental=experimental)
     assert len(ctr) == 31
     assert len(ctr[0]) == 2
@@ -1470,9 +1483,12 @@ def test_cfunc():
 @pytest.mark.parametrize("cl", (0.5, None, 0.9))
 @pytest.mark.parametrize("experimental", (False, True))
 def test_confidence_level(cl, experimental):
+    stats = pytest.importorskip("scipy.stats")
+    mpath = pytest.importorskip("matplotlib.path")
+
     cov = ((1.0, 0.5), (0.5, 4.0))
     truth = (1.0, 2.0)
-    d = multivariate_normal(truth, cov)
+    d = stats.multivariate_normal(truth, cov)
 
     def nll(par):
         return -np.log(d.pdf(par))
