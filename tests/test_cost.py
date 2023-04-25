@@ -220,20 +220,16 @@ def test_UnbinnedNLL_properties(log):
 @pytest.mark.parametrize("log", (False, True))
 def test_UnbinnedNLL_visualize(log):
     c = UnbinnedNLL([1, 2], norm_logpdf if log else norm_pdf, log=log)
-    c.visualize((1, 2))  # auto-sampling
-    c.visualize((1, 2), model_points=10)  # linear spacing
-    c.visualize(
-        (1, 2), model_points=10, bins=20
-    )  # linear spacing and different binning
-
+    # auto-sampling
+    c.visualize((1, 2))
+    # linear spacing
+    c.visualize((1, 2), model_points=10)
+    # linear spacing and different binning
+    c.visualize((1, 2), model_points=10, nbins=20)
     # trigger log-spacing
     c = UnbinnedNLL([1, 1000], norm_logpdf if log else norm_pdf, log=log)
     c.visualize((1, 2), model_points=10)
-    c.visualize((1, 2), model_points=10, bins=20)
-    with pytest.raises(
-        np.VisibleDeprecationWarning, match="keyword 'nbins' is deprecated"
-    ):
-        c.visualize((1, 2), nbins=20)
+    c.visualize((1, 2), model_points=10, nbins=20)
 
 
 def test_UnbinnedNLL_visualize_2D():
