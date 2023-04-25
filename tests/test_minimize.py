@@ -2,8 +2,7 @@ import pytest
 from iminuit import minimize
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
-
-opt = pytest.importorskip("scipy.optimize")
+from scipy import optimize as opt
 
 
 def func(x, *args):

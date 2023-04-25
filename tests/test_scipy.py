@@ -3,8 +3,7 @@ from numpy.testing import assert_allclose
 from iminuit import Minuit
 from iminuit.testing import rosenbrock, rosenbrock_grad
 import numpy as np
-
-scopt = pytest.importorskip("scipy.optimize")
+from scipy import optimize as scopt
 
 
 def fcn(a, b):
