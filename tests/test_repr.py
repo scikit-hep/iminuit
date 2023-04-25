@@ -246,6 +246,8 @@ def test_text_params(minuit):
 
 
 def test_text_params_with_latex_names():
+    pytest.importorskip("unicodeitplus")
+
     m = Minuit(lambda x: x**2, 1, name=[r"$\alpha$"])
     assert _repr_text.params(m.params) == ref("params_latex_1.txt")
 

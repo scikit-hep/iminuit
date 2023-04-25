@@ -2,6 +2,8 @@ from iminuit._hide_modules import hide_modules
 from iminuit.cost import LeastSquares
 import pytest
 
+pytest.importorskip("ipywidgets")
+
 
 def test_interactive():
     import iminuit
