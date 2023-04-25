@@ -26,7 +26,7 @@
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 
-*iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
+``iminuit`` is a Jupyter-friendly Python interface for the ``Minuit2`` C++ library maintained by CERN's ROOT team.
 
 Minuit was designed to minimise statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
 
@@ -39,11 +39,21 @@ The iminuit package comes with additional features:
 - Builtin cost functions for statistical fits
 
   - Binned and unbinned maximum-likelihood
+  - Template fits with error propagation [H. Dembinski, A. Abldemotteleb, Eur.Phys.J.C 82 (2022) 11, 1043](https://doi.org/10.1140/epjc/s10052-022-11019-z)
   - Non-linear regression with (optionally robust) weighted least-squares
   - Gaussian penalty terms
   - Cost functions can be combined by adding them: ``total_cost = cost_1 + cost_2``
 - Support for SciPy minimisers as alternatives to Minuit's Migrad algorithm (optional)
 - Support for Numba accelerated functions (optional)
+
+Dependencies
+------------
+
+``iminuit`` is will always be a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed
+- ``matplotlib``: Visualization of fitted model for builtin cost functions
+- ``ipywidgets``: Interactive fitting (also requires ``matplotlib``)
+- ``scipy``: Compute Minos intervals for arbitrary confidence levels
+- ``unicodeitplus``: Render names of model parameters in simple LaTeX as Unicode
 
 Documentation
 -------------
@@ -73,8 +83,106 @@ iminuit is intended to be used with a user-provided negative log-likelihood func
     m.migrad()  # run optimiser
     m.hesse()   # run covariance estimator
 
-    print(m.values)  # x: 2, y: 3, z: 4
-    print(m.errors)  # x: 1, y: 1, z: 1
+.. raw::html
+
+   <table>
+      <tr>
+         <th colspan="5" style="text-align:center" title="Minimizer"> Migrad </th>
+      </tr>
+      <tr>
+         <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 6.731e-18 </td>
+         <td colspan="3" style="text-align:center" title="Total number of function and (optional) gradient evaluations"> Nfcn = 52 </td>
+      </tr>
+      <tr>
+         <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 6.73e-18 (Goal: 0.0002) </td>
+         <td colspan="3" style="text-align:center" title="Total run time of algorithms">  </td>
+      </tr>
+      <tr>
+         <td colspan="2" style="text-align:center;background-color:#92CCA6;color:black"> Valid Minimum </td>
+         <td colspan="3" style="text-align:center;background-color:#92CCA6;color:black"> No Parameters at limit </td>
+      </tr>
+      <tr>
+         <td colspan="2" style="text-align:center;background-color:#92CCA6;color:black"> Below EDM threshold (goal x 10) </td>
+         <td colspan="3" style="text-align:center;background-color:#92CCA6;color:black"> Below call limit </td>
+      </tr>
+      <tr>
+         <td style="text-align:center;background-color:#92CCA6;color:black"> Covariance </td>
+         <td style="text-align:center;background-color:#92CCA6;color:black"> Hesse ok </td>
+         <td style="text-align:center;background-color:#92CCA6;color:black" title="Is covariance matrix accurate?"> Accurate </td>
+         <td style="text-align:center;background-color:#92CCA6;color:black" title="Is covariance matrix positive definite?"> Pos. def. </td>
+         <td style="text-align:center;background-color:#92CCA6;color:black" title="Was positive definiteness enforced by Minuit?"> Not forced </td>
+      </tr>
+   </table><table>
+      <tr>
+         <td></td>
+         <th title="Variable name"> Name </th>
+         <th title="Value of parameter"> Value </th>
+         <th title="Hesse error"> Hesse Error </th>
+         <th title="Minos lower error"> Minos Error- </th>
+         <th title="Minos upper error"> Minos Error+ </th>
+         <th title="Lower limit of the parameter"> Limit- </th>
+         <th title="Upper limit of the parameter"> Limit+ </th>
+         <th title="Is the parameter fixed in the fit"> Fixed </th>
+      </tr>
+      <tr>
+         <th> 0 </th>
+         <td> x </td>
+         <td> 2 </td>
+         <td> 1 </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+      </tr>
+      <tr>
+         <th> 1 </th>
+         <td> y </td>
+         <td> 3 </td>
+         <td> 1 </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+      </tr>
+      <tr>
+         <th> 2 </th>
+         <td> z </td>
+         <td> 4 </td>
+         <td> 1 </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+         <td>  </td>
+      </tr>
+   </table><table>
+      <tr>
+         <td></td>
+         <th> x </th>
+         <th> y </th>
+         <th> z </th>
+      </tr>
+      <tr>
+         <th> x </th>
+         <td> 1 </td>
+         <td style="background-color:rgb(250,250,250);color:black"> -0 </td>
+         <td style="background-color:rgb(250,250,250);color:black"> -0 </td>
+      </tr>
+      <tr>
+         <th> y </th>
+         <td style="background-color:rgb(250,250,250);color:black"> -0 </td>
+         <td> 1 </td>
+         <td style="background-color:rgb(250,250,250);color:black"> -0 </td>
+      </tr>
+      <tr>
+         <th> z </th>
+         <td style="background-color:rgb(250,250,250);color:black"> -0 </td>
+         <td style="background-color:rgb(250,250,250);color:black"> -0 </td>
+         <td> 1 </td>
+      </tr>
+   </table>
 
 Interactive fitting
 -------------------

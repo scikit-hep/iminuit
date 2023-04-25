@@ -6,6 +6,7 @@ import pytest
 from argparse import Namespace
 from pathlib import Path
 import numpy as np
+from iminuit._hide_modules import hide_modules
 
 nan = float("nan")
 inf = float("infinity")
@@ -242,6 +243,20 @@ def test_text_fmin_bad(fmin_bad):
 
 def test_text_params(minuit):
     assert _repr_text.params(minuit.params) == ref("params.txt")
+
+
+def test_text_params_with_latex_names():
+    m = Minuit(lambda x: x**2, 1, name=[r"$\alpha$"])
+    assert _repr_text.params(m.params) == ref("params_latex_1.txt")
+
+    with hide_modules("unicodeitplus"):
+        from iminuit.warnings import OptionalDependencyWarning
+
+        with pytest.warns(
+            OptionalDependencyWarning,
+            match="rendering simple LaTeX requires optional package 'unicodeitplus'",
+        ):
+            assert _repr_text.params(m.params) == ref("params_latex_2.txt")
 
 
 def test_text_params_with_long_names():

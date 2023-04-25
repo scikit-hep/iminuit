@@ -3,14 +3,7 @@ from iminuit.util import IMinuitWarning
 import pickle
 import pytest
 import numpy as np
-
-try:
-    # see comment in test_cost.py why pytest.importorskip is not used
-    from scipy.stats import norm, expon
-
-    scipy_stats_available = True
-except ImportError:
-    scipy_stats_available = False
+from scipy.stats import norm, expon
 
 
 def test_issue_424():
@@ -23,7 +16,7 @@ def test_issue_424():
     m.fixed["x"] = True
     m.errors["x"] = 2
     m.hesse()  # this used to release x
-    assert m.fixed["x"] is True
+    assert m.fixed["x"]
     assert m.errors["x"] == 2
 
 
@@ -114,7 +107,6 @@ def test_issue_687():
     assert s_m == s_m2
 
 
-@pytest.mark.skipif(not scipy_stats_available, reason="scipy.stats is needed")
 def test_issue_694():
     from iminuit.cost import ExtendedUnbinnedNLL
 
@@ -144,8 +136,8 @@ def test_issue_694():
         m.migrad()
 
         if np.isnan(m.fmin.edm):
-            assert m.valid is False
-            assert m.fmin.is_above_max_edm is True
+            assert not m.valid
+            assert m.fmin.is_above_max_edm
             break
     else:
         assert False

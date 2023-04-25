@@ -49,11 +49,14 @@ documentation = "https://iminuit.readthedocs.io"
 test = [
     "coverage",
     "cython",
-    "ipywidgets",
+    # ipywidgets 8.0.5 and 8.0.6 are broken
+    # see https://github.com/jupyter-widgets/ipywidgets/issues/3731
+    "ipywidgets<8.0.5",
     "ipykernel",  # needed by ipywidgets 8.0.6
     "joblib",
     "jacobi",
     "matplotlib",
+    # numba currently requires numpy<1.24
     "numpy<1.24",
     "numba",
     "numba-stats",
@@ -61,7 +64,8 @@ test = [
     "scipy",
     "tabulate",
     "boost_histogram",
-    "resample>=1.5"
+    "resample",
+    "unicodeitplus"
 ]
 doc = [
     "sphinx~=5.3.0",
@@ -85,6 +89,21 @@ filterwarnings = [
     "error::DeprecationWarning",
 ]
 
+[tool.ruff]
+select = ["E", "F", "D"]
+extend-ignore = ["D203", "D212"]
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.per-file-ignores]
+"test_*.py" = ["B", "D"]
+".ci/*.py" = ["D"]
+"bench/*.py" = ["D"]
+"doc/*.py" = ["D"]
+"setup.py" = ["D"]
+"cmake_ext.py" = ["D"]
+
 [tool.mypy]
 ignore_missing_imports = true
 allow_redefinition = true
@@ -92,9 +111,6 @@ plugins = "numpy.typing.mypy_plugin"
 pretty = true
 files = ["src"]
 no_implicit_optional = false
-
-[tool.pydocstyle]
-convention = "numpy"
 
 [tool.cibuildwheel]
 # update skip when numpy wheels become available

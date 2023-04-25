@@ -18,11 +18,6 @@ cov: build/done build/testdep
 	# only computes the coverage in pure Python
 	rm -rf htmlcov
 	JUPYTER_PLATFORM_DIRS=1 coverage run -m pytest
-	python -m pip uninstall --yes numba ipykernel ipywidgets
-	coverage run --append -m pytest
-	python -m pip uninstall --yes scipy matplotlib
-	coverage run --append -m pytest
-	pip install numba ipykernel ipywidgets scipy matplotlib
 	coverage html -d htmlcov
 	coverage report -m
 	@echo htmlcov/index.html
@@ -34,7 +29,7 @@ build/docdep: build/done
 	python .ci/install_deps.py test doc
 	touch build/docdep
 
-build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/tutorial/*.ipynb *.rst)
+build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/notebooks/*.ipynb *.rst)
 	mkdir -p build/html
 	sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done

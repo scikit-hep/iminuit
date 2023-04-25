@@ -1,4 +1,4 @@
-from ._repr_text import pdg_format, matrix_format, fmin_fields
+from ._repr_text import pdg_format, matrix_format, fmin_fields, _parse_latex
 
 good_style = "background-color:#92CCA6;color:black"
 bad_style = "background-color:#c15ef7;color:black"
@@ -114,7 +114,9 @@ def fmin(fm):
                     ff[2],
                     colspan=3,
                     style="text-align:center",
-                    title="Total number of function and (optional) gradient evaluations",
+                    title=(
+                        "Total number of function and (optional) gradient evaluations"
+                    ),
                 ),
             ),
             tr(
@@ -201,7 +203,7 @@ def params(mps):
         rows.append(
             tr(
                 th(str(i)),
-                td(mp.name),
+                td(_parse_latex(mp.name)),
                 td(v),
                 td(e),
                 td(mem),
@@ -243,7 +245,7 @@ def merrors(mes):
     for me in mes:
         header.append(
             th(
-                me.name,
+                _parse_latex(me.name),
                 colspan=2,
                 title="Parameter name",
                 style="text-align:center",
@@ -279,7 +281,7 @@ def merrors(mes):
 
 
 def matrix(arr):
-    names = tuple(arr._var2pos)
+    names = [_parse_latex(x) for x in arr._var2pos]
 
     n = len(names)
 

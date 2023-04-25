@@ -1,4 +1,5 @@
-"""Types for iminuit.
+"""
+Types for iminuit.
 
 These are used by mypy and similar tools.
 """

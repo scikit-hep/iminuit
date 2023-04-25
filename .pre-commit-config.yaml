@@ -46,15 +46,15 @@ repos:
     files: src/iminuit/[^_].*\.py
     additional_dependencies: [tomli]
 
-# Python linter (Flake8)
-- repo: https://github.com/pycqa/flake8
-  rev: 6.0.0
+# Ruff linter, replacement for flake8
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.261'
   hooks:
-  - id: flake8
+    - id: ruff
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v16.0.0
+  rev: v16.0.1
   hooks:
   - id: clang-format
 
@@ -69,7 +69,7 @@ repos:
 
 # Python type checking
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.1.1'
+  rev: 'v1.2.0'
   hooks:
   - id: mypy
     additional_dependencies: [numpy]

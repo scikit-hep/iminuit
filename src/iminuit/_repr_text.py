@@ -1,4 +1,5 @@
 from .pdg_format import _round, _strip
+from iminuit._optional_dependencies import optional_module_for
 import re
 import numpy as np
 
@@ -90,7 +91,8 @@ def fmin(fm):
 
 
 def params(mps):
-    vnames = (mp.name for mp in mps)
+    vnames = [_parse_latex(mp.name) for mp in mps]
+
     name_width = max([4] + [len(x) for x in vnames])
     num_width = max(2, len(f"{len(mps) - 1}"))
 
@@ -123,7 +125,7 @@ def params(mps):
             format_row(
                 ws,
                 str(i),
-                mp.name,
+                vnames[i],
                 val,
                 err,
                 mel,
@@ -143,7 +145,7 @@ def merrors(mes):
     n = len(mes)
     ws = [10] + [23] * n
     l1 = format_line(ws, "┌" + "┬" * n + "┐")
-    header = format_row(ws, "", *(m.name for m in mes))
+    header = format_row(ws, "", *(_parse_latex(m.name) for m in mes))
     ws = [10] + [11] * (2 * n)
     l2 = format_line(ws, "├" + "┼┬" * n + "┤")
     l3 = format_line(ws, "└" + "┴" * n * 2 + "┘")
@@ -177,7 +179,7 @@ def merrors(mes):
 
 
 def matrix(arr):
-    names = tuple(arr._var2pos)
+    names = [_parse_latex(x) for x in arr._var2pos]
 
     n = len(arr)
     nums = matrix_format(arr)
@@ -219,3 +221,12 @@ def matrix_format(matrix):
                 x = pdg_format(matrix[i, j], matrix[i, i], matrix[j, j])[0]
                 r.append(x)
     return r
+
+
+def _parse_latex(s):
+    if s.startswith("$") and s.endswith("$"):
+        with optional_module_for("rendering simple LaTeX"):
+            import unicodeitplus
+
+            return unicodeitplus.parse(s)
+    return s
