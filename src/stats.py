@@ -1,12 +1,14 @@
 """
 Wrappers which fix unpractical conventions in scipy.stats.
 
+This module requires scipy.
+
 The truncated distributions in scipy use an unpractical calling convention
 for historical reasons. They expect the truncation limits to be for the
 function in standardized form (location = 0 and scale = 1) but users
 generally want to provide them in their normal coordinates.
 
-The derived classes here which fix these quirks.
+The classes here which fix these quirks.
 """
 from scipy import stats
 
