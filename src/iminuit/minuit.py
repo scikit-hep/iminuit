@@ -2528,13 +2528,12 @@ class Minuit:
                 import io
 
                 with mpl.rc_context({"interactive": False}):
-                    plt.figure()
-                    self.visualize()
-                    with io.StringIO() as io:
-                        plt.savefig(io, format="svg")
-                        io.seek(0)
-                        s += io.read()
-
+                    with _TemporaryFigure():
+                        self.visualize()
+                        with io.StringIO() as io:
+                            plt.savefig(io, format="svg")
+                            io.seek(0)
+                            s += io.read()
             except (ModuleNotFoundError, AttributeError, ValueError):
                 pass
         return s
@@ -2691,6 +2690,20 @@ class _TemporaryErrordef:
 
     def __exit__(self, *args: object) -> None:
         self.fcn._errordef = self.saved
+
+
+class _TemporaryFigure:
+    def __init__(self):
+        from matplotlib import pyplot as plt
+
+        self.plt = plt
+        self.plt.figure()
+
+    def __enter__(self) -> None:
+        pass
+
+    def __exit__(self, *args: object) -> None:
+        self.plt.close()
 
 
 def _cl_to_errordef(cl, npar, default):
