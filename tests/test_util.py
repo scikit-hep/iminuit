@@ -6,6 +6,7 @@ import numpy as np
 from iminuit._core import MnUserParameterState
 from iminuit._optional_dependencies import optional_module_for
 import pickle
+from iminuit._hide_modules import hide_modules
 
 
 def test_ndim():
@@ -705,7 +706,7 @@ def test_replace_none():
     assert util._replace_none(3, 2) == 3
 
 
-def test_progressbar_1(capsys):
+def test_progressbar(capsys):
     with util.ProgressBar(max_value=4) as bar:
         for i in range(4):
             bar += 1
@@ -713,7 +714,16 @@ def test_progressbar_1(capsys):
     assert stdout == "\r0 %\r25 %\r50 %\r75 %\r100 %\r     "
 
 
-def test_progressbar_2(capsys):
+def test_progressbar_no_ipykernel(capsys):
+    with hide_modules("ipykernel"):
+        with util.ProgressBar(max_value=4) as bar:
+            for i in range(4):
+                bar += 1
+        stdout, stderr = capsys.readouterr()
+        assert stdout == "\r0 %\r25 %\r50 %\r75 %\r100 %\r     "
+
+
+def test_progressbar_html(capsys):
     import sys
 
     m_iostream = pytest.importorskip("ipykernel.iostream")
@@ -730,6 +740,7 @@ def test_progressbar_2(capsys):
         sys.stdout.write(msg._repr_html_())
 
     original_stdout = sys.stdout
+    # make ProgressBar think it is running in Jupyter
     sys.stdout = OutStream()
 
     # monkey-patching our mockups
