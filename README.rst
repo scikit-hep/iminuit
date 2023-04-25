@@ -26,7 +26,7 @@
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 
-*iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
+``iminuit`` is a Jupyter-friendly Python interface for the ``Minuit2`` C++ library maintained by CERN's ROOT team.
 
 Minuit was designed to minimise statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
 
@@ -39,11 +39,21 @@ The iminuit package comes with additional features:
 - Builtin cost functions for statistical fits
 
   - Binned and unbinned maximum-likelihood
+  - Template fits with error propagation [H. Dembinski, A. Abldemotteleb, Eur.Phys.J.C 82 (2022) 11, 1043](https://doi.org/10.1140/epjc/s10052-022-11019-z)
   - Non-linear regression with (optionally robust) weighted least-squares
   - Gaussian penalty terms
   - Cost functions can be combined by adding them: ``total_cost = cost_1 + cost_2``
 - Support for SciPy minimisers as alternatives to Minuit's Migrad algorithm (optional)
 - Support for Numba accelerated functions (optional)
+
+Dependencies
+------------
+
+``iminuit`` is will always be a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed
+- ``matplotlib``: Visualization of fitted model for builtin cost functions
+- ``ipywidgets``: Interactive fitting (also requires ``matplotlib``)
+- ``scipy``: Compute Minos intervals for arbitrary confidence levels
+- ``unicodeitplus``: Render names of model parameters in simple LaTeX as Unicode
 
 Documentation
 -------------
@@ -73,8 +83,9 @@ iminuit is intended to be used with a user-provided negative log-likelihood func
     m.migrad()  # run optimiser
     m.hesse()   # run covariance estimator
 
-    print(m.values)  # x: 2, y: 3, z: 4
-    print(m.errors)  # x: 1, y: 1, z: 1
+.. image:: doc/_static/minuit_jupyter.png
+   :alt: Jupyter display of Minuit
+
 
 Interactive fitting
 -------------------

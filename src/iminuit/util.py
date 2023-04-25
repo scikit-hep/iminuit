@@ -105,7 +105,7 @@ class BasicView(abc.ABC):
         return self._get(index)
 
     def __setitem__(self, key: Key, value: Any) -> None:
-        """Assign a new value at key, which can be an index, parameter name, or slice."""
+        """Assign new value at key, which can be index, parameter name, or slice."""
         self._minuit._copy_state_if_needed()
         index = _key2index(self._minuit._var2pos, key)
         if isinstance(index, list):
@@ -311,7 +311,8 @@ class Matrix(np.ndarray):
         """
         Convert matrix to dict.
 
-        Since the matrix is symmetric, the dict only contains the upper triangular matrix.
+        Since the matrix is symmetric, the dict only contains the upper triangular
+        matrix.
         """
         names = tuple(self._var2pos)
         d = {}
@@ -824,7 +825,8 @@ class Params(tuple):
 
 
 class MError:
-    """Minos data object.
+    """
+    Minos data object.
 
     Attributes
     ----------
@@ -1010,8 +1012,8 @@ def propagate(
     """
     Numerically propagates the covariance into a new space.
 
-    This function is deprecated and will be removed. Please use jacobi.propagate from the
-    jacobi library, which is more accurate. The signatures of the two functions are
+    This function is deprecated and will be removed. Please use jacobi.propagate from
+    the jacobi library, which is more accurate. The signatures of the two functions are
     compatible, so it is a drop-in replacement.
 
     Parameters
@@ -1080,6 +1082,8 @@ def make_with_signature(
 
     Parameters
     ----------
+    callable:
+        Original callable whose signature shall be changed.
     *varnames: sequence of str
         Replace the first N argument names with these.
     **replacements: mapping of str to str, optional
@@ -1129,8 +1133,11 @@ def merge_signatures(
 
     Parameters
     ----------
-    callable : callable
-        Callable whose parameters can be extracted with :func:`describe`.
+    callables :
+        Callables whose parameters can be extracted with :func:`describe`.
+    annotations : bool, optional
+        Whether to return the annotions. Default is False, for backward
+        compatibility.
 
     Returns
     -------
@@ -1195,10 +1202,10 @@ def describe(callable, *, annotations=False):
     Parameter names are extracted with the following three methods, which are attempted
     in order. The first to succeed determines the result.
 
-    1.  Using ``obj._parameters``, which is a dict that makes parameter names to parameter
-        limits or None if the parameter has to limits. Users are encouraged to use this
-        mechanism to provide signatures for objects that otherwise would not have a
-        detectable signature. Example::
+    1.  Using ``obj._parameters``, which is a dict that makes parameter names to
+        parameter limits or None if the parameter has to limits. Users are encouraged
+        to use this mechanism to provide signatures for objects that otherwise would
+        not have a detectable signature. Example::
 
             def f(*args):  # no signature
                 x, y = args
@@ -1206,16 +1213,16 @@ def describe(callable, *, annotations=False):
 
             f._parameters = {"x": None, "y": (1, 4)}
 
-        Here, the first parameter is declared to have no limits (values from minus to plus
-        infinity are allowed), while the second parameter is declared to have limits, it
-        cannot be smaller than 1 or larger than 4.
+        Here, the first parameter is declared to have no limits (values from minus to
+        plus infinity are allowed), while the second parameter is declared to have
+        limits, it cannot be smaller than 1 or larger than 4.
 
         Note: In the past, the ``func_code`` attribute was used for a similar purpose as
         ``_parameters``. It is still supported for legacy code, but should not be used
         anymore in new code, since it does not support declaring parameter limits.
 
-        If an objects has a ``func_code`` attribute, it is used to detect the parameters.
-        Example::
+        If an objects has a ``func_code`` attribute, it is used to detect the
+        parameters. Example::
 
             from iminuit.util import make_func_code
 
@@ -1234,10 +1241,10 @@ def describe(callable, *, annotations=False):
                 def __call__(self, a, b):
                     ...
 
-        Limits are supported via annotations, using the Annotated type that was introduced
-        in Python-3.9 and can be obtained from the external package typing_extensions in
-        Python-3.8. In the following example, the second parameter has a lower limit at
-        0, because it must be positive::
+        Limits are supported via annotations, using the Annotated type that was
+        introduced in Python-3.9 and can be obtained from the external package
+        typing_extensions in Python-3.8. In the following example, the second parameter
+        has a lower limit at 0, because it must be positive::
 
             from typing import Annotated
 
@@ -1245,8 +1252,8 @@ def describe(callable, *, annotations=False):
                 ...
 
         There are no standard annotations yet at the time of this writing. iminuit
-        supports the annotations Gt, Ge, Lt, Le from the external package annotated-types,
-        and interprets slice notation as limits.
+        supports the annotations Gt, Ge, Lt, Le from the external package
+        annotated-types, and interprets slice notation as limits.
 
     3.  Using the docstring. The docstring is textually parsed to detect the parameter
         names. This requires that a docstring is present which follows the Python

@@ -1,3 +1,5 @@
+"""Print iminuit version."""
+
 from pathlib import PurePath
 
 try:
