@@ -56,8 +56,7 @@ test = [
     "joblib",
     "jacobi",
     "matplotlib",
-    # numba currently requires numpy<1.24
-    "numpy<1.24",
+    "numpy",
     "numba",
     "numba-stats",
     "pytest",

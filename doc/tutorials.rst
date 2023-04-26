@@ -24,3 +24,16 @@ Important for most users are only the first two entries.
     notebooks/external_minimizer
     notebooks/generic_least_squares
     notebooks/cython
+
+RooFit tutorials
+----------------
+
+The following tutorials correspond to a RooFit tutorial, which performs the same task but uses only iminuit and other libraries from the standard Python scientific stack and Scikit-HEP. It can be used as a learning resource or to decide which toolset to use.
+
+The list is incomplete. If you would like to see more tutorials, please leave an issue on Github with your request or feel free to make a PR to provide it yourself.
+
+.. toctree::
+    :maxdepth: 1
+
+    notebooks/roofit/rf101_basics
+    notebooks/roofit/rf109_chi2residpull
