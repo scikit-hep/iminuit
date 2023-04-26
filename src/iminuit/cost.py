@@ -1069,19 +1069,6 @@ class BinnedCost(MaskedCost):
 
         super().__init__(parameters, n, verbose)
 
-    def _ndata(self):
-        return np.prod(self._masked.shape[: self._ndim])
-
-    @abc.abstractmethod
-    def _pred(self, args: Sequence[float]) -> Union[NDArray, Tuple[NDArray, NDArray]]:
-        ...  # pragma: no cover
-
-    def _update_cache(self):
-        super()._update_cache()
-        if self._bztrafo:
-            ma = _replace_none(self._mask, ...)
-            self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
-
     def prediction(
         self, args: Sequence[float]
     ) -> Union[NDArray, Tuple[NDArray, NDArray]]:
@@ -1100,7 +1087,33 @@ class BinnedCost(MaskedCost):
         """
         return self._pred(args)
 
-    def visualize(self, args: Sequence[float]):
+    def pulls(self, args: Sequence[float]) -> NDArray:
+        """
+        Return studentized residuals (aka pulls).
+
+        Pulls allow one to estimate how well a model fits the data.
+        A pull is a value compute for each data bin. In the asymptotic
+        limit of infinite samples, it is given by
+        (observed - predicted)^2 / variance. If the model is correct,
+        the expectation value of each pull is zero and its variance is
+        one. The chi-square statistic is computed from the sum of pulls,
+        and also has a known probability distribution if the model is
+        correct.
+
+        Parameters
+        ----------
+        args : sequence of float
+            Parameter values.
+
+        Returns
+        -------
+        array
+            Array of pull values. If the cost function is masked, the array contains NaN
+            values where the mask is active.
+        """
+        return self._pulls(args)
+
+    def visualize(self, args: Sequence[float]) -> None:
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1113,18 +1126,55 @@ class BinnedCost(MaskedCost):
         """
         from matplotlib import pyplot as plt
 
-        if self._ndim > 1:
-            raise ValueError("visualize is not implemented for multi-dimensional data")
-
-        n = self._masked[..., 0] if self._bztrafo else self._masked
-        ne = (self._masked[..., 1] if self._bztrafo else self._masked) ** 0.5
-        xe = self.xe
-        cx = 0.5 * (xe[1:] + xe[:-1])
-        if self.mask is not None:
-            cx = cx[self.mask]
-        plt.errorbar(cx, n, ne, fmt="ok")
+        n, ne = self._n_err()
         mu = self.prediction(args)
+        assert not isinstance(mu, tuple)
+
+        if self._ndim > 1:
+            # flatten higher-dimensional data
+            n = n.reshape(-1)
+            ne = ne.reshape(-1)
+            mu = mu.reshape(-1)
+            # just use bin numbers instead of original values
+            xe = np.arange(len(n) + 1) - 0.5
+            cx = np.arange(len(n)).astype(float)
+        else:
+            xe = self.xe
+            cx = 0.5 * (xe[1:] + xe[:-1])
+        plt.errorbar(cx, n, ne, fmt="ok")
         plt.stairs(mu, xe, fill=True, color="C0")
+
+    @abc.abstractmethod
+    def _pred(self, args: Sequence[float]) -> Union[NDArray, Tuple[NDArray, NDArray]]:
+        ...  # pragma: no cover
+
+    def _ndata(self):
+        return np.prod(self._masked.shape[: self._ndim])
+
+    def _update_cache(self):
+        super()._update_cache()
+        if self._bztrafo:
+            ma = _replace_none(self._mask, ...)
+            self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
+
+    def _n_err(self) -> Tuple[NDArray, NDArray]:
+        d = self.data
+        if self._bztrafo:
+            n = d[..., 0].copy()
+            err = d[..., 1] ** 0.5
+        else:
+            n = d.copy()
+            err = d**0.5
+        ma = self._mask
+        if ma is not None:
+            n[ma] = np.nan
+            err[ma] = np.nan
+        return n, err
+
+    def _pulls(self, args: Sequence[float]) -> NDArray:
+        mu = self.prediction(args)
+        n, ne = self._n_err()
+        return (n - mu) / ne
 
 
 class BinnedCostWithModel(BinnedCost):
@@ -1429,7 +1479,7 @@ class Template(BinnedCost):
         mu, mu_var = self._pred(args)
         return mu, np.sqrt(mu_var)
 
-    def visualize(self, args: Sequence[float]):
+    def visualize(self, args: Sequence[float]) -> None:
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1442,24 +1492,30 @@ class Template(BinnedCost):
         """
         from matplotlib import pyplot as plt
 
+        n, ne = self._n_err()
+        mu, mue = self.prediction(args)  # type: ignore
+
         if self._ndim > 1:
-            raise ValueError("visualize is not implemented for multi-dimensional data")
+            n = n.reshape(-1)
+            ne = ne.reshape(-1)
+            mu = mu.reshape(-1)
+            mue = mue.reshape(-1)
+            xe = np.arange(len(n) + 1) - 0.5
+            cx = np.arange(len(n)).astype(float)
+        else:
+            xe = self.xe
+            cx = 0.5 * (xe[1:] + xe[:-1])
 
-        args = np.atleast_1d(args)
-
-        n = self._masked[..., 0] if self._bztrafo else self._masked
-        ne = (self._masked[..., 1] if self._bztrafo else self._masked) ** 0.5
-
-        xe = self.xe
-        cx = 0.5 * (xe[1:] + xe[:-1])
-        if self.mask is not None:
-            cx = cx[self.mask]
         plt.errorbar(cx, n, ne, fmt="ok")
 
-        mu, mu_err = self.prediction(args)  # type: ignore
-        # need fill and line so that bins with mu_err=0 show up
+        # need fill and line so that bins with mue=0 show up
         for fill in (False, True):
-            plt.stairs(mu + mu_err, xe, baseline=mu - mu_err, fill=fill, color="C0")
+            plt.stairs(mu + mue, xe, baseline=mu - mue, fill=fill, color="C0")
+
+    def _pulls(self, args: Sequence[float]) -> NDArray:
+        mu, mu_err = self.prediction(args)
+        n, ne = self._n_err()
+        return (n - mu) / (mu_err**2 + ne**2) ** 0.5
 
 
 class BinnedNLL(BinnedCostWithModel):

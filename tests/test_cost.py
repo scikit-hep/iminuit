@@ -565,8 +565,7 @@ def test_BinnedNLL_visualize_2D():
 
     c = BinnedNLL(w, (xe, ye), model)
 
-    with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
-        c.visualize(truth)
+    c.visualize(truth)
 
 
 def test_BinnedNLL_pickle():
@@ -704,8 +703,7 @@ def test_ExtendedBinnedNLL_visualize_2D():
 
     c = ExtendedBinnedNLL(w, (xe, ye), model)
 
-    with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
-        c.visualize(truth)
+    c.visualize(truth)
 
 
 def test_ExtendedBinnedNLL_pickle():
@@ -1287,9 +1285,7 @@ def test_Template_visualize_2D():
     t = [[[1, 2], [1, 2]], [[5, 4], [5, 4]]]
 
     c = Template(n, xe, t)
-
-    with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
-        c.visualize((1, 2))
+    c.visualize((1, 2))
 
 
 def test_Template_pickle():
