@@ -1091,15 +1091,6 @@ class BinnedCost(MaskedCost):
         """
         Return studentized residuals (aka pulls).
 
-        Pulls allow one to estimate how well a model fits the data.
-        A pull is a value compute for each data bin. In the asymptotic
-        limit of infinite samples, it is given by
-        (observed - predicted)^2 / variance. If the model is correct,
-        the expectation value of each pull is zero and its variance is
-        one. The chi-square statistic is computed from the sum of pulls,
-        and also has a known probability distribution if the model is
-        correct.
-
         Parameters
         ----------
         args : sequence of float
@@ -1110,6 +1101,24 @@ class BinnedCost(MaskedCost):
         array
             Array of pull values. If the cost function is masked, the array contains NaN
             values where the mask is active.
+
+        Notes
+        -----
+        Pulls allow one to estimate how well a model fits the data. A pull is a value
+        computed for each data bin. It is given by (observed - predicted) /
+        standard-deviation. If the model is correct, the expectation value of each pull
+        is zero and its variance is one in the asymptotic limit of infinite samples.
+        Under these conditions, the chi-square statistic is computed from the sum of
+        pulls squared has a known probability distribution if the model is correct. It
+        therefore serves as a goodness-of-fit statistic.
+
+        Beware: the sum of pulls squared in general is not identical to the value
+        returned by the cost function, even if the cost function returns a chi-square
+        distributed test-statistic. The cost function is computed in a slightly
+        differently way that makes the return value approach the asymptotic chi-square
+        distribution faster than a test statistic based on sum of pulls squared. In
+        summary, only use pulls for plots. Compute the chi-square test statistic
+        directly from the cost function.
         """
         return self._pulls(args)
 
@@ -1123,7 +1132,18 @@ class BinnedCost(MaskedCost):
         ----------
         args : sequence of float
             Parameter values.
+
+        Notes
+        -----
+        The automatically provided visualization for multi-dimensional data set is often
+        not very pretty, but still helps to judge whether the fit is reasonable. Since
+        there is no obvious way to draw higher dimensional data with error bars in
+        comparison to a model, the visualization shows all data bins as a single
+        sequence.
         """
+        return self._vis(args)
+
+    def _vis(self, args: Sequence[float]) -> None:
         from matplotlib import pyplot as plt
 
         n, ne = self._n_err()
@@ -1165,8 +1185,8 @@ class BinnedCost(MaskedCost):
         else:
             n = d.copy()
             err = d**0.5
-        ma = self._mask
-        if ma is not None:
+        if self.mask is not None:
+            ma = ~self.mask
             n[ma] = np.nan
             err[ma] = np.nan
         return n, err
@@ -1479,22 +1499,13 @@ class Template(BinnedCost):
         mu, mu_var = self._pred(args)
         return mu, np.sqrt(mu_var)
 
-    def visualize(self, args: Sequence[float]) -> None:
-        """
-        Visualize data and model agreement (requires matplotlib).
-
-        The visualization is drawn with matplotlib.pyplot into the current axes.
-
-        Parameters
-        ----------
-        args : array-like
-            Parameter values.
-        """
+    def _vis(self, args: Sequence[float]) -> None:
         from matplotlib import pyplot as plt
 
         n, ne = self._n_err()
         mu, mue = self.prediction(args)  # type: ignore
 
+        # see implementation notes in BinnedCost.visualize
         if self._ndim > 1:
             n = n.reshape(-1)
             ne = ne.reshape(-1)
@@ -1508,14 +1519,14 @@ class Template(BinnedCost):
 
         plt.errorbar(cx, n, ne, fmt="ok")
 
-        # need fill and line so that bins with mue=0 show up
+        # need fill=True and fill=False so that bins with mue=0 show up
         for fill in (False, True):
             plt.stairs(mu + mue, xe, baseline=mu - mue, fill=fill, color="C0")
 
     def _pulls(self, args: Sequence[float]) -> NDArray:
-        mu, mu_err = self.prediction(args)
+        mu, mue = self.prediction(args)
         n, ne = self._n_err()
-        return (n - mu) / (mu_err**2 + ne**2) ** 0.5
+        return (n - mu) / (mue**2 + ne**2) ** 0.5
 
 
 class BinnedNLL(BinnedCostWithModel):
