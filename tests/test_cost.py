@@ -414,8 +414,19 @@ def test_BinnedNLL(binned, verbose):
     assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
 
 
+def test_BinnedNLL_pull(binned):
+    mle, nx, xe = binned
+    cost = BinnedNLL(nx, xe, cdf)
+    m = Minuit(cost, mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    pulls = cost.pulls(m.values)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.05)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
+
+
 def test_BinnedNLL_weighted():
-    xe = np.array([0, 1, 10])
+    xe = np.array([0, 0.2, 0.4, 0.8, 1.5, 10])
     p = np.diff(expon_cdf(xe, 1))
     n = p * 1000
     c = BinnedNLL(n, xe, expon_cdf)
@@ -425,6 +436,8 @@ def test_BinnedNLL_weighted():
     m1.migrad()
     assert m1.values[0] == pytest.approx(1, rel=1e-2)
 
+    # variance * 4 = (sigma * 2)^2, constructed so that
+    # fitted parameter has twice the uncertainty
     w = np.transpose((n, 4 * n))
     c = BinnedNLL(w, xe, expon_cdf)
     assert_equal(c.data, w)
@@ -432,6 +445,24 @@ def test_BinnedNLL_weighted():
     m2.migrad()
     assert m2.values[0] == pytest.approx(1, rel=1e-2)
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+
+def test_BinnedNLL_weighted_pull():
+    rng = np.random.default_rng(1)
+
+    xe = np.array([0, 0.2, 0.4, 0.8, 1.5, 10])
+    p = np.diff(expon_cdf(xe, 1))
+    m = p * 1000
+    n = rng.poisson(m / 4) * 4
+    ne = 4 * n
+
+    w = np.transpose((n, ne))
+    c = BinnedNLL(w, xe, expon_cdf)
+    m = Minuit(c, 1)
+    m.migrad()
+    pulls = c.pulls(m.values)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.05)
 
 
 def test_BinnedNLL_bad_input_1():
@@ -1361,6 +1392,23 @@ def test_Template_with_only_models():
     m.limits["x0_mu", "x1_mu"] = (xe[0], xe[-1])
     m.migrad()
     assert m.valid
+
+
+def test_Template_pull():
+    rng = np.random.default_rng(2)
+    xe = np.array([0, 1, 2, 3, 4])
+    tmu = np.array([[10, 20, 30, 0], [10, 10, 10, 10]])
+    truth = (100, 200)
+    mu = sum(truth[i] * (tmu[i] / np.sum(tmu[i])) for i in range(2))
+    n = rng.poisson(mu)
+    t = rng.poisson(tmu)
+    c = Template(n, xe, t)
+    m = Minuit(c, *truth)
+    m.migrad()
+    assert m.valid
+    pulls = c.pulls(m.values)
+    assert np.mean(pulls) == pytest.approx(0, abs=0.1)
+    assert np.var(pulls) == pytest.approx(1, abs=0.01)
 
 
 def test_deprecated():

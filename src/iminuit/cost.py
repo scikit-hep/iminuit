@@ -1189,6 +1189,10 @@ class BinnedCost(MaskedCost):
             ma = ~self.mask
             n[ma] = np.nan
             err[ma] = np.nan
+        # mask values where error is zero
+        ma = err == 0
+        err[ma] = np.nan
+        n[ma] = np.nan
         return n, err
 
     def _pulls(self, args: Sequence[float]) -> NDArray:
