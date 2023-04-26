@@ -229,7 +229,7 @@ def test_UnbinnedNLL_visualize(log):
     # linear spacing
     c.visualize((1, 2), model_points=10)
     # linear spacing and different binning
-    c.visualize((1, 2), model_points=10, nbins=20)
+    c.visualize((1, 2), model_points=10, bins=20)
     # trigger log-spacing
     c = UnbinnedNLL([1, 1000], norm_logpdf if log else norm_pdf, log=log)
     c.visualize((1, 2), model_points=10)
