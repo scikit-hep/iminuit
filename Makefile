@@ -29,7 +29,7 @@ build/docdep: build/done
 	python .ci/install_deps.py test doc
 	touch build/docdep
 
-build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/notebooks/*.ipynb *.rst)
+build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/notebooks/*.ipynb doc/notebooks/roofit/*.ipynb *.rst)
 	mkdir -p build/html
 	sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done
