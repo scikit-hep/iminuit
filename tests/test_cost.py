@@ -414,8 +414,19 @@ def test_BinnedNLL(binned, verbose):
     assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
 
 
+def test_BinnedNLL_pull(binned):
+    mle, nx, xe = binned
+    cost = BinnedNLL(nx, xe, cdf)
+    m = Minuit(cost, mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    pulls = cost.pulls(m.values)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.05)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
+
+
 def test_BinnedNLL_weighted():
-    xe = np.array([0, 1, 10])
+    xe = np.array([0, 0.2, 0.4, 0.8, 1.5, 10])
     p = np.diff(expon_cdf(xe, 1))
     n = p * 1000
     c = BinnedNLL(n, xe, expon_cdf)
@@ -425,6 +436,8 @@ def test_BinnedNLL_weighted():
     m1.migrad()
     assert m1.values[0] == pytest.approx(1, rel=1e-2)
 
+    # variance * 4 = (sigma * 2)^2, constructed so that
+    # fitted parameter has twice the uncertainty
     w = np.transpose((n, 4 * n))
     c = BinnedNLL(w, xe, expon_cdf)
     assert_equal(c.data, w)
@@ -432,6 +445,25 @@ def test_BinnedNLL_weighted():
     m2.migrad()
     assert m2.values[0] == pytest.approx(1, rel=1e-2)
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+
+def test_ExtendedBinnedNLL_weighted_pull():
+    rng = np.random.default_rng(1)
+    xe = np.linspace(0, 5, 500)
+    p = np.diff(expon_cdf(xe, 2))
+    m = p * 100000
+    n = rng.poisson(m * 4) / 4
+    nvar = m * 4 / 4**2
+    w = np.transpose((n, nvar))
+    c = ExtendedBinnedNLL(w, xe, lambda x, n, s: n * expon_cdf(x, s))
+    m = Minuit(c, np.sum(n), 2)
+    m.limits["n"] = (0.1, None)
+    m.limits["s"] = (0.1, None)
+    m.migrad()
+    assert m.valid
+    pulls = c.pulls(m.values)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
 
 
 def test_BinnedNLL_bad_input_1():
@@ -565,8 +597,7 @@ def test_BinnedNLL_visualize_2D():
 
     c = BinnedNLL(w, (xe, ye), model)
 
-    with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
-        c.visualize(truth)
+    c.visualize(truth)
 
 
 def test_BinnedNLL_pickle():
@@ -704,8 +735,7 @@ def test_ExtendedBinnedNLL_visualize_2D():
 
     c = ExtendedBinnedNLL(w, (xe, ye), model)
 
-    with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
-        c.visualize(truth)
+    c.visualize(truth)
 
 
 def test_ExtendedBinnedNLL_pickle():
@@ -1287,9 +1317,7 @@ def test_Template_visualize_2D():
     t = [[[1, 2], [1, 2]], [[5, 4], [5, 4]]]
 
     c = Template(n, xe, t)
-
-    with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
-        c.visualize((1, 2))
+    c.visualize((1, 2))
 
 
 def test_Template_pickle():
@@ -1365,6 +1393,28 @@ def test_Template_with_only_models():
     m.limits["x0_mu", "x1_mu"] = (xe[0], xe[-1])
     m.migrad()
     assert m.valid
+
+
+def test_Template_pull():
+    rng = np.random.default_rng(1)
+    xe = np.linspace(0, 1, 200)
+    tmu = np.array(
+        [
+            np.diff(norm_cdf(xe, 0.5, 0.1)) * 1000,
+            np.diff(expon_cdf(xe, 1)) * 10000,
+        ]
+    )
+    truth = (1000, 2000)
+    mu = sum(truth[i] * (tmu[i] / np.sum(tmu[i])) for i in range(2))
+    n = rng.poisson(mu)
+    t = rng.poisson(tmu)
+    c = Template(n, xe, t)
+    m = Minuit(c, *truth)
+    m.migrad()
+    assert m.valid
+    pulls = c.pulls(m.values)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.1)
 
 
 def test_deprecated():

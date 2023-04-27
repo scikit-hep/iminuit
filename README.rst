@@ -39,19 +39,21 @@ The iminuit package comes with additional features:
 - Builtin cost functions for statistical fits
 
   - Binned and unbinned maximum-likelihood
-  - Template fits with error propagation [H. Dembinski, A. Abldemotteleb, Eur.Phys.J.C 82 (2022) 11, 1043](https://doi.org/10.1140/epjc/s10052-022-11019-z)
+  - `Template fits with error propagation <https://doi.org/10.1140/epjc/s10052-022-11019-z>`_
   - Non-linear regression with (optionally robust) weighted least-squares
-  - Gaussian penalty terms
+  - Gaussian penalty terms for parameters
   - Cost functions can be combined by adding them: ``total_cost = cost_1 + cost_2``
+  - Visualization of the fit in Jupyter notebooks
 - Support for SciPy minimisers as alternatives to Minuit's Migrad algorithm (optional)
 - Support for Numba accelerated functions (optional)
 
 Dependencies
 ------------
 
-``iminuit`` is will always be a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed
+``iminuit`` is will always be a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed.
+
 - ``matplotlib``: Visualization of fitted model for builtin cost functions
-- ``ipywidgets``: Interactive fitting (also requires ``matplotlib``)
+- ``ipywidgets``: Interactive fitting, see example below (also requires ``matplotlib``)
 - ``scipy``: Compute Minos intervals for arbitrary confidence levels
 - ``unicodeitplus``: Render names of model parameters in simple LaTeX as Unicode
 
@@ -98,7 +100,7 @@ iminuit optionally supports an interactive fitting mode in Jupyter notebooks.
 Partner projects
 ----------------
 
-* `boost-histogram` from Scikit-HEP provides fast generalized histograms that you can use with the builtin cost functions.
+* `boost-histogram`_ from Scikit-HEP provides fast generalized histograms that you can use with the builtin cost functions.
 * `numba_stats`_ provides faster implementations of probability density functions than scipy, and a few specific ones used in particle physics that are not in scipy.
 * `jacobi`_ provides a robust, fast, and accurate calculation of the Jacobi matrix of any transformation function and building a function for generic error propagation.
 
@@ -115,3 +117,4 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 .. _gitter: https://gitter.im/Scikit-HEP/iminuit
 .. _jacobi: https://github.com/hdembinski/jacobi
 .. _numba_stats: https://github.com/HDembinski/numba-stats
+.. _boost-histogram: https://github.com/scikit-hep/boost-histogram

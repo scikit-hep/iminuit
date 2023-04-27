@@ -29,7 +29,7 @@ build/docdep: build/done
 	python .ci/install_deps.py test doc
 	touch build/docdep
 
-build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/notebooks/*.ipynb *.rst)
+build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/notebooks/*.ipynb doc/notebooks/roofit/*.ipynb *.rst)
 	mkdir -p build/html
 	sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done
@@ -47,8 +47,3 @@ clean:
 	rm -rf build htmlcov src/iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache src/iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
 
 .PHONY: clean check cov doc test
-
-## pylint is garbage, also see https://lukeplant.me.uk/blog/posts/pylint-false-positives/#running-total
-# pylint: build
-# 	@python3 -m pylint -E src/$(PROJECT) -d E0611,E0103,E1126 -f colorized \
-# 	       --msg-template='{C}: {path}:{line}:{column}: {msg} ({symbol})'

@@ -16,4 +16,5 @@ The following studies explore different aspects of the library, including its pe
     notebooks/automatic_differentiation
     notebooks/cost_function_benchmarks
     notebooks/gof
+    notebooks/template_gof
     notebooks/memory_layout
