@@ -1853,9 +1853,6 @@ class LeastSquares(MaskedCost):
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
-        # TODO
-        # - make linear or log-spacing configurable
-
         x, y, ye = self._masked.T
         plt.errorbar(x, y, ye, fmt="ok")
         if isinstance(model_points, Iterable):
