@@ -231,9 +231,12 @@ def test_UnbinnedNLL_visualize(log):
     # linear spacing and different binning
     c.visualize((1, 2), model_points=10, bins=20)
     # trigger log-spacing
-    c = UnbinnedNLL([1, 1000], norm_logpdf if log else norm_pdf, log=log)
+    c = UnbinnedNLL([1, 100, 1000], norm_logpdf if log else norm_pdf, log=log)
     c.visualize((1, 2), model_points=10)
     c.visualize((1, 2), model_points=10, bins=20)
+    # manual spacing
+    c.visualize((1, 2), model_points=np.linspace(1, 1000))
+
     with pytest.raises(
         np.VisibleDeprecationWarning, match="keyword 'nbins' is deprecated"
     ):
@@ -868,12 +871,15 @@ def test_LeastSquares_visualize():
 
     c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
-    c.visualize((1, 2))  # auto-sampling
-    c.visualize((1, 2), model_points=10)  # linear spacing
-
-    # trigger use of log-spacing
-    c = LeastSquares([1, 2000], [2, 3], 0.1, line)
+    # auto-sampling
+    c.visualize((1, 2))
+    # linear spacing
     c.visualize((1, 2), model_points=10)
+    # trigger use of log-spacing
+    c = LeastSquares([1, 10, 100], [2, 3, 4], 0.1, line)
+    c.visualize((1, 2), model_points=10)
+    # manual spacing
+    c.visualize((1, 2), model_points=np.linspace(1, 100))
 
 
 def test_LeastSquares_visualize_2D():

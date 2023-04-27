@@ -1626,3 +1626,15 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
     xy = list(y.items())
     xy.sort()
     return np.transpose(xy)
+
+
+def _detect_log_spacing(x: NDArray) -> bool:
+    # x should never contain NaN
+    x = np.sort(x)
+    if x[0] <= 0:
+        return False
+    d_lin = np.diff(x)
+    d_log = np.diff(np.log(x))
+    lin_rel_std = np.std(d_lin) / np.mean(d_lin)
+    log_rel_std = np.std(d_log) / np.mean(d_log)
+    return log_rel_std < lin_rel_std

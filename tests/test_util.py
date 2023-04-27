@@ -798,6 +798,14 @@ def test_smart_sampling_2():
         util._smart_sampling(np.log, 1e-10, 1, tol=1e-10)
 
 
+@pytest.mark.parametrize(
+    "x,expected",
+    [([1, 2, 3], False), ([-1, 1000, 100000], False), ([1, 10, 100], True)],
+)
+def test_detect_log_spacing_1(x, expected):
+    assert util._detect_log_spacing(x) == expected
+
+
 def test_optional_module_for_1():
     with optional_module_for("foo"):
         import iminuit  # noqa
