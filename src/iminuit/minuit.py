@@ -2523,17 +2523,15 @@ class Minuit:
             s += self.covariance._repr_html_()
         if self.fmin is not None:
             try:
-                import matplotlib as mpl
                 import matplotlib.pyplot as plt
                 import io
 
-                with mpl.rc_context({"interactive": False}):
-                    with _TemporaryFigure():
-                        self.visualize()
-                        with io.StringIO() as io:
-                            plt.savefig(io, format="svg")
-                            io.seek(0)
-                            s += io.read()
+                with _TemporaryFigure():
+                    self.visualize()
+                    with io.StringIO() as io:
+                        plt.savefig(io, format="svg")
+                        io.seek(0)
+                        s += io.read()
             except (ModuleNotFoundError, AttributeError, ValueError):
                 pass
         return s
@@ -2697,13 +2695,13 @@ class _TemporaryFigure:
         from matplotlib import pyplot as plt
 
         self.plt = plt
-        self.plt.figure()
+        self.fig = self.plt.figure()
 
     def __enter__(self) -> None:
         pass
 
     def __exit__(self, *args: object) -> None:
-        self.plt.close()
+        self.plt.close(self.fig)
 
 
 def _cl_to_errordef(cl, npar, default):

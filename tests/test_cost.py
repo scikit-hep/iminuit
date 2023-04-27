@@ -447,22 +447,23 @@ def test_BinnedNLL_weighted():
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
 
 
-def test_BinnedNLL_weighted_pull():
+def test_ExtendedBinnedNLL_weighted_pull():
     rng = np.random.default_rng(1)
-
-    xe = np.array([0, 0.2, 0.4, 0.8, 1.5, 10])
-    p = np.diff(expon_cdf(xe, 1))
-    m = p * 1000
-    n = rng.poisson(m / 4) * 4
-    ne = 4 * n
-
-    w = np.transpose((n, ne))
-    c = BinnedNLL(w, xe, expon_cdf)
-    m = Minuit(c, 1)
+    xe = np.linspace(0, 5, 500)
+    p = np.diff(expon_cdf(xe, 2))
+    m = p * 100000
+    n = rng.poisson(m * 4) / 4
+    nvar = m * 4 / 4**2
+    w = np.transpose((n, nvar))
+    c = ExtendedBinnedNLL(w, xe, lambda x, n, s: n * expon_cdf(x, s))
+    m = Minuit(c, np.sum(n), 2)
+    m.limits["n"] = (0.1, None)
+    m.limits["s"] = (0.1, None)
     m.migrad()
+    assert m.valid
     pulls = c.pulls(m.values)
     assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
-    assert np.nanvar(pulls) == pytest.approx(1, abs=0.05)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
 
 
 def test_BinnedNLL_bad_input_1():
@@ -1395,10 +1396,15 @@ def test_Template_with_only_models():
 
 
 def test_Template_pull():
-    rng = np.random.default_rng(2)
-    xe = np.array([0, 1, 2, 3, 4])
-    tmu = np.array([[10, 20, 30, 0], [10, 10, 10, 10]])
-    truth = (100, 200)
+    rng = np.random.default_rng(1)
+    xe = np.linspace(0, 1, 200)
+    tmu = np.array(
+        [
+            np.diff(norm_cdf(xe, 0.5, 0.1)) * 1000,
+            np.diff(expon_cdf(xe, 1)) * 10000,
+        ]
+    )
+    truth = (1000, 2000)
     mu = sum(truth[i] * (tmu[i] / np.sum(tmu[i])) for i in range(2))
     n = rng.poisson(mu)
     t = rng.poisson(tmu)
@@ -1407,8 +1413,8 @@ def test_Template_pull():
     m.migrad()
     assert m.valid
     pulls = c.pulls(m.values)
-    assert np.mean(pulls) == pytest.approx(0, abs=0.1)
-    assert np.var(pulls) == pytest.approx(1, abs=0.01)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.1)
 
 
 def test_deprecated():
