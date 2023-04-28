@@ -906,6 +906,8 @@ def test_LeastSquares_pulls():
     assert_equal(c.pulls((1, 1)), [0, 0])
     # correct slope but line offset by 1 with error 0.1 produces pulls [10, 10]
     assert_equal(c.pulls((0, 1)), [10, 10])
+    c.mask = [True, False]
+    assert_equal(c.pulls((0, 1)), [10, np.nan])
 
 
 def test_CostSum_1():

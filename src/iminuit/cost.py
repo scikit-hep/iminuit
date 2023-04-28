@@ -1117,7 +1117,7 @@ class BinnedCost(MaskedCost):
         -------
         array
             Array of pull values. If the cost function is masked, the array contains NaN
-            values where the mask is active.
+            values where the mask value is False.
 
         Notes
         -----
