@@ -26,7 +26,7 @@
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 
-``iminuit`` is a Jupyter-friendly Python interface for the ``Minuit2`` C++ library maintained by CERN's ROOT team.
+*iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
 
 Minuit was designed to minimise statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
 
@@ -50,7 +50,7 @@ The iminuit package comes with additional features:
 Dependencies
 ------------
 
-``iminuit`` is will always be a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed.
+*iminuit* is (and always will be) a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed.
 
 - ``matplotlib``: Visualization of fitted model for builtin cost functions
 - ``ipywidgets``: Interactive fitting, see example below (also requires ``matplotlib``)
