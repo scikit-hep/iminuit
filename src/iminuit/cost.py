@@ -1875,6 +1875,36 @@ class LeastSquares(MaskedCost):
             xm, ym = _smart_sampling(lambda x: self.model(x, *args), x[0], x[-1])
         plt.plot(xm, ym)
 
+    def prediction(self, args: Sequence[float]) -> NDArray:
+        """
+        Return the prediction from the fitted model.
+
+        Parameters
+        ----------
+        args : array-like
+            Parameter values.
+
+        Returns
+        -------
+        NDArray
+            Model prediction for each bin.
+        """
+        return self.model(self.x, *args)
+
+    def pulls(self, args: Sequence[float]) -> NDArray:  # noqa: D102
+        y = self.y.copy()
+        ye = self.yerror.copy()
+        ym = self.prediction(args)
+
+        if self.mask is not None:
+            ma = ~self.mask
+            y[ma] = np.nan
+            ye[ma] = np.nan
+        return (y - ym) / ye
+
+
+LeastSquares.pulls.__doc__ = BinnedCost.pulls.__doc__
+
 
 class NormalConstraint(Cost):
     """

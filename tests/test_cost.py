@@ -417,7 +417,7 @@ def test_BinnedNLL(binned, verbose):
     assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
 
 
-def test_BinnedNLL_pull(binned):
+def test_BinnedNLL_pulls(binned):
     mle, nx, xe = binned
     cost = BinnedNLL(nx, xe, cdf)
     m = Minuit(cost, mu=0, sigma=1)
@@ -450,7 +450,7 @@ def test_BinnedNLL_weighted():
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
 
 
-def test_ExtendedBinnedNLL_weighted_pull():
+def test_ExtendedBinnedNLL_weighted_pulls():
     rng = np.random.default_rng(1)
     xe = np.linspace(0, 5, 500)
     p = np.diff(expon_cdf(xe, 2))
@@ -898,6 +898,14 @@ def test_LeastSquares_pickle():
     c2 = pickle.loads(b)
     assert_equal(c.data, c2.data)
     assert c.model is c2.model
+
+
+def test_LeastSquares_pulls():
+    c = LeastSquares([1, 2], [2, 3], 0.1, line)
+    # pulls are zero for parameters 1, 1
+    assert_equal(c.pulls((1, 1)), [0, 0])
+    # correct slope but line offset by 1 with error 0.1 produces pulls [10, 10]
+    assert_equal(c.pulls((0, 1)), [10, 10])
 
 
 def test_CostSum_1():
@@ -1401,7 +1409,7 @@ def test_Template_with_only_models():
     assert m.valid
 
 
-def test_Template_pull():
+def test_Template_pulls():
     rng = np.random.default_rng(1)
     xe = np.linspace(0, 1, 200)
     tmu = np.array(
