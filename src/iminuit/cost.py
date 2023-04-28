@@ -67,6 +67,7 @@ from .util import (
     merge_signatures,
     PerformanceWarning,
     _smart_sampling,
+    _detect_log_spacing,
 )
 from .typing import Model, LossFunction
 import numpy as np
@@ -821,7 +822,12 @@ class UnbinnedCost(MaskedCost):
         return np.inf
 
     @deprecated_parameter(bins="nbins")
-    def visualize(self, args: Sequence[float], model_points: int = 0, bins: int = 50):
+    def visualize(
+        self,
+        args: Sequence[float],
+        model_points: Union[int, Sequence[float]] = 0,
+        bins: int = 50,
+    ):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -831,30 +837,41 @@ class UnbinnedCost(MaskedCost):
         ----------
         args : array-like
             Parameter values.
-        model_points : int, optional
+        model_points : int or array-like, optional
             How many points to use to draw the model. Default is 0, in this case
-            an smart sampling algorithm selects the number of points.
+            an smart sampling algorithm selects the number of points. If array-like,
+            it is interpreted as the point locations.
         bins : int, optional
             number of bins. Default is 50 bins.
 
         """
         from matplotlib import pyplot as plt
 
-        if self.data.ndim > 1:
+        x = np.sort(self.data)
+
+        if x.ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
-        n, xe = np.histogram(self.data, bins=bins)
-        cx = 0.5 * (xe[1:] + xe[:-1])
-        plt.errorbar(cx, n, n**0.5, fmt="ok")
-        if model_points > 0:
-            if xe[0] > 0 and xe[-1] / xe[0] > 1e2:
-                xm = np.geomspace(xe[0], xe[-1], model_points)
+        # this implementation only works with a histogram with linear spacing
+
+        if isinstance(model_points, Iterable):
+            xm = np.array(model_points)
+            ym = self.scaled_pdf(xm, *args)
+        elif model_points > 0:
+            if _detect_log_spacing(x):
+                xm = np.geomspace(x[0], x[-1], model_points)
             else:
-                xm = np.linspace(xe[0], xe[-1], model_points)
+                xm = np.linspace(x[0], x[-1], model_points)
             ym = self.scaled_pdf(xm, *args)
         else:
-            xm, ym = _smart_sampling(lambda x: self.scaled_pdf(x, *args), xe[0], xe[-1])
+            xm, ym = _smart_sampling(lambda x: self.scaled_pdf(x, *args), x[0], x[-1])
+
+        # use xm for range, which may be narrower or wider than x range
+        n, xe = np.histogram(x, bins=bins, range=(xm[0], xm[-1]))
+        cx = 0.5 * (xe[1:] + xe[:-1])
         dx = xe[1] - xe[0]
+
+        plt.errorbar(cx, n, n**0.5, fmt="ok")
         plt.fill_between(xm, 0, ym * dx, fc="C0")
 
 
@@ -1822,7 +1839,7 @@ class LeastSquares(MaskedCost):
     def _ndata(self):
         return len(self._masked)
 
-    def visualize(self, args: ArrayLike, model_points: int = 0):
+    def visualize(self, args: ArrayLike, model_points: Union[int, Sequence[float]] = 0):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1833,22 +1850,23 @@ class LeastSquares(MaskedCost):
         args : array-like
             Parameter values.
 
-        model_points : int, optional
+        model_points : int or array-like, optional
             How many points to use to draw the model. Default is 0, in this case
-            an smart sampling algorithm selects the number of points.
+            an smart sampling algorithm selects the number of points. If array-like,
+            it is interpreted as the point locations.
         """
         from matplotlib import pyplot as plt
 
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
-        # TODO
-        # - make linear or log-spacing configurable
-
         x, y, ye = self._masked.T
         plt.errorbar(x, y, ye, fmt="ok")
-        if model_points > 0:
-            if x[0] > 0 and x[-1] / x[0] > 1e2:
+        if isinstance(model_points, Iterable):
+            xm = np.array(model_points)
+            ym = self.model(xm, *args)
+        elif model_points > 0:
+            if _detect_log_spacing(x):
                 xm = np.geomspace(x[0], x[-1], model_points)
             else:
                 xm = np.linspace(x[0], x[-1], model_points)
