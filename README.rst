@@ -30,10 +30,6 @@
 
 Minuit was designed to minimise statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
 
-- Supported CPython versions: 3.6+
-- Supported PyPy versions: 3.6+
-- Supported platforms: Linux, OSX and Windows.
-
 The iminuit package comes with additional features:
 
 - Builtin cost functions for statistical fits
