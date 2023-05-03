@@ -80,10 +80,10 @@ names = [
         "minuit_custom_numba_norm": "numba",
         "minuit_custom_cfunc": "cfunc",
     },
-    # [
-    #     "minuit_custom_log_numba_parallel_fastmath",
-    #     "minuit_custom_log_numba_parallel_fastmath_handtuned",
-    # ]
+    {
+        "minuit_custom_log_numba_parallel_fastmath": "parallel fastmath",
+        "minuit_custom_log_numba_parallel_fastmath_handtuned": "parallel fastmath handtuned",  # noqa: E501
+    },
     {
         "minuit_custom_numba_parallel_fastmath_norm": "norm parallel fastmath",
         "minuit_custom_numba_parallel_fastmath_log_norm": "norm logpdf parallel fastmath",  # noqa: E501
