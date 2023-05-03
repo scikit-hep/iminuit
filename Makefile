@@ -14,8 +14,12 @@ build/testdep: build/done
 test: build/done build/testdep
 	JUPYTER_PLATFORM_DIRS=1 python -m pytest -vv -r a --ff --pdb
 
+# this requires that ROOT is installed
+bench: build/done build/testdep
+	python -m pytest bench --benchmark-autosave
+
+# only computes the coverage in pure Python
 cov: build/done build/testdep
-	# only computes the coverage in pure Python
 	rm -rf htmlcov
 	JUPYTER_PLATFORM_DIRS=1 coverage run -m pytest
 	coverage html -d htmlcov
@@ -46,4 +50,4 @@ check:
 clean:
 	rm -rf build htmlcov src/iminuit/_core* tutorial/.ipynb_checkpoints iminuit.egg-info src/iminuit.egg-info .pytest_cache src/iminuit/__pycache__ tests/__pycache__ tutorial/__pycache__ .coverage .eggs .ipynb_checkpoints dist __pycache__
 
-.PHONY: clean check cov doc test
+.PHONY: clean check cov doc test bench

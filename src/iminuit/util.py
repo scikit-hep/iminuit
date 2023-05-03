@@ -1290,13 +1290,7 @@ def describe(callable, *, annotations=False):
 def _arguments_from_func_code(callable):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(callable, "func_code"):
-        warnings.warn(
-            "Using the `func_code` attribute to dynamically declare parameter names is "
-            "deprecated, use the attribute `_parameters` instead (a dict of strings "
-            "to limits)",
-            np.VisibleDeprecationWarning,
-            stacklevel=1,
-        )
+        # cannot warn about deprecation here, since numba.njit also uses .func_code
         fc = callable.func_code
         return {x: None for x in fc.co_varnames[: fc.co_argcount]}
     return {}
