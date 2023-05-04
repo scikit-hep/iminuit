@@ -54,12 +54,11 @@ def fmin_fields(fm):
 
     if fm.hesse_failed:
         covariance_msg1 = "Hesse FAILED"
-        if not fm.has_posdef_covar:
-            covariance_msg2 = "Covariance NOT pos. def."
-        elif not fm.has_covariance:
-            covariance_msg2 = "NO covariance"
+        if fm.has_reached_call_limit:
+            covariance_msg2 = "ABOVE call limit"
         else:
-            covariance_msg2 = "UNKNOWN failure"
+            assert not fm.has_posdef_covar
+            covariance_msg2 = "Covariance NOT pos. def."
     else:
         if fm.has_covariance:
             covariance_msg1 = "Hesse ok"
@@ -67,9 +66,11 @@ def fmin_fields(fm):
                 covariance_msg2 = "Covariance accurate"
             elif fm.has_made_posdef_covar:
                 covariance_msg2 = "Covariance FORCED pos. def."
+            else:
+                covariance_msg2 = "Covariance APPROXIMATE"
         else:
             covariance_msg1 = "Hesse not run"
-            covariance_msg2 = "No covariance"
+            covariance_msg2 = "NO covariance"
 
     return [
         f"{fm.algorithm}",

@@ -1,12 +1,12 @@
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           SciPy[L-BFGS-B]                               │
+│                                Migrad                                   │
 ├──────────────────────────────────┬──────────────────────────────────────┤
-│ FCN = nan                        │    Nfcn = 100000, Ngrad = 200000     │
-│ EDM = 1.23e-10 (Goal: 1e-05)     │            time = 1.2 sec            │
+│ FCN = 11.46 (χ²/ndof = 1.1)      │         Nfcn = 10, Ngrad = 3         │
+│ EDM = 1.23e-10 (Goal: 0.0001)    │                                      │
 ├──────────────────────────────────┼──────────────────────────────────────┤
-│         INVALID Minimum          │   ABOVE EDM threshold (goal x 10)    │
+│          Valid Minimum           │   Below EDM threshold (goal x 10)    │
 ├──────────────────────────────────┼──────────────────────────────────────┤
-│     SOME parameters at limit     │           ABOVE call limit           │
+│      No parameters at limit      │           Below call limit           │
 ├──────────────────────────────────┼──────────────────────────────────────┤
-│           Hesse FAILED           │           ABOVE call limit           │
+│             Hesse ok             │        Covariance APPROXIMATE        │
 └──────────────────────────────────┴──────────────────────────────────────┘
