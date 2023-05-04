@@ -67,16 +67,16 @@ test = [
     "unicodeitplus"
 ]
 doc = [
-    "sphinx~=5.3.0",
-    "sphinx-rtd-theme",
+    "sphinx<7",
+    "sphinx-rtd-theme",  # needs sphinx<7
     "nbsphinx",
     "nbconvert",
     "nbformat",
     "jupyter_client",
     "ipykernel",
     # There are some problems with current jax versions
-    "jax~=0.4.1",
-    "jaxlib~=0.4.1"
+    "jax",
+    "jaxlib"
 ]
 
 [tool.pytest.ini_options]
