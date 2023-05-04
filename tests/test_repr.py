@@ -168,6 +168,28 @@ def fmin_bad():
     return FMin(fm, "SciPy[L-BFGS-B]", 100000, 200000, 1, 1e-5, 1.2)
 
 
+@pytest.fixture
+def fmin_no_cov():
+    fm = Namespace(
+        fval=11.456,
+        edm=1.23456e-10,
+        up=0.5,
+        is_valid=True,
+        has_valid_parameters=True,
+        has_accurate_covar=False,
+        has_posdef_covar=False,
+        has_made_posdef_covar=False,
+        hesse_failed=False,
+        has_covariance=False,
+        is_above_max_edm=False,
+        has_reached_call_limit=False,
+        has_parameters_at_limit=False,
+        errordef=1,
+        state=[],
+    )
+    return FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+
+
 def test_html_fmin_good(fmin_good):
     assert fmin_good._repr_html_() == ref("fmin_good.html").format(
         good=_repr_html.good_style
@@ -177,6 +199,12 @@ def test_html_fmin_good(fmin_good):
 def test_html_fmin_bad(fmin_bad):
     assert fmin_bad._repr_html_() == ref("fmin_bad.html").format(
         bad=_repr_html.bad_style, warn=_repr_html.warn_style
+    )
+
+
+def test_html_fmin_no_cov(fmin_no_cov):
+    assert fmin_no_cov._repr_html_() == ref("fmin_no_cov.html").format(
+        good=_repr_html.good_style, bad=_repr_html.bad_style, warn=_repr_html.warn_style
     )
 
 
@@ -239,6 +267,76 @@ def test_text_fmin_good(fmin_good):
 
 def test_text_fmin_bad(fmin_bad):
     assert _repr_text.fmin(fmin_bad) == ref("fmin_bad.txt")
+
+
+def test_text_fmin_no_cov(fmin_no_cov):
+    assert _repr_text.fmin(fmin_no_cov) == ref("fmin_no_cov.txt")
+
+
+def test_text_fmin_not_posdef():
+    fm = Namespace(
+        fval=11.456,
+        edm=1.23456e-10,
+        up=0.5,
+        is_valid=True,
+        has_valid_parameters=True,
+        has_accurate_covar=False,
+        has_posdef_covar=False,
+        has_made_posdef_covar=False,
+        hesse_failed=True,
+        has_covariance=False,
+        is_above_max_edm=False,
+        has_reached_call_limit=False,
+        has_parameters_at_limit=False,
+        errordef=1,
+        state=[],
+    )
+    fmin = FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    assert _repr_text.fmin(fmin) == ref("fmin_not_posdef.txt")
+
+
+def test_text_fmin_made_posdef():
+    fm = Namespace(
+        fval=11.456,
+        edm=1.23456e-10,
+        up=0.5,
+        is_valid=True,
+        has_valid_parameters=True,
+        has_accurate_covar=False,
+        has_posdef_covar=True,
+        has_made_posdef_covar=True,
+        hesse_failed=False,
+        has_covariance=True,
+        is_above_max_edm=False,
+        has_reached_call_limit=False,
+        has_parameters_at_limit=False,
+        errordef=1,
+        state=[],
+    )
+    fmin = FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    assert _repr_text.fmin(fmin) == ref("fmin_made_posdef.txt")
+
+
+def test_text_fmin_approximate():
+    fm = Namespace(
+        fval=11.456,
+        edm=1.23456e-10,
+        up=0.5,
+        is_valid=True,
+        has_valid_parameters=True,
+        has_accurate_covar=False,
+        has_posdef_covar=True,
+        has_made_posdef_covar=False,
+        hesse_failed=False,
+        has_covariance=True,
+        is_above_max_edm=False,
+        has_reached_call_limit=False,
+        has_parameters_at_limit=False,
+        errordef=1,
+        state=[],
+    )
+    fmin = FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    assert _repr_text.fmin(fmin) == ref("fmin_approximate.txt")
 
 
 def test_text_params(minuit):
