@@ -625,7 +625,7 @@ class Minuit:
         if len(start) == 0 and len(kwds) == 0:
             raise RuntimeError(
                 "starting value(s) are required"
-                + (f" for {' '.join(name)}" if name else "")
+                + (f" for [{' '.join(name)}]" if name else "")
             )
 
         # Maintain two dictionaries to easily convert between
