@@ -36,7 +36,7 @@ The iminuit package comes with additional features:
 
   - Binned and unbinned maximum-likelihood
   - `Template fits with error propagation <https://doi.org/10.1140/epjc/s10052-022-11019-z>`_
-  - Non-linear regression with (optionally robust) weighted least-squares
+  - Least-squares (optionally robust to outliers)
   - Gaussian penalty terms for parameters
   - Cost functions can be combined by adding them: ``total_cost = cost_1 + cost_2``
   - Visualization of the fit in Jupyter notebooks
@@ -67,23 +67,9 @@ Checkout our large and comprehensive list of `tutorials`_ that take you all the 
 In a nutshell
 -------------
 
-iminuit is intended to be used with a user-provided negative log-likelihood function or least-squares function. Standard functions are included in ``iminuit.cost``, so you don't have to write them yourself. The following example shows how iminuit is used with a dummy least-squares function.
+iminuit can be used with a user-provided cost functions in form of a negative log-likelihood function or least-squares function. Standard functions are included in ``iminuit.cost``, so you don't have to write them yourself. The following example shows how to perform an unbinned maximum likelihood fit.
 
-.. code-block:: python
-
-    from iminuit import Minuit
-
-    def cost_function(x, y, z):
-        return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
-
-    m = Minuit(cost_function, x=0, y=0, z=0)
-
-    m.migrad()  # run optimiser
-    m.hesse()   # run covariance estimator
-
-.. image:: doc/_static/minuit_jupyter.png
-   :alt: Jupyter display of Minuit
-
+.. include:: doc/nutshell.rst
 
 Interactive fitting
 -------------------
