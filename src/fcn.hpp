@@ -1,7 +1,7 @@
 #include <Minuit2/FCNGradientBase.h>
+#include <cstdint>
 #include <pybind11/pytypes.h>
 #include <vector>
-#include <cstdint>
 
 namespace py = pybind11;
 
