@@ -64,7 +64,6 @@ names = [
         "RooFit_norm": "RooFit",
         "RooFit_BatchMode_norm": "RooFit with BatchMode",
         "RooFit_NumCPU_norm": "RooFit with NumCPU",
-        "RooFit_NumCPU_BatchMode_norm": "RooFit with NumCPU, BatchMode",
         "minuit_custom_numba_norm": "iminuit+numba",
         "minuit_custom_numba_parallel_fastmath_norm": "iminuit+numba with parallel, fastmath",  # noqa: E501
     },
@@ -72,7 +71,6 @@ names = [
         "RooFit_norm+truncexpon": "RooFit",
         "RooFit_BatchMode_norm+truncexpon": "RooFit with BatchMode",
         "RooFit_NumCPU_norm+truncexpon": "RooFit with NumCPU",
-        "RooFit_NumCPU_BatchMode_norm+truncexpon": "RooFit with NumCPU, BatchMode",
         "minuit_custom_numba_norm+truncexpon": "iminuit+numba",
         "minuit_custom_numba_parallel_fastmath_norm+truncexpon": "iminuit+numba with parallel, fastmath",  # noqa: E501
     },
