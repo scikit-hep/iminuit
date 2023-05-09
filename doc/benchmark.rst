@@ -81,7 +81,7 @@ A very powerful feature of `numba`_ is auto-parallelization. The distributions i
 
 Always combine ``parallel=True`` with ``fastmath=True``, because they synergize. Auto-parallelization speeds up the calculation of the cost function over large datasets considerably, but slows it down over small datasets. Only enable it when you profit from it.
 
-The following plot shows the impact of auto-parallelization. We compare the performance of a fit of our `numba`_ JIT'ed cost function with iminuit to an equivalent fit with the `RooFit`_ framework. The latter allows one to get a performance boost from enabling ``BatchMode``, which is roughly comparable to ``fastmath=True``, and ``NumCPU`` which roughly corresponds to ``parallel=True``.
+The following plot shows the impact of auto-parallelization. We compare the performance of a fit of our `numba`_ JIT'ed cost function with iminuit to an equivalent fit with the `RooFit`_ framework (from ROOT-v6.28/00 installed with ``conda``). The latter can be sped up by enabling ``BatchMode``, which is roughly comparable to ``fastmath=True``, and ``NumCPU`` which roughly corresponds to ``parallel=True``.
 
 .. image:: _static/roofit_vs_iminuit+numba.svg
 
