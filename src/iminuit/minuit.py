@@ -658,7 +658,7 @@ class Minuit:
             if lim is not None:
                 self.limits[k] = lim
 
-    def fix(self, key: mutil.Key, value: Union[float, Iterable[float]]):
+    def fix(self, key: mutil.Key, value: Union[float, Iterable[float]]) -> "Minuit":
         """
         Fix parameter and set it to value.
 
@@ -691,9 +691,9 @@ class Minuit:
         else:
             self._last_state.fix(index)
             self._last_state.set_value(index, value)
-        return self
+        return self  # return self for method chaining
 
-    def reset(self) -> "Minuit":  # requires from __future__ import annotations
+    def reset(self) -> "Minuit":
         """
         Reset minimization state to initial state.
 
