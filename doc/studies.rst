@@ -1,6 +1,6 @@
 .. include:: bibliography.txt
 
-.. _examples:
+.. _studies:
 
 Studies
 =======

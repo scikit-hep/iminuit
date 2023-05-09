@@ -3,57 +3,95 @@
 Benchmarks
 ==========
 
-Cost function benchmark
------------------------
+Speed of an unbinned fit
+------------------------
 
-iminuit comes with a couple of builtin cost functions, but also makes it easy for users to implement their own. One motivation to use your own cost function is to get the best possible performance. If your fit takes more than a minute (possible if you do an unbinned fit on a large sample or if you have a model with many parameters), you may wonder whether there are wells to speed things up. There are, read on.
+``iminuit`` comes with a couple of built-in cost functions, but also makes it easy for users to implement their own. One motivation to use your own cost function is to get the best possible performance. If your fit takes more than a minute (possible if you do an unbinned fit on a large sample or if you have a model with many parameters), you may wonder whether there are wells to speed things up. There are, read on.
 
-Easy steps to make a fit faster
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-These steps require little effort in terms of changing your code and should be tried first.
+There are a few simple steps which increase performance without much effort.
 
-- If you have a large sample, use a binned fit instead of an unbinned fit.
+- If you have a large sample, use a binned fit instead of an unbinned fit, e.g. :class:`iminuit.cost.BinnedNLL` instead of :class:`iminuit.cost.UnbinnedNLL`. This can easily give you a factor 100 speed-up.
 - Use faster implementations of probability densities from `numba_stats`_.
-- For an unbinned fit, use the ``logpdf`` instead of the ``pdf``, if available.
-- Use `numba`_ to compile the cost function; try options `parallel=True` and `fastmath=True` to parallelize the computation.
+- Use `numba`_ to compile the cost function; try options `parallel=True` and `fastmath=True` to parallelize the computation. This works best if you use the distributions from `numba_stats`_.
 
-Benchmark of unbinned maximum-likelihood fit
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Next we show some benchmarks to prove some of these points. The gain of using a binned fit is demonstrated elsewhere, see "Binned vs. unbinned fits" in :ref:`studies`.
 
-.. image:: _static/cost_bench.svg
-
-A normal distribution is fitted to a sample of varying size. We need to compute the log-probability for maximum-likelihood. For several common distributions (those of the exponential family), it is possible to implement ``logpdf`` more efficiently than ``log(pdf)``:
+For the following benchmarks, we consider a common model in high-energy physics which describes a mixture of two components, a background described by a truncated exponential and a signal described by a normal distribution. The model is fitted to a dataset of varying size using the maximum-likelihood method. Our cost function is the negative sum of log-probabilities.
 
 .. code-block:: python
 
     import numpy as np
-    from numba_stats import norm
+    from numba_stats import norm, truncexpon
 
     x = ... # data
 
-    def cost_log_pdf(mu, sigma):
-        return -np.sum(np.log(norm.pdf(x, mu, sigma)))
+    def model(x, z, mu, sigma, slope):
+        # background is truncated to the observation window [0, 1]
+        b = truncexpon.pdf(x, 0, 1, 0, slope)
+        s = norm.pdf(x, mu, sigma)
+        return (1 - z) * b + z * s
 
-    def cost_logpdf(mu, sigma):
-        return -np.sum(norm.logpdf(x, mu, sigma))
+    # handwritten negative log-likelihood
+    def nll(z, mu, sigma, slope):
+        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
 
-The second form can be computed faster. We discuss the plots in the following.
+It is also possible to write down a ``log_model`` computed from the ``logpdf`` functions which are available for the two component distributions, but the code is more complex and the gain is small, so it is not explicitly shown here.
 
-Top left: The implementations of ``norm.pdf`` and ``norm.logpdf`` from `scipy`_ and `numba_stats`_ are compared.
+The following plot shows that this cost function computed with pdfs from `numba_stats`_ is much faster than using those from `scipy`_.
 
-Top right: The builtin :class:`iminuit.cost.UnbinnedNLL` cost function is compared with the custom implementations shown above. The ``UnbinnedNLL`` class has a ``log`` keyword to use the ``logpdf``.
+.. image:: _static/numba_vs_scipy.svg
 
-Bottom left: The impact of parallelization is demonstrated. ``custom_log`` uses the ``logpdf`` from `numba_stats`_, but the cost function itself is not compiled with `numba`_, while ``custom_log_numba`` is. The other variants turn on additional options for `numba`_ to enable compilation with ``fastmath`` mode and/or ``parallel`` mode.
+It is an order of magnitude for small samples and still a factor of three for very large samples.
 
-Conclusions
-^^^^^^^^^^^
-- The Scipy versions of ``norm.pdf`` and ``norm.logpdf`` are implemented in pure Python and much slower than the implementations from ``numba_stats``.
-- iminuit with `numba_stats`_ is much faster than `RooFit`_. `RooFit`_ with ``BatchMode`` is still worse than a `numba`_ compiled function. `RooFit`_ in parallel mode has a huge overhead and performs much worse than a parallelized `numba`_ implementation.
-- :class:`iminuit.cost.UnbinnedNLL` is nearly as fast as the custom implementation.
-- Using ``norm.logpdf`` instead of ``log(norm.pdf(...))`` is a big gain. This is because the compiler can use SIMD instructions more efficently and omit the extra calls to the ``log`` and ``exp`` functions.
-- Using `numba`_ is not a huge gain if the ``pdf`` or ``logpdf`` is already compiled for large samples, but it reduces the overall call overhead slightly. This has a dramatic effect for small samples, however, that speed-up is not noticable because the run-time is anyway negligible. Using `numba`_ to generate a C function pointer for the cost function reduces the call overhead even further, but it is again barely noticable in practice.
-- Using `numba`_ with the option ``parallel`` is a considerable gain for samples with more than 3000 elements, and ``parallel`` together with ``fastmath`` increases this gain even more.
-- Hand-tuning the cost function does not produce better results than compiling the cost function with a `numba_stats`_ implementation of ``norm.logpdf``.
+Instead of using a handwritten negative log-likelihood, it is convenient to use the built-in class :class:`iminuit.cost.UnbinnedNLL`. This increases the call overhead slightly compared to a handwritten function compiled with `numba`_. The smallest possible overhead is obtained by compiling the function with a ``numba.cfunc`` interface, which ``iminuit`` supports as a special case.
+
+.. code-block:: python
+
+    import numba as nb
+    import numpy as np
+    from numba_stats import norm, truncexpon
+
+    # JIT'ed handwritten negative log-likelihood
+    @nb.njit
+    def nll(z, mu, sigma, slope):
+        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
+
+    # as before, but with a cfunc interface
+    @nb.cfunc(nb.double(nb.uintc, nb.types.CPointer(nb.double)))
+    def cost(n, par):
+        z, mu, sigma, slope = nb.carray(par, (n,))
+        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
+
+The three ways of calling the function are compared in the following plot. The call overhead is only relevant for very small samples, which rarely occur in practice and if they do, speed is nothing to worry about. Thus, it is safe to use :class:`iminuit.cost.UnbinnedNLL`.
+
+.. image:: _static/overhead.svg
+
+A very powerful feature of `numba`_ is auto-parallelization. The distributions in `numba_stats`_ are written so that they benefit from auto-parallelization. To enable this, we only have to change the decorator.
+
+.. code-block:: python
+
+    import numba as nb
+    import numpy as np
+    from numba_stats import norm, truncexpon
+
+    # JIT'ed handwritten negative log-likelihood, parallelized
+    @nb.njit(parallel=True, fastmath=True)
+    def nll(z, mu, sigma, slope):
+        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
+
+Always combine ``parallel=True`` with ``fastmath=True``, because they synergize. Auto-parallelization speeds up the calculation of the cost function over large datasets considerably, but slows it down over small datasets. Only enable it when you profit from it.
+
+The following plot shows the impact of auto-parallelization. We compare the performance of a fit of our `numba`_ JIT'ed cost function with iminuit to an equivalent fit with the `RooFit`_ framework. The latter allows one to get a performance boost from enabling ``BatchMode``, which is roughly comparable to ``fastmath=True``, and ``NumCPU`` which roughly corresponds to ``parallel=True``.
+
+.. image:: _static/roofit_vs_iminuit+numba.svg
+
+``iminuit`` in combination with a `numba`_ JIT'ed cost function outperforms `RooFit`_ by a large margin, except when the dataset is so small that performance is not relevant anyway. The gap is particularly large when parallel computation is enabled.
+
+Performance hints
+^^^^^^^^^^^^^^^^^
+- Use the distributions from `numba_stats`_ instead of the `scipy`_ equivalents to get a large performance gain. Use auto-parallelization to speed up the computation of the cost function for large datasets.
+- ``iminuit`` with a `numba_stats`_ distributions and a `numba`_ compiled cost function is much faster than `RooFit`_. The gain is especially large when parallel computation is enabled.
+- :class:`iminuit.cost.UnbinnedNLL` is as fast as the fasted possible function you can write by hand for large datasets. With extra manual work, you can gain a bit for small datasets, but then the extra gain in performance hardly matters.
 
 Minuit2 vs other optimisers
 ---------------------------
