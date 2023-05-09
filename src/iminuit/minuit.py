@@ -302,6 +302,16 @@ class Minuit:
         minimize the function with respect to the other parameters, then release the
         fixed parameters and minimize again starting from that state.
 
+        Warning: You can assign None, a boolean, or a number. When assigning a
+        number, it is not cast to a boolean. Instead the parameter is fixed and
+        set to that value. This is convenient, but can be surprising::
+
+            m = Minuit(...)
+            # fixes parameter 0 and sets value to 0
+            m.fixed[0] = 0
+            # releases parameter 0
+            m.fixed[0] = False
+
         See Also
         --------
         values, errors, limits

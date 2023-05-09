@@ -184,11 +184,17 @@ class FixedView(BasicView):
     def _get(self, i: int) -> bool:
         return self._minuit._last_state[i].is_fixed  # type:ignore
 
-    def _set(self, i: int, fix: bool) -> None:
-        if fix:
-            self._minuit._last_state.fix(i)
-        else:
+    def _set(self, i: int, fix: Union[bool, float, None]) -> None:
+        if fix is None:
             self._minuit._last_state.release(i)
+        elif isinstance(fix, bool):
+            if fix:
+                self._minuit._last_state.fix(i)
+            else:
+                self._minuit._last_state.release(i)
+        else:
+            self._minuit._last_state.fix(i)
+            self._minuit._last_state.set_value(i, fix)
 
     def __invert__(self) -> list:
         """Return list with inverted elements."""

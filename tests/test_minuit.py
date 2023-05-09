@@ -368,8 +368,10 @@ def test_fix_param(grad):
     assert_allclose(m.covariance, ((4, 0), (0, 1)), atol=1e-4)
 
     # now fix y = 10
-    m = Minuit(func0, grad=grad, x=0, y=10.0)
-    m.fixed["y"] = True
+    m = Minuit(func0, grad=grad, x=0, y=0)
+    m.fixed["y"] = 10
+    assert m.values["y"] == 10
+    assert m.fixed["y"]
     assert m.npar == 2
     assert m.nfit == 1
     m.migrad()
