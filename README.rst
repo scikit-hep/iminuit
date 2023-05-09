@@ -181,7 +181,7 @@ iminuit optionally supports an interactive fitting mode in Jupyter notebooks.
 Faster than RooFit
 ------------------
 
-When ``iminuit`` is used with cost functions and pdfs that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the fit is up to 10x faster compared to an equivalent fit in the `RooFit`_ framework. The gain is even larger when `numba`_ with auto-parallelization is compared to parallel computation in `RooFit`_.
+When ``iminuit`` is used with cost functions and pdfs that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the fit is up to 10x faster compared to an equivalent fit in the `RooFit`_ framework. The gain is particularly large when `numba`_ with auto-parallelization is compared to parallel computation in `RooFit`_.
 
 .. image:: doc/_static/roofit_vs_iminuit+numba.svg
 
@@ -206,4 +206,5 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 .. _jacobi: https://github.com/hdembinski/jacobi
 .. _numba_stats: https://github.com/HDembinski/numba-stats
 .. _boost-histogram: https://github.com/scikit-hep/boost-histogram
+.. _numba: https://numba.pydata.org
 .. _RooFit: https://root.cern.ch/doc/master/namespaceRooFit.html
