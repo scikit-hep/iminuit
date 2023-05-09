@@ -1,4 +1,4 @@
-.. _RooFit: https://root.cern/manual/roofit/
+.. _RooFit: https://root.cern.ch/master/namespaceRooFit.html
 .. _scipy: https://www.scipy.org/
 .. _scipy.optimize: https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html
 .. _numba: https://numba.pydata.org
@@ -26,5 +26,4 @@
 .. _MINUIT paper: https://doi.org/10.1016/0010-4655(75)90039-9
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 .. _pytest: http://pytest.org
-.. _Estimated Distance to Minimum: http://en.wikipedia.org/wiki/Minimum_distance_estimation
 .. _zenodo: https://zenodo.org/record/4310361
