@@ -28,7 +28,7 @@
 
 *iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
 
-Minuit was designed to minimise statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
+Minuit was designed to minimize statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
 
 The iminuit package comes with additional features:
 
@@ -40,7 +40,7 @@ The iminuit package comes with additional features:
   - Gaussian penalty terms for parameters
   - Cost functions can be combined by adding them: ``total_cost = cost_1 + cost_2``
   - Visualization of the fit in Jupyter notebooks
-- Support for SciPy minimisers as alternatives to Minuit's Migrad algorithm (optional)
+- Support for SciPy minimizers as alternatives to Minuit's MIGRAD algorithm (optional)
 - Support for Numba accelerated functions (optional)
 
 Dependencies
@@ -173,7 +173,7 @@ In a nutshell
 Interactive fitting
 -------------------
 
-iminuit optionally supports an interactive fitting mode in Jupyter notebooks.
+``iminuit`` optionally supports an interactive fitting mode in Jupyter notebooks.
 
 .. image:: doc/_static/interactive_demo.gif
    :alt: Animated demo of an interactive fit in a Jupyter notebook
@@ -185,11 +185,13 @@ When ``iminuit`` is used with cost functions and pdfs that are JIT-compiled with
 
 .. image:: doc/_static/roofit_vs_iminuit+numba.svg
 
+More information about this benchmark is given `in the Benchmark section of the documentation <https://iminuit.readthedocs.io/en/stable/benchmark.html#cost-function-benchmark>`_.
+
 Partner projects
 ----------------
 
-* `boost-histogram`_ from Scikit-HEP provides fast generalized histograms that you can use with the builtin cost functions.
 * `numba_stats`_ provides faster implementations of probability density functions than scipy, and a few specific ones used in particle physics that are not in scipy.
+* `boost-histogram`_ from Scikit-HEP provides fast generalized histograms that you can use with the builtin cost functions.
 * `jacobi`_ provides a robust, fast, and accurate calculation of the Jacobi matrix of any transformation function and building a function for generic error propagation.
 
 Versions
