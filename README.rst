@@ -67,7 +67,7 @@ Checkout our large and comprehensive list of `tutorials`_ that take you all the 
 In a nutshell
 -------------
 
-iminuit can be used with a user-provided cost functions in form of a negative log-likelihood function or least-squares function. Standard functions are included in ``iminuit.cost``, so you don't have to write them yourself. The following example shows how to perform an unbinned maximum likelihood fit.
+``iminuit`` can be used with a user-provided cost functions in form of a negative log-likelihood function or least-squares function. Standard functions are included in ``iminuit.cost``, so you don't have to write them yourself. The following example shows how to perform an unbinned maximum likelihood fit.
 
 .. code:: python
 
@@ -178,6 +178,13 @@ iminuit optionally supports an interactive fitting mode in Jupyter notebooks.
 .. image:: doc/_static/interactive_demo.gif
    :alt: Animated demo of an interactive fit in a Jupyter notebook
 
+Faster than RooFit
+------------------
+
+When ``iminuit`` is used with cost functions and pdfs that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the fit is up to 10x faster compared to an equivalent fit in the `RooFit`_ framework. The gain is even larger when `numba`_ with auto-parallelization is compared to parallel computation in `RooFit`_.
+
+.. image:: doc/_static/roofit_vs_iminuit+numba.svg
+
 Partner projects
 ----------------
 
@@ -199,3 +206,4 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 .. _jacobi: https://github.com/hdembinski/jacobi
 .. _numba_stats: https://github.com/HDembinski/numba-stats
 .. _boost-histogram: https://github.com/scikit-hep/boost-histogram
+.. _RooFit: https://root.cern.ch/doc/master/namespaceRooFit.html
