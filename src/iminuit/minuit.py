@@ -28,6 +28,7 @@ from typing import (
     Any,
     Collection,
     Set,
+    Sized,
 )
 from iminuit.typing import UserBound
 from iminuit._optional_dependencies import optional_module_for
@@ -301,16 +302,6 @@ class Minuit:
         In case of complex fits, it can help to fix some parameters first and only
         minimize the function with respect to the other parameters, then release the
         fixed parameters and minimize again starting from that state.
-
-        Warning: You can assign None, a boolean, or a number. When assigning a
-        number, it is not cast to a boolean. Instead the parameter is fixed and
-        set to that value. This is convenient, but can be surprising::
-
-            m = Minuit(...)
-            # fixes parameter 0 and sets value to 0
-            m.fixed[0] = 0
-            # releases parameter 0
-            m.fixed[0] = False
 
         See Also
         --------
@@ -666,6 +657,41 @@ class Minuit:
         for k, lim in annotated.items():
             if lim is not None:
                 self.limits[k] = lim
+
+    def fix(self, key: mutil.Key, value: Union[float, Iterable[float]]):
+        """
+        Fix parameter and set it to value.
+
+        This is a convenience function to fix a parameter and set it to a value
+        at the same time. It is equivalent to calling :attr:`fixed` and :attr:`values`.
+
+        Parameters
+        ----------
+        key : int, str, slice, list of int or str
+            Key, which can be an index, name, slice, or list of indices or names.
+        value : float or sequence of float
+            Value(s) assigned to key(s).
+
+        Returns
+        -------
+        self
+        """
+        index = mutil._key2index(self._var2pos, key)
+        if isinstance(index, list):
+            if mutil._ndim(value) == 0:  # support basic broadcasting
+                for i in index:
+                    self.fix(i, value)
+            else:
+                assert isinstance(value, Iterable)
+                assert isinstance(value, Sized)
+                if len(value) != len(index):
+                    raise ValueError("length of argument does not match slice")
+                for i, v in zip(index, value):
+                    self.fix(i, v)
+        else:
+            self._last_state.fix(index)
+            self._last_state.set_value(index, value)
+        return self
 
     def reset(self) -> "Minuit":  # requires from __future__ import annotations
         """

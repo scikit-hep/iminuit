@@ -138,7 +138,7 @@ class BasicView(abc.ABC):
         return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
 
-def _ndim(obj: Iterable) -> int:
+def _ndim(obj: Any) -> int:
     nd = 0
     while isinstance(obj, Iterable):
         nd += 1
@@ -184,17 +184,11 @@ class FixedView(BasicView):
     def _get(self, i: int) -> bool:
         return self._minuit._last_state[i].is_fixed  # type:ignore
 
-    def _set(self, i: int, fix: Union[bool, float, None]) -> None:
-        if fix is None:
-            self._minuit._last_state.release(i)
-        elif isinstance(fix, bool):
-            if fix:
-                self._minuit._last_state.fix(i)
-            else:
-                self._minuit._last_state.release(i)
-        else:
+    def _set(self, i: int, fix: bool) -> None:
+        if fix:
             self._minuit._last_state.fix(i)
-            self._minuit._last_state.set_value(i, fix)
+        else:
+            self._minuit._last_state.release(i)
 
     def __invert__(self) -> list:
         """Return list with inverted elements."""

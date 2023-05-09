@@ -357,7 +357,7 @@ def test_initial_guesses():
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
-def test_fix_param(grad):
+def test_fixed(grad):
     m = Minuit(func0, grad=grad, x=0, y=0)
     assert m.npar == 2
     assert m.nfit == 2
@@ -367,10 +367,9 @@ def test_fix_param(grad):
     assert_allclose(m.errors, (2, 1), rtol=1e-4)
     assert_allclose(m.covariance, ((4, 0), (0, 1)), atol=1e-4)
 
-    # now fix y = 10
-    m = Minuit(func0, grad=grad, x=0, y=0)
-    m.fixed["y"] = 10
-    assert m.values["y"] == 10
+    m = Minuit(func0, grad=grad, x=0, y=10)
+    assert not m.fixed["y"]
+    m.fixed["y"] = True
     assert m.fixed["y"]
     assert m.npar == 2
     assert m.nfit == 1
@@ -414,6 +413,24 @@ def test_fix_param(grad):
     m.fixed[1:] = False
     assert m.fixed == [True, False]
     assert m.fixed[:1] == [True]
+
+
+def test_fix():
+    m = Minuit(func0, x=0, y=0)
+    assert np.all(~m.fixed)
+    m.fix(0, 1)
+    assert m.fixed[0]
+    assert m.values[0] == 1
+    m.fix([0, 1], 0)
+    assert np.all(m.fixed)
+    assert m.values == [0, 0]
+    m.fixed = False
+    assert np.all(~m.fixed)
+    m.fix(slice(0, 2), [1, 2])
+    assert np.all(m.fixed)
+    assert_equal(m.values, [1, 2])
+    with pytest.raises(ValueError, match="length of argument"):
+        m.fix([1], [1, 2])
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
