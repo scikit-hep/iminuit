@@ -4,9 +4,9 @@
 │ FCN = nan                        │    Nfcn = 100000, Ngrad = 200000     │
 │ EDM = 1.23e-10 (Goal: 1e-05)     │            time = 1.2 sec            │
 ├──────────────────────────────────┼──────────────────────────────────────┤
-│         INVALID Minimum          │       SOME Parameters at limit       │
+│         INVALID Minimum          │   ABOVE EDM threshold (goal x 10)    │
 ├──────────────────────────────────┼──────────────────────────────────────┤
-│ ABOVE EDM threshold (goal x 10)  │           ABOVE call limit           │
-├───────────────┬──────────────────┼───────────┬─────────────┬────────────┤
-│ NO Covariance │   Hesse FAILED   │APPROXIMATE│NOT pos. def.│   FORCED   │
-└───────────────┴──────────────────┴───────────┴─────────────┴────────────┘
+│     SOME parameters at limit     │           ABOVE call limit           │
+├──────────────────────────────────┼──────────────────────────────────────┤
+│           Hesse FAILED           │           ABOVE call limit           │
+└──────────────────────────────────┴──────────────────────────────────────┘

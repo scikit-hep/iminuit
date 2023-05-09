@@ -625,7 +625,7 @@ class Minuit:
         if len(start) == 0 and len(kwds) == 0:
             raise RuntimeError(
                 "starting value(s) are required"
-                + (f" for {' '.join(name)}" if name else "")
+                + (f" for [{' '.join(name)}]" if name else "")
             )
 
         # Maintain two dictionaries to easily convert between
@@ -2526,10 +2526,10 @@ class Minuit:
                 import matplotlib.pyplot as plt
                 import io
 
-                with _TemporaryFigure():
+                with _TemporaryFigure(5, 4):
                     self.visualize()
                     with io.StringIO() as io:
-                        plt.savefig(io, format="svg")
+                        plt.savefig(io, format="svg", dpi=10)
                         io.seek(0)
                         s += io.read()
             except (ModuleNotFoundError, AttributeError, ValueError):
@@ -2691,11 +2691,11 @@ class _TemporaryErrordef:
 
 
 class _TemporaryFigure:
-    def __init__(self):
+    def __init__(self, w, h):
         from matplotlib import pyplot as plt
 
         self.plt = plt
-        self.fig = self.plt.figure()
+        self.fig = self.plt.figure(figsize=(w, h), constrained_layout=True)
 
     def __enter__(self) -> None:
         pass

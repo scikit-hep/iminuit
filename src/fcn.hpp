@@ -1,4 +1,5 @@
 #include <Minuit2/FCNGradientBase.h>
+#include <cstdint>
 #include <pybind11/pytypes.h>
 #include <vector>
 

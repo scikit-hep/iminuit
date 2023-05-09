@@ -30,17 +30,13 @@
 
 Minuit was designed to minimise statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
 
-- Supported CPython versions: 3.6+
-- Supported PyPy versions: 3.6+
-- Supported platforms: Linux, OSX and Windows.
-
 The iminuit package comes with additional features:
 
 - Builtin cost functions for statistical fits
 
   - Binned and unbinned maximum-likelihood
   - `Template fits with error propagation <https://doi.org/10.1140/epjc/s10052-022-11019-z>`_
-  - Non-linear regression with (optionally robust) weighted least-squares
+  - Least-squares (optionally robust to outliers)
   - Gaussian penalty terms for parameters
   - Cost functions can be combined by adding them: ``total_cost = cost_1 + cost_2``
   - Visualization of the fit in Jupyter notebooks
@@ -71,23 +67,108 @@ Checkout our large and comprehensive list of `tutorials`_ that take you all the 
 In a nutshell
 -------------
 
-iminuit is intended to be used with a user-provided negative log-likelihood function or least-squares function. Standard functions are included in ``iminuit.cost``, so you don't have to write them yourself. The following example shows how iminuit is used with a dummy least-squares function.
+iminuit can be used with a user-provided cost functions in form of a negative log-likelihood function or least-squares function. Standard functions are included in ``iminuit.cost``, so you don't have to write them yourself. The following example shows how to perform an unbinned maximum likelihood fit.
 
-.. code-block:: python
+.. code:: python
 
+    import numpy as np
     from iminuit import Minuit
+    from iminuit.cost import UnbinnedNLL
+    from scipy.stats import norm
 
-    def cost_function(x, y, z):
-        return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
+    x = norm.rvs(size=1000, random_state=1)
 
-    m = Minuit(cost_function, x=0, y=0, z=0)
+    def pdf(x, mu, sigma):
+        return norm.pdf(x, mu, sigma)
 
-    m.migrad()  # run optimiser
-    m.hesse()   # run covariance estimator
+    # Negative unbinned log-likelihood, you can write your own
+    cost = UnbinnedNLL(x, pdf)
 
-.. image:: doc/_static/minuit_jupyter.png
-   :alt: Jupyter display of Minuit
+    m = Minuit(cost, mu=0, sigma=1)
+    m.limits["sigma"] = (0, np.inf)
+    m.migrad()  # find minimum
+    m.hesse()   # compute uncertainties
 
+.. raw:: html
+
+    <table>
+        <tr>
+            <th colspan="5" style="text-align:center" title="Minimizer"> Migrad </th>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:left" title="Minimum value of function"> FCN = 2800 </td>
+            <td colspan="3" style="text-align:center" title="Total number of function and (optional) gradient evaluations"> Nfcn = 34 </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:left" title="Estimated distance to minimum and goal"> EDM = 2.01e-07 (Goal: 0.0002) </td>
+            <td colspan="3" style="text-align:center" title="Total run time of algorithms">  </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center;background-color:#92CCA6;color:black"> Valid Minimum </td>
+            <td colspan="3" style="text-align:center;background-color:#92CCA6;color:black"> No Parameters at limit </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align:center;background-color:#92CCA6;color:black"> Below EDM threshold (goal x 10) </td>
+            <td colspan="3" style="text-align:center;background-color:#92CCA6;color:black"> Below call limit </td>
+        </tr>
+        <tr>
+            <td style="text-align:center;background-color:#92CCA6;color:black"> Covariance </td>
+            <td style="text-align:center;background-color:#92CCA6;color:black"> Hesse ok </td>
+            <td style="text-align:center;background-color:#92CCA6;color:black" title="Is covariance matrix accurate?"> Accurate </td>
+            <td style="text-align:center;background-color:#92CCA6;color:black" title="Is covariance matrix positive definite?"> Pos. def. </td>
+            <td style="text-align:center;background-color:#92CCA6;color:black" title="Was positive definiteness enforced by Minuit?"> Not forced </td>
+        </tr>
+    </table><table>
+        <tr>
+            <td></td>
+            <th title="Variable name"> Name </th>
+            <th title="Value of parameter"> Value </th>
+            <th title="Hesse error"> Hesse Error </th>
+            <th title="Minos lower error"> Minos Error- </th>
+            <th title="Minos upper error"> Minos Error+ </th>
+            <th title="Lower limit of the parameter"> Limit- </th>
+            <th title="Upper limit of the parameter"> Limit+ </th>
+            <th title="Is the parameter fixed in the fit"> Fixed </th>
+        </tr>
+        <tr>
+            <th> 0 </th>
+            <td> mu </td>
+            <td> 0.039 </td>
+            <td> 0.031 </td>
+            <td>  </td>
+            <td>  </td>
+            <td>  </td>
+            <td>  </td>
+            <td>  </td>
+        </tr>
+        <tr>
+            <th> 1 </th>
+            <td> sigma </td>
+            <td> 0.981 </td>
+            <td> 0.022 </td>
+            <td>  </td>
+            <td>  </td>
+            <td> 0 </td>
+            <td>  </td>
+            <td>  </td>
+        </tr>
+    </table><table>
+        <tr>
+            <td></td>
+            <th> mu </th>
+            <th> sigma </th>
+        </tr>
+        <tr>
+            <th> mu </th>
+            <td> 0.000962 </td>
+            <td style="background-color:rgb(250,250,250);color:black"> 0 </td>
+        </tr>
+        <tr>
+            <th> sigma </th>
+            <td style="background-color:rgb(250,250,250);color:black"> 0 </td>
+            <td> 0.000481 </td>
+        </tr>
+    </table>
 
 Interactive fitting
 -------------------

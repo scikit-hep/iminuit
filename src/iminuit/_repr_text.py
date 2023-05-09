@@ -51,6 +51,27 @@ def fmin_fields(fm):
     s_ncall = f"Nfcn = {fm.nfcn}"
     if fm.ngrad > 0:
         s_ncall += f", Ngrad = {fm.ngrad}"
+
+    if fm.hesse_failed:
+        covariance_msg1 = "Hesse FAILED"
+        if fm.has_reached_call_limit:
+            covariance_msg2 = "ABOVE call limit"
+        else:
+            assert not fm.has_posdef_covar
+            covariance_msg2 = "Covariance NOT pos. def."
+    else:
+        if fm.has_covariance:
+            covariance_msg1 = "Hesse ok"
+            if fm.has_accurate_covar:
+                covariance_msg2 = "Covariance accurate"
+            elif fm.has_made_posdef_covar:
+                covariance_msg2 = "Covariance FORCED pos. def."
+            else:
+                covariance_msg2 = "Covariance APPROXIMATE"
+        else:
+            covariance_msg1 = "Hesse not run"
+            covariance_msg2 = "NO covariance"
+
     return [
         f"{fm.algorithm}",
         f"FCN = {fm.fval:.4g}" + (f" (χ²/ndof = {rc:.1f})" if not np.isnan(rc) else ""),
@@ -58,14 +79,11 @@ def fmin_fields(fm):
         f"EDM = {fm.edm:.3g} (Goal: {fm.edm_goal:.3g})",
         f"time = {fm.time:.1f} sec" if fm.time >= 0.1 else "",
         f"{'Valid' if fm.is_valid else 'INVALID'} Minimum",
-        f"{'SOME' if fm.has_parameters_at_limit else 'No'} Parameters at limit",
         f"{'ABOVE' if fm.is_above_max_edm else 'Below'} EDM threshold (goal x 10)",
+        f"{'SOME' if fm.has_parameters_at_limit else 'No'} parameters at limit",
         f"{'ABOVE' if fm.has_reached_call_limit else 'Below'} call limit",
-        f"{'' if fm.has_covariance else 'NO '}Covariance",
-        f"Hesse {'FAILED' if fm.hesse_failed else 'ok'}",
-        "Accurate" if fm.has_accurate_covar else "APPROXIMATE",
-        "Pos. def." if fm.has_posdef_covar else "NOT pos. def.",
-        "FORCED" if fm.has_made_posdef_covar else "Not forced",
+        covariance_msg1,
+        covariance_msg2,
     ]
 
 
@@ -82,11 +100,10 @@ def fmin(fm):
     l3 = format_line(w, "├┼┤")
     v1 = format_row(w, *ff[5:7])
     l4 = format_line(w, "├┼┤")
-    v2 = format_row((34, 38), *ff[7:9])
-    w = (15, 18, 11, 13, 12)
-    l5 = format_line(w, "├┬┼┬┬┤")
-    v3 = format_row(w, *ff[9:14])
-    l6 = format_line(w, "└┴┴┴┴┘")
+    v2 = format_row(w, *ff[7:9])
+    l5 = format_line(w, "├┼┤")
+    v3 = format_row(w, *ff[9:])
+    l6 = format_line(w, "└┴┘")
     return "\n".join((l1, i1, l2, i2, i3, l3, v1, l4, v2, l5, v3, l6))
 
 

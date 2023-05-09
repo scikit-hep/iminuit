@@ -93,12 +93,18 @@ def good(x, should_be, alt_style=bad_style):
 
 def fmin(fm):
     ff = fmin_fields(fm)
+    if fm.hesse_failed:
+        cov_style = bad_style
+    elif fm.has_accurate_covar:
+        cov_style = good_style
+    else:
+        cov_style = warn_style
     return to_str(
         table(
             tr(
                 th(
                     ff[0],
-                    colspan=5,
+                    colspan=2,
                     style="text-align:center",
                     title="Minimizer",
                 ),
@@ -106,13 +112,11 @@ def fmin(fm):
             tr(
                 td(
                     ff[1],
-                    colspan=2,
                     style="text-align:left",
                     title="Minimum value of function",
                 ),
                 td(
                     ff[2],
-                    colspan=3,
                     style="text-align:center",
                     title=(
                         "Total number of function and (optional) gradient evaluations"
@@ -122,13 +126,11 @@ def fmin(fm):
             tr(
                 td(
                     ff[3],
-                    colspan=2,
                     style="text-align:left",
                     title="Estimated distance to minimum and goal",
                 ),
                 td(
                     ff[4],
-                    colspan=3,
                     style="text-align:center",
                     title="Total run time of algorithms",
                 ),
@@ -136,54 +138,27 @@ def fmin(fm):
             tr(
                 td(
                     ff[5],
-                    colspan=2,
                     style="text-align:center;" + good(fm.is_valid, True),
                 ),
                 td(
                     ff[6],
-                    colspan=3,
-                    style="text-align:center;"
-                    + good(fm.has_parameters_at_limit, False, warn_style),
+                    style="text-align:center;" + good(fm.is_above_max_edm, False),
                 ),
             ),
             tr(
                 td(
                     ff[7],
-                    colspan="2",
-                    style="text-align:center;" + good(fm.is_above_max_edm, False),
+                    style="text-align:center;"
+                    + good(fm.has_parameters_at_limit, False, warn_style),
                 ),
                 td(
                     ff[8],
-                    colspan=3,
                     style="text-align:center;" + good(fm.has_reached_call_limit, False),
                 ),
             ),
             tr(
-                td(
-                    ff[9],
-                    style="text-align:center;"
-                    + good(fm.has_covariance, True, warn_style),
-                ),
-                td(
-                    ff[10],
-                    style="text-align:center;" + good(fm.hesse_failed, False),
-                ),
-                td(
-                    ff[11],
-                    title="Is covariance matrix accurate?",
-                    style="text-align:center;"
-                    + good(fm.has_accurate_covar, True, warn_style),
-                ),
-                td(
-                    ff[12],
-                    style="text-align:center;" + good(fm.has_posdef_covar, True),
-                    title="Is covariance matrix positive definite?",
-                ),
-                td(
-                    ff[13],
-                    style="text-align:center;" + good(fm.has_made_posdef_covar, False),
-                    title="Was positive definiteness enforced by Minuit?",
-                ),
+                td(ff[9], style="text-align:center;" + cov_style),
+                td(ff[10], style="text-align:center;" + cov_style),
             ),
         )
     )
