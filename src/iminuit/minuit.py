@@ -28,6 +28,7 @@ from typing import (
     Any,
     Collection,
     Set,
+    Sized,
 )
 from iminuit.typing import UserBound
 from iminuit._optional_dependencies import optional_module_for
@@ -657,7 +658,42 @@ class Minuit:
             if lim is not None:
                 self.limits[k] = lim
 
-    def reset(self) -> "Minuit":  # requires from __future__ import annotations
+    def fixto(self, key: mutil.Key, value: Union[float, Iterable[float]]) -> "Minuit":
+        """
+        Fix parameter and set it to value.
+
+        This is a convenience function to fix a parameter and set it to a value
+        at the same time. It is equivalent to calling :attr:`fixed` and :attr:`values`.
+
+        Parameters
+        ----------
+        key : int, str, slice, list of int or str
+            Key, which can be an index, name, slice, or list of indices or names.
+        value : float or sequence of float
+            Value(s) assigned to key(s).
+
+        Returns
+        -------
+        self
+        """
+        index = mutil._key2index(self._var2pos, key)
+        if isinstance(index, list):
+            if mutil._ndim(value) == 0:  # support basic broadcasting
+                for i in index:
+                    self.fixto(i, value)
+            else:
+                assert isinstance(value, Iterable)
+                assert isinstance(value, Sized)
+                if len(value) != len(index):
+                    raise ValueError("length of argument does not match slice")
+                for i, v in zip(index, value):
+                    self.fixto(i, v)
+        else:
+            self._last_state.fix(index)
+            self._last_state.set_value(index, value)
+        return self  # return self for method chaining
+
+    def reset(self) -> "Minuit":
         """
         Reset minimization state to initial state.
 

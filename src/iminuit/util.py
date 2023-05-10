@@ -138,7 +138,7 @@ class BasicView(abc.ABC):
         return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
 
-def _ndim(obj: Iterable) -> int:
+def _ndim(obj: Any) -> int:
     nd = 0
     while isinstance(obj, Iterable):
         nd += 1
@@ -1450,6 +1450,8 @@ def _key2index(
     var2pos: Dict[str, int],
     key: Key,
 ) -> Union[int, List[int]]:
+    if key is ...:
+        return list(range(len(var2pos)))
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
     if not isinstance(key, str) and isinstance(key, Iterable):
