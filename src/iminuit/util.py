@@ -1450,6 +1450,8 @@ def _key2index(
     var2pos: Dict[str, int],
     key: Key,
 ) -> Union[int, List[int]]:
+    if key is ...:
+        return list(range(len(var2pos)))
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
     if not isinstance(key, str) and isinstance(key, Iterable):

@@ -429,6 +429,11 @@ def test_fixto():
     m.fixto(slice(0, 2), [1, 2])
     assert np.all(m.fixed)
     assert_equal(m.values, [1, 2])
+    m.fixed = False
+    assert np.all(~m.fixed)
+    m.fixto(..., [2, 3])
+    assert np.all(m.fixed)
+    assert_equal(m.values, [2, 3])
     with pytest.raises(ValueError, match="length of argument"):
         m.fixto([1], [1, 2])
 
