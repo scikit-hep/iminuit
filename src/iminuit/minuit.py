@@ -658,7 +658,7 @@ class Minuit:
             if lim is not None:
                 self.limits[k] = lim
 
-    def fix(self, key: mutil.Key, value: Union[float, Iterable[float]]) -> "Minuit":
+    def fixto(self, key: mutil.Key, value: Union[float, Iterable[float]]) -> "Minuit":
         """
         Fix parameter and set it to value.
 
@@ -680,14 +680,14 @@ class Minuit:
         if isinstance(index, list):
             if mutil._ndim(value) == 0:  # support basic broadcasting
                 for i in index:
-                    self.fix(i, value)
+                    self.fixto(i, value)
             else:
                 assert isinstance(value, Iterable)
                 assert isinstance(value, Sized)
                 if len(value) != len(index):
                     raise ValueError("length of argument does not match slice")
                 for i, v in zip(index, value):
-                    self.fix(i, v)
+                    self.fixto(i, v)
         else:
             self._last_state.fix(index)
             self._last_state.set_value(index, value)

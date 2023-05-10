@@ -415,22 +415,22 @@ def test_fixed(grad):
     assert m.fixed[:1] == [True]
 
 
-def test_fix():
+def test_fixto():
     m = Minuit(func0, x=0, y=0)
     assert np.all(~m.fixed)
-    m.fix(0, 1)
+    m.fixto(0, 1)
     assert m.fixed[0]
     assert m.values[0] == 1
-    m.fix([0, 1], 0)
+    m.fixto([0, 1], 0)
     assert np.all(m.fixed)
     assert m.values == [0, 0]
     m.fixed = False
     assert np.all(~m.fixed)
-    m.fix(slice(0, 2), [1, 2])
+    m.fixto(slice(0, 2), [1, 2])
     assert np.all(m.fixed)
     assert_equal(m.values, [1, 2])
     with pytest.raises(ValueError, match="length of argument"):
-        m.fix([1], [1, 2])
+        m.fixto([1], [1, 2])
 
 
 @pytest.mark.parametrize("grad", (None, func0_grad))
