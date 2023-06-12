@@ -1,9 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "cmake",
-]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core[pyproject]>=0.3", "pybind11"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "iminuit"
@@ -78,6 +75,10 @@ doc = [
     "jax",
     "jaxlib"
 ]
+
+[tool.scikit-build]
+minimum-version = "0.3"
+build-dir = "build/{wheel_tag}"
 
 [tool.pytest.ini_options]
 minversion = "6.0"

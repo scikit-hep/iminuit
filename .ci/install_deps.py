@@ -13,6 +13,7 @@ def install(packages):
 packages = [
     "tomli",
     "pip",
+    "wheel",
 ]
 
 install(packages)

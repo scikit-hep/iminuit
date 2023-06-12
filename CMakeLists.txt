@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.13...3.17)
+cmake_minimum_required(VERSION 3.15...3.26)
 
 project(iminuit LANGUAGES CXX)
 
-if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+if(NOT DEFINED SKBUILD)
   message(
     WARNING
-      "You should call this through setup.py so that all variables are set; python setup.py build_ext --inplace"
+      "You should call this through Python so that all variables are set; pip install -v ."
   )
 endif()
 
@@ -15,13 +15,7 @@ set(CMAKE_CXX_STANDARD
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # optional, ensure standard is supported
 set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
 
-# Now we can find pybind11
-option(IMINUIT_EXTERNAL_PYBIND11 "Build against an external pybind11" OFF)
-if(IMINUIT_EXTERNAL_PYBIND11)
-  find_package(pybind11 CONFIG REQUIRED)
-else()
-  add_subdirectory(extern/pybind11)
-endif()
+find_package(pybind11 CONFIG REQUIRED)
 
 file(GLOB SOURCES_A "src/*.cpp")
 set(SOURCES_B
@@ -98,3 +92,5 @@ else()
 endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
+install(TARGETS _core DESTINATION iminuit)
