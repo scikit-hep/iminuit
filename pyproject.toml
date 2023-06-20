@@ -79,6 +79,13 @@ doc = [
 [tool.scikit-build]
 minimum-version = "0.3"
 build-dir = "build/{wheel_tag}"
+sdist.exclude = [
+    "extern/root",
+]
+sdist.include = [
+    "extern/root/math/minuit2/inc",
+    "extern/root/math/minuit2/src",
+]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
