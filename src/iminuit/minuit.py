@@ -1272,8 +1272,7 @@ class Minuit:
         elif "jac" in r:
             jac = r.jac
         else:
-            tol = 1e-2
-            dx = np.sqrt(np.diag(matrix) * tol)
+            dx = np.sqrt(np.diag(matrix) * 1e-10)
             jac = approx_fprime(r.x, fcn, epsilon=dx)
 
         edm_goal = self._edm_goal(migrad_factor=True)
