@@ -949,60 +949,6 @@ class MErrors(OrderedDict):
         return OrderedDict.__getitem__(self, key)
 
 
-def _jacobi(
-    fn: Callable, x: NDArray, dx: NDArray, tol: float, debug: bool = False
-) -> Tuple[NDArray, NDArray]:
-    assert x.ndim == 1
-    assert dx.ndim == 1
-    assert np.all(dx >= 0)
-    assert tol > 0
-    y = fn(x)
-    yrank = np.ndim(y)
-    jac = np.zeros((1 if yrank == 0 else len(y), len(x)))
-    h = np.zeros(len(x))
-    divergence = True
-    for i, hi in enumerate(dx):
-        if i > 0:
-            h[i - 1] = 0
-        if hi == 0:
-            continue
-        h[i] = hi
-        prev_esq = np.inf
-        for iter in range(20):
-            assert h[i] > 0
-            yu = fn(x + h)
-            yd = fn(x - h)
-            du = (yu - y) / h[i]
-            dd = (y - yd) / h[i]
-            d = 0.5 * (du + dd)
-            delta = du - dd
-            if np.all(np.abs(delta) <= tol * np.abs(d)):
-                if debug:
-                    print(
-                        f"jacobi: iter={iter} converged; delta={delta} "
-                        f"threshold={tol * np.abs(d)}"
-                    )
-                jac[:, i] = d
-                break
-            esq = np.dot(delta, delta)
-            if debug:
-                print(f"jacobi: iter={iter} d={d} esq={esq} h={h}")
-            if iter > 0 and esq < prev_esq:
-                divergence = False
-            if esq >= prev_esq:
-                if divergence:
-                    print(f"jacobi: iter={iter} divergence detected")
-                    jac[:, i] = np.nan
-                else:
-                    print(f"jacobi: iter={iter} no convergence")
-                    # no convergence, use previous more accurate jac[:, i]
-                break
-            jac[:, i] = d
-            prev_esq = esq
-            h[i] *= 0.1
-    return y, jac
-
-
 @_deprecated.deprecated("use jacobi.propagate instead from jacobi library")
 def propagate(
     fn: Callable,
@@ -1031,17 +977,20 @@ def propagate(
         y is the result of fn(x)
         ycov is the propagated covariance matrix.
     """
+    from scipy.optimize import approx_fprime
+
     vx = np.atleast_1d(x)  # type:ignore
     if np.ndim(cov) != 2:  # type:ignore
         raise ValueError("cov must be 2D array-like")
     vcov = np.atleast_2d(cov)  # type:ignore
     if vcov.shape[0] != vcov.shape[1]:
         raise ValueError("cov must have shape (N, N)")
-    tol = 1e-2
+    tol = 1e-10
     dx = (np.diag(vcov) * tol) ** 0.5
     if not np.all(dx >= 0):
         raise ValueError("diagonal elements of covariance matrix must be non-negative")
-    y, jac = _jacobi(fn, vx, dx, tol)
+    y = fn(vx)
+    jac = np.atleast_2d(approx_fprime(vx, fn, dx))
     ycov = np.einsum("ij,kl,jl", jac, jac, vcov)
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
 
