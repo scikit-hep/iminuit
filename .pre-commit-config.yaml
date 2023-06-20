@@ -40,14 +40,14 @@ repos:
 
 # Ruff linter, replacement for flake8, pydocstyle, isort
 - repo: https://github.com/charliermarsh/ruff-pre-commit
-  rev: 'v0.0.270'
+  rev: 'v0.0.272'
   hooks:
     - id: ruff
       args: [--fix, --exit-non-zero-on-fix]
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v16.0.4
+  rev: v16.0.6
   hooks:
   - id: clang-format
 
