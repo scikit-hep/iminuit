@@ -8,6 +8,13 @@ from iminuit._optional_dependencies import optional_module_for
 import pickle
 from iminuit._hide_modules import hide_modules
 
+try:
+    import scipy  # noqa
+
+    scipy_available = True
+except ModuleNotFoundError:
+    scipy_available = False
+
 
 def test_ndim():
     ndim = util._ndim
@@ -511,6 +518,7 @@ def test_merge_signatures():
     assert pg == (0, 3, 4)
 
 
+@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_1():
     cov = [
         [1.0, 0.1, 0.2],
@@ -535,6 +543,7 @@ def test_propagate_1():
     np.testing.assert_allclose(ycov, 8, rtol=1e-3)
 
 
+@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_2():
     cov = [
         [1.0, 0.1, 0.2],
@@ -563,6 +572,7 @@ def test_propagate_2():
     np.testing.assert_allclose(ycov, np.einsum("i,k,ik", jac, jac, cov), rtol=1e-3)
 
 
+@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_3():
     # matrices with full zero rows and columns are supported
     cov = [
@@ -581,6 +591,7 @@ def test_propagate_3():
     np.testing.assert_allclose(ycov, [[4, 0.0, 0.8], [0.0, 0.0, 0.0], [0.8, 0.0, 12]])
 
 
+@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_on_bad_input():
     cov = [[np.nan, 0.0], [0.0, 1.0]]
     x = [1.0, 2.0]
