@@ -949,6 +949,7 @@ class MErrors(OrderedDict):
         return OrderedDict.__getitem__(self, key)
 
 
+@_deprecated.deprecated("use jacobi.jacobi instead from jacobi library")
 def _jacobi(
     fn: Callable, x: NDArray, dx: NDArray, tol: float, debug: bool = False
 ) -> Tuple[NDArray, NDArray]:

@@ -7,6 +7,7 @@ from iminuit._core import MnUserParameterState
 from iminuit._optional_dependencies import optional_module_for
 import pickle
 from iminuit._hide_modules import hide_modules
+import platform
 
 
 def test_ndim():
@@ -606,7 +607,8 @@ def test_jacobi():
     dx = np.abs(x) * 1e-3 + 1e-3
     tol = 1e-3
 
-    y, jac = util._jacobi(np.exp, x, dx, tol)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(np.exp, x, dx, tol)
     np.testing.assert_equal(y, np.exp(x))
     jac_ref = np.zeros((n, n))
     for i in range(n):
@@ -615,7 +617,8 @@ def test_jacobi():
 
     x = np.linspace(1e-10, 5, n)
     dx = np.abs(x) * 1e-3
-    y, jac = util._jacobi(np.log, x, dx, tol)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(np.log, x, dx, tol)
     jac_ref = np.zeros((n, n))
     for i in range(n):
         jac_ref[i, i] = 1 / x[i]
@@ -625,21 +628,24 @@ def test_jacobi():
 def test_jacobi_on_bad_input():
     x = np.array([1])
     dx = np.array([0.1])
-    y, jac = util._jacobi(lambda x: np.nan, x, dx, 1e-3)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(lambda x: np.nan, x, dx, 1e-3)
 
     np.testing.assert_equal(y, np.nan)
     np.testing.assert_equal(jac, np.nan)
 
     x = np.array([1])
     dx = np.array([0])
-    y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
 
     np.testing.assert_equal(y, 1)
     np.testing.assert_equal(jac, 0)
 
     x = np.array([np.nan])
     dx = np.array([0.1])
-    y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
 
     np.testing.assert_equal(y, np.nan)
     np.testing.assert_equal(jac, np.nan)
@@ -648,21 +654,26 @@ def test_jacobi_on_bad_input():
     dx = np.array([np.nan])
     with pytest.raises(AssertionError):
         # dx must be >= 0
-        util._jacobi(lambda x: x**2, x, dx, 1e-3)
+        with pytest.warns(np.VisibleDeprecationWarning):
+            util._jacobi(lambda x: x**2, x, dx, 1e-3)
 
 
 @pytest.mark.parametrize("fail", (False, True))
+@pytest.mark.skipif(
+    platform.system() == "FreeBSD", reason="Fails on FreeBSD 13.2, see issue 901"
+)
 def test_jacobi_low_resolution(fail, capsys):
     x = np.array([1])
     dx = np.array([1])
 
-    y, jac = util._jacobi(
-        lambda x: np.exp(x.astype(np.float32)),
-        x,
-        dx,
-        1e-10 if fail else 1e-3,
-        debug=True,
-    )
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(
+            lambda x: np.exp(x.astype(np.float32)),
+            x,
+            dx,
+            1e-10 if fail else 1e-3,
+            debug=True,
+        )
 
     assert fail == ("no convergence" in capsys.readouterr()[0])
 
@@ -676,7 +687,8 @@ def test_jacobi_divergence_1(capsys):
     x = np.array([1])
     dx = np.array([1])
 
-    y, jac = util._jacobi(lambda x: rng.normal(), x, dx, 0.1, debug=True)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(lambda x: rng.normal(), x, dx, 0.1, debug=True)
 
     assert "divergence" in capsys.readouterr()[0]
 
@@ -688,7 +700,8 @@ def test_jacobi_divergence_2(capsys):
     x = np.array([1e-10])
     dx = np.array([0.1])
 
-    y, jac = util._jacobi(lambda x: 1 / x, x, dx, 1e-3, debug=True)
+    with pytest.warns(np.VisibleDeprecationWarning):
+        y, jac = util._jacobi(lambda x: 1 / x, x, dx, 1e-3, debug=True)
 
     assert "divergence" in capsys.readouterr()[0]
 
