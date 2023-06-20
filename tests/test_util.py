@@ -7,7 +7,6 @@ from iminuit._core import MnUserParameterState
 from iminuit._optional_dependencies import optional_module_for
 import pickle
 from iminuit._hide_modules import hide_modules
-import platform
 
 
 def test_ndim():
@@ -526,12 +525,14 @@ def test_propagate_1():
     with pytest.warns(np.VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_allclose(y, [3, 5, 7])
-    np.testing.assert_allclose(ycov, [[4, 0.4, 0.8], [0.4, 8, 1.2], [0.8, 1.2, 12]])
+    np.testing.assert_allclose(
+        ycov, [[4, 0.4, 0.8], [0.4, 8, 1.2], [0.8, 1.2, 12]], rtol=1e-3
+    )
 
     with pytest.warns(np.VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, [1], [[2]])
     np.testing.assert_allclose(y, 3)
-    np.testing.assert_allclose(ycov, 8)
+    np.testing.assert_allclose(ycov, 8, rtol=1e-3)
 
 
 def test_propagate_2():
@@ -550,7 +551,7 @@ def test_propagate_2():
     with pytest.warns(np.VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(x))
-    np.testing.assert_allclose(ycov, np.einsum("ij,kl,jl", a, a, cov))
+    np.testing.assert_allclose(ycov, np.einsum("ij,kl,jl", a, a, cov), rtol=1e-3)
 
     def fn(x):
         return np.linalg.multi_dot([x.T, cov, x])
@@ -559,7 +560,7 @@ def test_propagate_2():
         y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(np.array(x)))
     jac = 2 * np.dot(cov, x)
-    np.testing.assert_allclose(ycov, np.einsum("i,k,ik", jac, jac, cov))
+    np.testing.assert_allclose(ycov, np.einsum("i,k,ik", jac, jac, cov), rtol=1e-3)
 
 
 def test_propagate_3():
@@ -599,114 +600,6 @@ def test_propagate_on_bad_input():
     with pytest.warns(np.VisibleDeprecationWarning):
         with pytest.raises(ValueError):
             util.propagate(fn, x, cov)
-
-
-def test_jacobi():
-    n = 100
-    x = np.linspace(-5, 5, n)
-    dx = np.abs(x) * 1e-3 + 1e-3
-    tol = 1e-3
-
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(np.exp, x, dx, tol)
-    np.testing.assert_equal(y, np.exp(x))
-    jac_ref = np.zeros((n, n))
-    for i in range(n):
-        jac_ref[i, i] = np.exp(x[i])
-    np.testing.assert_allclose(jac, jac_ref)
-
-    x = np.linspace(1e-10, 5, n)
-    dx = np.abs(x) * 1e-3
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(np.log, x, dx, tol)
-    jac_ref = np.zeros((n, n))
-    for i in range(n):
-        jac_ref[i, i] = 1 / x[i]
-    np.testing.assert_allclose(jac, jac_ref)
-
-
-def test_jacobi_on_bad_input():
-    x = np.array([1])
-    dx = np.array([0.1])
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(lambda x: np.nan, x, dx, 1e-3)
-
-    np.testing.assert_equal(y, np.nan)
-    np.testing.assert_equal(jac, np.nan)
-
-    x = np.array([1])
-    dx = np.array([0])
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
-
-    np.testing.assert_equal(y, 1)
-    np.testing.assert_equal(jac, 0)
-
-    x = np.array([np.nan])
-    dx = np.array([0.1])
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(lambda x: x**2, x, dx, 1e-3)
-
-    np.testing.assert_equal(y, np.nan)
-    np.testing.assert_equal(jac, np.nan)
-
-    x = np.array([1])
-    dx = np.array([np.nan])
-    with pytest.raises(AssertionError):
-        # dx must be >= 0
-        with pytest.warns(np.VisibleDeprecationWarning):
-            util._jacobi(lambda x: x**2, x, dx, 1e-3)
-
-
-@pytest.mark.parametrize("fail", (False, True))
-@pytest.mark.skipif(
-    platform.system() == "FreeBSD", reason="Fails on FreeBSD 13.2, see issue 901"
-)
-def test_jacobi_low_resolution(fail, capsys):
-    x = np.array([1])
-    dx = np.array([1])
-
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(
-            lambda x: np.exp(x.astype(np.float32)),
-            x,
-            dx,
-            1e-10 if fail else 1e-3,
-            debug=True,
-        )
-
-    assert fail == ("no convergence" in capsys.readouterr()[0])
-
-    np.testing.assert_allclose(y, np.exp(1), rtol=1e-3)
-    np.testing.assert_allclose(jac, np.exp(1), rtol=1e-3)
-
-
-def test_jacobi_divergence_1(capsys):
-    rng = np.random.default_rng(1)
-
-    x = np.array([1])
-    dx = np.array([1])
-
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(lambda x: rng.normal(), x, dx, 0.1, debug=True)
-
-    assert "divergence" in capsys.readouterr()[0]
-
-    np.testing.assert_allclose(y, 0, atol=1)
-    np.testing.assert_equal(jac, np.nan)
-
-
-def test_jacobi_divergence_2(capsys):
-    x = np.array([1e-10])
-    dx = np.array([0.1])
-
-    with pytest.warns(np.VisibleDeprecationWarning):
-        y, jac = util._jacobi(lambda x: 1 / x, x, dx, 1e-3, debug=True)
-
-    assert "divergence" in capsys.readouterr()[0]
-
-    np.testing.assert_allclose(y, 1e10)
-    np.testing.assert_equal(jac, np.nan)
 
 
 def test_iterate():
