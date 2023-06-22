@@ -68,7 +68,7 @@ class BasicView(abc.ABC):
     __slots__ = ("_minuit", "_ndim")
 
     def __init__(self, minuit: Any, ndim: int = 0):
-        """Not to be initialized by users."""
+        # Users should not call this __init__, instances are created by the library
         self._minuit = minuit
         self._ndim = ndim
 
@@ -199,7 +199,7 @@ class LimitView(BasicView):
     """Array-like view of parameter limits."""
 
     def __init__(self, minuit: Any):
-        """Not to be initialized by users."""
+        # Users should not call this __init__, instances are created by the library
         super(LimitView, self).__init__(minuit, 1)
 
     def _get(self, i: int) -> Tuple[float, float]:
@@ -258,8 +258,8 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, parameters: Union[Dict, Tuple]) -> Any:
-        """Not to be initialized by users."""
+    def __new__(cls, parameters: Union[Dict, Tuple]) -> Any:  # noqa D102
+        # Users should not call __new__, instances are created by the library
         if isinstance(parameters, dict):
             var2pos = parameters
         elif isinstance(parameters, tuple):
@@ -396,11 +396,11 @@ class FMin:
     Function minimum view.
 
     This object provides detailed metadata about the function minimum. Inspect this to
-    check what exactly happened if the fit did not converge. Use the
-    :class:`iminuit.Minuit` object to get the best fit values, their
-    uncertainties, or the function value at the minimum. For convenience, you can also
-    get a basic OK from :class:`iminuit.Minuit` with the methods
-    :attr:`iminuit.Minuit.valid` and :attr:`iminuit.Minuit.accurate`.
+    check what exactly happened if the fit did not converge. Use the attribute
+    :attr:`iminuit.Minuit.fmin` to get the best fit values, their uncertainties, or the
+    function value at the minimum. For convenience, you can also get a basic OK from
+    :class:`iminuit.Minuit` with the methods :attr:`iminuit.Minuit.valid` and
+    :attr:`iminuit.Minuit.accurate`.
 
     See Also
     --------
@@ -434,7 +434,7 @@ class FMin:
         edm_goal: float,
         time: float,
     ):
-        """Not to be initialized by users."""
+        # Users should not call this __init__, instances are created by the library
         self._src = fmin
         self._algorithm = algorithm
         self._has_parameters_at_limit = False
@@ -699,7 +699,7 @@ class Param:
         self,
         *args: Union[int, str, float, Optional[Tuple[float, float]], bool],
     ):
-        """Not to be initialized by users."""
+        # Users should not call this __init__, instances are created by the library
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)
@@ -881,7 +881,7 @@ class MError:
     )
 
     def __init__(self, *args: Union[int, str, float, bool]):
-        """Not to be initialized by users."""
+        # Users should not call this __init__, instances are created by the library
         assert len(args) == len(self.__slots__)
         for k, arg in zip(self.__slots__, args):
             setattr(self, k, arg)
@@ -1007,8 +1007,8 @@ class _Timer:
 
 
 @_deprecated.deprecated(
-    "Use of `func_code` attribute to declare parameters is deprecated. "
-    "Use `_parameters` instead, which is a dict of parameter names to limits."
+    "Use of ``func_code`` attribute to declare parameters is deprecated. "
+    "Use ``_parameters`` instead, which is a dict of parameter names to limits."
 )
 def make_func_code(params: Collection[str]) -> Namespace:
     """
