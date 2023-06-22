@@ -5,33 +5,6 @@
 Changelog
 =========
 
-2.22.0 (June 12, 2023)
-----------------------
-- Use scikit-build-core (`#812 <https://github.com/scikit-hep/iminuit/pull/812>`_)
-- Fix: make nograd not use grad at all in automatic diff doc (`#895 <https://github.com/scikit-hep/iminuit/pull/895>`_)
-- Add minuit.fixto (`#894 <https://github.com/scikit-hep/iminuit/pull/894>`_)
-- New benchmarks (`#893 <https://github.com/scikit-hep/iminuit/pull/893>`_)
-- Make covariance fields in display easier to understand (`#891 <https://github.com/scikit-hep/iminuit/pull/891>`_)
-- Improve docs (`#890 <https://github.com/scikit-hep/iminuit/pull/890>`_)
-- Update ``fcn.hpp`` (`#889 <https://github.com/scikit-hep/iminuit/pull/889>`_)
-- Fix typo in basic tutorial (`#888 <https://github.com/scikit-hep/iminuit/pull/888>`_)
-- Add ``LeastSquares.pulls`` and ``LeastSquares.prediction`` (`#880 <https://github.com/scikit-hep/iminuit/pull/880>`_)
-- Better log-spacing detection (`#878 <https://github.com/scikit-hep/iminuit/pull/878>`_)
-- More Roofit tutorials (`#877 <https://github.com/scikit-hep/iminuit/pull/877>`_)
-- Rename keyword ``nbins`` to ``bins`` in ```UnbinnedCost.visualize`` (`#876 <https://github.com/scikit-hep/iminuit/pull/876>`_)
-- Ignore missing matplotlib when calling ``Minuit._repr_html_()`` (`#875 <https://github.com/scikit-hep/iminuit/pull/875>`_)
-- Forward kwargs in ``Minuit.visualize`` to plotting function (`#874 <https://github.com/scikit-hep/iminuit/pull/874>`_)
-- Add ``hide_modules`` and ``deprecated_parameters`` (`#873 <https://github.com/scikit-hep/iminuit/pull/873>`_)
-- Update progressbar (`#872 <https://github.com/scikit-hep/iminuit/pull/872>`_)
-- Better ruff settings and adjustments, improvements to readme (`#871 <https://github.com/scikit-hep/iminuit/pull/871>`_)
-- Use unicodeitplus instead of unicodeit to render latex as unicode (`#868 <https://github.com/scikit-hep/iminuit/pull/868>`_)
-- Add Roofit tutorial (`#867 <https://github.com/scikit-hep/iminuit/pull/867>`_)
-- Improve error message for cost function (`#863 <https://github.com/scikit-hep/iminuit/pull/863>`_)
-- Experimental ``Minuit.mncontour`` algorithm (`#861 <https://github.com/scikit-hep/iminuit/pull/861>`_)
-- Allow passing an integer instead of a variable name in several places for consistency (`#860 <https://github.com/scikit-hep/iminuit/pull/860>`_)
-- Replace flake8 with ruff (`#859 <https://github.com/scikit-hep/iminuit/pull/859>`_)
-- Add basic latex display support if unicodeit is installed (`#858 <https://github.com/scikit-hep/iminuit/pull/858>`_)
-
 2.21.3 (April 03, 2023)
 -----------------------
 - Fix template input modification bug in template class (`#856 <https://github.com/scikit-hep/iminuit/pull/856>`_)
