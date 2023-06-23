@@ -7,11 +7,12 @@
 FAQ
 ===
 
-Disclaimer: Read the excellent MINUIT2 user guide!
---------------------------------------------------
+Disclaimer: Read the excellent MINUIT user guide!
+-------------------------------------------------
 
-Many technical questions are nicely covered by the user guide of MINUIT2,
-:download:`MINUIT User's guide <mnusersguide.pdf>`. We will frequently refer to it here.
+Many technical questions are nicely covered by the `Minuit reference manual <https://cds.cern.ch/record/2296388>`_ of the original MINUIT in Fortran, on which MINUIT2 is based. Still relevant is chapter 5, which covers all the questions that one encounters when using Minuit in practice. If you have trouble with the fit, there is advice in sections 5.6 and 5.7 on how to fix common issues.
+
+Another source is the :download:`MINUIT User's guide <mnusersguide.pdf>`, which covers the C++ Minuit2 library on which iminuit is based. It also contains advice on troubleshooting, we will frequently refer to it here. However, the Fortran manual usually goes into more detail and is therefore preferred.
 
 I don't understand :meth:`Minuit.hesse`, :meth:`Minuit.minos`, :attr:`Minuit.errordef`; what do these do?
 -----------------------------------------------------------------------------------------------------------
@@ -27,7 +28,7 @@ The MINUIT2 user's guide explains all about it, see pages 6-8 and 38-40.
 I want to cite iminuit in my paper. Help?
 ------------------------------------------------
 
-We use the excellent Zenodo service to make each iminuit release citable. You can either cite iminuit as a software or you can cite the exact version that was used for your analysis. For more details, see :ref:`citation`.
+We use Zenodo to make each iminuit release citable. You can either cite iminuit as a software or you can cite the exact version that was used for your analysis. For more details, see :ref:`citation`.
 
 Can I have parameter limits that depend on each other (e.g. x^2 + y^2 < 3)?
 ---------------------------------------------------------------------------
