@@ -1,6 +1,6 @@
 # flake8: noqa E501
 from iminuit import Minuit
-from iminuit.util import Params, Param, Matrix, FMin, MError
+from iminuit.util import Param, Matrix, FMin, MError
 from iminuit import _repr_html, _repr_text
 import pytest
 from argparse import Namespace
