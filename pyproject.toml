@@ -33,10 +33,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
 ]
-dependencies = [
-    "numpy >= 1.21",
-    "typing_extensions;python_version < '3.9'"
-]
+dependencies = ["numpy >= 1.21", "typing_extensions;python_version < '3.9'"]
 
 [project.urls]
 repository = "http://github.com/scikit-hep/iminuit"
@@ -49,7 +46,7 @@ test = [
     # ipywidgets 8.0.5 and 8.0.6 are broken
     # see https://github.com/jupyter-widgets/ipywidgets/issues/3731
     "ipywidgets<8.0.5",
-    "ipykernel",  # needed by ipywidgets 8.0.6
+    "ipykernel",        # needed by ipywidgets 8.0.6
     "joblib",
     "jacobi",
     "matplotlib",
@@ -61,31 +58,25 @@ test = [
     "tabulate",
     "boost_histogram",
     "resample",
-    "unicodeitplus"
+    "unicodeitplus",
 ]
 doc = [
     "sphinx<7",
-    "sphinx-rtd-theme",  # needs sphinx<7
+    "sphinx-rtd-theme", # needs sphinx<7
     "nbsphinx",
     "nbconvert",
     "nbformat",
     "jupyter_client",
     "ipykernel",
-    # There are some problems with current jax versions
     "jax",
-    "jaxlib"
+    "jaxlib",
 ]
 
 [tool.scikit-build]
 minimum-version = "0.3"
 build-dir = "build/{wheel_tag}"
-sdist.exclude = [
-    "extern/root",
-]
-sdist.include = [
-    "extern/root/math/minuit2/inc",
-    "extern/root/math/minuit2/src",
-]
+sdist.exclude = ["extern/root"]
+sdist.include = ["extern/root/math/minuit2/inc", "extern/root/math/minuit2/src"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"

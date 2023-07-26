@@ -223,6 +223,8 @@ def test_interactive():
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_raises():
+    pytest.importorskip("ipywidgets")
+
     def raiser(args):
         raise ValueError
 
@@ -237,6 +239,8 @@ def test_interactive_raises():
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_with_array_func():
+    pytest.importorskip("ipywidgets")
+
     def cost(par):
         return par[0] ** 2 + (par[1] / 2) ** 2
 
