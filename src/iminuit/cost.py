@@ -116,7 +116,7 @@ NEGATIVE_LOG_LIKELIHOOD = 0.5
 
 def _safe_log(x):
     # guard against x = 0
-    return np.log(x + 1e-323)
+    return np.log(np.maximum(np.finfo(x.dtype).smallest_normal, x))
 
 
 def _unbinned_nll(x):
