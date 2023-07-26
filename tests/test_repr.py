@@ -1,4 +1,4 @@
-# flake8: noqa E501
+# flake8: noqa: E501
 from iminuit import Minuit
 from iminuit.util import Param, Matrix, FMin, MError
 from iminuit import _repr_html, _repr_text
