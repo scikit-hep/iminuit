@@ -180,6 +180,9 @@ def _strip(items: List[str]) -> List[str]:
         if i > 0:
             for k in mask:
                 items[k] = items[k][:-i]
+        # turn negative zero into positive zero
+        if items[0] == "-0":
+            items[0] = "0"
     return items
 
 

@@ -81,6 +81,8 @@ def test_strip():
     assert _strip(["0.11", "0.20"]) == ["0.11", "0.20"]
     assert _strip(["10.0", "20.0"]) == ["10", "20"]
     assert _strip(["1.200", "3.40"]) == ["1.20", "3.4"]
+    assert _strip(["0.000", "0.000"]) == ["0", "0"]
+    assert _strip(["-0.00", "0.00"]) == ["0", "0"]
 
 
 def test_term_format():
