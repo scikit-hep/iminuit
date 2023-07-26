@@ -113,10 +113,12 @@ __all__ = [
 CHISQUARE = 1.0
 NEGATIVE_LOG_LIKELIHOOD = 0.5
 
+_SMALLEST_NORMAL = np.finfo(float).smallest_normal
+
 
 def _safe_log(x):
     # guard against x = 0
-    return np.log(np.maximum(np.finfo(x.dtype).smallest_normal, x))
+    return np.log(np.maximum(_SMALLEST_NORMAL, x))
 
 
 def _unbinned_nll(x):
