@@ -237,7 +237,7 @@ def test_UnbinnedNLL_visualize(log):
     # manual spacing
     c.visualize((1, 2), model_points=np.linspace(1, 1000))
 
-    with pytest.raises(
+    with pytest.warns(
         np.VisibleDeprecationWarning, match="keyword 'nbins' is deprecated"
     ):
         c.visualize((1, 2), nbins=20)
