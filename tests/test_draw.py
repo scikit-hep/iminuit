@@ -137,7 +137,7 @@ def test_mnmatrix_7(fig):
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive():
-    import ipywidgets
+    ipywidgets = pytest.importorskip("ipywidgets")
 
     def cost(a, b):
         return a**2 + b**2
