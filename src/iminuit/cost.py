@@ -727,9 +727,8 @@ class CostSum(Cost, ABCSequence):
         n = sum(hasattr(comp, "visualize") for comp in self)
 
         fig = plt.gcf()
-        w = fig.get_figwidth()
-        h = fig.get_figheight() * n / 1.5
-        _, ax = plt.subplots(1, n, figsize=(w, h), num=fig.number)
+        fig.set_figwidth(n * fig.get_figwidth() / 1.5)
+        _, ax = plt.subplots(1, n, num=fig.number)
 
         if component_kwargs is None:
             component_kwargs = {}
