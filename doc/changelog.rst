@@ -5,10 +5,10 @@
 Changelog
 =========
 
-2.23.0 (July 27, 2023)
+2.23.0 (July 28, 2023)
 ----------------------
 - Fix ``CostSum.visualize`` bug (`#918 <https://github.com/scikit-hep/iminuit/pull/918>`_)
-- Fix ``_safe_log`` on systems which use 32 bit floats (`#915 <https://github.com/scikit-hep/iminuit/pull/915>`_)
+- Fix ``_safe_log`` on systems which use 32 bit floats (`#915 <https://github.com/scikit-hep/iminuit/pull/915>`_), (`#919 <https://github.com/scikit-hep/iminuit/pull/919>`_)
 - Skip test_interactive and friends when ipywidgets is not installed (`#917 <https://github.com/scikit-hep/iminuit/pull/917>`_)
 - Turn negative zero into positive zero in ``pdg_format`` (`#916 <https://github.com/scikit-hep/iminuit/pull/916>`_)
 - Remove warning in ``test_cost.py`` by using ``pytest.warns`` instead of ``pytest.raises`` (`#914 <https://github.com/scikit-hep/iminuit/pull/914>`_)
