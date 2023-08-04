@@ -1,5 +1,5 @@
 from iminuit.util import describe, make_func_code
-from iminuit.typing import Annotated, Gt, Lt, Ge, Le
+from iminuit.typing import Annotated, Gt, Lt, Ge, Le, Interval
 from math import ldexp
 import platform
 from functools import wraps
@@ -195,6 +195,7 @@ def test_with_type_hints():
         c: Annotated[float, 0:],
         d: Annotated[float, Ge(1)],
         e: Annotated[float, Le(2)],
+        f: Annotated[float, Interval(gt=2, lt=3)],
     ):
         ...
 
@@ -206,6 +207,7 @@ def test_with_type_hints():
         "c": (0, np.inf),
         "d": (1, np.inf),
         "e": (-np.inf, 2),
+        "f": (2, 3),
     }
 
     class Foo:
@@ -217,6 +219,50 @@ def test_with_type_hints():
 
     r = describe(Foo(), annotations=True)
     assert r == {"x": None, "a": (0, 1), "b": None}
+
+
+def test_with_pydantic_types():
+    tp = pytest.importorskip("pydantic.types")
+
+    def foo(
+        x: NDArray,
+        a: tp.PositiveFloat,
+        b: tp.NonNegativeFloat,
+        c: float,
+        d: Annotated[float, tp.annotated_types.Gt(1)],
+        e: Annotated[float, tp.annotated_types.Interval(gt=0, lt=1)],
+    ):
+        ...
+
+    r = describe(foo, annotations=True)
+    assert r == {
+        "x": None,
+        "a": (0, np.inf),
+        "b": (0, np.inf),
+        "c": None,
+        "d": (1, np.inf),
+        "e": (0, 1),
+    }
+
+
+def test_with_annotated_types():
+    tp = pytest.importorskip("annotated_types")
+
+    def foo(
+        x: NDArray,
+        a: float,
+        b: Annotated[float, tp.Gt(1)],
+        c: Annotated[float, tp.Interval(gt=0, lt=1)],
+    ):
+        ...
+
+    r = describe(foo, annotations=True)
+    assert r == {
+        "x": None,
+        "a": None,
+        "b": (1, np.inf),
+        "c": (0, 1),
+    }
 
 
 class Foo(float):

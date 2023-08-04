@@ -71,3 +71,13 @@ class Le:
     """Annotation compatible with annotated-types."""
 
     le: float
+
+
+@dataclasses.dataclass
+class Interval:
+    """Annotation compatible with annotated-types."""
+
+    gt: Optional[float] = None
+    ge: Optional[float] = None
+    lt: Optional[float] = None
+    le: Optional[float] = None

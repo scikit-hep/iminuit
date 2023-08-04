@@ -59,6 +59,8 @@ test = [
     "boost_histogram",
     "resample",
     "unicodeitplus",
+    "pydantic",
+    "annotated_types",
 ]
 doc = [
     "sphinx<7",

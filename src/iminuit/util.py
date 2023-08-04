@@ -1276,15 +1276,22 @@ def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
                 lim[0] = c.start
             if c.stop is not None:
                 lim[1] = c.stop
-        # Minuit does not distinguish between closed and open intervals
-        elif hasattr(c, "gt"):
-            lim[0] = c.gt
-        elif hasattr(c, "ge"):
-            lim[0] = c.ge
-        elif hasattr(c, "lt"):
-            lim[1] = c.lt
-        elif hasattr(c, "le"):
-            lim[1] = c.le
+        # Minuit does not distinguish between closed and open intervals.
+        # We use a chain of ifs so that the code also works with the
+        # `Interval` class, which contains several of those attributes
+        # and which can be None.
+        gt = getattr(c, "gt", None)
+        ge = getattr(c, "ge", None)
+        lt = getattr(c, "lt", None)
+        le = getattr(c, "le", None)
+        if gt is not None:
+            lim[0] = gt
+        if ge is not None:
+            lim[0] = ge
+        if lt is not None:
+            lim[1] = lt
+        if le is not None:
+            lim[1] = le
     return tuple(lim)
 
 
