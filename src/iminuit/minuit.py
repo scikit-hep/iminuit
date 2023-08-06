@@ -1434,13 +1434,14 @@ class Minuit:
             Names of parameters to generate Minos errors for. If no positional
             arguments are given, Minos is run for each parameter.
         cl : float or None, optional
-            Confidence level for the confidence interval. If not set or None, a
-            standard 68.3 % confidence interval is produced. Setting this to another
-            value requires the scipy module to be installed. If 0 < cl < 1, the value
-            is interpreted as the confidence level (a probability). If cl >= 1, it is
-            interpreted as number of standard deviations. For example, cl=3 produces a
-            3 sigma interval. Values other than 0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5
-            require the scipy module.
+            Confidence level of the interval. If not set or None, a standard 68 %
+            interval is computed (default). If 0 < cl < 1, the value is interpreted as
+            the confidence level (a probability). For convenience, values cl >= 1 are
+            interpreted as the probability content of a central symmetric interval
+            covering that many standard deviations of a normal distribution. For
+            example, cl=1 is interpreted as 68.3 %, and cl=2 is 84.3 %, and so on. Using
+            values other than 0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5 require the scipy
+            module.
         ncall : int or None, optional
             Limit the number of calls made by Minos. If None, an adaptive internal
             heuristic of the Minuit2 library is used (Default: None).
@@ -1929,9 +1930,12 @@ class Minuit:
         cl : float or None, optional
             Confidence level of the contour. If not set or None, a standard 68 % contour
             is computed (default). If 0 < cl < 1, the value is interpreted as the
-            confidence level (a probability). If cl >= 1, it is interpreted as number of
-            standard deviations. For example, cl=3 produces a 3 sigma contour. Values
-            other than 0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5 require the scipy module.
+            confidence level (a probability). For convenience, values cl >= 1 are
+            interpreted as the probability content of a central symmetric interval
+            covering that many standard deviations of a normal distribution. For
+            example, cl=1 is interpreted as 68.3 %, and cl=2 is 84.3 %, and so on. Using
+            values other than 0.68, 0.9, 0.95, 0.99, 1, 2, 3, 4, 5 require the scipy
+            module.
         size : int, optional
             Number of points on the contour to find (default: 100). Increasing this
             makes the contour smoother, but requires more computation time.
