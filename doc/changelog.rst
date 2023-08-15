@@ -5,6 +5,12 @@
 Changelog
 =========
 
+2.24.0 (August 15, 2023)
+------------------------
+- Iteration limit in smart sampling to fix behavior for step functions (`#928 <https://github.com/scikit-hep/iminuit/pull/928>`_)
+- Clarify meaning of 2d contours in minuit.draw_mnmatrix (`#927 <https://github.com/scikit-hep/iminuit/pull/927>`_)
+- Support interval type and check compatibility with pydantic (`#922 <https://github.com/scikit-hep/iminuit/pull/922>`_)
+
 2.23.0 (July 28, 2023)
 ----------------------
 - Fix ``CostSum.visualize`` bug (`#918 <https://github.com/scikit-hep/iminuit/pull/918>`_)
