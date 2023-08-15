@@ -33,7 +33,7 @@ repos:
     exclude: ^doc/_static/.*.svg
 
 # Python formatting
-- repo: https://github.com/psf/black
+- repo: https://github.com/psf/black-pre-commit-mirror
   rev: 23.7.0
   hooks:
   - id: black
