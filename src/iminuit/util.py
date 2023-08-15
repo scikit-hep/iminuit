@@ -1583,7 +1583,7 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3, maxiter=100, maxtime=10):
 
         # in next iteration, handle intervals which do not
         # pass interpolation test and are not too narrow
-        mask = (dy > tol * (ymax - ymin)) & (dx > tol)
+        mask = (dy > tol * (ymax - ymin)) & (dx > tol * abs(xmax - xmin))
         a = a[mask]
         b = b[mask]
         xnew = xnew[mask]
