@@ -165,6 +165,10 @@ def test_issue_923():
     from iminuit import Minuit
     from iminuit.cost import LeastSquares
     import numpy as np
+    import pytest
+
+    # implicitly needed by visualize
+    pytest.importorskip("matplotlib")
 
     def model(x, c1):
         c2 = 100
