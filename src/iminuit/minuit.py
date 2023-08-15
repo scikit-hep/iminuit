@@ -2085,8 +2085,15 @@ class Minuit:
         This draws a matrix of Minos likelihood scans, meaning that the likelihood is
         minimized with respect to the parameters that are not scanned over. The diagonal
         cells of the matrix show the 1D scan, the off-diagonal cells show 2D scans for
-        all unique pairs of parameters. The 2D scans show confidence regions. See
-        :meth:`mncontour` for details on the interpretation of these regions.
+        all unique pairs of parameters.
+
+        The 2D contours should not be interpreted as having the requested confidence
+        level. The requested confidence level is valid only for the 1D interval. This
+        convention differs from other tools, because the matrix is a diagnostic tool. We
+        do not aim for a statistical interpretation of the 2D scans here based on Wilks'
+        theorem, rather the objective was here to align the 1D levels with the 2D
+        contours. To obtain a proper 2D contour with requested confidence level, use
+        :meth:`mncontour`.
 
         Parameters
         ----------
