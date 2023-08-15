@@ -1542,7 +1542,7 @@ def _histogram_segments(mask, xe, masked):
     return segments
 
 
-def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3, maxiter=100, maxtime=10):
+def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3, maxiter=20, maxtime=10):
     t0 = monotonic()
     x = np.linspace(xmin, xmax, start)
     ynew = f(x)
