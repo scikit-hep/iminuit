@@ -711,8 +711,30 @@ def test_smart_sampling_1(fn_expected):
 
 
 def test_smart_sampling_2():
-    with pytest.warns(RuntimeWarning):
-        util._smart_sampling(np.log, 1e-10, 1, tol=1e-10)
+    # should not raise a warning
+    x, y = util._smart_sampling(np.log, 1e-10, 1, tol=1e-5)
+    assert 0 < len(x) < 1000
+
+
+def test_smart_sampling_3():
+    def step(x):
+        return np.where(x > 0.5, 0, 1)
+
+    with pytest.warns(RuntimeWarning, match="Iteration limit"):
+        x, y = util._smart_sampling(step, 0, 1, tol=0)
+    assert 0 < len(x) < 80
+
+
+def test_smart_sampling_4():
+    from time import sleep
+
+    def step(x):
+        sleep(0.1)
+        return np.where(x > 0.5, 0, 1)
+
+    with pytest.warns(RuntimeWarning, match="Time limit"):
+        x, y = util._smart_sampling(step, 0, 1, maxtime=0)
+    assert 0 < len(x) < 10
 
 
 @pytest.mark.parametrize(

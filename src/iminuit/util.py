@@ -1542,7 +1542,8 @@ def _histogram_segments(mask, xe, masked):
     return segments
 
 
-def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
+def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3, maxiter=20, maxtime=10):
+    t0 = monotonic()
     x = np.linspace(xmin, xmax, start)
     ynew = f(x)
     ymin = np.min(ynew)
@@ -1550,10 +1551,23 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
     y = {xi: yi for (xi, yi) in zip(x, ynew)}
     a = x[:-1]
     b = x[1:]
+    niter = 0
     while len(a):
-        if len(y) > 10000:
-            warnings.warn("Too many points", RuntimeWarning)  # pragma: no cover
-            break  # pragma: no cover
+        niter += 1
+        if niter > maxiter:
+            msg = (
+                f"Iteration limit {maxiter} in smart sampling reached, "
+                f"produced {len(y)} points"
+            )
+            warnings.warn(msg, RuntimeWarning)
+            break
+        if monotonic() - t0 > maxtime:
+            msg = (
+                f"Time limit {maxtime} in smart sampling reached, "
+                f"produced {len(y)} points"
+            )
+            warnings.warn(msg, RuntimeWarning)
+            break
         xnew = 0.5 * (a + b)
         ynew = f(xnew)
         ymin = min(ymin, np.min(ynew))
@@ -1565,10 +1579,11 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
             + np.fromiter((y[bi] for bi in b), float)
         )
         dy = np.abs(ynew - yint)
+        dx = np.abs(b - a)
 
-        mask = dy > tol * (ymax - ymin)
-
-        # intervals which do not pass interpolation test
+        # in next iteration, handle intervals which do not
+        # pass interpolation test and are not too narrow
+        mask = (dy > tol * (ymax - ymin)) & (dx > tol * abs(xmax - xmin))
         a = a[mask]
         b = b[mask]
         xnew = xnew[mask]
