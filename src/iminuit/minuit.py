@@ -1916,7 +1916,11 @@ class Minuit:
         scan point. This scan produces a statistical confidence region according to the
         `profile likelihood method <https://en.wikipedia.org/wiki/Likelihood_function>`_
         with a confidence level `cl`, which is asymptotically equal to the coverage
-        probability of the confidence region.
+        probability of the confidence region according to `Wilks' theorem
+        <https://en.wikipedia.org/wiki/Wilks%27_theorem>`. Note that 1D projections of
+        the 2D confidence region are larger than 1D Minos intervals computed for the
+        same confidence level. This is not an error, but a consequence of Wilks'
+        theorem.
 
         The calculation is expensive since a numerical minimisation has to be performed
         at various points.
@@ -2087,12 +2091,9 @@ class Minuit:
         cells of the matrix show the 1D scan, the off-diagonal cells show 2D scans for
         all unique pairs of parameters.
 
-        The 2D contours should not be interpreted as having the requested confidence
-        level. The requested confidence level is valid only for the 1D interval. This
-        convention differs from other tools, because the matrix is a diagnostic tool. We
-        do not aim for a statistical interpretation of the 2D scans here based on Wilks'
-        theorem, rather the objective was here to align the 1D levels with the 2D
-        contours. To obtain a proper 2D contour with requested confidence level, use
+        The projected edges of the 2D contours do not align with the 1D intervals,
+        because of Wilks' theorem. The levels for 2D confidence regions are higher. For
+        more information on the interpretation of 2D confidence regions, see
         :meth:`mncontour`.
 
         Parameters
