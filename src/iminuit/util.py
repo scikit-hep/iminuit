@@ -1550,10 +1550,18 @@ def _smart_sampling(f, xmin, xmax, start=5, tol=5e-3):
     y = {xi: yi for (xi, yi) in zip(x, ynew)}
     a = x[:-1]
     b = x[1:]
+    t0 = monotonic()
+    niter = 0
     while len(a):
-        if len(y) > 10000:
-            warnings.warn("Too many points", RuntimeWarning)  # pragma: no cover
-            break  # pragma: no cover
+        niter += 1
+        if niter > 100:
+            msg = f"Iteration limit in smart sampling reached, produced {len(y)} points"
+            warnings.warn(msg, RuntimeWarning)
+            break
+        if monotonic() - t0 > 10:
+            msg = f"Time limit in smart sampling reached, produced {len(y)} points"
+            warnings.warn(msg, RuntimeWarning)
+            break
         xnew = 0.5 * (a + b)
         ynew = f(xnew)
         ymin = min(ymin, np.min(ynew))

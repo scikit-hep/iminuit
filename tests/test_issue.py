@@ -1,11 +1,9 @@
-from iminuit import Minuit
-from iminuit.util import IMinuitWarning
-import pickle
-import pytest
 import numpy as np
 
 
 def test_issue_424():
+    from iminuit import Minuit
+
     def fcn(x, y, z):
         return (x - 1) ** 2 + (y - 4) ** 2 / 2 + (z - 9) ** 2 / 3
 
@@ -20,6 +18,10 @@ def test_issue_424():
 
 
 def test_issue_544():
+    import pytest
+    from iminuit import Minuit
+    from iminuit.util import IMinuitWarning
+
     def fcn(x, y):
         return x**2 + y**2
 
@@ -30,6 +32,8 @@ def test_issue_544():
 
 
 def test_issue_648():
+    from iminuit import Minuit
+
     class F:
         first = True
 
@@ -45,6 +49,8 @@ def test_issue_648():
 
 
 def test_issue_643():
+    from iminuit import Minuit
+
     def fcn(x, y, z):
         return (x - 2) ** 2 + (y - 3) ** 2 + (z - 4) ** 2
 
@@ -64,6 +70,8 @@ def test_issue_643():
 
 
 def test_issue_669():
+    from iminuit import Minuit
+
     def fcn(x, y):
         return x**2 + (y / 2) ** 2
 
@@ -84,15 +92,21 @@ def test_issue_669():
         assert match
 
 
+# cannot define this inside function, pickle will not allow it
 def fcn(par):
     return np.sum(par**2)
 
 
+# cannot define this inside function, pickle will not allow it
 def grad(par):
     return 2 * par
 
 
 def test_issue_687():
+    import pickle
+    import numpy as np
+    from iminuit import Minuit
+
     start = np.zeros(3)
     m = Minuit(fcn, start)
 
@@ -107,9 +121,12 @@ def test_issue_687():
 
 
 def test_issue_694():
-    stats = pytest.importorskip("scipy.stats")
-
+    import pytest
+    import numpy as np
+    from iminuit import Minuit
     from iminuit.cost import ExtendedUnbinnedNLL
+
+    stats = pytest.importorskip("scipy.stats")
 
     xmus = 1.0
     xmub = 5.0
@@ -142,3 +159,31 @@ def test_issue_694():
             break
     else:
         assert False
+
+
+def test_issue_923():
+    from iminuit import Minuit
+    from iminuit.cost import LeastSquares
+    import numpy as np
+    import pytest
+
+    def model(x, c1):
+        c2 = 100
+        res = np.zeros(len(x))
+        mask = x < 47
+        res[mask] = c1
+        res[~mask] = c2
+        return res
+
+    xtest = np.linspace(0, 74)
+    ytest = xtest * 0 + 1
+    ytesterr = ytest
+
+    least_squares = LeastSquares(xtest, ytest, ytesterr, model)
+
+    m = Minuit(least_squares, c1=1)
+    m.migrad()
+    with pytest.warns(
+        RuntimeWarning, match="Iteration limit in smart sampling reached"
+    ):
+        m.visualize()
