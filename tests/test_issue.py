@@ -165,7 +165,6 @@ def test_issue_923():
     from iminuit import Minuit
     from iminuit.cost import LeastSquares
     import numpy as np
-    import pytest
 
     def model(x, c1):
         c2 = 100
@@ -183,7 +182,5 @@ def test_issue_923():
 
     m = Minuit(least_squares, c1=1)
     m.migrad()
-    with pytest.warns(
-        RuntimeWarning, match="Iteration limit in smart sampling reached"
-    ):
-        m.visualize()
+    # this used to trigger an endless (?) loop
+    m.visualize()
