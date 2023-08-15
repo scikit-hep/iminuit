@@ -27,11 +27,13 @@ These methods and properties you will probably use a lot:
     Minuit.fval
     Minuit.nfit
     Minuit.mnprofile
-    Minuit.draw_mnprofile
+    Minuit.mncontour
+    Minuit.visualize
+    Minuit.draw_mnmatrix
 
 
-Minuit
-------
+Main interface
+--------------
 
 .. autoclass:: Minuit
     :members:
