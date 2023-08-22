@@ -597,13 +597,35 @@ class Cost(abc.ABC):
         -------
         float
         """
-        r = self._call(args)
+        r = self._value(args)
         if self.verbose >= 1:
             print(args, "->", r)
         return r
 
+    def gradient(self, *args: float) -> Optional[NDArray]:
+        """
+        Compute gradient of the cost function.
+
+        This requires that a model gradient is provided.
+
+        Parameters
+        ----------
+        *args : float
+            Parameter values.
+
+        Returns
+        -------
+        ndarray of float or None
+            The length of the array is equal to the length of args.
+        """
+        return self._gradient(args)
+
     @abc.abstractmethod
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
+        ...  # pragma: no cover
+
+    @abc.abstractmethod
+    def _gradient(self, args: Sequence[float]) -> NDArray:
         ...  # pragma: no cover
 
 
@@ -625,8 +647,11 @@ class Constant(Cost):
     def _ndata(self):
         return 0
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         return self.value
+
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        return np.zeros_like(args)
 
 
 class CostSum(Cost, ABCSequence):
@@ -683,10 +708,17 @@ class CostSum(Cost, ABCSequence):
             component_args = tuple(args[i] for i in cmap)
             yield component, component_args
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         r = 0.0
-        for comp, cargs in self._split(args):
-            r += comp._call(cargs) / comp.errordef
+        for component, component_args in self._split(args):
+            r += component._value(component_args) / component.errordef
+        return r
+
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        r = np.zeros(len(args))
+        for component, indices in zip(self._items, self._maps):
+            component_args = tuple(args[i] for i in indices)
+            r[indices] += component._gradient(component_args) / component.errordef
         return r
 
     def _ndata(self):
@@ -793,6 +825,30 @@ class MaskedCost(Cost):
 
     def _update_cache(self):
         self._masked = self._data[_replace_none(self._mask, ...)]
+
+    def point_gradient(self, x: ArrayLike, *args: float) -> NDArray:
+        """
+        Compute gradient of the cost function at each observed value.
+
+        This requires that the model gradient is provided.
+
+        Parameters
+        ----------
+        x: array-like
+            Sample values.
+        *args : float
+            Parameter values.
+
+        Returns
+        -------
+        ndarray of float
+            The array has shape (N, k) for N samples and k arguments.
+        """
+        return self._point_gradient(x, args)
+
+    @abc.abstractmethod
+    def _point_gradient(self, x: ArrayLike, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
 
 
 class UnbinnedCost(MaskedCost):
@@ -936,7 +992,7 @@ class UnbinnedNLL(UnbinnedCost):
         """
         super().__init__(data, pdf, verbose, log)
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         data = self._masked
         x = self._model(data, *args)
         x = _normalize_model_output(x)
@@ -1016,7 +1072,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         """
         super().__init__(data, scaled_pdf, verbose, log)
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         data = self._masked
         ns, x = self._model(data, *args)
         x = _normalize_model_output(
@@ -1479,7 +1535,7 @@ class Template(BinnedCost):
                 assert False  # pragma: no cover
         return mu, mu_var
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         mu, mu_var = self._pred(args)
 
         ma = self.mask
@@ -1614,7 +1670,7 @@ class BinnedNLL(BinnedCostWithModel):
         scale = np.sum(self._masked[..., 0] if self._bztrafo else self._masked)
         return p * scale
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
         ma = self.mask
         if ma is not None:
@@ -1682,7 +1738,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         """
         super().__init__(n, xe, scaled_cdf, verbose)
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
         ma = self.mask
         if ma is not None:
@@ -1832,7 +1888,7 @@ class LeastSquares(MaskedCost):
         data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
         super().__init__(_model_parameters(self._model), data, verbose)
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
         y, yerror = self._masked.T[self._ndim :]
         ym = self._model(x, *args)
@@ -1934,7 +1990,7 @@ class NormalConstraint(Cost):
     result.
     """
 
-    __slots__ = "_value", "_cov", "_covinv"
+    __slots__ = "_expected", "_cov", "_covinv"
 
     def __init__(
         self,
@@ -1955,7 +2011,7 @@ class NormalConstraint(Cost):
             Expected error(s). If 1D, must have same length as `args`. If 2D, must be
             the covariance matrix of the parameters.
         """
-        self._value = _norm(value)
+        self._expected = _norm(value)
         self._cov = _norm(error)
         if self._cov.ndim < 2:
             self._cov **= 2
@@ -1980,14 +2036,14 @@ class NormalConstraint(Cost):
     @property
     def value(self):
         """Get expected parameter values."""
-        return self._value
+        return self._expected
 
     @value.setter
     def value(self, value):
-        self._value[:] = value
+        self._expected[:] = value
 
-    def _call(self, args: Sequence[float]) -> float:
-        delta = self._value - args
+    def _value(self, args: Sequence[float]) -> float:
+        delta = self._expected - args
         if self._covinv.ndim < 2:
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
