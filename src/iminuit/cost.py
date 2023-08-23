@@ -68,6 +68,7 @@ from .util import (
     PerformanceWarning,
     _smart_sampling,
     _detect_log_spacing,
+    is_positive_definite,
 )
 from .typing import Model, ModelGradient, LossFunction
 import numpy as np
@@ -2168,17 +2169,24 @@ class NormalConstraint(Cost):
             Expected error(s). If 1D, must have same length as `args`. If 2D, must be
             the covariance matrix of the parameters.
         """
+        tp_args = (args,) if isinstance(args, str) else tuple(args)
+        nargs = len(tp_args)
         self._expected = _norm(value)
+        if self._expected.ndim > 1:
+            raise ValueError("value must be a scalar or one-dimensional")
+        if len(self._expected) != nargs:
+            raise ValueError("size of value does not match size of args")
         self._cov = _norm(error)
+        if len(self._cov) != nargs:
+            raise ValueError("size of error does not match size of args")
         if self._cov.ndim < 2:
             self._cov **= 2
         elif self._cov.ndim == 2:
-            if not np.all(self._cov == self._cov.T):
-                raise ValueError("covariance matrix is not symmetric")
+            if not is_positive_definite(self._cov):
+                raise ValueError("covariance matrix is not positive definite")
         else:
             raise ValueError("covariance matrix cannot have more than two dimensions")
         self._covinv = _covinv(self._cov)
-        tp_args = (args,) if isinstance(args, str) else tuple(args)
         super().__init__({k: None for k in tp_args}, False)
 
     @property
@@ -2192,6 +2200,8 @@ class NormalConstraint(Cost):
 
     @covariance.setter
     def covariance(self, value):
+        if not is_positive_definite(value):
+            raise ValueError("covariance matrix is not positive definite")
         self._cov[:] = value
         self._covinv = _covinv(self._cov)
 

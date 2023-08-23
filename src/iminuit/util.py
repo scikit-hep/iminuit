@@ -11,7 +11,7 @@ from iminuit import _repr_html, _repr_text, _deprecated
 from iminuit.typing import Key, UserBound, Cost, CostGradient
 from iminuit.warnings import IMinuitWarning, HesseFailedWarning, PerformanceWarning
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 from typing import (
     overload,
     Any,
@@ -52,6 +52,8 @@ __all__ = (
     "make_with_signature",
     "merge_signatures",
     "describe",
+    "gradient",
+    "is_positive_definite",
 )
 
 
@@ -1637,3 +1639,29 @@ def gradient(fcn: Cost) -> Optional[CostGradient]:
     if gradient and isinstance(gradient, CostGradient) and has_gradient:
         return gradient
     return None
+
+
+def is_positive_definite(m: ArrayLike) -> bool:
+    """
+    Return True if argument is a positive definite matrix.
+
+    This test is somewhat expensive, because we attempt a cholesky decomposition.
+
+    Parameters
+    ----------
+    m : array-like
+        Matrix to be tested.
+
+    Returns
+    -------
+    bool
+        True if matrix is positive definite and False otherwise.
+    """
+    m = np.atleast_2d(m)
+    if np.all(m.T == m):
+        try:
+            np.linalg.cholesky(m)
+        except np.linalg.LinAlgError:
+            return False
+        return True
+    return False
