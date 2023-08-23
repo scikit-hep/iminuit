@@ -644,16 +644,16 @@ class Minuit:
         if grad is None:
             grad = mutil.gradient(fcn)
         elif grad is True:
-            g = mutil.gradient(fcn)
-            if g is None:
+            grad = mutil.gradient(fcn)
+            if grad is None:
                 raise ValueError(
-                    "gradient is required, " "but iminuit.util.gradient returned None"
+                    "gradient enforced, but iminuit.util.gradient returned None"
                 )
         elif grad is False:
             grad = None
 
         if grad is not None and not isinstance(grad, CostGradient):
-            raise ValueError("grad is not a CostGradient")
+            raise ValueError("provided gradient is not a CostGradient")
 
         self._fcn = FCN(
             fcn,

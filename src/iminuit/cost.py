@@ -665,7 +665,7 @@ class Constant(Cost):
         return self.value
 
     def _gradient(self, args: Sequence[float]) -> NDArray:
-        return np.zeros_like(args)
+        return np.zeros(0)
 
     @staticmethod
     def _has_gradient():
@@ -2172,6 +2172,11 @@ class NormalConstraint(Cost):
         self._cov = _norm(error)
         if self._cov.ndim < 2:
             self._cov **= 2
+        elif self._cov.ndim == 2:
+            if not np.all(self._cov == self._cov.T):
+                raise ValueError("covariance matrix is not symmetric")
+        else:
+            raise ValueError("covariance matrix cannot have more than two dimensions")
         self._covinv = _covinv(self._cov)
         tp_args = (args,) if isinstance(args, str) else tuple(args)
         super().__init__({k: None for k in tp_args}, False)
@@ -2200,16 +2205,16 @@ class NormalConstraint(Cost):
         self._expected[:] = value
 
     def _value(self, args: Sequence[float]) -> float:
-        delta = self._expected - args
+        delta = args - self._expected
         if self._covinv.ndim < 2:
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
     def _gradient(self, args: Sequence[float]) -> NDArray:
-        delta = self._expected - args
+        delta = args - self._expected
         if self._covinv.ndim < 2:
-            return delta * self._covinv
-        return self._covinv @ delta
+            return 2 * delta * self._covinv
+        return 2 * self._covinv @ delta
 
     def _has_gradient(self) -> bool:
         return True

@@ -55,6 +55,11 @@ def expon_cdf(x, a):
         return 1 - np.exp(-x / a)
 
 
+def numerical_gradient(fcn, *args):
+    jacobi = pytest.importorskip("jacobi").jacobi
+    return lambda *args: jacobi(lambda p: fcn(*p), args)[0]
+
+
 @pytest.fixture
 def unbinned():
     rng = np.random.default_rng(1)
@@ -143,10 +148,27 @@ def test_describe():
     }
 
 
-def test_Constant():
+def test_Constant_1():
     c = Constant(2.5)
     assert c.value == 2.5
     assert c.ndata == 0
+    assert c.has_gradient
+    assert_equal(c.gradient(), [])
+
+
+def test_Constant_2():
+    c = NormalConstraint(("a", "b"), (1, 2), (3, 4)) + Constant(10.2)
+    assert_allclose(c(1, 2), 10.2)
+    assert_allclose(c(4, 2), 10.2 + 1)
+
+
+def test_Constant_3():
+    c = NormalConstraint(("a", "b"), (1, 2), (3, 4)) + Constant(10.2)
+    ref = numerical_gradient(c)
+    assert c.has_gradient
+    assert_allclose(c.gradient(1, 2), ref(1, 2))
+    assert_allclose(c.gradient(2, 3), ref(2, 3))
+    assert_allclose(c.gradient(-1, -2), ref(-1, -2))
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -1023,28 +1045,115 @@ def test_CostSum_visualize():
 
 
 def test_NormalConstraint_1():
-    def model(x, a):
-        return a * np.ones_like(x)
+    c1 = NormalConstraint("a", 1, 1.5)
+    c2 = NormalConstraint(("a", "b"), (1, 2), (3, 4))
+    c3 = NormalConstraint(("a", "b"), (1, 2), ((1, 0.5), (0.5, 4)))
 
-    lsq1 = LeastSquares(0, 1, 1, model)
-    lsq2 = lsq1 + NormalConstraint("a", 1, 0.1)
-    assert describe(lsq1) == ["a"]
-    assert describe(lsq2) == ["a"]
-    assert lsq1.ndata == 1
-    assert lsq2.ndata == 2
+    assert describe(c1) == ["a"]
+    assert describe(c2) == ["a", "b"]
+    assert describe(c3) == ["a", "b"]
+    assert c1.ndata == 1
+    assert c2.ndata == 2
+    assert c3.ndata == 2
+    assert c1.has_gradient
+    assert c2.has_gradient
+    assert c3.has_gradient
+    assert c1.value == 1
+    assert_equal(c1.covariance, [1.5**2])
+    assert_equal(c2.value, (1, 2))
+    assert_equal(c2.covariance, (9, 16))
+    assert_equal(c3.value, (1, 2))
+    assert_equal(c3.covariance, ((1, 0.5), (0.5, 4)))
 
-    m = Minuit(lsq1, 0)
+    assert_allclose(c1(1), 0)
+    assert_allclose(c1(1 + 1.5), 1)
+    assert_allclose(c1(1 - 1.5), 1)
+
+    assert_allclose(c2(1, 2), 0)
+    assert_allclose(c2(1 + 3, 2), 1)
+    assert_allclose(c2(1 - 3, 2), 1)
+    assert_allclose(c2(1, 2 + 4), 1)
+    assert_allclose(c2(1, 2 - 4), 1)
+
+    def ref(x, y):
+        d = np.subtract((x, y), (1, 2))
+        c = ((1, 0.5), (0.5, 4))
+        cinv = np.linalg.inv(c)
+        return d.T @ cinv @ d
+
+    assert_allclose(c3(1, 2), 0)
+    assert_allclose(c3(2, 2), ref(2, 2))
+    assert_allclose(c3(3, 4), ref(3, 4))
+    assert_allclose(c3(-1, -2), ref(-1, -2))
+
+    ref = numerical_gradient(c1)
+    assert_allclose(c1.gradient(1), [0])
+    assert_allclose(c1.gradient(2), ref(2))
+    assert_allclose(c1.gradient(-2), ref(-2))
+
+    ref = numerical_gradient(c2)
+    assert_allclose(c2.gradient(1, 2), [0, 0])
+    assert_allclose(c2.gradient(2, 3), ref(2, 3))
+    assert_allclose(c2.gradient(-2, -4), ref(-2, -4))
+
+    ref = numerical_gradient(c3)
+    assert_allclose(c3.gradient(1, 2), [0, 0])
+    assert_allclose(c3.gradient(2, 3), ref(2, 3))
+    assert_allclose(c3.gradient(-2, -4), ref(-2, -4))
+
+    c1.value = 2
+    c1.covariance = 4
+    assert_equal(c1.value, 2)
+    assert_equal(c1.covariance, 4)
+    assert_allclose(c1(2), 0)
+    assert_allclose(c1(4), 1)
+    assert_allclose(c1(0), 1)
+
+    c2.value = (2, 3)
+    c2.covariance = (1, 4)
+    assert_equal(c2.value, (2, 3))
+    assert_equal(c2.covariance, (1, 4))
+    assert_allclose(c2(2, 3), 0)
+    assert_allclose(c2(1, 3), 1)
+    assert_allclose(c2(2, 5), 1)
+
+    c3.value = (2, 3)
+    c3.covariance = [(4, 1), (1, 5)]
+    assert_equal(c3.value, (2, 3))
+    assert_equal(c3.covariance, [(4, 1), (1, 5)])
+
+    def ref(x, y):
+        d = np.subtract((x, y), (2, 3))
+        c = ((4, 1), (1, 5))
+        cinv = np.linalg.inv(c)
+        return d.T @ cinv @ d
+
+    assert_allclose(c3(2, 3), 0)
+    assert_allclose(c3(1, 3), ref(1, 3))
+    assert_allclose(c3(2, 5), ref(2, 5))
+
+
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_NormalConstraint_2(use_grad):
+    c1 = NormalConstraint("a", 1, 1)
+    c2 = c1 + NormalConstraint("a", 1, 0.1)
+
+    m = Minuit(c1, 0, grad=use_grad)
     m.migrad()
+    if use_grad:
+        assert m.ngrad > 0
     assert_allclose(m.values, (1,), atol=1e-2)
     assert_allclose(m.errors, (1,), rtol=1e-2)
 
-    m = Minuit(lsq2, 0)
+    m = Minuit(c2, 0, grad=use_grad)
     m.migrad()
+    if use_grad:
+        assert m.ngrad > 0
     assert_allclose(m.values, (1,), atol=1e-2)
     assert_allclose(m.errors, (0.1,), rtol=1e-2)
 
 
-def test_NormalConstraint_2():
+def test_NormalConstraint_3():
     lsq1 = NormalConstraint(("a", "b"), (1, 2), (2, 2))
     lsq2 = lsq1 + NormalConstraint("b", 2, 0.1) + NormalConstraint("a", 1, 0.01)
     sa = 0.1
@@ -1073,16 +1182,6 @@ def test_NormalConstraint_2():
     assert_allclose(m.values, (1, 2), atol=1e-3)
     assert_allclose(m.errors, (sa, sb), rtol=1e-2)
     assert_allclose(m.covariance, cov, rtol=1e-2)
-
-
-def test_NormalConstraint_properties():
-    nc = NormalConstraint(("a", "b"), (1, 2), (3, 4))
-    assert_equal(nc.value, (1, 2))
-    assert_equal(nc.covariance, (9, 16))
-    nc.value = (2, 3)
-    nc.covariance = (1, 2)
-    assert_equal(nc.value, (2, 3))
-    assert_equal(nc.covariance, (1, 2))
 
 
 def test_NormalConstraint_visualize():
