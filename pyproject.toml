@@ -90,8 +90,15 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-select = ["E", "F", "D"]
+select = [
+    "E", "F", # flake8
+    "D",      # pydocstyle
+]
 extend-ignore = ["D203", "D212"]
+src = ["src"]
+unfixable = [
+    "F841", # Removes unused variables
+]
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
