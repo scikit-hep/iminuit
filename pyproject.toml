@@ -82,11 +82,15 @@ sdist.include = ["extern/root/math/minuit2/inc", "extern/root/math/minuit2/src"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-q -ra --ff"
+addopts = ["-q", "-ra", "--ff", "--strict-config", "--strict-markers"]
+log_cli_level = "INFO"
 testpaths = ["tests"]
+xfail_strict = true
 filterwarnings = [
     "error::numpy.VisibleDeprecationWarning",
+    "error::PendingDeprecationWarning",
     "error::DeprecationWarning",
+    "error::FutureWarning",
 ]
 
 [tool.ruff]
