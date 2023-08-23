@@ -2200,7 +2200,8 @@ class NormalConstraint(Cost):
 
     @covariance.setter
     def covariance(self, value):
-        if np.ndim(value) == 2 and not is_positive_definite(value):
+        value = np.asarray(value)
+        if value.ndim == 2 and not is_positive_definite(value):
             raise ValueError("covariance matrix is not positive definite")
         self._cov[:] = value
         self._covinv = _covinv(self._cov)
