@@ -8,7 +8,7 @@ import inspect
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
-from iminuit.typing import Key, UserBound
+from iminuit.typing import Key, UserBound, Cost, CostGradient
 from iminuit.warnings import IMinuitWarning, HesseFailedWarning, PerformanceWarning
 import numpy as np
 from numpy.typing import NDArray
@@ -1066,7 +1066,7 @@ def make_with_signature(
 
 def merge_signatures(
     callables: Iterable[Callable], annotations: bool = False
-) -> Tuple[Any, List[Tuple[int, ...]]]:
+) -> Tuple[Any, List[List[int]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1078,7 +1078,7 @@ def merge_signatures(
 
         parameters, mapping = merge_signatures(f, g)
         # parameters is ('x', 'y', 'z', 'p')
-        # mapping is ((0, 1, 2), (0, 3))
+        # mapping is ([0, 1, 2], [0, 3])
 
     Parameters
     ----------
@@ -1108,7 +1108,7 @@ def merge_signatures(
                 amap.append(len(args))
                 args.append(k)
                 anns.append(ann)
-        mapping.append(tuple(amap))
+        mapping.append(amap)
 
     if annotations:
         return {k: a for (k, a) in zip(args, anns)}, mapping
@@ -1605,3 +1605,35 @@ def _detect_log_spacing(x: NDArray) -> bool:
     lin_rel_std = np.std(d_lin) / np.mean(d_lin)
     log_rel_std = np.std(d_log) / np.mean(d_log)
     return log_rel_std < lin_rel_std
+
+
+def gradient(fcn: Cost) -> Optional[CostGradient]:
+    """
+    Return a callable which computes the gradient of fcn or None.
+
+    Parameters
+    ----------
+    fcn: Cost
+        Cost function which may provide a callable gradient. How the gradient
+        is detected is specified below in the Notes.
+
+    Notes
+    -----
+    This function checks whether the following attributes exist:
+        `fcn.grad`
+        `fcn.gradient`
+        `fcn.has_gradient`
+    If `fcn.grad` or `fcn.gradient` exists and is a CostGradient, it is returned unless
+    `fcn.has_gradient` exists and is False. If no useable gradient is detected, None is
+    returned. If both `fcn.grad` and `fcn.gradient` exist, `fcn.gradient` is used.
+
+    Returns
+    -------
+    callable or None
+        The gradient function or None
+    """
+    gradient = getattr(fcn, "gradient", getattr(fcn, "grad", None))
+    has_gradient = getattr(fcn, "has_gradient", True)
+    if gradient and isinstance(gradient, CostGradient) and has_gradient:
+        return gradient
+    return None

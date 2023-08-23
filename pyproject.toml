@@ -91,7 +91,7 @@ filterwarnings = [
 
 [tool.ruff]
 select = ["E", "F", "D"]
-extend-ignore = ["D203", "D212"]
+extend-ignore = ["D203", "D212", "D200"]
 
 [tool.ruff.pydocstyle]
 convention = "numpy"

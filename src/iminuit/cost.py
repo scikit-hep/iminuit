@@ -69,7 +69,7 @@ from .util import (
     _smart_sampling,
     _detect_log_spacing,
 )
-from .typing import Model, LossFunction
+from .typing import Model, ModelGradient, LossFunction
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from collections.abc import Sequence as ABCSequence
@@ -85,6 +85,7 @@ from typing import (
     Iterable,
     Optional,
     overload,
+    TypeVar,
 )
 import warnings
 from ._deprecated import deprecated_parameter
@@ -109,6 +110,8 @@ __all__ = [
     "Template",
     "LeastSquares",
 ]
+
+T = TypeVar("T", float, NDArray)
 
 CHISQUARE = 1.0
 NEGATIVE_LOG_LIKELIHOOD = 0.5
@@ -602,7 +605,7 @@ class Cost(abc.ABC):
             print(args, "->", r)
         return r
 
-    def gradient(self, *args: float) -> Optional[NDArray]:
+    def gradient(self, *args: float) -> NDArray:
         """
         Compute gradient of the cost function.
 
@@ -615,10 +618,17 @@ class Cost(abc.ABC):
 
         Returns
         -------
-        ndarray of float or None
+        ndarray of float
             The length of the array is equal to the length of args.
         """
         return self._gradient(args)
+
+    @property
+    def has_gradient(self) -> bool:
+        """
+        Return True if cost function can compute a gradient.
+        """
+        return self._has_gradient()
 
     @abc.abstractmethod
     def _value(self, args: Sequence[float]) -> float:
@@ -626,6 +636,10 @@ class Cost(abc.ABC):
 
     @abc.abstractmethod
     def _gradient(self, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
+
+    @abc.abstractmethod
+    def _has_gradient(self) -> bool:
         ...  # pragma: no cover
 
 
@@ -652,6 +666,10 @@ class Constant(Cost):
 
     def _gradient(self, args: Sequence[float]) -> NDArray:
         return np.zeros_like(args)
+
+    @staticmethod
+    def _has_gradient():
+        return True
 
 
 class CostSum(Cost, ABCSequence):
@@ -720,6 +738,9 @@ class CostSum(Cost, ABCSequence):
             component_args = tuple(args[i] for i in indices)
             r[indices] += component._gradient(component_args) / component.errordef
         return r
+
+    def _has_gradient(self) -> bool:
+        return all(component.has_gradient for component in self._items)
 
     def _ndata(self):
         return sum(c.ndata for c in self._items)
@@ -826,28 +847,28 @@ class MaskedCost(Cost):
     def _update_cache(self):
         self._masked = self._data[_replace_none(self._mask, ...)]
 
-    def point_gradient(self, x: ArrayLike, *args: float) -> NDArray:
+    def covariance(self, *args: float) -> NDArray:
         """
-        Compute gradient of the cost function at each observed value.
+        Estimate covariance of the parameters with the sandwich estimator.
 
-        This requires that the model gradient is provided.
+        This requires that the model gradient is provided, and that the arguments are
+        the maximum-likelihood estimates. The sandwich estimator is only asymptotically
+        correct.
 
         Parameters
         ----------
-        x: array-like
-            Sample values.
         *args : float
-            Parameter values.
+            Maximum-likelihood estimates of the parameter values.
 
         Returns
         -------
         ndarray of float
-            The array has shape (N, k) for N samples and k arguments.
+            The array has shape (K, K) for K arguments.
         """
-        return self._point_gradient(x, args)
+        return self._sandwich(args)
 
     @abc.abstractmethod
-    def _point_gradient(self, x: ArrayLike, args: Sequence[float]) -> NDArray:
+    def _sandwich(self, args: Sequence[float]) -> NDArray:
         ...  # pragma: no cover
 
 
@@ -858,12 +879,20 @@ class UnbinnedCost(MaskedCost):
     :meta private:
     """
 
-    __slots__ = "_model", "_log"
+    __slots__ = "_model", "_grad", "_log"
 
-    def __init__(self, data, model: Model, verbose: int, log: bool):
+    def __init__(
+        self,
+        data,
+        model: Model,
+        verbose: int,
+        log: bool,
+        grad: Optional[ModelGradient],
+    ):
         """For internal use."""
         self._model = model
         self._log = log
+        self._grad = grad
         super().__init__(_model_parameters(model), _norm(data), verbose)
 
     @abc.abstractproperty
@@ -933,6 +962,34 @@ class UnbinnedCost(MaskedCost):
         plt.errorbar(cx, n, n**0.5, fmt="ok")
         plt.fill_between(xm, 0, ym * dx, fc="C0")
 
+    def fisher_information(self, *args: float) -> NDArray:
+        """
+        Estimate Fisher information for model and sample.
+
+        The estimated Fisher information is only meaningful if the arguments provided
+        are estimates of the true values.
+
+        Parameters
+        ----------
+        *args: float
+            Estimates of model parameters.
+        """
+        return self._fisher_information(args)
+
+    def _fisher_information(self, args: Sequence[float]) -> NDArray:
+        g = self._pointwise_grad(args)
+        return np.einsum("ji,ki->jk", g, g)
+
+    def _sandwich(self, args: Sequence[float]) -> NDArray:
+        return np.linalg.inv(self._fisher_information(args))
+
+    @abc.abstractmethod
+    def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
+
+    def _has_gradient(self) -> bool:
+        return self._grad is not None
+
 
 class UnbinnedNLL(UnbinnedCost):
     """
@@ -963,8 +1020,10 @@ class UnbinnedNLL(UnbinnedCost):
         self,
         data: ArrayLike,
         pdf: Model,
+        *,
         verbose: int = 0,
         log: bool = False,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize UnbinnedNLL with data and model.
@@ -979,26 +1038,51 @@ class UnbinnedNLL(UnbinnedCost):
             Probability density function of the form f(data, par0, [par1, ...]), where
             data is the data sample and par0, ... are model parameters. If the data are
             multivariate, data passed to f has shape (D, N), where D is the number of
-            dimensions and N the number of data points.
+            dimensions and N the number of data points. Must return an array with the
+            shape (N,).
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and
             negative log-likelihood value.
         log : bool, optional
             Distributions of the exponential family (normal, exponential, poisson, ...)
             allow one to compute the logarithm of the pdf directly, which is more
-            accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
-            to True, if the model returns the logarithm of the pdf instead of the pdf.
+            accurate and efficient than numerically computing ``log(pdf)``. Set this
+            to True, if the model returns the logpdf instead of the pdf.
             Default is False.
+        grad : callable or None, optional
+            Optionally pass the gradient of the pdf. Has the same calling signature like
+            the pdf, but must return an array with the shape (K, N), where N is the
+            number of data points and K is the number of parameters. If `log` is True,
+            the function must return the gradient of the logpdf instead of the pdf. The
+            gradient can be used by Minuit to improve or speed up convergence and to
+            compute the sandwich estimator for the variance of the parameter estimates.
+            Default is None.
         """
-        super().__init__(data, pdf, verbose, log)
+        super().__init__(data, pdf, verbose, log, grad)
 
     def _value(self, args: Sequence[float]) -> float:
         data = self._masked
-        x = self._model(data, *args)
-        x = _normalize_model_output(x)
+        f = self._model(data, *args)
+        f = _normalize_model_output(f)
         if self._log:
-            return -2.0 * np.sum(x)
-        return 2.0 * _unbinned_nll(x)
+            return -2.0 * np.sum(f)
+        return 2.0 * _unbinned_nll(f)
+
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        g = self._pointwise_grad(args)
+        return -2.0 * np.sum(g, axis=1)
+
+    def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
+        if self._grad is None:
+            raise ValueError("no gradient available")
+        data = self._masked
+        g = self._grad(data, *args)
+        g = _normalize_model_output(g)
+        if self._log:
+            return g
+        f = self._model(data, *args)
+        f = _normalize_model_output(f)
+        return g / f
 
 
 class ExtendedUnbinnedNLL(UnbinnedCost):
@@ -1039,8 +1123,10 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         self,
         data: ArrayLike,
         scaled_pdf: Model,
+        *,
         verbose: int = 0,
         log: bool = False,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1070,17 +1156,56 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
             to True, if the model returns the logarithm of the density as the second
             argument instead of the density. Default is False.
         """
-        super().__init__(data, scaled_pdf, verbose, log)
+        super().__init__(data, scaled_pdf, verbose, log, grad)
 
     def _value(self, args: Sequence[float]) -> float:
         data = self._masked
-        ns, x = self._model(data, *args)
-        x = _normalize_model_output(
-            x, "Model should return numpy array in second position"
+        fint, f = self._model(data, *args)
+        f = _normalize_model_output(
+            f, "Model should return numpy array in second position"
         )
         if self._log:
-            return 2 * (ns - np.sum(x))
-        return 2 * (ns + _unbinned_nll(x))
+            return 2 * (fint - np.sum(f))
+        return 2 * (fint + _unbinned_nll(f))
+
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        if self._grad is None:
+            raise ValueError("no gradient available")
+        data = self._masked
+        gint, g = self._grad(data, *args)
+        gint = _normalize_model_output(
+            gint, "Model should return numpy array in first position"
+        )
+        g = _normalize_model_output(
+            g, "Model should return numpy array in second position"
+        )
+        if self._log:
+            return 2 * (gint - np.sum(g, axis=1))
+        fint, f = self._model(data, *args)
+        f = _normalize_model_output(
+            f, "Model should return numpy array in second position"
+        )
+        return 2 * (gint / fint - np.sum(g / f, axis=1))
+
+    def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
+        if self._grad is None:
+            raise ValueError("no gradient available")
+        data = self._masked
+        gint, g = self._grad(data, *args)
+        gint = _normalize_model_output(
+            gint, "Model should return numpy array in first position"
+        )
+        g = _normalize_model_output(
+            g, "Model should return numpy array in second position"
+        )
+        m = len(data)
+        if self._log:
+            return g - gint / m
+        fint, f = self._model(data, *args)
+        f = _normalize_model_output(
+            f, "Model should return numpy array in second position"
+        )
+        return g / f - gint / (fint * m)
 
 
 class BinnedCost(MaskedCost):
@@ -1322,6 +1447,12 @@ class BinnedCostWithModel(BinnedCost):
         d[d < 0] = 0
         return d
 
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        raise NotImplementedError
+
+    def _has_gradient(self) -> bool:
+        return False
+
 
 class Template(BinnedCost):
     """
@@ -1551,6 +1682,12 @@ class Template(BinnedCost):
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
 
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        raise NotImplementedError
+
+    def _has_gradient(self) -> bool:
+        return False
+
     def _errordef(self) -> float:
         return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
 
@@ -1681,6 +1818,12 @@ class BinnedNLL(BinnedCostWithModel):
             n = self._masked
         return multinominal_chi2(n, mu)
 
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        raise NotImplementedError
+
+    def _has_gradient(self) -> bool:
+        return False
+
 
 class ExtendedBinnedNLL(BinnedCostWithModel):
     """
@@ -1749,6 +1892,12 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
             n = self._masked
         # assert isinstance(n, np.ndarray)
         return poisson_chi2(n, mu)
+
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        raise NotImplementedError
+
+    def _has_gradient(self) -> bool:
+        return False
 
 
 class LeastSquares(MaskedCost):
@@ -1961,6 +2110,12 @@ class LeastSquares(MaskedCost):
             ye[ma] = np.nan
         return (y - ym) / ye
 
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        raise NotImplementedError
+
+    def _has_gradient(self) -> bool:
+        return False
+
 
 LeastSquares.pulls.__doc__ = BinnedCost.pulls.__doc__
 
@@ -2048,8 +2203,17 @@ class NormalConstraint(Cost):
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        delta = self._expected - args
+        if self._covinv.ndim < 2:
+            return delta * self._covinv
+        return self._covinv @ delta
+
+    def _has_gradient(self) -> bool:
+        return True
+
     def _ndata(self):
-        return len(self._value)
+        return len(self._expected)
 
     def visualize(self, args: ArrayLike):
         """

@@ -18,7 +18,6 @@ from iminuit._core import (
 import numpy as np
 from typing import (
     Union,
-    Sequence,
     Optional,
     Callable,
     Tuple,
@@ -30,12 +29,9 @@ from typing import (
     Set,
     Sized,
 )
-from iminuit.typing import UserBound
+from iminuit.typing import UserBound, Cost, CostGradient
 from iminuit._optional_dependencies import optional_module_for
-
-# Better use numpy.typing.ArrayLike in the future, but this
-# requires dropping Python-3.6 support
-_ArrayLike = Sequence
+from numpy.typing import ArrayLike
 
 MnPrint.global_level = 0
 
@@ -488,9 +484,9 @@ class Minuit:
 
     def __init__(
         self,
-        fcn: Callable,
-        *args: Union[float, _ArrayLike[float]],
-        grad: Callable = None,
+        fcn: Cost,
+        *args: Union[float, ArrayLike],
+        grad: Union[CostGradient, bool, None] = None,
         name: Collection[str] = None,
         **kwds: float,
     ):
@@ -508,11 +504,18 @@ class Minuit:
         *args :
             Starting values for the minimization as positional arguments.
             See notes for details on how to set starting values.
-        grad :
-            Function that calculates the gradient and returns an iterable object with
-            one entry for each parameter, which is the derivative for that parameter. If
-            None (default), Minuit will calculate the gradient numerically.
-        name :
+        grad : callable, bool, or None, optional
+            If grad is a callable, it must be a function that calculates the gradient
+            and returns an iterable object with one entry for each parameter, which is
+            the derivative of `fcn` for that parameter. If None (default), Minuit will
+            call the function :func:`iminuit.util.gradient` on `fcn`. If this function
+            returns gradient callable, it will be used, otherwise Minuit will internally
+            compute the gradient numerically. Please see the documentation of
+            :func:`iminuit.util.gradient` how gradients are detected. Passing a boolean
+            override this detection. If grad=True is used, a ValueError is raised if no
+            useable gradient is found. If grad=False, Minuit will internally compute the
+            gradient numerically.
+        name : sequence of str, optional
             If it is set, it overrides iminuit's function signature detection.
         **kwds :
             Starting values for the minimization as keyword arguments.
@@ -605,7 +608,7 @@ class Minuit:
 
         See Also
         --------
-        migrad, hesse, minos, scan, simplex
+        migrad, hesse, minos, scan, simplex, iminuit.util.gradient
         """
         array_call = False
         if len(args) == 1 and isinstance(args[0], Iterable):
@@ -637,9 +640,24 @@ class Minuit:
         # set self.tol to default value
         self.tol = None  # type:ignore
         self._strategy = MnStrategy(1)
+
+        if grad is None:
+            grad = mutil.gradient(fcn)
+        elif grad is True:
+            g = mutil.gradient(fcn)
+            if g is None:
+                raise ValueError(
+                    "gradient is required, " "but iminuit.util.gradient returned None"
+                )
+        elif grad is False:
+            grad = None
+
+        if grad is not None and not isinstance(grad, CostGradient):
+            raise ValueError("grad is not a CostGradient")
+
         self._fcn = FCN(
             fcn,
-            getattr(fcn, "grad", grad),
+            grad,
             array_call,
             getattr(fcn, "errordef", 1.0),
         )
@@ -1528,7 +1546,7 @@ class Minuit:
         *,
         size: int = 30,
         bound: Union[float, UserBound] = 2,
-        grid: _ArrayLike[float] = None,
+        grid: ArrayLike = None,
         subtract_min: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -1634,7 +1652,7 @@ class Minuit:
         *,
         size: int = 100,
         bound: Union[float, UserBound] = 2,
-        grid: _ArrayLike[float] = None,
+        grid: ArrayLike = None,
         subtract_min: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
         r"""
@@ -1772,7 +1790,7 @@ class Minuit:
         *,
         size: int = 50,
         bound: Union[float, Iterable[Tuple[float, float]]] = 2,
-        grid: Tuple[_ArrayLike, _ArrayLike] = None,
+        grid: Tuple[ArrayLike, ArrayLike] = None,
         subtract_min: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
@@ -2012,7 +2030,7 @@ class Minuit:
         x: Union[int, str],
         y: Union[int, str],
         *,
-        cl: Union[float, _ArrayLike[float]] = None,
+        cl: Union[float, ArrayLike] = None,
         size: int = 100,
         interpolated: int = 0,
         experimental: bool = False,
@@ -2078,7 +2096,7 @@ class Minuit:
     def draw_mnmatrix(
         self,
         *,
-        cl: Union[float, _ArrayLike[float]] = None,
+        cl: Union[float, ArrayLike] = None,
         size: int = 100,
         experimental: bool = False,
         figsize=None,

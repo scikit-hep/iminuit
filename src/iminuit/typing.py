@@ -30,6 +30,33 @@ class Model(Protocol):
 
 
 @runtime_checkable
+class ModelGradient(Protocol):
+    """Type for user-defined model gradient."""
+
+    def __call__(self, x: np.ndarray, *args: float) -> np.ndarray:
+        """Evaluate model gradient at locations x and return results as an array."""
+        ...  # pragma: no cover
+
+
+@runtime_checkable
+class Cost(Protocol):
+    """Type for user-defined cost function."""
+
+    def __call__(self, *args: float) -> float:
+        """Evaluate cost and return results as a float."""
+        ...  # pragma: no cover
+
+
+@runtime_checkable
+class CostGradient(Protocol):
+    """Type for user-defined gradient of a cost function."""
+
+    def __call__(self, *args: float) -> np.ndarray:
+        """Evaluate gradient and return results as an array."""
+        ...  # pragma: no cover
+
+
+@runtime_checkable
 class LossFunction(Protocol):
     """Type for user-defined loss function for LeastSquares clas."""
 
