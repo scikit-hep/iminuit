@@ -514,8 +514,8 @@ def test_merge_signatures():
 
     args, (pf, pg) = util.merge_signatures([f, g])
     assert args == ["x", "y", "z", "a", "b"]
-    assert pf == (0, 1, 2)
-    assert pg == (0, 3, 4)
+    assert pf == [0, 1, 2]
+    assert pg == [0, 3, 4]
 
 
 @pytest.mark.skipif(not scipy_available, reason="needs scipy")

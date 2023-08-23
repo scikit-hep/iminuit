@@ -847,30 +847,6 @@ class MaskedCost(Cost):
     def _update_cache(self):
         self._masked = self._data[_replace_none(self._mask, ...)]
 
-    def covariance(self, *args: float) -> NDArray:
-        """
-        Estimate covariance of the parameters with the sandwich estimator.
-
-        This requires that the model gradient is provided, and that the arguments are
-        the maximum-likelihood estimates. The sandwich estimator is only asymptotically
-        correct.
-
-        Parameters
-        ----------
-        *args : float
-            Maximum-likelihood estimates of the parameter values.
-
-        Returns
-        -------
-        ndarray of float
-            The array has shape (K, K) for K arguments.
-        """
-        return self._sandwich(args)
-
-    @abc.abstractmethod
-    def _sandwich(self, args: Sequence[float]) -> NDArray:
-        ...  # pragma: no cover
-
 
 class UnbinnedCost(MaskedCost):
     """
@@ -989,6 +965,26 @@ class UnbinnedCost(MaskedCost):
 
     def _has_gradient(self) -> bool:
         return self._grad is not None
+
+    def covariance(self, *args: float) -> NDArray:
+        """
+        Estimate covariance of the parameters with the sandwich estimator.
+
+        This requires that the model gradient is provided, and that the arguments are
+        the maximum-likelihood estimates. The sandwich estimator is only asymptotically
+        correct.
+
+        Parameters
+        ----------
+        *args : float
+            Maximum-likelihood estimates of the parameter values.
+
+        Returns
+        -------
+        ndarray of float
+            The array has shape (K, K) for K arguments.
+        """
+        return self._sandwich(args)
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -1400,6 +1396,12 @@ class BinnedCost(MaskedCost):
         mu = self.prediction(args)
         n, ne = self._n_err()
         return (n - mu) / ne
+
+    def _gradient(self, args: Sequence[float]) -> NDArray:
+        raise NotImplementedError
+
+    def _has_gradient(self) -> bool:
+        return False
 
 
 class BinnedCostWithModel(BinnedCost):
