@@ -55,14 +55,26 @@ def expon_cdf(x, a):
         return 1 - np.exp(-x / a)
 
 
-def numerical_cost_gradient(fcn, *args):
+def numerical_cost_gradient(fcn):
     jacobi = pytest.importorskip("jacobi").jacobi
     return lambda *args: jacobi(lambda p: fcn(*p), args)[0]
 
 
-def numerical_model_gradient(fcn, *args):
+def numerical_model_gradient(fcn):
     jacobi = pytest.importorskip("jacobi").jacobi
     return lambda x, *args: jacobi(lambda p: fcn(x, *p), args)[0].T
+
+
+def numerical_extended_model_gradient(fcn):
+    jacobi = pytest.importorskip("jacobi").jacobi
+
+    def fn(x, *args):
+        print(x.shape, args)
+        fint = jacobi(lambda p: fcn(x, *p)[0], args)[0]
+        f = jacobi(lambda p: fcn(x, *p)[1], args)[0].T
+        return fint, f
+
+    return fn
 
 
 @pytest.fixture
@@ -348,18 +360,20 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model, use_grad):
             return n, np.log(n) + logpdf(x, mu, sigma)
         return n, n * pdf(x, mu, sigma)
 
-    jacobi = pytest.importorskip("jacobi").jacobi
-
-    def grad(x, *args):
-        return np.array([1, 0, 0]), jacobi(lambda p: density(x, *p)[1], args)[0].T
-
-    cost = ExtendedUnbinnedNLL(x, density, verbose=verbose, log=log, grad=grad)
+    cost = ExtendedUnbinnedNLL(
+        x,
+        density,
+        verbose=verbose,
+        log=log,
+        grad=numerical_extended_model_gradient(density),
+    )
     assert cost.ndata == np.inf
 
     m = Minuit(cost, n=len(x), mu=0, sigma=1, grad=use_grad)
     m.limits["n"] = (0, None)
     m.limits["sigma"] = (0, None)
     m.migrad()
+    assert m.valid
     assert_allclose(m.values, mle, atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
 
@@ -371,16 +385,19 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model, use_grad):
         assert m.ngrad == 0
 
 
-def test_ExtendedUnbinnedNLL_2D():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedUnbinnedNLL_2D(use_grad):
     def model(x_y, n, mux, muy, sx, sy, rho):
         return n * 1000, n * 1000 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
     truth = 1.0, 0.1, 0.2, 0.3, 0.4, 0.5
     x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
 
-    cost = ExtendedUnbinnedNLL((x, y), model)
+    cost = ExtendedUnbinnedNLL(
+        (x, y), model, grad=numerical_extended_model_gradient(model)
+    )
 
-    m = Minuit(cost, *truth)
+    m = Minuit(cost, *truth, grad=use_grad)
     m.limits["n", "sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
@@ -388,15 +405,29 @@ def test_ExtendedUnbinnedNLL_2D():
 
     assert_allclose(m.values, truth, atol=0.1)
 
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
+
 
 def test_ExtendedUnbinnedNLL_mask():
-    c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
+    def model(x, a):
+        return 1, x + a
+
+    c = ExtendedUnbinnedNLL(
+        [1, np.nan, 2], model, grad=numerical_extended_model_gradient(model)
+    )
     assert c.ndata == np.inf
 
     assert np.isnan(c(0))
     c.mask = np.arange(3) != 1
     assert not np.isnan(c(0))
     assert c.ndata == np.inf
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(0), ref(0))
+    assert_allclose(c.grad(1.5), ref(1.5))
 
 
 @pytest.mark.parametrize("log", (False, True))
