@@ -69,7 +69,6 @@ def numerical_extended_model_gradient(fcn):
     jacobi = pytest.importorskip("jacobi").jacobi
 
     def fn(x, *args):
-        print(x.shape, args)
         fint = jacobi(lambda p: fcn(x, *p)[0], args)[0]
         f = jacobi(lambda p: fcn(x, *p)[1], args)[0].T
         return fint, f
@@ -212,6 +211,10 @@ def test_UnbinnedNLL(unbinned, verbose, model, use_grad):
 
     if use_grad:
         assert m.ngrad > 0
+
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(1, 2), ref(1, 2), rtol=1e-3)
+        assert_allclose(cost.grad(-1, 3), ref(-1, 3), rtol=1e-3)
     else:
         assert m.ngrad == 0
 
@@ -224,7 +227,7 @@ def test_UnbinnedNLL_2D(use_grad):
         return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
     truth = 0.1, 0.2, 0.3, 0.4, 0.5
-    x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
+    x, y = mvnorm(*truth).rvs(size=100, random_state=1).T
 
     cost = UnbinnedNLL((x, y), model, grad=numerical_model_gradient(model))
     m = Minuit(cost, *truth, grad=use_grad)
@@ -235,10 +238,13 @@ def test_UnbinnedNLL_2D(use_grad):
 
     if use_grad:
         assert m.ngrad > 0
+
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*m.values), ref(*m.values), atol=0.2)
     else:
         assert m.ngrad == 0
 
-    assert_allclose(m.values, truth, atol=0.02)
+    assert_allclose(m.values, truth, atol=0.2)
 
 
 @pytest.mark.parametrize("use_grad", (False, True))
@@ -388,10 +394,10 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model, use_grad):
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_ExtendedUnbinnedNLL_2D(use_grad):
     def model(x_y, n, mux, muy, sx, sy, rho):
-        return n * 1000, n * 1000 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
+        return n, n * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
-    truth = 1.0, 0.1, 0.2, 0.3, 0.4, 0.5
-    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
+    truth = 100.0, 0.1, 0.2, 0.3, 0.4, 0.5
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0])).T
 
     cost = ExtendedUnbinnedNLL(
         (x, y), model, grad=numerical_extended_model_gradient(model)
@@ -403,10 +409,13 @@ def test_ExtendedUnbinnedNLL_2D(use_grad):
     m.migrad()
     assert m.valid
 
-    assert_allclose(m.values, truth, atol=0.1)
+    assert_allclose(m.values, truth, atol=0.2)
 
     if use_grad:
         assert m.ngrad > 0
+
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*m.values), ref(*m.values), atol=0.5)
     else:
         assert m.ngrad == 0
 
@@ -498,21 +507,32 @@ def test_ExtendedUnbinnedNLL_pickle():
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_BinnedNLL(binned, verbose):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL(binned, verbose, use_grad):
     mle, nx, xe = binned
 
-    cost = BinnedNLL(nx, xe, cdf, verbose=verbose)
+    cost = BinnedNLL(nx, xe, cdf, verbose=verbose, grad=numerical_model_gradient(cdf))
     assert cost.ndata == len(nx)
 
-    m = Minuit(cost, mu=0, sigma=1)
+    m = Minuit(cost, mu=0, sigma=1, grad=use_grad)
     m.limits["sigma"] = (0, None)
     m.migrad()
+    assert m.valid
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle[1:], rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
     assert m.ndof == len(nx) - 2
 
     assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
+
+    if use_grad:
+        assert m.ngrad > 0
+
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(0, 1), ref(0, 1))
+        assert_allclose(cost.grad(-1, 2), ref(-1, 2))
+    else:
+        assert m.ngrad == 0
 
 
 def test_BinnedNLL_pulls(binned):

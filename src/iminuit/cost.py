@@ -1172,11 +1172,11 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
     def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
         gint, g = self._eval_model_grad(args)
-        m = len(g)
+        m = g.shape[-1]
         if self._log:
             return g - (gint / m)[:, np.newaxis]
-        fint, f = self._eval_model(args)
-        return g / f - (gint / (fint * m))[:, np.newaxis]
+        _, f = self._eval_model(args)
+        return g / f - (gint / m)[:, np.newaxis]
 
     def _eval_model(self, args: Sequence[float]) -> Tuple[float, float]:
         data = self._masked
