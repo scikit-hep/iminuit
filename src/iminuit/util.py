@@ -1623,21 +1623,20 @@ def gradient(fcn: Cost) -> Optional[CostGradient]:
     -----
     This function checks whether the following attributes exist:
         `fcn.grad`
-        `fcn.gradient`
-        `fcn.has_gradient`
-    If `fcn.grad` or `fcn.gradient` exists and is a CostGradient, it is returned unless
-    `fcn.has_gradient` exists and is False. If no useable gradient is detected, None is
-    returned. If both `fcn.grad` and `fcn.gradient` exist, `fcn.gradient` is used.
+        `fcn.has_grad`
+    If `fcn.grad` exists and is a CostGradient, it is returned unless
+    `fcn.has_grad` exists and is False. If no useable gradient is detected, None is
+    returned.
 
     Returns
     -------
     callable or None
         The gradient function or None
     """
-    gradient = getattr(fcn, "gradient", getattr(fcn, "grad", None))
-    has_gradient = getattr(fcn, "has_gradient", True)
-    if gradient and isinstance(gradient, CostGradient) and has_gradient:
-        return gradient
+    grad = getattr(fcn, "grad", None)
+    has_grad = getattr(fcn, "has_grad", True)
+    if grad and isinstance(grad, CostGradient) and has_grad:
+        return grad
     return None
 
 

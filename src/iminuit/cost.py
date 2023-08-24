@@ -606,7 +606,7 @@ class Cost(abc.ABC):
             print(args, "->", r)
         return r
 
-    def gradient(self, *args: float) -> NDArray:
+    def grad(self, *args: float) -> NDArray:
         """
         Compute gradient of the cost function.
 
@@ -622,25 +622,25 @@ class Cost(abc.ABC):
         ndarray of float
             The length of the array is equal to the length of args.
         """
-        return self._gradient(args)
+        return self._grad(args)
 
     @property
-    def has_gradient(self) -> bool:
+    def has_grad(self) -> bool:
         """
         Return True if cost function can compute a gradient.
         """
-        return self._has_gradient()
+        return self._has_grad()
 
     @abc.abstractmethod
     def _value(self, args: Sequence[float]) -> float:
         ...  # pragma: no cover
 
     @abc.abstractmethod
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         ...  # pragma: no cover
 
     @abc.abstractmethod
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         ...  # pragma: no cover
 
 
@@ -665,11 +665,11 @@ class Constant(Cost):
     def _value(self, args: Sequence[float]) -> float:
         return self.value
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         return np.zeros(0)
 
     @staticmethod
-    def _has_gradient():
+    def _has_grad():
         return True
 
 
@@ -733,15 +733,15 @@ class CostSum(Cost, ABCSequence):
             r += component._value(component_args) / component.errordef
         return r
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         r = np.zeros(len(args))
         for component, indices in zip(self._items, self._maps):
             component_args = tuple(args[i] for i in indices)
-            r[indices] += component._gradient(component_args) / component.errordef
+            r[indices] += component._grad(component_args) / component.errordef
         return r
 
-    def _has_gradient(self) -> bool:
-        return all(component.has_gradient for component in self._items)
+    def _has_grad(self) -> bool:
+        return all(component.has_grad for component in self._items)
 
     def _ndata(self):
         return sum(c.ndata for c in self._items)
@@ -856,7 +856,7 @@ class UnbinnedCost(MaskedCost):
     :meta private:
     """
 
-    __slots__ = "_model", "_grad", "_log"
+    __slots__ = "_model", "_model_grad", "_log"
 
     def __init__(
         self,
@@ -869,7 +869,7 @@ class UnbinnedCost(MaskedCost):
         """For internal use."""
         self._model = model
         self._log = log
-        self._grad = grad
+        self._model_grad = grad
         super().__init__(_model_parameters(model), _norm(data), verbose)
 
     @abc.abstractproperty
@@ -964,8 +964,8 @@ class UnbinnedCost(MaskedCost):
     def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
         ...  # pragma: no cover
 
-    def _has_gradient(self) -> bool:
-        return self._grad is not None
+    def _has_grad(self) -> bool:
+        return self._model_grad is not None
 
     def covariance(self, *args: float) -> NDArray:
         """
@@ -1058,28 +1058,33 @@ class UnbinnedNLL(UnbinnedCost):
         super().__init__(data, pdf, verbose, log, grad)
 
     def _value(self, args: Sequence[float]) -> float:
-        data = self._masked
-        f = self._model(data, *args)
-        f = _normalize_model_output(f)
+        f = self._eval_model(args)
         if self._log:
             return -2.0 * np.sum(f)
         return 2.0 * _unbinned_nll(f)
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         g = self._pointwise_grad(args)
         return -2.0 * np.sum(g, axis=1)
 
     def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
-        if self._grad is None:
-            raise ValueError("no gradient available")
-        data = self._masked
-        g = self._grad(data, *args)
-        g = _normalize_model_output(g)
+        g = self._eval_model_grad(args)
         if self._log:
             return g
-        f = self._model(data, *args)
-        f = _normalize_model_output(f)
+        f = self._eval_model(args)
         return g / f
+
+    def _eval_model(self, args: Sequence[float]) -> float:
+        data = self._masked
+        return _normalize_output(self._model(data, *args), "model", data.shape[-1])
+
+    def _eval_model_grad(self, args: Sequence[float]) -> NDArray:
+        if self._model_grad is None:
+            raise ValueError("no gradient available")
+        data = self._masked
+        return _normalize_output(
+            self._model_grad(data, *args), "model gradient", len(args), data.shape[-1]
+        )
 
 
 class ExtendedUnbinnedNLL(UnbinnedCost):
@@ -1156,53 +1161,41 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         super().__init__(data, scaled_pdf, verbose, log, grad)
 
     def _value(self, args: Sequence[float]) -> float:
-        data = self._masked
-        fint, f = self._model(data, *args)
-        f = _normalize_model_output(
-            f, "Model should return numpy array in second position"
-        )
+        fint, f = self._eval_model(args)
         if self._log:
             return 2 * (fint - np.sum(f))
         return 2 * (fint + _unbinned_nll(f))
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
-        if self._grad is None:
-            raise ValueError("no gradient available")
-        data = self._masked
-        gint, g = self._grad(data, *args)
-        gint = _normalize_model_output(
-            gint, "Model should return numpy array in first position"
-        )
-        g = _normalize_model_output(
-            g, "Model should return numpy array in second position"
-        )
-        if self._log:
-            return 2 * (gint - np.sum(g, axis=1))
-        fint, f = self._model(data, *args)
-        f = _normalize_model_output(
-            f, "Model should return numpy array in second position"
-        )
-        return 2 * (gint / fint - np.sum(g / f, axis=1))
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        g = self._pointwise_grad(args)
+        return -2 * np.sum(g, axis=1)
 
     def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
-        if self._grad is None:
+        gint, g = self._eval_model_grad(args)
+        m = len(self._masked)
+        if self._log:
+            return g - (gint / m)[:, np.newaxis]
+        fint, f = self._eval_model(args)
+        return g / f - (gint / (fint * m))[:, np.newaxis]
+
+    def _eval_model(self, args: Sequence[float]) -> Tuple[float, float]:
+        data = self._masked
+        fint, f = self._model(data, *args)
+        f = _normalize_output(f, "model", data.shape[-1], msg="in second position")
+        return fint, f
+
+    def _eval_model_grad(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
+        if self._model_grad is None:
             raise ValueError("no gradient available")
         data = self._masked
-        gint, g = self._grad(data, *args)
-        gint = _normalize_model_output(
-            gint, "Model should return numpy array in first position"
+        gint, g = self._model_grad(data, *args)
+        gint = _normalize_output(
+            gint, "model gradient", len(args), msg="in first position"
         )
-        g = _normalize_model_output(
-            g, "Model should return numpy array in second position"
+        g = _normalize_output(
+            g, "model gradient", len(args), data.shape[-1], msg="in second position"
         )
-        m = len(data)
-        if self._log:
-            return g - gint / m
-        fint, f = self._model(data, *args)
-        f = _normalize_model_output(
-            f, "Model should return numpy array in second position"
-        )
-        return g / f - gint / (fint * m)
+        return gint, g
 
 
 class BinnedCost(MaskedCost):
@@ -1398,10 +1391,10 @@ class BinnedCost(MaskedCost):
         n, ne = self._n_err()
         return (n - mu) / ne
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         raise NotImplementedError
 
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         return False
 
 
@@ -1412,7 +1405,7 @@ class BinnedCostWithModel(BinnedCost):
     :meta private:
     """
 
-    __slots__ = "_xe_shape", "_model", "_model_xe"
+    __slots__ = "_xe_shape", "_model", "_model_xe", "_model_len"
 
     _model_xe: np.ndarray
     _xe_shape: Union[Tuple[int], Tuple[int, ...]]
@@ -1431,16 +1424,11 @@ class BinnedCostWithModel(BinnedCost):
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
+        self._model_len = np.prod(self._xe_shape)
 
     def _pred(self, args: Sequence[float]) -> NDArray:
         d = self._model(self._model_xe, *args)
-        d = _normalize_model_output(d)
-        expected_shape = (np.prod(self._xe_shape),)
-        if d.shape != expected_shape:
-            raise ValueError(
-                f"Expected model to return an array of shape {expected_shape}, "
-                f"but it returns an array of shape {d.shape}"
-            )
+        d = _normalize_output(d, "model", self._model_len)
         if self._ndim > 1:
             d = d.reshape(self._xe_shape)
         for i in range(self._ndim):
@@ -1450,10 +1438,10 @@ class BinnedCostWithModel(BinnedCost):
         d[d < 0] = 0
         return d
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         raise NotImplementedError
 
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         return False
 
 
@@ -1507,7 +1495,7 @@ class Template(BinnedCost):
     .. [6] Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393
     """
 
-    __slots__ = "_model_data", "_model_xe", "_xe_shape", "_impl"
+    __slots__ = "_model_data", "_model_xe", "_xe_shape", "_impl", "_model_len"
 
     _model_data: List[
         Union[
@@ -1641,6 +1629,7 @@ class Template(BinnedCost):
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
+        self._model_len = np.prod(self._xe_shape)
 
     def _pred(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
         mu: NDArray = 0  # type:ignore
@@ -1654,7 +1643,7 @@ class Template(BinnedCost):
                 i += 1
             elif isinstance(t1, Model) and isinstance(t2, int):
                 d = t1(self._model_xe, *args[i : i + t2])
-                d = _normalize_model_output(d)
+                d = _normalize_output(d, "model", self._model_len)
                 if self._ndim > 1:
                     d = d.reshape(self._xe_shape)
                 for j in range(self._ndim):
@@ -1685,10 +1674,10 @@ class Template(BinnedCost):
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         raise NotImplementedError
 
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         return False
 
     def _errordef(self) -> float:
@@ -1821,10 +1810,10 @@ class BinnedNLL(BinnedCostWithModel):
             n = self._masked
         return multinominal_chi2(n, mu)
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         raise NotImplementedError
 
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         return False
 
 
@@ -1896,10 +1885,10 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         # assert isinstance(n, np.ndarray)
         return poisson_chi2(n, mu)
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         raise NotImplementedError
 
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         return False
 
 
@@ -2044,7 +2033,7 @@ class LeastSquares(MaskedCost):
         x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
         y, yerror = self._masked.T[self._ndim :]
         ym = self._model(x, *args)
-        ym = _normalize_model_output(ym)
+        ym = _normalize_output(ym, "model", len(y))
         return self._cost(y, yerror, ym)
 
     def _ndata(self):
@@ -2113,10 +2102,10 @@ class LeastSquares(MaskedCost):
             ye[ma] = np.nan
         return (y - ym) / ye
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         raise NotImplementedError
 
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         return False
 
 
@@ -2174,11 +2163,12 @@ class NormalConstraint(Cost):
         self._expected = _norm(value)
         if self._expected.ndim > 1:
             raise ValueError("value must be a scalar or one-dimensional")
-        if len(self._expected) != nargs:
+        # args can be a vector of values, in this case we have nargs == 1
+        if nargs > 1 and len(self._expected) != nargs:
             raise ValueError("size of value does not match size of args")
         self._cov = _norm(error)
-        if len(self._cov) != nargs:
-            raise ValueError("size of error does not match size of args")
+        if len(self._cov) != len(self._expected):
+            raise ValueError("size of error does not match size of value")
         if self._cov.ndim < 2:
             self._cov **= 2
         elif self._cov.ndim == 2:
@@ -2221,13 +2211,13 @@ class NormalConstraint(Cost):
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
-    def _gradient(self, args: Sequence[float]) -> NDArray:
+    def _grad(self, args: Sequence[float]) -> NDArray:
         delta = args - self._expected
         if self._covinv.ndim < 2:
             return 2 * delta * self._covinv
         return 2 * self._covinv @ delta
 
-    def _has_gradient(self) -> bool:
+    def _has_grad(self) -> bool:
         return True
 
     def _ndata(self):
@@ -2284,15 +2274,21 @@ def _covinv(array):
     return np.linalg.inv(array) if array.ndim == 2 else 1.0 / array
 
 
-def _normalize_model_output(x, msg="Model should return numpy array"):
+def _normalize_output(x, kind, *shape, msg=None):
     if not isinstance(x, np.ndarray):
-        warnings.warn(
-            f"{msg}, but returns {type(x)}",
-            PerformanceWarning,
-        )
+        if msg is None:
+            msg = f"{kind} should return numpy array, but returns {type(x)}"
+        else:
+            msg = f"{kind} should return numpy array {msg}, but returns {type(x)}"
+        warnings.warn(msg, PerformanceWarning)
         x = np.array(x)
         if x.dtype.kind != "f":
             return x.astype(float)
+    if x.ndim < len(shape):
+        return x.reshape(*shape)
+    elif x.shape != shape:
+        msg = f"output of {kind} has shape {x.shape!r}, but {shape!r} is required"
+        raise ValueError(msg)
     return x
 
 
