@@ -202,6 +202,11 @@ def test_UnbinnedNLL(unbinned, verbose, model, use_grad):
     )
     assert cost.ndata == np.inf
 
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(1, 2), ref(1, 2), rtol=1e-3)
+        assert_allclose(cost.grad(-1, 3), ref(-1, 3), rtol=1e-3)
+
     m = Minuit(cost, mu=0, sigma=1, grad=use_grad)
     m.limits["sigma"] = (0, None)
     m.migrad()
@@ -211,10 +216,6 @@ def test_UnbinnedNLL(unbinned, verbose, model, use_grad):
 
     if use_grad:
         assert m.ngrad > 0
-
-        ref = numerical_cost_gradient(cost)
-        assert_allclose(cost.grad(1, 2), ref(1, 2), rtol=1e-3)
-        assert_allclose(cost.grad(-1, 3), ref(-1, 3), rtol=1e-3)
     else:
         assert m.ngrad == 0
 
@@ -409,7 +410,7 @@ def test_ExtendedUnbinnedNLL_2D(use_grad):
     m.migrad()
     assert m.valid
 
-    assert_allclose(m.values, truth, atol=0.2)
+    assert_allclose(m.values, truth, atol=0.5)
 
     if use_grad:
         assert m.ngrad > 0

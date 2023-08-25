@@ -157,8 +157,10 @@ class BohmZechTransform:
     :meta private:
     """
 
-    _scale: np.ndarray
-    _obs: np.ndarray
+    __slots__ = "_obs", "_scale"
+
+    _obs: NDArray
+    _scale: NDArray
 
     def __init__(self, val: ArrayLike, var: ArrayLike):
         """
@@ -264,6 +266,10 @@ def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
+def _multinominal_chi2_grad(n, mu, gmu):
+    return -2 * np.sum(n * gmu / mu)
+
+
 def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
@@ -289,6 +295,10 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
     n, mu = np.atleast_1d(n, mu)
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
+
+
+def _poisson_chi2_grad(n, mu, gmu):
+    return 2 * np.sum(gmu * (1.0 - n / mu))
 
 
 def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
@@ -542,6 +552,13 @@ class Cost(abc.ABC):
         """
         return self._ndata()
 
+    @property
+    def npar(self):
+        """
+        Return total number of model parameters.
+        """
+        return len(self._parameters)
+
     @abc.abstractmethod
     def _ndata(self):
         NotImplemented  # pragma: no cover
@@ -734,7 +751,7 @@ class CostSum(Cost, ABCSequence):
         return r
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        r = np.zeros(len(args))
+        r = np.zeros(self.npar)
         for component, indices in zip(self._items, self._maps):
             component_args = tuple(args[i] for i in indices)
             r[indices] += component._grad(component_args) / component.errordef
@@ -837,7 +854,9 @@ class MaskedCost(Cost):
 
     @property
     def data(self):
-        """Return data samples."""
+        """
+        Return data samples.
+        """
         return self._data
 
     @data.setter
@@ -886,6 +905,11 @@ class UnbinnedCost(MaskedCost):
         # unbinned likelihoods have infinite degrees of freedom
         return np.inf
 
+    def _npoints(self):
+        # cannot use len(self._masked) because multi-dimensional data has format
+        # (K, N) with K dimensions and N points
+        return self._masked.shape[-1]
+
     @deprecated_parameter(bins="nbins")
     def visualize(
         self,
@@ -908,7 +932,6 @@ class UnbinnedCost(MaskedCost):
             it is interpreted as the point locations.
         bins : int, optional
             number of bins. Default is 50 bins.
-
         """
         from matplotlib import pyplot as plt
 
@@ -953,20 +976,6 @@ class UnbinnedCost(MaskedCost):
         """
         return self._fisher_information(args)
 
-    def _fisher_information(self, args: Sequence[float]) -> NDArray:
-        g = self._pointwise_grad(args)
-        return np.einsum("ji,ki->jk", g, g)
-
-    def _sandwich(self, args: Sequence[float]) -> NDArray:
-        return np.linalg.inv(self._fisher_information(args))
-
-    @abc.abstractmethod
-    def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
-        ...  # pragma: no cover
-
-    def _has_grad(self) -> bool:
-        return self._model_grad is not None
-
     def covariance(self, *args: float) -> NDArray:
         """
         Estimate covariance of the parameters with the sandwich estimator.
@@ -986,6 +995,20 @@ class UnbinnedCost(MaskedCost):
             The array has shape (K, K) for K arguments.
         """
         return self._sandwich(args)
+
+    def _fisher_information(self, args: Sequence[float]) -> NDArray:
+        g = self._pointwise_score(args)
+        return np.einsum("ji,ki->jk", g, g)
+
+    def _sandwich(self, args: Sequence[float]) -> NDArray:
+        return np.linalg.inv(self._fisher_information(args))
+
+    @abc.abstractmethod
+    def _pointwise_score(self, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
+
+    def _has_grad(self) -> bool:
+        return self._model_grad is not None
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -1064,10 +1087,10 @@ class UnbinnedNLL(UnbinnedCost):
         return 2.0 * _unbinned_nll(f)
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        g = self._pointwise_grad(args)
+        g = self._pointwise_score(args)
         return -2.0 * np.sum(g, axis=1)
 
-    def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
+    def _pointwise_score(self, args: Sequence[float]) -> NDArray:
         g = self._eval_model_grad(args)
         if self._log:
             return g
@@ -1076,14 +1099,14 @@ class UnbinnedNLL(UnbinnedCost):
 
     def _eval_model(self, args: Sequence[float]) -> float:
         data = self._masked
-        return _normalize_output(self._model(data, *args), "model", data.shape[-1])
+        return _normalize_output(self._model(data, *args), "model", self._npoints())
 
     def _eval_model_grad(self, args: Sequence[float]) -> NDArray:
         if self._model_grad is None:
             raise ValueError("no gradient available")
         data = self._masked
         return _normalize_output(
-            self._model_grad(data, *args), "model gradient", len(args), data.shape[-1]
+            self._model_grad(data, *args), "model gradient", self.npar, self._npoints()
         )
 
 
@@ -1167,12 +1190,12 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         return 2 * (fint + _unbinned_nll(f))
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        g = self._pointwise_grad(args)
+        g = self._pointwise_score(args)
         return -2 * np.sum(g, axis=1)
 
-    def _pointwise_grad(self, args: Sequence[float]) -> NDArray:
+    def _pointwise_score(self, args: Sequence[float]) -> NDArray:
         gint, g = self._eval_model_grad(args)
-        m = g.shape[-1]
+        m = self._npoints()
         if self._log:
             return g - (gint / m)[:, np.newaxis]
         _, f = self._eval_model(args)
@@ -1181,7 +1204,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
     def _eval_model(self, args: Sequence[float]) -> Tuple[float, float]:
         data = self._masked
         fint, f = self._model(data, *args)
-        f = _normalize_output(f, "model", data.shape[-1], msg="in second position")
+        f = _normalize_output(f, "model", self._npoints(), msg="in second position")
         return fint, f
 
     def _eval_model_grad(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
@@ -1190,10 +1213,10 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         data = self._masked
         gint, g = self._model_grad(data, *args)
         gint = _normalize_output(
-            gint, "model gradient", len(args), msg="in first position"
+            gint, "model gradient", self.npar, msg="in first position"
         )
         g = _normalize_output(
-            g, "model gradient", len(args), data.shape[-1], msg="in second position"
+            g, "model gradient", self.npar, self._npoints(), msg="in second position"
         )
         return gint, g
 
@@ -1205,11 +1228,12 @@ class BinnedCost(MaskedCost):
     :meta private:
     """
 
-    __slots__ = "_xe", "_ndim", "_bztrafo"
+    __slots__ = "_xe", "_ndim", "_bohm_zech_scale", "_bohm_zech_n"
 
     _xe: Union[NDArray, Tuple[NDArray, ...]]
     _ndim: int
-    _bztrafo: Optional[BohmZechTransform]
+    _bohm_zech_scale: Optional[NDArray]
+    _bohm_zech_n: Optional[NDArray]
 
     n = MaskedCost.data
 
@@ -1224,7 +1248,6 @@ class BinnedCost(MaskedCost):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         verbose: int,
-        *updater,
     ):
         """For internal use."""
         if not isinstance(xe, Iterable):
@@ -1251,13 +1274,9 @@ class BinnedCost(MaskedCost):
                     "xe must be longer by one element along each dimension"
                 )
 
-        if is_weighted:
-            if n.shape[-1] != 2:
-                raise ValueError("n must have shape (..., 2)")
-            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])
-        else:
-            self._bztrafo = None
-
+        self._bohm_zech_scale = None
+        self._bohm_zech_n = None
+        self._set_bohm_zech(n, is_weighted)
         super().__init__(parameters, n, verbose)
 
     def prediction(
@@ -1362,28 +1381,20 @@ class BinnedCost(MaskedCost):
     def _ndata(self):
         return np.prod(self._masked.shape[: self._ndim])
 
-    def _update_cache(self):
-        super()._update_cache()
-        if self._bztrafo:
-            ma = _replace_none(self._mask, ...)
-            self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
-
     def _n_err(self) -> Tuple[NDArray, NDArray]:
         d = self.data
-        if self._bztrafo:
-            n = d[..., 0].copy()
-            err = d[..., 1] ** 0.5
-        else:
+        if self._bohm_zech_scale is None:
             n = d.copy()
             err = d**0.5
-        if self.mask is not None:
-            ma = ~self.mask
-            n[ma] = np.nan
-            err[ma] = np.nan
+        else:
+            n = d[..., 0].copy()
+            err = d[..., 1] ** 0.5
         # mask values where error is zero
         ma = err == 0
-        err[ma] = np.nan
+        if self.mask is not None:
+            ma = ~self.mask
         n[ma] = np.nan
+        err[ma] = np.nan
         return n, err
 
     def _pulls(self, args: Sequence[float]) -> NDArray:
@@ -1397,6 +1408,49 @@ class BinnedCost(MaskedCost):
     def _has_grad(self) -> bool:
         return False
 
+    def _set_bohm_zech(self, n: NDArray, is_weighted: bool):
+        if not is_weighted:
+            return
+        val = n[..., 0]
+        var = n[..., 1]
+        self._bohm_zech_scale = np.ones_like(val)
+        np.divide(val, var, out=self._bohm_zech_scale, where=var > 0)
+        self._bohm_zech_n = val * self._bohm_zech_scale
+
+    def _update_cache(self):
+        super()._update_cache()
+        self._set_bohm_zech(self._masked, self._bohm_zech_scale is not None)
+
+    @overload
+    def _transformed(self, val: NDArray) -> Tuple[NDArray, NDArray]:
+        ...  # pragma: no cover
+
+    @overload
+    def _transformed(
+        self, val: NDArray, var: NDArray
+    ) -> Tuple[NDArray, NDArray, NDArray]:
+        ...  # pragma: no cover
+
+    def _transformed(self, val, var=None):
+        s = self._bohm_zech_scale
+        ma = self.mask
+        if ma is not None:
+            val = val[ma]
+            if var is not None:
+                var = var[ma]
+        if s is None:
+            if var is None:
+                return self._masked, val
+            return self._masked, val, var
+        if var is None:
+            return self._bohm_zech_n, val * s
+        return self._bohm_zech_n, val * s, var * s**2
+
+    def _counts(self):
+        if self._bohm_zech_scale is None:
+            return self._masked
+        return self._masked[..., 0]
+
 
 class BinnedCostWithModel(BinnedCost):
     """
@@ -1405,14 +1459,15 @@ class BinnedCostWithModel(BinnedCost):
     :meta private:
     """
 
-    __slots__ = "_xe_shape", "_model", "_model_xe", "_model_len"
+    __slots__ = "_xe_shape", "_model", "_model_xe", "_model_len", "_model_grad"
 
     _model_xe: np.ndarray
     _xe_shape: Union[Tuple[int], Tuple[int, ...]]
 
-    def __init__(self, n, xe, model, verbose):
+    def __init__(self, n, xe, model, verbose, grad):
         """For internal use."""
         self._model = model
+        self._model_grad = grad
 
         super().__init__(_model_parameters(model), n, xe, verbose)
 
@@ -1438,11 +1493,17 @@ class BinnedCostWithModel(BinnedCost):
         d[d < 0] = 0
         return d
 
-    def _grad(self, args: Sequence[float]) -> NDArray:
-        raise NotImplementedError
+    def _pred_grad(self, args: Sequence[float]) -> NDArray:
+        d = self._model_grad(self._model_xe, *args)
+        d = _normalize_output(d, "model gradient", self.npar, self._model_len)
+        if self._ndim > 1:
+            d = d.reshape((self.npar, *self._xe_shape))
+        for i in range(1, self._ndim + 1):
+            d = np.diff(d, axis=i)
+        return d
 
     def _has_grad(self) -> bool:
-        return False
+        return self._model_grad is not None
 
 
 class Template(BinnedCost):
@@ -1511,6 +1572,7 @@ class Template(BinnedCost):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         model_or_template: Collection[Union[Model, ArrayLike]],
+        *,
         name: Optional[Sequence[str]] = None,
         verbose: int = 0,
         method: str = "da",
@@ -1660,17 +1722,7 @@ class Template(BinnedCost):
 
     def _value(self, args: Sequence[float]) -> float:
         mu, mu_var = self._pred(args)
-
-        ma = self.mask
-        if ma is not None:
-            mu = mu[ma]
-            mu_var = mu_var[ma]
-
-        if self._bztrafo:
-            n, mu, mu_var = self._bztrafo(mu, mu_var)
-        else:
-            n = self._masked
-
+        n, mu, mu_var = self._transformed(mu, mu_var)
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
 
@@ -1763,7 +1815,9 @@ class BinnedNLL(BinnedCostWithModel):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         cdf: Model,
+        *,
         verbose: int = 0,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1789,32 +1843,32 @@ class BinnedNLL(BinnedCostWithModel):
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
         """
-        super().__init__(n, xe, cdf, verbose)
+        super().__init__(n, xe, cdf, verbose, grad)
 
     def _pred(self, args: Sequence[float]) -> NDArray:
+        # must return array of full length, mask not applied yet
         p = super()._pred(args)
         ma = self.mask
         if ma is not None:
             p /= np.sum(p[ma])  # normalise probability of remaining bins
-        scale = np.sum(self._masked[..., 0] if self._bztrafo else self._masked)
-        return p * scale
+        # scale probabilities with total number of entries of unmasked bins in histogram
+        return p * np.sum(self._counts())
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
-        ma = self.mask
-        if ma is not None:
-            mu = mu[ma]
-        if self._bztrafo:
-            n, mu = self._bztrafo(mu)
-        else:
-            n = self._masked
+        n, mu = self._transformed(mu)
         return multinominal_chi2(n, mu)
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        raise NotImplementedError
-
-    def _has_grad(self) -> bool:
-        return False
+        mu = self._pred(args)
+        gmu = self._pred_grad(args)
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
+            gmu = gmu[ma]
+        # don't need to scale mu and gmu, because scale factor cancels
+        n = self._masked if self._bohm_zech_scale is None else self._bohm_zech_n
+        return _multinominal_chi2_grad(n, mu, gmu)
 
 
 class ExtendedBinnedNLL(BinnedCostWithModel):
@@ -1847,7 +1901,9 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         scaled_cdf: Model,
+        *,
         verbose: int = 0,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1871,25 +1927,25 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
             Verbosity level. 0: is no output (default). 1: print current args and
             negative log-likelihood value.
         """
-        super().__init__(n, xe, scaled_cdf, verbose)
+        super().__init__(n, xe, scaled_cdf, verbose, grad)
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
-        ma = self.mask
-        if ma is not None:
-            mu = mu[ma]
-        if self._bztrafo:
-            n, mu = self._bztrafo(mu)
-        else:
-            n = self._masked
-        # assert isinstance(n, np.ndarray)
+        n, mu = self._transformed(mu)
         return poisson_chi2(n, mu)
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        raise NotImplementedError
-
-    def _has_grad(self) -> bool:
-        return False
+        mu = self._pred(args)
+        gmu = self._pred_grad(args)
+        ma = self.mask
+        if ma is not None:
+            mu = mu[ma]
+            gmu = gmu[ma]
+        n = self._counts()
+        s = self._bohm_zech_scale
+        if s is None:
+            return _poisson_chi2_grad(n, mu, gmu)
+        return _poisson_chi2_grad(n, mu, s * gmu)
 
 
 class LeastSquares(MaskedCost):
