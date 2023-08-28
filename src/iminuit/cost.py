@@ -267,7 +267,7 @@ def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
 
 
 def _multinominal_chi2_grad(n, mu, gmu):
-    return -2 * np.sum(n * gmu / mu)
+    return -2 * np.sum(n * gmu / mu, axis=1)
 
 
 def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
@@ -298,7 +298,7 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
 
 
 def _poisson_chi2_grad(n, mu, gmu):
-    return 2 * np.sum(gmu * (1.0 - n / mu))
+    return 2 * np.sum(gmu * (1.0 - n / mu), axis=1)
 
 
 def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
@@ -1261,7 +1261,8 @@ class BinnedCost(MaskedCost):
             self._xe = tuple(_norm(xei) for xei in xe)
 
         n = _norm(n)
-        is_weighted = n.ndim > self._ndim
+
+        is_weighted = n.ndim > self._ndim and n.shape[-1] == 2
 
         if n.ndim != (self._ndim + int(is_weighted)):
             raise ValueError("n must either have same dimension as xe or one extra")
@@ -1860,8 +1861,16 @@ class BinnedNLL(BinnedCostWithModel):
         return multinominal_chi2(n, mu)
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        mu = self._pred(args)
-        gmu = self._pred_grad(args)
+        # must return array of full length, mask not applied yet
+        pg = super()._pred_grad(args)
+        p = super()._pred(args)
+        ma = self.mask
+        if ma is not None:
+            pg /= np.sum(p[ma])  # normalise probability of remaining bins
+        # scale probabilities with total number of entries of unmasked bins in histogram
+        scale = np.sum(self._counts())
+        mu = p * scale
+        gmu = pg * scale
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
@@ -1945,6 +1954,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         s = self._bohm_zech_scale
         if s is None:
             return _poisson_chi2_grad(n, mu, gmu)
+        # use original n and mu because Bohm-Zech scale factor cancels
         return _poisson_chi2_grad(n, mu, s * gmu)
 
 

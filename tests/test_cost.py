@@ -515,6 +515,11 @@ def test_BinnedNLL(binned, verbose, use_grad):
     cost = BinnedNLL(nx, xe, cdf, verbose=verbose, grad=numerical_model_gradient(cdf))
     assert cost.ndata == len(nx)
 
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*mle[1:]), ref(*mle[1:]))
+        assert_allclose(cost.grad(-1, 2), ref(-1, 2))
+
     m = Minuit(cost, mu=0, sigma=1, grad=use_grad)
     m.limits["sigma"] = (0, None)
     m.migrad()
@@ -528,10 +533,6 @@ def test_BinnedNLL(binned, verbose, use_grad):
 
     if use_grad:
         assert m.ngrad > 0
-
-        ref = numerical_cost_gradient(cost)
-        assert_allclose(cost.grad(0, 1), ref(0, 1))
-        assert_allclose(cost.grad(-1, 2), ref(-1, 2))
     else:
         assert m.ngrad == 0
 
@@ -547,7 +548,8 @@ def test_BinnedNLL_pulls(binned):
     assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
 
 
-def test_BinnedNLL_weighted():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL_weighted(use_grad):
     xe = np.array([0, 0.2, 0.4, 0.8, 1.5, 10])
     p = np.diff(expon_cdf(xe, 1))
     n = p * 1000
@@ -561,12 +563,24 @@ def test_BinnedNLL_weighted():
     # variance * 4 = (sigma * 2)^2, constructed so that
     # fitted parameter has twice the uncertainty
     w = np.transpose((n, 4 * n))
-    c = BinnedNLL(w, xe, expon_cdf)
+    c = BinnedNLL(w, xe, expon_cdf, grad=numerical_model_gradient(expon_cdf))
     assert_equal(c.data, w)
-    m2 = Minuit(c, 1)
+
+    if use_grad:
+        ref = numerical_cost_gradient(c)
+        assert_allclose(c.grad(*m1.values), ref(*m1.values))
+        assert_allclose(c.grad(12), ref(12))
+
+    m2 = Minuit(c, 1, grad=use_grad)
     m2.migrad()
+    assert m2.valid
     assert m2.values[0] == pytest.approx(1, rel=1e-2)
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+    if use_grad:
+        assert m2.ngrad > 0
+    else:
+        assert m2.ngrad == 0
 
 
 def test_ExtendedBinnedNLL_weighted_pulls():
@@ -604,7 +618,7 @@ def test_BinnedNLL_bad_input_3():
 
 
 def test_BinnedNLL_bad_input_4():
-    with pytest.raises(ValueError, match="n must have shape"):
+    with pytest.raises(ValueError, match="n must either have same dimension as xe"):
         BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
 
 
@@ -730,22 +744,35 @@ def test_BinnedNLL_pickle():
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_ExtendedBinnedNLL(binned, verbose):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedBinnedNLL(binned, verbose, use_grad):
     mle, nx, xe = binned
 
-    cost = ExtendedBinnedNLL(nx, xe, scaled_cdf, verbose=verbose)
+    cost = ExtendedBinnedNLL(
+        nx, xe, scaled_cdf, verbose=verbose, grad=numerical_model_gradient(scaled_cdf)
+    )
     assert cost.ndata == len(nx)
 
-    m = Minuit(cost, n=mle[0], mu=0, sigma=1)
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*mle), ref(*mle))
+
+    m = Minuit(cost, n=mle[0], mu=0, sigma=1, grad=use_grad)
     m.limits["n"] = (0, None)
     m.limits["sigma"] = (0, None)
     m.migrad()
+    assert m.valid
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
     assert m.ndof == len(nx) - 3
 
     assert_allclose(m.fmin.reduced_chi2, 1, 0.1)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
 
 def test_ExtendedBinnedNLL_weighted():
