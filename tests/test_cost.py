@@ -775,7 +775,8 @@ def test_ExtendedBinnedNLL(binned, verbose, use_grad):
         assert m.ngrad == 0
 
 
-def test_ExtendedBinnedNLL_weighted():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedBinnedNLL_weighted(use_grad):
     xe = np.array([0, 1, 10])
     n = np.diff(expon_cdf(xe, 1))
     m1 = Minuit(ExtendedBinnedNLL(n, xe, expon_cdf), 1)
@@ -783,11 +784,22 @@ def test_ExtendedBinnedNLL_weighted():
     assert_allclose(m1.values, (1,), rtol=1e-2)
 
     w = np.transpose((n, 4 * n))
-    m2 = Minuit(ExtendedBinnedNLL(w, xe, expon_cdf), 1)
+    c = ExtendedBinnedNLL(w, xe, expon_cdf, grad=numerical_model_gradient(expon_cdf))
+    if use_grad:
+        ref = numerical_cost_gradient(c)
+        assert_allclose(c.grad(1), ref(1), atol=1e-14)
+        assert_allclose(c.grad(12), ref(12))
+    m2 = Minuit(c, 1.1, grad=use_grad)
     m2.migrad()
+    assert m2.valid
     assert_allclose(m2.values, (1,), rtol=1e-2)
 
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+    if use_grad:
+        assert m2.ngrad > 0
+    else:
+        assert m2.ngrad == 0
 
 
 def test_ExtendedBinnedNLL_bad_input():
@@ -795,23 +807,33 @@ def test_ExtendedBinnedNLL_bad_input():
         ExtendedBinnedNLL([1], [1], lambda x, a: 0)
 
 
-def test_ExtendedBinnedNLL_2D():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedBinnedNLL_2D(use_grad):
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
-    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 100), random_state=1).T
 
     w, xe, ye = np.histogram2d(x, y, bins=(10, 20))
 
     def model(xy, n, mux, muy, sx, sy, rho):
-        return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
+        return n * 100 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
 
-    cost = ExtendedBinnedNLL(w, (xe, ye), model)
+    cost = ExtendedBinnedNLL(w, (xe, ye), model, grad=numerical_model_gradient(model))
     assert cost.ndata == np.prod(w.shape)
-    m = Minuit(cost, *truth)
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*truth), ref(*truth))
+
+    m = Minuit(cost, *truth, grad=use_grad)
     m.limits["n", "sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
     assert_allclose(m.values, truth, atol=0.1)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
 
 def test_ExtendedBinnedNLL_3D():

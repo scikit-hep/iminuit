@@ -267,7 +267,7 @@ def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
 
 
 def _multinominal_chi2_grad(n, mu, gmu):
-    return -2 * np.sum(n * gmu / mu, axis=1)
+    return -2 * np.sum(n * gmu / mu, axis=tuple(range(1, gmu.ndim)))
 
 
 def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
@@ -298,7 +298,7 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
 
 
 def _poisson_chi2_grad(n, mu, gmu):
-    return 2 * np.sum(gmu * (1.0 - n / mu), axis=1)
+    return 2 * np.sum(gmu * (1.0 - n / mu), axis=tuple(range(1, gmu.ndim)))
 
 
 def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
