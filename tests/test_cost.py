@@ -1158,16 +1158,25 @@ def test_CostSum_1(use_grad):
         return c
 
     def grad3(x, c):
-        return np.zeros((1, len(x)))
+        return np.ones((1, len(x)))
 
     lsq1 = LeastSquares(1, 2, 3, model1, grad=grad1)
     assert describe(lsq1) == ["a"]
 
+    if use_grad:
+        assert_allclose(lsq1.grad(2), numerical_cost_gradient(lsq1)(2))
+
     lsq2 = LeastSquares(1, 3, 4, model2, grad=grad2)
     assert describe(lsq2) == ["b", "a"]
 
+    if use_grad:
+        assert_allclose(lsq2.grad(2, 3), numerical_cost_gradient(lsq2)(2, 3))
+
     lsq3 = LeastSquares(1, 1, 1, model3, grad=grad3)
     assert describe(lsq3) == ["c"]
+
+    if use_grad:
+        assert_allclose(lsq3.grad(4), numerical_cost_gradient(lsq3)(4))
 
     lsq12 = lsq1 + lsq2
     assert lsq12._items == [lsq1, lsq2]
@@ -1183,8 +1192,8 @@ def test_CostSum_1(use_grad):
         a = 2
         b = 3
         ref = np.zeros(2)
-        ref[0] = lsq1.grad(a)
-        ref[[1, 0]] = lsq2.grad(b, a)
+        ref[0] += lsq1.grad(a)
+        ref[[1, 0]] += lsq2.grad(b, a)
         assert_allclose(lsq12.grad(a, b), ref)
 
     lsq121 = lsq12 + lsq1
@@ -1198,6 +1207,7 @@ def test_CostSum_1(use_grad):
         ref = np.zeros(2)
         ref[0] += lsq1.grad(a)
         ref[[1, 0]] += lsq2.grad(b, a)
+        ref[0] += lsq1.grad(a)
         assert_allclose(lsq121.grad(a, b), ref)
 
     lsq312 = lsq3 + lsq12
@@ -1219,6 +1229,15 @@ def test_CostSum_1(use_grad):
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2]
     assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 5
+
+    if use_grad:
+        a = 2
+        b = 3
+        c = 4
+        ref = np.zeros(3)
+        ref[:] += lsq312.grad(c, a, b)
+        ref[1:] += lsq12.grad(a, b)
+        assert_allclose(lsq31212.grad(c, a, b), ref)
 
     lsq31212 += lsq1
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
