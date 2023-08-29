@@ -1849,9 +1849,10 @@ class BinnedNLL(BinnedCostWithModel):
     def _pred(self, args: Sequence[float]) -> NDArray:
         # must return array of full length, mask not applied yet
         p = super()._pred(args)
+        # normalise probability of remaining bins
         ma = self.mask
         if ma is not None:
-            p /= np.sum(p[ma])  # normalise probability of remaining bins
+            p /= np.sum(p[ma])
         # scale probabilities with total number of entries of unmasked bins in histogram
         return p * np.sum(self._counts())
 
@@ -1861,12 +1862,15 @@ class BinnedNLL(BinnedCostWithModel):
         return multinominal_chi2(n, mu)
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        # must return array of full length, mask not applied yet
+        # pg and p must be arrays of full length, mask not applied yet
         pg = super()._pred_grad(args)
         p = super()._pred(args)
         ma = self.mask
+        # normalise probability of remaining bins
         if ma is not None:
-            pg /= np.sum(p[ma])  # normalise probability of remaining bins
+            scale = np.sum(p[ma])
+            pg = pg / scale - p * np.sum(pg[:, ma]) / scale**2
+            p /= scale
         # scale probabilities with total number of entries of unmasked bins in histogram
         scale = np.sum(self._counts())
         mu = p * scale
@@ -1874,7 +1878,7 @@ class BinnedNLL(BinnedCostWithModel):
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
-            gmu = gmu[ma]
+            gmu = gmu[:, ma]
         # don't need to scale mu and gmu, because scale factor cancels
         n = self._masked if self._bohm_zech_scale is None else self._bohm_zech_n
         return _multinominal_chi2_grad(n, mu, gmu)
@@ -1949,7 +1953,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
-            gmu = gmu[ma]
+            gmu = gmu[:, ma]
         n = self._counts()
         s = self._bohm_zech_scale
         if s is None:

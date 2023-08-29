@@ -583,25 +583,6 @@ def test_BinnedNLL_weighted(use_grad):
         assert m2.ngrad == 0
 
 
-def test_ExtendedBinnedNLL_weighted_pulls():
-    rng = np.random.default_rng(1)
-    xe = np.linspace(0, 5, 500)
-    p = np.diff(expon_cdf(xe, 2))
-    m = p * 100000
-    n = rng.poisson(m * 4) / 4
-    nvar = m * 4 / 4**2
-    w = np.transpose((n, nvar))
-    c = ExtendedBinnedNLL(w, xe, lambda x, n, s: n * expon_cdf(x, s))
-    m = Minuit(c, np.sum(n), 2)
-    m.limits["n"] = (0.1, None)
-    m.limits["s"] = (0.1, None)
-    m.migrad()
-    assert m.valid
-    pulls = c.pulls(m.values)
-    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
-    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
-
-
 def test_BinnedNLL_bad_input_1():
     with pytest.raises(ValueError):
         BinnedNLL([1], [1], lambda x, a: 0)
@@ -640,7 +621,8 @@ def test_BinnedNLL_bad_input_6():
         BinnedNLL(1, 2, lambda x, a: 0)
 
 
-def test_BinnedNLL_2D():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL_2D(use_grad):
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
 
@@ -649,14 +631,24 @@ def test_BinnedNLL_2D():
     def model(xy, mux, muy, sx, sy, rho):
         return mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
 
-    cost = BinnedNLL(w, (xe, ye), model)
+    cost = BinnedNLL(w, (xe, ye), model, grad=numerical_model_gradient(model))
     assert cost.ndata == np.prod(w.shape)
-    m = Minuit(cost, *truth)
+
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*truth), ref(*truth))
+
+    m = Minuit(cost, *truth, grad=use_grad)
     m.limits["sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
     assert_allclose(m.values, truth, atol=0.05)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
     assert cost.ndata == np.prod(w.shape)
     w2 = w.copy()
@@ -685,13 +677,21 @@ def test_BinnedNLL_2D_with_zero_bins():
 
 
 def test_BinnedNLL_mask():
-    c = BinnedNLL([5, 1000, 1], [0, 1, 2, 3], expon_cdf)
+    c = BinnedNLL(
+        [5, 1000, 1], [0, 1, 2, 3], expon_cdf, grad=numerical_model_gradient(expon_cdf)
+    )
     assert c.ndata == 3
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(2), ref(2))
 
     c_unmasked = c(1)
     c.mask = np.arange(3) != 1
     assert c(1) < c_unmasked
     assert c.ndata == 2
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(2), ref(2))
 
 
 def test_BinnedNLL_properties():
@@ -866,13 +866,18 @@ def test_ExtendedBinnedNLL_3D():
 
 
 def test_ExtendedBinnedNLL_mask():
-    c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], expon_cdf)
+    c = ExtendedBinnedNLL(
+        [1, 1000, 2], [0, 1, 2, 3], expon_cdf, grad=numerical_model_gradient(expon_cdf)
+    )
     assert c.ndata == 3
 
     c_unmasked = c(2)
     c.mask = np.arange(3) != 1
     assert c(2) < c_unmasked
     assert c.ndata == 2
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(2), ref(2))
 
 
 def test_ExtendedBinnedNLL_properties():
@@ -914,6 +919,25 @@ def test_ExtendedBinnedNLL_pickle():
     b = pickle.dumps(c)
     c2 = pickle.loads(b)
     assert_equal(c.data, c2.data)
+
+
+def test_ExtendedBinnedNLL_weighted_pulls():
+    rng = np.random.default_rng(1)
+    xe = np.linspace(0, 5, 500)
+    p = np.diff(expon_cdf(xe, 2))
+    m = p * 100000
+    n = rng.poisson(m * 4) / 4
+    nvar = m * 4 / 4**2
+    w = np.transpose((n, nvar))
+    c = ExtendedBinnedNLL(w, xe, lambda x, n, s: n * expon_cdf(x, s))
+    m = Minuit(c, np.sum(n), 2)
+    m.limits["n"] = (0.1, None)
+    m.limits["s"] = (0.1, None)
+    m.migrad()
+    assert m.valid
+    pulls = c.pulls(m.values)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
 
 
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
