@@ -14,7 +14,6 @@ from iminuit.cost import (
     NormalConstraint,
     Template,
     multinominal_chi2,
-    _soft_l1_loss,
     PerformanceWarning,
 )
 from iminuit.util import describe
@@ -819,6 +818,7 @@ def test_ExtendedBinnedNLL_2D(use_grad):
 
     cost = ExtendedBinnedNLL(w, (xe, ye), model, grad=numerical_model_gradient(model))
     assert cost.ndata == np.prod(w.shape)
+
     if use_grad:
         ref = numerical_cost_gradient(cost)
         assert_allclose(cost.grad(*truth), ref(*truth))
@@ -942,7 +942,11 @@ def test_ExtendedBinnedNLL_weighted_pulls():
 
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_LeastSquares(loss, verbose):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_LeastSquares(loss, verbose, use_grad):
+    if use_grad and loss is np.arctan:
+        pytest.skip()
+
     rng = np.random.default_rng(1)
 
     x = np.linspace(0, 1, 1000)
@@ -952,10 +956,22 @@ def test_LeastSquares(loss, verbose):
     def model(x, a, b):
         return a + b * x
 
-    cost = LeastSquares(x, y, ye, model, loss=loss, verbose=verbose)
+    cost = LeastSquares(
+        x,
+        y,
+        ye,
+        model,
+        loss=loss,
+        verbose=verbose,
+        grad=numerical_model_gradient(model),
+    )
     assert cost.ndata == len(x)
 
-    m = Minuit(cost, a=0, b=0)
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(1, 2), ref(1, 2))
+
+    m = Minuit(cost, a=0, b=0, grad=use_grad)
     m.migrad()
     assert_allclose(m.values, (1, 2), rtol=0.05)
     assert cost.loss == loss
@@ -968,6 +984,11 @@ def test_LeastSquares(loss, verbose):
 
     assert_allclose(m.fmin.reduced_chi2, 1, atol=5e-2)
 
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
+
 
 def test_LeastSquares_2D():
     x = np.array([1.0, 2.0, 3.0])
@@ -979,7 +1000,12 @@ def test_LeastSquares_2D():
         x, y = xy
         return a * x + b * y
 
-    c = LeastSquares((x, y), z, ze, model)
+    c = LeastSquares((x, y), z, ze, model, grad=numerical_model_gradient(model))
+    assert c.ndata == 3
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(1, 2), ref(1, 2))
+
     assert_equal(c.x, (x, y))
     assert_equal(c.y, z)
     assert_equal(c.yerror, ze)
@@ -1007,19 +1033,28 @@ def test_LeastSquares_bad_input():
         LeastSquares([1], [1], [1], lambda x, a: 0, loss=[1, 2, 3])
 
 
-def test_LeastSquares_mask():
-    c = LeastSquares([1, 2, 3], [3, np.nan, 4], [1, 1, 1], lambda x, a: x + a)
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_LeastSquares_mask(use_grad):
+    c = LeastSquares(
+        [1, 2, 3],
+        [3, np.nan, 4],
+        [1, 1, 1],
+        lambda x, a: x + a,
+        grad=lambda x, a: np.ones_like(x),
+    )
     assert c.ndata == 3
     assert np.isnan(c(0))
+    assert np.all(np.isnan(c.grad(1)))
 
-    m = Minuit(c, 1)
+    m = Minuit(c, 1, grad=use_grad)
     assert m.ndof == 2
     m.migrad()
     assert not m.valid
 
     c.mask = np.arange(3) != 1
-    assert not np.isnan(c(0))
     assert c.ndata == 2
+    assert not np.isnan(c(0))
+    assert not np.any(np.isnan(c.grad(0)))
 
     assert m.ndof == 1
     m.migrad()
@@ -1102,23 +1137,36 @@ def test_LeastSquares_pulls():
     assert_equal(c.pulls((0, 1)), [10, np.nan])
 
 
-def test_CostSum_1():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_CostSum_1(use_grad):
     def model1(x, a):
         return a + x
+
+    def grad1(x, a):
+        return np.ones((1, len(x)))
 
     def model2(x, b, a):
         return a + b * x
 
+    def grad2(x, b, a):
+        g = np.empty((2, len(x)))
+        g[0] = x
+        g[1] = 1
+        return g
+
     def model3(x, c):
         return c
 
-    lsq1 = LeastSquares(1, 2, 3, model1)
+    def grad3(x, c):
+        return np.zeros((1, len(x)))
+
+    lsq1 = LeastSquares(1, 2, 3, model1, grad=grad1)
     assert describe(lsq1) == ["a"]
 
-    lsq2 = LeastSquares(1, 3, 4, model2)
+    lsq2 = LeastSquares(1, 3, 4, model2, grad=grad2)
     assert describe(lsq2) == ["b", "a"]
 
-    lsq3 = LeastSquares(1, 1, 1, model3)
+    lsq3 = LeastSquares(1, 1, 1, model3, grad=grad3)
     assert describe(lsq3) == ["c"]
 
     lsq12 = lsq1 + lsq2
@@ -1131,22 +1179,41 @@ def test_CostSum_1():
 
     assert lsq12(1, 2) == lsq1(1) + lsq2(2, 1)
 
-    m = Minuit(lsq12, a=0, b=0)
-    m.migrad()
-    assert m.parameters == ("a", "b")
-    assert_allclose(m.values, (1, 2))
-    assert_allclose(m.errors, (3, 5))
-    assert_allclose(m.covariance, ((9, -9), (-9, 25)), atol=1e-10)
+    if use_grad:
+        a = 2
+        b = 3
+        ref = np.zeros(2)
+        ref[0] = lsq1.grad(a)
+        ref[[1, 0]] = lsq2.grad(b, a)
+        assert_allclose(lsq12.grad(a, b), ref)
 
     lsq121 = lsq12 + lsq1
     assert lsq121._items == [lsq1, lsq2, lsq1]
     assert describe(lsq121) == ["a", "b"]
     assert lsq121.ndata == 3
 
+    if use_grad:
+        a = 2
+        b = 3
+        ref = np.zeros(2)
+        ref[0] += lsq1.grad(a)
+        ref[[1, 0]] += lsq2.grad(b, a)
+        assert_allclose(lsq121.grad(a, b), ref)
+
     lsq312 = lsq3 + lsq12
     assert lsq312._items == [lsq3, lsq1, lsq2]
     assert describe(lsq312) == ["c", "a", "b"]
     assert lsq312.ndata == 3
+
+    if use_grad:
+        a = 2
+        b = 3
+        c = 4
+        ref = np.zeros(3)
+        ref[0] += lsq3.grad(c)
+        ref[1] += lsq1.grad(a)
+        ref[[2, 1]] += lsq2.grad(b, a)
+        assert_allclose(lsq312.grad(c, a, b), ref)
 
     lsq31212 = lsq312 + lsq12
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2]
@@ -1157,6 +1224,18 @@ def test_CostSum_1():
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
     assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 6
+
+    m = Minuit(lsq12, a=0, b=0, grad=use_grad)
+    m.migrad()
+    assert m.parameters == ("a", "b")
+    assert_allclose(m.values, (1, 2))
+    assert_allclose(m.errors, (3, 5))
+    assert_allclose(m.covariance, ((9, -9), (-9, 25)), atol=1e-10)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
 
 def test_CostSum_2():
@@ -1376,16 +1455,6 @@ def test_NormalConstraint_pickle():
 dtypes_to_test = [np.float32]
 if hasattr(np, "float128"):  # not available on all platforms
     dtypes_to_test.append(np.float128)
-
-
-@pytest.mark.parametrize("dtype", dtypes_to_test)
-def test_soft_l1_loss(dtype):
-    v = np.array([0], dtype=dtype)
-    assert _soft_l1_loss(v) == v
-    v[:] = 0.1
-    assert _soft_l1_loss(v) == pytest.approx(0.1, abs=0.01)
-    v[:] = 1e10
-    assert _soft_l1_loss(v) == pytest.approx(2e5, rel=0.01)
 
 
 def test_multinominal_chi2():

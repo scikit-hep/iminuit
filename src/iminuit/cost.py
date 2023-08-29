@@ -87,6 +87,7 @@ from typing import (
     Optional,
     overload,
     TypeVar,
+    Callable,
 )
 import warnings
 from ._deprecated import deprecated_parameter
@@ -132,14 +133,6 @@ def _unbinned_nll(x):
 def _z_squared(y, ye, ym):
     z = (y - ym) / ye
     return z * z
-
-
-def _soft_l1_loss(z_sqr):
-    return np.sum(2 * (np.sqrt(1 + z_sqr) - 1))
-
-
-def _soft_l1_cost(y, ye, ym):
-    return _soft_l1_loss(_z_squared(y, ye, ym))
 
 
 def _replace_none(x, replacement):
@@ -236,6 +229,21 @@ def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:
     """
     y, ye, ym = np.atleast_1d(y, ye, ym)
     return np.sum(_z_squared(y, ye, ym))
+
+
+def _chi2_grad(y: NDArray, ye: NDArray, ym: NDArray, ymg: NDArray) -> NDArray:
+    return -2 * np.sum((y - ym) * ymg * ye**-2, axis=1)
+
+
+def _soft_l1_cost(y: NDArray, ye: NDArray, ym: NDArray) -> float:
+    z_sqr = _z_squared(y, ye, ym)
+    return 2 * np.sum(np.sqrt(1 + z_sqr) - 1)
+
+
+def _soft_l1_cost_grad(y: NDArray, ye: NDArray, ym: NDArray, ymg: NDArray) -> NDArray:
+    inv_ye = 1 / ye
+    z = (y - ym) * inv_ye
+    return -2 * np.sum(z * ymg * inv_ye * (1 + z**2) ** -0.5, axis=1)
 
 
 def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
@@ -484,23 +492,6 @@ try:
 
     chi2.__doc__ = _chi2_np.__doc__
 
-    _soft_l1_loss_np = _soft_l1_loss
-    _soft_l1_loss_nb = jit(
-        nogil=True,
-        cache=True,
-        error_model="numpy",
-    )(_soft_l1_loss_np)
-
-    def _soft_l1_loss(z_sqr):
-        if z_sqr.dtype in (np.float32, np.float64):
-            return _soft_l1_loss_nb(z_sqr)
-        # fallback to numpy for float128
-        return _soft_l1_loss_np(z_sqr)
-
-    @nb_overload(_soft_l1_loss, inline="always")
-    def _ol_soft_l1_loss(z_sqr):
-        return _soft_l1_loss_np  # pragma: no cover
-
     _soft_l1_cost_np = _soft_l1_cost
     _soft_l1_cost_nb = jit(
         nogil=True,
@@ -508,7 +499,7 @@ try:
         error_model="numpy",
     )(_soft_l1_cost_np)
 
-    def _soft_l1_cost(y, ye, ym):
+    def _soft_l1_cost(y: NDArray, ye: NDArray, ym: NDArray) -> float:
         if ym.dtype in (np.float32, np.float64):
             return _soft_l1_cost_nb(y, ye, ym)
         # fallback to numpy for float128
@@ -868,6 +859,56 @@ class MaskedCost(Cost):
         self._masked = self._data[_replace_none(self._mask, ...)]
 
 
+class MaskedCostWithPulls(MaskedCost):
+    """
+    Base class for cost functions with pulls.
+
+    :meta private:
+    """
+
+    def pulls(self, args: Sequence[float]) -> NDArray:
+        """
+        Return studentized residuals (aka pulls).
+
+        Parameters
+        ----------
+        args : sequence of float
+            Parameter values.
+
+        Returns
+        -------
+        array
+            Array of pull values. If the cost function is masked, the array contains NaN
+            values where the mask value is False.
+
+        Notes
+        -----
+        Pulls allow one to estimate how well a model fits the data. A pull is a value
+        computed for each data point. It is given by (observed - predicted) /
+        standard-deviation. If the model is correct, the expectation value of each pull
+        is zero and its variance is one in the asymptotic limit of infinite samples.
+        Under these conditions, the chi-square statistic is computed from the sum of
+        pulls squared has a known probability distribution if the model is correct. It
+        therefore serves as a goodness-of-fit statistic.
+
+        Beware: the sum of pulls squared in general is not identical to the value
+        returned by the cost function, even if the cost function returns a chi-square
+        distributed test-statistic. The cost function is computed in a slightly
+        differently way that makes the return value approach the asymptotic chi-square
+        distribution faster than a test statistic based on sum of pulls squared. In
+        summary, only use pulls for plots. Compute the chi-square test statistic
+        directly from the cost function.
+        """
+        return self._pulls(args)
+
+    def _ndata(self):
+        return np.prod(self._masked.shape[: self._ndim])
+
+    @abc.abstractmethod
+    def _pulls(self, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
+
+
 class UnbinnedCost(MaskedCost):
     """
     Base class for unbinned cost functions.
@@ -1221,7 +1262,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         return gint, g
 
 
-class BinnedCost(MaskedCost):
+class BinnedCost(MaskedCostWithPulls):
     """
     Base class for binned cost functions.
 
@@ -1294,44 +1335,10 @@ class BinnedCost(MaskedCost):
         Returns
         -------
         NDArray
-            Model prediction for each bin.
+            Model prediction for each bin. The expectation is always returned for all
+            bins, even if some bins are temporarily masked.
         """
         return self._pred(args)
-
-    def pulls(self, args: Sequence[float]) -> NDArray:
-        """
-        Return studentized residuals (aka pulls).
-
-        Parameters
-        ----------
-        args : sequence of float
-            Parameter values.
-
-        Returns
-        -------
-        array
-            Array of pull values. If the cost function is masked, the array contains NaN
-            values where the mask value is False.
-
-        Notes
-        -----
-        Pulls allow one to estimate how well a model fits the data. A pull is a value
-        computed for each data bin. It is given by (observed - predicted) /
-        standard-deviation. If the model is correct, the expectation value of each pull
-        is zero and its variance is one in the asymptotic limit of infinite samples.
-        Under these conditions, the chi-square statistic is computed from the sum of
-        pulls squared has a known probability distribution if the model is correct. It
-        therefore serves as a goodness-of-fit statistic.
-
-        Beware: the sum of pulls squared in general is not identical to the value
-        returned by the cost function, even if the cost function returns a chi-square
-        distributed test-statistic. The cost function is computed in a slightly
-        differently way that makes the return value approach the asymptotic chi-square
-        distribution faster than a test statistic based on sum of pulls squared. In
-        summary, only use pulls for plots. Compute the chi-square test statistic
-        directly from the cost function.
-        """
-        return self._pulls(args)
 
     def visualize(self, args: Sequence[float]) -> None:
         """
@@ -1352,9 +1359,9 @@ class BinnedCost(MaskedCost):
         comparison to a model, the visualization shows all data bins as a single
         sequence.
         """
-        return self._vis(args)
+        return self._visualize(args)
 
-    def _vis(self, args: Sequence[float]) -> None:
+    def _visualize(self, args: Sequence[float]) -> None:
         from matplotlib import pyplot as plt
 
         n, ne = self._n_err()
@@ -1379,9 +1386,6 @@ class BinnedCost(MaskedCost):
     def _pred(self, args: Sequence[float]) -> Union[NDArray, Tuple[NDArray, NDArray]]:
         ...  # pragma: no cover
 
-    def _ndata(self):
-        return np.prod(self._masked.shape[: self._ndim])
-
     def _n_err(self) -> Tuple[NDArray, NDArray]:
         d = self.data
         if self._bohm_zech_scale is None:
@@ -1402,12 +1406,6 @@ class BinnedCost(MaskedCost):
         mu = self.prediction(args)
         n, ne = self._n_err()
         return (n - mu) / ne
-
-    def _grad(self, args: Sequence[float]) -> NDArray:
-        raise NotImplementedError
-
-    def _has_grad(self) -> bool:
-        return False
 
     def _set_bohm_zech(self, n: NDArray, is_weighted: bool):
         if not is_weighted:
@@ -1761,7 +1759,7 @@ class Template(BinnedCost):
         mu, mu_var = self._pred(args)
         return mu, np.sqrt(mu_var)
 
-    def _vis(self, args: Sequence[float]) -> None:
+    def _visualize(self, args: Sequence[float]) -> None:
         from matplotlib import pyplot as plt
 
         n, ne = self._n_err()
@@ -1962,7 +1960,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         return _poisson_chi2_grad(n, mu, s * gmu)
 
 
-class LeastSquares(MaskedCost):
+class LeastSquares(MaskedCostWithPulls):
     """
     Least-squares cost function (aka chisquare function).
 
@@ -1971,9 +1969,11 @@ class LeastSquares(MaskedCost):
     :meth:`__init__` for details on how to use a multivariate model.
     """
 
-    __slots__ = "_loss", "_cost", "_model", "_ndim"
+    __slots__ = "_loss", "_cost", "_cost_grad", "_model", "_model_grad", "_ndim"
 
     _loss: Union[str, LossFunction]
+    _cost: Callable[[ArrayLike, ArrayLike, ArrayLike], float]
+    _cost_grad: Optional[Callable[[NDArray, NDArray, NDArray, NDArray], NDArray]]
 
     @property
     def x(self):
@@ -2026,14 +2026,17 @@ class LeastSquares(MaskedCost):
         if isinstance(loss, str):
             if loss == "linear":
                 self._cost = chi2
+                self._cost_grad = _chi2_grad
             elif loss == "soft_l1":
-                self._cost = _soft_l1_cost
+                self._cost = _soft_l1_cost  # type: ignore
+                self._cost_grad = _soft_l1_cost_grad
             else:
                 raise ValueError(f"unknown loss {loss!r}")
         elif isinstance(loss, LossFunction):
             self._cost = lambda y, ye, ym: np.sum(
                 loss(_z_squared(y, ye, ym))  # type:ignore
             )
+            self._cost_grad = None
         else:
             raise ValueError("loss must be str or LossFunction")
 
@@ -2045,6 +2048,7 @@ class LeastSquares(MaskedCost):
         model: Model,
         loss: Union[str, LossFunction] = "linear",
         verbose: int = 0,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -2093,18 +2097,12 @@ class LeastSquares(MaskedCost):
 
         self._ndim = x.ndim
         self._model = model
+        self._model_grad = grad
         self.loss = loss
 
         x = np.atleast_2d(x)
         data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
         super().__init__(_model_parameters(self._model), data, verbose)
-
-    def _value(self, args: Sequence[float]) -> float:
-        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
-        y, yerror = self._masked.T[self._ndim :]
-        ym = self._model(x, *args)
-        ym = _normalize_output(ym, "model", len(y))
-        return self._cost(y, yerror, ym)
 
     def _ndata(self):
         return len(self._masked)
@@ -2161,7 +2159,7 @@ class LeastSquares(MaskedCost):
         """
         return self.model(self.x, *args)
 
-    def pulls(self, args: Sequence[float]) -> NDArray:  # noqa: D102
+    def _pulls(self, args: Sequence[float]) -> NDArray:
         y = self.y.copy()
         ye = self.yerror.copy()
         ym = self.prediction(args)
@@ -2172,14 +2170,33 @@ class LeastSquares(MaskedCost):
             ye[ma] = np.nan
         return (y - ym) / ye
 
+    def _pred(self, args: Sequence[float]) -> NDArray:
+        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
+        ym = self._model(x, *args)
+        return _normalize_output(ym, "model", self._ndata())
+
+    def _pred_grad(self, args: Sequence[float]) -> NDArray:
+        if self._model_grad is None:
+            raise ValueError("no gradient available")
+        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
+        ymg = self._model_grad(x, *args)
+        return _normalize_output(ymg, "model gradient", len(args), self._ndata())
+
+    def _value(self, args: Sequence[float]) -> float:
+        y, ye = self._masked.T[self._ndim :]
+        ym = self._pred(args)
+        return self._cost(y, ye, ym)
+
     def _grad(self, args: Sequence[float]) -> NDArray:
-        raise NotImplementedError
+        if self._cost_grad is None:
+            raise ValueError("no cost gradient available")
+        y, ye = self._masked.T[self._ndim :]
+        ym = self._pred(args)
+        ymg = self._pred_grad(args)
+        return self._cost_grad(y, ye, ym, ymg)
 
     def _has_grad(self) -> bool:
-        return False
-
-
-LeastSquares.pulls.__doc__ = BinnedCost.pulls.__doc__
+        return self._model_grad is not None and self._cost_grad is not None
 
 
 class NormalConstraint(Cost):
