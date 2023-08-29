@@ -1221,6 +1221,16 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
             accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
             to True, if the model returns the logarithm of the density as the second
             argument instead of the density. Default is False.
+        grad : callable or None, optional
+            Optionally pass the gradient of the density function. Has the same calling
+            signature like the density function, but must return two arrays. The first
+            array has shape (K,) where K are the number of parameters, while the second
+            has shape (K, N), where N is the number of data points. The first array is
+            the gradient of the integrated density. The second array is the gradient of
+            the density itself. If `log` is True, the second array must be the gradient
+            of the log-density instead. The gradient can be used by Minuit to improve or
+            speed up convergence and to compute the sandwich estimator for the variance
+            of the parameter estimates. Default is None.
         """
         super().__init__(data, scaled_pdf, verbose, log, grad)
 
@@ -2183,7 +2193,7 @@ class LeastSquares(MaskedCostWithPulls):
             raise ValueError("no gradient available")
         x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
         ymg = self._model_grad(x, *args)
-        return _normalize_output(ymg, "model gradient", len(args), self._ndata())
+        return _normalize_output(ymg, "model gradient", self.npar, self._ndata())
 
     def _value(self, args: Sequence[float]) -> float:
         y, ye = self._masked.T[self._ndim :]
