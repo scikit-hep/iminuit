@@ -562,9 +562,7 @@ class Cost(abc.ABC):
 
     @property
     def npar(self):
-        """
-        Return total number of model parameters.
-        """
+        """Return total number of model parameters."""
         return len(self._parameters)
 
     @abc.abstractmethod
@@ -651,9 +649,7 @@ class Cost(abc.ABC):
 
     @property
     def has_grad(self) -> bool:
-        """
-        Return True if cost function can compute a gradient.
-        """
+        """Return True if cost function can compute a gradient."""
         return self._has_grad()
 
     @abc.abstractmethod
@@ -862,9 +858,7 @@ class MaskedCost(Cost):
 
     @property
     def data(self):
-        """
-        Return data samples.
-        """
+        """Return data samples."""
         return self._data
 
     @data.setter
