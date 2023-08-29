@@ -1621,10 +1621,8 @@ def gradient(fcn: Cost) -> Optional[CostGradient]:
 
     Notes
     -----
-    This function checks whether the following attributes exist:
-        `fcn.grad`
-        `fcn.has_grad`
-    If `fcn.grad` exists and is a CostGradient, it is returned unless
+    This function checks whether the following attributes exist: `fcn.grad` and
+    `fcn.has_grad`. If `fcn.grad` exists and is a CostGradient, it is returned unless
     `fcn.has_grad` exists and is False. If no useable gradient is detected, None is
     returned.
 

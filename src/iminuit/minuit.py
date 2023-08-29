@@ -31,7 +31,8 @@ from typing import (
 )
 from iminuit.typing import UserBound, Cost, CostGradient
 from iminuit._optional_dependencies import optional_module_for
-from numpy.typing import ArrayLike
+
+ArrayLike = Collection[float]
 
 MnPrint.global_level = 0
 
@@ -509,7 +510,7 @@ class Minuit:
             and returns an iterable object with one entry for each parameter, which is
             the derivative of `fcn` for that parameter. If None (default), Minuit will
             call the function :func:`iminuit.util.gradient` on `fcn`. If this function
-            returns gradient callable, it will be used, otherwise Minuit will internally
+            returns a callable, it will be used, otherwise Minuit will internally
             compute the gradient numerically. Please see the documentation of
             :func:`iminuit.util.gradient` how gradients are detected. Passing a boolean
             override this detection. If grad=True is used, a ValueError is raised if no
@@ -1345,6 +1346,10 @@ class Minuit:
         kwargs :
             Other keyword arguments are forwarded to the
             plot function.
+
+        See Also
+        --------
+        Minuit.interactive
         """
         return self._visualize(plot)(self.values, **kwargs)
 
@@ -2258,6 +2263,10 @@ class Minuit:
         --------
         .. plot:: plots/interactive.py
             :include-source:
+
+        See Also
+        --------
+        Minuit.visualize
         """
         with warnings.catch_warnings():
             # ipywidgets produces deprecation warnings through use of internal APIs :(

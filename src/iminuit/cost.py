@@ -18,8 +18,9 @@ What to use when
     - Data are binned: :class:`ExtendedBinnedNLL`, also supports
       histogram of weighted samples
 
-- Fit a template to binned data with bin-wise uncertainties on the template:
-  :class:`Template`, which also supports weighted data and weighted templates
+- Fit a template to binned data with bin-wise uncertainties on the template
+
+    - :class:`Template`, also supports weighted data and weighted template histograms
 
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
   is one- or multi-dimensional, y is one-dimensional.
@@ -28,8 +29,9 @@ What to use when
     - y values contain outliers: :class:`LeastSquares` with loss function set to
       "soft_l1"
 
-- Include constraints from external fits or apply regularisation:
-  :class:`NormalConstraint`
+- Include constraints from external fits or apply regularisation
+
+    - :class:`NormalConstraint`
 
 Combining cost functions
 ------------------------
@@ -52,6 +54,18 @@ which is usually the right choice, however, it may be desirable to fit templates
 can have negative amplitudes. To achieve this, simply reset the limits with
 :attr:`iminuit.Minuit.limits` after creating the Minuit instance.
 
+User-defined gradients
+----------------------
+If the user provides a model gradient, the cost functions defined here except
+:class:`Template` will then also make their gradient available, which is then
+automatically used by :class:`iminuit.Minuit` (see the constructor for details) to
+potentially improve the fit (improve convergence  or robustness).
+
+Note that it is perfectly normal to use Minuit without a user-defined gradient, and
+Minuit does not always benefit from a user-defined gradient. If the gradient is
+expensive to compute, the time to converge may increase. If you have trouble with the
+fitting process, it is unlikely that the issues are resolved by a user-defined gradient.
+
 Notes
 -----
 The cost functions defined here have been optimized with knowledge about implementation
@@ -72,7 +86,7 @@ from .util import (
 )
 from .typing import Model, ModelGradient, LossFunction
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray, ArrayLike
 from collections.abc import Sequence as ABCSequence
 import abc
 from typing import (
@@ -88,6 +102,7 @@ from typing import (
     overload,
     TypeVar,
     Callable,
+    cast,
 )
 import warnings
 from ._deprecated import deprecated_parameter
@@ -274,7 +289,7 @@ def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
-def _multinominal_chi2_grad(n, mu, gmu):
+def _multinominal_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
     return -2 * np.sum(n * gmu / mu, axis=tuple(range(1, gmu.ndim)))
 
 
@@ -305,7 +320,7 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
 
 
-def _poisson_chi2_grad(n, mu, gmu):
+def _poisson_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
     return 2 * np.sum(gmu * (1.0 - n / mu), axis=tuple(range(1, gmu.ndim)))
 
 
@@ -1307,7 +1322,7 @@ class BinnedCost(MaskedCostWithPulls):
         shape = _shape_from_xe(xe)
         self._ndim = len(shape)
         if self._ndim == 1:
-            self._xe = _norm(xe)  # type:ignore
+            self._xe = _norm(cast(ArrayLike, xe))
         else:
             self._xe = tuple(_norm(xei) for xei in xe)
 
