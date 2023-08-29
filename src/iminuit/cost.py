@@ -1974,6 +1974,9 @@ class LeastSquares(MaskedCostWithPulls):
     _loss: Union[str, LossFunction]
     _cost: Callable[[ArrayLike, ArrayLike, ArrayLike], float]
     _cost_grad: Optional[Callable[[NDArray, NDArray, NDArray, NDArray], NDArray]]
+    _model: Model
+    _model_grad: Optional[ModelGradient]
+    _ndim: int
 
     @property
     def x(self):
