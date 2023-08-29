@@ -76,6 +76,8 @@ The binned versions of the log-likelihood fits support weighted samples. For eac
 the histogram, the sum of weights and the sum of squared weights is needed then, see
 class documentation for details.
 """
+from __future__ import annotations
+
 from .util import (
     describe,
     merge_signatures,

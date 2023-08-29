@@ -1,4 +1,5 @@
 """Minuit class."""
+from __future__ import annotations
 
 import warnings
 from iminuit import util as mutil
@@ -31,8 +32,7 @@ from typing import (
 )
 from iminuit.typing import UserBound, Cost, CostGradient
 from iminuit._optional_dependencies import optional_module_for
-
-ArrayLike = Collection[float]
+from numpy.typing import ArrayLike
 
 MnPrint.global_level = 0
 
