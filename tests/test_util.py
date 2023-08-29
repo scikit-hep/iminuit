@@ -768,3 +768,8 @@ def test_optional_module_for_3():
     ):
         with optional_module_for("foo", replace={"foobarbaz": "foo"}):
             import foobarbaz  # noqa
+
+
+def test_positive_definite():
+    assert util.is_positive_definite([[1, 0], [0, 1]])
+    assert not util.is_positive_definite([[1, 1], [1, 1]])

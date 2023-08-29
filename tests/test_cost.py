@@ -220,6 +220,15 @@ def test_UnbinnedNLL(unbinned, verbose, model, use_grad):
 
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
+    if use_grad and verbose == 0:
+        fi = cost.fisher_information(*m.values)
+        cov = cost.covariance(*m.values)
+        assert_allclose(cov, np.linalg.inv(fi))
+        assert_allclose(np.diag(cov) ** 0.5, m.errors, rtol=5e-2)
+        rho1 = m.covariance.correlation()[0, 1]
+        rho2 = cov[0, 1] / (cov[0, 0] * cov[1, 1]) ** 0.5
+        assert_allclose(rho1, rho2, atol=0.01)
+
 
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_UnbinnedNLL_2D(use_grad):
@@ -1471,6 +1480,38 @@ def test_NormalConstraint_pickle():
     assert_equal(c.covariance, c2.covariance)
 
 
+def test_NormalConstraint_bad_input_1():
+    with pytest.raises(ValueError, match="scalar or one-dimensional"):
+        NormalConstraint("par", [[[1, 2]]], np.eye(2))
+
+
+def test_NormalConstraint_bad_input_2():
+    with pytest.raises(ValueError, match="not match size of args"):
+        NormalConstraint(["a", "b", "c"], [1, 2], np.eye(2))
+
+
+def test_NormalConstraint_bad_input_3():
+    with pytest.raises(ValueError, match="size of error does not match size of value"):
+        NormalConstraint(["a", "b"], [1, 2], np.eye(3))
+
+
+def test_NormalConstraint_bad_input_4():
+    with pytest.raises(ValueError, match="positive definite"):
+        NormalConstraint(["a", "b"], [1, 2], [[1, 1], [1, 1]])
+
+
+def test_NormalConstraint_bad_input_5():
+    n = NormalConstraint(["a", "b"], [1, 2], [[1, 0], [0, 1]])
+
+    with pytest.raises(ValueError, match="positive definite"):
+        n.covariance = [[1, 1], [1, 1]]
+
+
+def test_NormalConstraint_bad_input_6():
+    with pytest.raises(ValueError, match="cannot have more than two dimensions"):
+        NormalConstraint(["a", "b"], [1, 2], np.ones((2, 2, 2)))
+
+
 dtypes_to_test = [np.float32]
 if hasattr(np, "float128"):  # not available on all platforms
     dtypes_to_test.append(np.float128)
@@ -1846,3 +1887,22 @@ def test_binned_cost_with_model_shape_error_message_2D(cost):
         match=(r"output of model has shape \(11,\), but \(12,\) is required"),
     ):
         c(1)
+
+
+def test_BohmZechTransform():
+    from iminuit.cost import BohmZechTransform
+
+    with pytest.warns(np.VisibleDeprecationWarning):
+        val = np.array([1.0, 2.0])
+        var = np.array([3.0, 4.0])
+        tr = BohmZechTransform(val, var)
+        s = val / var
+        mu = np.array([2.0, 2.0])
+        ns, mus = tr(mu)
+        assert_allclose(ns, val * s)
+        assert_allclose(mus, mu * s)
+        var2 = mu**2
+        ns, mus, vars = tr(mu, var2)
+        assert_allclose(ns, val * s)
+        assert_allclose(mus, mu * s)
+        assert_allclose(vars, var2 * s**2)

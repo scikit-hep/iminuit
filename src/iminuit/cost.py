@@ -107,12 +107,11 @@ from typing import (
     cast,
 )
 import warnings
-from ._deprecated import deprecated_parameter
+from ._deprecated import deprecated_parameter, deprecated
 
 __all__ = [
     "CHISQUARE",
     "NEGATIVE_LOG_LIKELIHOOD",
-    "BohmZechTransform",
     "chi2",
     "multinominal_chi2",
     "poisson_chi2",
@@ -158,6 +157,7 @@ def _replace_none(x, replacement):
     return x
 
 
+@deprecated("The class is deprecated and will be removed without replacement")
 class BohmZechTransform:
     """
     Apply Bohm-Zech transform.
@@ -1026,7 +1026,8 @@ class UnbinnedCost(MaskedCost):
         *args: float
             Estimates of model parameters.
         """
-        return self._fisher_information(args)
+        g = self._pointwise_score(args)
+        return np.einsum("ji,ki->jk", g, g)
 
     def covariance(self, *args: float) -> NDArray:
         """
@@ -1046,14 +1047,7 @@ class UnbinnedCost(MaskedCost):
         ndarray of float
             The array has shape (K, K) for K arguments.
         """
-        return self._sandwich(args)
-
-    def _fisher_information(self, args: Sequence[float]) -> NDArray:
-        g = self._pointwise_score(args)
-        return np.einsum("ji,ki->jk", g, g)
-
-    def _sandwich(self, args: Sequence[float]) -> NDArray:
-        return np.linalg.inv(self._fisher_information(args))
+        return np.linalg.inv(self.fisher_information(*args))
 
     @abc.abstractmethod
     def _pointwise_score(self, args: Sequence[float]) -> NDArray:
@@ -1155,7 +1149,7 @@ class UnbinnedNLL(UnbinnedCost):
 
     def _eval_model_grad(self, args: Sequence[float]) -> NDArray:
         if self._model_grad is None:
-            raise ValueError("no gradient available")
+            raise ValueError("no gradient available")  # pragma: no cover
         data = self._masked
         return _normalize_output(
             self._model_grad(data, *args), "model gradient", self.npar, self._npoints()
@@ -1271,7 +1265,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
     def _eval_model_grad(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
         if self._model_grad is None:
-            raise ValueError("no gradient available")
+            raise ValueError("no gradient available")  # pragma: no cover
         data = self._masked
         gint, g = self._model_grad(data, *args)
         gint = _normalize_output(
@@ -1747,7 +1741,7 @@ class Template(BinnedCost):
         return self._impl(n[ma], mu[ma], mu_var[ma])
 
     def _grad(self, args: Sequence[float]) -> NDArray:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     def _has_grad(self) -> bool:
         return False
@@ -2201,7 +2195,7 @@ class LeastSquares(MaskedCostWithPulls):
 
     def _pred_grad(self, args: Sequence[float]) -> NDArray:
         if self._model_grad is None:
-            raise ValueError("no gradient available")
+            raise ValueError("no gradient available")  # pragma: no cover
         x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
         ymg = self._model_grad(x, *args)
         return _normalize_output(ymg, "model gradient", self.npar, self._ndata())
@@ -2213,7 +2207,7 @@ class LeastSquares(MaskedCostWithPulls):
 
     def _grad(self, args: Sequence[float]) -> NDArray:
         if self._cost_grad is None:
-            raise ValueError("no cost gradient available")
+            raise ValueError("no cost gradient available")  # pragma: no cover
         y, ye = self._masked.T[self._ndim :]
         ym = self._pred(args)
         ymg = self._pred_grad(args)
