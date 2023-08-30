@@ -773,3 +773,4 @@ def test_optional_module_for_3():
 def test_positive_definite():
     assert util.is_positive_definite([[1, 0], [0, 1]])
     assert not util.is_positive_definite([[1, 1], [1, 1]])
+    assert not util.is_positive_definite([[1, 0], [1, 1]])
