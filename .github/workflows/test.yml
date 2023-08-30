@@ -44,16 +44,11 @@ jobs:
     - run: python -m pytest
 
   # The aarch64 test is very slow, that's why we do not run it
-  #
   aarch64:
-    strategy:
-      matrix:
-        python: cp309
-        arch: [aarch64]
-      fail-fast: false
     runs-on: ubuntu-latest
     env:
-      py: /opt/python/${{ matrix.python }}-${{ matrix.python }}/bin/python
+      pyver: 309
+      py: /opt/python/cp${{ matrix.pyver }}-cp${{ matrix.pyver }}/bin/python
       img: quay.io/pypa/manylinux2014_${{ matrix.arch }}
     steps:
     - uses: actions/checkout@v3
