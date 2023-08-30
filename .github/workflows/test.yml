@@ -39,42 +39,29 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - run: python -m pip install --upgrade pip
-    - run: python -m pip install --prefer-binary -v .[test]
+    - run: python -m pip install --upgrade pip wheel
+    # python -m pip install .[test] is not used here to test minimum (faster)
+    - run: python -m pip install -v . pytest
     - run: python -m pytest
 
-  pypy38:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
-    # must come after checkout
-    - uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        key: ${{ github.job }}-ubuntu-latest-pypy38
-    - uses: actions/setup-python@v4
-      with:
-        python-version: pypy-3.8
-    - run: python -m pip install --upgrade pip
-    # do not install all optional test dependencies on pypy
-    - run: python -m pip install --prefer-binary -v . pytest
-    - run: python -m pytest
-
-  # The aarch64 test is very slow, that's why we do not run it
   aarch64:
     runs-on: ubuntu-latest
+    env:
+      py: /opt/python/cp309-cp309/bin/python
+      img: quay.io/pypa/manylinux2014_aarch64
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
-    - uses: uraimo/run-on-arch-action@v2.5.1
-      with:
-        arch: aarch64
-        distro: ubuntu-latest
-        githubToken: ${{ github.token }}
-        install:
-          python3.9 -m pip install --upgrade pip &&
-          python3.9 -m pip install .[test]'
-        run:
-          python3.9 -m pytest
+    - uses: docker/setup-qemu-action@v2.2.0
+    - run: >
+            docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws
+            ${{ env.img }}
+            bash -exc '${{ env.py }} -m venv venv &&
+            source venv/bin/activate &&
+            python -m pip install --upgrade pip &&
+            python -m pip install . pytest'
+    - run: >
+            docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws
+            ${{ env.img }}
+            venv/bin/python -m pytest
