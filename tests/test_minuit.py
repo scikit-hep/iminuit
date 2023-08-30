@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
 from iminuit.util import Param, make_func_code
-from iminuit.warnings import IMinuitWarning
+from iminuit.warnings import IMinuitWarning, ErrordefAlreadySetWarning
 from iminuit.typing import Annotated
 from pytest import approx
 from argparse import Namespace
@@ -1709,3 +1709,14 @@ def test_bad_grad():
 
     with pytest.raises(ValueError, match="provided gradient is not a CostGradient"):
         Minuit(cost, 0, 0, grad="foo")
+
+
+def test_errordef_already_set_warning():
+    def cost(a, b):
+        return a**2 + b**2
+
+    cost.errordef = 1
+
+    m = Minuit(cost, 0, 0)
+    with pytest.warns(ErrordefAlreadySetWarning):
+        m.errordef = 2

@@ -5,6 +5,10 @@ We provide these for convenience, so that you do not have to write your own for 
 fits. The cost functions optionally use Numba to accelerate some calculations, if Numba
 is installed.
 
+**There is no need** to set :attr:`iminuit.Minuit.errordef` manually for any of these
+cost functions. :class:`iminuit.Minuit` automatically uses the correct value, which is
+provided by each cost function with the attribute ``Cost.errordef``.
+
 What to use when
 ----------------
 - Fit a normalised probability density to data

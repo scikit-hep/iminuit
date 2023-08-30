@@ -16,6 +16,7 @@ from iminuit._core import (
     MnUserParameterState,
     FunctionMinimum,
 )
+from iminuit.warnings import ErrordefAlreadySetWarning
 import numpy as np
 from typing import (
     Union,
@@ -108,6 +109,13 @@ class Minuit:
         the :download:`MINUIT2 User's Guide <mnusersguide.pdf>`. This parameter is also
         called *UP* in MINUIT documents.
 
+        If FCN has an attribute ``errordef``, its value is used automatically and you
+        should not set errordef by hand. Doing so will raise a
+        ErrordefAlreadySetWarning.
+
+        For the builtin cost functions in :module:`iminuit.cost`, you don't need to set
+        this value, because they all have the ``errordef`` attribute set.
+
         To make user code more readable, we provided two named constants::
 
             m_lsq = Minuit(a_least_squares_function)
@@ -120,6 +128,13 @@ class Minuit:
 
     @errordef.setter
     def errordef(self, value: float) -> None:
+        fcn_errordef = getattr(self._fcn._fcn, "errordef", None)
+        if fcn_errordef is not None:
+            msg = (
+                f"cost function has an errordef attribute equal to {fcn_errordef}, "
+                "you should not override this with Minuit.errordef"
+            )
+            warnings.warn(msg, ErrordefAlreadySetWarning)
         if value <= 0:
             raise ValueError(f"errordef={value} must be a positive number")
         self._fcn._errordef = value
@@ -926,7 +941,7 @@ class Minuit:
 
         def run(ipar: int) -> None:
             if ipar == self.npar:
-                r = self.fcn(x[: self.npar])
+                r = self._fcn(x[: self.npar])
                 if r < x[self.npar]:
                     x[self.npar] = r
                     self.values[:] = x[: self.npar]
@@ -1126,9 +1141,9 @@ class Minuit:
                         self.vec[self.free] = v
                         return self.fcn(*self.par, self.vec)[self.free]
 
-        fcn = Wrapped(self.fcn._fcn)
+        fcn = Wrapped(self._fcn._fcn)
 
-        grad = self.fcn._grad
+        grad = self._fcn._grad
         grad = WrappedGrad(grad) if grad else None
 
         if hess:
@@ -1239,9 +1254,9 @@ class Minuit:
         if self.print_level > 0:
             print(r)
 
-        self.fcn._nfcn += r["nfev"]
+        self._fcn._nfcn += r["nfev"]
         if grad:
-            self.fcn._ngrad += r.get("njev", 0)
+            self._fcn._ngrad += r.get("njev", 0)
 
         # Get inverse Hesse matrix, working around many inconsistencies in scipy.
         # Try in order:
@@ -1709,7 +1724,7 @@ class Minuit:
         values = np.array(self.values)
         for i, vi in enumerate(x):
             values[ipar] = vi
-            y[i] = self.fcn(values)
+            y[i] = self._fcn(values)
 
         if subtract_min:
             y -= np.min(y)
@@ -2298,7 +2313,7 @@ class Minuit:
                 trans = plt.gca().transAxes
                 try:
                     with warnings.catch_warnings():
-                        if self.fcn._array_call:
+                        if self._fcn._array_call:
                             plot([args], **kwargs)  # prevent unpacking of array
                         else:
                             plot(args, **kwargs)
@@ -2321,7 +2336,7 @@ class Minuit:
                 if from_fit:
                     fval = self.fmin.fval
                 else:
-                    fval = self.fcn(args)
+                    fval = self._fcn(args)
                 plt.text(
                     0.05,
                     1.05,
@@ -2618,15 +2633,16 @@ class Minuit:
             p.text(str(self))
 
     def _visualize(self, plot):
-        pyfcn = self.fcn._fcn
+        pyfcn = self._fcn._fcn
         if plot is None:
             if hasattr(pyfcn, "visualize"):
                 plot = pyfcn.visualize
             else:
-                raise AttributeError(
+                msg = (
                     f"class {pyfcn.__class__.__name__} has no visualize method, "
                     "please use the 'plot' keyword to pass a visualization function"
                 )
+                raise AttributeError(msg)
         return plot
 
     def _experimental_mncontour(
