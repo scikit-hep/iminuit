@@ -1693,3 +1693,19 @@ def test_annotated_cost_function():
     assert m2.limits["y"] == (0.1, 1.0)
     m.migrad()
     assert_allclose(m.values, (0, 0.1), atol=1e-2)
+
+
+def test_enforced_grad():
+    def cost(a, b):
+        return a**2 + b**2
+
+    with pytest.raises(ValueError):
+        Minuit(cost, 0, 0, grad=True)
+
+
+def test_bad_grad():
+    def cost(a, b):
+        return a**2 + b**2
+
+    with pytest.raises(ValueError, match="provided gradient is not a CostGradient"):
+        Minuit(cost, 0, 0, grad="foo")

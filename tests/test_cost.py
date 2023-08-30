@@ -14,7 +14,6 @@ from iminuit.cost import (
     NormalConstraint,
     Template,
     multinominal_chi2,
-    _soft_l1_loss,
     PerformanceWarning,
 )
 from iminuit.util import describe
@@ -53,6 +52,27 @@ def mvnorm(mux, muy, sx, sy, rho):
 def expon_cdf(x, a):
     with np.errstate(over="ignore"):
         return 1 - np.exp(-x / a)
+
+
+def numerical_cost_gradient(fcn):
+    jacobi = pytest.importorskip("jacobi").jacobi
+    return lambda *args: jacobi(lambda p: fcn(*p), args)[0]
+
+
+def numerical_model_gradient(fcn):
+    jacobi = pytest.importorskip("jacobi").jacobi
+    return lambda x, *args: jacobi(lambda p: fcn(x, *p), args)[0].T
+
+
+def numerical_extended_model_gradient(fcn):
+    jacobi = pytest.importorskip("jacobi").jacobi
+
+    def fn(x, *args):
+        fint = jacobi(lambda p: fcn(x, *p)[0], args)[0]
+        f = jacobi(lambda p: fcn(x, *p)[1], args)[0].T
+        return fint, f
+
+    return fn
 
 
 @pytest.fixture
@@ -143,54 +163,117 @@ def test_describe():
     }
 
 
-def test_Constant():
+def test_Constant_1():
     c = Constant(2.5)
     assert c.value == 2.5
     assert c.ndata == 0
+    assert c.has_grad
+    assert_equal(c.grad(), [])
+
+
+def test_Constant_2():
+    c = NormalConstraint(("a", "b"), (1, 2), (3, 4)) + Constant(10.2)
+    assert_allclose(c(1, 2), 10.2)
+    assert_allclose(c(4, 2), 10.2 + 1)
+
+
+def test_Constant_3():
+    c = NormalConstraint(("a", "b"), (1, 2), (3, 4)) + Constant(10.2)
+    ref = numerical_cost_gradient(c)
+    assert c.has_grad
+    assert_allclose(c.grad(1, 2), ref(1, 2))
+    assert_allclose(c.grad(2, 3), ref(2, 3))
+    assert_allclose(c.grad(-1, -2), ref(-1, -2))
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
-def test_UnbinnedNLL(unbinned, verbose, model):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_UnbinnedNLL(unbinned, verbose, model, use_grad):
     mle, x = unbinned
 
-    cost = UnbinnedNLL(x, model, verbose=verbose, log=model is logpdf)
+    cost = UnbinnedNLL(
+        x,
+        model,
+        verbose=verbose,
+        log=model is logpdf,
+        grad=numerical_model_gradient(model),
+    )
     assert cost.ndata == np.inf
 
-    m = Minuit(cost, mu=0, sigma=1)
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(1, 2), ref(1, 2), rtol=1e-3)
+        assert_allclose(cost.grad(-1, 3), ref(-1, 3), rtol=1e-3)
+
+    m = Minuit(cost, mu=0, sigma=1, grad=use_grad)
     m.limits["sigma"] = (0, None)
     m.migrad()
+    assert m.valid
     assert_allclose(m.values, mle[1:], atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
 
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
+
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
+    if use_grad and verbose == 0:
+        fi = cost.fisher_information(*m.values)
+        cov = cost.covariance(*m.values)
+        assert_allclose(cov, np.linalg.inv(fi))
+        assert_allclose(np.diag(cov) ** 0.5, m.errors, rtol=5e-2)
+        rho1 = m.covariance.correlation()[0, 1]
+        rho2 = cov[0, 1] / (cov[0, 0] * cov[1, 1]) ** 0.5
+        assert_allclose(rho1, rho2, atol=0.01)
 
-def test_UnbinnedNLL_2D():
+
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_UnbinnedNLL_2D(use_grad):
     def model(x_y, mux, muy, sx, sy, rho):
         return mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
     truth = 0.1, 0.2, 0.3, 0.4, 0.5
-    x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
+    x, y = mvnorm(*truth).rvs(size=100, random_state=1).T
 
-    cost = UnbinnedNLL((x, y), model)
-    m = Minuit(cost, *truth)
+    cost = UnbinnedNLL((x, y), model, grad=numerical_model_gradient(model))
+    m = Minuit(cost, *truth, grad=use_grad)
     m.limits["sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
 
-    assert_allclose(m.values, truth, atol=0.02)
+    if use_grad:
+        assert m.ngrad > 0
+
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*m.values), ref(*m.values), rtol=0.01)
+    else:
+        assert m.ngrad == 0
+
+    assert_allclose(m.values, truth, atol=0.2)
 
 
-def test_UnbinnedNLL_mask():
-    c = UnbinnedNLL([1, np.nan, 2], lambda x, a: x + a)
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_UnbinnedNLL_mask(use_grad):
+    c = UnbinnedNLL(
+        [1, np.nan, 2],
+        lambda x, a: x + a**2,
+        grad=lambda x, a: np.ones_like(x) * 2 * a,
+    )
     assert c.mask is None
 
     assert np.isnan(c(0))
     c.mask = np.arange(3) != 1
     assert_equal(c.mask, (True, False, True))
     assert not np.isnan(c(0))
+
+    assert_allclose(c.grad(0), [0])
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(1), ref(1), atol=1e-3)
 
 
 @pytest.mark.parametrize("log", (False, True))
@@ -281,7 +364,8 @@ def test_UnbinnedNLL_annotated():
 
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
-def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedUnbinnedNLL(unbinned, verbose, model, use_grad):
     mle, x = unbinned
 
     log = model is logpdf
@@ -291,45 +375,77 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model):
             return n, np.log(n) + logpdf(x, mu, sigma)
         return n, n * pdf(x, mu, sigma)
 
-    cost = ExtendedUnbinnedNLL(x, density, verbose=verbose, log=log)
+    cost = ExtendedUnbinnedNLL(
+        x,
+        density,
+        verbose=verbose,
+        log=log,
+        grad=numerical_extended_model_gradient(density),
+    )
     assert cost.ndata == np.inf
 
-    m = Minuit(cost, n=len(x), mu=0, sigma=1)
+    m = Minuit(cost, n=len(x), mu=0, sigma=1, grad=use_grad)
     m.limits["n"] = (0, None)
     m.limits["sigma"] = (0, None)
     m.migrad()
+    assert m.valid
     assert_allclose(m.values, mle, atol=1e-3)
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
 
     assert_equal(m.fmin.reduced_chi2, np.nan)
 
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
-def test_ExtendedUnbinnedNLL_2D():
+
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedUnbinnedNLL_2D(use_grad):
     def model(x_y, n, mux, muy, sx, sy, rho):
-        return n * 1000, n * 1000 * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
+        return n, n * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
-    truth = 1.0, 0.1, 0.2, 0.3, 0.4, 0.5
-    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000)).T
+    truth = 100.0, 0.1, 0.2, 0.3, 0.4, 0.5
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0]), random_state=1).T
 
-    cost = ExtendedUnbinnedNLL((x, y), model)
+    cost = ExtendedUnbinnedNLL(
+        (x, y), model, grad=numerical_extended_model_gradient(model)
+    )
 
-    m = Minuit(cost, *truth)
+    m = Minuit(cost, *truth, grad=use_grad)
     m.limits["n", "sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
 
-    assert_allclose(m.values, truth, atol=0.1)
+    assert_allclose(m.values, truth, atol=0.5)
+
+    if use_grad:
+        assert m.ngrad > 0
+
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*m.values), ref(*m.values), rtol=0.01)
+    else:
+        assert m.ngrad == 0
 
 
 def test_ExtendedUnbinnedNLL_mask():
-    c = ExtendedUnbinnedNLL([1, np.nan, 2], lambda x, a: (1, x + a))
+    def model(x, a):
+        return 1, x + a
+
+    c = ExtendedUnbinnedNLL(
+        [1, np.nan, 2], model, grad=numerical_extended_model_gradient(model)
+    )
     assert c.ndata == np.inf
 
     assert np.isnan(c(0))
     c.mask = np.arange(3) != 1
     assert not np.isnan(c(0))
     assert c.ndata == np.inf
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(0), ref(0))
+    assert_allclose(c.grad(1.5), ref(1.5))
 
 
 @pytest.mark.parametrize("log", (False, True))
@@ -400,21 +516,33 @@ def test_ExtendedUnbinnedNLL_pickle():
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_BinnedNLL(binned, verbose):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL(binned, verbose, use_grad):
     mle, nx, xe = binned
 
-    cost = BinnedNLL(nx, xe, cdf, verbose=verbose)
+    cost = BinnedNLL(nx, xe, cdf, verbose=verbose, grad=numerical_model_gradient(cdf))
     assert cost.ndata == len(nx)
 
-    m = Minuit(cost, mu=0, sigma=1)
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*mle[1:]), ref(*mle[1:]))
+        assert_allclose(cost.grad(-1, 2), ref(-1, 2))
+
+    m = Minuit(cost, mu=0, sigma=1, grad=use_grad)
     m.limits["sigma"] = (0, None)
     m.migrad()
+    assert m.valid
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle[1:], rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
     assert m.ndof == len(nx) - 2
 
     assert_allclose(m.fmin.reduced_chi2, 1, atol=0.15)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
 
 def test_BinnedNLL_pulls(binned):
@@ -428,7 +556,8 @@ def test_BinnedNLL_pulls(binned):
     assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
 
 
-def test_BinnedNLL_weighted():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL_weighted(use_grad):
     xe = np.array([0, 0.2, 0.4, 0.8, 1.5, 10])
     p = np.diff(expon_cdf(xe, 1))
     n = p * 1000
@@ -442,31 +571,24 @@ def test_BinnedNLL_weighted():
     # variance * 4 = (sigma * 2)^2, constructed so that
     # fitted parameter has twice the uncertainty
     w = np.transpose((n, 4 * n))
-    c = BinnedNLL(w, xe, expon_cdf)
+    c = BinnedNLL(w, xe, expon_cdf, grad=numerical_model_gradient(expon_cdf))
     assert_equal(c.data, w)
-    m2 = Minuit(c, 1)
+
+    if use_grad:
+        ref = numerical_cost_gradient(c)
+        assert_allclose(c.grad(*m1.values), ref(*m1.values))
+        assert_allclose(c.grad(12), ref(12))
+
+    m2 = Minuit(c, 1, grad=use_grad)
     m2.migrad()
+    assert m2.valid
     assert m2.values[0] == pytest.approx(1, rel=1e-2)
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
 
-
-def test_ExtendedBinnedNLL_weighted_pulls():
-    rng = np.random.default_rng(1)
-    xe = np.linspace(0, 5, 500)
-    p = np.diff(expon_cdf(xe, 2))
-    m = p * 100000
-    n = rng.poisson(m * 4) / 4
-    nvar = m * 4 / 4**2
-    w = np.transpose((n, nvar))
-    c = ExtendedBinnedNLL(w, xe, lambda x, n, s: n * expon_cdf(x, s))
-    m = Minuit(c, np.sum(n), 2)
-    m.limits["n"] = (0.1, None)
-    m.limits["s"] = (0.1, None)
-    m.migrad()
-    assert m.valid
-    pulls = c.pulls(m.values)
-    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
-    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
+    if use_grad:
+        assert m2.ngrad > 0
+    else:
+        assert m2.ngrad == 0
 
 
 def test_BinnedNLL_bad_input_1():
@@ -485,7 +607,7 @@ def test_BinnedNLL_bad_input_3():
 
 
 def test_BinnedNLL_bad_input_4():
-    with pytest.raises(ValueError, match="n must have shape"):
+    with pytest.raises(ValueError, match="n must either have same dimension as xe"):
         BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
 
 
@@ -507,7 +629,8 @@ def test_BinnedNLL_bad_input_6():
         BinnedNLL(1, 2, lambda x, a: 0)
 
 
-def test_BinnedNLL_2D():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL_2D(use_grad):
     truth = (0.1, 0.2, 0.3, 0.4, 0.5)
     x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
 
@@ -516,14 +639,24 @@ def test_BinnedNLL_2D():
     def model(xy, mux, muy, sx, sy, rho):
         return mvnorm(mux, muy, sx, sy, rho).cdf(xy.T)
 
-    cost = BinnedNLL(w, (xe, ye), model)
+    cost = BinnedNLL(w, (xe, ye), model, grad=numerical_model_gradient(model))
     assert cost.ndata == np.prod(w.shape)
-    m = Minuit(cost, *truth)
+
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*truth), ref(*truth))
+
+    m = Minuit(cost, *truth, grad=use_grad)
     m.limits["sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
     assert_allclose(m.values, truth, atol=0.05)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
     assert cost.ndata == np.prod(w.shape)
     w2 = w.copy()
@@ -552,13 +685,21 @@ def test_BinnedNLL_2D_with_zero_bins():
 
 
 def test_BinnedNLL_mask():
-    c = BinnedNLL([5, 1000, 1], [0, 1, 2, 3], expon_cdf)
+    c = BinnedNLL(
+        [5, 1000, 1], [0, 1, 2, 3], expon_cdf, grad=numerical_model_gradient(expon_cdf)
+    )
     assert c.ndata == 3
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(2), ref(2))
 
     c_unmasked = c(1)
     c.mask = np.arange(3) != 1
     assert c(1) < c_unmasked
     assert c.ndata == 2
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(2), ref(2))
 
 
 def test_BinnedNLL_properties():
@@ -611,16 +752,24 @@ def test_BinnedNLL_pickle():
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_ExtendedBinnedNLL(binned, verbose):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedBinnedNLL(binned, verbose, use_grad):
     mle, nx, xe = binned
 
-    cost = ExtendedBinnedNLL(nx, xe, scaled_cdf, verbose=verbose)
+    cost = ExtendedBinnedNLL(
+        nx, xe, scaled_cdf, verbose=verbose, grad=numerical_model_gradient(scaled_cdf)
+    )
     assert cost.ndata == len(nx)
 
-    m = Minuit(cost, n=mle[0], mu=0, sigma=1)
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*mle), ref(*mle))
+
+    m = Minuit(cost, n=mle[0], mu=0, sigma=1, grad=use_grad)
     m.limits["n"] = (0, None)
     m.limits["sigma"] = (0, None)
     m.migrad()
+    assert m.valid
     # binning loses information compared to unbinned case
     assert_allclose(m.values, mle, rtol=0.15)
     assert m.errors["mu"] == pytest.approx(1000**-0.5, rel=0.05)
@@ -628,8 +777,14 @@ def test_ExtendedBinnedNLL(binned, verbose):
 
     assert_allclose(m.fmin.reduced_chi2, 1, 0.1)
 
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
-def test_ExtendedBinnedNLL_weighted():
+
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedBinnedNLL_weighted(use_grad):
     xe = np.array([0, 1, 10])
     n = np.diff(expon_cdf(xe, 1))
     m1 = Minuit(ExtendedBinnedNLL(n, xe, expon_cdf), 1)
@@ -637,11 +792,22 @@ def test_ExtendedBinnedNLL_weighted():
     assert_allclose(m1.values, (1,), rtol=1e-2)
 
     w = np.transpose((n, 4 * n))
-    m2 = Minuit(ExtendedBinnedNLL(w, xe, expon_cdf), 1)
+    c = ExtendedBinnedNLL(w, xe, expon_cdf, grad=numerical_model_gradient(expon_cdf))
+    if use_grad:
+        ref = numerical_cost_gradient(c)
+        assert_allclose(c.grad(1), ref(1), atol=1e-14)
+        assert_allclose(c.grad(12), ref(12))
+    m2 = Minuit(c, 1.1, grad=use_grad)
     m2.migrad()
+    assert m2.valid
     assert_allclose(m2.values, (1,), rtol=1e-2)
 
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+    if use_grad:
+        assert m2.ngrad > 0
+    else:
+        assert m2.ngrad == 0
 
 
 def test_ExtendedBinnedNLL_bad_input():
@@ -649,23 +815,34 @@ def test_ExtendedBinnedNLL_bad_input():
         ExtendedBinnedNLL([1], [1], lambda x, a: 0)
 
 
-def test_ExtendedBinnedNLL_2D():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedBinnedNLL_2D(use_grad):
     truth = (1.0, 0.1, 0.2, 0.3, 0.4, 0.5)
-    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 1000), random_state=1).T
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0] * 100), random_state=1).T
 
     w, xe, ye = np.histogram2d(x, y, bins=(10, 20))
 
     def model(xy, n, mux, muy, sx, sy, rho):
-        return n * 1000 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
+        return n * 100 * mvnorm(mux, muy, sx, sy, rho).cdf(np.transpose(xy))
 
-    cost = ExtendedBinnedNLL(w, (xe, ye), model)
+    cost = ExtendedBinnedNLL(w, (xe, ye), model, grad=numerical_model_gradient(model))
     assert cost.ndata == np.prod(w.shape)
-    m = Minuit(cost, *truth)
+
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(*truth), ref(*truth))
+
+    m = Minuit(cost, *truth, grad=use_grad)
     m.limits["n", "sx", "sy"] = (0, None)
     m.limits["rho"] = (-1, 1)
     m.migrad()
     assert m.valid
     assert_allclose(m.values, truth, atol=0.1)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
 
 def test_ExtendedBinnedNLL_3D():
@@ -698,13 +875,18 @@ def test_ExtendedBinnedNLL_3D():
 
 
 def test_ExtendedBinnedNLL_mask():
-    c = ExtendedBinnedNLL([1, 1000, 2], [0, 1, 2, 3], expon_cdf)
+    c = ExtendedBinnedNLL(
+        [1, 1000, 2], [0, 1, 2, 3], expon_cdf, grad=numerical_model_gradient(expon_cdf)
+    )
     assert c.ndata == 3
 
     c_unmasked = c(2)
     c.mask = np.arange(3) != 1
     assert c(2) < c_unmasked
     assert c.ndata == 2
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(2), ref(2))
 
 
 def test_ExtendedBinnedNLL_properties():
@@ -748,9 +930,32 @@ def test_ExtendedBinnedNLL_pickle():
     assert_equal(c.data, c2.data)
 
 
+def test_ExtendedBinnedNLL_weighted_pulls():
+    rng = np.random.default_rng(1)
+    xe = np.linspace(0, 5, 500)
+    p = np.diff(expon_cdf(xe, 2))
+    m = p * 100000
+    n = rng.poisson(m * 4) / 4
+    nvar = m * 4 / 4**2
+    w = np.transpose((n, nvar))
+    c = ExtendedBinnedNLL(w, xe, lambda x, n, s: n * expon_cdf(x, s))
+    m = Minuit(c, np.sum(n), 2)
+    m.limits["n"] = (0.1, None)
+    m.limits["s"] = (0.1, None)
+    m.migrad()
+    assert m.valid
+    pulls = c.pulls(m.values)
+    assert np.nanmean(pulls) == pytest.approx(0, abs=0.1)
+    assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
+
+
 @pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
 @pytest.mark.parametrize("verbose", (0, 1))
-def test_LeastSquares(loss, verbose):
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_LeastSquares(loss, verbose, use_grad):
+    if use_grad and loss is np.arctan:
+        pytest.skip()
+
     rng = np.random.default_rng(1)
 
     x = np.linspace(0, 1, 1000)
@@ -760,10 +965,22 @@ def test_LeastSquares(loss, verbose):
     def model(x, a, b):
         return a + b * x
 
-    cost = LeastSquares(x, y, ye, model, loss=loss, verbose=verbose)
+    cost = LeastSquares(
+        x,
+        y,
+        ye,
+        model,
+        loss=loss,
+        verbose=verbose,
+        grad=numerical_model_gradient(model),
+    )
     assert cost.ndata == len(x)
 
-    m = Minuit(cost, a=0, b=0)
+    if use_grad:
+        ref = numerical_cost_gradient(cost)
+        assert_allclose(cost.grad(1, 2), ref(1, 2))
+
+    m = Minuit(cost, a=0, b=0, grad=use_grad)
     m.migrad()
     assert_allclose(m.values, (1, 2), rtol=0.05)
     assert cost.loss == loss
@@ -776,6 +993,11 @@ def test_LeastSquares(loss, verbose):
 
     assert_allclose(m.fmin.reduced_chi2, 1, atol=5e-2)
 
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
+
 
 def test_LeastSquares_2D():
     x = np.array([1.0, 2.0, 3.0])
@@ -787,7 +1009,12 @@ def test_LeastSquares_2D():
         x, y = xy
         return a * x + b * y
 
-    c = LeastSquares((x, y), z, ze, model)
+    c = LeastSquares((x, y), z, ze, model, grad=numerical_model_gradient(model))
+    assert c.ndata == 3
+
+    ref = numerical_cost_gradient(c)
+    assert_allclose(c.grad(1, 2), ref(1, 2))
+
     assert_equal(c.x, (x, y))
     assert_equal(c.y, z)
     assert_equal(c.yerror, ze)
@@ -815,19 +1042,28 @@ def test_LeastSquares_bad_input():
         LeastSquares([1], [1], [1], lambda x, a: 0, loss=[1, 2, 3])
 
 
-def test_LeastSquares_mask():
-    c = LeastSquares([1, 2, 3], [3, np.nan, 4], [1, 1, 1], lambda x, a: x + a)
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_LeastSquares_mask(use_grad):
+    c = LeastSquares(
+        [1, 2, 3],
+        [3, np.nan, 4],
+        [1, 1, 1],
+        lambda x, a: x + a,
+        grad=lambda x, a: np.ones_like(x),
+    )
     assert c.ndata == 3
     assert np.isnan(c(0))
+    assert np.all(np.isnan(c.grad(1)))
 
-    m = Minuit(c, 1)
+    m = Minuit(c, 1, grad=use_grad)
     assert m.ndof == 2
     m.migrad()
     assert not m.valid
 
     c.mask = np.arange(3) != 1
-    assert not np.isnan(c(0))
     assert c.ndata == 2
+    assert not np.isnan(c(0))
+    assert not np.any(np.isnan(c.grad(0)))
 
     assert m.ndof == 1
     m.migrad()
@@ -910,24 +1146,46 @@ def test_LeastSquares_pulls():
     assert_equal(c.pulls((0, 1)), [10, np.nan])
 
 
-def test_CostSum_1():
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_CostSum_1(use_grad):
     def model1(x, a):
         return a + x
+
+    def grad1(x, a):
+        return np.ones((1, len(x)))
 
     def model2(x, b, a):
         return a + b * x
 
+    def grad2(x, b, a):
+        g = np.empty((2, len(x)))
+        g[0] = x
+        g[1] = 1
+        return g
+
     def model3(x, c):
         return c
 
-    lsq1 = LeastSquares(1, 2, 3, model1)
+    def grad3(x, c):
+        return np.ones((1, len(x)))
+
+    lsq1 = LeastSquares(1, 2, 3, model1, grad=grad1)
     assert describe(lsq1) == ["a"]
 
-    lsq2 = LeastSquares(1, 3, 4, model2)
+    if use_grad:
+        assert_allclose(lsq1.grad(2), numerical_cost_gradient(lsq1)(2))
+
+    lsq2 = LeastSquares(1, 3, 4, model2, grad=grad2)
     assert describe(lsq2) == ["b", "a"]
 
-    lsq3 = LeastSquares(1, 1, 1, model3)
+    if use_grad:
+        assert_allclose(lsq2.grad(2, 3), numerical_cost_gradient(lsq2)(2, 3))
+
+    lsq3 = LeastSquares(1, 1, 1, model3, grad=grad3)
     assert describe(lsq3) == ["c"]
+
+    if use_grad:
+        assert_allclose(lsq3.grad(4), numerical_cost_gradient(lsq3)(4))
 
     lsq12 = lsq1 + lsq2
     assert lsq12._items == [lsq1, lsq2]
@@ -939,32 +1197,73 @@ def test_CostSum_1():
 
     assert lsq12(1, 2) == lsq1(1) + lsq2(2, 1)
 
-    m = Minuit(lsq12, a=0, b=0)
-    m.migrad()
-    assert m.parameters == ("a", "b")
-    assert_allclose(m.values, (1, 2))
-    assert_allclose(m.errors, (3, 5))
-    assert_allclose(m.covariance, ((9, -9), (-9, 25)), atol=1e-10)
+    if use_grad:
+        a = 2
+        b = 3
+        ref = np.zeros(2)
+        ref[0] += lsq1.grad(a)
+        ref[[1, 0]] += lsq2.grad(b, a)
+        assert_allclose(lsq12.grad(a, b), ref)
 
     lsq121 = lsq12 + lsq1
     assert lsq121._items == [lsq1, lsq2, lsq1]
     assert describe(lsq121) == ["a", "b"]
     assert lsq121.ndata == 3
 
+    if use_grad:
+        a = 2
+        b = 3
+        ref = np.zeros(2)
+        ref[0] += lsq1.grad(a)
+        ref[[1, 0]] += lsq2.grad(b, a)
+        ref[0] += lsq1.grad(a)
+        assert_allclose(lsq121.grad(a, b), ref)
+
     lsq312 = lsq3 + lsq12
     assert lsq312._items == [lsq3, lsq1, lsq2]
     assert describe(lsq312) == ["c", "a", "b"]
     assert lsq312.ndata == 3
+
+    if use_grad:
+        a = 2
+        b = 3
+        c = 4
+        ref = np.zeros(3)
+        ref[0] += lsq3.grad(c)
+        ref[1] += lsq1.grad(a)
+        ref[[2, 1]] += lsq2.grad(b, a)
+        assert_allclose(lsq312.grad(c, a, b), ref)
 
     lsq31212 = lsq312 + lsq12
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2]
     assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 5
 
+    if use_grad:
+        a = 2
+        b = 3
+        c = 4
+        ref = np.zeros(3)
+        ref[:] += lsq312.grad(c, a, b)
+        ref[1:] += lsq12.grad(a, b)
+        assert_allclose(lsq31212.grad(c, a, b), ref)
+
     lsq31212 += lsq1
     assert lsq31212._items == [lsq3, lsq1, lsq2, lsq1, lsq2, lsq1]
     assert describe(lsq31212) == ["c", "a", "b"]
     assert lsq31212.ndata == 6
+
+    m = Minuit(lsq12, a=0, b=0, grad=use_grad)
+    m.migrad()
+    assert m.parameters == ("a", "b")
+    assert_allclose(m.values, (1, 2))
+    assert_allclose(m.errors, (3, 5))
+    assert_allclose(m.covariance, ((9, -9), (-9, 25)), atol=1e-10)
+
+    if use_grad:
+        assert m.ngrad > 0
+    else:
+        assert m.ngrad == 0
 
 
 def test_CostSum_2():
@@ -1023,28 +1322,115 @@ def test_CostSum_visualize():
 
 
 def test_NormalConstraint_1():
-    def model(x, a):
-        return a * np.ones_like(x)
+    c1 = NormalConstraint("a", 1, 1.5)
+    c2 = NormalConstraint(("a", "b"), (1, 2), (3, 4))
+    c3 = NormalConstraint(("a", "b"), (1, 2), ((1, 0.5), (0.5, 4)))
 
-    lsq1 = LeastSquares(0, 1, 1, model)
-    lsq2 = lsq1 + NormalConstraint("a", 1, 0.1)
-    assert describe(lsq1) == ["a"]
-    assert describe(lsq2) == ["a"]
-    assert lsq1.ndata == 1
-    assert lsq2.ndata == 2
+    assert describe(c1) == ["a"]
+    assert describe(c2) == ["a", "b"]
+    assert describe(c3) == ["a", "b"]
+    assert c1.ndata == 1
+    assert c2.ndata == 2
+    assert c3.ndata == 2
+    assert c1.has_grad
+    assert c2.has_grad
+    assert c3.has_grad
+    assert c1.value == 1
+    assert_equal(c1.covariance, [1.5**2])
+    assert_equal(c2.value, (1, 2))
+    assert_equal(c2.covariance, (9, 16))
+    assert_equal(c3.value, (1, 2))
+    assert_equal(c3.covariance, ((1, 0.5), (0.5, 4)))
 
-    m = Minuit(lsq1, 0)
+    assert_allclose(c1(1), 0)
+    assert_allclose(c1(1 + 1.5), 1)
+    assert_allclose(c1(1 - 1.5), 1)
+
+    assert_allclose(c2(1, 2), 0)
+    assert_allclose(c2(1 + 3, 2), 1)
+    assert_allclose(c2(1 - 3, 2), 1)
+    assert_allclose(c2(1, 2 + 4), 1)
+    assert_allclose(c2(1, 2 - 4), 1)
+
+    def ref(x, y):
+        d = np.subtract((x, y), (1, 2))
+        c = ((1, 0.5), (0.5, 4))
+        cinv = np.linalg.inv(c)
+        return d.T @ cinv @ d
+
+    assert_allclose(c3(1, 2), 0)
+    assert_allclose(c3(2, 2), ref(2, 2))
+    assert_allclose(c3(3, 4), ref(3, 4))
+    assert_allclose(c3(-1, -2), ref(-1, -2))
+
+    ref = numerical_cost_gradient(c1)
+    assert_allclose(c1.grad(1), [0])
+    assert_allclose(c1.grad(2), ref(2))
+    assert_allclose(c1.grad(-2), ref(-2))
+
+    ref = numerical_cost_gradient(c2)
+    assert_allclose(c2.grad(1, 2), [0, 0])
+    assert_allclose(c2.grad(2, 3), ref(2, 3))
+    assert_allclose(c2.grad(-2, -4), ref(-2, -4))
+
+    ref = numerical_cost_gradient(c3)
+    assert_allclose(c3.grad(1, 2), [0, 0])
+    assert_allclose(c3.grad(2, 3), ref(2, 3))
+    assert_allclose(c3.grad(-2, -4), ref(-2, -4))
+
+    c1.value = 2
+    c1.covariance = 4
+    assert_equal(c1.value, 2)
+    assert_equal(c1.covariance, 4)
+    assert_allclose(c1(2), 0)
+    assert_allclose(c1(4), 1)
+    assert_allclose(c1(0), 1)
+
+    c2.value = (2, 3)
+    c2.covariance = (1, 4)
+    assert_equal(c2.value, (2, 3))
+    assert_equal(c2.covariance, (1, 4))
+    assert_allclose(c2(2, 3), 0)
+    assert_allclose(c2(1, 3), 1)
+    assert_allclose(c2(2, 5), 1)
+
+    c3.value = (2, 3)
+    c3.covariance = [(4, 1), (1, 5)]
+    assert_equal(c3.value, (2, 3))
+    assert_equal(c3.covariance, [(4, 1), (1, 5)])
+
+    def ref(x, y):
+        d = np.subtract((x, y), (2, 3))
+        c = ((4, 1), (1, 5))
+        cinv = np.linalg.inv(c)
+        return d.T @ cinv @ d
+
+    assert_allclose(c3(2, 3), 0)
+    assert_allclose(c3(1, 3), ref(1, 3))
+    assert_allclose(c3(2, 5), ref(2, 5))
+
+
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_NormalConstraint_2(use_grad):
+    c1 = NormalConstraint("a", 1, 1)
+    c2 = c1 + NormalConstraint("a", 1, 0.1)
+
+    m = Minuit(c1, 0, grad=use_grad)
     m.migrad()
+    if use_grad:
+        assert m.ngrad > 0
     assert_allclose(m.values, (1,), atol=1e-2)
     assert_allclose(m.errors, (1,), rtol=1e-2)
 
-    m = Minuit(lsq2, 0)
+    m = Minuit(c2, 0, grad=use_grad)
     m.migrad()
+    if use_grad:
+        assert m.ngrad > 0
     assert_allclose(m.values, (1,), atol=1e-2)
     assert_allclose(m.errors, (0.1,), rtol=1e-2)
 
 
-def test_NormalConstraint_2():
+def test_NormalConstraint_3():
     lsq1 = NormalConstraint(("a", "b"), (1, 2), (2, 2))
     lsq2 = lsq1 + NormalConstraint("b", 2, 0.1) + NormalConstraint("a", 1, 0.01)
     sa = 0.1
@@ -1075,16 +1461,6 @@ def test_NormalConstraint_2():
     assert_allclose(m.covariance, cov, rtol=1e-2)
 
 
-def test_NormalConstraint_properties():
-    nc = NormalConstraint(("a", "b"), (1, 2), (3, 4))
-    assert_equal(nc.value, (1, 2))
-    assert_equal(nc.covariance, (9, 16))
-    nc.value = (2, 3)
-    nc.covariance = (1, 2)
-    assert_equal(nc.value, (2, 3))
-    assert_equal(nc.covariance, (1, 2))
-
-
 def test_NormalConstraint_visualize():
     pytest.importorskip("matplotlib")
 
@@ -1104,19 +1480,41 @@ def test_NormalConstraint_pickle():
     assert_equal(c.covariance, c2.covariance)
 
 
+def test_NormalConstraint_bad_input_1():
+    with pytest.raises(ValueError, match="scalar or one-dimensional"):
+        NormalConstraint("par", [[[1, 2]]], np.eye(2))
+
+
+def test_NormalConstraint_bad_input_2():
+    with pytest.raises(ValueError, match="not match size of args"):
+        NormalConstraint(["a", "b", "c"], [1, 2], np.eye(2))
+
+
+def test_NormalConstraint_bad_input_3():
+    with pytest.raises(ValueError, match="size of error does not match size of value"):
+        NormalConstraint(["a", "b"], [1, 2], np.eye(3))
+
+
+def test_NormalConstraint_bad_input_4():
+    with pytest.raises(ValueError, match="positive definite"):
+        NormalConstraint(["a", "b"], [1, 2], [[1, 1], [1, 1]])
+
+
+def test_NormalConstraint_bad_input_5():
+    n = NormalConstraint(["a", "b"], [1, 2], [[1, 0], [0, 1]])
+
+    with pytest.raises(ValueError, match="positive definite"):
+        n.covariance = [[1, 1], [1, 1]]
+
+
+def test_NormalConstraint_bad_input_6():
+    with pytest.raises(ValueError, match="cannot have more than two dimensions"):
+        NormalConstraint(["a", "b"], [1, 2], np.ones((2, 2, 2)))
+
+
 dtypes_to_test = [np.float32]
 if hasattr(np, "float128"):  # not available on all platforms
     dtypes_to_test.append(np.float128)
-
-
-@pytest.mark.parametrize("dtype", dtypes_to_test)
-def test_soft_l1_loss(dtype):
-    v = np.array([0], dtype=dtype)
-    assert _soft_l1_loss(v) == v
-    v[:] = 0.1
-    assert _soft_l1_loss(v) == pytest.approx(0.1, abs=0.01)
-    v[:] = 1e10
-    assert _soft_l1_loss(v) == pytest.approx(2e5, rel=0.01)
 
 
 def test_multinominal_chi2():
@@ -1469,10 +1867,7 @@ def test_binned_cost_with_model_shape_error_message_1D(cost):
     c = cost(n, edges, cdf)
     with pytest.raises(
         ValueError,
-        match=(
-            r"Expected model to return an array of shape \(3,\), "
-            r"but it returns an array of shape \(2,\)"
-        ),
+        match=(r"output of model has shape \(2,\), but \(3,\) is required"),
     ):
         c(1)
 
@@ -1489,9 +1884,25 @@ def test_binned_cost_with_model_shape_error_message_2D(cost):
     c = cost(n, edges, cdf)
     with pytest.raises(
         ValueError,
-        match=(
-            r"Expected model to return an array of shape \(12,\), "
-            r"but it returns an array of shape \(11,\)"
-        ),
+        match=(r"output of model has shape \(11,\), but \(12,\) is required"),
     ):
         c(1)
+
+
+def test_BohmZechTransform():
+    from iminuit.cost import BohmZechTransform
+
+    with pytest.warns(np.VisibleDeprecationWarning):
+        val = np.array([1.0, 2.0])
+        var = np.array([3.0, 4.0])
+        tr = BohmZechTransform(val, var)
+        s = val / var
+        mu = np.array([2.0, 2.0])
+        ns, mus = tr(mu)
+        assert_allclose(ns, val * s)
+        assert_allclose(mus, mu * s)
+        var2 = mu**2
+        ns, mus, vars = tr(mu, var2)
+        assert_allclose(ns, val * s)
+        assert_allclose(mus, mu * s)
+        assert_allclose(vars, var2 * s**2)

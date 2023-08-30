@@ -95,10 +95,13 @@ filterwarnings = [
 
 [tool.ruff]
 select = [
-    "E", "F", # flake8
-    "D",      # pydocstyle
+    "E",
+    "F", # flake8
+    "D", # pydocstyle
 ]
-extend-ignore = ["D203", "D212"]
+extend-ignore = [
+    "D212", # multi-line-summary-first-line
+]
 src = ["src"]
 unfixable = [
     "F841", # Removes unused variables
@@ -112,8 +115,6 @@ convention = "numpy"
 ".ci/*.py" = ["D"]
 "bench/*.py" = ["D"]
 "doc/*.py" = ["D"]
-"setup.py" = ["D"]
-"cmake_ext.py" = ["D"]
 
 [tool.mypy]
 ignore_missing_imports = true

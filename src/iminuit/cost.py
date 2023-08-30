@@ -18,8 +18,9 @@ What to use when
     - Data are binned: :class:`ExtendedBinnedNLL`, also supports
       histogram of weighted samples
 
-- Fit a template to binned data with bin-wise uncertainties on the template:
-  :class:`Template`, which also supports weighted data and weighted templates
+- Fit a template to binned data with bin-wise uncertainties on the template
+
+    - :class:`Template`, also supports weighted data and weighted template histograms
 
 - Fit of a function f(x) to (x, y, yerror) pairs with normal-distributed fluctuations. x
   is one- or multi-dimensional, y is one-dimensional.
@@ -28,8 +29,9 @@ What to use when
     - y values contain outliers: :class:`LeastSquares` with loss function set to
       "soft_l1"
 
-- Include constraints from external fits or apply regularisation:
-  :class:`NormalConstraint`
+- Include constraints from external fits or apply regularisation
+
+    - :class:`NormalConstraint`
 
 Combining cost functions
 ------------------------
@@ -52,6 +54,18 @@ which is usually the right choice, however, it may be desirable to fit templates
 can have negative amplitudes. To achieve this, simply reset the limits with
 :attr:`iminuit.Minuit.limits` after creating the Minuit instance.
 
+User-defined gradients
+----------------------
+If the user provides a model gradient, the cost functions defined here except
+:class:`Template` will then also make their gradient available, which is then
+automatically used by :class:`iminuit.Minuit` (see the constructor for details) to
+potentially improve the fit (improve convergence  or robustness).
+
+Note that it is perfectly normal to use Minuit without a user-defined gradient, and
+Minuit does not always benefit from a user-defined gradient. If the gradient is
+expensive to compute, the time to converge may increase. If you have trouble with the
+fitting process, it is unlikely that the issues are resolved by a user-defined gradient.
+
 Notes
 -----
 The cost functions defined here have been optimized with knowledge about implementation
@@ -62,16 +76,19 @@ The binned versions of the log-likelihood fits support weighted samples. For eac
 the histogram, the sum of weights and the sum of squared weights is needed then, see
 class documentation for details.
 """
+from __future__ import annotations
+
 from .util import (
     describe,
     merge_signatures,
     PerformanceWarning,
     _smart_sampling,
     _detect_log_spacing,
+    is_positive_definite,
 )
-from .typing import Model, LossFunction
+from .typing import Model, ModelGradient, LossFunction
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray, ArrayLike
 from collections.abc import Sequence as ABCSequence
 import abc
 from typing import (
@@ -85,14 +102,16 @@ from typing import (
     Iterable,
     Optional,
     overload,
+    TypeVar,
+    Callable,
+    cast,
 )
 import warnings
-from ._deprecated import deprecated_parameter
+from ._deprecated import deprecated_parameter, deprecated
 
 __all__ = [
     "CHISQUARE",
     "NEGATIVE_LOG_LIKELIHOOD",
-    "BohmZechTransform",
     "chi2",
     "multinominal_chi2",
     "poisson_chi2",
@@ -109,6 +128,8 @@ __all__ = [
     "Template",
     "LeastSquares",
 ]
+
+T = TypeVar("T", float, NDArray)
 
 CHISQUARE = 1.0
 NEGATIVE_LOG_LIKELIHOOD = 0.5
@@ -130,20 +151,13 @@ def _z_squared(y, ye, ym):
     return z * z
 
 
-def _soft_l1_loss(z_sqr):
-    return np.sum(2 * (np.sqrt(1 + z_sqr) - 1))
-
-
-def _soft_l1_cost(y, ye, ym):
-    return _soft_l1_loss(_z_squared(y, ye, ym))
-
-
 def _replace_none(x, replacement):
     if x is None:
         return replacement
     return x
 
 
+@deprecated("The class is deprecated and will be removed without replacement")
 class BohmZechTransform:
     """
     Apply Bohm-Zech transform.
@@ -153,8 +167,10 @@ class BohmZechTransform:
     :meta private:
     """
 
-    _scale: np.ndarray
-    _obs: np.ndarray
+    __slots__ = "_obs", "_scale"
+
+    _obs: NDArray
+    _scale: NDArray
 
     def __init__(self, val: ArrayLike, var: ArrayLike):
         """
@@ -232,6 +248,21 @@ def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:
     return np.sum(_z_squared(y, ye, ym))
 
 
+def _chi2_grad(y: NDArray, ye: NDArray, ym: NDArray, ymg: NDArray) -> NDArray:
+    return -2 * np.sum((y - ym) * ymg * ye**-2, axis=1)
+
+
+def _soft_l1_cost(y: NDArray, ye: NDArray, ym: NDArray) -> float:
+    z_sqr = _z_squared(y, ye, ym)
+    return 2 * np.sum(np.sqrt(1 + z_sqr) - 1)
+
+
+def _soft_l1_cost_grad(y: NDArray, ye: NDArray, ym: NDArray, ymg: NDArray) -> NDArray:
+    inv_ye = 1 / ye
+    z = (y - ym) * inv_ye
+    return -2 * np.sum(z * ymg * inv_ye * (1 + z**2) ** -0.5, axis=1)
+
+
 def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for binomially-distributed data.
@@ -260,6 +291,10 @@ def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
 
 
+def _multinominal_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
+    return -2 * np.sum(n * gmu / mu, axis=tuple(range(1, gmu.ndim)))
+
+
 def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
     Compute asymptotically chi2-distributed cost for Poisson-distributed data.
@@ -285,6 +320,10 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
     n, mu = np.atleast_1d(n, mu)
     return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
+
+
+def _poisson_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
+    return 2 * np.sum(gmu * (1.0 - n / mu), axis=tuple(range(1, gmu.ndim)))
 
 
 def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
@@ -470,23 +509,6 @@ try:
 
     chi2.__doc__ = _chi2_np.__doc__
 
-    _soft_l1_loss_np = _soft_l1_loss
-    _soft_l1_loss_nb = jit(
-        nogil=True,
-        cache=True,
-        error_model="numpy",
-    )(_soft_l1_loss_np)
-
-    def _soft_l1_loss(z_sqr):
-        if z_sqr.dtype in (np.float32, np.float64):
-            return _soft_l1_loss_nb(z_sqr)
-        # fallback to numpy for float128
-        return _soft_l1_loss_np(z_sqr)
-
-    @nb_overload(_soft_l1_loss, inline="always")
-    def _ol_soft_l1_loss(z_sqr):
-        return _soft_l1_loss_np  # pragma: no cover
-
     _soft_l1_cost_np = _soft_l1_cost
     _soft_l1_cost_nb = jit(
         nogil=True,
@@ -494,7 +516,7 @@ try:
         error_model="numpy",
     )(_soft_l1_cost_np)
 
-    def _soft_l1_cost(y, ye, ym):
+    def _soft_l1_cost(y: NDArray, ye: NDArray, ym: NDArray) -> float:
         if ym.dtype in (np.float32, np.float64):
             return _soft_l1_cost_nb(y, ye, ym)
         # fallback to numpy for float128
@@ -537,6 +559,11 @@ class Cost(abc.ABC):
         compute the reduced chi2, a goodness-of-fit estimate.
         """
         return self._ndata()
+
+    @property
+    def npar(self):
+        """Return total number of model parameters."""
+        return len(self._parameters)
 
     @abc.abstractmethod
     def _ndata(self):
@@ -597,13 +624,44 @@ class Cost(abc.ABC):
         -------
         float
         """
-        r = self._call(args)
+        r = self._value(args)
         if self.verbose >= 1:
             print(args, "->", r)
         return r
 
+    def grad(self, *args: float) -> NDArray:
+        """
+        Compute gradient of the cost function.
+
+        This requires that a model gradient is provided.
+
+        Parameters
+        ----------
+        *args : float
+            Parameter values.
+
+        Returns
+        -------
+        ndarray of float
+            The length of the array is equal to the length of args.
+        """
+        return self._grad(args)
+
+    @property
+    def has_grad(self) -> bool:
+        """Return True if cost function can compute a gradient."""
+        return self._has_grad()
+
     @abc.abstractmethod
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
+        ...  # pragma: no cover
+
+    @abc.abstractmethod
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
+
+    @abc.abstractmethod
+    def _has_grad(self) -> bool:
         ...  # pragma: no cover
 
 
@@ -625,8 +683,15 @@ class Constant(Cost):
     def _ndata(self):
         return 0
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         return self.value
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        return np.zeros(0)
+
+    @staticmethod
+    def _has_grad():
+        return True
 
 
 class CostSum(Cost, ABCSequence):
@@ -683,11 +748,21 @@ class CostSum(Cost, ABCSequence):
             component_args = tuple(args[i] for i in cmap)
             yield component, component_args
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         r = 0.0
-        for comp, cargs in self._split(args):
-            r += comp._call(cargs) / comp.errordef
+        for component, component_args in self._split(args):
+            r += component._value(component_args) / component.errordef
         return r
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        r = np.zeros(self.npar)
+        for component, indices in zip(self._items, self._maps):
+            component_args = tuple(args[i] for i in indices)
+            r[indices] += component._grad(component_args) / component.errordef
+        return r
+
+    def _has_grad(self) -> bool:
+        return all(component.has_grad for component in self._items)
 
     def _ndata(self):
         return sum(c.ndata for c in self._items)
@@ -795,6 +870,56 @@ class MaskedCost(Cost):
         self._masked = self._data[_replace_none(self._mask, ...)]
 
 
+class MaskedCostWithPulls(MaskedCost):
+    """
+    Base class for cost functions with pulls.
+
+    :meta private:
+    """
+
+    def pulls(self, args: Sequence[float]) -> NDArray:
+        """
+        Return studentized residuals (aka pulls).
+
+        Parameters
+        ----------
+        args : sequence of float
+            Parameter values.
+
+        Returns
+        -------
+        array
+            Array of pull values. If the cost function is masked, the array contains NaN
+            values where the mask value is False.
+
+        Notes
+        -----
+        Pulls allow one to estimate how well a model fits the data. A pull is a value
+        computed for each data point. It is given by (observed - predicted) /
+        standard-deviation. If the model is correct, the expectation value of each pull
+        is zero and its variance is one in the asymptotic limit of infinite samples.
+        Under these conditions, the chi-square statistic is computed from the sum of
+        pulls squared has a known probability distribution if the model is correct. It
+        therefore serves as a goodness-of-fit statistic.
+
+        Beware: the sum of pulls squared in general is not identical to the value
+        returned by the cost function, even if the cost function returns a chi-square
+        distributed test-statistic. The cost function is computed in a slightly
+        differently way that makes the return value approach the asymptotic chi-square
+        distribution faster than a test statistic based on sum of pulls squared. In
+        summary, only use pulls for plots. Compute the chi-square test statistic
+        directly from the cost function.
+        """
+        return self._pulls(args)
+
+    def _ndata(self):
+        return np.prod(self._masked.shape[: self._ndim])
+
+    @abc.abstractmethod
+    def _pulls(self, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
+
+
 class UnbinnedCost(MaskedCost):
     """
     Base class for unbinned cost functions.
@@ -802,12 +927,20 @@ class UnbinnedCost(MaskedCost):
     :meta private:
     """
 
-    __slots__ = "_model", "_log"
+    __slots__ = "_model", "_model_grad", "_log"
 
-    def __init__(self, data, model: Model, verbose: int, log: bool):
+    def __init__(
+        self,
+        data,
+        model: Model,
+        verbose: int,
+        log: bool,
+        grad: Optional[ModelGradient],
+    ):
         """For internal use."""
         self._model = model
         self._log = log
+        self._model_grad = grad
         super().__init__(_model_parameters(model), _norm(data), verbose)
 
     @abc.abstractproperty
@@ -823,6 +956,11 @@ class UnbinnedCost(MaskedCost):
     def _ndata(self):
         # unbinned likelihoods have infinite degrees of freedom
         return np.inf
+
+    def _npoints(self):
+        # cannot use len(self._masked) because multi-dimensional data has format
+        # (K, N) with K dimensions and N points
+        return self._masked.shape[-1]
 
     @deprecated_parameter(bins="nbins")
     def visualize(
@@ -846,7 +984,6 @@ class UnbinnedCost(MaskedCost):
             it is interpreted as the point locations.
         bins : int, optional
             number of bins. Default is 50 bins.
-
         """
         from matplotlib import pyplot as plt
 
@@ -876,6 +1013,48 @@ class UnbinnedCost(MaskedCost):
 
         plt.errorbar(cx, n, n**0.5, fmt="ok")
         plt.fill_between(xm, 0, ym * dx, fc="C0")
+
+    def fisher_information(self, *args: float) -> NDArray:
+        """
+        Estimate Fisher information for model and sample.
+
+        The estimated Fisher information is only meaningful if the arguments provided
+        are estimates of the true values.
+
+        Parameters
+        ----------
+        *args: float
+            Estimates of model parameters.
+        """
+        g = self._pointwise_score(args)
+        return np.einsum("ji,ki->jk", g, g)
+
+    def covariance(self, *args: float) -> NDArray:
+        """
+        Estimate covariance of the parameters with the sandwich estimator.
+
+        This requires that the model gradient is provided, and that the arguments are
+        the maximum-likelihood estimates. The sandwich estimator is only asymptotically
+        correct.
+
+        Parameters
+        ----------
+        *args : float
+            Maximum-likelihood estimates of the parameter values.
+
+        Returns
+        -------
+        ndarray of float
+            The array has shape (K, K) for K arguments.
+        """
+        return np.linalg.inv(self.fisher_information(*args))
+
+    @abc.abstractmethod
+    def _pointwise_score(self, args: Sequence[float]) -> NDArray:
+        ...  # pragma: no cover
+
+    def _has_grad(self) -> bool:
+        return self._model_grad is not None
 
 
 class UnbinnedNLL(UnbinnedCost):
@@ -907,8 +1086,10 @@ class UnbinnedNLL(UnbinnedCost):
         self,
         data: ArrayLike,
         pdf: Model,
+        *,
         verbose: int = 0,
         log: bool = False,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize UnbinnedNLL with data and model.
@@ -923,26 +1104,56 @@ class UnbinnedNLL(UnbinnedCost):
             Probability density function of the form f(data, par0, [par1, ...]), where
             data is the data sample and par0, ... are model parameters. If the data are
             multivariate, data passed to f has shape (D, N), where D is the number of
-            dimensions and N the number of data points.
+            dimensions and N the number of data points. Must return an array with the
+            shape (N,).
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and
             negative log-likelihood value.
         log : bool, optional
             Distributions of the exponential family (normal, exponential, poisson, ...)
             allow one to compute the logarithm of the pdf directly, which is more
-            accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
-            to True, if the model returns the logarithm of the pdf instead of the pdf.
+            accurate and efficient than numerically computing ``log(pdf)``. Set this
+            to True, if the model returns the logpdf instead of the pdf.
             Default is False.
+        grad : callable or None, optional
+            Optionally pass the gradient of the pdf. Has the same calling signature like
+            the pdf, but must return an array with the shape (K, N), where N is the
+            number of data points and K is the number of parameters. If `log` is True,
+            the function must return the gradient of the logpdf instead of the pdf. The
+            gradient can be used by Minuit to improve or speed up convergence and to
+            compute the sandwich estimator for the variance of the parameter estimates.
+            Default is None.
         """
-        super().__init__(data, pdf, verbose, log)
+        super().__init__(data, pdf, verbose, log, grad)
 
-    def _call(self, args: Sequence[float]) -> float:
-        data = self._masked
-        x = self._model(data, *args)
-        x = _normalize_model_output(x)
+    def _value(self, args: Sequence[float]) -> float:
+        f = self._eval_model(args)
         if self._log:
-            return -2.0 * np.sum(x)
-        return 2.0 * _unbinned_nll(x)
+            return -2.0 * np.sum(f)
+        return 2.0 * _unbinned_nll(f)
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        g = self._pointwise_score(args)
+        return -2.0 * np.sum(g, axis=1)
+
+    def _pointwise_score(self, args: Sequence[float]) -> NDArray:
+        g = self._eval_model_grad(args)
+        if self._log:
+            return g
+        f = self._eval_model(args)
+        return g / f
+
+    def _eval_model(self, args: Sequence[float]) -> float:
+        data = self._masked
+        return _normalize_output(self._model(data, *args), "model", self._npoints())
+
+    def _eval_model_grad(self, args: Sequence[float]) -> NDArray:
+        if self._model_grad is None:
+            raise ValueError("no gradient available")  # pragma: no cover
+        data = self._masked
+        return _normalize_output(
+            self._model_grad(data, *args), "model gradient", self.npar, self._npoints()
+        )
 
 
 class ExtendedUnbinnedNLL(UnbinnedCost):
@@ -983,8 +1194,10 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         self,
         data: ArrayLike,
         scaled_pdf: Model,
+        *,
         verbose: int = 0,
         log: bool = False,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1013,32 +1226,70 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
             accurate and efficient than effectively doing ``log(exp(logpdf))``. Set this
             to True, if the model returns the logarithm of the density as the second
             argument instead of the density. Default is False.
+        grad : callable or None, optional
+            Optionally pass the gradient of the density function. Has the same calling
+            signature like the density function, but must return two arrays. The first
+            array has shape (K,) where K are the number of parameters, while the second
+            has shape (K, N), where N is the number of data points. The first array is
+            the gradient of the integrated density. The second array is the gradient of
+            the density itself. If `log` is True, the second array must be the gradient
+            of the log-density instead. The gradient can be used by Minuit to improve or
+            speed up convergence and to compute the sandwich estimator for the variance
+            of the parameter estimates. Default is None.
         """
-        super().__init__(data, scaled_pdf, verbose, log)
+        super().__init__(data, scaled_pdf, verbose, log, grad)
 
-    def _call(self, args: Sequence[float]) -> float:
-        data = self._masked
-        ns, x = self._model(data, *args)
-        x = _normalize_model_output(
-            x, "Model should return numpy array in second position"
-        )
+    def _value(self, args: Sequence[float]) -> float:
+        fint, f = self._eval_model(args)
         if self._log:
-            return 2 * (ns - np.sum(x))
-        return 2 * (ns + _unbinned_nll(x))
+            return 2 * (fint - np.sum(f))
+        return 2 * (fint + _unbinned_nll(f))
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        g = self._pointwise_score(args)
+        return -2 * np.sum(g, axis=1)
+
+    def _pointwise_score(self, args: Sequence[float]) -> NDArray:
+        gint, g = self._eval_model_grad(args)
+        m = self._npoints()
+        if self._log:
+            return g - (gint / m)[:, np.newaxis]
+        _, f = self._eval_model(args)
+        return g / f - (gint / m)[:, np.newaxis]
+
+    def _eval_model(self, args: Sequence[float]) -> Tuple[float, float]:
+        data = self._masked
+        fint, f = self._model(data, *args)
+        f = _normalize_output(f, "model", self._npoints(), msg="in second position")
+        return fint, f
+
+    def _eval_model_grad(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
+        if self._model_grad is None:
+            raise ValueError("no gradient available")  # pragma: no cover
+        data = self._masked
+        gint, g = self._model_grad(data, *args)
+        gint = _normalize_output(
+            gint, "model gradient", self.npar, msg="in first position"
+        )
+        g = _normalize_output(
+            g, "model gradient", self.npar, self._npoints(), msg="in second position"
+        )
+        return gint, g
 
 
-class BinnedCost(MaskedCost):
+class BinnedCost(MaskedCostWithPulls):
     """
     Base class for binned cost functions.
 
     :meta private:
     """
 
-    __slots__ = "_xe", "_ndim", "_bztrafo"
+    __slots__ = "_xe", "_ndim", "_bohm_zech_scale", "_bohm_zech_n"
 
     _xe: Union[NDArray, Tuple[NDArray, ...]]
     _ndim: int
-    _bztrafo: Optional[BohmZechTransform]
+    _bohm_zech_scale: Optional[NDArray]
+    _bohm_zech_n: Optional[NDArray]
 
     n = MaskedCost.data
 
@@ -1053,7 +1304,6 @@ class BinnedCost(MaskedCost):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         verbose: int,
-        *updater,
     ):
         """For internal use."""
         if not isinstance(xe, Iterable):
@@ -1062,12 +1312,13 @@ class BinnedCost(MaskedCost):
         shape = _shape_from_xe(xe)
         self._ndim = len(shape)
         if self._ndim == 1:
-            self._xe = _norm(xe)  # type:ignore
+            self._xe = _norm(cast(ArrayLike, xe))
         else:
             self._xe = tuple(_norm(xei) for xei in xe)
 
         n = _norm(n)
-        is_weighted = n.ndim > self._ndim
+
+        is_weighted = n.ndim > self._ndim and n.shape[-1] == 2
 
         if n.ndim != (self._ndim + int(is_weighted)):
             raise ValueError("n must either have same dimension as xe or one extra")
@@ -1080,13 +1331,9 @@ class BinnedCost(MaskedCost):
                     "xe must be longer by one element along each dimension"
                 )
 
-        if is_weighted:
-            if n.shape[-1] != 2:
-                raise ValueError("n must have shape (..., 2)")
-            self._bztrafo = BohmZechTransform(n[..., 0], n[..., 1])
-        else:
-            self._bztrafo = None
-
+        self._bohm_zech_scale = None
+        self._bohm_zech_n = None
+        self._set_bohm_zech(n, is_weighted)
         super().__init__(parameters, n, verbose)
 
     def prediction(
@@ -1103,44 +1350,10 @@ class BinnedCost(MaskedCost):
         Returns
         -------
         NDArray
-            Model prediction for each bin.
+            Model prediction for each bin. The expectation is always returned for all
+            bins, even if some bins are temporarily masked.
         """
         return self._pred(args)
-
-    def pulls(self, args: Sequence[float]) -> NDArray:
-        """
-        Return studentized residuals (aka pulls).
-
-        Parameters
-        ----------
-        args : sequence of float
-            Parameter values.
-
-        Returns
-        -------
-        array
-            Array of pull values. If the cost function is masked, the array contains NaN
-            values where the mask value is False.
-
-        Notes
-        -----
-        Pulls allow one to estimate how well a model fits the data. A pull is a value
-        computed for each data bin. It is given by (observed - predicted) /
-        standard-deviation. If the model is correct, the expectation value of each pull
-        is zero and its variance is one in the asymptotic limit of infinite samples.
-        Under these conditions, the chi-square statistic is computed from the sum of
-        pulls squared has a known probability distribution if the model is correct. It
-        therefore serves as a goodness-of-fit statistic.
-
-        Beware: the sum of pulls squared in general is not identical to the value
-        returned by the cost function, even if the cost function returns a chi-square
-        distributed test-statistic. The cost function is computed in a slightly
-        differently way that makes the return value approach the asymptotic chi-square
-        distribution faster than a test statistic based on sum of pulls squared. In
-        summary, only use pulls for plots. Compute the chi-square test statistic
-        directly from the cost function.
-        """
-        return self._pulls(args)
 
     def visualize(self, args: Sequence[float]) -> None:
         """
@@ -1161,9 +1374,9 @@ class BinnedCost(MaskedCost):
         comparison to a model, the visualization shows all data bins as a single
         sequence.
         """
-        return self._vis(args)
+        return self._visualize(args)
 
-    def _vis(self, args: Sequence[float]) -> None:
+    def _visualize(self, args: Sequence[float]) -> None:
         from matplotlib import pyplot as plt
 
         n, ne = self._n_err()
@@ -1188,37 +1401,69 @@ class BinnedCost(MaskedCost):
     def _pred(self, args: Sequence[float]) -> Union[NDArray, Tuple[NDArray, NDArray]]:
         ...  # pragma: no cover
 
-    def _ndata(self):
-        return np.prod(self._masked.shape[: self._ndim])
-
-    def _update_cache(self):
-        super()._update_cache()
-        if self._bztrafo:
-            ma = _replace_none(self._mask, ...)
-            self._bztrafo = BohmZechTransform(self._data[ma, 0], self._data[ma, 1])
-
     def _n_err(self) -> Tuple[NDArray, NDArray]:
         d = self.data
-        if self._bztrafo:
-            n = d[..., 0].copy()
-            err = d[..., 1] ** 0.5
-        else:
+        if self._bohm_zech_scale is None:
             n = d.copy()
             err = d**0.5
-        if self.mask is not None:
-            ma = ~self.mask
-            n[ma] = np.nan
-            err[ma] = np.nan
+        else:
+            n = d[..., 0].copy()
+            err = d[..., 1] ** 0.5
         # mask values where error is zero
         ma = err == 0
-        err[ma] = np.nan
+        if self.mask is not None:
+            ma = ~self.mask
         n[ma] = np.nan
+        err[ma] = np.nan
         return n, err
 
     def _pulls(self, args: Sequence[float]) -> NDArray:
         mu = self.prediction(args)
         n, ne = self._n_err()
         return (n - mu) / ne
+
+    def _set_bohm_zech(self, n: NDArray, is_weighted: bool):
+        if not is_weighted:
+            return
+        val = n[..., 0]
+        var = n[..., 1]
+        self._bohm_zech_scale = np.ones_like(val)
+        np.divide(val, var, out=self._bohm_zech_scale, where=var > 0)
+        self._bohm_zech_n = val * self._bohm_zech_scale
+
+    def _update_cache(self):
+        super()._update_cache()
+        self._set_bohm_zech(self._masked, self._bohm_zech_scale is not None)
+
+    @overload
+    def _transformed(self, val: NDArray) -> Tuple[NDArray, NDArray]:
+        ...  # pragma: no cover
+
+    @overload
+    def _transformed(
+        self, val: NDArray, var: NDArray
+    ) -> Tuple[NDArray, NDArray, NDArray]:
+        ...  # pragma: no cover
+
+    def _transformed(self, val, var=None):
+        s = self._bohm_zech_scale
+        ma = self.mask
+        if ma is not None:
+            val = val[ma]
+            if var is not None:
+                var = var[ma]
+        if s is None:
+            if var is None:
+                return self._masked, val
+            return self._masked, val, var
+        if var is None:
+            return self._bohm_zech_n, val * s
+        return self._bohm_zech_n, val * s, var * s**2
+
+    def _counts(self):
+        if self._bohm_zech_scale is None:
+            return self._masked
+        return self._masked[..., 0]
 
 
 class BinnedCostWithModel(BinnedCost):
@@ -1228,14 +1473,15 @@ class BinnedCostWithModel(BinnedCost):
     :meta private:
     """
 
-    __slots__ = "_xe_shape", "_model", "_model_xe"
+    __slots__ = "_xe_shape", "_model", "_model_xe", "_model_len", "_model_grad"
 
     _model_xe: np.ndarray
     _xe_shape: Union[Tuple[int], Tuple[int, ...]]
 
-    def __init__(self, n, xe, model, verbose):
+    def __init__(self, n, xe, model, verbose, grad):
         """For internal use."""
         self._model = model
+        self._model_grad = grad
 
         super().__init__(_model_parameters(model), n, xe, verbose)
 
@@ -1247,16 +1493,11 @@ class BinnedCostWithModel(BinnedCost):
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
+        self._model_len = np.prod(self._xe_shape)
 
     def _pred(self, args: Sequence[float]) -> NDArray:
         d = self._model(self._model_xe, *args)
-        d = _normalize_model_output(d)
-        expected_shape = (np.prod(self._xe_shape),)
-        if d.shape != expected_shape:
-            raise ValueError(
-                f"Expected model to return an array of shape {expected_shape}, "
-                f"but it returns an array of shape {d.shape}"
-            )
+        d = _normalize_output(d, "model", self._model_len)
         if self._ndim > 1:
             d = d.reshape(self._xe_shape)
         for i in range(self._ndim):
@@ -1265,6 +1506,18 @@ class BinnedCostWithModel(BinnedCost):
         # we set negative values to zero
         d[d < 0] = 0
         return d
+
+    def _pred_grad(self, args: Sequence[float]) -> NDArray:
+        d = self._model_grad(self._model_xe, *args)
+        d = _normalize_output(d, "model gradient", self.npar, self._model_len)
+        if self._ndim > 1:
+            d = d.reshape((self.npar, *self._xe_shape))
+        for i in range(1, self._ndim + 1):
+            d = np.diff(d, axis=i)
+        return d
+
+    def _has_grad(self) -> bool:
+        return self._model_grad is not None
 
 
 class Template(BinnedCost):
@@ -1317,7 +1570,7 @@ class Template(BinnedCost):
     .. [6] Langenbruch, Eur.Phys.J.C 82 (2022) 5, 393
     """
 
-    __slots__ = "_model_data", "_model_xe", "_xe_shape", "_impl"
+    __slots__ = "_model_data", "_model_xe", "_xe_shape", "_impl", "_model_len"
 
     _model_data: List[
         Union[
@@ -1333,6 +1586,7 @@ class Template(BinnedCost):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         model_or_template: Collection[Union[Model, ArrayLike]],
+        *,
         name: Optional[Sequence[str]] = None,
         verbose: int = 0,
         method: str = "da",
@@ -1451,6 +1705,7 @@ class Template(BinnedCost):
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
+        self._model_len = np.prod(self._xe_shape)
 
     def _pred(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
         mu: NDArray = 0  # type:ignore
@@ -1464,7 +1719,7 @@ class Template(BinnedCost):
                 i += 1
             elif isinstance(t1, Model) and isinstance(t2, int):
                 d = t1(self._model_xe, *args[i : i + t2])
-                d = _normalize_model_output(d)
+                d = _normalize_output(d, "model", self._model_len)
                 if self._ndim > 1:
                     d = d.reshape(self._xe_shape)
                 for j in range(self._ndim):
@@ -1479,21 +1734,17 @@ class Template(BinnedCost):
                 assert False  # pragma: no cover
         return mu, mu_var
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         mu, mu_var = self._pred(args)
-
-        ma = self.mask
-        if ma is not None:
-            mu = mu[ma]
-            mu_var = mu_var[ma]
-
-        if self._bztrafo:
-            n, mu, mu_var = self._bztrafo(mu, mu_var)
-        else:
-            n = self._masked
-
+        n, mu, mu_var = self._transformed(mu, mu_var)
         ma = mu > 0
         return self._impl(n[ma], mu[ma], mu_var[ma])
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        raise NotImplementedError  # pragma: no cover
+
+    def _has_grad(self) -> bool:
+        return False
 
     def _errordef(self) -> float:
         return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
@@ -1523,7 +1774,7 @@ class Template(BinnedCost):
         mu, mu_var = self._pred(args)
         return mu, np.sqrt(mu_var)
 
-    def _vis(self, args: Sequence[float]) -> None:
+    def _visualize(self, args: Sequence[float]) -> None:
         from matplotlib import pyplot as plt
 
         n, ne = self._n_err()
@@ -1578,7 +1829,9 @@ class BinnedNLL(BinnedCostWithModel):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         cdf: Model,
+        *,
         verbose: int = 0,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1604,26 +1857,44 @@ class BinnedNLL(BinnedCostWithModel):
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
         """
-        super().__init__(n, xe, cdf, verbose)
+        super().__init__(n, xe, cdf, verbose, grad)
 
     def _pred(self, args: Sequence[float]) -> NDArray:
+        # must return array of full length, mask not applied yet
         p = super()._pred(args)
+        # normalise probability of remaining bins
         ma = self.mask
         if ma is not None:
-            p /= np.sum(p[ma])  # normalise probability of remaining bins
-        scale = np.sum(self._masked[..., 0] if self._bztrafo else self._masked)
-        return p * scale
+            p /= np.sum(p[ma])
+        # scale probabilities with total number of entries of unmasked bins in histogram
+        return p * np.sum(self._counts())
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
+        n, mu = self._transformed(mu)
+        return multinominal_chi2(n, mu)
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        # pg and p must be arrays of full length, mask not applied yet
+        pg = super()._pred_grad(args)
+        p = super()._pred(args)
+        ma = self.mask
+        # normalise probability of remaining bins
+        if ma is not None:
+            scale = np.sum(p[ma])
+            pg = pg / scale - p * np.sum(pg[:, ma]) / scale**2
+            p /= scale
+        # scale probabilities with total number of entries of unmasked bins in histogram
+        scale = np.sum(self._counts())
+        mu = p * scale
+        gmu = pg * scale
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
-        if self._bztrafo:
-            n, mu = self._bztrafo(mu)
-        else:
-            n = self._masked
-        return multinominal_chi2(n, mu)
+            gmu = gmu[:, ma]
+        # don't need to scale mu and gmu, because scale factor cancels
+        n = self._masked if self._bohm_zech_scale is None else self._bohm_zech_n
+        return _multinominal_chi2_grad(n, mu, gmu)
 
 
 class ExtendedBinnedNLL(BinnedCostWithModel):
@@ -1656,7 +1927,9 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         n: ArrayLike,
         xe: Union[ArrayLike, Sequence[ArrayLike]],
         scaled_cdf: Model,
+        *,
         verbose: int = 0,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1680,22 +1953,29 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
             Verbosity level. 0: is no output (default). 1: print current args and
             negative log-likelihood value.
         """
-        super().__init__(n, xe, scaled_cdf, verbose)
+        super().__init__(n, xe, scaled_cdf, verbose, grad)
 
-    def _call(self, args: Sequence[float]) -> float:
+    def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
+        n, mu = self._transformed(mu)
+        return poisson_chi2(n, mu)
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        mu = self._pred(args)
+        gmu = self._pred_grad(args)
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
-        if self._bztrafo:
-            n, mu = self._bztrafo(mu)
-        else:
-            n = self._masked
-        # assert isinstance(n, np.ndarray)
-        return poisson_chi2(n, mu)
+            gmu = gmu[:, ma]
+        n = self._counts()
+        s = self._bohm_zech_scale
+        if s is None:
+            return _poisson_chi2_grad(n, mu, gmu)
+        # use original n and mu because Bohm-Zech scale factor cancels
+        return _poisson_chi2_grad(n, mu, s * gmu)
 
 
-class LeastSquares(MaskedCost):
+class LeastSquares(MaskedCostWithPulls):
     """
     Least-squares cost function (aka chisquare function).
 
@@ -1704,9 +1984,14 @@ class LeastSquares(MaskedCost):
     :meth:`__init__` for details on how to use a multivariate model.
     """
 
-    __slots__ = "_loss", "_cost", "_model", "_ndim"
+    __slots__ = "_loss", "_cost", "_cost_grad", "_model", "_model_grad", "_ndim"
 
     _loss: Union[str, LossFunction]
+    _cost: Callable[[ArrayLike, ArrayLike, ArrayLike], float]
+    _cost_grad: Optional[Callable[[NDArray, NDArray, NDArray, NDArray], NDArray]]
+    _model: Model
+    _model_grad: Optional[ModelGradient]
+    _ndim: int
 
     @property
     def x(self):
@@ -1759,14 +2044,17 @@ class LeastSquares(MaskedCost):
         if isinstance(loss, str):
             if loss == "linear":
                 self._cost = chi2
+                self._cost_grad = _chi2_grad
             elif loss == "soft_l1":
-                self._cost = _soft_l1_cost
+                self._cost = _soft_l1_cost  # type: ignore
+                self._cost_grad = _soft_l1_cost_grad
             else:
                 raise ValueError(f"unknown loss {loss!r}")
         elif isinstance(loss, LossFunction):
             self._cost = lambda y, ye, ym: np.sum(
                 loss(_z_squared(y, ye, ym))  # type:ignore
             )
+            self._cost_grad = None
         else:
             raise ValueError("loss must be str or LossFunction")
 
@@ -1778,6 +2066,7 @@ class LeastSquares(MaskedCost):
         model: Model,
         loss: Union[str, LossFunction] = "linear",
         verbose: int = 0,
+        grad: Optional[ModelGradient] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1826,18 +2115,12 @@ class LeastSquares(MaskedCost):
 
         self._ndim = x.ndim
         self._model = model
+        self._model_grad = grad
         self.loss = loss
 
         x = np.atleast_2d(x)
         data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
         super().__init__(_model_parameters(self._model), data, verbose)
-
-    def _call(self, args: Sequence[float]) -> float:
-        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
-        y, yerror = self._masked.T[self._ndim :]
-        ym = self._model(x, *args)
-        ym = _normalize_model_output(ym)
-        return self._cost(y, yerror, ym)
 
     def _ndata(self):
         return len(self._masked)
@@ -1894,7 +2177,7 @@ class LeastSquares(MaskedCost):
         """
         return self.model(self.x, *args)
 
-    def pulls(self, args: Sequence[float]) -> NDArray:  # noqa: D102
+    def _pulls(self, args: Sequence[float]) -> NDArray:
         y = self.y.copy()
         ye = self.yerror.copy()
         ym = self.prediction(args)
@@ -1905,8 +2188,33 @@ class LeastSquares(MaskedCost):
             ye[ma] = np.nan
         return (y - ym) / ye
 
+    def _pred(self, args: Sequence[float]) -> NDArray:
+        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
+        ym = self._model(x, *args)
+        return _normalize_output(ym, "model", self._ndata())
 
-LeastSquares.pulls.__doc__ = BinnedCost.pulls.__doc__
+    def _pred_grad(self, args: Sequence[float]) -> NDArray:
+        if self._model_grad is None:
+            raise ValueError("no gradient available")  # pragma: no cover
+        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
+        ymg = self._model_grad(x, *args)
+        return _normalize_output(ymg, "model gradient", self.npar, self._ndata())
+
+    def _value(self, args: Sequence[float]) -> float:
+        y, ye = self._masked.T[self._ndim :]
+        ym = self._pred(args)
+        return self._cost(y, ye, ym)
+
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        if self._cost_grad is None:
+            raise ValueError("no cost gradient available")  # pragma: no cover
+        y, ye = self._masked.T[self._ndim :]
+        ym = self._pred(args)
+        ymg = self._pred_grad(args)
+        return self._cost_grad(y, ye, ym, ymg)
+
+    def _has_grad(self) -> bool:
+        return self._model_grad is not None and self._cost_grad is not None
 
 
 class NormalConstraint(Cost):
@@ -1934,7 +2242,7 @@ class NormalConstraint(Cost):
     result.
     """
 
-    __slots__ = "_value", "_cov", "_covinv"
+    __slots__ = "_expected", "_cov", "_covinv"
 
     def __init__(
         self,
@@ -1955,12 +2263,25 @@ class NormalConstraint(Cost):
             Expected error(s). If 1D, must have same length as `args`. If 2D, must be
             the covariance matrix of the parameters.
         """
-        self._value = _norm(value)
+        tp_args = (args,) if isinstance(args, str) else tuple(args)
+        nargs = len(tp_args)
+        self._expected = _norm(value)
+        if self._expected.ndim > 1:
+            raise ValueError("value must be a scalar or one-dimensional")
+        # args can be a vector of values, in this case we have nargs == 1
+        if nargs > 1 and len(self._expected) != nargs:
+            raise ValueError("size of value does not match size of args")
         self._cov = _norm(error)
+        if len(self._cov) != len(self._expected):
+            raise ValueError("size of error does not match size of value")
         if self._cov.ndim < 2:
             self._cov **= 2
+        elif self._cov.ndim == 2:
+            if not is_positive_definite(self._cov):
+                raise ValueError("covariance matrix is not positive definite")
+        else:
+            raise ValueError("covariance matrix cannot have more than two dimensions")
         self._covinv = _covinv(self._cov)
-        tp_args = (args,) if isinstance(args, str) else tuple(args)
         super().__init__({k: None for k in tp_args}, False)
 
     @property
@@ -1974,26 +2295,38 @@ class NormalConstraint(Cost):
 
     @covariance.setter
     def covariance(self, value):
+        value = np.asarray(value)
+        if value.ndim == 2 and not is_positive_definite(value):
+            raise ValueError("covariance matrix is not positive definite")
         self._cov[:] = value
         self._covinv = _covinv(self._cov)
 
     @property
     def value(self):
         """Get expected parameter values."""
-        return self._value
+        return self._expected
 
     @value.setter
     def value(self, value):
-        self._value[:] = value
+        self._expected[:] = value
 
-    def _call(self, args: Sequence[float]) -> float:
-        delta = self._value - args
+    def _value(self, args: Sequence[float]) -> float:
+        delta = args - self._expected
         if self._covinv.ndim < 2:
             return np.sum(delta**2 * self._covinv)
         return np.einsum("i,ij,j", delta, self._covinv, delta)
 
+    def _grad(self, args: Sequence[float]) -> NDArray:
+        delta = args - self._expected
+        if self._covinv.ndim < 2:
+            return 2 * delta * self._covinv
+        return 2 * self._covinv @ delta
+
+    def _has_grad(self) -> bool:
+        return True
+
     def _ndata(self):
-        return len(self._value)
+        return len(self._expected)
 
     def visualize(self, args: ArrayLike):
         """
@@ -2046,15 +2379,21 @@ def _covinv(array):
     return np.linalg.inv(array) if array.ndim == 2 else 1.0 / array
 
 
-def _normalize_model_output(x, msg="Model should return numpy array"):
+def _normalize_output(x, kind, *shape, msg=None):
     if not isinstance(x, np.ndarray):
-        warnings.warn(
-            f"{msg}, but returns {type(x)}",
-            PerformanceWarning,
-        )
+        if msg is None:
+            msg = f"{kind} should return numpy array, but returns {type(x)}"
+        else:
+            msg = f"{kind} should return numpy array {msg}, but returns {type(x)}"
+        warnings.warn(msg, PerformanceWarning)
         x = np.array(x)
         if x.dtype.kind != "f":
             return x.astype(float)
+    if x.ndim < len(shape):
+        return x.reshape(*shape)
+    elif x.shape != shape:
+        msg = f"output of {kind} has shape {x.shape!r}, but {shape!r} is required"
+        raise ValueError(msg)
     return x
 
 

@@ -19,7 +19,6 @@ def npa(*args, **kwargs):
         ("multinominal_chi2", (npa(1, 0), npa(1.2, 0))),
         ("chi2", (npa(1.2, 0), npa(1.2, 1.0), npa(1.2, 0.1))),
         ("poisson_chi2", (npa(1, 0), npa(1.2, 0.1))),
-        ("_soft_l1_loss", (npa(1.2, 0),)),
         ("_soft_l1_cost", (npa(1.2, 0), npa(1.2, 0.1), npa(1.0, 1.0))),
     ),
 )

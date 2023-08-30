@@ -8,10 +8,10 @@ import inspect
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
-from iminuit.typing import Key, UserBound
+from iminuit.typing import Key, UserBound, Cost, CostGradient
 from iminuit.warnings import IMinuitWarning, HesseFailedWarning, PerformanceWarning
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import NDArray, ArrayLike
 from typing import (
     overload,
     Any,
@@ -52,6 +52,8 @@ __all__ = (
     "make_with_signature",
     "merge_signatures",
     "describe",
+    "gradient",
+    "is_positive_definite",
 )
 
 
@@ -1066,7 +1068,7 @@ def make_with_signature(
 
 def merge_signatures(
     callables: Iterable[Callable], annotations: bool = False
-) -> Tuple[Any, List[Tuple[int, ...]]]:
+) -> Tuple[Any, List[List[int]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1078,7 +1080,7 @@ def merge_signatures(
 
         parameters, mapping = merge_signatures(f, g)
         # parameters is ('x', 'y', 'z', 'p')
-        # mapping is ((0, 1, 2), (0, 3))
+        # mapping is ([0, 1, 2], [0, 3])
 
     Parameters
     ----------
@@ -1108,7 +1110,7 @@ def merge_signatures(
                 amap.append(len(args))
                 args.append(k)
                 anns.append(ann)
-        mapping.append(tuple(amap))
+        mapping.append(amap)
 
     if annotations:
         return {k: a for (k, a) in zip(args, anns)}, mapping
@@ -1605,3 +1607,60 @@ def _detect_log_spacing(x: NDArray) -> bool:
     lin_rel_std = np.std(d_lin) / np.mean(d_lin)
     log_rel_std = np.std(d_log) / np.mean(d_log)
     return log_rel_std < lin_rel_std
+
+
+def gradient(fcn: Cost) -> Optional[CostGradient]:
+    """
+    Return a callable which computes the gradient of fcn or None.
+
+    Parameters
+    ----------
+    fcn: Cost
+        Cost function which may provide a callable gradient. How the gradient
+        is detected is specified below in the Notes.
+
+    Notes
+    -----
+    This function checks whether the following attributes exist: `fcn.grad` and
+    `fcn.has_grad`. If `fcn.grad` exists and is a CostGradient, it is returned unless
+    `fcn.has_grad` exists and is False. If no useable gradient is detected, None is
+    returned.
+
+    Returns
+    -------
+    callable or None
+        The gradient function or None
+    """
+    grad = getattr(fcn, "grad", None)
+    has_grad = getattr(fcn, "has_grad", True)
+    if grad and isinstance(grad, CostGradient) and has_grad:
+        return grad
+    return None
+
+
+def is_positive_definite(m: ArrayLike) -> bool:
+    """
+    Return True if argument is a positive definite matrix.
+
+    This test is somewhat expensive, because we attempt a cholesky decomposition.
+
+    Parameters
+    ----------
+    m : array-like
+        Matrix to be tested.
+
+    Returns
+    -------
+    bool
+        True if matrix is positive definite and False otherwise.
+    """
+    m = np.atleast_2d(m)
+    if np.all(m.T == m):
+        # maybe check this first https://en.wikipedia.org/wiki/Diagonally_dominant_matrix
+        # and only try cholesky if that fails
+        try:
+            np.linalg.cholesky(m)
+        except np.linalg.LinAlgError:
+            return False
+        return True
+    return False

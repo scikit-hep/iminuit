@@ -54,6 +54,7 @@ if bool(os.environ.get("FAST", False)):
 autoclass_content = "both"
 autosummary_generate = True
 autodoc_member_order = "groupwise"
+autodoc_type_aliases = {"ArrayLike": "ArrayLike"}
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

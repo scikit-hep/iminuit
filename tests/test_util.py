@@ -514,8 +514,8 @@ def test_merge_signatures():
 
     args, (pf, pg) = util.merge_signatures([f, g])
     assert args == ["x", "y", "z", "a", "b"]
-    assert pf == (0, 1, 2)
-    assert pg == (0, 3, 4)
+    assert pf == [0, 1, 2]
+    assert pg == [0, 3, 4]
 
 
 @pytest.mark.skipif(not scipy_available, reason="needs scipy")
@@ -768,3 +768,9 @@ def test_optional_module_for_3():
     ):
         with optional_module_for("foo", replace={"foobarbaz": "foo"}):
             import foobarbaz  # noqa
+
+
+def test_positive_definite():
+    assert util.is_positive_definite([[1, 0], [0, 1]])
+    assert not util.is_positive_definite([[1, 1], [1, 1]])
+    assert not util.is_positive_definite([[1, 0], [1, 1]])
