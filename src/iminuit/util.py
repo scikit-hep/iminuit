@@ -1656,6 +1656,8 @@ def is_positive_definite(m: ArrayLike) -> bool:
     """
     m = np.atleast_2d(m)
     if np.all(m.T == m):
+        # maybe check this first https://en.wikipedia.org/wiki/Diagonally_dominant_matrix
+        # and only try cholesky if that fails
         try:
             np.linalg.cholesky(m)
         except np.linalg.LinAlgError:
