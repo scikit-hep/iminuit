@@ -13,5 +13,9 @@ class HesseFailedWarning(IMinuitWarning):
     """HESSE failed warning."""
 
 
+class ErrordefAlreadySetWarning(IMinuitWarning):
+    """The errordef attribute is already defined by the cost function."""
+
+
 class PerformanceWarning(UserWarning):
     """Warning about performance issues."""
