@@ -47,8 +47,7 @@ jobs:
   aarch64:
     runs-on: ubuntu-latest
     env:
-      pyver: 309
-      py: /opt/python/cp${{ matrix.pyver }}-cp${{ matrix.pyver }}/bin/python
+      py: /opt/python/cp309-cp309/bin/python
       img: quay.io/pypa/manylinux2014_aarch64
     steps:
     - uses: actions/checkout@v3
