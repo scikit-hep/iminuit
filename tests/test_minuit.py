@@ -1718,5 +1718,12 @@ def test_errordef_already_set_warning():
     cost.errordef = 1
 
     m = Minuit(cost, 0, 0)
+    m.hesse()
+    assert_allclose(m.errors, [1, 1])
+
     with pytest.warns(ErrordefAlreadySetWarning):
-        m.errordef = 2
+        m.errordef = 4
+
+    # check that cost.errordef value is still overridden
+    m.hesse()
+    assert_allclose(m.errors, [2, 2])
