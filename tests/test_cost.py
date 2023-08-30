@@ -249,7 +249,7 @@ def test_UnbinnedNLL_2D(use_grad):
         assert m.ngrad > 0
 
         ref = numerical_cost_gradient(cost)
-        assert_allclose(cost.grad(*m.values), ref(*m.values), atol=0.2)
+        assert_allclose(cost.grad(*m.values), ref(*m.values), rtol=0.01)
     else:
         assert m.ngrad == 0
 
@@ -406,7 +406,7 @@ def test_ExtendedUnbinnedNLL_2D(use_grad):
         return n, n * mvnorm(mux, muy, sx, sy, rho).pdf(x_y.T)
 
     truth = 100.0, 0.1, 0.2, 0.3, 0.4, 0.5
-    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0])).T
+    x, y = mvnorm(*truth[1:]).rvs(size=int(truth[0]), random_state=1).T
 
     cost = ExtendedUnbinnedNLL(
         (x, y), model, grad=numerical_extended_model_gradient(model)
@@ -424,7 +424,7 @@ def test_ExtendedUnbinnedNLL_2D(use_grad):
         assert m.ngrad > 0
 
         ref = numerical_cost_gradient(cost)
-        assert_allclose(cost.grad(*m.values), ref(*m.values), atol=0.5)
+        assert_allclose(cost.grad(*m.values), ref(*m.values), rtol=0.01)
     else:
         assert m.ngrad == 0
 
