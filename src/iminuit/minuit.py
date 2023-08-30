@@ -113,7 +113,7 @@ class Minuit:
         should not set errordef by hand. Doing so will raise a
         ErrordefAlreadySetWarning.
 
-        For the builtin cost functions in :module:`iminuit.cost`, you don't need to set
+        For the builtin cost functions in :mod:`iminuit.cost`, you don't need to set
         this value, because they all have the ``errordef`` attribute set.
 
         To make user code more readable, we provided two named constants::
