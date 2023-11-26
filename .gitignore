@@ -22,6 +22,8 @@ __pycache__
 
 pip-wheel-metadata
 
+bench/*.svg
+
 .benchmarks
 .DS_Store
 .idea
