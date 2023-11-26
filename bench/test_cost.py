@@ -213,7 +213,8 @@ def test_minuit_UnbinnedNLL(benchmark, n, log):
 @pytest.mark.parametrize("n", N)
 @pytest.mark.parametrize("BatchMode", [False, True])
 @pytest.mark.parametrize("NumCPU", [0, nb.get_num_threads()])
-def test_RooFit(benchmark, n, BatchMode, NumCPU):
+@pytest.mark.parametrize("EvalBackend", ["legacy", "cpu"])
+def test_RooFit(benchmark, n, BatchMode, NumCPU, EvalBackend):
     import ROOT as R
 
     x = R.RooRealVar("x", "x", 0, 1)
@@ -232,7 +233,11 @@ def test_RooFit(benchmark, n, BatchMode, NumCPU):
         sigma.setVal(0.1)
         slope.setVal(1)
         z.setVal(0.5)
-        args = [R.RooFit.PrintLevel(-1), R.RooFit.BatchMode(BatchMode)]
+        args = [
+            R.RooFit.PrintLevel(-1),
+            R.RooFit.BatchMode(BatchMode),
+            R.RooFit.EvalBackend(EvalBackend),
+        ]
         if NumCPU:
             args.append(R.RooFit.NumCPU(NumCPU))
         pdf.fitTo(data, *args)
