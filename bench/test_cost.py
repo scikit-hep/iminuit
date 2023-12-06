@@ -228,18 +228,23 @@ def test_RooFit(benchmark, n, BatchMode, NumCPU, EvalBackend):
 
     data = pdf.generate(x, n)
 
+    args = [
+        R.RooFit.PrintLevel(-1),
+        R.RooFit.BatchMode(BatchMode),
+    ]
+    if NumCPU:
+        args.append(R.RooFit.NumCPU(NumCPU))
+    if R.__version__ >= "6.30":
+        args.append(R.RooFit.EvalBackend(EvalBackend))
+    else:
+        if EvalBackend != "legacy":
+            pytest.skip()
+
     def run():
         mu.setVal(0.5)
         sigma.setVal(0.1)
         slope.setVal(1)
         z.setVal(0.5)
-        args = [
-            R.RooFit.PrintLevel(-1),
-            R.RooFit.BatchMode(BatchMode),
-            R.RooFit.EvalBackend(EvalBackend),
-        ]
-        if NumCPU:
-            args.append(R.RooFit.NumCPU(NumCPU))
         pdf.fitTo(data, *args)
 
     benchmark(run)
