@@ -35,9 +35,12 @@ def logsumexp(a, b):
     r = np.empty_like(a)
     for i in nb.prange(len(r)):
         if a[i] > b[i]:
-            r[i] = a[i] + np.log(1 + np.exp(b[i] - a[i]))
+            c = a[i]
+            d = b[i]
         else:
-            r[i] = b[i] + np.log(1 + np.exp(a[i] - b[i]))
+            c = b[i]
+            d = a[i]
+        r[i] = c + np.log1p(np.exp(d - c))
     return r
 
 
@@ -210,44 +213,77 @@ def test_minuit_UnbinnedNLL(benchmark, n, log):
     assert_allclose(m.values[:-1], ARGS[:-1], atol=2 / n**0.5)
 
 
-@pytest.mark.parametrize("n", N)
-@pytest.mark.parametrize("BatchMode", [False, True])
-@pytest.mark.parametrize("NumCPU", [0, nb.get_num_threads()])
-@pytest.mark.parametrize("EvalBackend", ["legacy", "cpu"])
-def test_RooFit(benchmark, n, BatchMode, NumCPU, EvalBackend):
+try:
     import ROOT as R
 
-    x = R.RooRealVar("x", "x", 0, 1)
-    z = R.RooRealVar("z", "z", 0.5, 0, 1)
-    mu = R.RooRealVar("mu", "mu", 0.5, 0, 1)
-    sigma = R.RooRealVar("sigma", "sigma", 0.1, 0, 10)
-    slope = R.RooRealVar("slope", "slope", 1.0, 0, 10)
-    pdf1 = R.RooGaussian("gauss", "gauss", x, mu, sigma)
-    pdf2 = R.RooExponential("expon", "expon", x, slope)
-    pdf = R.RooAddPdf("pdf", "pdf", [pdf1, pdf2], [z])
-
-    data = pdf.generate(x, n)
-
-    args = [
-        R.RooFit.PrintLevel(-1),
-        R.RooFit.BatchMode(BatchMode),
-    ]
-    if NumCPU:
-        args.append(R.RooFit.NumCPU(NumCPU))
     if R.__version__ >= "6.30":
-        args.append(R.RooFit.EvalBackend(EvalBackend))
+
+        @pytest.mark.parametrize("n", N)
+        @pytest.mark.parametrize("NumCPU", [0, nb.get_num_threads()])
+        @pytest.mark.parametrize(
+            "EvalBackend", ["legacy", "cpu", "codegen", "codegen_no_grad"]
+        )
+        def test_RooFit(benchmark, n, NumCPU, EvalBackend):
+            x = R.RooRealVar("x", "x", 0, 1)
+            z = R.RooRealVar("z", "z", 0.5, 0, 1)
+            mu = R.RooRealVar("mu", "mu", 0.5, 0, 1)
+            sigma = R.RooRealVar("sigma", "sigma", 0.1, 0, 10)
+            slope = R.RooRealVar("slope", "slope", 1.0, 0, 10)
+            pdf1 = R.RooGaussian("gauss", "gauss", x, mu, sigma)
+            pdf2 = R.RooExponential("expon", "expon", x, slope)
+            pdf = R.RooAddPdf("pdf", "pdf", [pdf1, pdf2], [z])
+
+            data = pdf.generate(x, n)
+
+            args = [R.RooFit.PrintLevel(-1), R.RooFit.EvalBackend(EvalBackend)]
+            if NumCPU:
+                args.append(R.RooFit.NumCPU(NumCPU))
+
+            def run():
+                mu.setVal(0.5)
+                sigma.setVal(0.1)
+                slope.setVal(1)
+                z.setVal(0.5)
+                pdf.fitTo(data, *args)
+
+            benchmark(run)
+            assert_allclose(z.getVal(), 0.5, atol=5 / n**0.5)
+            assert_allclose(mu.getVal(), 0.5, atol=5 / n**0.5)
+            assert_allclose(sigma.getVal(), 0.1, atol=5 / n**0.5)
+
     else:
-        if EvalBackend != "legacy":
-            pytest.skip()
 
-    def run():
-        mu.setVal(0.5)
-        sigma.setVal(0.1)
-        slope.setVal(1)
-        z.setVal(0.5)
-        pdf.fitTo(data, *args)
+        @pytest.mark.parametrize("n", N)
+        @pytest.mark.parametrize("NumCPU", [0, nb.get_num_threads()])
+        @pytest.mark.parametrize("BatchMode", [False, True])
+        def test_RooFit(benchmark, n, NumCPU, BatchMode):
+            x = R.RooRealVar("x", "x", 0, 1)
+            z = R.RooRealVar("z", "z", 0.5, 0, 1)
+            mu = R.RooRealVar("mu", "mu", 0.5, 0, 1)
+            sigma = R.RooRealVar("sigma", "sigma", 0.1, 0, 10)
+            slope = R.RooRealVar("slope", "slope", 1.0, 0, 10)
+            pdf1 = R.RooGaussian("gauss", "gauss", x, mu, sigma)
+            pdf2 = R.RooExponential("expon", "expon", x, slope)
+            pdf = R.RooAddPdf("pdf", "pdf", [pdf1, pdf2], [z])
 
-    benchmark(run)
-    assert_allclose(z.getVal(), 0.5, atol=5 / n**0.5)
-    assert_allclose(mu.getVal(), 0.5, atol=5 / n**0.5)
-    assert_allclose(sigma.getVal(), 0.1, atol=5 / n**0.5)
+            data = pdf.generate(x, n)
+
+            args = [R.RooFit.PrintLevel(-1), R.RooFit.BatchMode(BatchMode)]
+            if NumCPU:
+                args.append(R.RooFit.NumCPU(NumCPU, 1))
+                args.append(R.RooFit.Parallelize(NumCPU))
+
+            def run():
+                mu.setVal(0.5)
+                sigma.setVal(0.1)
+                slope.setVal(1)
+                z.setVal(0.5)
+                pdf.fitTo(data, *args)
+
+            benchmark(run)
+            assert_allclose(z.getVal(), 0.5, atol=5 / n**0.5)
+            assert_allclose(mu.getVal(), 0.5, atol=5 / n**0.5)
+            assert_allclose(sigma.getVal(), 0.1, atol=5 / n**0.5)
+
+except ModuleNotFoundError:
+    pass
