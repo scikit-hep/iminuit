@@ -1325,6 +1325,7 @@ def _arguments_from_docstring(callable):
     #   min(iterable, *[, default=obj, key=func]) -> value
     #   min(arg1, arg2, *args, *[, key=func]) -> value
     #   Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])
+    #   Foo.baz(self: Foo, ncall_me: int =10000)
 
     try:
         # function wrapper functools.partial does not offer __name__,
@@ -1350,7 +1351,7 @@ def _arguments_from_docstring(callable):
     items = [x.strip(" []") for x in doc[start : start + ich].split(",")]
 
     # strip self if callable is a class method
-    if items[0] == "self":
+    if inspect.ismethod(callable):
         items = items[1:]
 
     #   "iterable", "*", "default=obj", "key=func"
@@ -1369,7 +1370,9 @@ def _arguments_from_docstring(callable):
 
     def extract(s: str) -> str:
         a = s.find(" ")
-        b = s.find("=")
+        b = s.find(":")
+        if b < 0:
+            b = s.find("=")
         if a < 0:
             a = 0
         if b < 0:
