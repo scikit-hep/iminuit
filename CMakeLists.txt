@@ -92,5 +92,6 @@ else()
 endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+target_compile_definitions(_core PUBLIC PYBIND11_DETAILED_ERROR_MESSAGES=1)
 
 install(TARGETS _core DESTINATION iminuit)
