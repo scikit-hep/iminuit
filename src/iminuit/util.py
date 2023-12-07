@@ -1136,7 +1136,7 @@ def describe(callable, *, annotations=False):
     Parameters
     ----------
     callable : callable
-        Callable whose parameters should be extracted.
+        Callable whose parameter names should be extracted.
     annotations : bool, optional
         Whether to also extract annotations. Default is false.
 
@@ -1153,7 +1153,7 @@ def describe(callable, *, annotations=False):
     Parameter names are extracted with the following three methods, which are attempted
     in order. The first to succeed determines the result.
 
-    1.  Using ``obj._parameters``, which is a dict that makes parameter names to
+    1.  Using ``obj._parameters``, which is a dict that maps parameter names to
         parameter limits or None if the parameter has to limits. Users are encouraged
         to use this mechanism to provide signatures for objects that otherwise would
         not have a detectable signature. Example::
@@ -1208,28 +1208,28 @@ def describe(callable, *, annotations=False):
 
     3.  Using the docstring. The docstring is textually parsed to detect the parameter
         names. This requires that a docstring is present which follows the Python
-        standard formatting for function signatures.
+        standard formatting for function signatures. Here is a contrived example which
+        is parsed correctly: fn(a, b: float, int c, d=1, e: float=2.2, double e=3).
 
     Ambiguous cases with positional and keyword argument are handled in the following
     way::
 
+        def fcn(a, b, *args, **kwargs): ...
         # describe returns [a, b];
         # *args and **kwargs are ignored
-        def fcn(a, b, *args, **kwargs): ...
 
+        def fcn(a, b, c=1): ...
         # describe returns [a, b, c];
         # positional arguments with default values are detected
-        def fcn(a, b, c=1): ...
-
     """
     if _address_of_cfunc(callable) != 0:
         return {} if annotations else []
 
     args = (
         getattr(callable, "_parameters", {})
-        or _arguments_from_func_code(callable)
-        or _parameters_from_inspect(callable)
-        or _arguments_from_docstring(callable)
+        or _describe_impl_func_code(callable)
+        or _describe_impl_inspect(callable)
+        or _describe_impl_docstring(callable)
     )
 
     if annotations:
@@ -1238,13 +1238,106 @@ def describe(callable, *, annotations=False):
     return list(args)
 
 
-def _arguments_from_func_code(callable):
+def _describe_impl_func_code(callable):
     # Check (faked) f.func_code; for backward-compatibility with iminuit-1.x
     if hasattr(callable, "func_code"):
         # cannot warn about deprecation here, since numba.njit also uses .func_code
         fc = callable.func_code
         return {x: None for x in fc.co_varnames[: fc.co_argcount]}
     return {}
+
+
+def _describe_impl_inspect(callable):
+    try:
+        signature = inspect.signature(callable)
+    except ValueError:  # raised when used on built-in function
+        return {}
+
+    r = {}
+    for name, par in signature.parameters.items():
+        # stop when variable number of arguments is encountered
+        if par.kind is inspect.Parameter.VAR_POSITIONAL:
+            break
+        # stop when keyword argument is encountered
+        if par.kind is inspect.Parameter.VAR_KEYWORD:
+            break
+        r[name] = _get_limit(par.annotation)
+    return r
+
+
+def _describe_impl_docstring(callable):
+    doc = inspect.getdoc(callable)
+
+    if doc is None:
+        return {}
+
+    # Examples of strings we want to parse:
+    #   min(iterable, *[, default=obj, key=func]) -> value
+    #   min(arg1, arg2, *args, *[, key=func]) -> value
+    #   Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])
+    #   Foo.baz(self: Foo, ncall_me: int =10000)
+
+    try:
+        # function wrapper functools.partial does not offer __name__,
+        # we cannot extract the signature in this case
+        name = callable.__name__
+    except AttributeError:
+        return {}
+
+    token = name + "("
+    start = doc.find(token)
+    if start < 0:
+        return {}
+    start += len(token)
+
+    nbrace = 1
+    for ich, ch in enumerate(doc[start:]):
+        if ch == "(":
+            nbrace += 1
+        elif ch == ")":
+            nbrace -= 1
+        if nbrace == 0:
+            break
+    items = [x.strip(" []") for x in doc[start : start + ich].split(",")]
+
+    # strip self if callable is a class method
+    if inspect.ismethod(callable):
+        items = items[1:]
+
+    #   "iterable", "*", "default=obj", "key=func"
+    #   "arg1", "arg2", "*args", "*", "key=func"
+    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
+    #   "ncall_me: int =10000"
+
+    try:
+        i = items.index("*args")
+        items = items[:i]
+    except ValueError:
+        pass
+
+    #   "iterable", "*", "default=obj", "key=func"
+    #   "arg1", "arg2", "*", "key=func"
+    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
+    #   "ncall_me: int =10000"
+
+    def extract(s: str) -> str:
+        i = s.find("=")
+        if i >= 0:
+            s = s[:i]
+        i = s.find(":")
+        if i >= 0:
+            return s[:i].strip()
+        s = s.strip()
+        i = s.find(" ")
+        if i >= 0:
+            return s[i:].strip()
+        return s
+
+    #   "iterable", "*", "default", "key"
+    #   "arg1", "arg2", "key"
+    #   "ncall_me", "resume", "nsplit"
+    #   "ncall_me"
+    return {extract(x): None for x in items if x != "*"}
 
 
 def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
@@ -1295,91 +1388,6 @@ def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
         if le is not None:
             lim[1] = le
     return tuple(lim)
-
-
-def _parameters_from_inspect(callable):
-    try:
-        signature = inspect.signature(callable)
-    except ValueError:  # raised when used on built-in function
-        return {}
-
-    r = {}
-    for name, par in signature.parameters.items():
-        # stop when variable number of arguments is encountered
-        if par.kind is inspect.Parameter.VAR_POSITIONAL:
-            break
-        # stop when keyword argument is encountered
-        if par.kind is inspect.Parameter.VAR_KEYWORD:
-            break
-        r[name] = _get_limit(par.annotation)
-    return r
-
-
-def _arguments_from_docstring(callable):
-    doc = inspect.getdoc(callable)
-
-    if doc is None:
-        return {}
-
-    # Examples of strings we want to parse:
-    #   min(iterable, *[, default=obj, key=func]) -> value
-    #   min(arg1, arg2, *args, *[, key=func]) -> value
-    #   Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])
-
-    try:
-        # function wrapper functools.partial does not offer __name__,
-        # we cannot extract the signature in this case
-        name = callable.__name__
-    except AttributeError:
-        return {}
-
-    token = name + "("
-    start = doc.find(token)
-    if start < 0:
-        return {}
-    start += len(token)
-
-    nbrace = 1
-    for ich, ch in enumerate(doc[start:]):
-        if ch == "(":
-            nbrace += 1
-        elif ch == ")":
-            nbrace -= 1
-        if nbrace == 0:
-            break
-    items = [x.strip(" []") for x in doc[start : start + ich].split(",")]
-
-    # strip self if callable is a class method
-    if items[0] == "self":
-        items = items[1:]
-
-    #   "iterable", "*", "default=obj", "key=func"
-    #   "arg1", "arg2", "*args", "*", "key=func"
-    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
-
-    try:
-        i = items.index("*args")
-        items = items[:i]
-    except ValueError:
-        pass
-
-    #   "iterable", "*", "default=obj", "key=func"
-    #   "arg1", "arg2", "*", "key=func"
-    #   "int ncall_me =10000", "resume=True", "int nsplit=1"
-
-    def extract(s: str) -> str:
-        a = s.find(" ")
-        b = s.find("=")
-        if a < 0:
-            a = 0
-        if b < 0:
-            b = len(s)
-        return s[a:b].strip()
-
-    #   "iterable", "default", "key"
-    #   "arg1", "arg2", "key"
-    #   "ncall_me", "resume", "nsplit"
-    return {extract(x): None for x in items if x != "*"}
 
 
 def _guess_initial_step(val: float) -> float:

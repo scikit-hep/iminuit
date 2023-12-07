@@ -165,7 +165,11 @@ def test_from_docstring_2():
             """Foo.bar(self, int ncall_me =10000, [resume=True, int nsplit=1])"""
             pass
 
+        def baz(self, *args):
+            """Foo.baz(self: Foo, ncall_me: int =10000, arg: np.ndarray = [])"""
+
     assert describe(Foo().bar) == ["ncall_me", "resume", "nsplit"]
+    assert describe(Foo().baz) == ["ncall_me", "arg"]
 
 
 def test_from_docstring_3():
