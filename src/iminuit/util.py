@@ -236,7 +236,7 @@ class LimitView(BasicView):
         state.set_error(i, err)
 
 
-def _normalize_limit(lim: UserBound) -> Tuple[float, float]:
+def _normalize_limit(lim: Optional[Iterable]) -> Tuple[float, float]:
     if lim is None:
         return (-np.inf, np.inf)
     a, b = lim

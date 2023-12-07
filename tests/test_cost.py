@@ -1164,7 +1164,7 @@ def test_CostSum_1(use_grad):
         return g
 
     def model3(x, c):
-        return c
+        return c * np.ones_like(x)
 
     def grad3(x, c):
         return np.ones((1, len(x)))
@@ -1201,7 +1201,7 @@ def test_CostSum_1(use_grad):
         a = 2
         b = 3
         ref = np.zeros(2)
-        ref[0] += lsq1.grad(a)
+        ref[0] += lsq1.grad(a)[0]
         ref[[1, 0]] += lsq2.grad(b, a)
         assert_allclose(lsq12.grad(a, b), ref)
 
@@ -1214,9 +1214,9 @@ def test_CostSum_1(use_grad):
         a = 2
         b = 3
         ref = np.zeros(2)
-        ref[0] += lsq1.grad(a)
+        ref[0] += lsq1.grad(a)[0]
         ref[[1, 0]] += lsq2.grad(b, a)
-        ref[0] += lsq1.grad(a)
+        ref[0] += lsq1.grad(a)[0]
         assert_allclose(lsq121.grad(a, b), ref)
 
     lsq312 = lsq3 + lsq12
@@ -1229,8 +1229,8 @@ def test_CostSum_1(use_grad):
         b = 3
         c = 4
         ref = np.zeros(3)
-        ref[0] += lsq3.grad(c)
-        ref[1] += lsq1.grad(a)
+        ref[0] += lsq3.grad(c)[0]
+        ref[1] += lsq1.grad(a)[0]
         ref[[2, 1]] += lsq2.grad(b, a)
         assert_allclose(lsq312.grad(c, a, b), ref)
 
