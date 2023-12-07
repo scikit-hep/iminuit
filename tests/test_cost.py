@@ -1164,7 +1164,7 @@ def test_CostSum_1(use_grad):
         return g
 
     def model3(x, c):
-        return c
+        return c * np.ones_like(x)
 
     def grad3(x, c):
         return np.ones((1, len(x)))
