@@ -763,20 +763,22 @@ def test_BinnedNLL_with_pdf(use_pdf):
 
 
 @pytest.mark.parametrize("use_pdf", ["approximate", "numerical"])
-def test_BinnedNLL_with_pdf_2D(use_pdf):
-    xe = (np.array([0.1, 0.3, 0.4]), np.array([0, 0.1, 0.2, 0.3]))
-    n = [[1, 2, 3], [3, 4, 5]]
+def test_BinnedNLL_with_pdf_3D(use_pdf):
+    xe = (np.array([0, 0.1]), np.array([0.1, 0.3, 0.4]), np.array([0, 0.1, 0.2, 0.3]))
+    n = [[[1, 2, 3], [3, 4, 5]]]
 
-    def pdf(x_y, mux, muy, sx, sy):
-        return mvnorm(mux, muy, sx, sy, 0.5).pdf(x_y.T)
+    def pdf(r, mx, my, mz, sx, sy, sz):
+        x, y, z = r
+        return norm_pdf(x, mx, sx) * norm_pdf(y, my, sy) * norm_pdf(z, mz, sz)
 
-    def cdf(x_y, mux, muy, sx, sy):
-        return mvnorm(mux, muy, sx, sy, 0.5).cdf(x_y.T)
+    def cdf(r, mx, my, mz, sx, sy, sz):
+        x, y, z = r
+        return norm_cdf(x, mx, sx) * norm_cdf(y, my, sy) * norm_cdf(z, mz, sz)
 
     c1 = BinnedNLL(n, xe, pdf, use_pdf=use_pdf)
     c2 = BinnedNLL(n, xe, cdf)
 
-    par = [0, 1, 2, 3]
+    par = [0, 1, 2, 3, 4, 5]
     assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-3)
 
 

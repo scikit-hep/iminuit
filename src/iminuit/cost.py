@@ -1522,7 +1522,7 @@ class BinnedCostWithModel(BinnedCost):
             if use_pdf == "approximate":
                 dx = [np.diff(xe) for xe in self.xe]
                 xm = [xei[:-1] + 0.5 * dxi for (xei, dxi) in zip(self.xe, dx)]
-                xm = np.meshgrid(*xm, indexing="xy")
+                xm = np.meshgrid(*xm, indexing="ij")
                 dx = np.meshgrid(*dx, indexing="ij")
                 self._model_xm = np.array(xm)
                 self._model_dx = np.prod(dx, axis=0)
