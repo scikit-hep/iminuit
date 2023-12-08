@@ -1519,13 +1519,18 @@ class BinnedCostWithModel(BinnedCost):
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
-            if use_pdf:
+            if use_pdf == "approximate":
                 dx = [np.diff(xe) for xe in self.xe]
                 xm = [xei[:-1] + 0.5 * dxi for (xei, dxi) in zip(self.xe, dx)]
                 xm = np.meshgrid(*xm, indexing="xy")
                 dx = np.meshgrid(*dx, indexing="ij")
                 self._model_xm = np.array(xm)
                 self._model_dx = np.prod(dx, axis=0)
+            elif use_pdf == "numerical":
+                raise NotImplementedError(
+                    'use_pdf="numerical" is not supported for '
+                    "multidimensional histograms"
+                )
 
         self._model_len = np.prod(self._xe_shape)
 
@@ -1549,9 +1554,9 @@ class BinnedCostWithModel(BinnedCost):
         return y * self._model_dx
 
     def _pred_numerical(self, args: Sequence[float]) -> NDArray:
-        assert self._ndim == 1
-
         from scipy.integrate import quad
+
+        assert self._ndim == 1
 
         d = np.empty(self._model_len - 1)
         for i in range(self._model_len - 1):
