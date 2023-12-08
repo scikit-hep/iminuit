@@ -1496,7 +1496,7 @@ class BinnedCostWithModel(BinnedCost):
         self._model_grad = grad
 
         if use_pdf and grad:
-            raise NotImplementedError("use_pdf and grad cannot be used together")
+            raise ValueError("keywords use_pdf and grad cannot be used together")
 
         if use_pdf == "approximate":
             self._pred_impl = self._pred_approximate
@@ -1527,7 +1527,7 @@ class BinnedCostWithModel(BinnedCost):
                 self._model_xm = np.array(xm)
                 self._model_dx = np.prod(dx, axis=0)
             elif use_pdf == "numerical":
-                raise NotImplementedError(
+                raise ValueError(
                     'use_pdf="numerical" is not supported for '
                     "multidimensional histograms"
                 )
