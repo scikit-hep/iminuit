@@ -51,7 +51,7 @@ def mvnorm(mux, muy, sx, sy, rho):
 
 def expon_cdf(x, a):
     with np.errstate(over="ignore"):
-        return 1 - np.exp(-x / a)
+        return -np.expm1(-x / a)
 
 
 def numerical_cost_gradient(fcn):
@@ -749,6 +749,35 @@ def test_BinnedNLL_pickle():
     b = pickle.dumps(c)
     c2 = pickle.loads(b)
     assert_equal(c.data, c2.data)
+
+
+@pytest.mark.parametrize("use_pdf", ["approximate", "numerical"])
+def test_BinnedNLL_with_pdf(use_pdf):
+    xe = np.array([0, 0.1, 0.2, 0.3])
+    n = [1, 2, 3]
+    c = BinnedNLL(n, xe, norm_pdf, use_pdf=use_pdf)
+
+    par = [0.05, 1]
+    ref = np.diff(norm_cdf(xe, *par)) * np.sum(n)
+    assert_allclose(c.prediction(par), ref, rtol=1e-3)
+
+
+@pytest.mark.parametrize("use_pdf", ["approximate", "numerical"])
+def test_BinnedNLL_with_pdf_2D(use_pdf):
+    xe = (np.array([0.1, 0.3, 0.4]), np.array([0, 0.1, 0.2, 0.3]))
+    n = [[1, 2, 3], [3, 4, 5]]
+
+    def pdf(x_y, mux, muy, sx, sy):
+        return mvnorm(mux, muy, sx, sy, 0.5).pdf(x_y.T)
+
+    def cdf(x_y, mux, muy, sx, sy):
+        return mvnorm(mux, muy, sx, sy, 0.5).cdf(x_y.T)
+
+    c1 = BinnedNLL(n, xe, pdf, use_pdf=use_pdf)
+    c2 = BinnedNLL(n, xe, cdf)
+
+    par = [0, 1, 2, 3]
+    assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-3)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))

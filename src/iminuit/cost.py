@@ -1477,29 +1477,62 @@ class BinnedCostWithModel(BinnedCost):
     :meta private:
     """
 
-    __slots__ = "_xe_shape", "_model", "_model_xe", "_model_len", "_model_grad"
+    __slots__ = (
+        "_xe_shape",
+        "_model",
+        "_model_xe",
+        "_model_xm",
+        "_model_dx",
+        "_model_len",
+        "_model_grad",
+    )
 
     _model_xe: np.ndarray
     _xe_shape: Union[Tuple[int], Tuple[int, ...]]
 
-    def __init__(self, n, xe, model, verbose, grad):
+    def __init__(self, n, xe, model, verbose, grad, use_pdf):
         """For internal use."""
         self._model = model
         self._model_grad = grad
+
+        if use_pdf and grad:
+            raise NotImplementedError("use_pdf and grad cannot be used together")
+
+        if use_pdf == "approximate":
+            self._pred_impl = self._pred_approximate
+        elif use_pdf == "numerical":
+            self._pred_impl = self._pred_numerical
+        else:
+            self._pred_impl = self._pred_cdf
 
         super().__init__(_model_parameters(model), n, xe, verbose)
 
         if self._ndim == 1:
             self._xe_shape = (len(self.xe),)
             self._model_xe = _norm(self.xe)
+            if use_pdf:
+                dx = np.diff(self._model_xe)
+                self._model_dx = dx
+                self._model_xm = self._model_xe[:-1] + 0.5 * dx
         else:
             self._xe_shape = tuple(len(xei) for xei in self.xe)
             self._model_xe = np.row_stack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
+            if use_pdf:
+                dx = [np.diff(xe) for xe in self.xe]
+                xm = [xei[:-1] + 0.5 * dxi for (xei, dxi) in zip(self.xe, dx)]
+                xm = np.meshgrid(*xm, indexing="xy")
+                dx = np.meshgrid(*dx, indexing="ij")
+                self._model_xm = np.array(xm)
+                self._model_dx = np.prod(dx, axis=0)
+
         self._model_len = np.prod(self._xe_shape)
 
     def _pred(self, args: Sequence[float]) -> NDArray:
+        return self._pred_impl(args)
+
+    def _pred_cdf(self, args: Sequence[float]) -> NDArray:
         d = self._model(self._model_xe, *args)
         d = _normalize_output(d, "model", self._model_len)
         if self._ndim > 1:
@@ -1509,6 +1542,22 @@ class BinnedCostWithModel(BinnedCost):
         # differences can come out negative due to round-off error in subtraction,
         # we set negative values to zero
         d[d < 0] = 0
+        return d
+
+    def _pred_approximate(self, args: Sequence[float]) -> NDArray:
+        y = self._model(self._model_xm, *args)
+        return y * self._model_dx
+
+    def _pred_numerical(self, args: Sequence[float]) -> NDArray:
+        assert self._ndim == 1
+
+        from scipy.integrate import quad
+
+        d = np.empty(self._model_len - 1)
+        for i in range(self._model_len - 1):
+            a = self._model_xe[i]
+            b = self._model_xe[i + 1]
+            d[i] = quad(lambda x: self._model(x, *args), a, b)[0]
         return d
 
     def _pred_grad(self, args: Sequence[float]) -> NDArray:
@@ -1836,6 +1885,7 @@ class BinnedNLL(BinnedCostWithModel):
         *,
         verbose: int = 0,
         grad: Optional[ModelGradient] = None,
+        use_pdf: str = "",
     ):
         """
         Initialize cost function with data and model.
@@ -1860,8 +1910,12 @@ class BinnedNLL(BinnedCostWithModel):
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
+        grad: callable
+            TODO
+        use_pdf: str
+            TODO
         """
-        super().__init__(n, xe, cdf, verbose, grad)
+        super().__init__(n, xe, cdf, verbose, grad, use_pdf)
 
     def _pred(self, args: Sequence[float]) -> NDArray:
         # must return array of full length, mask not applied yet
@@ -1934,6 +1988,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         *,
         verbose: int = 0,
         grad: Optional[ModelGradient] = None,
+        use_pdf: str = "",
     ):
         """
         Initialize cost function with data and model.
@@ -1956,8 +2011,12 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and
             negative log-likelihood value.
+        grad : callable, optional
+            TODO
+        use_pdf : str, optional
+            TODO
         """
-        super().__init__(n, xe, scaled_cdf, verbose, grad)
+        super().__init__(n, xe, scaled_cdf, verbose, grad, use_pdf)
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
