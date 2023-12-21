@@ -1,0 +1,2826 @@
+{
+  "machine_info": {
+    "node": "MacBook-Pro-105.e5.physik.tu-dortmund.de",
+    "processor": "i386",
+    "machine": "x86_64",
+    "python_compiler": "Clang 14.0.6 ",
+    "python_implementation": "CPython",
+    "python_implementation_version": "3.11.3",
+    "python_version": "3.11.3",
+    "python_build": [
+      "main",
+      "Apr  6 2023 09:05:00"
+    ],
+    "release": "23.2.0",
+    "system": "Darwin",
+    "cpu": {
+      "python_version": "3.11.3.final.0 (64 bit)",
+      "cpuinfo_version": [
+        9,
+        0,
+        0
+      ],
+      "cpuinfo_version_string": "9.0.0",
+      "arch": "X86_64",
+      "bits": 64,
+      "count": 8,
+      "arch_string_raw": "x86_64",
+      "vendor_id_raw": "GenuineIntel",
+      "brand_raw": "Intel(R) Core(TM) i7-8569U CPU @ 2.80GHz",
+      "hz_advertised_friendly": "2.8000 GHz",
+      "hz_actual_friendly": "2.8000 GHz",
+      "hz_advertised": [
+        2800000000,
+        0
+      ],
+      "hz_actual": [
+        2800000000,
+        0
+      ],
+      "l2_cache_size": 262144,
+      "stepping": 10,
+      "model": 142,
+      "family": 6,
+      "flags": [
+        "1gbpage",
+        "3dnowprefetch",
+        "abm",
+        "acapmsr",
+        "acpi",
+        "adx",
+        "aes",
+        "apic",
+        "avx",
+        "avx1.0",
+        "avx2",
+        "bmi1",
+        "bmi2",
+        "clflush",
+        "clflushopt",
+        "clfsh",
+        "clfsopt",
+        "cmov",
+        "cx16",
+        "cx8",
+        "de",
+        "ds",
+        "ds_cpl",
+        "dscpl",
+        "dtes64",
+        "dts",
+        "em64t",
+        "erms",
+        "est",
+        "f16c",
+        "fma",
+        "fpu",
+        "fpu_csds",
+        "fxsr",
+        "ht",
+        "htt",
+        "ibrs",
+        "intel_pt",
+        "invpcid",
+        "ipt",
+        "l1df",
+        "lahf",
+        "lahf_lm",
+        "lzcnt",
+        "mca",
+        "mce",
+        "mdclear",
+        "mmx",
+        "mon",
+        "monitor",
+        "movbe",
+        "mpx",
+        "msr",
+        "mtrr",
+        "osxsave",
+        "pae",
+        "pat",
+        "pbe",
+        "pcid",
+        "pclmulqdq",
+        "pdcm",
+        "pge",
+        "pni",
+        "popcnt",
+        "prefetchw",
+        "pse",
+        "pse36",
+        "rdrand",
+        "rdrnd",
+        "rdseed",
+        "rdtscp",
+        "rdwrfsgs",
+        "seglim64",
+        "sep",
+        "sgx",
+        "smap",
+        "smep",
+        "ss",
+        "ssbd",
+        "sse",
+        "sse2",
+        "sse3",
+        "sse4.1",
+        "sse4.2",
+        "sse4_1",
+        "sse4_2",
+        "ssse3",
+        "stibp",
+        "syscall",
+        "tm",
+        "tm2",
+        "tpr",
+        "tsc",
+        "tsc_thread_offset",
+        "tscdeadline",
+        "tsci",
+        "tsctmr",
+        "tsxfa",
+        "vme",
+        "vmx",
+        "x2apic",
+        "xd",
+        "xsave",
+        "xtpr"
+      ],
+      "l2_cache_line_size": 256,
+      "l2_cache_associativity": 6
+    }
+  },
+  "commit_info": {
+    "id": "a7f9e06fd44a98dc1caf03c110caf57e8dbf69c3",
+    "time": "2023-12-08T18:17:55+01:00",
+    "author_time": "2023-12-08T18:17:55+01:00",
+    "dirty": true,
+    "project": "iminuit",
+    "branch": "develop"
+  },
+  "benchmarks": [
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-10]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-10]",
+      "params": {
+        "backend": "legacy",
+        "n": 10
+      },
+      "param": "legacy-10",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0007005090010352433,
+        "max": 0.0008599779976066202,
+        "mean": 0.0007565715703614322,
+        "stddev": 5.8255153846422144e-05,
+        "rounds": 7,
+        "median": 0.0007506270048907027,
+        "iqr": 8.358725608559325e-05,
+        "q1": 0.0007088404963724315,
+        "q3": 0.0007924277524580248,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.0007005090010352433,
+        "hd15iqr": 0.0008599779976066202,
+        "ops": 1321.752018149818,
+        "total": 0.0052960009925300255,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-31]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-31]",
+      "params": {
+        "backend": "legacy",
+        "n": 31
+      },
+      "param": "legacy-31",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0007951469888212159,
+        "max": 0.0246911450085463,
+        "mean": 0.0010871820886024068,
+        "stddev": 0.0008561111953296545,
+        "rounds": 835,
+        "median": 0.0009501390013610944,
+        "iqr": 0.00025586775154806674,
+        "q1": 0.0008877167492755689,
+        "q3": 0.0011435845008236356,
+        "iqr_outliers": 58,
+        "stddev_outliers": 8,
+        "outliers": "8;58",
+        "ld15iqr": 0.0007951469888212159,
+        "hd15iqr": 0.001528937995317392,
+        "ops": 919.8091198186672,
+        "total": 0.9077970439830096,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-100]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-100]",
+      "params": {
+        "backend": "legacy",
+        "n": 100
+      },
+      "param": "legacy-100",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.001465353008825332,
+        "max": 0.0031573739979648963,
+        "mean": 0.0018546975041212406,
+        "stddev": 0.0003273572769928595,
+        "rounds": 605,
+        "median": 0.0017449940060032532,
+        "iqr": 0.0003884627512888983,
+        "q1": 0.001618071495613549,
+        "q3": 0.002006534246902447,
+        "iqr_outliers": 26,
+        "stddev_outliers": 123,
+        "outliers": "123;26",
+        "ld15iqr": 0.001465353008825332,
+        "hd15iqr": 0.002596771009848453,
+        "ops": 539.1714809438977,
+        "total": 1.1220919899933506,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-316]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-316]",
+      "params": {
+        "backend": "legacy",
+        "n": 316
+      },
+      "param": "legacy-316",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0032979569950839505,
+        "max": 0.05757506699592341,
+        "mean": 0.004563227288206297,
+        "stddev": 0.003781750715640262,
+        "rounds": 222,
+        "median": 0.004000909502792638,
+        "iqr": 0.0006613579898839816,
+        "q1": 0.0037921530019957572,
+        "q3": 0.004453510991879739,
+        "iqr_outliers": 17,
+        "stddev_outliers": 5,
+        "outliers": "5;17",
+        "ld15iqr": 0.0032979569950839505,
+        "hd15iqr": 0.005578388008871116,
+        "ops": 219.1431495390355,
+        "total": 1.0130364579817979,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-1000]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-1000]",
+      "params": {
+        "backend": "legacy",
+        "n": 1000
+      },
+      "param": "legacy-1000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.010332684003515169,
+        "max": 0.018995074002305046,
+        "mean": 0.012094848250695655,
+        "stddev": 0.0016413108299880804,
+        "rounds": 92,
+        "median": 0.011847519490402192,
+        "iqr": 0.00158826750703156,
+        "q1": 0.010941118001937866,
+        "q3": 0.012529385508969426,
+        "iqr_outliers": 5,
+        "stddev_outliers": 13,
+        "outliers": "13;5",
+        "ld15iqr": 0.010332684003515169,
+        "hd15iqr": 0.014917556996806525,
+        "ops": 82.67983022792231,
+        "total": 1.1127260390640004,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-3162]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-3162]",
+      "params": {
+        "backend": "legacy",
+        "n": 3162
+      },
+      "param": "legacy-3162",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.030854668002575636,
+        "max": 0.036186438010190614,
+        "mean": 0.033038362357079416,
+        "stddev": 0.0015019388526836975,
+        "rounds": 28,
+        "median": 0.032942849495157134,
+        "iqr": 0.0023444729959010147,
+        "q1": 0.03170173599937698,
+        "q3": 0.03404620899527799,
+        "iqr_outliers": 0,
+        "stddev_outliers": 10,
+        "outliers": "10;0",
+        "ld15iqr": 0.030854668002575636,
+        "hd15iqr": 0.036186438010190614,
+        "ops": 30.2678440653921,
+        "total": 0.9250741459982237,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-10000]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-10000]",
+      "params": {
+        "backend": "legacy",
+        "n": 10000
+      },
+      "param": "legacy-10000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.09650715500174556,
+        "max": 0.11421739299839828,
+        "mean": 0.10395916340348776,
+        "stddev": 0.006496043950645579,
+        "rounds": 10,
+        "median": 0.10251897050329717,
+        "iqr": 0.011454138002591208,
+        "q1": 0.09812275200965814,
+        "q3": 0.10957689001224935,
+        "iqr_outliers": 0,
+        "stddev_outliers": 3,
+        "outliers": "3;0",
+        "ld15iqr": 0.09650715500174556,
+        "hd15iqr": 0.11421739299839828,
+        "ops": 9.619161671384234,
+        "total": 1.0395916340348776,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-31622]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-31622]",
+      "params": {
+        "backend": "legacy",
+        "n": 31622
+      },
+      "param": "legacy-31622",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.2844333589891903,
+        "max": 0.2985705949977273,
+        "mean": 0.2936104517953936,
+        "stddev": 0.005509503900663688,
+        "rounds": 5,
+        "median": 0.29422829700342845,
+        "iqr": 0.006075020992284408,
+        "q1": 0.2913954867472057,
+        "q3": 0.29747050773949013,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.2844333589891903,
+        "hd15iqr": 0.2985705949977273,
+        "ops": 3.405873305548617,
+        "total": 1.468052258976968,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-100000]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-100000]",
+      "params": {
+        "backend": "legacy",
+        "n": 100000
+      },
+      "param": "legacy-100000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 1.050909273995785,
+        "max": 1.2431965580035467,
+        "mean": 1.1157275094010402,
+        "stddev": 0.07547845712817663,
+        "rounds": 5,
+        "median": 1.0837585300032515,
+        "iqr": 0.07891360225039534,
+        "q1": 1.0725963722507004,
+        "q3": 1.1515099745010957,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 1.050909273995785,
+        "hd15iqr": 1.2431965580035467,
+        "ops": 0.8962761889207459,
+        "total": 5.578637547005201,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-316227]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-316227]",
+      "params": {
+        "backend": "legacy",
+        "n": 316227
+      },
+      "param": "legacy-316227",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 2.9033515580085805,
+        "max": 3.029330438002944,
+        "mean": 2.976277193799615,
+        "stddev": 0.04967547250975799,
+        "rounds": 5,
+        "median": 2.9731256230006693,
+        "iqr": 0.0720617669976491,
+        "q1": 2.9463962472473213,
+        "q3": 3.0184580142449704,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 2.9033515580085805,
+        "hd15iqr": 3.029330438002944,
+        "ops": 0.3359902102140448,
+        "total": 14.881385968998075,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-10]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-10]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 10
+      },
+      "param": "legacy-parallel-10",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.3718831489968579,
+        "max": 0.37906355000450276,
+        "mean": 0.37514686600188724,
+        "stddev": 0.0026443324202783535,
+        "rounds": 5,
+        "median": 0.3752416710049147,
+        "iqr": 0.003173609253281029,
+        "q1": 0.3733612677497149,
+        "q3": 0.3765348770029959,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.3718831489968579,
+        "hd15iqr": 0.37906355000450276,
+        "ops": 2.665622695072626,
+        "total": 1.8757343300094362,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-31]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-31]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 31
+      },
+      "param": "legacy-parallel-31",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.31850098200084176,
+        "max": 0.3294463159982115,
+        "mean": 0.3235686325991992,
+        "stddev": 0.004683913790956048,
+        "rounds": 5,
+        "median": 0.3250305789988488,
+        "iqr": 0.00780199549626559,
+        "q1": 0.3189168967510341,
+        "q3": 0.32671889224729966,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.31850098200084176,
+        "hd15iqr": 0.3294463159982115,
+        "ops": 3.0905344314962964,
+        "total": 1.617843162995996,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-100]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-100]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 100
+      },
+      "param": "legacy-parallel-100",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.31695572499302216,
+        "max": 0.34992367099039257,
+        "mean": 0.33083485599199774,
+        "stddev": 0.014172496402985964,
+        "rounds": 5,
+        "median": 0.3257616349874297,
+        "iqr": 0.023998363758437335,
+        "q1": 0.3194357109896373,
+        "q3": 0.34343407474807464,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.31695572499302216,
+        "hd15iqr": 0.34992367099039257,
+        "ops": 3.0226561134301644,
+        "total": 1.6541742799599888,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-316]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-316]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 316
+      },
+      "param": "legacy-parallel-316",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.30671836900000926,
+        "max": 0.3206368000101065,
+        "mean": 0.3135507946019061,
+        "stddev": 0.0054269156824407845,
+        "rounds": 5,
+        "median": 0.31319186800101306,
+        "iqr": 0.008314376256748801,
+        "q1": 0.3094648089972907,
+        "q3": 0.3177791852540395,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.30671836900000926,
+        "hd15iqr": 0.3206368000101065,
+        "ops": 3.1892759234421053,
+        "total": 1.5677539730095305,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-1000]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-1000]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 1000
+      },
+      "param": "legacy-parallel-1000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.30811516899848357,
+        "max": 0.3450653059990145,
+        "mean": 0.3218996348034125,
+        "stddev": 0.017060317740722444,
+        "rounds": 5,
+        "median": 0.31202193700300995,
+        "iqr": 0.02879128075801418,
+        "q1": 0.30886282975188806,
+        "q3": 0.33765411050990224,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.30811516899848357,
+        "hd15iqr": 0.3450653059990145,
+        "ops": 3.1065583550932283,
+        "total": 1.6094981740170624,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-3162]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-3162]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 3162
+      },
+      "param": "legacy-parallel-3162",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.2922349319997011,
+        "max": 0.3044901539979037,
+        "mean": 0.29808675600215795,
+        "stddev": 0.00498016733637895,
+        "rounds": 5,
+        "median": 0.2968873030040413,
+        "iqr": 0.008073935248830821,
+        "q1": 0.294361689753714,
+        "q3": 0.30243562500254484,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.2922349319997011,
+        "hd15iqr": 0.3044901539979037,
+        "ops": 3.354728044317275,
+        "total": 1.4904337800107896,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-10000]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-10000]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 10000
+      },
+      "param": "legacy-parallel-10000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.29546002500865143,
+        "max": 0.3344733609992545,
+        "mean": 0.31599222820368594,
+        "stddev": 0.01585648495187206,
+        "rounds": 5,
+        "median": 0.31112540900358,
+        "iqr": 0.024563671002397314,
+        "q1": 0.3060482175023935,
+        "q3": 0.33061188850479084,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.29546002500865143,
+        "hd15iqr": 0.3344733609992545,
+        "ops": 3.164634793977934,
+        "total": 1.5799611410184298,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-31622]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-31622]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 31622
+      },
+      "param": "legacy-parallel-31622",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.3346969919948606,
+        "max": 0.3590786599961575,
+        "mean": 0.3445257168001262,
+        "stddev": 0.011484672678500056,
+        "rounds": 5,
+        "median": 0.3390739810129162,
+        "iqr": 0.0206852892479219,
+        "q1": 0.33504641849867767,
+        "q3": 0.35573170774659957,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.3346969919948606,
+        "hd15iqr": 0.3590786599961575,
+        "ops": 2.902540946109233,
+        "total": 1.7226285840006312,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-100000]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-100000]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 100000
+      },
+      "param": "legacy-parallel-100000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.5947874940029578,
+        "max": 0.6609520100028021,
+        "mean": 0.6185228212008951,
+        "stddev": 0.026775051782847687,
+        "rounds": 5,
+        "median": 0.6055552910111146,
+        "iqr": 0.03549876425677212,
+        "q1": 0.6009627974926843,
+        "q3": 0.6364615617494565,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.5947874940029578,
+        "hd15iqr": 0.6609520100028021,
+        "ops": 1.6167552202171724,
+        "total": 3.0926141060044756,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[legacy-parallel-316227]",
+      "fullname": "bench/test_cost.py::test_RooFit[legacy-parallel-316227]",
+      "params": {
+        "backend": "legacy-parallel",
+        "n": 316227
+      },
+      "param": "legacy-parallel-316227",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 1.1974406770023052,
+        "max": 1.758303728987812,
+        "mean": 1.3421673655946507,
+        "stddev": 0.23696034971691565,
+        "rounds": 5,
+        "median": 1.2422643039899413,
+        "iqr": 0.22097694649346522,
+        "q1": 1.20129012174948,
+        "q3": 1.4222670682429452,
+        "iqr_outliers": 1,
+        "stddev_outliers": 1,
+        "outliers": "1;1",
+        "ld15iqr": 1.1974406770023052,
+        "hd15iqr": 1.758303728987812,
+        "ops": 0.7450635633335844,
+        "total": 6.710836827973253,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-10]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-10]",
+      "params": {
+        "backend": "cpu",
+        "n": 10
+      },
+      "param": "cpu-10",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0014671549870399758,
+        "max": 0.002871106000384316,
+        "mean": 0.0016200299061642125,
+        "stddev": 0.00017847356951943092,
+        "rounds": 116,
+        "median": 0.0015764940035296604,
+        "iqr": 0.00013952550943940878,
+        "q1": 0.001514359493739903,
+        "q3": 0.0016538850031793118,
+        "iqr_outliers": 8,
+        "stddev_outliers": 11,
+        "outliers": "11;8",
+        "ld15iqr": 0.0014671549870399758,
+        "hd15iqr": 0.0019183289987267926,
+        "ops": 617.272555398515,
+        "total": 0.18792346911504865,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-31]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-31]",
+      "params": {
+        "backend": "cpu",
+        "n": 31
+      },
+      "param": "cpu-31",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.000819156994111836,
+        "max": 0.021386360996984877,
+        "mean": 0.0009683774074458569,
+        "stddev": 0.0006830980065490508,
+        "rounds": 923,
+        "median": 0.000924173989915289,
+        "iqr": 9.77397539827507e-05,
+        "q1": 0.0008766409955569543,
+        "q3": 0.000974380749539705,
+        "iqr_outliers": 51,
+        "stddev_outliers": 1,
+        "outliers": "1;51",
+        "ld15iqr": 0.000819156994111836,
+        "hd15iqr": 0.0011226000060560182,
+        "ops": 1032.6552357696462,
+        "total": 0.8938123470725259,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-100]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-100]",
+      "params": {
+        "backend": "cpu",
+        "n": 100
+      },
+      "param": "cpu-100",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0007978200010256842,
+        "max": 0.0024681819922989234,
+        "mean": 0.0009230493377304445,
+        "stddev": 0.00016120479451367775,
+        "rounds": 518,
+        "median": 0.0008574754974688403,
+        "iqr": 0.00010985099652316421,
+        "q1": 0.000835560989798978,
+        "q3": 0.0009454119863221422,
+        "iqr_outliers": 45,
+        "stddev_outliers": 53,
+        "outliers": "53;45",
+        "ld15iqr": 0.0007978200010256842,
+        "hd15iqr": 0.001110733996029012,
+        "ops": 1083.365708769976,
+        "total": 0.47813955694437027,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-316]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-316]",
+      "params": {
+        "backend": "cpu",
+        "n": 316
+      },
+      "param": "cpu-316",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.00099500099895522,
+        "max": 0.002214982989244163,
+        "mean": 0.0011722189005684974,
+        "stddev": 0.00018187967594588428,
+        "rounds": 593,
+        "median": 0.0011077739909524098,
+        "iqr": 0.00015127825463423505,
+        "q1": 0.0010567337449174374,
+        "q3": 0.0012080119995516725,
+        "iqr_outliers": 51,
+        "stddev_outliers": 74,
+        "outliers": "74;51",
+        "ld15iqr": 0.00099500099895522,
+        "hd15iqr": 0.001455343997804448,
+        "ops": 853.0829860489577,
+        "total": 0.695125808037119,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-1000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-1000]",
+      "params": {
+        "backend": "cpu",
+        "n": 1000
+      },
+      "param": "cpu-1000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.002000612992560491,
+        "max": 0.0038917310012038797,
+        "mean": 0.002274001059866148,
+        "stddev": 0.0002445097657628164,
+        "rounds": 450,
+        "median": 0.002214209504018072,
+        "iqr": 0.00018441998690832406,
+        "q1": 0.0021369380119722337,
+        "q3": 0.0023213579988805577,
+        "iqr_outliers": 36,
+        "stddev_outliers": 63,
+        "outliers": "63;36",
+        "ld15iqr": 0.002000612992560491,
+        "hd15iqr": 0.0026014140021288767,
+        "ops": 439.75353294640144,
+        "total": 1.0233004769397667,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-3162]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-3162]",
+      "params": {
+        "backend": "cpu",
+        "n": 3162
+      },
+      "param": "cpu-3162",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.004249673002050258,
+        "max": 0.007217341990326531,
+        "mean": 0.0048226268934271,
+        "stddev": 0.0004421533143299928,
+        "rounds": 151,
+        "median": 0.004714020004030317,
+        "iqr": 0.00040734924186835997,
+        "q1": 0.004532697752438253,
+        "q3": 0.004940046994306613,
+        "iqr_outliers": 9,
+        "stddev_outliers": 23,
+        "outliers": "23;9",
+        "ld15iqr": 0.004249673002050258,
+        "hd15iqr": 0.005642948002787307,
+        "ops": 207.35587100111962,
+        "total": 0.728216660907492,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-10000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-10000]",
+      "params": {
+        "backend": "cpu",
+        "n": 10000
+      },
+      "param": "cpu-10000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.013100060008582659,
+        "max": 0.016508283995790407,
+        "mean": 0.01379366944858138,
+        "stddev": 0.0006386432630538987,
+        "rounds": 58,
+        "median": 0.013608618995931465,
+        "iqr": 0.0006548930105054751,
+        "q1": 0.01336961699416861,
+        "q3": 0.014024510004674084,
+        "iqr_outliers": 3,
+        "stddev_outliers": 14,
+        "outliers": "14;3",
+        "ld15iqr": 0.013100060008582659,
+        "hd15iqr": 0.01510237599723041,
+        "ops": 72.49702508296991,
+        "total": 0.80003282801772,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-31622]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-31622]",
+      "params": {
+        "backend": "cpu",
+        "n": 31622
+      },
+      "param": "cpu-31622",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.047107987003983,
+        "max": 0.05519401498895604,
+        "mean": 0.049077301788584965,
+        "stddev": 0.002272480384790934,
+        "rounds": 19,
+        "median": 0.04849759400531184,
+        "iqr": 0.0024033869995037094,
+        "q1": 0.047323406499344856,
+        "q3": 0.049726793498848565,
+        "iqr_outliers": 1,
+        "stddev_outliers": 4,
+        "outliers": "4;1",
+        "ld15iqr": 0.047107987003983,
+        "hd15iqr": 0.05519401498895604,
+        "ops": 20.376018313064492,
+        "total": 0.9324687339831144,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-100000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-100000]",
+      "params": {
+        "backend": "cpu",
+        "n": 100000
+      },
+      "param": "cpu-100000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.12987463500758167,
+        "max": 0.14339014800498262,
+        "mean": 0.13448679714305659,
+        "stddev": 0.005007674720867423,
+        "rounds": 7,
+        "median": 0.13209983200067654,
+        "iqr": 0.006055870253476314,
+        "q1": 0.13186249274440343,
+        "q3": 0.13791836299787974,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.12987463500758167,
+        "hd15iqr": 0.14339014800498262,
+        "ops": 7.435674142319545,
+        "total": 0.9414075800013961,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-316227]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-316227]",
+      "params": {
+        "backend": "cpu",
+        "n": 316227
+      },
+      "param": "cpu-316227",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.4676898799953051,
+        "max": 0.4770243910024874,
+        "mean": 0.4736688425997272,
+        "stddev": 0.003529541322922611,
+        "rounds": 5,
+        "median": 0.474255337001523,
+        "iqr": 0.0030081709919613786,
+        "q1": 0.4726006752534886,
+        "q3": 0.47560884624544997,
+        "iqr_outliers": 1,
+        "stddev_outliers": 1,
+        "outliers": "1;1",
+        "ld15iqr": 0.4742376070062164,
+        "hd15iqr": 0.4770243910024874,
+        "ops": 2.1111796049567224,
+        "total": 2.368344212998636,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-10]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-10]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 10
+      },
+      "param": "cpu-parallel-10",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.000668169988784939,
+        "max": 0.010772941997856833,
+        "mean": 0.0007794888897890063,
+        "stddev": 0.00031843733182223926,
+        "rounds": 1150,
+        "median": 0.0007282524966285564,
+        "iqr": 6.929201481398195e-05,
+        "q1": 0.0007105459953891113,
+        "q3": 0.0007798380102030933,
+        "iqr_outliers": 130,
+        "stddev_outliers": 35,
+        "outliers": "35;130",
+        "ld15iqr": 0.000668169988784939,
+        "hd15iqr": 0.0008838160138111562,
+        "ops": 1282.8919220012,
+        "total": 0.8964122232573573,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-31]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-31]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 31
+      },
+      "param": "cpu-parallel-31",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0009122519986703992,
+        "max": 0.00226244299847167,
+        "mean": 0.0010482984794189538,
+        "stddev": 0.00015547836700138782,
+        "rounds": 962,
+        "median": 0.0010011695048888214,
+        "iqr": 0.00010027299867942929,
+        "q1": 0.0009656089969212189,
+        "q3": 0.0010658819956006482,
+        "iqr_outliers": 86,
+        "stddev_outliers": 90,
+        "outliers": "90;86",
+        "ld15iqr": 0.0009122519986703992,
+        "hd15iqr": 0.0012183829967398196,
+        "ops": 953.926786724212,
+        "total": 1.0084631372010335,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-100]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-100]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 100
+      },
+      "param": "cpu-parallel-100",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0007350749947363511,
+        "max": 0.001863379991846159,
+        "mean": 0.0008269642522303109,
+        "stddev": 0.00011026228501073631,
+        "rounds": 1142,
+        "median": 0.0007954455068102106,
+        "iqr": 6.893000681884587e-05,
+        "q1": 0.0007721489964751527,
+        "q3": 0.0008410790032939985,
+        "iqr_outliers": 108,
+        "stddev_outliers": 111,
+        "outliers": "111;108",
+        "ld15iqr": 0.0007350749947363511,
+        "hd15iqr": 0.0009453940001549199,
+        "ops": 1209.242113311445,
+        "total": 0.944393176047015,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-316]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-316]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 316
+      },
+      "param": "cpu-parallel-316",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.001102002992411144,
+        "max": 0.0025494020082987845,
+        "mean": 0.001277589783393064,
+        "stddev": 0.00020050402170423458,
+        "rounds": 711,
+        "median": 0.0012095629936084151,
+        "iqr": 0.00013596451026387513,
+        "q1": 0.0011654922418529168,
+        "q3": 0.001301456752116792,
+        "iqr_outliers": 76,
+        "stddev_outliers": 82,
+        "outliers": "82;76",
+        "ld15iqr": 0.001102002992411144,
+        "hd15iqr": 0.0015073660033522174,
+        "ops": 782.7238547134964,
+        "total": 0.9083663359924685,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-1000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-1000]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 1000
+      },
+      "param": "cpu-parallel-1000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.001947208002093248,
+        "max": 0.026661908006644808,
+        "mean": 0.002474250720781611,
+        "stddev": 0.0012592933691523047,
+        "rounds": 415,
+        "median": 0.002282087007188238,
+        "iqr": 0.0004096262600796763,
+        "q1": 0.0021398869939730503,
+        "q3": 0.0025495132540527266,
+        "iqr_outliers": 35,
+        "stddev_outliers": 4,
+        "outliers": "4;35",
+        "ld15iqr": 0.001947208002093248,
+        "hd15iqr": 0.0031644420087104663,
+        "ops": 404.16275990175404,
+        "total": 1.0268140491243685,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-3162]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-3162]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 3162
+      },
+      "param": "cpu-parallel-3162",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.004864135000389069,
+        "max": 0.007666377001442015,
+        "mean": 0.0053891585104335355,
+        "stddev": 0.000473195254738816,
+        "rounds": 147,
+        "median": 0.005266398002277128,
+        "iqr": 0.0003113054917776026,
+        "q1": 0.005115893753099954,
+        "q3": 0.005427199244877556,
+        "iqr_outliers": 17,
+        "stddev_outliers": 22,
+        "outliers": "22;17",
+        "ld15iqr": 0.004864135000389069,
+        "hd15iqr": 0.005920135998167098,
+        "ops": 185.55772632480134,
+        "total": 0.7922063010337297,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-10000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-10000]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 10000
+      },
+      "param": "cpu-parallel-10000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.014344871990033425,
+        "max": 0.018350030994042754,
+        "mean": 0.015482226793618135,
+        "stddev": 0.0011242937805976386,
+        "rounds": 58,
+        "median": 0.015050748996145558,
+        "iqr": 0.001431675991625525,
+        "q1": 0.01467892900109291,
+        "q3": 0.016110604992718436,
+        "iqr_outliers": 2,
+        "stddev_outliers": 11,
+        "outliers": "11;2",
+        "ld15iqr": 0.014344871990033425,
+        "hd15iqr": 0.01826805000018794,
+        "ops": 64.5901919233095,
+        "total": 0.8979691540298518,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-31622]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-31622]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 31622
+      },
+      "param": "cpu-parallel-31622",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.040180248994147405,
+        "max": 0.05163722299039364,
+        "mean": 0.04289198528775679,
+        "stddev": 0.0031649917132922493,
+        "rounds": 21,
+        "median": 0.04152488900581375,
+        "iqr": 0.002441354747134028,
+        "q1": 0.04107215250405716,
+        "q3": 0.043513507251191186,
+        "iqr_outliers": 3,
+        "stddev_outliers": 3,
+        "outliers": "3;3",
+        "ld15iqr": 0.040180248994147405,
+        "hd15iqr": 0.04876860199146904,
+        "ops": 23.31437897525911,
+        "total": 0.9007316910428926,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-100000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-100000]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 100000
+      },
+      "param": "cpu-parallel-100000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.14871835500525776,
+        "max": 0.16018856200389564,
+        "mean": 0.15196209816834502,
+        "stddev": 0.004485295401590702,
+        "rounds": 6,
+        "median": 0.15004983450489817,
+        "iqr": 0.005101219008793123,
+        "q1": 0.1488323919911636,
+        "q3": 0.15393361099995673,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.14871835500525776,
+        "hd15iqr": 0.16018856200389564,
+        "ops": 6.5805882654514996,
+        "total": 0.9117725890100701,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-parallel-316227]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-parallel-316227]",
+      "params": {
+        "backend": "cpu-parallel",
+        "n": 316227
+      },
+      "param": "cpu-parallel-316227",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.45470694699906744,
+        "max": 0.46212191399536096,
+        "mean": 0.45817346739931963,
+        "stddev": 0.002640144979663871,
+        "rounds": 5,
+        "median": 0.45809548599936534,
+        "iqr": 0.002312164240720449,
+        "q1": 0.456926146754995,
+        "q3": 0.45923831099571544,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.45470694699906744,
+        "hd15iqr": 0.46212191399536096,
+        "ops": 2.182579462045656,
+        "total": 2.290867336996598,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-10]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-10]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 10
+      },
+      "param": "cpu-implicitmt-10",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0007200959953479469,
+        "max": 0.001797903998522088,
+        "mean": 0.0008133133315610716,
+        "stddev": 0.00011703830866325536,
+        "rounds": 1070,
+        "median": 0.0007792219912516885,
+        "iqr": 7.482500222977251e-05,
+        "q1": 0.000754313005018048,
+        "q3": 0.0008291380072478205,
+        "iqr_outliers": 102,
+        "stddev_outliers": 109,
+        "outliers": "109;102",
+        "ld15iqr": 0.0007200959953479469,
+        "hd15iqr": 0.0009425540047232062,
+        "ops": 1229.538433952143,
+        "total": 0.8702452647703467,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-31]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-31]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 31
+      },
+      "param": "cpu-implicitmt-31",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0008245380013249815,
+        "max": 0.001914356995257549,
+        "mean": 0.0009253558771507371,
+        "stddev": 0.00012110792391076515,
+        "rounds": 1050,
+        "median": 0.0008875455023371615,
+        "iqr": 7.933400047477335e-05,
+        "q1": 0.000862483007949777,
+        "q3": 0.0009418170084245503,
+        "iqr_outliers": 92,
+        "stddev_outliers": 107,
+        "outliers": "107;92",
+        "ld15iqr": 0.0008245380013249815,
+        "hd15iqr": 0.0010611149918986484,
+        "ops": 1080.6653144940296,
+        "total": 0.971623671008274,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-100]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-100]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 100
+      },
+      "param": "cpu-implicitmt-100",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0007356760033871979,
+        "max": 0.0020696200081147254,
+        "mean": 0.0008372390935366984,
+        "stddev": 0.00013132055339564906,
+        "rounds": 1059,
+        "median": 0.0007916689937701449,
+        "iqr": 7.000749610597268e-05,
+        "q1": 0.000777236509748036,
+        "q3": 0.0008472440058540087,
+        "iqr_outliers": 114,
+        "stddev_outliers": 103,
+        "outliers": "103;114",
+        "ld15iqr": 0.0007356760033871979,
+        "hd15iqr": 0.000952778005739674,
+        "ops": 1194.4019429094747,
+        "total": 0.8866362000553636,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-316]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-316]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 316
+      },
+      "param": "cpu-implicitmt-316",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.0010497159964870661,
+        "max": 0.002325473993550986,
+        "mean": 0.0011809460886370378,
+        "stddev": 0.00014962243321875958,
+        "rounds": 824,
+        "median": 0.0011355685055605136,
+        "iqr": 0.00010644949361449108,
+        "q1": 0.0011011159949703142,
+        "q3": 0.0012075654885848053,
+        "iqr_outliers": 61,
+        "stddev_outliers": 79,
+        "outliers": "79;61",
+        "ld15iqr": 0.0010497159964870661,
+        "hd15iqr": 0.0013689659972442314,
+        "ops": 846.7787053294934,
+        "total": 0.9730995770369191,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-1000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-1000]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 1000
+      },
+      "param": "cpu-implicitmt-1000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.001790890994016081,
+        "max": 0.004143363999901339,
+        "mean": 0.0020498482750351188,
+        "stddev": 0.0002869803341444723,
+        "rounds": 502,
+        "median": 0.001965461007785052,
+        "iqr": 0.00019754499953705817,
+        "q1": 0.001890444997115992,
+        "q3": 0.00208798999665305,
+        "iqr_outliers": 43,
+        "stddev_outliers": 51,
+        "outliers": "51;43",
+        "ld15iqr": 0.001790890994016081,
+        "hd15iqr": 0.002386910011409782,
+        "ops": 487.840984222536,
+        "total": 1.0290238340676297,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-3162]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-3162]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 3162
+      },
+      "param": "cpu-implicitmt-3162",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.004783964002854191,
+        "max": 0.007459753003786318,
+        "mean": 0.0053213926825619855,
+        "stddev": 0.0004159361645062317,
+        "rounds": 164,
+        "median": 0.005223456500971224,
+        "iqr": 0.00032539849780732766,
+        "q1": 0.005080420502054039,
+        "q3": 0.005405818999861367,
+        "iqr_outliers": 14,
+        "stddev_outliers": 26,
+        "outliers": "26;14",
+        "ld15iqr": 0.004783964002854191,
+        "hd15iqr": 0.005913358996622264,
+        "ops": 187.92073046534685,
+        "total": 0.8727083999401657,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-10000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-10000]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 10000
+      },
+      "param": "cpu-implicitmt-10000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.014872005995130166,
+        "max": 0.020700373002910055,
+        "mean": 0.017060837692009622,
+        "stddev": 0.0012039184978595925,
+        "rounds": 55,
+        "median": 0.017030836010235362,
+        "iqr": 0.0011959252515225671,
+        "q1": 0.016383821250201436,
+        "q3": 0.017579746501724003,
+        "iqr_outliers": 3,
+        "stddev_outliers": 15,
+        "outliers": "15;3",
+        "ld15iqr": 0.014872005995130166,
+        "hd15iqr": 0.019847458999720402,
+        "ops": 58.613769033647515,
+        "total": 0.9383460730605293,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-31622]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-31622]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 31622
+      },
+      "param": "cpu-implicitmt-31622",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.045840309001505375,
+        "max": 0.05520169799274299,
+        "mean": 0.04762188742001614,
+        "stddev": 0.0021407254240015878,
+        "rounds": 19,
+        "median": 0.047332203001133166,
+        "iqr": 0.0016499667508469429,
+        "q1": 0.046292393999465276,
+        "q3": 0.04794236075031222,
+        "iqr_outliers": 1,
+        "stddev_outliers": 2,
+        "outliers": "2;1",
+        "ld15iqr": 0.045840309001505375,
+        "hd15iqr": 0.05520169799274299,
+        "ops": 20.99874772245348,
+        "total": 0.9048158609803068,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-100000]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-100000]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 100000
+      },
+      "param": "cpu-implicitmt-100000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.14228589199774433,
+        "max": 0.15501050600141753,
+        "mean": 0.14729090083468085,
+        "stddev": 0.004172174887266756,
+        "rounds": 6,
+        "median": 0.1466384650047985,
+        "iqr": 0.000986426995950751,
+        "q1": 0.14609282500168774,
+        "q3": 0.1470792519976385,
+        "iqr_outliers": 2,
+        "stddev_outliers": 2,
+        "outliers": "2;2",
+        "ld15iqr": 0.14609282500168774,
+        "hd15iqr": 0.15501050600141753,
+        "ops": 6.789285653988897,
+        "total": 0.8837454050080851,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[cpu-implicitmt-316227]",
+      "fullname": "bench/test_cost.py::test_RooFit[cpu-implicitmt-316227]",
+      "params": {
+        "backend": "cpu-implicitmt",
+        "n": 316227
+      },
+      "param": "cpu-implicitmt-316227",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.47016523098864127,
+        "max": 0.48012216700590216,
+        "mean": 0.47380304760008585,
+        "stddev": 0.0042034478505916205,
+        "rounds": 5,
+        "median": 0.4724877050030045,
+        "iqr": 0.006576268260687357,
+        "q1": 0.47033784124505473,
+        "q3": 0.4769141095057421,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.47016523098864127,
+        "hd15iqr": 0.48012216700590216,
+        "ops": 2.1105816120542378,
+        "total": 2.3690152380004292,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-10]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-10]",
+      "params": {
+        "backend": "codegen",
+        "n": 10
+      },
+      "param": "codegen-10",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.06683230800263118,
+        "max": 0.06993486700230278,
+        "mean": 0.06841488259669859,
+        "stddev": 0.0012513390334097122,
+        "rounds": 5,
+        "median": 0.06871401699027047,
+        "iqr": 0.001999333002459025,
+        "q1": 0.06731868824499543,
+        "q3": 0.06931802124745445,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.06683230800263118,
+        "hd15iqr": 0.06993486700230278,
+        "ops": 14.61670271211217,
+        "total": 0.34207441298349295,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-31]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-31]",
+      "params": {
+        "backend": "codegen",
+        "n": 31
+      },
+      "param": "codegen-31",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.06590226799016818,
+        "max": 0.07333107000158634,
+        "mean": 0.06887715066235008,
+        "stddev": 0.0020692905383103664,
+        "rounds": 12,
+        "median": 0.06835134499851847,
+        "iqr": 0.0022804895052104257,
+        "q1": 0.06750148299033754,
+        "q3": 0.06978197249554796,
+        "iqr_outliers": 1,
+        "stddev_outliers": 3,
+        "outliers": "3;1",
+        "ld15iqr": 0.06590226799016818,
+        "hd15iqr": 0.07333107000158634,
+        "ops": 14.518602909435163,
+        "total": 0.826525807948201,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-100]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-100]",
+      "params": {
+        "backend": "codegen",
+        "n": 100
+      },
+      "param": "codegen-100",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.07552436999685597,
+        "max": 0.14266879399656318,
+        "mean": 0.09213821891656455,
+        "stddev": 0.02006523749108669,
+        "rounds": 12,
+        "median": 0.0857936385073117,
+        "iqr": 0.013452628503728192,
+        "q1": 0.07952348499384243,
+        "q3": 0.09297611349757062,
+        "iqr_outliers": 2,
+        "stddev_outliers": 2,
+        "outliers": "2;2",
+        "ld15iqr": 0.07552436999685597,
+        "hd15iqr": 0.12208131900115404,
+        "ops": 10.85325950250402,
+        "total": 1.1056586269987747,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-316]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-316]",
+      "params": {
+        "backend": "codegen",
+        "n": 316
+      },
+      "param": "codegen-316",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.07084199499513488,
+        "max": 0.08963498999946751,
+        "mean": 0.07476126369035158,
+        "stddev": 0.004867411834158928,
+        "rounds": 13,
+        "median": 0.0732175820012344,
+        "iqr": 0.0028022569968015887,
+        "q1": 0.07226451049791649,
+        "q3": 0.07506676749471808,
+        "iqr_outliers": 1,
+        "stddev_outliers": 1,
+        "outliers": "1;1",
+        "ld15iqr": 0.07084199499513488,
+        "hd15iqr": 0.08963498999946751,
+        "ops": 13.375910874672071,
+        "total": 0.9718964279745705,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-1000]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-1000]",
+      "params": {
+        "backend": "codegen",
+        "n": 1000
+      },
+      "param": "codegen-1000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.07296148099703714,
+        "max": 0.0846795780089451,
+        "mean": 0.07856812483320634,
+        "stddev": 0.0038187833260300784,
+        "rounds": 12,
+        "median": 0.07784744999662507,
+        "iqr": 0.00633002749964362,
+        "q1": 0.07513087899860693,
+        "q3": 0.08146090649825055,
+        "iqr_outliers": 0,
+        "stddev_outliers": 5,
+        "outliers": "5;0",
+        "ld15iqr": 0.07296148099703714,
+        "hd15iqr": 0.0846795780089451,
+        "ops": 12.727807900760235,
+        "total": 0.942817497998476,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-3162]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-3162]",
+      "params": {
+        "backend": "codegen",
+        "n": 3162
+      },
+      "param": "codegen-3162",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.07991708199551795,
+        "max": 0.09413949798909016,
+        "mean": 0.08559422174706317,
+        "stddev": 0.003555874212433865,
+        "rounds": 12,
+        "median": 0.08569041099690367,
+        "iqr": 0.00419082601001719,
+        "q1": 0.08289551599591505,
+        "q3": 0.08708634200593224,
+        "iqr_outliers": 1,
+        "stddev_outliers": 2,
+        "outliers": "2;1",
+        "ld15iqr": 0.07991708199551795,
+        "hd15iqr": 0.09413949798909016,
+        "ops": 11.683031629811051,
+        "total": 1.0271306609647581,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-10000]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-10000]",
+      "params": {
+        "backend": "codegen",
+        "n": 10000
+      },
+      "param": "codegen-10000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.11125191500468645,
+        "max": 0.131547947996296,
+        "mean": 0.11652122374835017,
+        "stddev": 0.007206100756245227,
+        "rounds": 8,
+        "median": 0.11275007849326357,
+        "iqr": 0.008202141005313024,
+        "q1": 0.11186637199716642,
+        "q3": 0.12006851300247945,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.11125191500468645,
+        "hd15iqr": 0.131547947996296,
+        "ops": 8.582127511462556,
+        "total": 0.9321697899868013,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-31622]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-31622]",
+      "params": {
+        "backend": "codegen",
+        "n": 31622
+      },
+      "param": "codegen-31622",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.23037348099751398,
+        "max": 0.24697742798889522,
+        "mean": 0.24114297199703288,
+        "stddev": 0.006732287118619689,
+        "rounds": 5,
+        "median": 0.24329604199738242,
+        "iqr": 0.009211855507601285,
+        "q1": 0.2369634017450153,
+        "q3": 0.24617525725261657,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.23037348099751398,
+        "hd15iqr": 0.24697742798889522,
+        "ops": 4.1469174561401045,
+        "total": 1.2057148599851644,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-100000]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-100000]",
+      "params": {
+        "backend": "codegen",
+        "n": 100000
+      },
+      "param": "codegen-100000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.6001459550025174,
+        "max": 0.811777016002452,
+        "mean": 0.6747652078018291,
+        "stddev": 0.08091696200007821,
+        "rounds": 5,
+        "median": 0.6460077130032005,
+        "iqr": 0.07558948950463673,
+        "q1": 0.6321563847486686,
+        "q3": 0.7077458742533054,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.6001459550025174,
+        "hd15iqr": 0.811777016002452,
+        "ops": 1.4819969797460106,
+        "total": 3.3738260390091455,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen-316227]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen-316227]",
+      "params": {
+        "backend": "codegen",
+        "n": 316227
+      },
+      "param": "codegen-316227",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 1.8010034800099675,
+        "max": 2.0892695580114378,
+        "mean": 1.92036267920339,
+        "stddev": 0.1077377377820376,
+        "rounds": 5,
+        "median": 1.9017413690016838,
+        "iqr": 0.12847684175358154,
+        "q1": 1.850720329748583,
+        "q3": 1.9791971715021646,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 1.8010034800099675,
+        "hd15iqr": 2.0892695580114378,
+        "ops": 0.5207349688834937,
+        "total": 9.60181339601695,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-10]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-10]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 10
+      },
+      "param": "codegen_no_grad-10",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.010190108994720504,
+        "max": 0.025696373006212525,
+        "mean": 0.012253358521537966,
+        "stddev": 0.002824272706262127,
+        "rounds": 92,
+        "median": 0.011197070503840223,
+        "iqr": 0.001678156499110628,
+        "q1": 0.010761483994429,
+        "q3": 0.012439640493539628,
+        "iqr_outliers": 9,
+        "stddev_outliers": 9,
+        "outliers": "9;9",
+        "ld15iqr": 0.010190108994720504,
+        "hd15iqr": 0.01678557100240141,
+        "ops": 81.61027837733472,
+        "total": 1.127308983981493,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-31]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-31]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 31
+      },
+      "param": "codegen_no_grad-31",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.010589262994471937,
+        "max": 0.016498710989253595,
+        "mean": 0.011839018053887162,
+        "stddev": 0.0012027574405917138,
+        "rounds": 93,
+        "median": 0.011505026996019296,
+        "iqr": 0.0011304999970889185,
+        "q1": 0.01103748725290643,
+        "q3": 0.012167987249995349,
+        "iqr_outliers": 9,
+        "stddev_outliers": 11,
+        "outliers": "11;9",
+        "ld15iqr": 0.010589262994471937,
+        "hd15iqr": 0.013878323006792925,
+        "ops": 84.46646465512106,
+        "total": 1.101028679011506,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-100]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-100]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 100
+      },
+      "param": "codegen_no_grad-100",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.010526666999794543,
+        "max": 0.015157608999288641,
+        "mean": 0.011656077519198593,
+        "stddev": 0.000787832060219564,
+        "rounds": 81,
+        "median": 0.011498309002490714,
+        "iqr": 0.0006766655060346238,
+        "q1": 0.011210065244085854,
+        "q3": 0.011886730750120478,
+        "iqr_outliers": 6,
+        "stddev_outliers": 13,
+        "outliers": "13;6",
+        "ld15iqr": 0.010526666999794543,
+        "hd15iqr": 0.013068179003312252,
+        "ops": 85.79215420907346,
+        "total": 0.944142279055086,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-316]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-316]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 316
+      },
+      "param": "codegen_no_grad-316",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.01137653698970098,
+        "max": 0.013352230002055876,
+        "mean": 0.0121299539154484,
+        "stddev": 0.0004041635551083039,
+        "rounds": 71,
+        "median": 0.012051107987645082,
+        "iqr": 0.0004939007631037384,
+        "q1": 0.011813542991149006,
+        "q3": 0.012307443754252745,
+        "iqr_outliers": 3,
+        "stddev_outliers": 18,
+        "outliers": "18;3",
+        "ld15iqr": 0.01137653698970098,
+        "hd15iqr": 0.013094114998239093,
+        "ops": 82.44054404249842,
+        "total": 0.8612267279968364,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-1000]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-1000]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 1000
+      },
+      "param": "codegen_no_grad-1000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.013053673988906667,
+        "max": 0.02356622899242211,
+        "mean": 0.014778493820826884,
+        "stddev": 0.0022501301992051,
+        "rounds": 67,
+        "median": 0.01409292800235562,
+        "iqr": 0.001543123013107106,
+        "q1": 0.013505486745998496,
+        "q3": 0.015048609759105602,
+        "iqr_outliers": 6,
+        "stddev_outliers": 7,
+        "outliers": "7;6",
+        "ld15iqr": 0.013053673988906667,
+        "hd15iqr": 0.018043802003376186,
+        "ops": 67.66589424632232,
+        "total": 0.9901590859954013,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-3162]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-3162]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 3162
+      },
+      "param": "codegen_no_grad-3162",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.019105512998066843,
+        "max": 0.02910914400126785,
+        "mean": 0.02083919196156785,
+        "stddev": 0.0023238479786721277,
+        "rounds": 25,
+        "median": 0.020141758999670856,
+        "iqr": 0.0008154914939950686,
+        "q1": 0.01981114775480819,
+        "q3": 0.020626639248803258,
+        "iqr_outliers": 3,
+        "stddev_outliers": 2,
+        "outliers": "2;3",
+        "ld15iqr": 0.019105512998066843,
+        "hd15iqr": 0.022097530993050896,
+        "ops": 47.98650551538777,
+        "total": 0.5209797990391962,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-10000]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-10000]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 10000
+      },
+      "param": "codegen_no_grad-10000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.03955670598952565,
+        "max": 0.04542348100221716,
+        "mean": 0.04166008686099138,
+        "stddev": 0.0016294170234124933,
+        "rounds": 22,
+        "median": 0.04113661999144824,
+        "iqr": 0.002047046000370756,
+        "q1": 0.040531354999984615,
+        "q3": 0.04257840100035537,
+        "iqr_outliers": 0,
+        "stddev_outliers": 7,
+        "outliers": "7;0",
+        "ld15iqr": 0.03955670598952565,
+        "hd15iqr": 0.04542348100221716,
+        "ops": 24.003790566657575,
+        "total": 0.9165219109418103,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-31622]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-31622]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 31622
+      },
+      "param": "codegen_no_grad-31622",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.09108170800027438,
+        "max": 0.10447667400876526,
+        "mean": 0.09457751549925889,
+        "stddev": 0.003919609694759334,
+        "rounds": 10,
+        "median": 0.09392885849956656,
+        "iqr": 0.003891891989042051,
+        "q1": 0.09179762600979302,
+        "q3": 0.09568951799883507,
+        "iqr_outliers": 1,
+        "stddev_outliers": 1,
+        "outliers": "1;1",
+        "ld15iqr": 0.09108170800027438,
+        "hd15iqr": 0.10447667400876526,
+        "ops": 10.573337592145103,
+        "total": 0.9457751549925888,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-100000]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-100000]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 100000
+      },
+      "param": "codegen_no_grad-100000",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.3220408360066358,
+        "max": 0.34582003600371536,
+        "mean": 0.33433468620060014,
+        "stddev": 0.010814202779697189,
+        "rounds": 5,
+        "median": 0.33366848999867216,
+        "iqr": 0.020301168740843423,
+        "q1": 0.32463605050361366,
+        "q3": 0.3449372192444571,
+        "iqr_outliers": 0,
+        "stddev_outliers": 2,
+        "outliers": "2;0",
+        "ld15iqr": 0.3220408360066358,
+        "hd15iqr": 0.34582003600371536,
+        "ops": 2.991014816213242,
+        "total": 1.6716734310030006,
+        "iterations": 1
+      }
+    },
+    {
+      "group": null,
+      "name": "test_RooFit[codegen_no_grad-316227]",
+      "fullname": "bench/test_cost.py::test_RooFit[codegen_no_grad-316227]",
+      "params": {
+        "backend": "codegen_no_grad",
+        "n": 316227
+      },
+      "param": "codegen_no_grad-316227",
+      "extra_info": {},
+      "options": {
+        "disable_gc": false,
+        "timer": "perf_counter",
+        "min_rounds": 5,
+        "max_time": 1.0,
+        "min_time": 5e-06,
+        "warmup": false
+      },
+      "stats": {
+        "min": 0.8641546050057514,
+        "max": 0.9343273810081882,
+        "mean": 0.8891137668018928,
+        "stddev": 0.027782482951162507,
+        "rounds": 5,
+        "median": 0.883118365003611,
+        "iqr": 0.03537458126083948,
+        "q1": 0.8686111387432902,
+        "q3": 0.9039857200041297,
+        "iqr_outliers": 0,
+        "stddev_outliers": 1,
+        "outliers": "1;0",
+        "ld15iqr": 0.8641546050057514,
+        "hd15iqr": 0.9343273810081882,
+        "ops": 1.1247154608762393,
+        "total": 4.445568834009464,
+        "iterations": 1
+      }
+    }
+  ],
+  "datetime": "2023-12-21T10:21:33.110016",
+  "version": "4.0.0"
+}

@@ -7,7 +7,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 N = [int(x) for x in np.geomspace(10, 1e6, 11)]
-N = N[:-1]
+# N = N[:-5]
 
 
 def make_data(size, seed=1):
@@ -219,11 +219,19 @@ try:
     if R.__version__ >= "6.30":
 
         @pytest.mark.parametrize("n", N)
-        @pytest.mark.parametrize("NumCPU", [0, nb.get_num_threads()])
         @pytest.mark.parametrize(
-            "EvalBackend", ["legacy", "cpu", "codegen", "codegen_no_grad"]
+            "backend",
+            [
+                "legacy",
+                "legacy-parallel",
+                "cpu",
+                "cpu-parallel",
+                "cpu-implicitmt",
+                "codegen",
+                "codegen_no_grad",
+            ],
         )
-        def test_RooFit(benchmark, n, NumCPU, EvalBackend):
+        def test_RooFit(benchmark, n, backend):
             x = R.RooRealVar("x", "x", 0, 1)
             z = R.RooRealVar("z", "z", 0.5, 0, 1)
             mu = R.RooRealVar("mu", "mu", 0.5, 0, 1)
@@ -235,9 +243,24 @@ try:
 
             data = pdf.generate(x, n)
 
-            args = [R.RooFit.PrintLevel(-1), R.RooFit.EvalBackend(EvalBackend)]
-            if NumCPU:
+            parallel = False
+            implicitmt = False
+            if backend.endswith("-parallel"):
+                backend = backend.split("-")[0]
+                parallel = True
+            if backend.endswith("-implicitmt"):
+                backend = backend.split("-")[0]
+                implicitmt = True
+            print(backend)
+            args = [R.RooFit.PrintLevel(-1), R.RooFit.EvalBackend(backend)]
+
+            NumCPU = nb.get_num_threads()
+            if parallel:
                 args.append(R.RooFit.NumCPU(NumCPU))
+            if implicitmt:
+                R.EnableImplicitMT(NumCPU)
+            else:
+                R.EnableImplicitMT(1)
 
             def run():
                 mu.setVal(0.5)
