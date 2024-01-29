@@ -200,8 +200,7 @@ def test_with_type_hints():
         d: Annotated[float, Ge(1)],
         e: Annotated[float, Le(2)],
         f: Annotated[float, Interval(gt=2, lt=3)],
-    ):
-        ...
+    ): ...
 
     r = describe(foo, annotations=True)
     assert r == {
@@ -215,8 +214,7 @@ def test_with_type_hints():
     }
 
     class Foo:
-        def __call__(self, x: NDArray, a: Annotated[float, Gt(0), Lt(1)], b: float):
-            ...
+        def __call__(self, x: NDArray, a: Annotated[float, Gt(0), Lt(1)], b: float): ...
 
     r = describe(Foo.__call__, annotations=True)
     assert r == {"self": None, "x": None, "a": (0, 1), "b": None}
@@ -235,8 +233,7 @@ def test_with_pydantic_types():
         c: float,
         d: Annotated[float, tp.annotated_types.Gt(1)],
         e: Annotated[float, tp.annotated_types.Interval(gt=0, lt=1)],
-    ):
-        ...
+    ): ...
 
     r = describe(foo, annotations=True)
     assert r == {
@@ -257,8 +254,7 @@ def test_with_annotated_types():
         a: float,
         b: Annotated[float, tp.Gt(1)],
         c: Annotated[float, tp.Interval(gt=0, lt=1)],
-    ):
-        ...
+    ): ...
 
     r = describe(foo, annotations=True)
     assert r == {

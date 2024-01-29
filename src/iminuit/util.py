@@ -3,6 +3,7 @@ Data classes and utilities used by :class:`iminuit.Minuit`.
 
 You can look up the interface of data classes that iminuit uses here.
 """
+
 from __future__ import annotations
 import inspect
 from collections import OrderedDict
@@ -1118,15 +1119,13 @@ def merge_signatures(
 
 
 @overload
-def describe(callable: Callable) -> List[str]:
-    ...  # pragma: no cover
+def describe(callable: Callable) -> List[str]: ...  # pragma: no cover
 
 
 @overload
 def describe(
     callable: Callable, annotations: bool
-) -> Dict[str, Optional[Tuple[float, float]]]:
-    ...  # pragma: no cover
+) -> Dict[str, Optional[Tuple[float, float]]]: ...  # pragma: no cover
 
 
 def describe(callable, *, annotations=False):
