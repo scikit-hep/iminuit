@@ -775,11 +775,21 @@ def test_BinnedNLL_with_pdf_3D(use_pdf):
         x, y, z = r
         return norm_cdf(x, mx, sx) * norm_cdf(y, my, sy) * norm_cdf(z, mz, sz)
 
-    c1 = BinnedNLL(n, xe, pdf, use_pdf=use_pdf)
-    c2 = BinnedNLL(n, xe, cdf)
+    if use_pdf == "numerical":
+        with pytest.raises(
+            ValueError,
+            match=(
+                'use_pdf="numerical" is not supported '
+                "for multidimensional histograms"
+            ),
+        ):
+            BinnedNLL(n, xe, pdf, use_pdf=use_pdf)
+    else:
+        c1 = BinnedNLL(n, xe, pdf, use_pdf=use_pdf)
+        c2 = BinnedNLL(n, xe, cdf)
 
-    par = [0, 1, 2, 3, 4, 5]
-    assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-3)
+        par = [0, 1, 2, 3, 4, 5]
+        assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-3)
 
 
 @pytest.mark.parametrize("verbose", (0, 1))
@@ -980,13 +990,18 @@ def test_ExtendedBinnedNLL_weighted_pulls():
     assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
 
 
-@pytest.mark.parametrize("loss", ["linear", "soft_l1", np.arctan])
+@pytest.mark.parametrize(
+    "loss,use_grad",
+    [
+        ("linear", False),
+        ("linear", True),
+        ("soft_l1", False),
+        ("soft_l1", True),
+        (np.arctan, False),
+    ],
+)
 @pytest.mark.parametrize("verbose", (0, 1))
-@pytest.mark.parametrize("use_grad", (False, True))
 def test_LeastSquares(loss, verbose, use_grad):
-    if use_grad and loss is np.arctan:
-        pytest.skip()
-
     rng = np.random.default_rng(1)
 
     x = np.linspace(0, 1, 1000)
