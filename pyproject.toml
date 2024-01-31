@@ -45,8 +45,8 @@ test = [
     "cython",
     # ipywidgets 8.0.5 and 8.0.6 are broken
     # see https://github.com/jupyter-widgets/ipywidgets/issues/3731
-    "ipywidgets<8.0.5",
-    "ipykernel",        # needed by ipywidgets 8.0.6
+    "ipywidgets",
+    "ipykernel",       # needed by ipywidgets >= 8.0.6
     "joblib",
     "jacobi",
     "matplotlib",
