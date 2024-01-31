@@ -80,6 +80,7 @@ The binned versions of the log-likelihood fits support weighted samples. For eac
 the histogram, the sum of weights and the sum of squared weights is needed then, see
 class documentation for details.
 """
+
 from __future__ import annotations
 
 from .util import (
@@ -194,14 +195,14 @@ class BohmZechTransform:
         self._obs = val * self._scale
 
     @overload
-    def __call__(self, val: ArrayLike) -> Tuple[NDArray, NDArray]:
-        ...  # pragma: no cover
+    def __call__(
+        self, val: ArrayLike
+    ) -> Tuple[NDArray, NDArray]: ...  # pragma: no cover
 
     @overload
     def __call__(
         self, val: ArrayLike, var: ArrayLike
-    ) -> Tuple[NDArray, NDArray, NDArray]:
-        ...  # pragma: no cover
+    ) -> Tuple[NDArray, NDArray, NDArray]: ...  # pragma: no cover
 
     def __call__(self, val, var=None):
         """
@@ -657,16 +658,13 @@ class Cost(abc.ABC):
         return self._has_grad()
 
     @abc.abstractmethod
-    def _value(self, args: Sequence[float]) -> float:
-        ...  # pragma: no cover
+    def _value(self, args: Sequence[float]) -> float: ...  # pragma: no cover
 
     @abc.abstractmethod
-    def _grad(self, args: Sequence[float]) -> NDArray:
-        ...  # pragma: no cover
+    def _grad(self, args: Sequence[float]) -> NDArray: ...  # pragma: no cover
 
     @abc.abstractmethod
-    def _has_grad(self) -> bool:
-        ...  # pragma: no cover
+    def _has_grad(self) -> bool: ...  # pragma: no cover
 
 
 class Constant(Cost):
@@ -920,8 +918,7 @@ class MaskedCostWithPulls(MaskedCost):
         return np.prod(self._masked.shape[: self._ndim])
 
     @abc.abstractmethod
-    def _pulls(self, args: Sequence[float]) -> NDArray:
-        ...  # pragma: no cover
+    def _pulls(self, args: Sequence[float]) -> NDArray: ...  # pragma: no cover
 
 
 class UnbinnedCost(MaskedCost):
@@ -1054,8 +1051,9 @@ class UnbinnedCost(MaskedCost):
         return np.linalg.inv(self.fisher_information(*args))
 
     @abc.abstractmethod
-    def _pointwise_score(self, args: Sequence[float]) -> NDArray:
-        ...  # pragma: no cover
+    def _pointwise_score(
+        self, args: Sequence[float]
+    ) -> NDArray: ...  # pragma: no cover
 
     def _has_grad(self) -> bool:
         return self._model_grad is not None
@@ -1402,8 +1400,9 @@ class BinnedCost(MaskedCostWithPulls):
         plt.stairs(mu, xe, fill=True, color="C0")
 
     @abc.abstractmethod
-    def _pred(self, args: Sequence[float]) -> Union[NDArray, Tuple[NDArray, NDArray]]:
-        ...  # pragma: no cover
+    def _pred(
+        self, args: Sequence[float]
+    ) -> Union[NDArray, Tuple[NDArray, NDArray]]: ...  # pragma: no cover
 
     def _n_err(self) -> Tuple[NDArray, NDArray]:
         d = self.data
@@ -1440,14 +1439,14 @@ class BinnedCost(MaskedCostWithPulls):
         self._set_bohm_zech(self._masked, self._bohm_zech_scale is not None)
 
     @overload
-    def _transformed(self, val: NDArray) -> Tuple[NDArray, NDArray]:
-        ...  # pragma: no cover
+    def _transformed(
+        self, val: NDArray
+    ) -> Tuple[NDArray, NDArray]: ...  # pragma: no cover
 
     @overload
     def _transformed(
         self, val: NDArray, var: NDArray
-    ) -> Tuple[NDArray, NDArray, NDArray]:
-        ...  # pragma: no cover
+    ) -> Tuple[NDArray, NDArray, NDArray]: ...  # pragma: no cover
 
     def _transformed(self, val, var=None):
         s = self._bohm_zech_scale
