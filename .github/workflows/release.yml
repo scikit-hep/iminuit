@@ -70,6 +70,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: wheel-${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}
           path: ./wheelhouse/*.whl
 
   sdist:
@@ -89,7 +90,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}
+          name: sdist
           path: dist/*.tar.gz
 
   upload:
@@ -99,7 +100,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: dist-*
+          pattern: "*"
           merge-multiple: true
           path: dist
 
