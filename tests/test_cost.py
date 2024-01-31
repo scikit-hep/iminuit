@@ -753,6 +753,9 @@ def test_BinnedNLL_pickle():
 
 @pytest.mark.parametrize("use_pdf", ["approximate", "numerical"])
 def test_BinnedNLL_with_pdf(use_pdf):
+    if use_pdf == "numerical":
+        pytest.importorskip("scipy")
+
     xe = np.array([0, 0.1, 0.2, 0.3])
     n = [1, 2, 3]
     c = BinnedNLL(n, xe, norm_pdf, use_pdf=use_pdf)
@@ -760,6 +763,11 @@ def test_BinnedNLL_with_pdf(use_pdf):
     par = [0.05, 1]
     ref = np.diff(norm_cdf(xe, *par)) * np.sum(n)
     assert_allclose(c.prediction(par), ref, rtol=1e-3)
+
+
+def test_BinnedNLL_use_pdf_bad_value():
+    with pytest.raises(ValueError):
+        BinnedNLL([1, 2], [1, 2, 3], norm_pdf, use_pdf="foo")
 
 
 @pytest.mark.parametrize("use_pdf", ["approximate", "numerical"])

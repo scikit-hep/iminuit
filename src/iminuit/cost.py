@@ -1501,8 +1501,14 @@ class BinnedCostWithModel(BinnedCost):
             self._pred_impl = self._pred_approximate
         elif use_pdf == "numerical":
             self._pred_impl = self._pred_numerical
-        else:
+        elif use_pdf == "":
             self._pred_impl = self._pred_cdf
+        else:
+            msg = (
+                f"use_pdf={use_pdf} is not understood, "
+                "allowed values are 'approximate' and 'numerical'"
+            )
+            raise ValueError(msg)
 
         super().__init__(_model_parameters(model), n, xe, verbose)
 
