@@ -20,6 +20,7 @@ Further information:
 * Code: https://github.com/scikit-hep/iminuit
 * Docs: https://iminuit.readthedocs.io
 """
+
 from iminuit.minuit import Minuit
 from iminuit.minimize import minimize
 from iminuit.util import describe

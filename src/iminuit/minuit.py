@@ -1,4 +1,5 @@
 """Minuit class."""
+
 from __future__ import annotations
 
 import warnings
@@ -1242,9 +1243,11 @@ class Minuit:
                 fcn,
                 start,
                 method=method,
-                bounds=Bounds(lower_bound, upper_bound, keep_feasible=True)
-                if has_limits
-                else None,
+                bounds=(
+                    Bounds(lower_bound, upper_bound, keep_feasible=True)
+                    if has_limits
+                    else None
+                ),
                 jac=grad,
                 hess=hess,
                 hessp=hessp,
@@ -1793,10 +1796,14 @@ class Minuit:
 
         if text:
             plt.title(
-                (f"{pname} = {v:.3g}")
-                if vmin is None
-                else (
-                    "{} = {:.3g} - {:.3g} + {:.3g}".format(pname, v, v - vmin, vmax - v)
+                (
+                    (f"{pname} = {v:.3g}")
+                    if vmin is None
+                    else (
+                        "{} = {:.3g} - {:.3g} + {:.3g}".format(
+                            pname, v, v - vmin, vmax - v
+                        )
+                    )
                 ),
                 fontsize="large",
             )
