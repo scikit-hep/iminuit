@@ -5,6 +5,17 @@
 Changelog
 =========
 
+2.25.0 (January 31, 2024)
+-------------------------
+- Approximate cdf from pdf (`#950 <https://github.com/scikit-hep/iminuit/pull/950>`_)
+- Fix test that requires scipy and raise error on invalid value for use_pdf (`#962 <https://github.com/scikit-hep/iminuit/pull/962>`_)
+- Fix docstring parsing (`#953 <https://github.com/scikit-hep/iminuit/pull/953>`_)
+- Fix use of removed array rules in test (`#952 <https://github.com/scikit-hep/iminuit/pull/952>`_)
+- Benchmark update to root 6.30 (`#951 <https://github.com/scikit-hep/iminuit/pull/951>`_)
+- Fix: include debug info on failures (`#946 <https://github.com/scikit-hep/iminuit/pull/946>`_)
+- Warn on errordef override (`#937 <https://github.com/scikit-hep/iminuit/pull/937>`_)
+- Cost gradient support (`#936 <https://github.com/scikit-hep/iminuit/pull/936>`_)
+
 2.24.0 (August 15, 2023)
 ------------------------
 - Iteration limit in smart sampling to fix behavior for step functions (`#928 <https://github.com/scikit-hep/iminuit/pull/928>`_)
