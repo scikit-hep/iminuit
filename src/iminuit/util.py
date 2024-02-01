@@ -1035,7 +1035,7 @@ def make_with_signature(
     Parameters
     ----------
     callable:
-        Original callable whose signature shall be changed.
+        Original callable with positional arguments, whose names shall be changed.
     *varnames: sequence of str
         Replace the first N argument names with these.
     **replacements: mapping of str to str, optional
@@ -1043,7 +1043,7 @@ def make_with_signature(
 
     Returns
     -------
-    callable with new argument names.
+    Callable with positional-only arguments.
     """
     pars = describe(callable, annotations=True)
     if pars:
@@ -1061,7 +1061,7 @@ def make_with_signature(
         def __init__(self, parameters):
             self._parameters = parameters
 
-        def __call__(self, *args: object) -> object:
+        def __call__(self, *args: Any) -> Any:
             return callable(*args)
 
     return Caller(pars)
