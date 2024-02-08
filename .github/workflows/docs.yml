@@ -2,8 +2,13 @@ name: Docs
 
 on:
   pull_request:
-    paths-ignore:
-      - '.ci/**'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 env:
   CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -11,18 +16,41 @@ env:
   JUPYTER_PLATFORM_DIRS: 1
 
 jobs:
-  docs:
+  build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: true
+        fetch-depth: 0  # needed to get correct ROOT version
+    # must come after checkout
     - uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.9"
+        python-version: "3.11"
     - run: sudo apt-get install pandoc
     - run: make doc
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: './build/html'
+
+  deploy:
+    if: github.ref_type == 'tag' || github.ref_name == 'main'
+    needs: build
+    # Set permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/configure-pages@v4
+    - uses: actions/deploy-pages@v4
