@@ -1830,7 +1830,7 @@ class Template(BinnedCost):
 
         Returns
         -------
-        y, yerr : NDArray, np.array
+        y, yerr : NDArray, NDArray
             Template prediction and its standard deviation, based on the statistical
             uncertainty of the template only.
         """
@@ -2104,7 +2104,12 @@ class LeastSquares(MaskedCostWithPulls):
     @property
     def model(self):
         """Get model of the form y = f(x, par0, [par1, ...])."""
-        return self._model
+        if len(self._parameters) == 1:
+            return lambda x, *args: (
+                self._model(x, args) if len(args) > 1 else self._model(x, *args)
+            )
+        else:
+            return self._model
 
     @property
     def loss(self):
@@ -2198,7 +2203,9 @@ class LeastSquares(MaskedCostWithPulls):
     def _ndata(self):
         return len(self._masked)
 
-    def visualize(self, args: ArrayLike, model_points: Union[int, Sequence[float]] = 0):
+    def visualize(
+        self, args: ArrayLike, model_points: Union[int, Sequence[float]] = 0
+    ) -> Tuple[Tuple[NDArray, NDArray, NDArray], Tuple[NDArray, NDArray]]:
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -2233,6 +2240,7 @@ class LeastSquares(MaskedCostWithPulls):
         else:
             xm, ym = _smart_sampling(lambda x: self.model(x, *args), x[0], x[-1])
         plt.plot(xm, ym)
+        return (x, y, ye), (xm, ym)
 
     def prediction(self, args: Sequence[float]) -> NDArray:
         """
