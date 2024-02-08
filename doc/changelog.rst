@@ -5,6 +5,12 @@
 Changelog
 =========
 
+2.25.1 (February 08, 2024)
+--------------------------
+- Fix LeastSquares.visualize for models that accept parameter array (`#968 <https://github.com/scikit-hep/iminuit/pull/968>`_)
+- Update benchmark to root-6.30 (`#967 <https://github.com/scikit-hep/iminuit/pull/967>`_)
+- Improve docs for make_with_signature (`#963 <https://github.com/scikit-hep/iminuit/pull/963>`_)
+
 2.25.0 (January 31, 2024)
 -------------------------
 - Approximate cdf from pdf (`#950 <https://github.com/scikit-hep/iminuit/pull/950>`_)
