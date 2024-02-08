@@ -533,7 +533,10 @@ class FMin:
         Note: The actual verdict is computed inside the Minuit2 C++ code, so we
         cannot guarantee that is_valid is exactly equivalent to these conditions.
         """
-        return self._src.is_valid  # type:ignore
+        valid = self._src.is_valid
+        if valid and self.edm < 0:
+            return False
+        return valid
 
     @property
     def has_valid_parameters(self) -> bool:
