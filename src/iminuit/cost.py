@@ -2104,7 +2104,12 @@ class LeastSquares(MaskedCostWithPulls):
     @property
     def model(self):
         """Get model of the form y = f(x, par0, [par1, ...])."""
-        return self._model
+        if len(self._parameters) == 1:
+            return lambda x, *args: (
+                self._model(x, args) if len(args) > 1 else self._model(x, *args)
+            )
+        else:
+            return self._model
 
     @property
     def loss(self):

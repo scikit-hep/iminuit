@@ -1139,13 +1139,14 @@ def test_LeastSquares_mask_2():
 
 def test_LeastSquares_properties():
     def model(x, a):
-        return a
+        return x + 2 * a
 
     c = LeastSquares(1, 2, 3, model)
     assert_equal(c.x, [1])
     assert_equal(c.y, [2])
     assert_equal(c.yerror, [3])
-    assert c.model is model
+    assert c.model(1, 1) == model(1, 1)
+    assert c.model(2, 3) == model(2, 3)
     with pytest.raises(AttributeError):
         c.model = model
     with pytest.raises(ValueError):
@@ -1170,6 +1171,17 @@ def test_LeastSquares_visualize():
     c.visualize((1, 2), model_points=10)
     # manual spacing
     c.visualize((1, 2), model_points=np.linspace(1, 100))
+
+
+def test_LeastSquares_visualize_par_array():
+    pytest.importorskip("matplotlib")
+
+    def line(x, par):
+        return par[0] + par[1] * x
+
+    c = LeastSquares([1, 2], [2, 3], 0.1, line)
+
+    c.visualize((1, 2))
 
 
 def test_LeastSquares_visualize_2D():
