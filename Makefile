@@ -35,7 +35,7 @@ build/docdep: build/done
 
 build/html/done: build/done build/docdep doc/conf.py $(wildcard src/iminuit/*.py doc/*.rst doc/_static/* doc/plots/* doc/notebooks/*.ipynb doc/notebooks/roofit/*.ipynb *.rst)
 	mkdir -p build/html
-	sphinx-build -v -W -b html -d build/doctrees doc build/html
+	PYDEVD_DISABLE_FILE_VALIDATION=1 sphinx-build -v -W -b html -d build/doctrees doc build/html
 	touch build/html/done
 
 tutorial: build/done build/tutorial_done
