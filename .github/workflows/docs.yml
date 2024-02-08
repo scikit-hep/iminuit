@@ -31,9 +31,9 @@ jobs:
         python-version: "3.11"
     - run: sudo apt-get install pandoc
     - run: make doc
-    - uses: actions/upload-pages-artifact@v1
+    - uses: actions/upload-pages-artifact@v3
       with:
-        path: 'doc/_build/html'
+        path: './build/html'
 
   deploy:
     if: github.ref_type == 'tag' || github.ref_name == 'main'
@@ -51,5 +51,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/configure-pages@v2
-    - uses: actions/deploy-pages@v1
+    - uses: actions/configure-pages@v4
+    - uses: actions/deploy-pages@v4
