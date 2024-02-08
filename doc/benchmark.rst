@@ -33,7 +33,8 @@ For the following benchmarks, we consider a common model in high-energy physics 
 
     # handwritten negative log-likelihood
     def nll(z, mu, sigma, slope):
-        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
+        ll = np.log(model(x, z, mu, sigma, slope))
+        return -np.sum(ll)
 
 It is also possible to write down a ``log_model`` computed from the ``logpdf`` functions which are available for the two component distributions, but the code is more complex and the gain is small, so it is not explicitly shown here.
 
@@ -51,22 +52,31 @@ Instead of using a handwritten negative log-likelihood, it is convenient to use 
     import numpy as np
     from numba_stats import norm, truncexpon
 
-    # JIT'ed handwritten negative log-likelihood
+    # mark function for inlining to improve performance
+    @nb.njit(inline="always")
+    def model(x, z, mu, sigma, slope):
+        b = truncexpon.pdf(x, 0, 1, 0, slope)
+        s = norm.pdf(x, mu, sigma)
+        return (1 - z) * b + z * s
+
+    # Just-in-time-compiled negative log-likelihood
     @nb.njit
     def nll(z, mu, sigma, slope):
-        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
+        ll = np.log(model(x, z, mu, sigma, slope))
+        return -np.sum(ll)
 
     # as before, but with a cfunc interface
     @nb.cfunc(nb.double(nb.uintc, nb.types.CPointer(nb.double)))
-    def cost(n, par):
+    def nll2(n, par):
         z, mu, sigma, slope = nb.carray(par, (n,))
-        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
+        ll = np.log(model(x, z, mu, sigma, slope))
+        return -np.sum(ll)
 
-The three ways of calling the function are compared in the following plot. The call overhead is only relevant for very small samples, which rarely occur in practice and if they do, speed is nothing to worry about. Thus, it is safe to use :class:`iminuit.cost.UnbinnedNLL`.
+The three ways of calling the function are compared in the following plot. The call overhead is only relevant for small samples, where speed is usally no concern. For most users, :class:`iminuit.cost.UnbinnedNLL` incurs a neglible performance loss compared to the best handwritten solution.
 
 .. image:: _static/overhead.svg
 
-A very powerful feature of `numba`_ is auto-parallelization. The distributions in `numba_stats`_ are written so that they benefit from auto-parallelization. To enable this, we only have to change the decorator.
+A very powerful feature of `numba`_ is auto-parallelization. The distributions in `numba_stats`_ are written so that they benefit optimally from auto-parallelization. To enable this, we only have to change the decorator.
 
 .. code-block:: python
 
@@ -74,29 +84,33 @@ A very powerful feature of `numba`_ is auto-parallelization. The distributions i
     import numpy as np
     from numba_stats import norm, truncexpon
 
-    # JIT'ed handwritten negative log-likelihood, parallelized
     @nb.njit(parallel=True, fastmath=True)
     def nll(z, mu, sigma, slope):
-        return -np.sum(np.log(model(x, z, mu, sigma, slope)))
+        ll = np.log(model(x, z, mu, sigma, slope))
+        return -np.sum(ll)
 
-Always combine ``parallel=True`` with ``fastmath=True``, because they synergize. Auto-parallelization speeds up the calculation of the cost function over large datasets considerably, but slows it down over small datasets. Only enable it when you profit from it.
+The combination ``parallel=True`` and ``fastmath=True`` provides the best performance. Auto-parallelization speeds up the calculation of the cost function over large datasets considerably, but slows it down over small datasets. Only enable it when you profit from it.
 
-The following plot shows the impact of auto-parallelization. We compare the performance of a fit of our `numba`_ JIT'ed cost function with iminuit to an equivalent fit with the `RooFit`_ framework (from ROOT-v6.28/00 installed with ``conda``). The latter can be sped up by enabling ``BatchMode``, which is roughly comparable to ``fastmath=True``, and ``NumCPU`` which roughly corresponds to ``parallel=True``.
+The following plot compares the performance of iminuit with `numba`_ JIT'ed NLL functions to an equivalent fit with the `RooFit`_ framework (from ROOT-v6.30/02 installed with ``conda``). RooFit can compute with several backends. The fastest is the ``CPU`` backend, which is comparable to the numba-compiled NLL function. The other backends run slower in this example. RooFit also has a parallel computation mode, but the auto-parallelized NLL function outperforms it by a large margin.
+
+When the dataset is small (< 1000), RooFit is slightly faster due to the Python call overhead, which we previously discussed.
 
 .. image:: _static/roofit_vs_iminuit+numba.svg
 
-``iminuit`` in combination with a `numba`_ JIT'ed cost function outperforms `RooFit`_ by a large margin, except when the dataset is so small that performance is not relevant anyway. The gap is particularly large when parallel computation is enabled.
-
 Performance hints
 ^^^^^^^^^^^^^^^^^
-- Use the distributions from `numba_stats`_ instead of the `scipy`_ equivalents to get a large performance gain. Use auto-parallelization to speed up the computation of the cost function for large datasets.
-- ``iminuit`` with a `numba_stats`_ distributions and a `numba`_ compiled cost function is much faster than `RooFit`_. The gain is especially large when parallel computation is enabled.
-- :class:`iminuit.cost.UnbinnedNLL` is as fast as the fasted possible function you can write by hand for large datasets. With extra manual work, you can gain a bit for small datasets, but then the extra gain in performance hardly matters.
+- Use the distributions from `numba_stats`_ instead of the `scipy`_ equivalents to get large performance gains.
+- Use auto-parallelization to speed up the computation of the cost function for large datasets. Always combine the options `parallel=True` and `fastmath=True`, which allows the compiler to run the parallel computation out-of-order (among other things).
+- When the computation is split into several functions, use the option `inline="always"` for the inner `numba.njit` functions. Without inlining, the compiler will miss important global optimization opportunities.
+- If you don't need to parallelize the computation, use :class:`iminuit.cost.UnbinnedNLL`. It is likely as good as the fastest function you can write by hand.
+- Dramatic (100x) performance gains also be achieved by replacing unbinned fits with binned fits, see `binned vs. unbinned fits`_.
+
+.. _binned vs. unbinned fits: notebooks/binned_vs_unbinned.ipynb
 
 Minuit2 vs other optimisers
 ---------------------------
 
-We compare the performance of Minuit2 (the code that is wrapped by iminuit) with other minimizers available in Python. We compare Minuit with the strategy settings 0 to 2 with several algorithms implemented in the `nlopt`_ library and `scipy.optimize`_. .
+We compare the performance of Minuit2 (the code that is wrapped by iminuit) with other minimizers available in Python. We compare Minuit with the strategy settings 0 to 2 with several algorithms implemented in the `nlopt`_ library and `scipy.optimize`_.
 
 All algorithms minimize a dummy cost function
 
