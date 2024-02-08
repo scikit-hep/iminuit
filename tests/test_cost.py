@@ -1163,14 +1163,23 @@ def test_LeastSquares_visualize():
     c = LeastSquares([1, 2], [2, 3], 0.1, line)
 
     # auto-sampling
-    c.visualize((1, 2))
+    (x, y, ye), (xm, ym) = c.visualize((1, 2))
+    assert_equal(x, (1, 2))
+    assert_equal(y, (2, 3))
+    assert_equal(ye, 0.1)
+    assert len(xm) < 10
     # linear spacing
-    c.visualize((1, 2), model_points=10)
+    (x, y, ye), (xm, ym) = c.visualize((1, 2), model_points=10)
+    assert len(xm) == 10
+    assert_allclose(xm[1:] - xm[:-1], xm[1] - xm[0])
     # trigger use of log-spacing
     c = LeastSquares([1, 10, 100], [2, 3, 4], 0.1, line)
-    c.visualize((1, 2), model_points=10)
+    (x, y, ye), (xm, ym) = c.visualize((1, 2), model_points=10)
+    assert len(xm) == 10
+    assert_allclose(xm[1:] / xm[:-1], xm[1] / xm[0])
     # manual spacing
-    c.visualize((1, 2), model_points=np.linspace(1, 100))
+    (x, y, ye), (xm, ym) = c.visualize((1, 2), model_points=np.linspace(1, 100))
+    assert_equal(xm, np.linspace(1, 100))
 
 
 def test_LeastSquares_visualize_par_array():
