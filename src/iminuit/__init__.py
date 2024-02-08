@@ -18,7 +18,7 @@ Basic usage example::
 Further information:
 
 * Code: https://github.com/scikit-hep/iminuit
-* Docs: https://iminuit.readthedocs.io
+* Docs: https://scikit-hep.org/iminuit
 """
 
 from iminuit.minuit import Minuit

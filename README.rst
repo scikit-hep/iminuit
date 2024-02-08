@@ -107,7 +107,7 @@ When ``iminuit`` is used with cost functions and pdfs that are JIT-compiled with
 
 .. image:: doc/_static/roofit_vs_iminuit+numba.svg
 
-More information about this benchmark is given `in the Benchmark section of the documentation <https://iminuit.readthedocs.io/en/stable/benchmark.html#cost-function-benchmark>`_.
+More information about this benchmark is given `in the Benchmark section of the documentation <https://scikit-hep.org/iminuit/benchmark.html#cost-function-benchmark>`_.
 
 Partner projects
 ----------------
@@ -123,8 +123,8 @@ Versions
 
 All interface changes are documented in the `changelog`_ with recommendations how to upgrade. To keep existing scripts running, pin your major iminuit version to <2, i.e. ``pip install 'iminuit<2'`` installs the 1.x series.
 
-.. _changelog: https://iminuit.readthedocs.io/en/stable/changelog.html
-.. _tutorials: https://iminuit.readthedocs.io/en/stable/tutorials.html
+.. _changelog: https://scikit-hep.org/iminuit/changelog.html
+.. _tutorials: https://scikit-hep.org/iminuit/tutorials.html
 .. _discussions: https://github.com/scikit-hep/iminuit/discussions
 .. _gitter: https://gitter.im/Scikit-HEP/iminuit
 .. _jacobi: https://github.com/hdembinski/jacobi

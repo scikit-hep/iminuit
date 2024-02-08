@@ -37,7 +37,7 @@ dependencies = ["numpy >= 1.21", "typing_extensions;python_version < '3.9'"]
 
 [project.urls]
 repository = "http://github.com/scikit-hep/iminuit"
-documentation = "https://iminuit.readthedocs.io"
+documentation = "https://scikit-hep.org/iminuit"
 
 [project.optional-dependencies]
 test = [

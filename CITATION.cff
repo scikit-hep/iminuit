@@ -63,7 +63,7 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.7695764
 repository-code: 'https://github.com/scikit-hep/iminuit'
-url: 'https://iminuit.readthedocs.io/en/stable/'
+url: 'https://scikit-hep.org/iminuit/'
 abstract: >-
   iminuit is a Jupyter-friendly Python interface for the
   Minuit2 C++ library maintained by CERN's ROOT team.
