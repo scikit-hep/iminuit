@@ -14,8 +14,8 @@
    :target: https://github.com/conda-forge/iminuit-feedstock
 .. image:: https://coveralls.io/repos/github/scikit-hep/iminuit/badge.svg?branch=develop
    :target: https://coveralls.io/github/scikit-hep/iminuit?branch=develop
-.. image:: https://readthedocs.org/projects/iminuit/badge/?version=latest
-   :target: https://iminuit.readthedocs.io/en/stable
+.. image:: https://github.com/scikit-hep/iminuit/actions/workflows/docs.yml/badge.svg?branch=main
+   :target: https://scikit-hep.org/iminuit
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3949207.svg
    :target: https://doi.org/10.5281/zenodo.3949207
 .. image:: https://img.shields.io/badge/ascl-2108.024-blue.svg?colorB=262255
