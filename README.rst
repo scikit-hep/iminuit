@@ -33,6 +33,7 @@ Minuit was designed to optimize statistical cost functions, for maximum-likeliho
 The iminuit package brings additional features:
 
 - Builtin cost functions for statistical fits to N-dimensional data
+
   - Unbinned and binned maximum-likelihood + extended versions
   - `Template fits with error propagation <https://doi.org/10.1140/epjc/s10052-022-11019-z>`_
   - Least-squares (optionally robust to outliers)
