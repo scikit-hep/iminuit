@@ -104,7 +104,7 @@ Interactive fitting
 High performance when combined with numba
 -----------------------------------------
 
-When ``iminuit`` is used with cost functions that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the speed is comparable to the latest `RooFit`_ versions (``iminuit`` used to be faster previously). `numba`_ with auto-parallelization is much faster than the parallel computation in `RooFit`_.
+When ``iminuit`` is used with cost functions that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the speed is comparable to `RooFit`_ with the fastest backend. `numba`_ with auto-parallelization is considerably faster than the parallel computation in `RooFit`_.
 
 .. image:: doc/_static/roofit_vs_iminuit+numba.svg
 
