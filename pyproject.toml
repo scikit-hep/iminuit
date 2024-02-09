@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "iminuit"
 description = "Jupyter-friendly Python frontend for MINUIT2 in C++"
-version = "2.25.1"
+version = "2.25.2"
 maintainers = [
     { name = "Hans Dembinski" },
     { email = "hans.dembinski@gmail.com" },

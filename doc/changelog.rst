@@ -5,6 +5,11 @@
 Changelog
 =========
 
+2.25.2 (February 09, 2024)
+--------------------------
+- Update to latest root (`#970 <https://github.com/scikit-hep/iminuit/pull/970>`_)
+- Move documentation to Github pages (`#969 <https://github.com/scikit-hep/iminuit/pull/969>`_)
+
 2.25.1 (February 08, 2024)
 --------------------------
 - Fix LeastSquares.visualize for models that accept parameter array (`#968 <https://github.com/scikit-hep/iminuit/pull/968>`_)
