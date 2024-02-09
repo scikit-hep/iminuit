@@ -15,4 +15,5 @@ for item in git_submodule.strip().split("\n"):
     assert len(parts) == 3, "module is not checked out"
 
     root_version = parts[2][1:-1]  # strip braces
+    print("ROOT", root_version)
     break
