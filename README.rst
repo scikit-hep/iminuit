@@ -26,15 +26,14 @@
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 
-*iminuit* is a Jupyter-friendly Python interface for the *Minuit2* C++ library maintained by CERN's ROOT team.
+``iminuit`` is a Jupyter-friendly Python interface for the ``Minuit2`` C++ library maintained by CERN's `ROOT team <https://root.cern.ch>`_.
 
-Minuit was designed to minimize statistical cost functions, for likelihood and least-squares fits of parametric models to data. It provides the best-fit parameters and error estimates from likelihood profile analysis.
+Minuit was designed to optimize statistical cost functions, for maximum-likelihood and least-squares fits. It provides the best-fit parameters and error estimates from likelihood profile analysis.
 
-The iminuit package comes with additional features:
+The iminuit package brings additional features:
 
-- Builtin cost functions for statistical fits
-
-  - Binned and unbinned maximum-likelihood
+- Builtin cost functions for statistical fits to N-dimensional data
+  - Unbinned and binned maximum-likelihood + extended versions
   - `Template fits with error propagation <https://doi.org/10.1140/epjc/s10052-022-11019-z>`_
   - Least-squares (optionally robust to outliers)
   - Gaussian penalty terms for parameters
@@ -43,11 +42,12 @@ The iminuit package comes with additional features:
 - Support for SciPy minimizers as alternatives to Minuit's MIGRAD algorithm (optional)
 - Support for Numba accelerated functions (optional)
 
-Dependencies
-------------
+Minimal dependencies
+--------------------
 
-*iminuit* is (and always will be) a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed.
+``iminuit`` is promised to remain a lean package which only depends on ``numpy``, but additional features are enabled if the following optional packages are installed.
 
+- ``numba``: Cost functions are partially JIT-compiled if ``numba`` is installed.
 - ``matplotlib``: Visualization of fitted model for builtin cost functions
 - ``ipywidgets``: Interactive fitting, see example below (also requires ``matplotlib``)
 - ``scipy``: Compute Minos intervals for arbitrary confidence levels
@@ -100,10 +100,10 @@ Interactive fitting
 .. image:: doc/_static/interactive_demo.gif
    :alt: Animated demo of an interactive fit in a Jupyter notebook
 
-Faster than RooFit
-------------------
+High performance when combined with numba
+-----------------------------------------
 
-When ``iminuit`` is used with cost functions and pdfs that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the fit is up to 10x faster compared to an equivalent fit in the `RooFit`_ framework. The gain is particularly large when `numba`_ with auto-parallelization is compared to parallel computation in `RooFit`_.
+When ``iminuit`` is used with cost functions that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the speed is comparable to the latest `RooFit`_ versions (``iminuit`` used to be faster previously). `numba`_ with auto-parallelization is much faster than the parallel computation in `RooFit`_.
 
 .. image:: doc/_static/roofit_vs_iminuit+numba.svg
 
