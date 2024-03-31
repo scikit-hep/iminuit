@@ -1277,7 +1277,7 @@ class Minuit:
             matrix = r.hess
             needs_invert = True
         # hess_inv is a function, need to convert to full matrix
-        if hasattr(matrix, "__call__"):
+        if callable(matrix):
             assert matrix is not None  # for mypy
             matrix = matrix(np.eye(self.nfit))
         accurate_covar = bool(hess) or bool(hessp)

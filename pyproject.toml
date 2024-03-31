@@ -94,23 +94,16 @@ filterwarnings = [
 ]
 
 [tool.ruff]
-select = [
-    "E",
-    "F", # flake8
+src = ["src"]
+lint.extend-select = [
     "D", # pydocstyle
 ]
-extend-ignore = [
+lint.ignore = [
     "D212", # multi-line-summary-first-line
 ]
-src = ["src"]
-unfixable = [
-    "F841", # Removes unused variables
-]
+lint.pydocstyle.convention = "numpy"
 
-[tool.ruff.pydocstyle]
-convention = "numpy"
-
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["B", "D"]
 ".ci/*.py" = ["D"]
 "bench/*.py" = ["D"]
