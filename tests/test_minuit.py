@@ -193,7 +193,7 @@ def test_Func1():
 
 
 def test_Func2():
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(np.exceptions.VisibleDeprecationWarning):
         func_test_helper(Func2())
 
 

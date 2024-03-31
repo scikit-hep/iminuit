@@ -1,5 +1,5 @@
 import warnings
-from numpy import VisibleDeprecationWarning
+from numpy.exceptions import VisibleDeprecationWarning
 
 
 class deprecated:

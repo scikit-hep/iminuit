@@ -1754,7 +1754,7 @@ class Template(BinnedCost):
         if method == "hpd":
             warnings.warn(
                 "key 'hpd' is deprecated, please use 'da' instead",
-                category=np.VisibleDeprecationWarning,
+                category=np.exceptions.VisibleDeprecationWarning,
                 stacklevel=2,
             )
 
@@ -2504,7 +2504,7 @@ def __getattr__(name: str) -> Any:
         new_name, obj = _deprecated_content[name]
         warnings.warn(
             f"{name} was renamed to {new_name}, please import {new_name} instead",
-            np.VisibleDeprecationWarning,
+            np.exceptions.VisibleDeprecationWarning,
             stacklevel=2,
         )
         return obj

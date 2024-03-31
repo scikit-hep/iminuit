@@ -94,7 +94,7 @@ def test_generic_functor_with_fake_func():
         def __call__(self, *args):
             pass
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(np.exceptions.VisibleDeprecationWarning):
         assert describe(A()) == ["x", "y"]
 
 
