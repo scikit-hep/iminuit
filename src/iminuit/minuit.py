@@ -2572,7 +2572,8 @@ class Minuit:
         # - goal is used to detect convergence but violations by 10x are also accepted;
         #   see VariableMetricBuilder.cxx:425
         edm_goal = max(
-            self.tol * self.errordef, self._mnprecision().eps2  # type:ignore
+            self.tol * self.errordef,
+            self._mnprecision().eps2,  # type:ignore
         )
         if migrad_factor:
             edm_goal *= 2e-3
