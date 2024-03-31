@@ -68,3 +68,14 @@ repos:
     additional_dependencies: [numpy]
     args: [src]
     pass_filenames: false
+
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.28.0
+  hooks:
+  - id: check-readthedocs
+  - id: check-github-workflows
+
+- repo: https://github.com/henryiii/validate-pyproject-schema-store
+  rev: 2024.03.25
+  hooks:
+  - id: validate-pyproject

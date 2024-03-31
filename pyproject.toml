@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.3", "pybind11"]
+requires = ["scikit-build-core[pyproject]>=0.5", "pybind11>=2.12"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -75,7 +75,7 @@ doc = [
 ]
 
 [tool.scikit-build]
-minimum-version = "0.3"
+minimum-version = "0.5"
 build-dir = "build/{wheel_tag}"
 sdist.exclude = ["extern/root"]
 sdist.include = ["extern/root/math/minuit2/inc", "extern/root/math/minuit2/src"]
@@ -126,7 +126,7 @@ no_implicit_optional = false
 
 [tool.cibuildwheel]
 # update skip when numpy wheels become available
-skip = ["*-musllinux_*", "cp31?-win32", "cp31?-manylinux_i686"]
+skip = ["cp31?-manylinux_i686"]
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 test-skip = ["*universal2:arm64"]
