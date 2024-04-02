@@ -87,7 +87,7 @@ log_cli_level = "INFO"
 testpaths = ["tests"]
 xfail_strict = true
 filterwarnings = [
-    "error::iminuit.exceptions.VisibleDeprecationWarning",
+    "error::iminuit._exceptions.VisibleDeprecationWarning",
     "error::PendingDeprecationWarning",
     "error::DeprecationWarning",
     "error::FutureWarning",

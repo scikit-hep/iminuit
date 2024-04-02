@@ -18,7 +18,7 @@ from iminuit.cost import (
 )
 from iminuit.util import describe
 from iminuit.typing import Annotated, Gt, Lt
-from iminuit.exceptions import VisibleDeprecationWarning
+from iminuit._exceptions import VisibleDeprecationWarning
 from typing import Sequence
 import pickle
 

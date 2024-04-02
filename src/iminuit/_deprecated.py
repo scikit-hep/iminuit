@@ -1,5 +1,5 @@
 import warnings
-from .exceptions import VisibleDeprecationWarning
+from ._exceptions import VisibleDeprecationWarning
 
 
 class deprecated:

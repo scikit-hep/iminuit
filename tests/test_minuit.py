@@ -6,7 +6,7 @@ from iminuit import Minuit
 from iminuit.util import Param, make_func_code
 from iminuit.warnings import IMinuitWarning, ErrordefAlreadySetWarning
 from iminuit.typing import Annotated
-from iminuit.exceptions import VisibleDeprecationWarning
+from iminuit._exceptions import VisibleDeprecationWarning
 from pytest import approx
 from argparse import Namespace
 

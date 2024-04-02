@@ -92,7 +92,7 @@ from .util import (
     is_positive_definite,
 )
 from .typing import Model, ModelGradient, LossFunction
-from .exceptions import VisibleDeprecationWarning
+from ._exceptions import VisibleDeprecationWarning
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
 from collections.abc import Sequence as ABCSequence

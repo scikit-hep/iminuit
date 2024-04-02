@@ -1,6 +1,6 @@
 from iminuit.util import describe, make_func_code
 from iminuit.typing import Annotated, Gt, Lt, Ge, Le, Interval
-from iminuit.exceptions import VisibleDeprecationWarning
+from iminuit._exceptions import VisibleDeprecationWarning
 from math import ldexp
 import platform
 from functools import wraps

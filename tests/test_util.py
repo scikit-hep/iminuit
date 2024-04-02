@@ -7,7 +7,7 @@ from iminuit._core import MnUserParameterState
 from iminuit._optional_dependencies import optional_module_for
 import pickle
 from iminuit._hide_modules import hide_modules
-from iminuit.exceptions import VisibleDeprecationWarning
+from iminuit._exceptions import VisibleDeprecationWarning
 
 try:
     import scipy  # noqa
