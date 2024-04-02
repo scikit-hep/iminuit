@@ -25,6 +25,7 @@ jobs:
             installs: "numpy>=2.0.0rc1"
           - os: macos-latest
             python-version: "3.8"
+            installs: "'numpy==1.21.0'"
           - os: ubuntu-latest
             python-version: "pypy-3.8"
           - os: ubuntu-latest
