@@ -87,7 +87,7 @@ log_cli_level = "INFO"
 testpaths = ["tests"]
 xfail_strict = true
 filterwarnings = [
-    "error::numpy.exceptions.VisibleDeprecationWarning",
+    "error::VisibleDeprecationWarning",
     "error::PendingDeprecationWarning",
     "error::DeprecationWarning",
     "error::FutureWarning",

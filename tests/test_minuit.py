@@ -6,6 +6,7 @@ from iminuit import Minuit
 from iminuit.util import Param, make_func_code
 from iminuit.warnings import IMinuitWarning, ErrordefAlreadySetWarning
 from iminuit.typing import Annotated
+from iminuit.exceptions import VisibleDeprecationWarning
 from pytest import approx
 from argparse import Namespace
 
@@ -193,7 +194,7 @@ def test_Func1():
 
 
 def test_Func2():
-    with pytest.warns(np.exceptions.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         func_test_helper(Func2())
 
 
