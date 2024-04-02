@@ -126,7 +126,7 @@ no_implicit_optional = false
 
 [tool.cibuildwheel]
 # update skip when numpy wheels become available
-skip = ["cp31?-manylinux_i686"]
+skip = ["*-musllinux_*", "cp31?-manylinux_i686"]
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 test-skip = ["*universal2:arm64"]
