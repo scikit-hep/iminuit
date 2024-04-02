@@ -1,7 +1,6 @@
 from iminuit._deprecated import deprecated, deprecated_parameter
 from iminuit.exceptions import VisibleDeprecationWarning
 import pytest
-import numpy as np
 
 
 def test_deprecated_func():

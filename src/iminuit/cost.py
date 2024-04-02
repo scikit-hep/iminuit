@@ -1522,7 +1522,7 @@ class BinnedCostWithModel(BinnedCost):
                 self._model_xm = self._model_xe[:-1] + 0.5 * dx
         else:
             self._xe_shape = tuple(len(xei) for xei in self.xe)
-            self._model_xe = np.row_stack(
+            self._model_xe = np.vstack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
             if use_pdf == "approximate":
@@ -1766,7 +1766,7 @@ class Template(BinnedCost):
             self._model_xe = _norm(self.xe)
         else:
             self._xe_shape = tuple(len(xei) for xei in self.xe)
-            self._model_xe = np.row_stack(
+            self._model_xe = np.vstack(
                 [x.flatten() for x in np.meshgrid(*self.xe, indexing="ij")]
             )
         self._model_len = np.prod(self._xe_shape)
@@ -2474,7 +2474,11 @@ def _normalize_output(x, kind, *shape, msg=None):
     if x.ndim < len(shape):
         return x.reshape(*shape)
     elif x.shape != shape:
-        msg = f"output of {kind} has shape {x.shape!r}, but {shape!r} is required"
+        # NumPy 2 uses a numpy int here
+        pretty_shape = tuple(int(i) for i in shape)
+        msg = (
+            f"output of {kind} has shape {x.shape!r}, but {pretty_shape!r} is required"
+        )
         raise ValueError(msg)
     return x
 
