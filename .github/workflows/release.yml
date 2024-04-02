@@ -43,12 +43,11 @@ jobs:
         exclude:
           - os: windows-latest
             arch: aarch64
-          - os: macos-latest
+          - os: macos-13
+            arch: aarch64
+          - os: macos-14
             arch: aarch64
 
-    env:
-      CIBW_BUILD: ${{ matrix.py }}-*
-      CIBW_ARCHS_LINUX: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v4
         with:
