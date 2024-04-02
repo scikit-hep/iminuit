@@ -1281,7 +1281,10 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
 
 class BinnedCost(MaskedCostWithPulls):
     """
-    Base class for binned cost functions.
+    Base class for binned cost functions to support histograms filled with weights.
+
+    Histograms filled with weights are supported by applying the Bohm-Zech transform.
+    See Bohm and Zech, NIMA 748 (2014) 1-6.
 
     :meta private:
     """
