@@ -30,7 +30,7 @@ jobs:
             python-version: "pypy-3.8"
           - os: ubuntu-latest
             python-version: "3.12"
-            installs: "'numpy>=2.0.0rc1' 'scipy>=1.13.0rc1'"
+            installs: "'numpy>=2.0.0rc1' 'scipy>=1.13.0'"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
