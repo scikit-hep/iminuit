@@ -85,7 +85,7 @@ def minimize(
     if bool(jac):
         if jac is True:
             raise ValueError("jac=True is not supported, only jac=callable")
-        assert hasattr(jac, "__call__")
+        assert callable(jac)
         wrapped_grad = wrapped(jac, args)
     else:
         wrapped_grad = None

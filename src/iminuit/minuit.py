@@ -1277,7 +1277,7 @@ class Minuit:
             matrix = r.hess
             needs_invert = True
         # hess_inv is a function, need to convert to full matrix
-        if hasattr(matrix, "__call__"):
+        if callable(matrix):
             assert matrix is not None  # for mypy
             matrix = matrix(np.eye(self.nfit))
         accurate_covar = bool(hess) or bool(hessp)
@@ -2572,7 +2572,8 @@ class Minuit:
         # - goal is used to detect convergence but violations by 10x are also accepted;
         #   see VariableMetricBuilder.cxx:425
         edm_goal = max(
-            self.tol * self.errordef, self._mnprecision().eps2  # type:ignore
+            self.tol * self.errordef,
+            self._mnprecision().eps2,  # type:ignore
         )
         if migrad_factor:
             edm_goal *= 2e-3
