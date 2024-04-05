@@ -32,18 +32,13 @@ repos:
   - id: trailing-whitespace
     exclude: ^doc/_static/.*.svg
 
-# Python formatting
-- repo: https://github.com/psf/black-pre-commit-mirror
-  rev: 24.1.1
-  hooks:
-  - id: black
-
-# Ruff linter, replacement for flake8, pydocstyle, isort
+# Ruff linter and formatter
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.2.2'
+  rev: 'v0.3.3'
   hooks:
     - id: ruff
       args: [--fix, --show-fixes]
+    - id: ruff-format
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
