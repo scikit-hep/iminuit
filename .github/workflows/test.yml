@@ -18,15 +18,19 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
         include:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
             python-version: "3.11"
+            installs: "numpy>=2.0.0rc1"
           - os: macos-latest
             python-version: "3.8"
+            installs: "'numpy==1.21.0'"
           - os: ubuntu-latest
             python-version: "pypy-3.8"
+          - os: ubuntu-latest
+            python-version: "3.12"
+            installs: "'numpy>=2.0.0rc1' scipy matplotlib"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
@@ -41,8 +45,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - run: python -m pip install --upgrade pip wheel
     # python -m pip install .[test] is not used here to test minimum (faster),
-    # the cov workflow runs all tests
-    - run: python -m pip install -v . pytest
+    # the cov workflow runs all tests.
+    - run: python -m pip install -v . pytest ${{ matrix.installs }}
     - run: python -m pytest
 
   # aarch64:

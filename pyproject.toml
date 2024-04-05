@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.3", "pybind11"]
+requires = ["scikit-build-core[pyproject]>=0.5", "pybind11>=2.12"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -33,7 +33,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
 ]
-dependencies = ["numpy >= 1.21", "typing_extensions;python_version < '3.9'"]
+dependencies = ["numpy >=1.21", "typing_extensions >=3.7.4; python_version<'3.9'"]
 
 [project.urls]
 repository = "http://github.com/scikit-hep/iminuit"
@@ -75,7 +75,7 @@ doc = [
 ]
 
 [tool.scikit-build]
-minimum-version = "0.3"
+minimum-version = "0.5"
 build-dir = "build/{wheel_tag}"
 sdist.exclude = ["extern/root"]
 sdist.include = ["extern/root/math/minuit2/inc", "extern/root/math/minuit2/src"]
@@ -87,7 +87,7 @@ log_cli_level = "INFO"
 testpaths = ["tests"]
 xfail_strict = true
 filterwarnings = [
-    "error::numpy.VisibleDeprecationWarning",
+    "error::iminuit._exceptions.VisibleDeprecationWarning",
     "error::PendingDeprecationWarning",
     "error::DeprecationWarning",
     "error::FutureWarning",
@@ -126,7 +126,7 @@ no_implicit_optional = false
 
 [tool.cibuildwheel]
 # update skip when numpy wheels become available
-skip = ["*-musllinux_*", "cp31?-win32", "cp31?-manylinux_i686"]
+skip = ["*-musllinux_*", "cp31?-manylinux_i686"]
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 test-skip = ["*universal2:arm64"]

@@ -7,6 +7,7 @@ from iminuit._core import MnUserParameterState
 from iminuit._optional_dependencies import optional_module_for
 import pickle
 from iminuit._hide_modules import hide_modules
+from iminuit._exceptions import VisibleDeprecationWarning
 
 try:
     import scipy  # noqa
@@ -450,12 +451,12 @@ def test_address_of_cfunc_bad_signature():
 
 
 def test_make_func_code():
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         fc = util.make_func_code(["a", "b"])
     assert fc.co_varnames == ("a", "b")
     assert fc.co_argcount == 2
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         fc = util.make_func_code(("x",))
     assert fc.co_varnames == ("x",)
     assert fc.co_argcount == 1
@@ -530,14 +531,14 @@ def test_propagate_1():
     def fn(x):
         return 2 * x + 1
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_allclose(y, [3, 5, 7])
     np.testing.assert_allclose(
         ycov, [[4, 0.4, 0.8], [0.4, 8, 1.2], [0.8, 1.2, 12]], rtol=1e-3
     )
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, [1], [[2]])
     np.testing.assert_allclose(y, 3)
     np.testing.assert_allclose(ycov, 8, rtol=1e-3)
@@ -557,7 +558,7 @@ def test_propagate_2():
     def fn(x):
         return np.dot(a, x)
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(x))
     np.testing.assert_allclose(ycov, np.einsum("ij,kl,jl", a, a, cov), rtol=1e-3)
@@ -565,7 +566,7 @@ def test_propagate_2():
     def fn(x):
         return np.linalg.multi_dot([x.T, cov, x])
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_equal(y, fn(np.array(x)))
     jac = 2 * np.dot(cov, x)
@@ -585,7 +586,7 @@ def test_propagate_3():
     def fn(x):
         return 2 * x + 1
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         y, ycov = util.propagate(fn, x, cov)
     np.testing.assert_allclose(y, [3, 5, 7])
     np.testing.assert_allclose(ycov, [[4, 0.0, 0.8], [0.0, 0.0, 0.0], [0.8, 0.0, 12]])
@@ -599,16 +600,16 @@ def test_propagate_on_bad_input():
     def fn(x):
         return 2 * x + 1
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         with pytest.raises(ValueError):
             util.propagate(fn, x, cov)
 
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         with pytest.raises(ValueError):
             util.propagate(fn, x, 1)
 
     cov = [[1.0], [1.0]]
-    with pytest.warns(np.VisibleDeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         with pytest.raises(ValueError):
             util.propagate(fn, x, cov)
 
