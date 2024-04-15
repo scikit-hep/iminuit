@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <vector>
@@ -6,9 +5,9 @@
 namespace pybind11 {
 namespace detail {
 
-template <typename Value>
-struct type_caster<std::vector<Value>> {
-  using vec_t = std::vector<Value>;
+template <typename Value, typename Alloc>
+struct type_caster<std::vector<Value, Alloc>> {
+  using vec_t = std::vector<Value, Alloc>;
   using value_conv = make_caster<Value>;
   using size_conv = make_caster<std::size_t>;
 

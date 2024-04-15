@@ -87,8 +87,16 @@ if(MSVC)
   target_compile_options(_core PRIVATE /std:c++14 /Y-)
 else()
   # lots of warnings from clang and gcc
-  target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror
-                                       -fstrict-aliasing)
+  target_compile_options(
+    _core
+    PRIVATE -Wall
+            -Wextra
+            -pedantic
+            -Werror
+            -fstrict-aliasing
+            -Werror=odr
+            -Werror=selector-type-mismatch
+            -Werror=strict-aliasing)
 endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
