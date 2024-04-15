@@ -85,8 +85,20 @@ set(SOURCES_B
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 if(MSVC)
   target_compile_options(_core PRIVATE /std:c++14 /Y-)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # lots of warnings from gcc, including odr violations
+  target_compile_options(
+    _core
+    PRIVATE -Wall
+            -Wextra
+            -pedantic
+            -Werror
+            -fstrict-aliasing
+            -Werror=odr
+            -Werror=lto-type-mismatch
+            -Werror=strict-aliasing)
 else()
-  # lots of warnings from clang and gcc
+  # lots of warnings from clang
   target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror
                                        -fstrict-aliasing)
 endif()
