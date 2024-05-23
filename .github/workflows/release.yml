@@ -89,6 +89,10 @@ jobs:
   upload:
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/download-artifact@v4
@@ -96,6 +100,11 @@ jobs:
           pattern: "*"
           merge-multiple: true
           path: dist
+
+      - name: Generate artifact attestation for sdist and wheels
+        uses: actions/attest-build-provenance@173725a1209d09b31f9d30a3890cf2757ebbff0d # v1.1.2
+        with:
+          subject-path: "dist/iminuit-*"
 
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
