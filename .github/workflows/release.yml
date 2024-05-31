@@ -5,6 +5,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
 
 env:
   # Latest Jupyter requires this to acknowledge deprecation
@@ -66,6 +69,29 @@ jobs:
           name: wheel-${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}
           path: ./wheelhouse/*.whl
 
+  pyodide:
+    needs: release_check
+    name: Pyodide
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: pypa/cibuildwheel@main
+        env:
+          CIBW_PLATFORM: pyodide
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pyodide
+          path: ./wheelhouse/*.whl
+
+
   sdist:
     needs: release_check
     name: source package
@@ -83,7 +109,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sdist
+          name: wheel-sdist
           path: dist/*.tar.gz
 
   upload:
@@ -97,7 +123,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: "*"
+          pattern: "wheel-*"
           merge-multiple: true
           path: dist
 

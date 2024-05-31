@@ -136,3 +136,10 @@ PIP_ONLY_BINARY = ":all:"
 select = "cp3?-*"
 manylinux-x86_64-image = "manylinux2010"
 manylinux-i686-image = "manylinux2010"
+
+
+[[tool.cibuildwheel.overrides]]
+select = "*pyodide*"
+inherit.environment = "append"
+environment.CFLAGS = "-fexceptions"
+environment.LDFLAGS = "-fexceptions"
