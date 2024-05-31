@@ -40,13 +40,15 @@ jobs:
     - uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
+    - uses: rui314/setup-mold@v1
+      if: runner.os == 'Linux'
+    - uses: yezz123/setup-uv@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - run: python -m pip install --upgrade pip wheel
     # python -m pip install .[test] is not used here to test minimum (faster),
     # the cov workflow runs all tests.
-    - run: python -m pip install -v . pytest ${{ matrix.installs }}
+    - run: uv pip install --system -v . pytest ${{ matrix.installs }}
     - run: python -m pytest
 
   # aarch64:
