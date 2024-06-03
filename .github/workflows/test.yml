@@ -22,15 +22,12 @@ jobs:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
             python-version: "3.11"
-            installs: "numpy>=2.0.0rc1"
           - os: macos-14
             python-version: "3.8"
-            installs: "'numpy==1.21.0'"
           - os: ubuntu-latest
-            python-version: "pypy-3.8"
+            python-version: "pypy-3.9"
           - os: ubuntu-latest
             python-version: "3.12"
-            installs: "'numpy>=2.0.0rc1' scipy matplotlib"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
@@ -46,10 +43,14 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    # python -m pip install .[test] is not used here to test minimum (faster),
-    # the cov workflow runs all tests.
-    - run: uv pip install --system -v . pytest ${{ matrix.installs }}
+    - run: uv pip install --system .[test]
     - run: python -m pytest
+    - run: |
+        uv pip uninstall --system numba
+        uv pip install --system --upgrade --pre numpy scipy matplotlib
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
+    - run: python -m pytest
+      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
 
   # aarch64:
   #   runs-on: ubuntu-latest

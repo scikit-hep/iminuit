@@ -1,11 +1,5 @@
 name: Coverage
 
-env:
-  # Latest Jupyter requires this to acknowledge deprecation
-  JUPYTER_PLATFORM_DIRS: 1
-  # Much faster coverage on 3.12+
-  COVERAGE_CORE: sysmon
-
 on:
   pull_request:
     paths-ignore:
@@ -38,5 +32,9 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
-    - run: make cov
+    - uses: yezz123/setup-uv@v4
+    - name: Install nox
+      run: uv pip install --system nox
+    - name: Coverage
+      run: nox -s coverage
     - uses: AndreMiras/coveralls-python-action@develop
