@@ -5,6 +5,18 @@
 Changelog
 =========
 
+2.26.0 (June 03, 2024)
+----------------------
+- Ci: add github artifact attestations to package distribution (`#993 <https://github.com/scikit-hep/iminuit/pull/993>`_)
+- Ci: macos-latest is changing to macos-14 arm runners (`#989 <https://github.com/scikit-hep/iminuit/pull/989>`_)
+- Added new tutorial on fitting correlated data (`#987 <https://github.com/scikit-hep/iminuit/pull/987>`_)
+- Update to root master (`#986 <https://github.com/scikit-hep/iminuit/pull/986>`_)
+- Check for odr violations and fix odr violation (`#985 <https://github.com/scikit-hep/iminuit/pull/985>`_)
+- Improve comments on coverage (`#984 <https://github.com/scikit-hep/iminuit/pull/984>`_)
+- Use modern ruff config & ruff fmt (`#978 <https://github.com/scikit-hep/iminuit/pull/978>`_)
+- Bump the actions group with 3 updates (`#979 <https://github.com/scikit-hep/iminuit/pull/979>`_)
+- Support numpy 2 (`#977 <https://github.com/scikit-hep/iminuit/pull/977>`_)
+
 2.25.2 (February 09, 2024)
 --------------------------
 - Update to latest root (`#970 <https://github.com/scikit-hep/iminuit/pull/970>`_)
