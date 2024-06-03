@@ -89,6 +89,10 @@ jobs:
   upload:
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/iminuit/
+
     permissions:
       id-token: write
       attestations: write
