@@ -61,7 +61,7 @@ jobs:
 
       - uses: yezz123/setup-uv@v4
 
-      - uses: pypa/cibuildwheel@main
+      - uses: pypa/cibuildwheel@v2.19
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
           CIBW_ARCHS: ${{ matrix.arch }}
