@@ -3,7 +3,7 @@ from packaging.version import Version
 from typing import Callable, Any
 from importlib.metadata import version
 
-CURRENT_VERSION = Version(version("sweights"))
+CURRENT_VERSION = Version(version("iminuit"))
 
 
 class deprecated:
