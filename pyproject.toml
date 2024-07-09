@@ -121,6 +121,7 @@ files = ["src"]
 no_implicit_optional = false
 
 [tool.cibuildwheel]
+build-frontend = "build[uv]"
 # update skip when numpy wheels become available
 skip = ["*-musllinux_*", "cp31?-manylinux_i686"]
 test-requires = "pytest"
@@ -139,3 +140,4 @@ PIP_ONLY_BINARY = ":all:"
 select = "cp3?-*"
 manylinux-x86_64-image = "manylinux2010"
 manylinux-i686-image = "manylinux2010"
+build-frontend = "build"
