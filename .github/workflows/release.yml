@@ -5,6 +5,9 @@ on:
     branches:
       - main
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
 
 env:
   # Latest Jupyter requires this to acknowledge deprecation
@@ -56,7 +59,9 @@ jobs:
       - if: ${{ matrix.arch == 'aarch64' }}
         uses: docker/setup-qemu-action@v3
 
-      - uses: pypa/cibuildwheel@v2.17.0
+      - uses: yezz123/setup-uv@v4
+
+      - uses: pypa/cibuildwheel@v2.19
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -89,6 +94,10 @@ jobs:
   upload:
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/iminuit/
+
     permissions:
       id-token: write
       attestations: write

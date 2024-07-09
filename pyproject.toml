@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "iminuit"
 description = "Jupyter-friendly Python frontend for MINUIT2 in C++"
-version = "2.25.2"
+version = "2.26.0"
 maintainers = [
     { name = "Hans Dembinski" },
     { email = "hans.dembinski@gmail.com" },
@@ -33,7 +33,10 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
 ]
-dependencies = ["numpy >=1.21", "typing_extensions >=3.7.4; python_version<'3.9'"]
+dependencies = [
+    "numpy >=1.21",
+    "typing_extensions >=3.7.4; python_version<'3.9'",
+]
 
 [project.urls]
 repository = "http://github.com/scikit-hep/iminuit"
@@ -118,6 +121,7 @@ files = ["src"]
 no_implicit_optional = false
 
 [tool.cibuildwheel]
+build-frontend = "build[uv]"
 # update skip when numpy wheels become available
 skip = ["*-musllinux_*", "cp31?-manylinux_i686"]
 test-requires = "pytest"
@@ -136,3 +140,4 @@ PIP_ONLY_BINARY = ":all:"
 select = "cp3?-*"
 manylinux-x86_64-image = "manylinux2010"
 manylinux-i686-image = "manylinux2010"
+build-frontend = "build"
