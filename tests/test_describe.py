@@ -201,6 +201,7 @@ def test_with_type_hints():
         d: Annotated[float, Ge(1)],
         e: Annotated[float, Le(2)],
         f: Annotated[float, Interval(gt=2, lt=3)],
+        g: Annotated[float, (4, 5)],
     ): ...
 
     r = describe(foo, annotations=True)
@@ -212,6 +213,7 @@ def test_with_type_hints():
         "d": (1, np.inf),
         "e": (-np.inf, 2),
         "f": (2, 3),
+        "g": (4, 5),
     }
 
     class Foo:
