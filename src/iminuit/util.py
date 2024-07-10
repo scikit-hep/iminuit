@@ -25,6 +25,7 @@ from typing import (
     Optional,
     Callable,
     Collection,
+    Sequence,
 )
 import abc
 from time import monotonic
@@ -1342,7 +1343,9 @@ def _describe_impl_docstring(callable):
     return {extract(x): None for x in items if x != "*"}
 
 
-def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
+def _get_limit(
+    annotation: Union[type, Annotated[float, Any], str],
+) -> Optional[Tuple[float, float]]:
     from iminuit import typing
 
     if isinstance(annotation, str):
@@ -1366,13 +1369,19 @@ def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
 
     tp, *constraints = get_args(annotation)
     assert tp is float
-    lim = [-np.inf, np.inf]
+    lower = -np.inf
+    upper = np.inf
     for c in constraints:
         if isinstance(c, slice):
             if c.start is not None:
-                lim[0] = c.start
+                lower = c.start
             if c.stop is not None:
-                lim[1] = c.stop
+                upper = c.stop
+            continue
+        if isinstance(c, Sequence):
+            lower, upper = c
+            continue
+
         # Minuit does not distinguish between closed and open intervals.
         # We use a chain of ifs so that the code also works with the
         # `Interval` class, which contains several of those attributes
@@ -1382,14 +1391,14 @@ def _get_limit(annotation: Union[type, Annotated[float, Any], str]):
         lt = getattr(c, "lt", None)
         le = getattr(c, "le", None)
         if gt is not None:
-            lim[0] = gt
+            lower = gt
         if ge is not None:
-            lim[0] = ge
+            lower = ge
         if lt is not None:
-            lim[1] = lt
+            upper = lt
         if le is not None:
-            lim[1] = le
-    return tuple(lim)
+            upper = le
+    return lower, upper
 
 
 def _guess_initial_step(val: float) -> float:

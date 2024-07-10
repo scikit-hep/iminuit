@@ -1,6 +1,5 @@
 from iminuit.util import describe, make_func_code
 from iminuit.typing import Annotated, Gt, Lt, Ge, Le, Interval
-from iminuit._exceptions import VisibleDeprecationWarning
 from math import ldexp
 import platform
 from functools import wraps
@@ -95,7 +94,7 @@ def test_generic_functor_with_fake_func():
         def __call__(self, *args):
             pass
 
-    with pytest.warns(VisibleDeprecationWarning):
+    with pytest.warns(FutureWarning):
         assert describe(A()) == ["x", "y"]
 
 
@@ -201,6 +200,7 @@ def test_with_type_hints():
         d: Annotated[float, Ge(1)],
         e: Annotated[float, Le(2)],
         f: Annotated[float, Interval(gt=2, lt=3)],
+        g: Annotated[float, (4, 5)],
     ): ...
 
     r = describe(foo, annotations=True)
@@ -212,6 +212,7 @@ def test_with_type_hints():
         "d": (1, np.inf),
         "e": (-np.inf, 2),
         "f": (2, 3),
+        "g": (4, 5),
     }
 
     class Foo:
