@@ -108,3 +108,8 @@ class Interval:
     ge: Optional[float] = None
     lt: Optional[float] = None
     le: Optional[float] = None
+
+
+# common convenience types
+PositiveFloat = Annotated[float, Gt(0)]
+Probability = Annotated[float, Interval(ge=0, le=1)]

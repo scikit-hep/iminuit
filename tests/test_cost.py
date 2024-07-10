@@ -18,7 +18,6 @@ from iminuit.cost import (
 )
 from iminuit.util import describe
 from iminuit.typing import Annotated, Gt, Lt
-from iminuit._exceptions import VisibleDeprecationWarning
 from typing import Sequence
 import pickle
 
@@ -321,7 +320,7 @@ def test_UnbinnedNLL_visualize(log):
     # manual spacing
     c.visualize((1, 2), model_points=np.linspace(1, 1000))
 
-    with pytest.warns(VisibleDeprecationWarning, match="keyword 'nbins' is deprecated"):
+    with pytest.warns(FutureWarning, match="keyword 'nbins' is deprecated"):
         c.visualize((1, 2), nbins=20)
 
 
@@ -1908,15 +1907,15 @@ def test_Template_pulls():
 def test_deprecated():
     from iminuit import cost
 
-    with pytest.warns(VisibleDeprecationWarning):
+    with pytest.warns(FutureWarning):
         from iminuit.cost import BarlowBeestonLite
     assert BarlowBeestonLite is cost.Template
 
-    with pytest.warns(VisibleDeprecationWarning):
+    with pytest.warns(FutureWarning):
         from iminuit.cost import barlow_beeston_lite_chi2_jsc
     assert barlow_beeston_lite_chi2_jsc is cost.template_chi2_jsc
 
-    with pytest.warns(VisibleDeprecationWarning):
+    with pytest.warns(FutureWarning):
         from iminuit.cost import barlow_beeston_lite_chi2_hpd
     assert barlow_beeston_lite_chi2_hpd is cost.template_chi2_da
 
@@ -1924,7 +1923,7 @@ def test_deprecated():
 def test_deprecated_Template_method():
     from iminuit import cost
 
-    with pytest.warns(VisibleDeprecationWarning):
+    with pytest.warns(FutureWarning):
         t = Template([1], [2, 3], [[1], [2]], method="hpd")
         t._impl is cost.template_chi2_da
 
@@ -1966,7 +1965,7 @@ def test_binned_cost_with_model_shape_error_message_2D(cost):
 def test_BohmZechTransform():
     from iminuit.cost import BohmZechTransform
 
-    with pytest.warns(VisibleDeprecationWarning):
+    with pytest.warns(FutureWarning):
         val = np.array([1.0, 2.0])
         var = np.array([3.0, 4.0])
         tr = BohmZechTransform(val, var)
