@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import warnings
 from iminuit import util as mutil
+from iminuit.util import _replace_none as replace_none
 from iminuit._core import (
     FCN,
     MnContours,
@@ -744,7 +745,7 @@ class Minuit:
         return self  # return self for method chaining and to autodisplay current state
 
     def migrad(
-        self, ncall: int = None, iterate: int = 5, use_simplex: bool = True
+        self, ncall: Optional[int] = None, iterate: int = 5, use_simplex: bool = True
     ) -> "Minuit":
         """
         Run Migrad minimization.
@@ -785,7 +786,7 @@ class Minuit:
             fm = _robust_low_level_fit(
                 self._fcn,
                 self._last_state,
-                mutil._replace_none(ncall, 0),
+                replace_none(ncall, 0),
                 self._strategy,
                 self._tolerance,
                 self._precision,
@@ -808,7 +809,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def simplex(self, ncall: int = None) -> "Minuit":
+    def simplex(self, ncall: Optional[int] = None) -> "Minuit":
         """
         Run Simplex minimization.
 
@@ -842,16 +843,14 @@ class Minuit:
         minimization. Early stopping can be avoided by setting Minuit.tol to an
         accordingly smaller value, however.
         """
-        if ncall is None:
-            ncall = 0  # tells C++ Minuit to use its internal heuristic
-
         simplex = MnSimplex(self._fcn, self._last_state, self.strategy)
         if self._precision is not None:
             simplex.precision = self._precision
 
         t = mutil._Timer(self._fmin)
         with t:
-            fm = simplex(ncall, self._tolerance)
+            # ncall = 0 tells C++ Minuit to use its internal heuristic
+            fm = simplex(replace_none(ncall, 0), self._tolerance)
         self._last_state = fm.state
 
         self._fmin = mutil.FMin(
@@ -868,7 +867,7 @@ class Minuit:
 
         return self  # return self for method chaining and to autodisplay current state
 
-    def scan(self, ncall: int = None) -> "Minuit":
+    def scan(self, ncall: Optional[int] = None) -> "Minuit":
         """
         Brute-force minimization.
 
@@ -981,7 +980,7 @@ class Minuit:
     def scipy(
         self,
         method: Union[str, Callable] = None,
-        ncall: int = None,
+        ncall: Optional[int] = None,
         hess: Any = None,
         hessp: Any = None,
         constraints: Iterable = None,
@@ -1372,7 +1371,7 @@ class Minuit:
         """
         return self._visualize(plot)(self.values, **kwargs)
 
-    def hesse(self, ncall: int = None) -> "Minuit":
+    def hesse(self, ncall: Optional[int] = None) -> "Minuit":
         """
         Run Hesse algorithm to compute asymptotic errors.
 
@@ -1405,8 +1404,6 @@ class Minuit:
         --------
         minos
         """
-        ncall = 0 if ncall is None else int(ncall)
-
         # Should be fixed upstream: workaround for segfault in MnHesse when all
         # parameters are fixed
         if self.nfit == 0:
@@ -1439,7 +1436,8 @@ class Minuit:
 
         t = mutil._Timer(self._fmin)
         with t:
-            hesse(self._fcn, fm, ncall, self._fmin.edm_goal)
+            # ncall = 0 tells C++ Minuit to use its internal heuristic
+            hesse(self._fcn, fm, replace_none(ncall, 0), self._fmin.edm_goal)
 
         self._last_state = fm.state
         self._fmin = mutil.FMin(
@@ -1460,7 +1458,7 @@ class Minuit:
         self,
         *parameters: Union[int, str],
         cl: float = None,
-        ncall: int = None,
+        ncall: Optional[int] = None,
     ) -> "Minuit":
         """
         Run Minos algorithm to compute confidence intervals.
@@ -1505,8 +1503,6 @@ class Minuit:
         minimisation for all other parameters of the cost function for each scan point.
         This requires many more function evaluations than running the Hesse algorithm.
         """
-        ncall = 0 if ncall is None else int(ncall)
-
         factor = _cl_to_errordef(cl, 1, 1.0)
 
         if self._fmin_does_not_exist_or_last_state_was_modified():
@@ -1538,7 +1534,7 @@ class Minuit:
                 minos = MnMinos(self._fcn, fm, self.strategy)
                 for ipar in ipars:
                     par = self._pos2var[ipar]
-                    me = minos(ipar, ncall, self._tolerance)
+                    me = minos(ipar, replace_none(ncall, 0), self._tolerance)
                     self._merrors[par] = mutil.MError(
                         me.number,
                         par,
@@ -1597,10 +1593,10 @@ class Minuit:
             bound are ignored.
         subtract_min : bool, optional
             If true, subtract offset so that smallest value is zero (Default: False).
-        ncall : int or None, optional
+        ncall : int, optional
             Approximate maximum number of calls before minimization will be aborted.
-            If set to None, use the adaptive heuristic from the Minuit2 library
-            (Default: None). Note: The limit may be slightly violated, because the
+            If set to 0, use the adaptive heuristic from the Minuit2 library
+            (Default: 0). Note: The limit may be slightly violated, because the
             condition is checked only after a full iteration of the algorithm, which
             usually performs several function calls.
         iterate : int, optional
@@ -1638,13 +1634,14 @@ class Minuit:
 
         state = MnUserParameterState(self._last_state)  # copy
         state.fix(ipar)
+        strategy = MnStrategy(max(0, self.strategy.strategy - 1))
         for i, v in enumerate(x):
             state.set_value(ipar, v)
             fm = _robust_low_level_fit(
                 self._fcn,
                 state,
                 ncall,
-                self._strategy,
+                strategy,
                 self._tolerance,
                 self._precision,
                 iterate,
@@ -1673,12 +1670,15 @@ class Minuit:
 
         Parameters
         ----------
+        vname: int or string
+            Which variable to scan over, can be identified by index or name.
         band : bool, optional
             If true, show a band to indicate the Hesse error interval (Default: True).
-
         text : bool, optional
             If true, show text a title with the function value and the Hesse error
             (Default: True).
+        **kwargs :
+            Other keyword arguments are forwarded to :meth:`mnprofile`.
 
         Examples
         --------
@@ -2030,6 +2030,21 @@ class Minuit:
             found to succeed in cases where MnContour produced no reasonable result, but
             is slower and not yet well tested in practice. Use with caution and report
             back any issues via Github.
+        ncall : int, optional
+            This parameter only takes effect if ``experimental`` is True. Approximate
+            maximum number of calls before minimization will be aborted. If set to 0,
+            use the adaptive heuristic from the Minuit2 library (Default: 0).
+        iterate : int, optional
+            This parameter only takes effect if ``experimental`` is True. Automatically
+            call Migrad up to N times if convergence was not reached (Default: 5). This
+            simple heuristic makes Migrad converge more often even if the numerical
+            precision of the cost function is low. Setting this to 1 disables the
+            feature.
+        use_simplex: bool, optional
+            This parameter only takes effect if ``experimental`` is True. If we have to
+            iterate, do interleaved calls to Simplex algorithm before each further call
+            to Migrad (Default: True).This seems to improve convergence in pathological
+            cases (which we are in anyway when we have to iterate).
 
         Returns
         -------
@@ -2124,7 +2139,7 @@ class Minuit:
 
         mpl_version = tuple(map(int, mpl_version_string.split(".")))
 
-        cls = [mutil._replace_none(x, 0.68) for x in mutil._iterate(cl)]
+        cls = [replace_none(x, 0.68) for x in mutil._iterate(cl)]
 
         c_val = []
         c_pts = []
@@ -2207,7 +2222,7 @@ class Minuit:
         if npar == 0:
             raise RuntimeError("all parameters are fixed")
 
-        cls = [mutil._replace_none(x, 0.68) for x in mutil._iterate(cl)]
+        cls = [replace_none(x, 0.68) for x in mutil._iterate(cl)]
         if len(cls) == 0:
             raise ValueError("cl must have at least one value")
 
@@ -2707,6 +2722,8 @@ class Minuit:
         )
         s = (t * factor) ** 0.5
 
+        strategy = MnStrategy(max(0, self.strategy.strategy - 1))
+
         ce = []
         for phi in np.linspace(-np.pi, np.pi, size, endpoint=False):
 
@@ -2731,7 +2748,6 @@ class Minuit:
                 xy = args(z)
                 state.set_value(ix, xy[0])
                 state.set_value(iy, xy[1])
-                strategy = max(0, self.strategy.strategy - 1)
                 fm = _robust_low_level_fit(
                     self._fcn,
                     state,
@@ -2903,7 +2919,7 @@ def _robust_low_level_fit(
     fcn: FCN,
     state: MnUserParameterState,
     ncall: int,
-    strategy: int,
+    strategy: MnStrategy,
     tolerance: float,
     precision: Optional[float],
     iterate: int,
