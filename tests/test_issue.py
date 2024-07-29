@@ -151,7 +151,8 @@ def test_issue_694():
         nll = ExtendedUnbinnedNLL(x, model)
 
         m = Minuit(nll, sig_n=33, sig_mu=ymu, sig_sigma=ysigma, bkg_n=66, bkg_tau=ytau)
-        m.migrad()
+        # with Simplex the fit never yields NaN, which is good but not what we want here
+        m.migrad(use_simplex=False)
 
         if np.isnan(m.fmin.edm):
             assert not m.valid

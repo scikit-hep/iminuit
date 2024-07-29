@@ -743,7 +743,9 @@ class Minuit:
         self._covariance: mutil.Matrix = None
         return self  # return self for method chaining and to autodisplay current state
 
-    def migrad(self, ncall: int = None, iterate: int = 5) -> "Minuit":
+    def migrad(
+        self, ncall: int = None, iterate: int = 5, use_simplex: bool = True
+    ) -> "Minuit":
         """
         Run Migrad minimization.
 
@@ -755,42 +757,41 @@ class Minuit:
 
         Parameters
         ----------
-        ncall :
+        ncall : int or None, optional
             Approximate maximum number of calls before minimization will be aborted.
             If set to None, use the adaptive heuristic from the Minuit2 library
             (Default: None). Note: The limit may be slightly violated, because the
             condition is checked only after a full iteration of the algorithm, which
             usually performs several function calls.
-
-        iterate :
+        iterate : int, optional
             Automatically call Migrad up to N times if convergence was not reached
             (Default: 5). This simple heuristic makes Migrad converge more often even if
             the numerical precision of the cost function is low. Setting this to 1
             disables the feature.
+        use_simplex: bool, optional
+            If we have to iterate, do interleaved calls to Simplex algorithm before each
+            further call to Migrad (Default: True).This seems to improve convergence in
+            pathological cases (which we are in anyway when we have to iterate).
 
         See Also
         --------
         simplex, scan
         """
-        if ncall is None:
-            ncall = 0  # tells C++ Minuit to use its internal heuristic
-
         if iterate < 1:
             raise ValueError("iterate must be at least 1")
 
-        migrad = MnMigrad(self._fcn, self._last_state, self.strategy)
-
         t = mutil._Timer(self._fmin)
         with t:
-            # Automatically call Migrad up to `iterate` times if minimum is not valid.
-            # This simple heuristic makes Migrad converge more often.
-            for _ in range(iterate):
-                # workaround: precision must be set again after each call to MnMigrad
-                if self._precision is not None:
-                    migrad.precision = self._precision
-                fm = migrad(ncall, self._tolerance)
-                if fm.is_valid or fm.has_reached_call_limit:
-                    break
+            fm = _robust_low_level_fit(
+                self._fcn,
+                self._last_state,
+                mutil._replace_none(ncall, 0),
+                self._strategy,
+                self._tolerance,
+                self._precision,
+                iterate,
+                use_simplex,
+            )
 
         self._last_state = fm.state
 
@@ -1571,6 +1572,9 @@ class Minuit:
         bound: Union[float, UserBound] = 2,
         grid: ArrayLike = None,
         subtract_min: bool = False,
+        ncall: int = 0,
+        iterate: int = 5,
+        use_simplex: bool = True,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         r"""
         Get Minos profile over a specified interval.
@@ -1593,6 +1597,21 @@ class Minuit:
             bound are ignored.
         subtract_min : bool, optional
             If true, subtract offset so that smallest value is zero (Default: False).
+        ncall : int or None, optional
+            Approximate maximum number of calls before minimization will be aborted.
+            If set to None, use the adaptive heuristic from the Minuit2 library
+            (Default: None). Note: The limit may be slightly violated, because the
+            condition is checked only after a full iteration of the algorithm, which
+            usually performs several function calls.
+        iterate : int, optional
+            Automatically call Migrad up to N times if convergence was not reached
+            (Default: 5). This simple heuristic makes Migrad converge more often even if
+            the numerical precision of the cost function is low. Setting this to 1
+            disables the feature.
+        use_simplex: bool, optional
+            If we have to iterate, do interleaved calls to Simplex algorithm before each
+            further call to Migrad (Default: True).This seems to improve convergence in
+            pathological cases (which we are in anyway when we have to iterate).
 
         Returns
         -------
@@ -1621,8 +1640,16 @@ class Minuit:
         state.fix(ipar)
         for i, v in enumerate(x):
             state.set_value(ipar, v)
-            migrad = MnMigrad(self._fcn, state, self.strategy)
-            fm = migrad(0, self._tolerance)
+            fm = _robust_low_level_fit(
+                self._fcn,
+                state,
+                ncall,
+                self._strategy,
+                self._tolerance,
+                self._precision,
+                iterate,
+                use_simplex,
+            )
             if not fm.is_valid:
                 warnings.warn(
                     f"MIGRAD fails to converge for {pname}={v}", mutil.IMinuitWarning
@@ -1953,6 +1980,9 @@ class Minuit:
         size: int = 100,
         interpolated: int = 0,
         experimental: bool = False,
+        ncall: int = 0,
+        iterate: int = 5,
+        use_simplex: bool = True,
     ) -> np.ndarray:
         """
         Get 2D Minos confidence region.
@@ -2032,7 +2062,9 @@ class Minuit:
             )
 
         if experimental:
-            ce = self._experimental_mncontour(factor, ix, iy, size)
+            ce = self._experimental_mncontour(
+                factor, ix, iy, size, ncall, iterate, use_simplex
+            )
         else:
             with _TemporaryErrordef(self._fcn, factor):
                 assert self._fmin is not None
@@ -2082,7 +2114,7 @@ class Minuit:
         --------
         mncontour
         """
-        from matplotlib import __version__ as mpl_version
+        from matplotlib import __version__ as mpl_version_string
         from matplotlib import pyplot as plt
         from matplotlib.path import Path
         from matplotlib.contour import ContourSet
@@ -2090,7 +2122,7 @@ class Minuit:
         ix, xname = self._normalize_key(x)
         iy, yname = self._normalize_key(y)
 
-        mpl_version = tuple(map(int, mpl_version.split(".")))
+        mpl_version = tuple(map(int, mpl_version_string.split(".")))
 
         cls = [mutil._replace_none(x, 0.68) for x in mutil._iterate(cl)]
 
@@ -2654,7 +2686,14 @@ class Minuit:
         return plot
 
     def _experimental_mncontour(
-        self, factor: float, ix: int, iy: int, size: int
+        self,
+        factor: float,
+        ix: int,
+        iy: int,
+        size: int,
+        ncall: int,
+        iterate: int,
+        use_simplex: bool,
     ) -> List[Tuple[float, float]]:
         from scipy.optimize import root_scalar
 
@@ -2692,8 +2731,17 @@ class Minuit:
                 xy = args(z)
                 state.set_value(ix, xy[0])
                 state.set_value(iy, xy[1])
-                migrad = MnMigrad(self._fcn, state, max(0, self.strategy.strategy - 1))
-                fm = migrad(0, self._tolerance)
+                strategy = max(0, self.strategy.strategy - 1)
+                fm = _robust_low_level_fit(
+                    self._fcn,
+                    state,
+                    ncall,
+                    strategy,
+                    self._tolerance,
+                    self._precision,
+                    iterate,
+                    use_simplex,
+                )
                 return fm.fval - self.fval - factor * self._fcn._errordef
 
             # find bracket
@@ -2849,3 +2897,36 @@ def _cl_to_errordef(cl, npar, default):
         factor = chi2(npar).ppf(cl)  # convert confidence level to errordef
 
     return factor
+
+
+def _robust_low_level_fit(
+    fcn: FCN,
+    state: MnUserParameterState,
+    ncall: int,
+    strategy: int,
+    tolerance: float,
+    precision: Optional[float],
+    iterate: int,
+    use_simplex: bool,
+) -> FunctionMinimum:
+    # Automatically call Migrad up to `iterate` times if minimum is not valid.
+    # This simple heuristic makes Migrad converge more often. Optionally,
+    # one can interleave calls to Simplex and Migrad, which may also help.
+    migrad = MnMigrad(fcn, state, strategy)
+    if precision is not None:
+        migrad.precision = precision
+    fm = migrad(ncall, tolerance)
+    while not fm.is_valid and not fm.has_reached_call_limit and iterate > 1:
+        if use_simplex:
+            simplex = MnSimplex(fcn, fm.state, strategy)
+            if precision is not None:
+                simplex.precision = precision
+            fm = simplex(ncall, tolerance)
+            # recreate MnMigrad instance to start from updated state
+            migrad = MnMigrad(fcn, fm.state, strategy)
+        # workaround: precision must be set again after each call
+        if precision is not None:
+            migrad.precision = precision
+        fm = migrad(ncall, tolerance)
+        iterate -= 1
+    return fm
