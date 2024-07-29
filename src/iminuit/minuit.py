@@ -2218,8 +2218,9 @@ class Minuit:
                         extremes.append(x[k - 1])
                     if yk > fmax and y[k - 1] < fmax:
                         extremes.append(xk)
-                a = min(*extremes, a)
-                b = max(*extremes, b)
+                if extremes:
+                    a = min(*extremes, a)
+                    b = max(*extremes, b)
                 prange[par1] = (a, b)
                 plt.ylim(0, fmax + 0.5)
                 for j in range(i):
