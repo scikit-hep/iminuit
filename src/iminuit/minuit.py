@@ -1624,9 +1624,7 @@ class Minuit:
             migrad = MnMigrad(self._fcn, state, self.strategy)
             fm = migrad(0, self._tolerance)
             if not fm.is_valid:
-                warnings.warn(
-                    "Running simplex and then migrad again"
-                )
+                warnings.warn("Running simplex and then migrad again")
                 fm = MnSimplex(self._fcn, fm.state, self.strategy)(0, self._tolerance)
                 fm = MnMigrad(self._fcn, fm.state, self.strategy)(0, self._tolerance)
             if not fm.is_valid:
