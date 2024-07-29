@@ -1625,6 +1625,12 @@ class Minuit:
             fm = migrad(0, self._tolerance)
             if not fm.is_valid:
                 warnings.warn(
+                    "Running simplex and then migrad again"
+                )
+                fm = MnSimplex(self._fcn, fm.state, self.strategy)(0, self._tolerance)
+                fm = MnMigrad(self._fcn, fm.state, self.strategy)(0, self._tolerance)
+            if not fm.is_valid:
+                warnings.warn(
                     f"MIGRAD fails to converge for {pname}={v}", mutil.IMinuitWarning
                 )
             status[i] = fm.is_valid
