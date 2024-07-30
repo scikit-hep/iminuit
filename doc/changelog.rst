@@ -5,6 +5,14 @@
 Changelog
 =========
 
+2.27.0 (July 30, 2024)
+----------------------
+- Fix odr issue in type_caster (`#1013 <https://github.com/scikit-hep/iminuit/pull/1013>`_)
+- More robust unified fitting in minuit.migrad and minuit.mnprofile (`#1009 <https://github.com/scikit-hep/iminuit/pull/1009>`_)
+- Cure error when extremes cannot be found (`#1011 <https://github.com/scikit-hep/iminuit/pull/1011>`_)
+- Fix for visibledeprecationwarning, useful annotated types, support tuple annotation (`#1004 <https://github.com/scikit-hep/iminuit/pull/1004>`_)
+- Ci: using uv with cibuildwheel (`#999 <https://github.com/scikit-hep/iminuit/pull/999>`_)
+
 2.26.0 (June 03, 2024)
 ----------------------
 - Ci: add github artifact attestations to package distribution (`#993 <https://github.com/scikit-hep/iminuit/pull/993>`_)
