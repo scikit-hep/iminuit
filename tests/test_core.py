@@ -121,8 +121,10 @@ def test_MnMigrad_grad():
     assert fcn._ngrad > 0
 
 
-@pytest.mark.skipif(platform.system() == "Windows", "cfunc segfaults on Windows")
 def test_MnMigrad_cfunc():
+    if platform.system() == "Windows":
+        pytest.xfail("cfunc segfaults on Windows")
+
     nb = pytest.importorskip("numba")
 
     c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
