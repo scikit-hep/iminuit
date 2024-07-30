@@ -33,8 +33,6 @@ jobs:
       with:
         python-version: "3.12"
     - uses: yezz123/setup-uv@v4
-    - name: Install nox
-      run: uv pip install --system nox
-    - name: Coverage
-      run: nox -s coverage
+    - run: uv pip install --system nox
+    - run: nox -s coverage
     - uses: AndreMiras/coveralls-python-action@develop
