@@ -44,9 +44,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - run: pip install -v .[test]
+    - run: pip uninstall -y numba
+      if: matrix.os == 'windows-latest'
     - run: python -m pytest
     - run: |
-        pip uninstall numba
+        pip uninstall -y numba
         pip install --upgrade --pre numpy scipy matplotlib
         python -m pytest
       if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
