@@ -46,7 +46,7 @@ jobs:
     - run: uv pip install --system .[test]
     # Tests which use Numba fail on Window
     - run: uv pip uninstall --system numba
-      if: matrix.os != 'windows-latest'
+      if: matrix.os == 'windows-latest'
     - run: python -m pytest
     - run: |
         uv pip uninstall --system numba
