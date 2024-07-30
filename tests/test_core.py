@@ -15,7 +15,6 @@ from pytest import approx
 import pytest
 import pickle
 import numpy as np
-import platform
 
 
 @pytest.fixture
@@ -122,9 +121,6 @@ def test_MnMigrad_grad():
 
 
 def test_MnMigrad_cfunc():
-    if platform.system() == "Windows":
-        pytest.xfail("cfunc segfaults on Windows")
-
     nb = pytest.importorskip("numba")
 
     c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
