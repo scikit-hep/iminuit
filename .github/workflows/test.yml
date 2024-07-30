@@ -39,18 +39,15 @@ jobs:
         key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
     - uses: rui314/setup-mold@v1
       if: runner.os == 'Linux'
-    - uses: yezz123/setup-uv@v4
+    # - uses: yezz123/setup-uv@v4
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - run: uv pip install --system .[test]
-    # Tests which use Numba fail on Window
-    - run: uv pip uninstall --system numba
-      if: matrix.os == 'windows-latest'
+    - run: pip install -v .[test]
     - run: python -m pytest
     - run: |
-        uv pip uninstall --system numba
-        uv pip install --system --upgrade --pre numpy scipy matplotlib
+        pip uninstall numba
+        pip install --upgrade --pre numpy scipy matplotlib
         python -m pytest
       if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
 
