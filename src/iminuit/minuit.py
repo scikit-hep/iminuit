@@ -745,7 +745,10 @@ class Minuit:
         return self  # return self for method chaining and to autodisplay current state
 
     def migrad(
-        self, ncall: Optional[int] = None, iterate: int = 5, use_simplex: bool = True
+        self,
+        ncall: Optional[int] = None,
+        iterate: int = 5,
+        use_simplex: bool = True,
     ) -> "Minuit":
         """
         Run Migrad minimization.
@@ -770,9 +773,9 @@ class Minuit:
             the numerical precision of the cost function is low. Setting this to 1
             disables the feature.
         use_simplex: bool, optional
-            If we have to iterate, do interleaved calls to Simplex algorithm before each
-            further call to Migrad (Default: True).This seems to improve convergence in
-            pathological cases (which we are in anyway when we have to iterate).
+            If we have to iterate, set this to True to call the Simplex algorithm before
+            each call to Migrad (Default: True). This may improve convergence in
+            pathological cases (which we are in when we have to iterate).
 
         See Also
         --------
@@ -1605,9 +1608,9 @@ class Minuit:
             the numerical precision of the cost function is low. Setting this to 1
             disables the feature.
         use_simplex: bool, optional
-            If we have to iterate, do interleaved calls to Simplex algorithm before each
-            further call to Migrad (Default: True).This seems to improve convergence in
-            pathological cases (which we are in anyway when we have to iterate).
+            If we have to iterate, set this to True to call the Simplex algorithm before
+            each call to Migrad (Default: True). This may improve convergence in
+            pathological cases (which we are in when we have to iterate).
 
         Returns
         -------
@@ -1634,7 +1637,8 @@ class Minuit:
 
         state = MnUserParameterState(self._last_state)  # copy
         state.fix(ipar)
-        strategy = MnStrategy(max(0, self.strategy.strategy - 1))
+        # strategy 0 to avoid expensive computation of Hesse matrix
+        strategy = MnStrategy(0)
         for i, v in enumerate(x):
             state.set_value(ipar, v)
             fm = _robust_low_level_fit(
@@ -2031,20 +2035,20 @@ class Minuit:
             is slower and not yet well tested in practice. Use with caution and report
             back any issues via Github.
         ncall : int, optional
-            This parameter only takes effect if ``experimental`` is True. Approximate
-            maximum number of calls before minimization will be aborted. If set to 0,
-            use the adaptive heuristic from the Minuit2 library (Default: 0).
+            This parameter only takes effect if ``experimental`` is True.
+            Approximate maximum number of calls before minimization will be aborted. If
+            set to 0, use the adaptive heuristic from the Minuit2 library (Default: 0).
         iterate : int, optional
-            This parameter only takes effect if ``experimental`` is True. Automatically
-            call Migrad up to N times if convergence was not reached (Default: 5). This
-            simple heuristic makes Migrad converge more often even if the numerical
-            precision of the cost function is low. Setting this to 1 disables the
-            feature.
+            This parameter only takes effect if ``experimental`` is True.
+            Automatically call Migrad up to N times if convergence was not reached
+            (Default: 5). This simple heuristic makes Migrad converge more often even if
+            the numerical precision of the cost function is low. Setting this to 1
+            disables the feature.
         use_simplex: bool, optional
-            This parameter only takes effect if ``experimental`` is True. If we have to
-            iterate, do interleaved calls to Simplex algorithm before each further call
-            to Migrad (Default: True).This seems to improve convergence in pathological
-            cases (which we are in anyway when we have to iterate).
+            This parameter only takes effect if ``experimental`` is True.
+            If we have to iterate, set this to True to call the Simplex algorithm before
+            each call to Migrad (Default: True). This may improve convergence in
+            pathological cases (which we are in when we have to iterate).
 
         Returns
         -------
@@ -2722,7 +2726,8 @@ class Minuit:
         )
         s = (t * factor) ** 0.5
 
-        strategy = MnStrategy(max(0, self.strategy.strategy - 1))
+        # strategy 0 to avoid expensive computation of Hesse matrix
+        strategy = MnStrategy(0)
 
         ce = []
         for phi in np.linspace(-np.pi, np.pi, size, endpoint=False):
@@ -2932,7 +2937,11 @@ def _robust_low_level_fit(
     if precision is not None:
         migrad.precision = precision
     fm = migrad(ncall, tolerance)
+    strategy = MnStrategy(2)
+    migrad = MnMigrad(fcn, fm.state, strategy)
     while not fm.is_valid and not fm.has_reached_call_limit and iterate > 1:
+        # If we have to iterate, we have a pathological case. Increasing the
+        # strategy to 2 in this case was found to be beneficial.
         if use_simplex:
             simplex = MnSimplex(fcn, fm.state, strategy)
             if precision is not None:

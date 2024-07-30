@@ -13,6 +13,7 @@ Important for most users are only the first two entries.
 
     notebooks/basic
     notebooks/cost_functions
+    notebooks/unstable_fit
     notebooks/correlated_data
     notebooks/error_bands
     notebooks/interactive
