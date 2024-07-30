@@ -46,7 +46,7 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - run: uv python -m pip install --system -v . pytest ${{ matrix.installs }}
+    - run: uv pip install --system -v . pytest ${{ matrix.installs }}
     # python -m pip install .[test] is not used here to test minimum (faster),
     # the cov workflow runs all tests.
     - run: python -m pytest
