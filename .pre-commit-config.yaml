@@ -34,7 +34,7 @@ repos:
 
 # Ruff linter and formatter
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.5.4'
+  rev: 'v0.5.5'
   hooks:
     - id: ruff
       args: [--fix, --show-fixes]
@@ -65,12 +65,12 @@ repos:
     pass_filenames: false
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.29.0
+  rev: 0.29.1
   hooks:
   - id: check-readthedocs
   - id: check-github-workflows
 
 - repo: https://github.com/henryiii/validate-pyproject-schema-store
-  rev: 2024.07.01
+  rev: 2024.07.29
   hooks:
   - id: validate-pyproject
