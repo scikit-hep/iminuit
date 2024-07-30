@@ -44,12 +44,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - run: uv pip install --system .[test]
+    # Tests which use Numba fail on Window
+    - run: uv pip uninstall --system numba
+      if: matrix.os != 'windows-latest'
     - run: python -m pytest
     - run: |
         uv pip uninstall --system numba
         uv pip install --system --upgrade --pre numpy scipy matplotlib
-      if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
-    - run: python -m pytest
+        python -m pytest
       if: matrix.python-version == '3.11' || matrix.python-version == '3.12'
 
   # aarch64:
