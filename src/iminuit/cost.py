@@ -144,7 +144,7 @@ _TINY_FLOAT = np.finfo(float).tiny
 
 def _safe_log(x):
     # guard against x = 0
-    return np.log(np.maximum(_TINY_FLOAT, x))
+    return np.log(x + _TINY_FLOAT)
 
 
 def _unbinned_nll(x):
@@ -392,7 +392,8 @@ def template_chi2_da(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
     """
     n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
     k = mu**2 / mu_var
-    beta = (n + k) / (mu + k)
+    # avoid divide by zero
+    beta = (n + k) / (mu + k + _TINY_FLOAT)
     return poisson_chi2(n, mu * beta) + poisson_chi2(k, k * beta)
 
 

@@ -1,10 +1,5 @@
 name: Coverage
 
-env:
-  CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-  # Latest Jupyter requires this to acknowledge deprecation
-  JUPYTER_PLATFORM_DIRS: 1
-
 on:
   pull_request:
     paths-ignore:
@@ -32,8 +27,12 @@ jobs:
     - uses: hendrikmuhs/ccache-action@v1.2
       with:
         key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
+        create-symlink: true
+    - uses: rui314/setup-mold@v1
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.9"
-    - run: make cov
+        python-version: "3.12"
+    - uses: yezz123/setup-uv@v4
+    - run: uv pip install --system nox
+    - run: nox -s coverage
     - uses: AndreMiras/coveralls-python-action@develop
