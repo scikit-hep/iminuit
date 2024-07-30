@@ -1,25 +1,25 @@
 from pathlib import Path
 import re
 import subprocess as subp
-from pkg_resources import parse_version
-from pkg_resources.extern.packaging.version import InvalidVersion
+from packaging.version import Version, InvalidVersion
 import datetime
 import warnings
 import sys
 
 cwd = Path(__file__).parent
 
+
+def parse_version_with_fallback(version_string):
+    try:
+        return Version(version_string)
+    except InvalidVersion:
+        return Version("0.0.1")
+
+
 version = (
     subp.check_output([sys.executable, cwd.parent / "version.py"]).strip().decode()
 )
-new_version = parse_version(version)
-
-
-def parse_version_with_fallback(x):
-    try:
-        return parse_version(x)
-    except InvalidVersion:
-        return parse_version("0.0.1")
+new_version = parse_version_with_fallback(version)
 
 
 with warnings.catch_warnings():
@@ -44,7 +44,7 @@ with open(cwd / "changelog.rst") as f:
 
 # find latest entry
 m = re.search(r"([0-9]+\.[0-9]+\.[0-9]+) \([^\)]+\)\n-*", content, re.MULTILINE)
-previous_version = parse_version(m.group(1))
+previous_version = Version(m.group(1))
 position = m.span(0)[0]
 
 # sanity checks

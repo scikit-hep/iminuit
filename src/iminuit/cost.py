@@ -92,7 +92,6 @@ from .util import (
     is_positive_definite,
 )
 from .typing import Model, ModelGradient, LossFunction
-from ._exceptions import VisibleDeprecationWarning
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
 from collections.abc import Sequence as ABCSequence
@@ -1758,7 +1757,7 @@ class Template(BinnedCost):
         if method == "hpd":
             warnings.warn(
                 "key 'hpd' is deprecated, please use 'da' instead",
-                category=VisibleDeprecationWarning,
+                category=FutureWarning,
                 stacklevel=2,
             )
 
@@ -2512,7 +2511,7 @@ def __getattr__(name: str) -> Any:
         new_name, obj = _deprecated_content[name]
         warnings.warn(
             f"{name} was renamed to {new_name}, please import {new_name} instead",
-            VisibleDeprecationWarning,
+            FutureWarning,
             stacklevel=2,
         )
         return obj

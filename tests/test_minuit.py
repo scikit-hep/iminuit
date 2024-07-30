@@ -6,7 +6,6 @@ from iminuit import Minuit
 from iminuit.util import Param, make_func_code
 from iminuit.warnings import IMinuitWarning, ErrordefAlreadySetWarning
 from iminuit.typing import Annotated
-from iminuit._exceptions import VisibleDeprecationWarning
 from pytest import approx
 from argparse import Namespace
 
@@ -194,7 +193,7 @@ def test_Func1():
 
 
 def test_Func2():
-    with pytest.warns(VisibleDeprecationWarning):
+    with pytest.warns(FutureWarning):
         func_test_helper(Func2())
 
 
@@ -1357,7 +1356,7 @@ def test_parameter_at_limit(sign):
 @pytest.mark.parametrize("iterate,valid", ((1, False), (5, True)))
 def test_inaccurate_fcn(iterate, valid):
     def f(x):
-        return abs(x) ** 10 + 1e7
+        return abs(x) ** 10 + 1e6
 
     m = Minuit(f, x=2)
     m.migrad(iterate=iterate)

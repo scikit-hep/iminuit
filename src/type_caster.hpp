@@ -5,10 +5,10 @@
 namespace pybind11 {
 namespace detail {
 
-template <typename Value, typename Alloc>
-struct type_caster<std::vector<Value, Alloc>> {
-  using vec_t = std::vector<Value, Alloc>;
-  using value_conv = make_caster<Value>;
+template <>
+struct type_caster<std::vector<double>> {
+  using vec_t = std::vector<double>;
+  using value_conv = make_caster<double>;
   using size_conv = make_caster<std::size_t>;
 
   bool load(handle src, bool convert) {
@@ -20,7 +20,7 @@ struct type_caster<std::vector<Value, Alloc>> {
       for (auto it : seq) {
         value_conv conv;
         if (!conv.load(it, convert)) return false;
-        value.push_back(cast_op<Value&&>(std::move(conv)));
+        value.push_back(cast_op<double&&>(std::move(conv)));
       }
       return true;
     }
@@ -30,7 +30,7 @@ struct type_caster<std::vector<Value, Alloc>> {
 public:
   template <typename T>
   static handle cast(T&& src, return_value_policy, handle) {
-    array_t<Value> arr({static_cast<ssize_t>(src.size())});
+    array_t<double> arr(static_cast<ssize_t>(src.size()));
     std::copy(src.begin(), src.end(), arr.mutable_data());
     return arr.release();
   }
