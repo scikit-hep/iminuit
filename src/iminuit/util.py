@@ -1669,7 +1669,9 @@ def is_positive_definite(m: ArrayLike) -> bool:
         # maybe check this first https://en.wikipedia.org/wiki/Diagonally_dominant_matrix
         # and only try cholesky if that fails
         try:
-            np.linalg.cholesky(m)
+            lm = np.linalg.cholesky(m)
+            if np.any(np.isnan(lm)):
+                return False
         except np.linalg.LinAlgError:
             return False
         return True
