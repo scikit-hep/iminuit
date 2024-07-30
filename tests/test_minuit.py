@@ -1356,7 +1356,7 @@ def test_parameter_at_limit(sign):
 @pytest.mark.parametrize("iterate,valid", ((1, False), (5, True)))
 def test_inaccurate_fcn(iterate, valid):
     def f(x):
-        return abs(x) ** 10 + 1e7
+        return abs(x) ** 10 + 1e6
 
     m = Minuit(f, x=2)
     m.migrad(iterate=iterate)

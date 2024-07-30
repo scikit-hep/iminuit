@@ -26,6 +26,7 @@ from typing import (
     Callable,
     Collection,
     Sequence,
+    TypeVar,
 )
 import abc
 from time import monotonic
@@ -36,6 +37,8 @@ if sys.version_info < (3, 9):
     from typing_extensions import Annotated, get_args, get_origin  # pragma: no cover
 else:
     from typing import Annotated, get_args, get_origin  # pragma: no cover
+
+T = TypeVar("T")
 
 __all__ = (
     "IMinuitWarning",
@@ -1465,7 +1468,7 @@ def _iterate(x):
             yield xi
 
 
-def _replace_none(x, v):
+def _replace_none(x: Optional[T], v: T) -> T:
     if x is None:
         return v
     return x
