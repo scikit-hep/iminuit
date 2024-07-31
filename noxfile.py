@@ -50,9 +50,9 @@ def coverage(session: nox.Session) -> None:
 
 # 3.11 needed by Cython notebook
 @nox.session(python="3.11", reuse_venv=True)
-def docs(session: nox.Session) -> None:
+def doc(session: nox.Session) -> None:
     """Build html documentation."""
-    session.install("-e.[test,docs]")
+    session.install("-e.[test,doc]")
 
     # link check
     session.run(
@@ -60,7 +60,7 @@ def docs(session: nox.Session) -> None:
         "-n",  # nitpicky mode
         "-T",  # full tracebacks
         "-b=html",
-        "docs",
+        "doc",
         "build/html",
     )
 

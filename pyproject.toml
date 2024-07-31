@@ -65,7 +65,7 @@ test = [
     "pydantic",
     "annotated_types",
 ]
-docs = [
+doc = [
     "sphinx-rtd-theme", # installs correct sphinx as well
     "nbsphinx",
     "nbconvert",
@@ -108,7 +108,7 @@ lint.pydocstyle.convention = "numpy"
 "test_*.py" = ["B", "D"]
 ".ci/*.py" = ["D"]
 "bench/*.py" = ["D"]
-"docs/*.py" = ["D"]
+"doc/*.py" = ["D"]
 
 [tool.mypy]
 ignore_missing_imports = true
