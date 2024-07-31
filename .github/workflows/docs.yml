@@ -32,7 +32,8 @@ jobs:
       with:
         python-version: "3.11"
     - run: sudo apt-get install pandoc
-    - run: make doc
+    - uses: yezz123/setup-uv@v4
+    - run: nox -s docs
     - uses: actions/upload-pages-artifact@v3
       with:
         path: './build/html'

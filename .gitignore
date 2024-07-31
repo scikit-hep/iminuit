@@ -54,7 +54,7 @@ coverage.xml
 
 tests/fig/*.svg
 
-doc/index.rst
+docs/index.rst
 
 testcase
 

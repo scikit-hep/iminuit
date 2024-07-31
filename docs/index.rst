@@ -1,10 +1,10 @@
-.. |iminuit| image:: doc/_static/iminuit_logo.svg
+.. |iminuit| image:: _static/iminuit_logo.svg
    :alt: iminuit
 
 |iminuit|
 =========
 
-.. version-marker-do-not-remove
+**These docs are for iminuit version:** |release|
 
 .. image:: https://scikit-hep.org/assets/images/Scikit--HEP-Project-blue.svg
    :target: https://scikit-hep.org
@@ -90,7 +90,7 @@ In a nutshell
     m.migrad()  # find minimum
     m.hesse()   # compute uncertainties
 
-.. image:: doc/_static/demo_output.png
+.. image:: _static/demo_output.png
     :alt: Output of the demo in a Jupyter notebook
 
 Interactive fitting
@@ -98,7 +98,7 @@ Interactive fitting
 
 ``iminuit`` optionally supports an interactive fitting mode in Jupyter notebooks.
 
-.. image:: doc/_static/interactive_demo.gif
+.. image:: _static/interactive_demo.gif
    :alt: Animated demo of an interactive fit in a Jupyter notebook
 
 High performance when combined with numba
@@ -106,7 +106,7 @@ High performance when combined with numba
 
 When ``iminuit`` is used with cost functions that are JIT-compiled with `numba`_ (JIT-compiled pdfs are provided by `numba_stats`_ ), the speed is comparable to `RooFit`_ with the fastest backend. `numba`_ with auto-parallelization is considerably faster than the parallel computation in `RooFit`_.
 
-.. image:: doc/_static/roofit_vs_iminuit+numba.svg
+.. image:: _static/roofit_vs_iminuit+numba.svg
 
 More information about this benchmark is given `in the Benchmark section of the documentation <https://scikit-hep.org/iminuit/benchmark.html>`_.
 
@@ -132,4 +132,19 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 .. _numba_stats: https://github.com/HDembinski/numba-stats
 .. _boost-histogram: https://github.com/scikit-hep/boost-histogram
 .. _numba: https://numba.pydata.org
-.. _RooFit: https://root.cern/manual/roofit/
+.. _RooFit: https://root.cern.ch/master/namespaceRooFit.html
+.. include:: bibliography.txt
+
+.. toctree::
+    :hidden:
+
+    about
+    install
+    reference
+    tutorials
+    studies
+    faq
+    changelog
+    benchmark
+    contribute
+    citation

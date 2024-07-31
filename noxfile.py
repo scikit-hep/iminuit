@@ -5,8 +5,6 @@ Use `-R` to instantly reuse an existing environment and
 to avoid rebuilding the binary.
 """
 
-import argparse
-
 import nox
 
 nox.needs_version = ">=2024.3.2"
@@ -18,14 +16,14 @@ ENV = {
 }
 
 
-@nox.session
+@nox.session(reuse_venv=True)
 def tests(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.[test]")
     session.run("pytest", *session.posargs, env=ENV)
 
 
-@nox.session
+@nox.session(reuse_venv=True)
 def np2tests(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.", "scipy", "pytest", "--pre")
@@ -40,7 +38,8 @@ def mintests(session: nox.Session) -> None:
     session.run("pytest", *session.posargs)
 
 
-@nox.session(python="3.12")
+# Python-3.12 provides coverage info faster
+@nox.session(python="3.12", reuse_venv=True)
 def coverage(session: nox.Session) -> None:
     """Run covage and place in 'htmlcov' directory."""
     session.install("-e.[test,doc]")
@@ -49,39 +48,32 @@ def coverage(session: nox.Session) -> None:
     session.run("coverage", "report", "-m")
 
 
-@nox.session(reuse_venv=True)
+# 3.11 needed by Cython notebook
+@nox.session(python="3.11", reuse_venv=True)
 def docs(session: nox.Session) -> None:
-    """Build the docs. Use '--non-interactive' to avoid serving. Pass '-b linkcheck' to check links."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-b", dest="builder", default="html", help="Build target (default: html)"
-    )
-    args, posargs = parser.parse_known_args(session.posargs)
+    """Build html documentation."""
+    session.install("-e.[test,docs]")
 
-    serve = args.builder == "html" and session.interactive
-    extra_installs = ["sphinx-autobuild"] if serve else []
-    session.install("-e.[docs]", *extra_installs)
-
-    session.chdir("doc")
-
-    shared_args = (
+    # link check
+    session.run(
+        "sphinx-build",
         "-n",  # nitpicky mode
         "-T",  # full tracebacks
-        f"-b={args.builder}",
-        ".",
-        f"_build/{args.builder}",
-        *posargs,
+        "-b=html",
+        "docs",
+        "build/html",
     )
 
-    if serve:
-        session.run("sphinx-autobuild", "--open-browser", *shared_args)
-    else:
-        session.run("sphinx-build", "--keep-going", *shared_args)
 
+@nox.session(python="3.11", reuse_venv=True)
+def linkcheck(session: nox.Session) -> None:
+    """Check all links in the documentation."""
+    session.install("-e.[test,docs]")
 
-@nox.session
-def tutorial(session: nox.Session) -> None:
-    """Start up a juptyer lab tutorial session."""
-    session.install("jupyterlab", "matplotlib", "scipy", "ipykernel", "-e.")
-    session.chdir("doc/tutorial")
-    session.run("jupyter", "lab")
+    # link check
+    session.run(
+        "sphinx-build",
+        "-b=linkcheck",
+        "docs",
+        "build/html",
+    )

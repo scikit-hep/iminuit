@@ -83,7 +83,7 @@ Run the notebook tests:
 
    make tutorial
 
-Maintainers that prepare a release, should follow the instructions in `doc/README.md`_
+Maintainers that prepare a release, should follow the instructions in `docs/README.md`
 
 To check your ``iminuit`` version number and install location:
 
@@ -101,4 +101,3 @@ To check your ``iminuit`` version number and install location:
 .. _Python virtual environments: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _Github: https://github.com/scikit-hep/iminuit
 .. _Makefile: https://github.com/scikit-hep/iminuit/blob/main/Makefile
-.. _doc/README.md: https://github.com/scikit-hep/iminuit/blob/main/doc/README.md
