@@ -26,3 +26,4 @@
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 .. _pytest: http://pytest.org
 .. _zenodo: https://zenodo.org/record/4310361
+.. _RooFit: https://root.cern/manual/roofit/

@@ -59,6 +59,7 @@ def doc(session: nox.Session) -> None:
         "sphinx-build",
         "-n",  # nitpicky mode
         "-T",  # full tracebacks
+        "-v",
         "-b=html",
         "doc",
         "build/html",
