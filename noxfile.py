@@ -17,21 +17,21 @@ ENV = {
 
 
 @nox.session(reuse_venv=True)
-def tests(session: nox.Session) -> None:
+def test(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.[test]")
     session.run("pytest", *session.posargs, env=ENV)
 
 
 @nox.session(reuse_venv=True)
-def np2tests(session: nox.Session) -> None:
+def np2test(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.", "scipy", "pytest", "--pre")
     session.run("pytest", *session.posargs, env=ENV)
 
 
 @nox.session(venv_backend="uv")
-def mintests(session: nox.Session) -> None:
+def mintest(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.", "--resolution=lowest-direct")
     session.install("pytest")
@@ -40,7 +40,7 @@ def mintests(session: nox.Session) -> None:
 
 # Python-3.12 provides coverage info faster
 @nox.session(python="3.12", reuse_venv=True)
-def coverage(session: nox.Session) -> None:
+def cov(session: nox.Session) -> None:
     """Run covage and place in 'htmlcov' directory."""
     session.install("-e.[test,doc]")
     session.run("coverage", "run", "-m", "pytest", env=ENV)
@@ -68,12 +68,12 @@ def doc(session: nox.Session) -> None:
 @nox.session(python="3.11", reuse_venv=True)
 def linkcheck(session: nox.Session) -> None:
     """Check all links in the documentation."""
-    session.install("-e.[test,docs]")
+    session.install("-e.[test,doc]")
 
     # link check
     session.run(
         "sphinx-build",
         "-b=linkcheck",
-        "docs",
+        "doc",
         "build/html",
     )

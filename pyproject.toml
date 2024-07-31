@@ -74,6 +74,7 @@ doc = [
     "ipykernel",
     "jax",
     "jaxlib",
+    "pytest-xdist",
 ]
 
 [tool.scikit-build]
