@@ -1380,7 +1380,7 @@ class Minuit:
 
         The Hesse method estimates the covariance matrix by inverting the matrix of
         `second derivatives (Hesse matrix) at the minimum
-        <http://en.wikipedia.org/wiki/Hessian_matrix>`_. To get parameters correlations,
+        <https://en.wikipedia.org/wiki/Hessian_matrix>`_. To get parameters correlations,
         you need to use this. The Minos algorithm is another way to estimate parameter
         uncertainties, see :meth:`minos`.
 
@@ -1620,6 +1620,10 @@ class Minuit:
             Profile values.
         array of bool
             Whether minimisation in each point succeeded or not.
+
+        See Also
+        --------
+        profile, contour, mncontour
         """
         ipar, pname = self._normalize_key(vname)
         del vname
@@ -1691,7 +1695,7 @@ class Minuit:
 
         See Also
         --------
-        mnprofile, profile, draw_profile
+        mnprofile, draw_profile, draw_contour, draw_mnmatrix
         """
         ipar, pname = self._normalize_key(vname)
         del vname
@@ -1741,7 +1745,7 @@ class Minuit:
 
         See Also
         --------
-        mnprofile
+        mnprofile, contour, mncontour
         """
         ipar, par = self._normalize_key(vname)
         del vname
@@ -1785,7 +1789,7 @@ class Minuit:
 
         See Also
         --------
-        profile, mnprofile, draw_mnprofile
+        profile, draw_mnprofile, draw_contour, draw_mncontourprofile
         """
         ipar, pname = self._normalize_key(vname)
         del vname
@@ -1895,7 +1899,7 @@ class Minuit:
 
         See Also
         --------
-        mncontour, mnprofile
+        mncontour, mnprofile, profile
         """
         ix, xname = self._normalize_key(x)
         iy, yname = self._normalize_key(y)
@@ -1952,7 +1956,7 @@ class Minuit:
 
         See Also
         --------
-        contour, mncontour, draw_mncontour
+        contour, draw_mncontour, draw_profile, draw_mnmatrix
         """
         from matplotlib import pyplot as plt
 
@@ -2059,7 +2063,7 @@ class Minuit:
 
         See Also
         --------
-        contour, mnprofile
+        contour, mnprofile, profile
         """
         ix, xname = self._normalize_key(x)
         iy, yname = self._normalize_key(y)
@@ -2131,7 +2135,7 @@ class Minuit:
 
         See Also
         --------
-        mncontour
+        mncontour, draw_contour, draw_mnmatrix, draw_profile
         """
         from matplotlib import __version__ as mpl_version_string
         from matplotlib import pyplot as plt
@@ -2215,7 +2219,7 @@ class Minuit:
 
         See Also
         --------
-        mncontour
+        mncontour, mnprofile, draw_mncontour, draw_contour, draw_profile
         """
         if not self.valid:
             raise RuntimeError(f"Function minimum is not valid: {repr(self._fmin)}")

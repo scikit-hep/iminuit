@@ -108,7 +108,7 @@ When ``iminuit`` is used with cost functions that are JIT-compiled with `numba`_
 
 .. image:: doc/_static/roofit_vs_iminuit+numba.svg
 
-More information about this benchmark is given `in the Benchmark section of the documentation <https://scikit-hep.org/iminuit/benchmark.html#cost-function-benchmark>`_.
+More information about this benchmark is given `in the Benchmark section of the documentation <https://scikit-hep.org/iminuit/benchmark.html>`_.
 
 Partner projects
 ----------------
@@ -132,4 +132,4 @@ All interface changes are documented in the `changelog`_ with recommendations ho
 .. _numba_stats: https://github.com/HDembinski/numba-stats
 .. _boost-histogram: https://github.com/scikit-hep/boost-histogram
 .. _numba: https://numba.pydata.org
-.. _RooFit: https://root.cern.ch/doc/master/namespaceRooFit.html
+.. _RooFit: https://root.cern/manual/roofit/

@@ -82,3 +82,6 @@ nbsphinx_execute_arguments = [
     "--InlineBackend.figure_formats={'svg', 'pdf'}",
     "--InlineBackend.rc=figure.dpi=96",
 ]
+
+linkcheck_timeout = 3
+linkcheck_allow_unauthorized = True

@@ -34,5 +34,5 @@ jobs:
         python-version: "3.12"
     - uses: yezz123/setup-uv@v4
     - run: uv pip install --system nox
-    - run: nox -s coverage
+    - run: nox -s cov
     - uses: AndreMiras/coveralls-python-action@develop

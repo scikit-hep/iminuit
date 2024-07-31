@@ -609,22 +609,36 @@ def test_BinnedNLL_bad_input_4():
         BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
 
 
+def test_BinnedNLL_bad_input_5():
+    with pytest.raises(ValueError, match="n must either have same dimension as xe"):
+        BinnedNLL([[1, 2, 3]], [1, 2], lambda x, a: 0)
+
+
+def test_BinnedNLL_bad_input_6():
+    with pytest.raises(
+        ValueError, match="not supported for multidimensional histograms"
+    ):
+        BinnedNLL([[1]], [[1, 2], [3, 4]], lambda x, a: 0, use_pdf="numerical")
+
+
+def test_BinnedNLL_bad_input_7():
+    with pytest.raises(ValueError, match="xe must be iterable"):
+        BinnedNLL([0, 1], 0, lambda x, a: 0)
+
+
+def test_BinnedNLL_bad_input_8():
+    with pytest.raises(ValueError, match="use_pdf and grad cannot be used together"):
+        BinnedNLL(
+            [0, 1], [1, 2, 3], lambda x, a: 0, grad=lambda x, a: [1], use_pdf="numeric"
+        )
+
+
 def test_BinnedNLL_ndof_zero():
     c = BinnedNLL([1], [0, 1], lambda x, scale: expon_cdf(x, scale))
     m = Minuit(c, scale=1)
     m.migrad()
     assert c.ndata == m.nfit
     assert np.isnan(m.fmin.reduced_chi2)
-
-
-def test_BinnedNLL_bad_input_5():
-    with pytest.raises(ValueError):
-        BinnedNLL([[1, 2, 3]], [[1, 2], [1, 2, 3]], lambda x, a: 0)
-
-
-def test_BinnedNLL_bad_input_6():
-    with pytest.raises(ValueError):
-        BinnedNLL(1, 2, lambda x, a: 0)
 
 
 @pytest.mark.parametrize("use_grad", (False, True))
