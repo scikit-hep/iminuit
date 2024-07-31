@@ -621,6 +621,18 @@ def test_BinnedNLL_bad_input_6():
         BinnedNLL([[1]], [[1, 2], [3, 4]], lambda x, a: 0, use_pdf="numerical")
 
 
+def test_BinnedNLL_bad_input_7():
+    with pytest.raises(ValueError, match="xe must be iterable"):
+        BinnedNLL([0, 1], 0, lambda x, a: 0)
+
+
+def test_BinnedNLL_bad_input_8():
+    with pytest.raises(ValueError, match="use_pdf and grad cannot be used together"):
+        BinnedNLL(
+            [0, 1], [1, 2, 3], lambda x, a: 0, grad=lambda x, a: [1], use_pdf="numeric"
+        )
+
+
 def test_BinnedNLL_ndof_zero():
     c = BinnedNLL([1], [0, 1], lambda x, scale: expon_cdf(x, scale))
     m = Minuit(c, scale=1)

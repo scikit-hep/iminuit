@@ -1727,3 +1727,32 @@ def test_errordef_already_set_warning():
     # check that cost.errordef value is still overridden
     m.hesse()
     assert_allclose(m.errors, [2, 2])
+
+
+def test_mnprofile_bad_cost():
+    def fn(a, b):
+        if b > 0:
+            return a**2
+        return (a - 0.1) ** 2
+
+    m = Minuit(fn, 1, 2)
+    # test iterative fitting with custom precision
+    # m.precision = 1e-18
+    m.migrad()
+    with pytest.warns(IMinuitWarning, match="MIGRAD fails to converge"):
+        m.mnprofile("a")
+
+
+def test_migrad_iterative_with_precision():
+    def fn(a, b):
+        return 0
+
+    m1 = Minuit(fn, 1, 2)
+    m1.precision = 1e-7
+    m1.migrad(iterate=5)
+
+    m2 = Minuit(fn, 1, 2)
+    m2.precision = 1e-7
+    m2.migrad(iterate=1)
+
+    assert m2.fmin.nfcn < m1.fmin.nfcn
