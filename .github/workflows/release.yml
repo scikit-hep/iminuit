@@ -42,7 +42,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-14]
         arch: [auto, aarch64]
-        py: [cp38, cp39, cp310, cp311, cp312]
+        py: [cp39, cp310, cp311, cp312]
         exclude:
           - os: windows-latest
             arch: aarch64

@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 
 def test_issue_424():
@@ -152,7 +153,9 @@ def test_issue_694():
 
         m = Minuit(nll, sig_n=33, sig_mu=ymu, sig_sigma=ysigma, bkg_n=66, bkg_tau=ytau)
         # with Simplex the fit never yields NaN, which is good but not what we want here
-        m.migrad(use_simplex=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            m.migrad(use_simplex=False)
 
         if np.isnan(m.fmin.edm):
             assert not m.valid
