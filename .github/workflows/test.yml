@@ -20,12 +20,24 @@ jobs:
       matrix:
         include:
           # version number must be string, otherwise 3.10 becomes 3.1
-          # - os: windows-latest
-          #   python-version: "3.11"
-          #   installs: "numpy>=2.0.0rc1"
+          - os: windows-latest
+            python-version: "3.11"
+            installs: "numpy>=2.0.0rc1"
+          - os: windows-latest
+            python-version: "3.11"
+            installs: "numpy>=2.0.0rc1 scipy"
+          - os: windows-latest
+            python-version: "3.11"
+            installs: "numpy>=2.0.0rc1 numba"
+          - os: windows-latest
+            python-version: "3.11"
+            installs: "numpy>=2.0.0rc1 numba scipy"
           - os: windows-latest
             python-version: "3.12"
             installs: "numpy<2"
+          - os: windows-latest
+            python-version: "3.12"
+            installs: "numpy>=2.0.0rc1"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
