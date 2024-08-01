@@ -5,6 +5,14 @@
 Changelog
 =========
 
+2.28.0 (August 01, 2024)
+------------------------
+- Add name argument to all cost functions (`#1017 <https://github.com/scikit-hep/iminuit/pull/1017>`_)
+- Fix leastsquares for functions with more than two arguments (`#1016 <https://github.com/scikit-hep/iminuit/pull/1016>`_)
+- Drop support for python-3.8 (`#1015 <https://github.com/scikit-hep/iminuit/pull/1015>`_)
+- Updating docs and links and ci for building docs (`#1014 <https://github.com/scikit-hep/iminuit/pull/1014>`_)
+- Ci: try to make faster (`#996 <https://github.com/scikit-hep/iminuit/pull/996>`_)
+
 2.27.0 (July 30, 2024)
 ----------------------
 - Fix odr issue in type_caster (`#1013 <https://github.com/scikit-hep/iminuit/pull/1013>`_)
