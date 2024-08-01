@@ -23,7 +23,7 @@ def test(session: nox.Session) -> None:
     session.install("-e.[test]")
     session.run("pytest", "-n=auto", *session.posargs, env=ENV)
 
-    
+
 @nox.session(python="3.9", venv_backend="uv")
 def mintest(session: nox.Session) -> None:
     """Run the unit and regular tests."""
