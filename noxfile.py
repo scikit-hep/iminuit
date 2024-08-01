@@ -15,6 +15,8 @@ ENV = {
     "COVERAGE_CORE": "sysmon",  # faster coverage on Python 3.12
 }
 
+nox.options.sessions = ["test", "mintest", "maxtest"]
+
 
 @nox.session(reuse_venv=True)
 def test(session: nox.Session) -> None:
@@ -23,17 +25,25 @@ def test(session: nox.Session) -> None:
     session.run("pytest", *session.posargs, env=ENV)
 
 
-@nox.session(reuse_venv=True)
-def np2test(session: nox.Session) -> None:
+@nox.session(python="3.12", reuse_venv=True)
+def maxtest(session: nox.Session) -> None:
     """Run the unit and regular tests."""
-    session.install("-e.", "scipy", "pytest", "--pre")
+    session.install("-e.", "scipy", "matplotlib", "pytest", "--pre")
     session.run("pytest", *session.posargs, env=ENV)
 
 
-@nox.session(venv_backend="uv")
+@nox.session(python="3.9", venv_backend="uv")
 def mintest(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.", "--resolution=lowest-direct")
+    session.install("pytest")
+    session.run("pytest", *session.posargs)
+
+
+@nox.session(python="pypy3.9", venv_backend="uv")
+def pypy(session: nox.Session) -> None:
+    """Run the unit and regular tests."""
+    session.install("-e.")
     session.install("pytest")
     session.run("pytest", *session.posargs)
 
