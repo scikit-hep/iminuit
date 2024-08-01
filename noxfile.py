@@ -25,7 +25,7 @@ LATEST_PYTHON = str(python_releases.latest())
 nox.options.sessions = ["test", "mintest", "maxtest"]
 
 
-@nox.session()
+@nox.session(reuse_venv=True)
 def test(session: nox.Session) -> None:
     """Run all tests."""
     session.install("-e.[test]")
