@@ -589,6 +589,19 @@ def test_BinnedNLL_weighted(use_grad):
         assert m2.ngrad == 0
 
 
+def test_BinnedNLL_name(binned):
+    mle, nx, xe = binned
+
+    cost = BinnedNLL(nx, xe, lambda x, *par: cdf(x, *par), name=("mu", "sigma"))
+    assert cost.ndata == len(nx)
+
+    m = Minuit(cost, mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    assert m.valid
+    assert m.parameters == ("mu", "sigma")
+
+
 def test_BinnedNLL_bad_input_1():
     with pytest.raises(ValueError):
         BinnedNLL([1], [1], lambda x, a: 0)
@@ -842,6 +855,21 @@ def test_ExtendedBinnedNLL(binned, verbose, use_grad):
         assert m.ngrad > 0
     else:
         assert m.ngrad == 0
+
+
+def test_ExtendedBinnedNLL_name(binned):
+    mle, nx, xe = binned
+
+    cost = ExtendedBinnedNLL(
+        nx, xe, lambda x, *par: scaled_cdf(x, *par), name=("n", "mu", "sigma")
+    )
+    assert cost.ndata == len(nx)
+
+    m = Minuit(cost, n=mle[0], mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    assert m.valid
+    assert m.parameters == ("n", "mu", "sigma")
 
 
 @pytest.mark.parametrize("use_grad", (False, True))
