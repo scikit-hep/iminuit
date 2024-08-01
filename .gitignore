@@ -32,12 +32,13 @@ bench/*.svg
 .project
 .pydevproject
 .settings
-.coverage
+.coverage*
 .ipynb_checkpoints
 .eggs
 .pytest_cache
 .mypy_cache
 .ruff_cache
+.nox
 
 Untitled*.ipynb
 Untitled*.py

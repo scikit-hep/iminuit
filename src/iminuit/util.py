@@ -27,16 +27,14 @@ from typing import (
     Collection,
     Sequence,
     TypeVar,
+    Annotated,
+    get_args,
+    get_origin,
 )
 import abc
 from time import monotonic
 import warnings
 import sys
-
-if sys.version_info < (3, 9):
-    from typing_extensions import Annotated, get_args, get_origin  # pragma: no cover
-else:
-    from typing import Annotated, get_args, get_origin  # pragma: no cover
 
 T = TypeVar("T")
 

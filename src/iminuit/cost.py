@@ -2195,7 +2195,7 @@ class LeastSquares(MaskedCostWithPulls):
         y = _norm(y)
         assert x.ndim >= 1  # guaranteed by _norm
 
-        self._ndim = x.ndim
+        self._ndim = x.shape[0] if x.ndim > 1 else 1
         self._model = model
         self._model_grad = grad
         self.loss = loss
