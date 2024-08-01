@@ -99,16 +99,36 @@ def pdf(x, mu, sigma):
     return norm_pdf(x, mu, sigma)
 
 
+def pdf_nosig(x, *par):
+    return norm_pdf(x, *par)
+
+
+def annotated_pdf(x, mu, sigma: Annotated[float, 0 : np.inf]):
+    return norm_pdf(x, mu, sigma)
+
+
 def cdf(x, mu, sigma):
     return norm_cdf(x, mu, sigma)
+
+
+def cdf_nosig(x, *par):
+    return norm_cdf(x, *par)
 
 
 def scaled_cdf(x, n, mu, sigma):
     return n * norm_cdf(x, mu, sigma)
 
 
+def scaled_cdf_nosig(x, *par):
+    return par[0] * norm_cdf(x, *par[1:])
+
+
 def line(x, a, b):
     return a + b * x
+
+
+def line_nosig(x, *par):
+    return par[0] + par[1] * x
 
 
 def test_norm_logpdf():
@@ -230,6 +250,38 @@ def test_UnbinnedNLL(unbinned, verbose, model, use_grad):
         assert_allclose(rho1, rho2, atol=0.01)
 
 
+def test_UnbinnedNLL_name(unbinned):
+    mle, x = unbinned
+
+    cost = UnbinnedNLL(x, pdf_nosig, name=("mu", "sigma"))
+    assert cost.ndata == np.inf
+
+    m = Minuit(cost, mu=0, sigma=1)
+    assert m.parameters == ("mu", "sigma")
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    assert m.valid
+
+
+def test_UnbinnedNLL_rename(unbinned):
+    mle, x = unbinned
+
+    cost = UnbinnedNLL(x, annotated_pdf, name=("m", "s"))
+    m = Minuit(cost, m=0, s=1)
+    assert m.limits["m"] == (-np.inf, np.inf)
+    assert m.limits["s"] == (0, np.inf)
+    assert m.parameters == ("m", "s")
+    m.migrad()
+    assert m.valid
+
+
+def test_UnbinnedNLL_name_bad():
+    with pytest.raises(
+        ValueError, match="length of name does not match number of model parameters"
+    ):
+        UnbinnedNLL([1, 2, 3], pdf, name=("mu", "sigma", "foo"))
+
+
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_UnbinnedNLL_2D(use_grad):
     def model(x_y, mux, muy, sx, sy, rho):
@@ -347,14 +399,7 @@ def test_UnbinnedNLL_pickle():
 
 
 def test_UnbinnedNLL_annotated():
-    def model(
-        x: np.ndarray,
-        mu: float,
-        sigma: Annotated[float, 0 : np.inf],
-    ) -> np.ndarray:
-        return norm_pdf(x, mu, sigma)
-
-    c = UnbinnedNLL([], model)
+    c = UnbinnedNLL([], annotated_pdf)
     m = Minuit(c, mu=1, sigma=1.5)
     assert m.limits[0] == (-np.inf, np.inf)
     assert m.limits[1] == (0, np.inf)
@@ -396,6 +441,22 @@ def test_ExtendedUnbinnedNLL(unbinned, verbose, model, use_grad):
         assert m.ngrad > 0
     else:
         assert m.ngrad == 0
+
+
+def test_ExtendedUnbinnedNLL_name(unbinned):
+    mle, x = unbinned
+
+    cost = ExtendedUnbinnedNLL(
+        x, lambda x, *par: (par[0], pdf(x, *par[1:])), name=("n", "mu", "sigma")
+    )
+    assert cost.ndata == np.inf
+
+    m = Minuit(cost, n=len(x), mu=0, sigma=1)
+    assert m.parameters == ("n", "mu", "sigma")
+    m.limits["n"] = (0, None)
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    assert m.valid
 
 
 @pytest.mark.parametrize("use_grad", (False, True))
@@ -587,6 +648,19 @@ def test_BinnedNLL_weighted(use_grad):
         assert m2.ngrad > 0
     else:
         assert m2.ngrad == 0
+
+
+def test_BinnedNLL_name(binned):
+    mle, nx, xe = binned
+
+    cost = BinnedNLL(nx, xe, cdf_nosig, name=("mu", "sigma"))
+    assert cost.ndata == len(nx)
+
+    m = Minuit(cost, mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    assert m.valid
+    assert m.parameters == ("mu", "sigma")
 
 
 def test_BinnedNLL_bad_input_1():
@@ -844,6 +918,19 @@ def test_ExtendedBinnedNLL(binned, verbose, use_grad):
         assert m.ngrad == 0
 
 
+def test_ExtendedBinnedNLL_name(binned):
+    mle, nx, xe = binned
+
+    cost = ExtendedBinnedNLL(nx, xe, scaled_cdf_nosig, name=("n", "mu", "sigma"))
+    assert cost.ndata == len(nx)
+
+    m = Minuit(cost, n=mle[0], mu=0, sigma=1)
+    m.limits["sigma"] = (0, None)
+    m.migrad()
+    assert m.valid
+    assert m.parameters == ("n", "mu", "sigma")
+
+
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_ExtendedBinnedNLL_weighted(use_grad):
     xe = np.array([0, 1, 10])
@@ -1028,17 +1115,14 @@ def test_LeastSquares(loss, verbose, use_grad):
     ye = 0.1
     y = rng.normal(2 * x + 1, ye)
 
-    def model(x, a, b):
-        return a + b * x
-
     cost = LeastSquares(
         x,
         y,
         ye,
-        model,
+        line,
         loss=loss,
         verbose=verbose,
-        grad=numerical_model_gradient(model),
+        grad=numerical_model_gradient(line),
     )
     assert cost.ndata == len(x)
 
@@ -1063,6 +1147,22 @@ def test_LeastSquares(loss, verbose, use_grad):
         assert m.ngrad > 0
     else:
         assert m.ngrad == 0
+
+
+def test_LeastSquares_name():
+    rng = np.random.default_rng(1)
+
+    x = np.linspace(0, 1, 1000)
+    ye = 0.1
+    y = rng.normal(2 * x + 1, ye)
+
+    cost = LeastSquares(x, y, ye, line_nosig, name=("a", "b"))
+    assert cost.ndata == len(x)
+
+    m = Minuit(cost, a=0, b=0)
+    assert m.parameters == ("a", "b")
+    m.migrad()
+    assert_allclose(m.values, (1, 2), rtol=0.05)
 
 
 def test_LeastSquares_2D():

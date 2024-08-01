@@ -25,11 +25,12 @@ LATEST_PYTHON = str(python_releases.latest())
 nox.options.sessions = ["test", "mintest", "maxtest"]
 
 
-@nox.session()
+@nox.session(reuse_venv=True)
 def test(session: nox.Session) -> None:
     """Run all tests."""
     session.install("-e.[test]")
-    session.run("pytest", "-n=auto", *session.posargs, env=ENV)
+    extra_args = session.posargs if session.posargs else ("-n=auto",)
+    session.run("pytest", *extra_args, env=ENV)
 
 
 @nox.session(python=MINIMUM_PYTHON, venv_backend="uv")
@@ -37,14 +38,16 @@ def mintest(session: nox.Session) -> None:
     """Run tests on the minimum python version."""
     session.install("-e.", "--resolution=lowest-direct")
     session.install("pytest", "pytest-xdist")
-    session.run("pytest", "-n=auto", *session.posargs)
+    extra_args = session.posargs if session.posargs else ("-n=auto",)
+    session.run("pytest", *extra_args)
 
 
 @nox.session(python=LATEST_PYTHON)
 def maxtest(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.", "scipy", "matplotlib", "pytest", "pytest-xdist", "--pre")
-    session.run("pytest", "-n=auto", *session.posargs, env=ENV)
+    extra_args = session.posargs if session.posargs else ("-n=auto",)
+    session.run("pytest", *extra_args, env=ENV)
 
 
 @nox.session(python="pypy3.9")
@@ -56,7 +59,7 @@ def pypy(session: nox.Session) -> None:
 
 
 # Python-3.12 provides coverage info faster
-@nox.session(python="3.12", venv_backend="uv")
+@nox.session(python="3.12", venv_backend="uv", reuse_venv=True)
 def cov(session: nox.Session) -> None:
     """Run covage and place in 'htmlcov' directory."""
     session.install("-e.[test,doc]")

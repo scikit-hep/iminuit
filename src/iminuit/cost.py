@@ -834,7 +834,7 @@ class MaskedCost(Cost):
 
     def __init__(
         self,
-        args: Dict[str, Optional[Tuple[float, float]]],
+        parameters: Dict[str, Optional[Tuple[float, float]]],
         data: NDArray,
         verbose: int,
     ):
@@ -842,7 +842,7 @@ class MaskedCost(Cost):
         self._data = data
         self._mask = None
         self._update_cache()
-        Cost.__init__(self, args, verbose)
+        Cost.__init__(self, parameters, verbose)
 
     @property
     def mask(self):
@@ -938,12 +938,13 @@ class UnbinnedCost(MaskedCost):
         verbose: int,
         log: bool,
         grad: Optional[ModelGradient],
+        name: Optional[Sequence[str]],
     ):
         """For internal use."""
         self._model = model
         self._log = log
         self._model_grad = grad
-        super().__init__(_model_parameters(model), _norm(data), verbose)
+        super().__init__(_model_parameters(model, name), _norm(data), verbose)
 
     @abc.abstractproperty
     def pdf(self):
@@ -1093,6 +1094,7 @@ class UnbinnedNLL(UnbinnedCost):
         verbose: int = 0,
         log: bool = False,
         grad: Optional[ModelGradient] = None,
+        name: Optional[Sequence[str]] = None,
     ):
         """
         Initialize UnbinnedNLL with data and model.
@@ -1126,8 +1128,11 @@ class UnbinnedNLL(UnbinnedCost):
             gradient can be used by Minuit to improve or speed up convergence and to
             compute the sandwich estimator for the variance of the parameter estimates.
             Default is None.
+        name : sequence of str or None, optional
+            Optional names for each parameter of the model (in order). Must have the
+            same length as there are model parameters. Default is None.
         """
-        super().__init__(data, pdf, verbose, log, grad)
+        super().__init__(data, pdf, verbose, log, grad, name)
 
     def _value(self, args: Sequence[float]) -> float:
         f = self._eval_model(args)
@@ -1201,6 +1206,7 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         verbose: int = 0,
         log: bool = False,
         grad: Optional[ModelGradient] = None,
+        name: Optional[Sequence[str]] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1239,8 +1245,11 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
             of the log-density instead. The gradient can be used by Minuit to improve or
             speed up convergence and to compute the sandwich estimator for the variance
             of the parameter estimates. Default is None.
+        name : sequence of str or None, optional
+            Optional names for each parameter of the model (in order). Must have the
+            same length as there are model parameters. Default is None.
         """
-        super().__init__(data, scaled_pdf, verbose, log, grad)
+        super().__init__(data, scaled_pdf, verbose, log, grad, name)
 
     def _value(self, args: Sequence[float]) -> float:
         fint, f = self._eval_model(args)
@@ -1346,7 +1355,7 @@ class BinnedCost(MaskedCostWithPulls):
         self, args: Sequence[float]
     ) -> Union[NDArray, Tuple[NDArray, NDArray]]:
         """
-        Return the bin expectation for the fitted model.
+        Return the bin-wise expectation for the fitted model.
 
         Parameters
         ----------
@@ -1488,12 +1497,13 @@ class BinnedCostWithModel(BinnedCost):
         "_model_dx",
         "_model_len",
         "_model_grad",
+        "_pred_impl",
     )
 
     _model_xe: np.ndarray
     _xe_shape: Union[Tuple[int], Tuple[int, ...]]
 
-    def __init__(self, n, xe, model, verbose, grad, use_pdf):
+    def __init__(self, n, xe, model, verbose, grad, use_pdf, name):
         """For internal use."""
         self._model = model
         self._model_grad = grad
@@ -1510,11 +1520,11 @@ class BinnedCostWithModel(BinnedCost):
         else:
             msg = (
                 f"use_pdf={use_pdf} is not understood, "
-                "allowed values are 'approximate' and 'numerical'"
+                "allowed values are '', 'approximate', or 'numerical'"
             )
             raise ValueError(msg)
 
-        super().__init__(_model_parameters(model), n, xe, verbose)
+        super().__init__(_model_parameters(model, name), n, xe, verbose)
 
         if self._ndim == 1:
             self._xe_shape = (len(self.xe),)
@@ -1678,10 +1688,10 @@ class Template(BinnedCost):
             where D is the number of histogram axes, then the last dimension must have
             two elements and is interpreted as pairs of sum of weights and sum of
             weights squared. Callables must return the model cdf evaluated as xe.
-        name : collection of str, optional
+        name : sequence of str or None, optional
             Optional name for the yield of each template and the parameter of each model
             (in order). Must have the same length as there are templates and model
-            parameters in templates_or_model.
+            parameters in templates_or_model. Default is None.
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and
             negative log-likelihood value.
@@ -1723,7 +1733,7 @@ class Template(BinnedCost):
                 self._model_data.append((t1, t2))
                 annotated[f"x{i}"] = (0.0, np.inf)
             elif isinstance(t, Model):
-                ann = _model_parameters(t)
+                ann = _model_parameters(t, None)
                 npar = len(ann)
                 self._model_data.append((t, npar))
                 for k in ann:
@@ -1900,6 +1910,7 @@ class BinnedNLL(BinnedCostWithModel):
         verbose: int = 0,
         grad: Optional[ModelGradient] = None,
         use_pdf: str = "",
+        name: Optional[Sequence[str]] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1924,12 +1935,26 @@ class BinnedNLL(BinnedCostWithModel):
         verbose : int, optional
             Verbosity level. 0: is no output (default).
             1: print current args and negative log-likelihood value.
-        grad: callable
-            TODO
-        use_pdf: str
-            TODO
+        grad: callable or None, optional
+            Optionally pass the gradient of the cdf (Default is None). Has the same
+            calling signature like the cdf, but must return an array with the shape (K,
+            N), where N is the number of data points and K is the number of parameters.
+            The gradient can be used by Minuit to improve or speed up convergence.
+        use_pdf: str, optional
+            Either "", "numerical", or "approximate" (Default is ""). If the model cdf
+            is not available, but the model pdf is, this option can be set to
+            "numerical" or "approximate" to compute the integral of the pdf over the bin
+            patch. The option "numerical" uses numerical integration, which is accurate
+            but computationally expensive and only supported for 1D histograms. The
+            option "approximate" uses the zero-order approximation of evaluating the pdf
+            at the bin center, multiplied with the bin area. This is fast and works in
+            higher dimensions, but can lead to biased results if the curvature of the
+            pdf inside the bin is significant.
+        name : sequence of str or None, optional
+            Optional names for each parameter of the model (in order). Must have the
+            same length as there are model parameters. Default is None.
         """
-        super().__init__(n, xe, cdf, verbose, grad, use_pdf)
+        super().__init__(n, xe, cdf, verbose, grad, use_pdf, name)
 
     def _pred(self, args: Sequence[float]) -> NDArray:
         # must return array of full length, mask not applied yet
@@ -2003,6 +2028,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         verbose: int = 0,
         grad: Optional[ModelGradient] = None,
         use_pdf: str = "",
+        name: Optional[Sequence[str]] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -2025,12 +2051,26 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         verbose : int, optional
             Verbosity level. 0: is no output (default). 1: print current args and
             negative log-likelihood value.
-        grad : callable, optional
-            TODO
-        use_pdf : str, optional
-            TODO
+        grad: callable or None, optional
+            Optionally pass the gradient of the cdf (Default is None). Has the same
+            calling signature like the cdf, but must return an array with the shape (K,
+            N), where N is the number of data points and K is the number of parameters.
+            The gradient can be used by Minuit to improve or speed up convergence.
+        use_pdf: str, optional
+            Either "", "numerical", or "approximate". If the model cdf is not available,
+            but the model pdf is, this option can be set to "numerical" or "approximate"
+            to compute the integral of the pdf over the bin patch. The option
+            "numerical" uses numerical integration, which is accurate but
+            computationally expensive and only supported for 1D histograms. The option
+            "approximate" uses the zero-order approximation of evaluating the pdf at the
+            bin center, multiplied with the bin area. This is fast and works in higher
+            dimensions, but can lead to biased results if the curvature of the pdf
+            inside the bin is significant.
+        name : sequence of str or None, optional
+            Optional names for each parameter of the model (in order). Must have the
+            same length as there are model parameters. Default is None.
         """
-        super().__init__(n, xe, scaled_cdf, verbose, grad, use_pdf)
+        super().__init__(n, xe, scaled_cdf, verbose, grad, use_pdf, name)
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
@@ -2146,9 +2186,11 @@ class LeastSquares(MaskedCostWithPulls):
         y: ArrayLike,
         yerror: ArrayLike,
         model: Model,
+        *,
         loss: Union[str, LossFunction] = "linear",
         verbose: int = 0,
         grad: Optional[ModelGradient] = None,
+        name: Optional[Sequence[str]] = None,
     ):
         """
         Initialize cost function with data and model.
@@ -2202,7 +2244,7 @@ class LeastSquares(MaskedCostWithPulls):
 
         x = np.atleast_2d(x)
         data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
-        super().__init__(_model_parameters(self._model), data, verbose)
+        super().__init__(_model_parameters(model, name), data, verbose)
 
     def _ndata(self):
         return len(self._masked)
@@ -2492,12 +2534,20 @@ def _shape_from_xe(xe):
     return (len(xe) - 1,)
 
 
-def _model_parameters(model):
+def _model_parameters(model, name):
     # strip first argument from model
     ann = describe(model, annotations=True)
     args = iter(ann)
     next(args)
-    return {k: ann[k] for k in args}
+    params = {k: ann[k] for k in args}
+    if name:
+        if len(params) == len(name):
+            params = {n: att for (n, att) in zip(name, params.values())}
+        elif len(params) > 0:
+            raise ValueError("length of name does not match number of model parameters")
+        else:
+            params = {n: None for n in name}
+    return params
 
 
 _deprecated_content = {
