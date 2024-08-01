@@ -23,6 +23,9 @@ jobs:
           - os: windows-latest
             python-version: "3.11"
             installs: "numpy>=2.0.0rc1"
+          - os: windows-latest
+            python-version: "3.12"
+            installs: "numpy>=2.0.0rc1 scipy numba matplotlib"
           - os: macos-14
             python-version: "3.9"
             installs: "numpy==1.21.0 scipy matplotlib"
