@@ -23,15 +23,7 @@ def test(session: nox.Session) -> None:
     session.install("-e.[test]")
     session.run("pytest", "-n=auto", *session.posargs, env=ENV)
 
-
-@nox.session(python="3.12")
-def maxtest(session: nox.Session) -> None:
-    """Run the unit and regular tests."""
-    session.install("-e.", "scipy", "matplotlib", "pytest", "pytest-xdist", "--pre")
-    session.run("pytest", "-n=auto", *session.posargs, env=ENV)
-
-
-# --resolution=lowest-direct only works with uv?
+    
 @nox.session(python="3.9", venv_backend="uv")
 def mintest(session: nox.Session) -> None:
     """Run the unit and regular tests."""
@@ -40,12 +32,27 @@ def mintest(session: nox.Session) -> None:
     session.run("pytest", "-n=auto", *session.posargs)
 
 
+@nox.session(python="3.12")
+def maxtest(session: nox.Session) -> None:
+    """Run the unit and regular tests."""
+    session.install("-e.", "scipy", "matplotlib", "pytest", "pytest-xdist", "--pre")
+    session.run("pytest", "-n=auto", *session.posargs, env=ENV)
+
+
 @nox.session(python="pypy3.9")
 def pypy(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.")
     session.install("pytest", "pytest-xdist")
     session.run("pytest", "-n=auto", *session.posargs)
+
+
+@nox.session(python="pypy3.9", venv_backend="uv")
+def pypy(session: nox.Session) -> None:
+    """Run the unit and regular tests."""
+    session.install("-e.")
+    session.install("pytest")
+    session.run("pytest", *session.posargs)
 
 
 # Python-3.12 provides coverage info faster
