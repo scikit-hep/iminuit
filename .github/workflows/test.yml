@@ -25,7 +25,7 @@ jobs:
           #   installs: "numpy>=2.0.0rc1"
           - os: windows-latest
             python-version: "3.12"
-            installs: "numpy>=2.0.0rc1 scipy matplotlib"
+            installs: "numpy<2 scipy matplotlib"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
