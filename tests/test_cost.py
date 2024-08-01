@@ -103,6 +103,10 @@ def pdf_nosig(x, *par):
     return norm_pdf(x, *par)
 
 
+def annotated_pdf(x, mu, sigma: Annotated[float, 0 : np.inf]):
+    return norm_pdf(x, mu, sigma)
+
+
 def cdf(x, mu, sigma):
     return norm_cdf(x, mu, sigma)
 
@@ -259,6 +263,25 @@ def test_UnbinnedNLL_name(unbinned):
     assert m.valid
 
 
+def test_UnbinnedNLL_rename(unbinned):
+    mle, x = unbinned
+
+    cost = UnbinnedNLL(x, annotated_pdf, name=("m", "s"))
+    m = Minuit(cost, m=0, s=1)
+    assert m.limits["m"] == (-np.inf, np.inf)
+    assert m.limits["s"] == (0, np.inf)
+    assert m.parameters == ("m", "s")
+    m.migrad()
+    assert m.valid
+
+
+def test_UnbinnedNLL_name_bad():
+    with pytest.raises(
+        ValueError, match="length of name does not match number of model parameters"
+    ):
+        UnbinnedNLL([1, 2, 3], pdf, name=("mu", "sigma", "foo"))
+
+
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_UnbinnedNLL_2D(use_grad):
     def model(x_y, mux, muy, sx, sy, rho):
@@ -376,14 +399,7 @@ def test_UnbinnedNLL_pickle():
 
 
 def test_UnbinnedNLL_annotated():
-    def model(
-        x: np.ndarray,
-        mu: float,
-        sigma: Annotated[float, 0 : np.inf],
-    ) -> np.ndarray:
-        return norm_pdf(x, mu, sigma)
-
-    c = UnbinnedNLL([], model)
+    c = UnbinnedNLL([], annotated_pdf)
     m = Minuit(c, mu=1, sigma=1.5)
     assert m.limits[0] == (-np.inf, np.inf)
     assert m.limits[1] == (0, np.inf)

@@ -2545,7 +2545,8 @@ def _model_parameters(model, name):
             params = {n: att for (n, att) in zip(name, params.values())}
         elif len(params) > 0:
             raise ValueError("length of name does not match number of model parameters")
-        params = {n: None for n in name}
+        else:
+            params = {n: None for n in name}
     return params
 
 
