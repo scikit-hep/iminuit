@@ -33,11 +33,17 @@ jobs:
             python-version: "3.11"
             installs: "numpy>=2.0.0rc1 numba scipy"
           - os: windows-latest
+            python-version: "3.11"
+            installs: "numpy>=2.0.0rc1 numba scipy matplotlib"
+          - os: windows-latest
             python-version: "3.12"
             installs: "numpy<2"
           - os: windows-latest
             python-version: "3.12"
             installs: "numpy>=2.0.0rc1"
+          - os: windows-latest
+            python-version: "3.11"
+            installs: "numpy>=2.0.0rc1 numba scipy matplotlib"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
