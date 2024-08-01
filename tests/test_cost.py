@@ -1112,8 +1112,8 @@ def test_LeastSquares_3D():
     ref = numerical_cost_gradient(c)
     assert_allclose(c.grad(1, 2), ref(1, 2))
 
-    assert_equal(c.x, (x, y))
-    assert_equal(c.y, z)
+    assert_equal(c.x, (x, y, z))
+    assert_equal(c.y, f)
     assert_equal(c.yerror, fe)
     assert_allclose(c(1.5, 0.2), 0.0)
     assert_allclose(
@@ -1125,8 +1125,8 @@ def test_LeastSquares_3D():
 
     c.y = 2 * z
     assert_equal(c.y, 2 * z)
-    c.x = (y, x)
-    assert_equal(c.x, (y, x))
+    c.x = (y, x, z)
+    assert_equal(c.x, (y, x, z))
 
 
 def test_LeastSquares_bad_input():
@@ -1243,7 +1243,7 @@ def test_LeastSquares_visualize_par_array():
 def test_LeastSquares_visualize_2D():
     pytest.importorskip("matplotlib")
 
-    c = LeastSquares([[1, 2]], [[2, 3]], 0.1, line)
+    c = LeastSquares([[1, 2], [2, 3]], [1, 2], 0.1, line)
 
     with pytest.raises(ValueError, match="not implemented for multi-dimensional"):
         c.visualize((1, 2))

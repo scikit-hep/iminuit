@@ -4,16 +4,18 @@ Types for iminuit.
 These are used by mypy and similar tools.
 """
 
-from typing import Protocol, Optional, List, Union, runtime_checkable, NamedTuple
+from typing import (
+    Protocol,
+    Optional,
+    List,
+    Union,
+    runtime_checkable,
+    NamedTuple,
+    Annotated,
+)
 from numpy.typing import NDArray
 import numpy as np
 import dataclasses
-import sys
-
-if sys.version_info < (3, 9):
-    from typing_extensions import Annotated  # noqa pragma: no cover
-else:
-    from typing import Annotated  # noqa pragma: no cover
 
 
 # Key for ValueView, ErrorView, etc.

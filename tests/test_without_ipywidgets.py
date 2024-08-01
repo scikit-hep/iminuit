@@ -6,6 +6,7 @@ pytest.importorskip("ipywidgets")
 
 
 def test_interactive():
+    pytest.importorskip("matplotlib")
     import iminuit
 
     cost = LeastSquares([1.1, 2.2], [3.3, 4.4], 1, lambda x, a: a * x)
