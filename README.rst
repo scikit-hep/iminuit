@@ -110,6 +110,36 @@ When ``iminuit`` is used with cost functions that are JIT-compiled with `numba`_
 
 More information about this benchmark is given `in the Benchmark section of the documentation <https://scikit-hep.org/iminuit/benchmark.html>`_.
 
+Citation
+--------
+
+If you use iminuit in a scientific work, please cite us. A generic BibTeX entry is::
+
+    @article{iminuit,
+      author={Hans Dembinski and Piti Ongmongkolkul et al.},
+      title={scikit-hep/iminuit},
+      DOI={10.5281/zenodo.3949207},
+      publisher={Zenodo},
+      year={2020},
+      month={Dec},
+      url={https://doi.org/10.5281/zenodo.3949207}
+    }
+
+The DOI and URL in this entry point always to the latest release of iminuit. You can also cite the actual release that you used, please follow the `Zenodo link <https://doi.org/10.5281/zenodo.3949207>`_, which offers entries for common bibliography formats for all iminuit releases.
+
+The recommended scientific reference for the MINUIT algorithms is::
+
+    @article{James:1975dr,
+        author = "James, F. and Roos, M.",
+        title = "{Minuit: A System for Function Minimization and Analysis of the Parameter Errors and Correlations}",
+        reportNumber = "CERN-DD-75-20",
+        doi = "10.1016/0010-4655(75)90039-9",
+        journal = "Comput. Phys. Commun.",
+        volume = "10",
+        pages = "343--367",
+        year = "1975"
+    }
+
 Partner projects
 ----------------
 
@@ -120,9 +150,9 @@ Partner projects
 Versions
 --------
 
-**The current 2.x series has introduced breaking interfaces changes with respect to the 1.x series.**
+The 2.x series has introduced breaking interfaces changes with respect to the 1.x series. There are no plans to introduce further breaking changes.
 
-All interface changes are documented in the `changelog`_ with recommendations how to upgrade. To keep existing scripts running, pin your major iminuit version to <2, i.e. ``pip install 'iminuit<2'`` installs the 1.x series.
+All interface changes from 1.x to 2.x are documented in the `changelog`_ with recommendations how to upgrade. To keep old scripts running, pin your major iminuit version to <2: the command ``pip install 'iminuit<2'`` installs the 1.x series.
 
 .. _changelog: https://scikit-hep.org/iminuit/changelog.html
 .. _tutorials: https://scikit-hep.org/iminuit/tutorials.html

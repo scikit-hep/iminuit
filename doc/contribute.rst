@@ -48,12 +48,12 @@ You have the source code now, but you also want to build and test. We recommend 
 
 This installs your version of ``iminuit`` locally and all the dependencies needed to run the tests, and then runs the tests.
 
-To generate a coverage report you do:
+Generate a coverage report:
 
 .. code-block:: bash
 
     nox -s cov
-    <your-web-browser> htmlcov/index.htm
+    <your-web-browser> build/htmlcov/index.htm
 
 Build the docs:
 
