@@ -7,8 +7,7 @@ name = "iminuit"
 description = "Jupyter-friendly Python frontend for MINUIT2 in C++"
 version = "2.28.0"
 maintainers = [
-    { name = "Hans Dembinski" },
-    { email = "hans.dembinski@gmail.com" },
+    { name = "Hans Dembinski", email = "hans.dembinski@gmail.com" },
 ]
 readme = "README.rst"
 requires-python = ">=3.9"
