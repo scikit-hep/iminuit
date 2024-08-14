@@ -112,7 +112,7 @@ from typing import (
     cast,
 )
 import warnings
-from ._deprecated import deprecated_parameter, deprecated
+from ._deprecated import deprecated_parameter
 
 __all__ = [
     "CHISQUARE",
@@ -160,71 +160,6 @@ def _replace_none(x, replacement):
     if x is None:
         return replacement
     return x
-
-
-@deprecated("The class is deprecated and will be removed without replacement")
-class BohmZechTransform:
-    """
-    Apply Bohm-Zech transform.
-
-    See Bohm and Zech, NIMA 748 (2014) 1-6.
-
-    :meta private:
-    """
-
-    __slots__ = "_obs", "_scale"
-
-    _obs: NDArray
-    _scale: NDArray
-
-    def __init__(self, val: ArrayLike, var: ArrayLike):
-        """
-        Initialize transformer with data value and variance.
-
-        Parameters
-        ----------
-        val : array-like
-            Observed values.
-        var : array-like
-            Estimated variance of observed values.
-        """
-        val, var = np.atleast_1d(val, var)
-
-        self._scale = np.ones_like(val)
-        np.divide(val, var, out=self._scale, where=var > 0)
-        self._obs = val * self._scale
-
-    @overload
-    def __call__(
-        self, val: ArrayLike
-    ) -> Tuple[NDArray, NDArray]: ...  # pragma: no cover
-
-    @overload
-    def __call__(
-        self, val: ArrayLike, var: ArrayLike
-    ) -> Tuple[NDArray, NDArray, NDArray]: ...  # pragma: no cover
-
-    def __call__(self, val, var=None):
-        """
-        Return precomputed scaled data and scaled prediction.
-
-        Parameters
-        ----------
-        val : array-like
-            Predicted values.
-        var : array-like, optional
-            Predicted variance.
-
-        Returns
-        -------
-        (obs, pred) or (obs, pred, pred_var)
-        """
-        val = np.atleast_1d(val)
-        s = self._scale
-        if var is None:
-            return self._obs, val * s
-        var = np.atleast_1d(var)
-        return self._obs, val * s, var * s**2
 
 
 def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:
@@ -324,7 +259,7 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     which helps to maximise the numerical accuracy for Minuit.
     """
     n, mu = np.atleast_1d(n, mu)
-    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
+    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)) + mu - n)
 
 
 def _poisson_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
@@ -1296,6 +1231,25 @@ class BinnedCost(MaskedCostWithPulls):
     Histograms filled with weights are supported by applying the Bohm-Zech transform.
     See Bohm and Zech, NIMA 748 (2014) 1-6.
 
+    The idea of the Bohm and Zech transform is to use the likelihood for Poisson
+    distributed data also for weighted data. They match the first and second moment of
+    the compound Poisson distribution for weighted data with a single Poisson
+    distribution with a scaling factor s, that is multiplied with the predicted
+    expectation and the observation.
+
+    This scaling factor is computed as s = sum(w) / sum(w^2). Instead of the normal
+    likelihood L(O; E), where O is the observed count and E is the expected count, we
+    now compute L(sum(w) * s; E * s).
+
+    When weights are positive and negative, sum(w) can be negative. In that case, s as
+    defined above becomes negative and thus E * s, but we cannot compute L with E * s <
+    0. This case is not discussed in the Bohm & Zech paper. Our ad hoc solution is as
+    follows. It provides reasonable results, but the fit results will be biased if the
+    sum(w) goes negative.
+
+    We compute s = |sum(w)| / sum(w^2), which is then always positive. For sum(w) = 0 we
+    assign s = 1. We compute L(O' * s; E * s) if sum(w) > 0 and otherwise L(0; E * s).
+
     :meta private:
     """
 
@@ -1443,9 +1397,10 @@ class BinnedCost(MaskedCostWithPulls):
             return
         val = n[..., 0]
         var = n[..., 1]
+
         self._bohm_zech_scale = np.ones_like(val)
-        np.divide(val, var, out=self._bohm_zech_scale, where=var > 0)
-        self._bohm_zech_n = val * self._bohm_zech_scale
+        np.divide(np.abs(val), var, out=self._bohm_zech_scale, where=var > 0)
+        self._bohm_zech_n = np.maximum(val * self._bohm_zech_scale, 0)
 
     def _update_cache(self):
         super()._update_cache()
