@@ -61,6 +61,7 @@ repos:
   hooks:
   - id: mypy
     additional_dependencies: [numpy]
+    files: "src"
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
   rev: 0.29.1
