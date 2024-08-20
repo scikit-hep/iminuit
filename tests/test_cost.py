@@ -13,7 +13,7 @@ from iminuit.cost import (
     Constant,
     NormalConstraint,
     Template,
-    multinominal_chi2,
+    multinomial_chi2,
     PerformanceWarning,
 )
 from iminuit.util import describe
@@ -648,6 +648,32 @@ def test_BinnedNLL_weighted(use_grad):
     assert m2.valid
     assert m2.values[0] == pytest.approx(1, rel=1e-2)
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+    if use_grad:
+        assert m2.ngrad > 0
+    else:
+        assert m2.ngrad == 0
+
+
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL_negative_weights(use_grad):
+    n = [48.57881659, 7.39393075, -1.6026582, 2.56719152, 1.03007896]
+    vn = [242.13921373, 46.13228182, 15.26273872, 6.26334277, 1.52360132]
+    xe = [0.0, 1.41453733, 2.82907465, 4.24361198, 5.6581493, 7.07268663]
+
+    w = np.transpose((n, vn))
+    c = BinnedNLL(w, xe, expon_cdf, grad=numerical_model_gradient(expon_cdf))
+
+    if use_grad:
+        ref = numerical_cost_gradient(c)
+        assert_allclose(c.grad(1), ref(1))
+        assert_allclose(c.grad(12), ref(12))
+
+    m2 = Minuit(c, 1, grad=use_grad)
+    m2.limits = (0, None)
+    m2.migrad()
+    assert m2.valid
+    assert m2.values[0] == pytest.approx(1.3, abs=0.05)
 
     if use_grad:
         assert m2.ngrad > 0
@@ -1774,16 +1800,16 @@ if hasattr(np, "float128"):  # not available on all platforms
     dtypes_to_test.append(np.float128)
 
 
-def test_multinominal_chi2():
+def test_multinomial_chi2():
     zero = np.array(0)
     one = np.array(1)
 
-    assert multinominal_chi2(zero, zero) == 0
-    assert multinominal_chi2(zero, one) == 0
-    assert multinominal_chi2(one, zero) == pytest.approx(1416, abs=1)
+    assert multinomial_chi2(zero, zero) == 0
+    assert multinomial_chi2(zero, one) == 0
+    assert multinomial_chi2(one, zero) == 0
     n = np.array([(0.0, 0.0)])
-    assert_allclose(multinominal_chi2(n, zero), 0)
-    assert_allclose(multinominal_chi2(n, one), 0)
+    assert_allclose(multinomial_chi2(n, zero), 0)
+    assert_allclose(multinomial_chi2(n, one), 0)
 
 
 @pytest.mark.skipif(
