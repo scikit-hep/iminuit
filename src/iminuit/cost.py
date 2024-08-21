@@ -1288,7 +1288,8 @@ class BinnedCost(MaskedCostWithPulls):
     This works, because this extension has the right gradient. The gradient should be
     equal to hat of the quadratic function s * (w - mu)**2/mu', where mu'=mu but fixed
     during the gradient computation, see D. Dembinski, M. Schmelling, R. Waldi. The
-    minimum of this quadratic function yields an unbiased estimate of mu, even if some w are negative. Since the quadratic function and the original function have the same
+    minimum of this quadratic function yields an unbiased estimate of mu, even if some w
+    are negative. Since the quadratic function and the original function have the same
     gradient, the minima of both functions are the same, and the original function also
     yields an unbiased estimate.
 
@@ -1348,8 +1349,8 @@ class BinnedCost(MaskedCostWithPulls):
                     "xe must be longer by one element along each dimension"
                 )
 
-        # this will be set propery when init of base class is called,
-        # which calls our _update_cache() override
+        # _bohm_zech_s will be set properly when init of base class
+        # is called, which in turn calls our _update_cache() override
         self._bohm_zech_s = np.zeros(0) if is_weighted else None
         super().__init__(parameters, n, verbose)
 
