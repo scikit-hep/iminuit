@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # optional, ensure standard is supported
 set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
 
+set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
 file(GLOB SOURCES_A "src/*.cpp")
