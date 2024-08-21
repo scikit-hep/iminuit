@@ -1446,9 +1446,14 @@ class BinnedCost(MaskedCostWithPulls):
         if self._bohm_zech_s is not None:
             val = n[..., 0]
             var = n[..., 1]
-            self._bohm_zech_s = np.ones_like(val)
-            np.divide(np.abs(val), var, out=self._bohm_zech_s, where=var > 0)
-            self._bohm_zech_n = val * self._bohm_zech_s
+            s = np.zeros_like(val)
+            ma = var > 0
+            s[ma] = np.abs(val[ma]) / var[ma]
+            # Use median of s from bins with entries to bins which have zero entries.
+            # This is arbitrary, but still better than other arbitrary choices.
+            s[~ma] = np.median(s[ma])
+            self._bohm_zech_s = s
+            self._bohm_zech_n = val * s
         else:
             self._bohm_zech_n = n
 
