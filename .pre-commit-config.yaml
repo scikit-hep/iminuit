@@ -45,6 +45,7 @@ repos:
   rev: v18.1.8
   hooks:
   - id: clang-format
+    files: "src"
 
 # CMake formatting
 - repo: https://github.com/cheshirekow/cmake-format-precommit
@@ -62,6 +63,14 @@ repos:
   - id: mypy
     additional_dependencies: [numpy]
     files: "src"
+
+# Clear Jupyter notebook output and remove empty cells
+# Override this by adding "keep_output": true to "metadata" block
+- repo: https://github.com/kynan/nbstripout
+  rev: 0.7.1
+  hooks:
+  - id: nbstripout
+    args: [--drop-empty-cells]
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
   rev: 0.29.1

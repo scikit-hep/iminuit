@@ -25,7 +25,6 @@ Important for most users are only the first two entries.
     notebooks/roofit
     notebooks/external_minimizer
     notebooks/generic_least_squares
-    notebooks/cython
 
 RooFit tutorials
 ----------------
