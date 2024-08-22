@@ -11,6 +11,7 @@ The following studies explore different aspects of the library, including its pe
     :maxdepth: 1
 
     notebooks/binned_vs_unbinned
+    notebooks/weighted_histograms
     notebooks/hesse_and_minos
     notebooks/numba
     notebooks/automatic_differentiation

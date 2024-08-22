@@ -106,19 +106,18 @@ from typing import (
     Any,
     Iterable,
     Optional,
-    overload,
     TypeVar,
     Callable,
     cast,
 )
 import warnings
-from ._deprecated import deprecated_parameter, deprecated
+from ._deprecated import deprecated_parameter
 
 __all__ = [
     "CHISQUARE",
     "NEGATIVE_LOG_LIKELIHOOD",
     "chi2",
-    "multinominal_chi2",
+    "multinomial_chi2",
     "poisson_chi2",
     "template_chi2_jsc",
     "template_chi2_da",
@@ -142,13 +141,30 @@ NEGATIVE_LOG_LIKELIHOOD = 0.5
 _TINY_FLOAT = np.finfo(float).tiny
 
 
-def _safe_log(x):
-    # guard against x = 0
-    return np.log(x + _TINY_FLOAT)
+def log_or_zero(x):
+    """
+    Evaluate to log(x) for x > 0 and to 0 otherwise.
+
+    Parameters
+    ----------
+    x : array
+        Argument.
+
+    Returns
+    -------
+    array
+        Elementwise contains log(x) for x > 0 and zero otherwise.
+    """
+    # return 0 for x <= 0
+    r = np.zeros_like(x)
+    ma = x > 0
+    r[ma] = np.log(x[ma])
+    return r
 
 
 def _unbinned_nll(x):
-    return -np.sum(_safe_log(x))
+    # sorting makes sum more accurate, protect against x = 0
+    return -np.sum(np.sort(np.log(x + _TINY_FLOAT)))
 
 
 def _z_squared(y, ye, ym):
@@ -162,71 +178,6 @@ def _replace_none(x, replacement):
     return x
 
 
-@deprecated("The class is deprecated and will be removed without replacement")
-class BohmZechTransform:
-    """
-    Apply Bohm-Zech transform.
-
-    See Bohm and Zech, NIMA 748 (2014) 1-6.
-
-    :meta private:
-    """
-
-    __slots__ = "_obs", "_scale"
-
-    _obs: NDArray
-    _scale: NDArray
-
-    def __init__(self, val: ArrayLike, var: ArrayLike):
-        """
-        Initialize transformer with data value and variance.
-
-        Parameters
-        ----------
-        val : array-like
-            Observed values.
-        var : array-like
-            Estimated variance of observed values.
-        """
-        val, var = np.atleast_1d(val, var)
-
-        self._scale = np.ones_like(val)
-        np.divide(val, var, out=self._scale, where=var > 0)
-        self._obs = val * self._scale
-
-    @overload
-    def __call__(
-        self, val: ArrayLike
-    ) -> Tuple[NDArray, NDArray]: ...  # pragma: no cover
-
-    @overload
-    def __call__(
-        self, val: ArrayLike, var: ArrayLike
-    ) -> Tuple[NDArray, NDArray, NDArray]: ...  # pragma: no cover
-
-    def __call__(self, val, var=None):
-        """
-        Return precomputed scaled data and scaled prediction.
-
-        Parameters
-        ----------
-        val : array-like
-            Predicted values.
-        var : array-like, optional
-            Predicted variance.
-
-        Returns
-        -------
-        (obs, pred) or (obs, pred, pred_var)
-        """
-        val = np.atleast_1d(val)
-        s = self._scale
-        if var is None:
-            return self._obs, val * s
-        var = np.atleast_1d(var)
-        return self._obs, val * s, var * s**2
-
-
 def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:
     """
     Compute (potentially) chi2-distributed cost.
@@ -237,24 +188,47 @@ def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:
 
     Parameters
     ----------
-    y : array-like
+    y : array-like with shape (N,)
         Observed values.
-    ye : array-like
+    ye : array-like with shape (N,)
         Uncertainties of values.
-    ym : array-like
+    ym : array-like with shape (N,)
         Expected values.
 
     Returns
     -------
     float
-        Const function value.
+        Value of cost function.
     """
     y, ye, ym = np.atleast_1d(y, ye, ym)
+    assert y.ndim == 1
     return np.sum(_z_squared(y, ye, ym))
 
 
-def _chi2_grad(y: NDArray, ye: NDArray, ym: NDArray, ymg: NDArray) -> NDArray:
-    return -2 * np.sum((y - ym) * ymg * ye**-2, axis=1)
+def _chi2_grad(y: ArrayLike, ye: ArrayLike, ym: ArrayLike, gym: ArrayLike) -> NDArray:
+    """
+    Compute gradient of :func:`chi2`.
+
+    Parameters
+    ----------
+    y : array-like  with shape (N,)
+        Observed values.
+    ye : array-like  with shape (N,)
+        Uncertainties of values.
+    ym : array-like with shape (N,)
+        Expected values.
+    gym : array-like with shape (K, N)
+        Gradient of ym with respect to K model parameters.
+
+    Returns
+    -------
+    array with shape (K,)
+        Gradient of cost function with respect to model parameters.
+    """
+    y, ye, ym, gym = np.atleast_1d(y, ye, ym, gym)
+    assert y.ndim == 1
+    assert gym.ndim == 2
+    return -2 * np.sum((y - ym) * gym * ye**-2, axis=1)
 
 
 def _soft_l1_cost(y: NDArray, ye: NDArray, ym: NDArray) -> float:
@@ -262,15 +236,16 @@ def _soft_l1_cost(y: NDArray, ye: NDArray, ym: NDArray) -> float:
     return 2 * np.sum(np.sqrt(1 + z_sqr) - 1)
 
 
-def _soft_l1_cost_grad(y: NDArray, ye: NDArray, ym: NDArray, ymg: NDArray) -> NDArray:
+def _soft_l1_cost_grad(y: NDArray, ye: NDArray, ym: NDArray, gym: NDArray) -> NDArray:
     inv_ye = 1 / ye
     z = (y - ym) * inv_ye
-    return -2 * np.sum(z * ymg * inv_ye * (1 + z**2) ** -0.5, axis=1)
+    f = (1 + z**2) ** -0.5
+    return -2 * np.sum(z * inv_ye * f * gym, axis=tuple(range(1, gym.ndim)))
 
 
-def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
+def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
-    Compute asymptotically chi2-distributed cost for binomially-distributed data.
+    Compute asymptotically chi2-distributed cost for Poisson-distributed data.
 
     See Baker & Cousins, NIM 221 (1984) 437-442.
 
@@ -288,21 +263,21 @@ def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:
 
     Notes
     -----
-    The implementation makes the result asymptotically chi2-distributed and
-    keeps the sum small near the minimum, which helps to maximise the numerical
-    accuracy for Minuit.
+    The implementation makes the result asymptotically chi2-distributed,
+    which helps to maximise the numerical accuracy for Minuit.
     """
     n, mu = np.atleast_1d(n, mu)
-    return 2 * np.sum(n * (_safe_log(n) - _safe_log(mu)))
+    return 2 * np.sum(n * (log_or_zero(n) - log_or_zero(mu)) + mu - n)
 
 
-def _multinominal_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
-    return -2 * np.sum(n * gmu / mu, axis=tuple(range(1, gmu.ndim)))
+def _poisson_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
+    assert gmu.ndim == 2
+    return 2 * np.sum((1.0 - n / mu) * gmu, axis=1)
 
 
-def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
+def multinomial_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     """
-    Compute asymptotically chi2-distributed cost for Poisson-distributed data.
+    Compute asymptotically chi2-distributed cost for multinomially-distributed data.
 
     See Baker & Cousins, NIM 221 (1984) 437-442.
 
@@ -324,11 +299,12 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     which helps to maximise the numerical accuracy for Minuit.
     """
     n, mu = np.atleast_1d(n, mu)
-    return 2 * np.sum(mu - n + n * (_safe_log(n) - _safe_log(mu)))
+    return 2 * np.sum(n * (log_or_zero(n) - log_or_zero(mu)))
 
 
-def _poisson_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
-    return 2 * np.sum(gmu * (1.0 - n / mu), axis=tuple(range(1, gmu.ndim)))
+def _multinomial_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
+    assert gmu.ndim == 2
+    return -2 * np.sum(n / mu * gmu, axis=1)
 
 
 def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
@@ -443,23 +419,21 @@ def template_nll_asy(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
 # precision. Fall back to plain numpy for float128 which is not currently supported
 # by numba.
 try:
-    from numba import njit as jit
+    from numba import njit
     from numba.extending import overload as nb_overload
 
-    @nb_overload(_safe_log, inline="always")
-    def _ol_safe_log(x):
-        return _safe_log  # pragma: no cover
+    jit = njit(nogil=True, cache=True, error_model="numpy")
+
+    @nb_overload(log_or_zero, inline="always")
+    def _ol_log_or_zero(x):
+        return log_or_zero  # pragma: no cover
 
     @nb_overload(_z_squared, inline="always")
     def _ol_z_squared(y, ye, ym):
         return _z_squared  # pragma: no cover
 
     _unbinned_nll_np = _unbinned_nll
-    _unbinned_nll_nb = jit(
-        nogil=True,
-        cache=True,
-        error_model="numpy",
-    )(_unbinned_nll_np)
+    _unbinned_nll_nb = jit(_unbinned_nll_np)
 
     def _unbinned_nll(x):
         if x.dtype in (np.float32, np.float64):
@@ -467,28 +441,20 @@ try:
         # fallback to numpy for float128
         return _unbinned_nll_np(x)
 
-    _multinominal_chi2_np = multinominal_chi2
-    _multinominal_chi2_nb = jit(
-        nogil=True,
-        cache=True,
-        error_model="numpy",
-    )(_multinominal_chi2_np)
+    _multinomial_chi2_np = multinomial_chi2
+    _multinomial_chi2_nb = jit(_multinomial_chi2_np)
 
-    def multinominal_chi2(n: ArrayLike, mu: ArrayLike) -> float:  # noqa
+    def multinomial_chi2(n: ArrayLike, mu: ArrayLike) -> float:  # noqa
         n, mu = np.atleast_1d(n, mu)
         if mu.dtype in (np.float32, np.float64):
-            return _multinominal_chi2_nb(n, mu)
+            return _multinomial_chi2_nb(n, mu)
         # fallback to numpy for float128
-        return _multinominal_chi2_np(n, mu)
+        return _multinomial_chi2_np(n, mu)
 
-    multinominal_chi2.__doc__ = _multinominal_chi2_np.__doc__
+    multinomial_chi2.__doc__ = _multinomial_chi2_np.__doc__
 
     _poisson_chi2_np = poisson_chi2
-    _poisson_chi2_nb = jit(
-        nogil=True,
-        cache=True,
-        error_model="numpy",
-    )(_poisson_chi2_np)
+    _poisson_chi2_nb = jit(_poisson_chi2_np)
 
     def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:  # noqa
         n, mu = np.atleast_1d(n, mu)
@@ -500,11 +466,7 @@ try:
     poisson_chi2.__doc__ = _poisson_chi2_np.__doc__
 
     _chi2_np = chi2
-    _chi2_nb = jit(
-        nogil=True,
-        cache=True,
-        error_model="numpy",
-    )(_chi2_np)
+    _chi2_nb = jit(_chi2_np)
 
     def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:  # noqa
         y, ye, ym = np.atleast_1d(y, ye, ym)
@@ -516,11 +478,7 @@ try:
     chi2.__doc__ = _chi2_np.__doc__
 
     _soft_l1_cost_np = _soft_l1_cost
-    _soft_l1_cost_nb = jit(
-        nogil=True,
-        cache=True,
-        error_model="numpy",
-    )(_soft_l1_cost_np)
+    _soft_l1_cost_nb = jit(_soft_l1_cost_np)
 
     def _soft_l1_cost(y: NDArray, ye: NDArray, ym: NDArray) -> float:
         if ym.dtype in (np.float32, np.float64):
@@ -1294,17 +1252,62 @@ class BinnedCost(MaskedCostWithPulls):
     Base class for binned cost functions to support histograms filled with weights.
 
     Histograms filled with weights are supported by applying the Bohm-Zech transform.
-    See Bohm and Zech, NIMA 748 (2014) 1-6.
+
+    The Bohm-Zech approach was further generalized to handle sums of weights which are
+    negative. See Baker & Cousins, NIM 221 (1984) 437-442; Bohm and Zech, NIMA 748
+    (2014) 1-6; H. Dembinski, M. Schmelling, R. Waldi, Nucl.Instrum.Meth.A 940 (2019)
+    135-141.
+
+    Bohm and Zech use the scaled Poisson distribution (SPD) as an approximate way to
+    handle sums of weights instead of Poisson counts. This approach also works for
+    multinomial distributions. The idea of the Bohm and Zech is to use the likelihood
+    for Poisson distributed data also for weighted data. They show that one can match
+    the first and second moment of the compound Poisson distribution for weighted data
+    with a single Poisson distribution with a scaling factor s, that is multiplied with
+    the predicted expectation and the observation.
+
+    This scaling factor is computed as s = sum(wi) / sum(wi**2), wi are the weights in
+    the current bin. Instead of the Baker & Cousins transformed log-likelihood
+    l(n; mu) for Poisson-distributed data, where n is the observed count and mu is the
+    expectation, we now compute l(sum(w) * s; mu * s), this can be further simplified:
+
+    l(w * s, mu * s) = 2 * [(w * s) * (log(w * s) - log(mu * s)) - s * mu + s * w]
+                     = 2 * s * [w * (log(w) - log(mu)) - mu + w]
+                     = s * l(w, mu)
+
+    For multinomially-distributed data and s = 1, sum(w-mu) = 0, which is why these
+    terms can be omitted in the standard calculation without weights, but in case of
+    weighted counts, sum(s * (w - m)) != 0 and the terms must be kept.
+
+    The original formulas from Bohm and Zech are only applicable if w >= 0 (with the
+    extra condition that w * log(w) evaluates to 0 for w = 0). One can generalize the
+    formula to w < 0, which is relevant in practice for example in fits of sweighted
+    samples, by computing s = abs(sum(wi)) / sum(wi ** 2) and replacing w * log(w) with
+    0 for w <= 0.
+
+    This works, because this extension has the right gradient. The gradient should be
+    equal to hat of the quadratic function s * (w - mu)**2/mu', where mu'=mu but fixed
+    during the gradient computation, see D. Dembinski, M. Schmelling, R. Waldi. The
+    minimum of this quadratic function yields an unbiased estimate of mu, even if some w
+    are negative. Since the quadratic function and the original function have the same
+    gradient, the minima of both functions are the same, and the original function also
+    yields an unbiased estimate.
+
+    The gradient is not affected by the particular choice of how to handle w * log(w)
+    with w < 0, since this term drops out in the computation of the gradient. Other
+    choices are possible. Our goal was to select an option which keeps the function
+    minimum approximately chi-square distributed, although that property tends to
+    dissolve when negative weights are involved. The minimum can even become negative.
 
     :meta private:
     """
 
-    __slots__ = "_xe", "_ndim", "_bohm_zech_scale", "_bohm_zech_n"
+    __slots__ = "_xe", "_ndim", "_bohm_zech_n", "_bohm_zech_s"
 
     _xe: Union[NDArray, Tuple[NDArray, ...]]
     _ndim: int
-    _bohm_zech_scale: Optional[NDArray]
-    _bohm_zech_n: Optional[NDArray]
+    _bohm_zech_n: NDArray
+    _bohm_zech_s: Optional[NDArray]
 
     n = MaskedCost.data
 
@@ -1346,9 +1349,9 @@ class BinnedCost(MaskedCostWithPulls):
                     "xe must be longer by one element along each dimension"
                 )
 
-        self._bohm_zech_scale = None
-        self._bohm_zech_n = None
-        self._set_bohm_zech(n, is_weighted)
+        # _bohm_zech_s will be set properly when init of base class
+        # is called, which in turn calls our _update_cache() override
+        self._bohm_zech_s = np.zeros(0) if is_weighted else None
         super().__init__(parameters, n, verbose)
 
     def prediction(
@@ -1419,7 +1422,7 @@ class BinnedCost(MaskedCostWithPulls):
 
     def _n_err(self) -> Tuple[NDArray, NDArray]:
         d = self.data
-        if self._bohm_zech_scale is None:
+        if self._bohm_zech_s is None:
             n = d.copy()
             err = d**0.5
         else:
@@ -1438,46 +1441,48 @@ class BinnedCost(MaskedCostWithPulls):
         n, ne = self._n_err()
         return (n - mu) / ne
 
-    def _set_bohm_zech(self, n: NDArray, is_weighted: bool):
-        if not is_weighted:
-            return
-        val = n[..., 0]
-        var = n[..., 1]
-        self._bohm_zech_scale = np.ones_like(val)
-        np.divide(val, var, out=self._bohm_zech_scale, where=var > 0)
-        self._bohm_zech_n = val * self._bohm_zech_scale
-
     def _update_cache(self):
         super()._update_cache()
-        self._set_bohm_zech(self._masked, self._bohm_zech_scale is not None)
+        n = self._masked
+        if self._bohm_zech_s is not None:
+            val = n[..., 0]
+            var = n[..., 1]
+            s = np.zeros_like(val)
+            ma = var > 0
+            s[ma] = np.abs(val[ma]) / var[ma]
+            # Use median of s from bins with entries to bins which have zero entries.
+            # This is arbitrary, but still better than other arbitrary choices.
+            s[~ma] = np.median(s[ma])
+            self._bohm_zech_s = s
+            self._bohm_zech_n = val * s
+        else:
+            self._bohm_zech_n = n
 
-    @overload
-    def _transformed(
-        self, val: NDArray
-    ) -> Tuple[NDArray, NDArray]: ...  # pragma: no cover
-
-    @overload
-    def _transformed(
-        self, val: NDArray, var: NDArray
-    ) -> Tuple[NDArray, NDArray, NDArray]: ...  # pragma: no cover
-
-    def _transformed(self, val, var=None):
-        s = self._bohm_zech_scale
+    def _transformed(self, val: NDArray) -> Tuple[NDArray, NDArray]:
+        s = self._bohm_zech_s
         ma = self.mask
         if ma is not None:
             val = val[ma]
-            if var is not None:
-                var = var[ma]
+        n = self._bohm_zech_n
         if s is None:
-            if var is None:
-                return self._masked, val
-            return self._masked, val, var
-        if var is None:
-            return self._bohm_zech_n, val * s
-        return self._bohm_zech_n, val * s, var * s**2
+            return n, val
+        return n, val * s
+
+    def _transformed2(
+        self, val: NDArray, var: NDArray
+    ) -> Tuple[NDArray, NDArray, NDArray]:
+        s = self._bohm_zech_s
+        ma = self.mask
+        if ma is not None:
+            val = val[ma]
+            var = var[ma]
+        n = self._bohm_zech_n
+        if s is None:
+            return n, val, var
+        return n, val * s, var * s**2
 
     def _counts(self):
-        if self._bohm_zech_scale is None:
+        if self._bohm_zech_s is None:
             return self._masked
         return self._masked[..., 0]
 
@@ -1813,9 +1818,9 @@ class Template(BinnedCost):
 
     def _value(self, args: Sequence[float]) -> float:
         mu, mu_var = self._pred(args)
-        n, mu, mu_var = self._transformed(mu, mu_var)
+        n, mu, mu_var = self._transformed2(mu, mu_var)
         ma = mu > 0
-        return self._impl(n[ma], mu[ma], mu_var[ma])
+        return self._impl(n[ma].reshape(-1), mu[ma].reshape(-1), mu_var[ma].reshape(-1))
 
     def _grad(self, args: Sequence[float]) -> NDArray:
         raise NotImplementedError  # pragma: no cover
@@ -1891,10 +1896,20 @@ class BinnedNLL(BinnedCostWithModel):
 
     The cost function has a minimum value that is asymptotically chi2-distributed. It is
     constructed from the log-likelihood assuming a multivariate-normal distribution and
-    using the saturated model as a reference.
+    using the saturated model as a reference, see :func:`multinomial_chi2` for details.
+
+    When this class is used with weighted data, we use the Bohm-Zech transform for
+    Poisson-distributed data and the :func:`poisson_chi2` cost function, because
+    :func:`multinomial_chi2` yields biased results for weighted data. The
+    reasoning for this choice is that :func:`multinomial_chi2` and :func:`poisson_chi2`
+    yield the same result for a model which predicts probabilities and expected counts
+    are computed by multiplying the probability with the total number of counts. Thus we
+    can derive :func:`multinomial_chi2` as a special case of :func:`poisson_chi2` in
+    case of unweighted data, but this mathematical equivalence is gone when data are
+    weighted. The correct cost function is then :func:`poisson_chi2`.
     """
 
-    __slots__ = ()
+    __slots__ = ("_chi2",)
 
     @property
     def cdf(self):
@@ -1955,6 +1970,10 @@ class BinnedNLL(BinnedCostWithModel):
             same length as there are model parameters. Default is None.
         """
         super().__init__(n, xe, cdf, verbose, grad, use_pdf, name)
+        if self._bohm_zech_s is None:
+            self._chi2 = multinomial_chi2
+        else:
+            self._chi2 = poisson_chi2
 
     def _pred(self, args: Sequence[float]) -> NDArray:
         # must return array of full length, mask not applied yet
@@ -1969,7 +1988,7 @@ class BinnedNLL(BinnedCostWithModel):
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
         n, mu = self._transformed(mu)
-        return multinominal_chi2(n, mu)
+        return self._chi2(n.reshape(-1), mu.reshape(-1))
 
     def _grad(self, args: Sequence[float]) -> NDArray:
         # pg and p must be arrays of full length, mask not applied yet
@@ -1978,20 +1997,27 @@ class BinnedNLL(BinnedCostWithModel):
         ma = self.mask
         # normalise probability of remaining bins
         if ma is not None:
-            scale = np.sum(p[ma])
-            pg = pg / scale - p * np.sum(pg[:, ma]) / scale**2
-            p /= scale
+            psum = np.sum(p[ma])
+            pg = pg / psum - p * np.sum(pg[:, ma]) / psum**2
+            p /= psum
         # scale probabilities with total number of entries of unmasked bins in histogram
-        scale = np.sum(self._counts())
-        mu = p * scale
-        gmu = pg * scale
+        n = self._counts()
+        ntot = np.sum(n)
+        mu = p * ntot
+        gmu = pg * ntot
         ma = self.mask
         if ma is not None:
             mu = mu[ma]
             gmu = gmu[:, ma]
-        # don't need to scale mu and gmu, because scale factor cancels
-        n = self._masked if self._bohm_zech_scale is None else self._bohm_zech_n
-        return _multinominal_chi2_grad(n, mu, gmu)
+        n = n.reshape(-1)
+        mu = mu.reshape(-1)
+        gmu = gmu.reshape(gmu.shape[0], -1)
+        s = self._bohm_zech_s
+        if s is None:
+            return _multinomial_chi2_grad(n, mu, gmu)
+        # use original n and mu because Bohm-Zech scale factor cancels
+        s = s.reshape(-1)
+        return _poisson_chi2_grad(n, mu, s * gmu)
 
 
 class ExtendedBinnedNLL(BinnedCostWithModel):
@@ -2075,7 +2101,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
         n, mu = self._transformed(mu)
-        return poisson_chi2(n, mu)
+        return poisson_chi2(n.reshape(-1), mu.reshape(-1))
 
     def _grad(self, args: Sequence[float]) -> NDArray:
         mu = self._pred(args)
@@ -2084,11 +2110,14 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         if ma is not None:
             mu = mu[ma]
             gmu = gmu[:, ma]
-        n = self._counts()
-        s = self._bohm_zech_scale
+        mu = mu.reshape(-1)
+        gmu = gmu.reshape(gmu.shape[0], -1)
+        n = self._counts().reshape(-1)
+        s = self._bohm_zech_s
         if s is None:
             return _poisson_chi2_grad(n, mu, gmu)
         # use original n and mu because Bohm-Zech scale factor cancels
+        s = s.reshape(-1)
         return _poisson_chi2_grad(n, mu, s * gmu)
 
 
@@ -2554,6 +2583,7 @@ _deprecated_content = {
     "BarlowBeestonLite": ("Template", Template),
     "barlow_beeston_lite_chi2_jsc": ("template_chi2_jsc", template_chi2_jsc),
     "barlow_beeston_lite_chi2_hpd": ("template_chi2_da", template_chi2_da),
+    "multinominal_chi2": ("multinomial_chi2", multinomial_chi2),
 }
 
 

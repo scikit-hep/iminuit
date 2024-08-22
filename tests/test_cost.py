@@ -13,7 +13,7 @@ from iminuit.cost import (
     Constant,
     NormalConstraint,
     Template,
-    multinominal_chi2,
+    multinomial_chi2,
     PerformanceWarning,
 )
 from iminuit.util import describe
@@ -52,6 +52,11 @@ def mvnorm(mux, muy, sx, sy, rho):
 def expon_cdf(x, a):
     with np.errstate(over="ignore"):
         return -np.expm1(-x / a)
+
+
+def scaled_expon_cdf(x, n, a):
+    with np.errstate(over="ignore"):
+        return n * -np.expm1(-x / a)
 
 
 def numerical_cost_gradient(fcn):
@@ -650,6 +655,32 @@ def test_BinnedNLL_weighted(use_grad):
         assert m2.ngrad == 0
 
 
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_BinnedNLL_negative_weights(use_grad):
+    n = [48.57881659, 7.39393075, -1.6026582, 2.56719152, 1.03007896]
+    vn = [242.13921373, 46.13228182, 15.26273872, 6.26334277, 1.52360132]
+    xe = [0.0, 1.41453733, 2.82907465, 4.24361198, 5.6581493, 7.07268663]
+
+    w = np.transpose((n, vn))
+    c = BinnedNLL(w, xe, expon_cdf, grad=numerical_model_gradient(expon_cdf))
+
+    if use_grad:
+        ref = numerical_cost_gradient(c)
+        assert_allclose(c.grad(1), ref(1))
+        assert_allclose(c.grad(12), ref(12))
+
+    m2 = Minuit(c, 1, grad=use_grad)
+    m2.limits = (0, None)
+    m2.migrad()
+    assert m2.valid
+    assert m2.values[0] == pytest.approx(1.3, abs=0.05)
+
+    if use_grad:
+        assert m2.ngrad > 0
+    else:
+        assert m2.ngrad == 0
+
+
 def test_BinnedNLL_name(binned):
     mle, nx, xe = binned
 
@@ -951,6 +982,36 @@ def test_ExtendedBinnedNLL_weighted(use_grad):
     assert_allclose(m2.values, (1,), rtol=1e-2)
 
     assert m2.errors[0] == pytest.approx(2 * m1.errors[0], rel=1e-2)
+
+    if use_grad:
+        assert m2.ngrad > 0
+    else:
+        assert m2.ngrad == 0
+
+
+@pytest.mark.parametrize("use_grad", (False, True))
+def test_ExtendedBinnedNLL_negative_weights(use_grad):
+    n = [48.57881659, 7.39393075, -1.6026582, 2.56719152, 1.03007896]
+    vn = [242.13921373, 46.13228182, 15.26273872, 6.26334277, 1.52360132]
+    xe = [0.0, 1.41453733, 2.82907465, 4.24361198, 5.6581493, 7.07268663]
+
+    w = np.transpose((n, vn))
+    c = ExtendedBinnedNLL(
+        w, xe, scaled_expon_cdf, grad=numerical_model_gradient(scaled_expon_cdf)
+    )
+
+    # if use_grad:
+    #     ref = numerical_cost_gradient(c)
+    #     assert_allclose(c.grad(1, 0.1), ref(1, 0.1))
+    #     assert_allclose(c.grad(1, 1), ref(1, 1))
+    #     assert_allclose(c.grad(2, 12), ref(2, 12))
+
+    m2 = Minuit(c, 50, 1, grad=use_grad)
+    m2.limits = (0, None)
+    m2.migrad()
+    assert m2.valid
+    assert m2.values[0] == pytest.approx(65, abs=1)
+    assert m2.values[1] == pytest.approx(1.3, abs=0.05)
 
     if use_grad:
         assert m2.ngrad > 0
@@ -1739,16 +1800,16 @@ if hasattr(np, "float128"):  # not available on all platforms
     dtypes_to_test.append(np.float128)
 
 
-def test_multinominal_chi2():
+def test_multinomial_chi2():
     zero = np.array(0)
     one = np.array(1)
 
-    assert multinominal_chi2(zero, zero) == 0
-    assert multinominal_chi2(zero, one) == 0
-    assert multinominal_chi2(one, zero) == pytest.approx(1416, abs=1)
+    assert multinomial_chi2(zero, zero) == 0
+    assert multinomial_chi2(zero, one) == 0
+    assert multinomial_chi2(one, zero) == 0
     n = np.array([(0.0, 0.0)])
-    assert_allclose(multinominal_chi2(n, zero), 0)
-    assert_allclose(multinominal_chi2(n, one), 0)
+    assert_allclose(multinomial_chi2(n, zero), 0)
+    assert_allclose(multinomial_chi2(n, one), 0)
 
 
 @pytest.mark.skipif(
@@ -2109,22 +2170,3 @@ def test_binned_cost_with_model_shape_error_message_2D(cost):
         match=(r"output of model has shape \(11,\), but \(12,\) is required"),
     ):
         c(1)
-
-
-def test_BohmZechTransform():
-    from iminuit.cost import BohmZechTransform
-
-    with pytest.warns(FutureWarning):
-        val = np.array([1.0, 2.0])
-        var = np.array([3.0, 4.0])
-        tr = BohmZechTransform(val, var)
-        s = val / var
-        mu = np.array([2.0, 2.0])
-        ns, mus = tr(mu)
-        assert_allclose(ns, val * s)
-        assert_allclose(mus, mu * s)
-        var2 = mu**2
-        ns, mus, vars = tr(mu, var2)
-        assert_allclose(ns, val * s)
-        assert_allclose(mus, mu * s)
-        assert_allclose(vars, var2 * s**2)
