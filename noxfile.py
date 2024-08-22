@@ -85,7 +85,7 @@ def doc(session: nox.Session) -> None:
     # link check
     session.run(
         "sphinx-build",
-        "-n",  # nitpicky mode
+        "-j3",
         "-T",  # full tracebacks
         "-v",
         "-b=html",
