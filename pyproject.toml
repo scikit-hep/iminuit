@@ -43,7 +43,8 @@ test = [
     # ipywidgets 8.0.5 and 8.0.6 are broken
     # see https://github.com/jupyter-widgets/ipywidgets/issues/3731
     "ipywidgets",
-    "ipykernel",                                              # needed by ipywidgets >= 8.0.6
+    # needed by ipywidgets >= 8.0.6
+    "ipykernel",
     "joblib",
     "jacobi",
     "matplotlib",
