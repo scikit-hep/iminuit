@@ -105,6 +105,8 @@ pydocstyle.convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["B", "D"]
 "*.ipynb" = ["D"]
+"automatic_differentiation.ipynb" = ["F821"]
+"cython.ipynb" = ["F821"]
 ".ci/*.py" = ["D"]
 "bench/*.py" = ["D"]
 "doc/*.py" = ["D"]
