@@ -1,4 +1,4 @@
-.. _scipy: https://www.scipy.org/
+.. _scipy: https://scipy.org/
 .. _scipy.optimize: https://docs.scipy.org/doc/scipy/tutorial/optimize.html
 .. _numba: https://numba.pydata.org
 .. _numba_stats: https://github.com/HDembinski/numba-stats
@@ -10,7 +10,7 @@
 .. _threeML: https://github.com/threeML/threeML
 .. _Veusz: https://github.com/veusz/veusz
 .. _TensorProb: https://github.com/tensorprob/tensorprob
-.. _Scikit-HEP: http://scikit-hep.org
+.. _Scikit-HEP: https://scikit-hep.org
 .. _probfit: https://github.com/scikit-hep/probfit
 .. _gammapy: https://github.com/gammapy/gammapy
 .. _flavio: https://github.com/flav-io/flavio

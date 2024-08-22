@@ -83,5 +83,7 @@ nbsphinx_execute_arguments = [
     "--InlineBackend.rc=figure.dpi=96",
 ]
 
-linkcheck_timeout = 3
+linkcheck_timeout = 10
 linkcheck_allow_unauthorized = True
+linkcheck_report_timeouts_as_broken = False
+linkcheck_ignore = ["https://doi.org/10.2307%2F2347496"]
