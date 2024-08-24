@@ -2141,12 +2141,12 @@ class Minuit:
         from matplotlib import pyplot as plt
         from matplotlib.path import Path
         from matplotlib.contour import ContourSet
-        from packaging.version import Version
+        from ._parse_version import parse_version
 
         ix, xname = self._normalize_key(x)
         iy, yname = self._normalize_key(y)
 
-        mpl_version = Version(mpl_version_string)
+        mpl_version = parse_version(mpl_version_string)
 
         cls = [replace_none(x, 0.68) for x in mutil._iterate(cl)]
 
@@ -2163,7 +2163,7 @@ class Minuit:
                 experimental=experimental,
             )
             n_lineto = len(pts) - 2
-            if (mpl_version.major, mpl_version.minor) < (3, 5):
+            if mpl_version < (3, 5):
                 n_lineto -= 1  # pragma: no cover
             c_val.append(cl)
             c_pts.append([pts])  # level can have more than one contour in mpl
