@@ -14,7 +14,6 @@ set(CMAKE_CXX_STANDARD
     CACHE STRING "C++ version selection") # or 11, 14, 17, 20
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # optional, ensure standard is supported
 set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
-
 set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
@@ -92,16 +91,24 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     _core
     PRIVATE -Wall
             -Wextra
-            -pedantic
             -Werror
-            -fstrict-aliasing
             -Werror=odr
             -Werror=lto-type-mismatch
-            -Werror=strict-aliasing)
+            -Werror=strict-aliasing
+            -pedantic
+            -fstrict-aliasing
+            -flto=4
+            -fsanitize=address
+            -fno-omit-frame-pointer)
+  # looks like false positive from GCC
+  set_source_files_properties(
+    extern/root/math/minuit2/src/MnPlot.cxx
+    PROPERTIES COMPILE_FLAGS "-Wno-free-nonheap-object")
+  target_link_options(_core PRIVATE -Werror -Wodr -Wlto-type-mismatch -flto)
 else()
   # lots of warnings from clang
   target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror
-                                       -fstrict-aliasing)
+                                       -fstrict-aliasing -Werror=odr)
 endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)

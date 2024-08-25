@@ -20,6 +20,9 @@ __pycache__
 *.o
 *.pkl
 
+CMakeCache.txt
+CMakeFiles/
+
 pip-wheel-metadata
 
 bench/*.svg
