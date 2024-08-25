@@ -17,3 +17,8 @@ import pytest
 )
 def test_parse_version(s, ref):
     assert parse_version(s) == ref
+
+
+def test_parse_version_bad():
+    with pytest.raises(ValueError):
+        parse_version("a.b.c")
