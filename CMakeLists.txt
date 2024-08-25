@@ -98,7 +98,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             -pedantic
             -fstrict-aliasing
             -flto=4
-            -fsanitize=address
             -fno-omit-frame-pointer)
   target_link_options(_core PRIVATE -Werror -Wodr -Wlto-type-mismatch -flto)
   # looks like false positive from GCC
