@@ -9,10 +9,10 @@ from iminuit._parse_version import parse_version
 cwd = Path(__file__).parent
 
 
-version = (
+new_version_string = (
     subp.check_output([sys.executable, cwd.parent / "version.py"]).strip().decode()
 )
-new_version = parse_version(version)
+new_version = parse_version(new_version_string)
 
 
 with warnings.catch_warnings():
@@ -21,7 +21,7 @@ with warnings.catch_warnings():
         iter(
             sorted(
                 (
-                    parse_version(x)
+                    parse_version(x.lstrip("v"))
                     for x in subp.check_output(["git", "tag"])
                     .decode()
                     .strip()
@@ -37,7 +37,9 @@ with open(cwd / "changelog.rst") as f:
 
 # find latest entry
 m = re.search(r"([0-9]+\.[0-9]+\.[0-9]+) \([^\)]+\)\n-*", content, re.MULTILINE)
-previous_version = parse_version(m.group(1))
+assert m is not None
+previous_version_string = m.group(1)
+previous_version = parse_version(previous_version_string)
 position = m.span(0)[0]
 
 # sanity checks
@@ -46,12 +48,12 @@ assert new_version > previous_version, f"{new_version} > {previous_version}"
 git_log = re.findall(
     r"[a-z0-9]+ ([^\n]+ \(#[0-9]+\))",
     subp.check_output(
-        ["git", "log", "--oneline", f"v{previous_version}..HEAD"]
+        ["git", "log", "--oneline", f"v{previous_version_string}..HEAD"]
     ).decode(),
 )
 
 today = datetime.date.today()
-header = f"{new_version} ({today.strftime('%B %d, %Y')})"
+header = f"{new_version_string} ({today.strftime('%B %d, %Y')})"
 
 new_content = f"{header}\n{'-' * len(header)}\n"
 if git_log:

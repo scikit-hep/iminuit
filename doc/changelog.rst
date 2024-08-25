@@ -5,6 +5,16 @@
 Changelog
 =========
 
+2.29.0 (August 25, 2024)
+------------------------
+- Fix odr issue in type_caster which could result in ub when `-flto` is enabled (`#1028 <https://github.com/scikit-hep/iminuit/pull/1028>`_)
+- Remove packaging dependency (`#1027 <https://github.com/scikit-hep/iminuit/pull/1027>`_)
+- Restore cython tutorial (`#1026 <https://github.com/scikit-hep/iminuit/pull/1026>`_)
+- Support sum(w) < 0 in binned fits (`#1022 <https://github.com/scikit-hep/iminuit/pull/1022>`_)
+- Set `pybind11_findpython` `on` to use `findpython` cmake mode (`#1023 <https://github.com/scikit-hep/iminuit/pull/1023>`_)
+- Fix version parse (`#1021 <https://github.com/scikit-hep/iminuit/pull/1021>`_)
+- Improve maintainer metadata (`#1020 <https://github.com/scikit-hep/iminuit/pull/1020>`_)
+
 2.28.0 (August 01, 2024)
 ------------------------
 - Add name argument to all cost functions (`#1017 <https://github.com/scikit-hep/iminuit/pull/1017>`_)
