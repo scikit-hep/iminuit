@@ -16,13 +16,13 @@ for item in git_submodule.strip().split("\n"):
     assert len(parts) == 3, "module is not checked out"
     break
 
+root_dir = project_dir / "extern" / "root"
+
 # git submodule status does not yield the right state
 # we must use git describe --tags
+subp.check_call(["git", "pull", "--tags"], cwd=root_dir)
+
 root_version = (
-    subp.check_output(
-        ["git", "describe", "--tags"], cwd=project_dir / "extern" / "root"
-    )
-    .decode()
-    .strip()
+    subp.check_output(["git", "describe", "--tags"], cwd=root_dir).decode().strip()
 )
 print("ROOT", root_version)
