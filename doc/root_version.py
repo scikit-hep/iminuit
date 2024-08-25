@@ -4,10 +4,10 @@ from pathlib import PurePath
 project_dir = PurePath(__file__).parent.parent
 root_dir = project_dir / "extern" / "root"
 
-subp.check_call(["git", "checkout", "master"], cwd=root_dir)
 git_submodule = subp.check_output(
     ["git", "submodule", "update"], cwd=project_dir
 ).decode()
+subp.check_call(["git", "fetch", "--tags"], cwd=root_dir)
 
 # git submodule status does not yield the right state
 # we must use git describe --tags
