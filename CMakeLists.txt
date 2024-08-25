@@ -101,9 +101,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
             -fsanitize=address
             -fno-omit-frame-pointer)
   target_link_options(_core PRIVATE -Werror -Wodr -Wlto-type-mismatch -flto)
-  # looks like false positive from GCC set_source_files_properties(
-  # extern/root/math/minuit2/src/MnPlot.cxx PROPERTIES COMPILE_FLAGS
-  # "-Wno-free-nonheap-object")
+  # looks like false positive from GCC
+
+  # set_source_files_properties( extern/root/math/minuit2/src/MnPlot.cxx
+  # PROPERTIES COMPILE_FLAGS "-Wno-free-nonheap-object")
 else()
   # lots of warnings from clang
   target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror
