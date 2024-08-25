@@ -1,8 +1,6 @@
 #include "equal.hpp"
-#include "type_caster.hpp"
+#include "pybind11.hpp"
 #include <Minuit2/MnUserParameterState.h>
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
 #include <type_traits>
 
 namespace ROOT {

@@ -1,8 +1,8 @@
 #ifndef IMINUIT_LAVECTOR
 #define IMINUIT_LAVECTOR
 
+#include "pybind11.hpp"
 #include <Minuit2/LAVector.h>
-#include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

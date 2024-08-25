@@ -1,5 +1,5 @@
 #include "Minuit2/MnPrint.h"
-#include <pybind11/pybind11.h>
+#include "pybind11.hpp"
 
 using ROOT::Minuit2::MnPrint;
 

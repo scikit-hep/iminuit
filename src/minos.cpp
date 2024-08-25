@@ -1,9 +1,9 @@
+#include "pybind11.hpp"
 #include <Minuit2/FCNBase.h>
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MinosError.h>
 #include <Minuit2/MnMinos.h>
 #include <Minuit2/MnStrategy.h>
-#include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

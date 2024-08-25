@@ -1,5 +1,11 @@
+#ifndef PYBIND11_HPP
+#define PYBIND11_HPP
+
 #include <pybind11/numpy.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/pytypes.h>
+#include <pybind11/stl.h>
 #include <vector>
 
 namespace pybind11 {
@@ -40,3 +46,5 @@ public:
 
 } // namespace detail
 } // namespace pybind11
+
+#endif // PYBIND11_HPP

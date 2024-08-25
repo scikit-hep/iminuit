@@ -1,9 +1,8 @@
+#include "pybind11.hpp"
 #include <Minuit2/ContoursError.h>
 #include <Minuit2/FCNBase.h>
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MnContours.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

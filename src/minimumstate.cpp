@@ -2,8 +2,6 @@
 #include "lavector.hpp"
 #include <Minuit2/MinimumState.h>
 #include <cmath>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <type_traits>
 
 namespace py = pybind11;

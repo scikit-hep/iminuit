@@ -1,6 +1,5 @@
+#include "pybind11.hpp"
 #include <Minuit2/MnMachinePrecision.h>
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
 
 namespace ROOT {
 namespace Minuit2 {
