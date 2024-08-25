@@ -15,7 +15,7 @@ def parse_version(s: str) -> Union[Tuple[int, int], Tuple[int, int, int]]:
     correctly parsed, but these segments are ignored, as well as development release
     segments.
     """
-    match = re.match("(\d+)\.(\d+)(?:\.(\d+))?", s)
+    match = re.match(r"(\d+)\.(\d+)(?:\.(\d+))?", s)
     if not match:
         msg = f"could not parse version string {s}"
         raise ValueError(msg)
