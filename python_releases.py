@@ -4,7 +4,6 @@ import urllib.request
 import re
 from html.parser import HTMLParser
 import gzip
-from packaging.version import Version
 
 
 class PythonVersionParser(HTMLParser):
@@ -27,9 +26,12 @@ class PythonVersionParser(HTMLParser):
         """Extract Python version from entry."""
         if self.found_version:
             self.found_version = False
-            match = re.search(r"Python (\d+\.\d+)", data)
+            match = re.search(r"Python (\d+)\.(\d+)\.(\d+)?", data)
             if match:
-                self.versions.add(Version(match.group(1)))
+                major = int(match.group(1))
+                minor = int(match.group(2))
+                bugfix = int(match.group(3))
+                self.versions.add((major, minor, bugfix))
 
 
 def versions():
@@ -56,7 +58,8 @@ def latest():
 
 def main():
     """Print all discovered release versions."""
-    print(" ".join(str(x) for x in sorted(versions())))
+    for x in sorted(versions()):
+        print(x)
 
 
 if __name__ == "__main__":

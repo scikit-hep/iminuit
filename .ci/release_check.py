@@ -1,6 +1,6 @@
 """Ensure that current version is not in conflict with published releases."""
 
-from pkg_resources import parse_version
+from iminuit._parse_version import parse_version
 import subprocess as subp
 from pathlib import PurePath
 import urllib.request

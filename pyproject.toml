@@ -30,7 +30,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
 ]
-dependencies = ["packaging", "numpy >=1.21"]
+dependencies = ["numpy >=1.21"]
 
 [project.urls]
 repository = "http://github.com/scikit-hep/iminuit"
