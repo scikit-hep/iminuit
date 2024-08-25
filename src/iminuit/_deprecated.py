@@ -1,21 +1,23 @@
 import warnings
-from packaging.version import Version
 from typing import Callable, Any
 from importlib.metadata import version
+from iminuit._parse_version import parse_version
 
-CURRENT_VERSION = Version(version("iminuit"))
+
+CURRENT_VERSION = parse_version(version("iminuit"))
 
 
 class deprecated:
     def __init__(self, reason: str, removal: str = ""):
         self.reason = reason
-        self.removal = Version(removal) if removal else None
+        self.removal = parse_version(removal) if removal else None
 
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
         category: Any = FutureWarning
         extra = ""
         if self.removal:
-            extra = f" and will be removed in version {self.removal}"
+            vstring = ".".join(str(x) for x in self.removal)
+            extra = f" and will be removed in version {vstring}"
             if CURRENT_VERSION >= self.removal:
                 category = DeprecationWarning
         msg = f"{func.__name__} is deprecated{extra}: {self.reason}"
