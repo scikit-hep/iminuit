@@ -28,7 +28,9 @@ jobs:
           python-version: '3.11'
 
       - if: ${{ github.ref == 'refs/heads/main' }}
-        run: python .ci/release_check.py
+        run: |
+          pip install packaging
+          python .ci/release_check.py
 
       - id: tag
         run: echo "tag=$(python version.py)" >> $GITHUB_OUTPUT
