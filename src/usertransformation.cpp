@@ -1,6 +1,5 @@
+#include "pybind11.hpp"
 #include <Minuit2/MnUserTransformation.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <type_traits>
 
 namespace py = pybind11;

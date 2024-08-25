@@ -1,9 +1,8 @@
+#include "pybind11.hpp"
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MinimumSeed.h>
 #include <Minuit2/MinimumState.h>
 #include <Minuit2/MnUserParameterState.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <type_traits>
 #include <vector>
 

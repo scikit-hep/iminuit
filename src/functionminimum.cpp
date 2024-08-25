@@ -1,16 +1,13 @@
 #include "equal.hpp"
 #include "fcn.hpp"
+#include "pybind11.hpp"
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MinimumSeed.h>
 #include <Minuit2/MinimumState.h>
 #include <Minuit2/MnStrategy.h>
 #include <Minuit2/MnUserFcn.h>
 #include <Minuit2/MnUserParameterState.h>
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <type_traits>
-#include <vector>
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

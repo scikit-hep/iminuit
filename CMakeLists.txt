@@ -9,12 +9,14 @@ if(NOT DEFINED SKBUILD)
   )
 endif()
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT error)
+
 set(CMAKE_CXX_STANDARD
     14
     CACHE STRING "C++ version selection") # or 11, 14, 17, 20
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # optional, ensure standard is supported
 set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
-
 set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
@@ -84,6 +86,15 @@ set(SOURCES_B
     extern/root/math/minuit2/src/mnxerbla.cxx)
 
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
+
+target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
+target_compile_definitions(_core PUBLIC PYBIND11_DETAILED_ERROR_MESSAGES=1)
+set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+if(ipo_supported)
+  set_target_properties(_core PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
+
+# Add compiler-specific extra warnings
 if(MSVC)
   target_compile_options(_core PRIVATE /std:c++14 /Y-)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -92,19 +103,18 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     _core
     PRIVATE -Wall
             -Wextra
-            -pedantic
             -Werror
-            -fstrict-aliasing
             -Werror=odr
             -Werror=lto-type-mismatch
-            -Werror=strict-aliasing)
+            -Werror=strict-aliasing
+            -pedantic
+            -fstrict-aliasing)
+  target_link_options(_core PRIVATE -Werror -Wodr -Wlto-type-mismatch)
 else()
   # lots of warnings from clang
   target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror
-                                       -fstrict-aliasing)
+                                       -Werror=odr -fstrict-aliasing)
+  target_link_options(_core PRIVATE -Werror -Wodr)
 endif()
-target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
-set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-target_compile_definitions(_core PUBLIC PYBIND11_DETAILED_ERROR_MESSAGES=1)
 
 install(TARGETS _core DESTINATION iminuit)

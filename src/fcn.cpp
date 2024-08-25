@@ -1,12 +1,10 @@
 #include "fcn.hpp"
-#include "type_caster.hpp"
+#include "pybind11.hpp"
 #include <Minuit2/FCNGradientBase.h>
 #include <Minuit2/MnPrint.h>
 #include <cmath>
 #include <cstdint>
 #include <limits>
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
 #include <sstream>
 #include <vector>
 

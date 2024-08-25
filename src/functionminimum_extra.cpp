@@ -1,5 +1,6 @@
 #include "equal.hpp"
 #include "fcn.hpp"
+#include "pybind11.hpp"
 #include <Minuit2/AnalyticalGradientCalculator.h>
 #include <Minuit2/FunctionMinimum.h>
 #include <Minuit2/MinimumState.h>
@@ -10,7 +11,6 @@
 #include <Minuit2/MnUserParameterState.h>
 #include <Minuit2/Numerical2PGradientCalculator.h>
 #include <Minuit2/VariableMetricEDMEstimator.h>
-#include <pybind11/pybind11.h>
 #include <type_traits>
 #include <vector>
 

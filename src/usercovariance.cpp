@@ -1,8 +1,6 @@
 #include "equal.hpp"
-#include "type_caster.hpp"
+#include "pybind11.hpp"
 #include <Minuit2/MnUserCovariance.h>
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
 #include <vector>
 
 namespace ROOT {
