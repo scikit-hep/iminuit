@@ -9,6 +9,10 @@ import warnings
 import sys
 
 
+def version_string(v):
+    return ".".join(map(str, v))
+
+
 project_dir = PurePath(__file__).parent.parent
 changelog_fn = project_dir / "doc/changelog.rst"
 version_fn = project_dir / "version.py"
@@ -20,21 +24,22 @@ with warnings.catch_warnings(record=True) as record:
 if record:
     raise ValueError(record[0].message)
 
-print("iminuit version:", iminuit_version)
+iminuit_version_string = version_string(iminuit_version)
+print("iminuit version:", iminuit_version_string)
 
 # make sure that changelog was updated
 with open(changelog_fn) as f:
-    assert iminuit_version.base_version in f.read(), "changelog entry missing"
+    assert iminuit_version_string in f.read(), "changelog entry missing"
 
 # make sure that version is not already tagged
 tags = subp.check_output(["git", "tag"]).decode().strip().split("\n")
-assert f"v{iminuit_version}" not in tags, "tag exists"
+assert f"v{iminuit_version_string}" not in tags, "tag exists"
 
 # make sure that version itself was updated
 with urllib.request.urlopen("https://pypi.org/pypi/iminuit/json") as r:
     pypi_versions = [parse_version(v) for v in json.loads(r.read())["releases"]]
 
 pypi_versions.sort()
-print("PyPI    version:", pypi_versions[-1])
+print("PyPI    version:", version_string(pypi_versions[-1]))
 
 assert iminuit_version not in pypi_versions, "pypi version exists"
