@@ -106,8 +106,16 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # PROPERTIES COMPILE_FLAGS "-Wno-free-nonheap-object")
 else()
   # lots of warnings from clang
-  target_compile_options(_core PRIVATE -Wall -Wextra -pedantic -Werror
-                                       -fstrict-aliasing -Werror=odr)
+  target_compile_options(
+    _core
+    PRIVATE -Wall
+            -Wextra
+            -pedantic
+            -Werror
+            -fstrict-aliasing
+            -Werror=odr
+            -flto=4)
+  target_link_options(_core PRIVATE -Werror -Wodr -flto)
 endif()
 target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
