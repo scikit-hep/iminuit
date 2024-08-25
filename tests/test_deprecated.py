@@ -26,6 +26,18 @@ def test_deprecated_func_2():
         func(1)
 
 
+def test_deprecated_func_3():
+    @deprecated("bla", removal="1000.0")
+    def func(x):
+        pass
+
+    with pytest.warns(
+        FutureWarning,
+        match="func is deprecated and will be removed in version 1000.0: bla",
+    ):
+        func(1)
+
+
 def test_deprecated_parameter():
     @deprecated_parameter(foo="bar")
     def some_function(x, y, foo):
