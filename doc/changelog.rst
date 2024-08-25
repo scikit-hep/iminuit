@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.29.1 (August 25, 2024)
+------------------------
+- Show correct ROOT version in documentation
+
 2.29.0 (August 25, 2024)
 ------------------------
 - Fix odr issue in type_caster which could result in ub when `-flto` is enabled (`#1028 <https://github.com/scikit-hep/iminuit/pull/1028>`_)
