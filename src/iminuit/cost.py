@@ -111,7 +111,7 @@ from typing import (
     cast,
 )
 import warnings
-from ._deprecated import deprecated_parameter
+from ._deprecated import renamed_parameter
 
 __all__ = [
     "CHISQUARE",
@@ -923,7 +923,7 @@ class UnbinnedCost(MaskedCost):
         # (K, N) with K dimensions and N points
         return self._masked.shape[-1]
 
-    @deprecated_parameter(bins="nbins")
+    @renamed_parameter(bins="nbins")
     def visualize(
         self,
         args: Sequence[float],

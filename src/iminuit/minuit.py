@@ -19,6 +19,7 @@ from iminuit._core import (
     FunctionMinimum,
 )
 from iminuit.warnings import ErrordefAlreadySetWarning
+from iminuit._deprecated import deprecated, removed_parameter
 import numpy as np
 from typing import (
     Union,
@@ -61,6 +62,7 @@ class Minuit:
         "_pos2var",
         "_init_state",
         "_last_state",
+        "_plotter",
     )
 
     _fmin: Optional[mutil.FMin]
@@ -264,6 +266,23 @@ class Minuit:
     @throw_nan.setter
     def throw_nan(self, value: bool) -> None:
         self._fcn._throw_nan = value
+
+    @property
+    def plotter(self) -> Optional[Callable[..., Any]]:
+        """
+        Access the plotter to visualize fit results.
+
+        Assign a function here which accepts a tuple of float, which represent the
+        fitted parameters. The function should use matplotlib to draw on the default
+        figure and axes with matplotlib.pyplot. A figure is internally created to hold
+        the plot, the function must not create additional figures. The return value of
+        function is ignored.
+        """
+        return self._plotter
+
+    @plotter.setter
+    def plotter(self, plotter: Optional[Callable[..., Any]]) -> None:
+        self._plotter = plotter
 
     @property
     def values(self) -> mutil.ValueView:
@@ -679,6 +698,8 @@ class Minuit:
             array_call,
             getattr(fcn, "errordef", 1.0),
         )
+
+        self._plotter = getattr(fcn, "visualize", None)
 
         self._init_state = _make_init_state(self._pos2var, start, kwds)
         self._values = mutil.ValueView(self)
@@ -1348,12 +1369,15 @@ class Minuit:
 
         return self
 
-    def visualize(self, plot: Callable = None, **kwargs):
+    @deprecated(
+        "use Minuit.plotter to visualize or modify visualization", removal="2.40"
+    )
+    def visualize(self, plot: Optional[Callable] = None, **kwargs):
         """
         Visualize agreement of current model with data (requires matplotlib).
 
         This generates a plot of the data/model agreement, using the current
-        parameter values, if the likelihood function supports this, otherwise
+        parameter values, if the likelihood function supports this. Otherwise,
         AttributeError is raised.
 
         Parameters
@@ -1372,7 +1396,8 @@ class Minuit:
         --------
         Minuit.interactive
         """
-        return self._visualize(plot)(self.values, **kwargs)
+        plot = self._plotter_with_override(plot)
+        return plot(self.values, **kwargs)
 
     def hesse(self, ncall: Optional[int] = None) -> "Minuit":
         """
@@ -2310,9 +2335,10 @@ class Minuit:
 
         return fig, ax
 
+    @removed_parameter("plot", "use Minuit.plotter to modify plotting", "2.40")
     def interactive(
         self,
-        plot: Callable = None,
+        plot: Optional[Callable] = None,
         raise_on_exception=False,
         **kwargs,
     ):
@@ -2345,7 +2371,7 @@ class Minuit:
 
         See Also
         --------
-        Minuit.visualize
+        Minuit.plotter
         """
         with warnings.catch_warnings():
             # ipywidgets produces deprecation warnings through use of internal APIs :(
@@ -2371,7 +2397,7 @@ class Minuit:
                 )
                 raise
 
-            plot = self._visualize(plot)
+            plot = self._plotter_with_override(plot)
 
             def plot_with_frame(args, from_fit, report_success):
                 trans = plt.gca().transAxes
@@ -2681,12 +2707,14 @@ class Minuit:
                 import matplotlib.pyplot as plt
                 import io
 
-                with _TemporaryFigure(5, 4):
-                    self.visualize()
-                    with io.StringIO() as io:
-                        plt.savefig(io, format="svg", dpi=10)
-                        io.seek(0)
-                        s += io.read()
+                with _TemporaryFigure(5, 4) as fig:
+                    self._plotter_with_override(None)(self.values)
+                    # detect empty figure
+                    if fig.get_axes():
+                        with io.StringIO() as io:
+                            plt.savefig(io, format="svg", dpi=10)
+                            io.seek(0)
+                            s += io.read()
             except (ModuleNotFoundError, AttributeError, ValueError):
                 pass
         return s
@@ -2697,17 +2725,20 @@ class Minuit:
         else:
             p.text(str(self))
 
-    def _visualize(self, plot):
-        pyfcn = self._fcn._fcn
+    def _plotter_with_override(self, plot: Optional[Callable]) -> Callable:
         if plot is None:
-            if hasattr(pyfcn, "visualize"):
-                plot = pyfcn.visualize
-            else:
-                msg = (
-                    f"class {pyfcn.__class__.__name__} has no visualize method, "
-                    "please use the 'plot' keyword to pass a visualization function"
+            if self._plotter is None:
+                pyfcn = self._fcn._fcn
+                if not hasattr(pyfcn, "visualize"):
+                    msg = (
+                        f"class {pyfcn.__class__.__name__} has no visualize method, "
+                        "use the Minuit.plotter attribute to set a visualization function"
+                    )
+                    raise AttributeError(msg)
+                raise ValueError(
+                    "plotter attribute is set to None, plotting is disabled"
                 )
-                raise AttributeError(msg)
+            plot = self._plotter
         return plot
 
     def _experimental_mncontour(
@@ -2872,7 +2903,7 @@ class _TemporaryFigure:
         self.fig = self.plt.figure(figsize=(w, h), constrained_layout=True)
 
     def __enter__(self) -> None:
-        pass
+        return self.fig
 
     def __exit__(self, *args: object) -> None:
         self.plt.close(self.fig)

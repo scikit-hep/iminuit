@@ -1,4 +1,4 @@
-from iminuit._deprecated import deprecated, deprecated_parameter
+from iminuit._deprecated import deprecated, renamed_parameter
 import pytest
 
 
@@ -38,8 +38,8 @@ def test_deprecated_func_3():
         func(1)
 
 
-def test_deprecated_parameter():
-    @deprecated_parameter(foo="bar")
+def test_renamed_parameter():
+    @renamed_parameter(foo="bar")
     def some_function(x, y, foo):
         pass
 

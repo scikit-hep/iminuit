@@ -31,7 +31,33 @@ class deprecated:
         return decorated_func
 
 
-class deprecated_parameter:
+class removed_parameter(deprecated):
+    def __init__(self, parameter: str, reason: str, removal: str):
+        self.parameter = parameter
+        super().__init__(reason, removal)
+
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        assert self.removal is not None
+        category: Any = FutureWarning
+        vstring = ".".join(str(x) for x in self.removal)
+        if CURRENT_VERSION >= self.removal:
+            category = DeprecationWarning
+
+        def decorated_func(*args: Any, **kwargs: Any) -> Any:
+            if self.parameter in kwargs:
+                warnings.warn(
+                    f"keyword {self.parameter!r} is deprecated and will be removed in version {vstring}",
+                    category=category,
+                    stacklevel=2,
+                )
+            return func(*args, **kwargs)
+
+        decorated_func.__name__ = func.__name__
+        decorated_func.__doc__ = func.__doc__
+        return decorated_func
+
+
+class renamed_parameter:
     def __init__(self, **replacements: str):
         self.replacements = replacements
 
@@ -49,4 +75,5 @@ class deprecated_parameter:
             return func(*args, **kwargs)
 
         decorated_func.__name__ = func.__name__
+        decorated_func.__doc__ = func.__doc__
         return decorated_func
