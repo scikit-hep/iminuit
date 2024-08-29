@@ -21,6 +21,7 @@ Important for most users are only the first two entries.
     notebooks/template_fits
     notebooks/template_model_mix
     notebooks/conditional_variable
+    notebooks/fitting_2d_histogram
     notebooks/scipy_and_constraints
     notebooks/roofit
     notebooks/external_minimizer
