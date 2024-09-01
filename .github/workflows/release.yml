@@ -63,7 +63,7 @@ jobs:
 
       - uses: yezz123/setup-uv@v4
 
-      - uses: pypa/cibuildwheel@v2.19
+      - uses: pypa/cibuildwheel@v2.20
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -113,7 +113,7 @@ jobs:
           path: dist
 
       - name: Generate artifact attestation for sdist and wheels
-        uses: actions/attest-build-provenance@173725a1209d09b31f9d30a3890cf2757ebbff0d # v1.1.2
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 # v1.4.2
         with:
           subject-path: "dist/iminuit-*"
 
