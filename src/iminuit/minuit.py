@@ -2428,6 +2428,7 @@ class Minuit:
                         step=step,
                         description=par,
                         continuous_update=True,
+                        readout_format=".4g",
                         layout=Layout(min_width="70%"),
                     )
                     self.fix = ToggleButton(
