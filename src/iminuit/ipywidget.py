@@ -30,7 +30,6 @@ with warnings.catch_warnings():
 
 class IPyWidget(HBox):
     def __init__(self, minuit, plot, kwargs, raise_on_exception):
-
         def plot_with_frame(args, from_fit, report_success):
             trans = plt.gca().transAxes
             try:
@@ -190,9 +189,7 @@ class IPyWidget(HBox):
         reset_button = Button(description="Reset")
         reset_button.on_click(on_reset_button_clicked)
 
-        algo_choice = Dropdown(
-            options=["Migrad", "Scipy", "Simplex"], value="Migrad"
-        )
+        algo_choice = Dropdown(options=["Migrad", "Scipy", "Simplex"], value="Migrad")
 
         ui = VBox(
             [
