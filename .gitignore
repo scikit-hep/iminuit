@@ -6,6 +6,9 @@
 /root-*
 /dev
 /venv
+/out
+/.venv
+/.vs
 
 /build
 /dist
