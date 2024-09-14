@@ -32,6 +32,7 @@ def make_widget(
     # we frequently use variables which are defined
     # near the end of the function.
     original_values = minuit.values[:]
+    original_limits = minuit.limits[:]
 
     def plot_with_frame(from_fit, report_success):
         trans = plt.gca().transAxes
@@ -136,32 +137,64 @@ def make_widget(
     def on_reset_button_clicked(change):
         minuit.reset()
         minuit.values = original_values
+        minuit.limits = original_limits
         for i, x in enumerate(parameters):
-            x.reset(minuit.values[i])
+            x.reset(minuit.values[i], minuit.limits[i])
         OnParameterChange()()
 
     class Parameter(widgets.HBox):
         def __init__(self, minuit, par):
-            self.minuit = minuit
-            self.par = par
             val = minuit.values[par]
             step = _guess_initial_step(val)
             vmin, vmax = minuit.limits[par]
+            vmin = _make_finite(vmin)
+            vmax = _make_finite(vmax)
             # safety margin to avoid overflow warnings
-            vmin = vmin + 1e-300 if np.isfinite(vmin) else val - 100 * step
-            vmax = vmax - 1e-300 if np.isfinite(vmax) else val + 100 * step
+            vmin2 = vmin + 1e-300 if np.isfinite(vmin) else val - 100 * step
+            vmax2 = vmax - 1e-300 if np.isfinite(vmax) else val + 100 * step
+
+            tmin = widgets.BoundedFloatText(
+                vmin,
+                min=vmin,
+                max=vmax2,
+                step=1e-1 * (vmax2 - vmin2),
+                layout=widgets.Layout(width="4.1em"),
+            )
+
+            tmax = widgets.BoundedFloatText(
+                vmax,
+                min=vmin2,
+                max=vmax,
+                step=1e-1 * (vmax2 - vmin2),
+                layout=widgets.Layout(width="4.1em"),
+            )
 
             self.slider = widgets.FloatSlider(
                 val,
-                min=vmin,
-                max=vmax,
+                min=vmin2,
+                max=vmax2,
                 step=step,
                 description=par,
                 continuous_update=True,
                 readout_format=".4g",
-                layout=widgets.Layout(min_width="70%"),
+                layout=widgets.Layout(min_width="50%"),
             )
             self.slider.observe(OnParameterChange(), "value")
+
+            def on_min_change(change):
+                self.slider.min = change["new"]
+                tmax.min = change["new"]
+                lim = minuit.limits[par]
+                minuit.limits[par] = (self.slider.min, lim[1])
+
+            def on_max_change(change):
+                self.slider.max = change["new"]
+                tmin.max = change["new"]
+                lim = minuit.limits[par]
+                minuit.limits[par] = (lim[0], self.slider.max)
+
+            tmin.observe(on_min_change, "value")
+            tmax.observe(on_max_change, "value")
 
             self.fix = widgets.ToggleButton(
                 minuit.fixed[par],
@@ -169,16 +202,14 @@ def make_widget(
                 layout=widgets.Layout(width="3.1em"),
             )
 
+            self.fit = widgets.ToggleButton(
+                False, description="Fit", layout=widgets.Layout(width="3.5em")
+            )
+
             def on_fix_toggled(change):
                 minuit.fixed[par] = change["new"]
                 if change["new"]:
                     self.fit.value = False
-
-            self.fix.observe(on_fix_toggled, "value")
-
-            self.fit = widgets.ToggleButton(
-                False, description="Fit", layout=widgets.Layout(width="3.5em")
-            )
 
             def on_fit_toggled(change):
                 self.slider.disabled = change["new"]
@@ -186,12 +217,15 @@ def make_widget(
                     self.fix.value = False
                 OnParameterChange()()
 
+            self.fix.observe(on_fix_toggled, "value")
             self.fit.observe(on_fit_toggled, "value")
-            super().__init__([self.slider, self.fix, self.fit])
+            super().__init__([tmin, self.slider, tmax, self.fix, self.fit])
 
-        def reset(self, value):
+        def reset(self, value, limits=None):
             self.slider.unobserve_all("value")
             self.slider.value = value
+            if limits:
+                self.slider.min, self.slider.max = limits
             # Installing the observer actually triggers a notification,
             # we skip it. See notes in OnParameterChange.
             self.slider.observe(OnParameterChange(1), "value")
@@ -220,3 +254,10 @@ def make_widget(
     out = widgets.Output()
     OnParameterChange()()
     return widgets.HBox([out, ui])
+
+
+def _make_finite(x: float) -> float:
+    sign = -1 if x < 0 else 1
+    if abs(x) == np.inf:
+        return sign * np.finfo(float).max
+    return x
