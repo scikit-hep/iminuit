@@ -2347,11 +2347,10 @@ class Minuit:
         --------
         Minuit.visualize
         """
-        from iminuit.ipywidget import IPyWidget
+        from iminuit.ipywidget import make_widget
 
         plot = self._visualize(plot)
-
-        return IPyWidget(self, plot, kwargs, raise_on_exception)
+        return make_widget(self, plot, kwargs, raise_on_exception)
 
     def _free_parameters(self) -> Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)

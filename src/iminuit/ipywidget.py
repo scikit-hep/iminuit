@@ -1,22 +1,15 @@
+"""Interactive fitting widget for Jupyter notebooks."""
+
 import warnings
 from iminuit.util import _guess_initial_step
 import numpy as np
-from contextlib import contextmanager
+from typing import Dict, Any, Callable
 
 with warnings.catch_warnings():
     # ipywidgets produces deprecation warnings through use of internal APIs :(
     warnings.simplefilter("ignore")
     try:
-        from ipywidgets import (
-            HBox,
-            VBox,
-            Output,
-            FloatSlider,
-            Button,
-            ToggleButton,
-            Layout,
-            Dropdown,
-        )
+        import ipywidgets as widgets
         from ipywidgets.widgets.interaction import show_inline_matplotlib_plots
         from IPython.display import clear_output
         from matplotlib import pyplot as plt
@@ -28,185 +21,198 @@ with warnings.catch_warnings():
         raise
 
 
-class IPyWidget(HBox):
-    def __init__(self, minuit, plot, kwargs, raise_on_exception):
+def make_widget(
+    minuit: Any,
+    plot: Callable[..., None],
+    kwargs: Dict[str, Any],
+    raise_on_exception: bool,
+):
+    """Make interactive fitting widget."""
+    original_values = minuit.values[:]
 
-        def plot_with_frame(args, from_fit, report_success):
-            trans = plt.gca().transAxes
-            try:
-                with warnings.catch_warnings():
-                    if minuit._fcn._array_call:
-                        plot([args], **kwargs)  # prevent unpacking of array
-                    else:
-                        plot(args, **kwargs)
-            except Exception:
-                if raise_on_exception:
-                    raise
+    def plot_with_frame(from_fit, report_success):
+        trans = plt.gca().transAxes
+        try:
+            with warnings.catch_warnings():
+                minuit.visualize(plot, **kwargs)
+        except Exception:
+            if raise_on_exception:
+                raise
 
-                import traceback
+            import traceback
 
-                plt.figtext(
-                    0.01,
-                    0.5,
-                    traceback.format_exc(),
-                    ha="left",
-                    va="center",
-                    transform=trans,
-                    color="r",
-                )
-                return
-            if from_fit:
-                fval = minuit.fmin.fval
-            else:
-                fval = minuit._fcn(args)
+            plt.figtext(
+                0.01,
+                0.5,
+                traceback.format_exc(),
+                ha="left",
+                va="center",
+                transform=trans,
+                color="r",
+            )
+            return
+        fval = minuit.fmin.fval if from_fit else minuit._fcn(minuit.values)
+        plt.text(
+            0.05,
+            1.05,
+            f"FCN = {fval:.3f}",
+            transform=trans,
+            fontsize="x-large",
+        )
+        if from_fit and report_success:
             plt.text(
-                0.05,
+                0.95,
                 1.05,
-                f"FCN = {fval:.3f}",
+                f"{'success' if minuit.valid and minuit.accurate else 'FAILURE'}",
                 transform=trans,
                 fontsize="x-large",
+                ha="right",
             )
-            if from_fit and report_success:
-                plt.text(
-                    0.95,
-                    1.05,
-                    f"{'success' if minuit.valid and minuit.accurate else 'FAILURE'}",
-                    transform=trans,
-                    fontsize="x-large",
-                    ha="right",
-                )
 
-        def fit():
-            if algo_choice.value == "Migrad":
-                minuit.migrad()
-            elif algo_choice.value == "Scipy":
-                minuit.scipy()
-            elif algo_choice.value == "Simplex":
-                minuit.simplex()
-                return False
-            else:
-                assert False  # pragma: no cover, should never happen
-            return True
+    def fit():
+        if algo_choice.value == "Migrad":
+            minuit.migrad()
+        elif algo_choice.value == "Scipy":
+            minuit.scipy()
+        elif algo_choice.value == "Simplex":
+            minuit.simplex()
+            return False
+        else:
+            assert False  # pragma: no cover, should never happen
+        return True
 
-        def on_slider_change(change):
-            args = [x.slider.value for x in parameters]
-            from_fit = False
-            report_success = False
-            if any(x.opt.value for x in parameters):
-                save = minuit.fixed[:]
-                minuit.fixed = [not x.opt.value for x in parameters]
-                minuit.values = args
+    class OnParameterChange:
+        # Ugly implementation notes:
+        # Updating the slider asynchronously calls on_parameter_change. I could not find
+        # a way to prevent that (and I tried many), so as a workaround we skip
+        # two calls for each slider update, because updating the slider generates two
+        # calls due to rounding (which is stupid).
+
+        def __init__(self, skip: int = 0):
+            self.skip = skip
+
+        def __call__(self, change: Dict[str, Any] = {}):
+            if self.skip > 0:
+                self.skip -= 1
+                return
+
+            from_fit = change.get("from_fit", False)
+            report_success = change.get("report_success", False)
+            if not from_fit:
+                for i, x in enumerate(parameters):
+                    minuit.values[i] = x.slider.value
+
+            if any(x.fit.value for x in parameters):
+                saved = minuit.fixed[:]
+                for i, x in enumerate(parameters):
+                    minuit.fixed[i] = not x.fit.value
                 report_success = fit()
-                args = minuit.values[:]
-                for x, val in zip(parameters, args):
-                    with pause_slider_update(x.slider):
-                        x.slider.value = val
-                minuit.fixed = save
-                from_fit = True
+                for i, x in enumerate(parameters):
+                    if x.fit.value:
+                        x.reset(minuit.values[i])
+                minuit.fixed = saved
+
+            # Implementation like in ipywidegts.interaction.interactive_output
             with out:
                 clear_output(wait=True)
-                plot_with_frame(args, from_fit, report_success)
+                plot_with_frame(from_fit, report_success)
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     show_inline_matplotlib_plots()
 
-        def on_fit_button_clicked(change):
-            for x in parameters:
-                minuit.values[x.par] = x.slider.value
-                minuit.fixed[x.par] = x.fix.value
-            report_success = fit()
-            for x in parameters:
-                with pause_slider_update(x.slider):
-                    val = minuit.values[x.par]
-                    if val < x.slider.min:
-                        x.slider.min = val
-                    elif val > x.slider.max:
-                        x.slider.max = val
-                    x.slider.value = val
-            with out:
-                clear_output(wait=True)
-                plot_with_frame(minuit.values, True, report_success)
-                show_inline_matplotlib_plots()
+    def do_fit(change):
+        report_success = fit()
+        for i, x in enumerate(parameters):
+            x.reset(minuit.values[i])
+        OnParameterChange()({"from_fit": True, "report_success": report_success})
 
-        def on_update_button_clicked(change):
-            for x in parameters:
-                x.slider.continuous_update = not x.slider.continuous_update
+    def on_update_button_clicked(change):
+        for x in parameters:
+            x.slider.continuous_update = not x.slider.continuous_update
 
-        def on_reset_button_clicked(change):
-            minuit.reset()
-            for x in parameters:
-                with pause_slider_update(x.slider):
-                    x.slider.value = minuit.values[x.par]
-            on_slider_change(None)
+    def on_reset_button_clicked(change):
+        minuit.reset()
+        minuit.values = original_values
+        for i, x in enumerate(parameters):
+            x.reset("value", minuit.values[i])
+        OnParameterChange()()
 
-        @contextmanager
-        def pause_slider_update(slider):
-            slider.observe(lambda change: None, "value")
-            yield
-            slider.observe(on_slider_change, "value")
-
-        class ParameterBox(HBox):
-            def __init__(self, par, val, min, max, step, fix):
-                self.par = par
-                self.slider = FloatSlider(
-                    val,
-                    min=min,
-                    max=max,
-                    step=step,
-                    description=par,
-                    continuous_update=True,
-                    readout_format=".4g",
-                    layout=Layout(min_width="70%"),
-                )
-                self.fix = ToggleButton(
-                    fix, description="Fix", layout=Layout(width="3.1em")
-                )
-                self.opt = ToggleButton(
-                    False, description="Opt", layout=Layout(width="3.5em")
-                )
-                self.opt.observe(self.on_opt_toggled, "value")
-                super().__init__([self.slider, self.fix, self.opt])
-
-            def on_opt_toggled(self, change):
-                self.slider.disabled = self.opt.value
-                on_slider_change(None)
-
-        parameters = []
-        for par in minuit.parameters:
+    class Parameter(widgets.HBox):
+        def __init__(self, minuit, par):
+            self.minuit = minuit
+            self.par = par
             val = minuit.values[par]
             step = _guess_initial_step(val)
-            a, b = minuit.limits[par]
+            vmin, vmax = minuit.limits[par]
             # safety margin to avoid overflow warnings
-            a = a + 1e-300 if np.isfinite(a) else val - 100 * step
-            b = b - 1e-300 if np.isfinite(b) else val + 100 * step
-            parameters.append(ParameterBox(par, val, a, b, step, minuit.fixed[par]))
+            vmin = vmin + 1e-300 if np.isfinite(vmin) else val - 100 * step
+            vmax = vmax - 1e-300 if np.isfinite(vmax) else val + 100 * step
 
-        fit_button = Button(description="Fit")
-        fit_button.on_click(on_fit_button_clicked)
+            self.slider = widgets.FloatSlider(
+                val,
+                min=vmin,
+                max=vmax,
+                step=step,
+                description=par,
+                continuous_update=True,
+                readout_format=".4g",
+                layout=widgets.Layout(min_width="70%"),
+            )
+            self.slider.observe(OnParameterChange(), "value")
 
-        update_button = ToggleButton(True, description="Continuous")
-        update_button.observe(on_update_button_clicked)
+            self.fix = widgets.ToggleButton(
+                minuit.fixed[par],
+                description="Fix",
+                layout=widgets.Layout(width="3.1em"),
+            )
 
-        reset_button = Button(description="Reset")
-        reset_button.on_click(on_reset_button_clicked)
+            def on_fix_toggled(change):
+                minuit.fixed[par] = change["new"]
+                if change["new"]:
+                    self.fit.value = False
 
-        algo_choice = Dropdown(
-            options=["Migrad", "Scipy", "Simplex"], value="Migrad"
-        )
+            self.fix.observe(on_fix_toggled, "value")
 
-        ui = VBox(
-            [
-                HBox([fit_button, update_button, reset_button, algo_choice]),
-                VBox(parameters),
-            ]
-        )
+            self.fit = widgets.ToggleButton(
+                False, description="Fit", layout=widgets.Layout(width="3.5em")
+            )
 
-        out = Output()
+            def on_fit_toggled(change):
+                self.slider.disabled = change["new"]
+                if change["new"]:
+                    self.fix.value = False
+                OnParameterChange()()
 
-        for x in parameters:
-            x.slider.observe(on_slider_change, "value")
+            self.fit.observe(on_fit_toggled, "value")
+            super().__init__([self.slider, self.fix, self.fit])
 
-        show_inline_matplotlib_plots()
-        on_slider_change(None)
+        def reset(self, value):
+            self.slider.unobserve_all("value")
+            self.slider.value = value
+            self.slider.observe(OnParameterChange(1), "value")
 
-        super().__init__([out, ui])
+    parameters = [Parameter(minuit, par) for par in minuit.parameters]
+
+    fit_button = widgets.Button(description="Fit")
+    fit_button.on_click(do_fit)
+
+    update_button = widgets.ToggleButton(True, description="Continuous")
+    update_button.observe(on_update_button_clicked)
+
+    reset_button = widgets.Button(description="Reset")
+    reset_button.on_click(on_reset_button_clicked)
+
+    algo_choice = widgets.Dropdown(
+        options=["Migrad", "Scipy", "Simplex"], value="Migrad"
+    )
+
+    ui = widgets.VBox(
+        [
+            widgets.HBox([fit_button, update_button, reset_button, algo_choice]),
+            widgets.VBox(parameters),
+        ]
+    )
+
+    out = widgets.Output()
+    OnParameterChange()()
+    return widgets.HBox([out, ui])
