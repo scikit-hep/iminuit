@@ -28,6 +28,9 @@ def make_widget(
     raise_on_exception: bool,
 ):
     """Make interactive fitting widget."""
+    # Implementations makes heavy use of closures,
+    # we frequently use variables which are defined
+    # near the end of the function.
     original_values = minuit.values[:]
 
     def plot_with_frame(from_fit, report_success):
@@ -83,11 +86,11 @@ def make_widget(
 
     class OnParameterChange:
         # Ugly implementation notes:
-        # Updating the slider asynchronously calls on_parameter_change. I could not find
-        # a way to prevent that (and I tried many), so as a workaround we skip
-        # two calls for each slider update, because updating the slider generates two
-        # calls due to rounding (which is stupid).
-
+        # We want the plot when the user moves the slider widget, but not when
+        # we update the slider value manually from our code. Unfortunately,
+        # the latter also calls OnParameterChange, which leads to superfluous plotting.
+        # I could not find a nice way to prevent that (and I tried many), so as a workaround
+        # we optionally skip a number of calls, when the slider is updated.
         def __init__(self, skip: int = 0):
             self.skip = skip
 
@@ -103,14 +106,11 @@ def make_widget(
                     minuit.values[i] = x.slider.value
 
             if any(x.fit.value for x in parameters):
-                from_fit = True
                 saved = minuit.fixed[:]
                 for i, x in enumerate(parameters):
                     minuit.fixed[i] = not x.fit.value
-                report_success = fit()
-                for i, x in enumerate(parameters):
-                    if x.fit.value:
-                        x.reset(minuit.values[i])
+                from_fit = True
+                report_success = do_fit(None)
                 minuit.fixed = saved
 
             # Implementation like in ipywidegts.interaction.interactive_output
@@ -125,6 +125,8 @@ def make_widget(
         report_success = fit()
         for i, x in enumerate(parameters):
             x.reset(minuit.values[i])
+        if change is None:
+            return report_success
         OnParameterChange()({"from_fit": True, "report_success": report_success})
 
     def on_update_button_clicked(change):
@@ -135,7 +137,7 @@ def make_widget(
         minuit.reset()
         minuit.values = original_values
         for i, x in enumerate(parameters):
-            x.reset("value", minuit.values[i])
+            x.reset(minuit.values[i])
         OnParameterChange()()
 
     class Parameter(widgets.HBox):
@@ -190,6 +192,8 @@ def make_widget(
         def reset(self, value):
             self.slider.unobserve_all("value")
             self.slider.value = value
+            # Installing the observer actually triggers a notification,
+            # we skip it. See notes in OnParameterChange.
             self.slider.observe(OnParameterChange(1), "value")
 
     parameters = [Parameter(minuit, par) for par in minuit.parameters]
@@ -213,7 +217,6 @@ def make_widget(
             widgets.VBox(parameters),
         ]
     )
-
     out = widgets.Output()
     OnParameterChange()()
     return widgets.HBox([out, ui])
