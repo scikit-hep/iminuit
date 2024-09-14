@@ -103,6 +103,7 @@ def make_widget(
                     minuit.values[i] = x.slider.value
 
             if any(x.fit.value for x in parameters):
+                from_fit = True
                 saved = minuit.fixed[:]
                 for i, x in enumerate(parameters):
                     minuit.fixed[i] = not x.fit.value
