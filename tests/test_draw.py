@@ -212,8 +212,8 @@ def test_interactive():
     ui = out.children[1]
     header, parameters = ui.children
     fit_button, update_button, reset_button, algo_select = header.children
-    assert parameters.children[0].slider.max == np.finfo(float).max
-    assert parameters.children[1].slider.min == -np.finfo(float).max
+    assert parameters.children[0].slider.max == 1
+    assert parameters.children[1].slider.min == -1
     with plot.assert_call():
         fit_button.click()
     assert_allclose(m.values, (100, -100), atol=1e-5)
