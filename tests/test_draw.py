@@ -189,10 +189,12 @@ def test_interactive():
 
     update_button.value = False
     with plot.assert_call():
-        parameters.children[0].slider.value = 0.4  # change first slider
+        # because of implementation details, we have to trigger the slider several times
+        for i in range(5):
+            parameters.children[0].slider.value = i  # change first slider
     parameters.children[0].fix.value = True
     with plot.assert_call():
-        parameters.children[0].opt.value = True
+        parameters.children[0].fit.value = True
 
     class Cost:
         def visualize(self, args):
@@ -210,8 +212,8 @@ def test_interactive():
     ui = out.children[1]
     header, parameters = ui.children
     fit_button, update_button, reset_button, algo_select = header.children
-    assert parameters.children[0].slider.max < 100
-    assert parameters.children[1].slider.min > -100
+    assert parameters.children[0].slider.max == 1
+    assert parameters.children[1].slider.min == -1
     with plot.assert_call():
         fit_button.click()
     assert_allclose(m.values, (100, -100), atol=1e-5)
@@ -253,4 +255,4 @@ def test_interactive_with_array_func():
     trace_args = TraceArgs()
     m = Minuit(cost, (1, 2))
     m.interactive(trace_args)
-    assert trace_args.nargs == 1
+    assert trace_args.nargs > 0

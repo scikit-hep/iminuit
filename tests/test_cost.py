@@ -1375,7 +1375,7 @@ def test_LeastSquares_visualize():
     assert_equal(x, (1, 2))
     assert_equal(y, (2, 3))
     assert_equal(ye, 0.1)
-    assert len(xm) < 10
+    assert len(xm) == 39
     # linear spacing
     (x, y, ye), (xm, ym) = c.visualize((1, 2), model_points=10)
     assert len(xm) == 10
