@@ -4,6 +4,7 @@ import warnings
 from iminuit.util import _guess_initial_step
 import numpy as np
 from typing import Dict, Any, Callable
+import sys
 
 with warnings.catch_warnings():
     # ipywidgets produces deprecation warnings through use of internal APIs :(
@@ -261,5 +262,5 @@ def make_widget(
 def _make_finite(x: float) -> float:
     sign = -1 if x < 0 else 1
     if abs(x) == np.inf:
-        return sign * np.finfo(float).max
+        return sign * sys.float_info.max
     return x
