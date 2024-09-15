@@ -157,7 +157,8 @@ def make_widget(
                 vmin,
                 min=vmin,
                 max=vmax2,
-                step=1e-1 * (vmax2 - vmin2),
+                # we multiply before subtraction to avoid overflow
+                step=(1e-1 * vmax2 - 1e-1 * vmin2),
                 layout=widgets.Layout(width="4.1em"),
             )
 
@@ -165,7 +166,8 @@ def make_widget(
                 vmax,
                 min=vmin2,
                 max=vmax,
-                step=1e-1 * (vmax2 - vmin2),
+                # we multiply before subtraction to avoid overflow
+                step=(1e-1 * vmax2 - 1e-1 * vmin2),
                 layout=widgets.Layout(width="4.1em"),
             )
 

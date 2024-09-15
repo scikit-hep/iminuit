@@ -13,6 +13,6 @@ def test_interactive():
 
     iminuit.Minuit(cost, 1).interactive()
 
-    with hide_modules("ipywidgets", reload="iminuit"):
+    with hide_modules("ipywidgets", reload="iminuit.ipywidget"):
         with pytest.raises(ModuleNotFoundError, match="Please install"):
             iminuit.Minuit(cost, 1).interactive()

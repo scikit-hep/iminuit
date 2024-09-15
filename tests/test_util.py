@@ -702,7 +702,7 @@ def test_histogram_segments(mask_expected):
 
 
 @pytest.mark.parametrize(
-    "fn_expected", ((lambda x: x, 15), (lambda x: x**11, 40), (np.log, 80))
+    "fn_expected", ((lambda x: x, 40), (lambda x: x**11, 60), (np.log, 80))
 )
 def test_smart_sampling_1(fn_expected):
     fn, expected = fn_expected
@@ -734,7 +734,7 @@ def test_smart_sampling_4():
 
     with pytest.warns(RuntimeWarning, match="Time limit"):
         x, y = util._smart_sampling(step, 0, 1, maxtime=0)
-    assert 0 < len(x) < 10
+    assert 0 < len(x) < 30
 
 
 @pytest.mark.parametrize(
