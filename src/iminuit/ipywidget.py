@@ -1,7 +1,6 @@
 """Interactive fitting widget for Jupyter notebooks."""
 
 import warnings
-from iminuit.util import _guess_initial_step
 import numpy as np
 from typing import Dict, Any, Callable
 import sys
@@ -47,15 +46,17 @@ def make_widget(
             import traceback
 
             plt.figtext(
-                0.01,
+                0,
                 0.5,
-                traceback.format_exc(),
-                ha="left",
+                traceback.format_exc(limit=-1),
+                fontdict={"family": "monospace", "size": "x-small"},
                 va="center",
-                transform=trans,
                 color="r",
+                backgroundcolor="w",
+                wrap=True,
             )
             return
+
         fval = minuit.fmin.fval if from_fit else minuit._fcn(minuit.values)
         plt.text(
             0.05,
@@ -146,29 +147,26 @@ def make_widget(
     class Parameter(widgets.HBox):
         def __init__(self, minuit, par):
             val = minuit.values[par]
-            step = _guess_initial_step(val)
             vmin, vmax = minuit.limits[par]
-            vmin = _make_finite(vmin)
-            vmax = _make_finite(vmax)
-            # safety margin to avoid overflow warnings
-            vmin2 = vmin + 1e-300 if np.isfinite(vmin) else val - 100 * step
-            vmax2 = vmax - 1e-300 if np.isfinite(vmax) else val + 100 * step
+            step = _guess_initial_step(val, vmin, vmax)
+            vmin2 = vmin if np.isfinite(vmin) else val - 100 * step
+            vmax2 = vmax if np.isfinite(vmax) else val + 100 * step
+
+            tlabel = widgets.Label(par, layout=widgets.Layout(width=f"{longest_par}em"))
 
             tmin = widgets.BoundedFloatText(
-                vmin,
-                min=vmin,
+                _round(vmin2),
+                min=_make_finite(vmin),
                 max=vmax2,
-                # we multiply before subtraction to avoid overflow
-                step=(1e-1 * vmax2 - 1e-1 * vmin2),
+                step=1e-1 * (vmax2 - vmin2),
                 layout=widgets.Layout(width="4.1em"),
             )
 
             tmax = widgets.BoundedFloatText(
-                vmax,
+                _round(vmax2),
                 min=vmin2,
-                max=vmax,
-                # we multiply before subtraction to avoid overflow
-                step=(1e-1 * vmax2 - 1e-1 * vmin2),
+                max=_make_finite(vmax),
+                step=1e-1 * (vmax2 - vmin2),
                 layout=widgets.Layout(width="4.1em"),
             )
 
@@ -177,9 +175,8 @@ def make_widget(
                 min=vmin2,
                 max=vmax2,
                 step=step,
-                description=par,
                 continuous_update=True,
-                readout_format=".4g",
+                readout_format=".3g",
                 layout=widgets.Layout(min_width="50%"),
             )
             self.slider.observe(OnParameterChange(), "value")
@@ -202,11 +199,15 @@ def make_widget(
             self.fix = widgets.ToggleButton(
                 minuit.fixed[par],
                 description="Fix",
+                tooltip="Fix",
                 layout=widgets.Layout(width="3.1em"),
             )
 
             self.fit = widgets.ToggleButton(
-                False, description="Fit", layout=widgets.Layout(width="3.5em")
+                False,
+                description="Fit",
+                tooltip="Fit",
+                layout=widgets.Layout(width="3.5em"),
             )
 
             def on_fix_toggled(change):
@@ -222,7 +223,7 @@ def make_widget(
 
             self.fix.observe(on_fix_toggled, "value")
             self.fit.observe(on_fit_toggled, "value")
-            super().__init__([tmin, self.slider, tmax, self.fix, self.fit])
+            super().__init__([tlabel, tmin, self.slider, tmax, self.fix, self.fit])
 
         def reset(self, value, limits=None):
             self.slider.unobserve_all("value")
@@ -233,19 +234,36 @@ def make_widget(
             # we skip it. See notes in OnParameterChange.
             self.slider.observe(OnParameterChange(1), "value")
 
+    longest_par = max(len(par) for par in minuit.parameters)
     parameters = [Parameter(minuit, par) for par in minuit.parameters]
 
-    fit_button = widgets.Button(description="Fit")
+    button_layout = widgets.Layout(max_width="8em")
+
+    fit_button = widgets.Button(
+        description="Fit",
+        button_style="primary",
+        layout=button_layout,
+    )
     fit_button.on_click(do_fit)
 
-    update_button = widgets.ToggleButton(True, description="Continuous")
+    update_button = widgets.ToggleButton(
+        True,
+        description="Continuous",
+        layout=button_layout,
+    )
     update_button.observe(on_update_button_clicked)
 
-    reset_button = widgets.Button(description="Reset")
+    reset_button = widgets.Button(
+        description="Reset",
+        button_style="danger",
+        layout=button_layout,
+    )
     reset_button.on_click(on_reset_button_clicked)
 
     algo_choice = widgets.Dropdown(
-        options=["Migrad", "Scipy", "Simplex"], value="Migrad"
+        options=["Migrad", "Scipy", "Simplex"],
+        value="Migrad",
+        layout=button_layout,
     )
 
     ui = widgets.VBox(
@@ -264,3 +282,13 @@ def _make_finite(x: float) -> float:
     if abs(x) == np.inf:
         return sign * sys.float_info.max
     return x
+
+
+def _guess_initial_step(val: float, vmin: float, vmax: float) -> float:
+    if np.isfinite(vmin) and np.isfinite(vmax):
+        return 1e-2 * (vmax - vmin)
+    return 1e-2
+
+
+def _round(x: float) -> float:
+    return float(f"{x:.1g}")
