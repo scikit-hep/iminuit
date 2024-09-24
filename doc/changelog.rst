@@ -5,6 +5,12 @@
 Changelog
 =========
 
+2.30.0 (September 24, 2024)
+---------------------------
+- Fix: root version in docs (`#1043 <https://github.com/scikit-hep/iminuit/pull/1043>`_)
+- Allow to modify slider range in interactive widget (`#1038 <https://github.com/scikit-hep/iminuit/pull/1038>`_)
+- Fix: add readout_format to slider (`#1036 <https://github.com/scikit-hep/iminuit/pull/1036>`_)
+
 2.29.1 (August 25, 2024)
 ------------------------
 - Show correct ROOT version in documentation
