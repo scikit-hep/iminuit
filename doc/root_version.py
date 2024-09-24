@@ -25,4 +25,4 @@ root_version = (
     .decode()
     .strip()
 )
-print("ROOT", root_version)
+print(root_version)
