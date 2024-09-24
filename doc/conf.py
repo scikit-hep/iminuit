@@ -1,12 +1,15 @@
 import os
-from iminuit import __version__ as version
-import sys
-
-sys.path.append(".")
-
-from root_version import root_version  # noqa
 
 # release and version are special variables used by sphinx
+from iminuit import __version__ as version
+
+# We set the root_version manually, because it setting it
+# automatically and efficiently in CI is difficult.
+# To update the number:
+# - Make sure you have a full clone, not a shallow clone of ROOT.
+# - Run `doc/root_version.py` and copy the string here.
+root_version = "v6-25-02-9213-g754d22635f"
+
 
 with open("../README.rst") as f:
     readme_content = f.read()
@@ -49,6 +52,7 @@ nbsphinx_execute_arguments = [
 nbsphinx_execute = "auto"
 # use FAST=1 to speed up doc build
 if bool(os.environ.get("FAST", False)):
+    print("Fast generation activated")
     nbsphinx_execute = "never"
 
 autoclass_content = "both"
