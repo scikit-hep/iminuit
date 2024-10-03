@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - if: ${{ github.ref == 'refs/heads/main' }}
         run: |
@@ -44,7 +44,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-14]
         arch: [auto, aarch64]
-        py: [cp39, cp310, cp311, cp312]
+        py: [cp39, cp310, cp311, cp312, cp313]
         exclude:
           - os: windows-latest
             arch: aarch64
@@ -63,7 +63,7 @@ jobs:
 
       - uses: yezz123/setup-uv@v4
 
-      - uses: pypa/cibuildwheel@v2.20
+      - uses: pypa/cibuildwheel@v2.21
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -103,7 +103,6 @@ jobs:
     permissions:
       id-token: write
       attestations: write
-      contents: read
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/download-artifact@v4

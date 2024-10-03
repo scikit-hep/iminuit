@@ -20,7 +20,7 @@ void bind_usercovariance(py::module);
 void bind_userparameterstate(py::module);
 void bind_usertransformation(py::module);
 
-PYBIND11_MODULE(_core, m) {
+PYBIND11_MODULE(_core, m, py::mod_gil_not_used()) {
   bind_application(m);
   bind_contours(m);
   bind_fcn(m);
