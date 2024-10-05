@@ -121,6 +121,7 @@ no_implicit_optional = false
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
+skip = ["cp39-musllinux_i686"] # no numpy wheel
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 test-skip = ["*universal2:arm64"]
@@ -135,7 +136,7 @@ PIP_ONLY_BINARY = ":all:"
 
 [[tool.cibuildwheel.overrides]]
 # to match numpy, we use manylinux2010 for cp36 to cp39
-select = "cp3?-*"
+select = "cp3?-manylinux*"
 manylinux-x86_64-image = "manylinux2010"
 manylinux-i686-image = "manylinux2010"
 build-frontend = "build"
