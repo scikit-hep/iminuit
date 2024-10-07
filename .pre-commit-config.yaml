@@ -15,7 +15,7 @@
 repos:
 # Standard hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
+  rev: v5.0.0
   hooks:
   - id: check-case-conflict
   - id: check-docstring-first
@@ -34,7 +34,7 @@ repos:
 
 # Ruff linter and formatter
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.6.7'
+  rev: 'v0.6.9'
   hooks:
     - id: ruff
       args: [--fix, --show-fixes]
@@ -42,7 +42,7 @@ repos:
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v18.1.8
+  rev: v19.1.1
   hooks:
   - id: clang-format
     files: "src"
@@ -73,11 +73,11 @@ repos:
     args: [--drop-empty-cells]
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.29.2
+  rev: 0.29.3
   hooks:
   - id: check-github-workflows
 
 - repo: https://github.com/henryiii/validate-pyproject-schema-store
-  rev: 2024.09.20
+  rev: 2024.09.23
   hooks:
   - id: validate-pyproject
