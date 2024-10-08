@@ -22,15 +22,15 @@ jobs:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
             python-version: "3.11"
-            installs: "numpy>=2.0.0rc1"
+            installs: "numpy>=2"
           - os: macos-14
             python-version: "3.9"
             installs: "numpy==1.21.0 scipy matplotlib"
           - os: ubuntu-latest
             python-version: "pypy-3.9"
           - os: ubuntu-latest
-            python-version: "3.12"
-            installs: "'numpy>=2.0.0rc1' scipy matplotlib"
+            python-version: "3.13"
+            installs: "'numpy>=2' scipy matplotlib"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
@@ -46,6 +46,7 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
     # pip install .[test] is not used here to test minimum (faster)
     # cov workflow runs all tests
     - run: uv pip install --system . pytest pytest-xdist ${{ matrix.installs }}
