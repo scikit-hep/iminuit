@@ -61,7 +61,7 @@ jobs:
       - if: ${{ matrix.arch == 'aarch64' }}
         uses: docker/setup-qemu-action@v3
 
-      - uses: yezz123/setup-uv@v4
+      - uses: astral-sh/setup-uv@v3
 
       - uses: pypa/cibuildwheel@v2.21
         env:
