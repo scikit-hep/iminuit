@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.30.1 (October 08, 2024)
+-------------------------
+- Ci: add 3.13 wheels (`#1047 <https://github.com/scikit-hep/iminuit/pull/1047>`_)
+
 2.30.0 (September 24, 2024)
 ---------------------------
 - Fix: root version in docs (`#1043 <https://github.com/scikit-hep/iminuit/pull/1043>`_)
