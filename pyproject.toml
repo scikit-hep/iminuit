@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core[pyproject]>=0.5", "pybind11>=2.12"]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -73,7 +73,7 @@ doc = [
 ]
 
 [tool.scikit-build]
-minimum-version = "0.5"
+minimum-version = "build-system.requires"
 build-dir = "build/{wheel_tag}"
 sdist.exclude = ["extern/root"]
 sdist.include = ["extern/root/math/minuit2/inc", "extern/root/math/minuit2/src"]
@@ -89,9 +89,6 @@ filterwarnings = [
     "error::DeprecationWarning",
     "error::FutureWarning",
 ]
-
-[tool.ruff]
-src = ["src"]
 
 [tool.ruff.lint]
 extend-select = [
