@@ -266,7 +266,7 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     The implementation makes the result asymptotically chi2-distributed,
     which helps to maximise the numerical accuracy for Minuit.
 
-    If sum(mu) == sum(n), the result is equal to :func:`multinomial_chi2`
+    If sum(mu) == sum(n), the result is equal to :func:`multinomial_chi2`.
     """
     n, mu = np.atleast_1d(n, mu)
     return 2 * np.sum(n * (log_or_zero(n) - log_or_zero(mu)) + mu - n)
