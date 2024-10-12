@@ -60,6 +60,8 @@ if git_log:
     for x in git_log:
         if x.startswith("[pre-commit.ci]"):
             continue
+        if x.lower().startswith("bump actions"):
+            continue
         x = re.sub(
             "#([0-9]+)", r"`#\1 <https://github.com/scikit-hep/iminuit/pull/\1>`_", x
         )

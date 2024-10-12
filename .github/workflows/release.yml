@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - if: ${{ github.ref == 'refs/heads/main' }}
         run: |
@@ -94,8 +94,10 @@ jobs:
           path: dist/*.tar.gz
 
   upload:
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
+
     environment:
       name: pypi
       url: https://pypi.org/project/iminuit/
@@ -103,7 +105,7 @@ jobs:
     permissions:
       id-token: write
       attestations: write
-    if: ${{ github.ref == 'refs/heads/main' }}
+
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -116,15 +118,10 @@ jobs:
         with:
           subject-path: "dist/iminuit-*"
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{secrets.pypi_password}}
-
   release:
+    if: ${{ github.ref == 'refs/heads/main' }}
     needs: [release_check, upload]
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
       - uses: softprops/action-gh-release@v2

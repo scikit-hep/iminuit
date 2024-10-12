@@ -5,6 +5,13 @@
 Changelog
 =========
 
+2.30.2 (October 12, 2024)
+-------------------------
+- Fix docs (`#1052 <https://github.com/scikit-hep/iminuit/pull/1052>`_)
+- Fix: use old license text (`#1050 <https://github.com/scikit-hep/iminuit/pull/1050>`_)
+- Chore: some minor updates (`#1051 <https://github.com/scikit-hep/iminuit/pull/1051>`_)
+- Ci: use official gha for uv (`#1048 <https://github.com/scikit-hep/iminuit/pull/1048>`_)
+
 2.30.1 (October 08, 2024)
 -------------------------
 - Ci: add 3.13 wheels (`#1047 <https://github.com/scikit-hep/iminuit/pull/1047>`_)
