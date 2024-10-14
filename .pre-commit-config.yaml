@@ -73,11 +73,11 @@ repos:
     args: [--drop-empty-cells]
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.29.3
+  rev: 0.29.4
   hooks:
   - id: check-github-workflows
 
 - repo: https://github.com/henryiii/validate-pyproject-schema-store
-  rev: 2024.09.23
+  rev: 2024.10.14
   hooks:
   - id: validate-pyproject
