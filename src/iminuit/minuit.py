@@ -2355,7 +2355,7 @@ class Minuit:
                 is_jupyter = True
             else:
                 is_jupyter = False
-        except NameError:
+        except Exception:
             is_jupyter = False
 
         if is_jupyter:
