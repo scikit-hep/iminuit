@@ -34,7 +34,7 @@ repos:
 
 # Ruff linter and formatter
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.6.9'
+  rev: 'v0.7.0'
   hooks:
     - id: ruff
       args: [--fix, --show-fixes]
@@ -42,7 +42,7 @@ repos:
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v19.1.1
+  rev: v19.1.2
   hooks:
   - id: clang-format
     files: "src"
@@ -58,7 +58,7 @@ repos:
 
 # Python type checking
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.11.2'
+  rev: 'v1.12.1'
   hooks:
   - id: mypy
     additional_dependencies: [numpy]
@@ -73,11 +73,11 @@ repos:
     args: [--drop-empty-cells]
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.29.3
+  rev: 0.29.4
   hooks:
   - id: check-github-workflows
 
 - repo: https://github.com/henryiii/validate-pyproject-schema-store
-  rev: 2024.09.23
+  rev: 2024.10.14
   hooks:
   - id: validate-pyproject
