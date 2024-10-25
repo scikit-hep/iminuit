@@ -25,7 +25,49 @@ def make_widget(
     raise_on_exception: bool,
 ):
     """Make interactive fitting widget."""
+    original_values = minuit.values[:]
+    original_limits = minuit.limits[:]
 
+    def plot_with_frame(from_fit, report_success):
+        trans = plt.gca().transAxes
+        try:
+            with warnings.catch_warnings():
+                minuit.visualize(plot, **kwargs)
+        except Exception:
+            if raise_on_exception:
+                raise
+
+            import traceback
+
+            plt.figtext(
+                0,
+                0.5,
+                traceback.format_exc(limit=-1),
+                fontdict={"family": "monospace", "size": "x-small"},
+                va="center",
+                color="r",
+                backgroundcolor="w",
+                wrap=True,
+            )
+            return
+
+        fval = minuit.fmin.fval if from_fit else minuit._fcn(minuit.values)
+        plt.text(
+            0.05,
+            1.05,
+            f"FCN = {fval:.3f}",
+            transform=trans,
+            fontsize="x-large",
+        )
+        if from_fit and report_success:
+            plt.text(
+                0.95,
+                1.05,
+                f"{'success' if minuit.valid and minuit.accurate else 'FAILURE'}",
+                transform=trans,
+                fontsize="x-large",
+                ha="right",
+            )
 
     class FloatSlider(QtWidgets.QSlider):
         # Qt sadly does not have a float slider, so we have to
@@ -85,56 +127,45 @@ def make_widget(
         def value(self):
             return self._value
 
-
     class Parameter(QtWidgets.QGroupBox):
         def __init__(self, minuit, par, callback):
             super().__init__("")
             self.par = par
             self.callback = callback
-            self.minuit = minuit
-            # Set the size policy of the group box
-            sizePolicy = QtWidgets.QSizePolicy(
+
+            size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
                 QtWidgets.QSizePolicy.Policy.Fixed)
-            self.setSizePolicy(sizePolicy)
-            # Set up the Qt Widget
+            self.setSizePolicy(size_policy)
             layout = QtWidgets.QVBoxLayout()
             self.setLayout(layout)
-            # Add label
+
             label = QtWidgets.QLabel(
                 par, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
             label.setMinimumSize(QtCore.QSize(50, 0))
-            # Add label to display slider value
             self.value_label = QtWidgets.QLabel(
                 alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
             self.value_label.setMinimumSize(QtCore.QSize(50, 0))
-            # Add value slider
             self.slider = FloatSlider(self.value_label)
-            # Add spin boxes for changing the limits
             self.tmin = QtWidgets.QDoubleSpinBox(
                 alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
             self.tmin.setRange(_make_finite(-np.inf), _make_finite(np.inf))
             self.tmax = QtWidgets.QDoubleSpinBox(
                 alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
             self.tmax.setRange(_make_finite(-np.inf), _make_finite(np.inf))
-            sizePolicy = QtWidgets.QSizePolicy(
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
-                QtWidgets.QSizePolicy.Policy.Fixed)
-            self.tmin.setSizePolicy(sizePolicy)
-            self.tmax.setSizePolicy(sizePolicy)
-            # Add buttons
+            self.tmin.setSizePolicy(size_policy)
+            self.tmax.setSizePolicy(size_policy)
             self.fix = QtWidgets.QPushButton("Fix")
             self.fix.setCheckable(True)
             self.fix.setChecked(minuit.fixed[par])
             self.fit = QtWidgets.QPushButton("Fit")
             self.fit.setCheckable(True)
             self.fit.setChecked(False)
-            sizePolicy = QtWidgets.QSizePolicy(
+            size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.Fixed,
                 QtWidgets.QSizePolicy.Policy.Fixed)
-            self.fix.setSizePolicy(sizePolicy)
-            self.fit.setSizePolicy(sizePolicy)
-            # Add widgets to the layout
+            self.fix.setSizePolicy(size_policy)
+            self.fit.setSizePolicy(size_policy)
             layout1 = QtWidgets.QHBoxLayout()
             layout.addLayout(layout1)
             layout1.addWidget(label)
@@ -146,36 +177,18 @@ def make_widget(
             layout2.addWidget(self.tmin)
             layout2.addWidget(self.tmax)
             layout2.addWidget(self.fit)
-            # Add tooltips
-            self.slider.setToolTip("Parameter Value")
-            self.value_label.setToolTip("Parameter Value")
-            self.tmin.setToolTip("Lower Limit")
-            self.tmax.setToolTip("Upper Limit")
-            self.fix.setToolTip("Fix Parameter")
-            self.fit.setToolTip("Fit Parameter")
-            # Set initial value and limits
+
             val = minuit.values[par]
             vmin, vmax = minuit.limits[par]
             self.step = _guess_initial_step(val, vmin, vmax)
             vmin2 = vmin if np.isfinite(vmin) else val - 100 * self.step
             vmax2 = vmax if np.isfinite(vmax) else val + 100 * self.step
-            # Set up the spin boxes
-            self.tmin.setValue(vmin2)
             self.tmin.setSingleStep(1e-1 * (vmax2 - vmin2))
-            self.tmax.setValue(vmax2)
             self.tmax.setSingleStep(1e-1 * (vmax2 - vmin2))
-            # Remember the original values and limits
-            self.original_value = val
-            self.original_limits = (vmin2, vmax2)
-            # Set up the slider
-            self.slider.setMinimum(vmin2)
-            self.slider.setMaximum(vmax2)
-            self.slider.setValue(val)
-            self.value_label.setText(f"{val:.3g}")
-            # Set limits for the spin boxes
             self.tmin.setMinimum(_make_finite(vmin))
             self.tmax.setMaximum(_make_finite(vmax))
-            # Connect signals
+            self.reset(val, limits=(vmin, vmax))
+
             self.slider.floatValueChanged.connect(self.on_val_change)
             self.fix.clicked.connect(self.on_fix_toggled)
             self.tmin.valueChanged.connect(self.on_min_change)
@@ -183,33 +196,33 @@ def make_widget(
             self.fit.clicked.connect(self.on_fit_toggled)
 
         def on_val_change(self, val):
-            self.minuit.values[self.par] = val
+            minuit.values[self.par] = val
             self.callback()
 
         def on_min_change(self):
             tmin = self.tmin.value()
             if tmin >= self.tmax.value():
                 self.tmin.blockSignals(True)
-                self.tmin.setValue(self.minuit.limits[self.par][0])
+                self.tmin.setValue(minuit.limits[self.par][0])
                 self.tmin.blockSignals(False)
                 return
             self.slider.setMinimum(tmin)
-            lim = self.minuit.limits[self.par]
+            lim = minuit.limits[self.par]
             minuit.limits[self.par] = (tmin, lim[1])
 
         def on_max_change(self):
             tmax = self.tmax.value()
             if tmax <= self.tmin.value():
                 self.tmax.blockSignals(True)
-                self.tmax.setValue(self.minuit.limits[self.par][1])
+                self.tmax.setValue(minuit.limits[self.par][1])
                 self.tmax.blockSignals(False)
                 return
             self.slider.setMaximum(tmax)
-            lim = self.minuit.limits[self.par]
+            lim = minuit.limits[self.par]
             minuit.limits[self.par] = (lim[0], tmax)
 
         def on_fix_toggled(self):
-            self.minuit.fixed[self.par] = self.fix.isChecked()
+            minuit.fixed[self.par] = self.fix.isChecked()
             if self.fix.isChecked():
                 self.fit.setChecked(False)
 
@@ -217,80 +230,84 @@ def make_widget(
             self.slider.setEnabled(not self.fit.isChecked())
             if self.fit.isChecked():
                 self.fix.setChecked(False)
-                self.minuit.fixed[self.par] = False
+                minuit.fixed[self.par] = False
             self.callback()
 
-        def reset(self, val=None, limits=False):
-            if limits:
+        def reset(self, val, limits=None):
+            # Set limits first so that the value won't be changed by the
+            # FloatSlider
+            if limits is not None:
+                vmin, vmax = limits
+                vmin = vmin if np.isfinite(vmin) else val - 100 * self.step
+                vmax = vmax if np.isfinite(vmax) else val + 100 * self.step
                 self.slider.blockSignals(True)
-                self.slider.setMinimum(self.original_limits[0])
+                self.slider.setMinimum(vmin)
                 self.slider.blockSignals(True)
-                self.slider.setMaximum(self.original_limits[1])
+                self.slider.setMaximum(vmax)
                 self.tmin.blockSignals(True)
-                self.tmin.setValue(self.original_limits[0])
+                self.tmin.setValue(vmin)
                 self.tmin.blockSignals(False)
                 self.tmax.blockSignals(True)
-                self.tmax.setValue(self.original_limits[1])
+                self.tmax.setValue(vmax)
                 self.tmax.blockSignals(False)
-            if val is None:
-                val = self.original_value
+
             self.slider.blockSignals(True)
             self.slider.setValue(val)
             self.value_label.setText(f"{val:.3g}")
             self.slider.blockSignals(False)
 
-
     class MainWindow(QtWidgets.QMainWindow):
         def __init__(self):
             super().__init__()
             self.resize(1200, 600)
-            # Set the global font
             font = QtGui.QFont()
             font.setPointSize(12)
             self.setFont(font)
-            # Create the central widget
             centralwidget = QtWidgets.QWidget(parent=self)
             self.setCentralWidget(centralwidget)
             central_layout = QtWidgets.QVBoxLayout(centralwidget)
-            # Add tabs for interactive and results
             tab = QtWidgets.QTabWidget(parent=centralwidget)
             interactive_tab = QtWidgets.QWidget()
             tab.addTab(interactive_tab, "Interactive")
             results_tab = QtWidgets.QWidget()
             tab.addTab(results_tab, "Results")
             central_layout.addWidget(tab)
-            # Interactive tab
+
             interactive_layout = QtWidgets.QGridLayout(interactive_tab)
-            # Add the plot
+
             plot_group = QtWidgets.QGroupBox("", parent=interactive_tab)
-            sizePolicy = QtWidgets.QSizePolicy(
+            size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding)
-            plot_group.setSizePolicy(sizePolicy)
+            plot_group.setSizePolicy(size_policy)
             plot_layout = QtWidgets.QVBoxLayout(plot_group)
-            fig, self.ax = plt.subplots()
+            fig, ax = plt.subplots()
             self.canvas = FigureCanvasQTAgg(fig)
             plot_layout.addWidget(self.canvas)
             plot_layout.addStretch()
             interactive_layout.addWidget(plot_group, 0, 0, 2, 1)
-            # Add buttons
+
             button_group = QtWidgets.QGroupBox("", parent=interactive_tab)
-            sizePolicy = QtWidgets.QSizePolicy(
+            size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.Expanding,
                 QtWidgets.QSizePolicy.Policy.Fixed)
-            button_group.setSizePolicy(sizePolicy)
+            button_group.setSizePolicy(size_policy)
             button_layout = QtWidgets.QHBoxLayout(button_group)
             self.fit_button = QtWidgets.QPushButton("Fit", parent=button_group)
-            self.fit_button.setStyleSheet("background-color: #2196F3; color: white")
+            self.fit_button.setStyleSheet(
+                "background-color: #2196F3; color: white")
             self.fit_button.clicked.connect(partial(self.do_fit, plot=True))
             button_layout.addWidget(self.fit_button)
-            self.update_button = QtWidgets.QPushButton("Continuous", parent=button_group)
+            self.update_button = QtWidgets.QPushButton(
+                "Continuous", parent=button_group)
             self.update_button.setCheckable(True)
             self.update_button.setChecked(True)
             self.update_button.clicked.connect(self.on_update_button_clicked)
             button_layout.addWidget(self.update_button)
-            self.reset_button = QtWidgets.QPushButton("Reset", parent=button_group)
-            self.reset_button.setStyleSheet("background-color: #F44336; color: white")
+            self.reset_button = QtWidgets.QPushButton(
+                "Reset", parent=button_group)
+            self.reset_button.setStyleSheet(
+                "background-color: #F44336; color: white")
             self.reset_button.clicked.connect(self.on_reset_button_clicked)
             button_layout.addWidget(self.reset_button)
             self.algo_choice = QtWidgets.QComboBox(parent=button_group)
@@ -298,16 +315,16 @@ def make_widget(
             self.algo_choice.addItems(["Migrad", "Scipy", "Simplex"])
             button_layout.addWidget(self.algo_choice)
             interactive_layout.addWidget(button_group, 0, 1, 1, 1)
-            # Add the parameters
+
             scroll_area = QtWidgets.QScrollArea()
             scroll_area.setWidgetResizable(True)
-            sizePolicy = QtWidgets.QSizePolicy(
+            size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding)
-            scroll_area.setSizePolicy(sizePolicy)
-            scroll_area_widget_contents = QtWidgets.QWidget()
-            parameter_layout = QtWidgets.QVBoxLayout(scroll_area_widget_contents)
-            scroll_area.setWidget(scroll_area_widget_contents)
+            scroll_area.setSizePolicy(size_policy)
+            scroll_area_contents = QtWidgets.QWidget()
+            parameter_layout = QtWidgets.QVBoxLayout(scroll_area_contents)
+            scroll_area.setWidget(scroll_area_contents)
             interactive_layout.addWidget(scroll_area, 1, 1, 1, 1)
             self.parameters = []
             for par in minuit.parameters:
@@ -315,19 +332,13 @@ def make_widget(
                 self.parameters.append(parameter)
                 parameter_layout.addWidget(parameter)
             parameter_layout.addStretch()
-            # Results tab
+
             results_layout = QtWidgets.QVBoxLayout(results_tab)
             self.results_text = QtWidgets.QTextEdit(parent=results_tab)
-            #font = QtGui.QFont()
-            #font.setFamily("FreeMono")
-            #self.results_text.setFont(font)
             self.results_text.setReadOnly(True)
             results_layout.addWidget(self.results_text)
-            # Remember the original values and limits
-            self.original_values = minuit.values[:]
-            self.original_limits = minuit.limits[:]
-            # Set the initial plot
-            self.plot_with_frame(from_fit=False, report_success=True)
+
+            plot_with_frame(from_fit=False, report_success=False)
 
         def fit(self):
             if self.algo_choice.currentText() == "Migrad":
@@ -358,8 +369,8 @@ def make_widget(
                 self.results_text.setHtml(minuit._repr_html_())
 
             self.canvas.figure.clear()
-            self.plot_with_frame(from_fit, report_success)
-            self.canvas.draw_idle()  
+            plot_with_frame(from_fit, report_success)
+            self.canvas.draw_idle()
 
         def do_fit(self, plot=True):
             report_success = self.fit()
@@ -376,53 +387,11 @@ def make_widget(
 
         def on_reset_button_clicked(self):
             minuit.reset()
-            minuit.values = self.original_values
-            minuit.limits = self.original_limits
+            minuit.values = original_values
+            minuit.limits = original_limits
             for i, x in enumerate(self.parameters):
-                x.reset(val=minuit.values[i], limits=True)
+                x.reset(val=minuit.values[i], limits=original_limits[i])
             self.on_parameter_change()
-
-        def plot_with_frame(self, from_fit, report_success):
-            trans = plt.gca().transAxes
-            try:
-                with warnings.catch_warnings():
-                    minuit.visualize(plot, **kwargs)
-            except Exception:
-                if raise_on_exception:
-                    raise
-
-                import traceback
-
-                plt.figtext(
-                    0,
-                    0.5,
-                    traceback.format_exc(limit=-1),
-                    fontdict={"family": "monospace", "size": "x-small"},
-                    va="center",
-                    color="r",
-                    backgroundcolor="w",
-                    wrap=True,
-                )
-                return
-
-            fval = minuit.fmin.fval if from_fit else minuit._fcn(minuit.values)
-            plt.text(
-                0.05,
-                1.05,
-                f"FCN = {fval:.3f}",
-                transform=trans,
-                fontsize="x-large",
-            )
-            if from_fit and report_success:
-                plt.text(
-                    0.95,
-                    1.05,
-                    f"{'success' if minuit.valid and minuit.accurate else 'FAILURE'}",
-                    transform=trans,
-                    fontsize="x-large",
-                    ha="right",
-                )
-
 
     # Set up the Qt application
     app = QtWidgets.QApplication.instance()
@@ -444,7 +413,3 @@ def _guess_initial_step(val: float, vmin: float, vmax: float) -> float:
     if np.isfinite(vmin) and np.isfinite(vmax):
         return 1e-2 * (vmax - vmin)
     return 1e-2
-
-
-def _round(x: float) -> float:
-    return float(f"{x:.1g}")
