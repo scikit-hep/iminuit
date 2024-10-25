@@ -2347,7 +2347,6 @@ class Minuit:
         --------
         Minuit.visualize
         """
-        is_jupyter = True
         try:
             if (get_ipython().__class__.__name__ == "ZMQInteractiveShell"
                     and "IPKernelApp" in get_ipython().config):
