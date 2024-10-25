@@ -2348,8 +2348,10 @@ class Minuit:
         Minuit.visualize
         """
         try:
-            if (get_ipython().__class__.__name__ == "ZMQInteractiveShell"
-                    and "IPKernelApp" in get_ipython().config):
+            if (
+                get_ipython().__class__.__name__ == "ZMQInteractiveShell"
+                and "IPKernelApp" in get_ipython().config
+            ):
                 is_jupyter = True
             else:
                 is_jupyter = False
