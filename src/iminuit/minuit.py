@@ -2349,7 +2349,6 @@ class Minuit:
         """
         is_jupyter = True
         try:
-            from IPython import get_ipython
             if (get_ipython().__class__.__name__ == "ZMQInteractiveShell"
                     and "IPKernelApp" in get_ipython().config):
                 is_jupyter = True
@@ -2360,14 +2359,11 @@ class Minuit:
 
         if is_jupyter:
             from iminuit.ipywidget import make_widget
-
-            plot = self._visualize(plot)
-            return make_widget(self, plot, kwargs, raise_on_exception)
         else:
             from iminuit.qtwidget import make_widget
 
-            plot = self._visualize(plot)
-            return make_widget(self, plot, kwargs, raise_on_exception)
+        plot = self._visualize(plot)
+        return make_widget(self, plot, kwargs, raise_on_exception)
 
     def _free_parameters(self) -> Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)
