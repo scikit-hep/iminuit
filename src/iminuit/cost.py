@@ -109,7 +109,11 @@ from typing import (
     TypeVar,
     Callable,
     cast,
+    TYPE_CHECKING,
 )
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 import warnings
 from ._deprecated import deprecated_parameter
 
@@ -739,7 +743,10 @@ class CostSum(Cost, ABCSequence):
         return self._items.__getitem__(key)
 
     def visualize(
-        self, args: Sequence[float], component_kwargs: Dict[int, Dict[str, Any]] = None
+        self,
+        args: Sequence[float],
+        component_kwargs: Dict[int, Dict[str, Any]] = None,
+        fig: Figure = None,
     ):
         """
         Visualize data and model agreement (requires matplotlib).
@@ -757,16 +764,26 @@ class CostSum(Cost, ABCSequence):
             Dict that maps an index to dict of keyword arguments. This can be
             used to pass keyword arguments to a visualize method of a component with
             that index.
-        **kwargs :
-            Other keyword arguments are forwarded to all components.
+        fig : Figure, optional
+            The matplotlib figure into which the visualization is drawn.
+            If None is passed, the current figure is used. If the passed figure
+            has the same number of axes as there are components with a visualize
+            method, the axes are reused. Otherwise, new axes are created.
         """
-        from matplotlib import pyplot as plt
+        if fig is None:
+            from matplotlib import pyplot as plt
+            fig = plt.gcf()
 
         n = sum(hasattr(comp, "visualize") for comp in self)
 
-        fig = plt.gcf()
         fig.set_figwidth(n * fig.get_figwidth() / 1.5)
-        _, ax = plt.subplots(1, n, num=fig.number)
+        ax = fig.get_axes()
+        if len(ax) != n:
+            fig.clear()
+            _, ax = fig.subplots(1, n)
+            # For some reason fig.subplots does not return axes array but only
+            # a single axes even for n > 1
+            ax = fig.get_axes()
 
         if component_kwargs is None:
             component_kwargs = {}
@@ -776,8 +793,7 @@ class CostSum(Cost, ABCSequence):
             if not hasattr(comp, "visualize"):
                 continue
             kwargs = component_kwargs.get(k, {})
-            plt.sca(ax[i])
-            comp.visualize(cargs, **kwargs)
+            comp.visualize(cargs, ax=ax[i], **kwargs)
             i += 1
 
 
@@ -931,6 +947,7 @@ class UnbinnedCost(MaskedCost):
         args: Sequence[float],
         model_points: Union[int, Sequence[float]] = 0,
         bins: int = 50,
+        ax: Axes = None,
     ):
         """
         Visualize data and model agreement (requires matplotlib).
@@ -947,8 +964,13 @@ class UnbinnedCost(MaskedCost):
             it is interpreted as the point locations.
         bins : int, optional
             number of bins. Default is 50 bins.
+        ax : Axes, optional
+            The matplotlib axes into which the visualization is drawn.
+            If None is passed, the current axes is used.
         """
-        from matplotlib import pyplot as plt
+        if ax is None:
+            from matplotlib import pyplot as plt
+            ax = plt.gca()
 
         x = np.sort(self.data)
 
@@ -974,8 +996,8 @@ class UnbinnedCost(MaskedCost):
         cx = 0.5 * (xe[1:] + xe[:-1])
         dx = xe[1] - xe[0]
 
-        plt.errorbar(cx, n, n**0.5, fmt="ok")
-        plt.fill_between(xm, 0, ym * dx, fc="C0")
+        ax.errorbar(cx, n, n**0.5, fmt="ok")
+        ax.fill_between(xm, 0, ym * dx, fc="C0")
 
     def fisher_information(self, *args: float) -> NDArray:
         """
@@ -1375,7 +1397,7 @@ class BinnedCost(MaskedCostWithPulls):
         """
         return self._pred(args)
 
-    def visualize(self, args: Sequence[float]) -> None:
+    def visualize(self, args: Sequence[float], ax: Axes = None) -> None:
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -1385,6 +1407,9 @@ class BinnedCost(MaskedCostWithPulls):
         ----------
         args : sequence of float
             Parameter values.
+        ax : Axes, optional
+            The matplotlib axes into which the visualization is drawn.
+            If None is passed, the current axes is used.
 
         Notes
         -----
@@ -1394,10 +1419,12 @@ class BinnedCost(MaskedCostWithPulls):
         comparison to a model, the visualization shows all data bins as a single
         sequence.
         """
-        return self._visualize(args)
+        return self._visualize(args, ax)
 
-    def _visualize(self, args: Sequence[float]) -> None:
-        from matplotlib import pyplot as plt
+    def _visualize(self, args: Sequence[float], ax: Axes) -> None:
+        if ax is None:
+            from matplotlib import pyplot as plt
+            ax = plt.gca()
 
         n, ne = self._n_err()
         mu = self.prediction(args)
@@ -1414,8 +1441,9 @@ class BinnedCost(MaskedCostWithPulls):
         else:
             xe = self.xe
             cx = 0.5 * (xe[1:] + xe[:-1])
-        plt.errorbar(cx, n, ne, fmt="ok")
-        plt.stairs(mu, xe, fill=True, color="C0")
+
+        ax.errorbar(cx, n, ne, fmt="ok")
+        ax.stairs(mu, xe, fill=True, color="C0")
 
     @abc.abstractmethod
     def _pred(
@@ -1858,8 +1886,10 @@ class Template(BinnedCost):
         mu, mu_var = self._pred(args)
         return mu, np.sqrt(mu_var)
 
-    def _visualize(self, args: Sequence[float]) -> None:
-        from matplotlib import pyplot as plt
+    def _visualize(self, args: Sequence[float], ax: Axes) -> None:
+        if ax is None:
+            from matplotlib import pyplot as plt
+            ax = plt.gca()
 
         n, ne = self._n_err()
         mu, mue = self.prediction(args)  # type: ignore
@@ -1876,11 +1906,11 @@ class Template(BinnedCost):
             xe = self.xe
             cx = 0.5 * (xe[1:] + xe[:-1])
 
-        plt.errorbar(cx, n, ne, fmt="ok")
+        ax.errorbar(cx, n, ne, fmt="ok")
 
         # need fill=True and fill=False so that bins with mue=0 show up
         for fill in (False, True):
-            plt.stairs(mu + mue, xe, baseline=mu - mue, fill=fill, color="C0")
+            ax.stairs(mu + mue, xe, baseline=mu - mue, fill=fill, color="C0")
 
     def _pulls(self, args: Sequence[float]) -> NDArray:
         mu, mue = self.prediction(args)
@@ -2281,7 +2311,10 @@ class LeastSquares(MaskedCostWithPulls):
         return len(self._masked)
 
     def visualize(
-        self, args: ArrayLike, model_points: Union[int, Sequence[float]] = 0
+        self,
+        args: ArrayLike,
+        model_points: Union[int, Sequence[float]] = 0,
+        ax: Axes = None,
     ) -> Tuple[Tuple[NDArray, NDArray, NDArray], Tuple[NDArray, NDArray]]:
         """
         Visualize data and model agreement (requires matplotlib).
@@ -2297,14 +2330,19 @@ class LeastSquares(MaskedCostWithPulls):
             How many points to use to draw the model. Default is 0, in this case
             an smart sampling algorithm selects the number of points. If array-like,
             it is interpreted as the point locations.
+        ax : Axes, optional
+            The matplotlib axes into which the visualization is drawn.
+            If None is passed, the current axes is used.
         """
-        from matplotlib import pyplot as plt
+        if ax is None:
+            from matplotlib import pyplot as plt
+            ax = plt.gca()
 
         if self._ndim > 1:
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
         x, y, ye = self._masked.T
-        plt.errorbar(x, y, ye, fmt="ok")
+        ax.errorbar(x, y, ye, fmt="ok")
         if isinstance(model_points, Iterable):
             xm = np.array(model_points)
             ym = self.model(xm, *args)
@@ -2316,7 +2354,7 @@ class LeastSquares(MaskedCostWithPulls):
             ym = self.model(xm, *args)
         else:
             xm, ym = _smart_sampling(lambda x: self.model(x, *args), x[0], x[-1])
-        plt.plot(xm, ym)
+        ax.plot(xm, ym)
         return (x, y, ye), (xm, ym)
 
     def prediction(self, args: Sequence[float]) -> NDArray:
@@ -2486,7 +2524,7 @@ class NormalConstraint(Cost):
     def _ndata(self):
         return len(self._expected)
 
-    def visualize(self, args: ArrayLike):
+    def visualize(self, args: ArrayLike, ax: Axes = None):
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -2496,8 +2534,13 @@ class NormalConstraint(Cost):
         ----------
         args : array-like
             Parameter values.
+        ax : Axes, optional
+            The matplotlib axes into which the visualization is drawn.
+            If None is passed, the current axes is used.
         """
-        from matplotlib import pyplot as plt
+        if ax is None:
+            from matplotlib import pyplot as plt
+            ax = plt.gca()
 
         args = np.atleast_1d(args)
 
@@ -2515,14 +2558,14 @@ class NormalConstraint(Cost):
         for v, e, a in zip(val, err, args):
             pull = (a - v) / e
             max_pull = max(abs(pull), max_pull)
-            plt.errorbar(pull, -i, 0, 1, fmt="o", color="C0")
+            ax.errorbar(pull, -i, 0, 1, fmt="o", color="C0")
             i += 1
-        plt.axvline(0, color="k")
-        plt.xlim(-max_pull - 1.1, max_pull + 1.1)
-        yaxis = plt.gca().yaxis
+        ax.axvline(0, color="k")
+        ax.set_xlim(-max_pull - 1.1, max_pull + 1.1)
+        yaxis = ax.yaxis
         yaxis.set_ticks(-np.arange(n))
         yaxis.set_ticklabels(par)
-        plt.ylim(-n + 0.5, 0.5)
+        ax.set_ylim(-n + 0.5, 0.5)
 
 
 def _norm(value: ArrayLike) -> NDArray:
