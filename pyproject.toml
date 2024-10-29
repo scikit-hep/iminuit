@@ -44,6 +44,7 @@ test = [
     "ipywidgets",
     # needed by ipywidgets >= 8.0.6
     "ipykernel",
+    "PyQt6",
     "joblib",
     "jacobi",
     "matplotlib",
@@ -52,6 +53,7 @@ test = [
     "numba-stats; platform_python_implementation=='CPython'",
     "pytest",
     "pytest-xdist",
+    "pytest-qt",
     "scipy",
     "tabulate",
     "boost_histogram",
