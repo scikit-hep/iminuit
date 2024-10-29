@@ -2314,6 +2314,7 @@ class Minuit:
         self,
         plot: Callable = None,
         raise_on_exception=False,
+        qt_exec=True,
         **kwargs,
     ):
         """
@@ -2321,7 +2322,8 @@ class Minuit:
 
         Starts a fitting application (requires PyQt6, matplotlib) in which the
         fit is visualized and the parameters can be manipulated to find good
-        starting parameters and to debug the fit.
+        starting parameters and to debug the fit. The QApplication is executed
+        by default, but can be disabled by setting qt_exec=False.
 
         When called in a Jupyter notebook (requires ipywidgets, IPython, matplotlib),
         a fitting widget is returned instead, which can be displayed.
@@ -2339,6 +2341,8 @@ class Minuit:
             The default is to catch exceptions in the plot function and convert them
             into a plotted message. In unit tests, raise_on_exception should be set to
             True to allow detecting errors.
+        qt_exec : bool, optional
+            Whether the PyQt6 application is executed. This is ignored in Jupyter notebooks.
         **kwargs :
             Any other keyword arguments are forwarded to the plot function.
 
@@ -2352,6 +2356,7 @@ class Minuit:
         Minuit.visualize
         """
         try:
+            from IPython import get_ipython
             if (get_ipython().__class__.__name__ == "ZMQInteractiveShell"
                     and "IPKernelApp" in get_ipython().config):
                 is_jupyter = True
@@ -2360,13 +2365,14 @@ class Minuit:
         except Exception:
             is_jupyter = False
 
+        plot = self._visualize(plot)
+
         if is_jupyter:
             from iminuit.ipywidget import make_widget
+            return make_widget(self, plot, kwargs, raise_on_exception)
         else:
             from iminuit.qtwidget import make_widget
-
-        plot = self._visualize(plot)
-        return make_widget(self, plot, kwargs, raise_on_exception)
+            return make_widget(self, plot, kwargs, raise_on_exception, qt_exec)
 
     def _free_parameters(self) -> Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)

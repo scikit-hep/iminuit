@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 from numpy.testing import assert_allclose
 import contextlib
+from unittest.mock import patch, MagicMock
 
 mpl = pytest.importorskip("matplotlib")
 plt = pytest.importorskip("matplotlib.pyplot")
@@ -136,7 +137,7 @@ def test_mnmatrix_7(fig):
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_interactive():
+def test_interactive_ipywidgets():
     ipywidgets = pytest.importorskip("ipywidgets")
 
     def cost(a, b):
@@ -161,40 +162,137 @@ def test_interactive():
     plot = Plot()
 
     m = Minuit(cost, 1, 1)
+
+    with patch("IPython.get_ipython") as mock_get_ipython:
+        mock_shell = MagicMock()
+        mock_shell.__class__.__name__ = "ZMQInteractiveShell"
+        mock_shell.config = {"IPKernelApp": True}
+        mock_get_ipython.return_value = mock_shell
+
+        with pytest.raises(AttributeError, match="no visualize method"):
+            m.interactive(raise_on_exception=True)
+
+        with plot.assert_call():
+            out1 = m.interactive(plot)
+        assert isinstance(out1, ipywidgets.HBox)
+
+        # manipulate state to also check this code
+        ui = out1.children[1]
+        header, parameters = ui.children
+        fit_button, update_button, reset_button, algo_select = header.children
+        with plot.assert_call():
+            fit_button.click()
+        assert_allclose(m.values, (0, 0), atol=1e-5)
+        with plot.assert_call():
+            reset_button.click()
+        assert_allclose(m.values, (1, 1), atol=1e-5)
+
+        algo_select.value = "Scipy"
+        with plot.assert_call():
+            fit_button.click()
+
+        algo_select.value = "Simplex"
+        with plot.assert_call():
+            fit_button.click()
+
+        update_button.value = False
+        with plot.assert_call():
+            # because of implementation details, we have to trigger the slider several times
+            for i in range(5):
+                parameters.children[0].slider.value = i  # change first slider
+        parameters.children[0].fix.value = True
+        with plot.assert_call():
+            parameters.children[0].fit.value = True
+
+        class Cost:
+            def visualize(self, args):
+                return plot(args)
+
+            def __call__(self, a, b):
+                return (a - 100) ** 2 + (b + 100) ** 2
+
+        c = Cost()
+        m = Minuit(c, 0, 0)
+        with plot.assert_call():
+            out = m.interactive(raise_on_exception=True)
+
+        # this should modify slider range
+        ui = out.children[1]
+        header, parameters = ui.children
+        fit_button, update_button, reset_button, algo_select = header.children
+        assert parameters.children[0].slider.max == 1
+        assert parameters.children[1].slider.min == -1
+        with plot.assert_call():
+            fit_button.click()
+        assert_allclose(m.values, (100, -100), atol=1e-5)
+        # this should trigger an exception
+        plot.raises = True
+        with plot.assert_call():
+            fit_button.click()
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_interactive_pyqt6(qtbot):
+    PyQt6 = pytest.importorskip("PyQt6")
+
+    def cost(a, b):
+        return a**2 + b**2
+
+    class Plot:
+        def __init__(self):
+            self.called = False
+            self.raises = False
+
+        def __call__(self, args):
+            self.called = True
+            if self.raises:
+                raise ValueError("foo")
+
+        @contextlib.contextmanager
+        def assert_call(self):
+            self.called = False
+            yield
+            assert self.called
+
+    plot = Plot()
+
+    m = Minuit(cost, 1, 1)
+
     with pytest.raises(AttributeError, match="no visualize method"):
-        m.interactive(raise_on_exception=True)
+        mw = m.interactive(raise_on_exception=True, qt_exec=False)[1]
+        qtbot.addWidget(mw)
+        mw.close()
+        mw.deleteLater()
 
     with plot.assert_call():
-        out1 = m.interactive(plot)
-    assert isinstance(out1, ipywidgets.HBox)
+        mw1 = m.interactive(plot, qt_exec=False)[1]
+    qtbot.addWidget(mw1)
+    assert isinstance(mw1, PyQt6.QtWidgets.QMainWindow)
 
     # manipulate state to also check this code
-    ui = out1.children[1]
-    header, parameters = ui.children
-    fit_button, update_button, reset_button, algo_select = header.children
     with plot.assert_call():
-        fit_button.click()
+        mw1.fit_button.click()
     assert_allclose(m.values, (0, 0), atol=1e-5)
     with plot.assert_call():
-        reset_button.click()
+        mw1.reset_button.click()
     assert_allclose(m.values, (1, 1), atol=1e-5)
 
-    algo_select.value = "Scipy"
+    mw1.algo_choice.setCurrentText("Scipy")
     with plot.assert_call():
-        fit_button.click()
+        mw1.fit_button.click()
 
-    algo_select.value = "Simplex"
+    mw1.algo_choice.setCurrentText("Simplex")
     with plot.assert_call():
-        fit_button.click()
+        mw1.fit_button.click()
 
-    update_button.value = False
+    mw1.update_button.click()
     with plot.assert_call():
-        # because of implementation details, we have to trigger the slider several times
-        for i in range(5):
-            parameters.children[0].slider.value = i  # change first slider
-    parameters.children[0].fix.value = True
+        mw1.parameters[0].slider.valueChanged.emit(int(5e7))
+    mw1.parameters[0].fix.click()
     with plot.assert_call():
-        parameters.children[0].fit.value = True
+        mw1.parameters[0].fit.click()
+
+    mw1.close()
+    mw1.deleteLater()
 
     class Cost:
         def visualize(self, args):
@@ -206,25 +304,24 @@ def test_interactive():
     c = Cost()
     m = Minuit(c, 0, 0)
     with plot.assert_call():
-        out = m.interactive(raise_on_exception=True)
+        mw = m.interactive(raise_on_exception=True, qt_exec=False)[1]
+    qtbot.addWidget(mw)
 
     # this should modify slider range
-    ui = out.children[1]
-    header, parameters = ui.children
-    fit_button, update_button, reset_button, algo_select = header.children
-    assert parameters.children[0].slider.max == 1
-    assert parameters.children[1].slider.min == -1
+    assert mw.parameters[0].slider._max == 1
+    assert mw.parameters[1].slider._min == -1
     with plot.assert_call():
-        fit_button.click()
+        mw.fit_button.click()
     assert_allclose(m.values, (100, -100), atol=1e-5)
     # this should trigger an exception
-    plot.raises = True
-    with plot.assert_call():
-        fit_button.click()
-
+    #plot.raises = True
+    #with plot.assert_call():
+    #    mw.fit_button.click()
+    mw.close()
+    mw.deleteLater()
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_interactive_raises():
+def test_interactive_ipywidgets_raises():
     pytest.importorskip("ipywidgets")
 
     def raiser(args):
@@ -233,14 +330,40 @@ def test_interactive_raises():
     m = Minuit(lambda x, y: 0, 0, 1)
 
     # by default do not raise
-    m.interactive(raiser)
+    with patch("IPython.get_ipython") as mock_get_ipython:
+        mock_shell = MagicMock()
+        mock_shell.__class__.__name__ = "ZMQInteractiveShell"
+        mock_shell.config = {"IPKernelApp": True}
+        mock_get_ipython.return_value = mock_shell
 
-    with pytest.raises(ValueError):
-        m.interactive(raiser, raise_on_exception=True)
+        m.interactive(raiser)
 
+        with pytest.raises(ValueError):
+            m.interactive(raiser, raise_on_exception=True)
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_interactive_with_array_func():
+def test_interactive_pyqt6_raises(qtbot):
+    pytest.importorskip("PyQt6")
+
+    def raiser(args):
+        raise ValueError
+
+    m = Minuit(lambda x, y: 0, 0, 1)
+
+    # by default do not raise
+    mw = m.interactive(raiser, qt_exec=False)[1]
+    qtbot.addWidget(mw)
+    mw.close()
+    mw.deleteLater()
+
+    with pytest.raises(ValueError):
+        mw = m.interactive(raiser, raise_on_exception=True, qt_exec=False)[1]
+        qtbot.addWidget(mw)
+        mw.close()
+        mw.deleteLater()
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_interactive_ipywidgets_with_array_func():
     pytest.importorskip("ipywidgets")
 
     def cost(par):
@@ -254,5 +377,31 @@ def test_interactive_with_array_func():
 
     trace_args = TraceArgs()
     m = Minuit(cost, (1, 2))
-    m.interactive(trace_args)
+
+    with patch("IPython.get_ipython") as mock_get_ipython:
+        mock_shell = MagicMock()
+        mock_shell.__class__.__name__ = "ZMQInteractiveShell"
+        mock_shell.config = {"IPKernelApp": True}
+        mock_get_ipython.return_value = mock_shell
+
+        m.interactive(trace_args)
+        assert trace_args.nargs > 0
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_interactive_pyqt6_with_array_func(qtbot):
+    pytest.importorskip("PyQt6")
+
+    def cost(par):
+        return par[0] ** 2 + (par[1] / 2) ** 2
+
+    class TraceArgs:
+        nargs = 0
+
+        def __call__(self, par):
+            self.nargs = len(par)
+
+    trace_args = TraceArgs()
+    m = Minuit(cost, (1, 2))
+
+    qtbot.addWidget(m.interactive(trace_args, qt_exec=False)[1])
     assert trace_args.nargs > 0

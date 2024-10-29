@@ -5,7 +5,6 @@ import numpy as np
 from typing import Dict, Any, Callable
 import sys
 from functools import partial
-import inspect
 
 try:
     from PyQt6 import QtCore, QtGui, QtWidgets
@@ -24,6 +23,7 @@ def make_widget(
     plot: Callable[..., None],
     kwargs: Dict[str, Any],
     raise_on_exception: bool,
+    qt_exec: bool,
 ):
     """Make interactive fitting widget."""
     original_values = minuit.values[:]
@@ -324,7 +324,7 @@ def make_widget(
 
                 import traceback
 
-                self.fig.figtext(
+                self.fig.text(
                     0,
                     0.5,
                     traceback.format_exc(limit=-1),
@@ -414,7 +414,10 @@ def make_widget(
         app = QtWidgets.QApplication([])
     main_window = MainWindow()
     main_window.show()
-    app.exec()
+
+    if qt_exec:
+        app.exec()
+    return app, main_window
 
 
 def _make_finite(x: float) -> float:
