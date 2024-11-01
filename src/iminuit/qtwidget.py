@@ -29,64 +29,6 @@ def make_widget(
     original_values = minuit.values[:]
     original_limits = minuit.limits[:]
 
-    class FloatSlider(QtWidgets.QSlider):
-        # Qt sadly does not have a float slider, so we have to
-        # implement one ourselves.
-        floatValueChanged = QtCore.pyqtSignal(float)
-
-        def __init__(self, label):
-            super().__init__(QtCore.Qt.Orientation.Horizontal)
-            super().setMinimum(0)
-            super().setMaximum(int(1e8))
-            super().setValue(int(5e7))
-            self._min = 0.0
-            self._max = 1.0
-            self._value = 0.5
-            self._label = label
-            self.valueChanged.connect(self._emit_float_value_changed)
-
-        def _emit_float_value_changed(self, value=None):
-            if value is not None:
-                self._value = self._int_to_float(value)
-            self._label.setText(f"{self._value:.3g}")
-            self.floatValueChanged.emit(self._value)
-
-        def _int_to_float(self, value):
-            return self._min + (value / 1e8) * (self._max - self._min)
-
-        def _float_to_int(self, value):
-            return int((value - self._min) / (self._max - self._min) * 1e8)
-
-        def setMinimum(self, min_value):
-            if self._max <= min_value:
-                return
-            self._min = min_value
-            self.setValue(self._value)
-
-        def setMaximum(self, max_value):
-            if self._min >= max_value:
-                return
-            self._max = max_value
-            self.setValue(self._value)
-
-        def setValue(self, value):
-            if value < self._min:
-                self._value = self._min
-                super().setValue(0)
-                self._emit_float_value_changed()
-            elif value > self._max:
-                self._value = self._max
-                super().setValue(int(1e8))
-                self._emit_float_value_changed()
-            else:
-                self._value = value
-                self.blockSignals(True)
-                super().setValue(self._float_to_int(value))
-                self.blockSignals(False)
-
-        def value(self):
-            return self._value
-
     class Parameter(QtWidgets.QGroupBox):
         def __init__(self, minuit, par, callback):
             super().__init__("")
@@ -106,7 +48,9 @@ def make_widget(
             self.value_label = QtWidgets.QLabel(
                 alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
             self.value_label.setMinimumSize(QtCore.QSize(50, 0))
-            self.slider = FloatSlider(self.value_label)
+            self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+            self.slider.setMinimum(0)
+            self.slider.setMaximum(int(1e8))
             self.tmin = QtWidgets.QDoubleSpinBox(
                 alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
             self.tmin.setRange(_make_finite(-np.inf), _make_finite(np.inf))
@@ -138,46 +82,70 @@ def make_widget(
             layout2.addWidget(self.tmax)
             layout2.addWidget(self.fit)
 
-            val = minuit.values[par]
-            vmin, vmax = minuit.limits[par]
-            self.step = _guess_initial_step(val, vmin, vmax)
-            vmin2 = vmin if np.isfinite(vmin) else val - 100 * self.step
-            vmax2 = vmax if np.isfinite(vmax) else val + 100 * self.step
-            self.tmin.setSingleStep(1e-1 * (vmax2 - vmin2))
-            self.tmax.setSingleStep(1e-1 * (vmax2 - vmin2))
-            self.tmin.setMinimum(_make_finite(vmin))
-            self.tmax.setMaximum(_make_finite(vmax))
-            self.reset(val, limits=(vmin, vmax))
+            self.reset(minuit.values[par], limits=minuit.limits[par])
 
-            self.slider.floatValueChanged.connect(self.on_val_change)
+            self.tmin.setSingleStep(1e-1 * (self.vmax - self.vmin))
+            self.tmax.setSingleStep(1e-1 * (self.vmax - self.vmin))
+            self.tmin.setMinimum(_make_finite(minuit.limits[par][0]))
+            self.tmax.setMaximum(_make_finite(minuit.limits[par][1]))
+
+            self.slider.valueChanged.connect(self.on_val_changed)
             self.fix.clicked.connect(self.on_fix_toggled)
-            self.tmin.valueChanged.connect(self.on_min_change)
-            self.tmax.valueChanged.connect(self.on_max_change)
+            self.tmin.valueChanged.connect(self.on_min_changed)
+            self.tmax.valueChanged.connect(self.on_max_changed)
             self.fit.clicked.connect(self.on_fit_toggled)
 
-        def on_val_change(self, val):
+        def _int_to_float(self, value):
+            return self.vmin + (value / 1e8) * (self.vmax - self.vmin)
+
+        def _float_to_int(self, value):
+            return int((value - self.vmin) / (self.vmax - self.vmin) * 1e8)
+
+        def on_val_changed(self, val):
+            val = self._int_to_float(val)
+            self.value_label.setText(f"{val:.3g}")
             minuit.values[self.par] = val
             self.callback()
 
-        def on_min_change(self):
+        def on_min_changed(self):
             tmin = self.tmin.value()
-            if tmin >= self.tmax.value():
+            if tmin >= self.vmax:
                 self.tmin.blockSignals(True)
-                self.tmin.setValue(minuit.limits[self.par][0])
+                self.tmin.setValue(self.vmin)
                 self.tmin.blockSignals(False)
                 return
-            self.slider.setMinimum(tmin)
+            self.vmin = tmin
+            self.slider.blockSignals(True)
+            if tmin > self.val:
+                self.val = tmin
+                minuit.values[self.par] = tmin
+                self.slider.setValue(0)
+                self.value_label.setText(f"{self.val:.3g}")
+                self.callback()
+            else:
+                self.slider.setValue(self._float_to_int(self.val))
+            self.slider.blockSignals(False)
             lim = minuit.limits[self.par]
             minuit.limits[self.par] = (tmin, lim[1])
 
-        def on_max_change(self):
+        def on_max_changed(self):
             tmax = self.tmax.value()
             if tmax <= self.tmin.value():
                 self.tmax.blockSignals(True)
-                self.tmax.setValue(minuit.limits[self.par][1])
+                self.tmax.setValue(self.vmax)
                 self.tmax.blockSignals(False)
                 return
-            self.slider.setMaximum(tmax)
+            self.vmax = tmax
+            self.slider.blockSignals(True)
+            if tmax < self.val:
+                self.val = tmax
+                minuit.values[self.par] = tmax
+                self.slider.setValue(int(1e8))
+                self.value_label.setText(f"{self.val:.3g}")
+                self.callback()
+            else:
+                self.slider.setValue(self._float_to_int(self.val))
+            self.slider.blockSignals(False)
             lim = minuit.limits[self.par]
             minuit.limits[self.par] = (lim[0], tmax)
 
@@ -190,31 +158,37 @@ def make_widget(
             self.slider.setEnabled(not self.fit.isChecked())
             if self.fit.isChecked():
                 self.fix.setChecked(False)
-                minuit.fixed[self.par] = False
             self.callback()
 
         def reset(self, val, limits=None):
-            # Set limits first so that the value won't be changed by the
-            # FloatSlider
             if limits is not None:
                 vmin, vmax = limits
-                vmin = vmin if np.isfinite(vmin) else val - 100 * self.step
-                vmax = vmax if np.isfinite(vmax) else val + 100 * self.step
-                self.slider.blockSignals(True)
-                self.slider.setMinimum(vmin)
-                self.slider.blockSignals(True)
-                self.slider.setMaximum(vmax)
+                step = _guess_initial_step(val, vmin, vmax)
+                self.vmin = vmin if np.isfinite(vmin) else val - 100 * step
+                self.vmax = vmax if np.isfinite(vmax) else val + 100 * step
                 self.tmin.blockSignals(True)
-                self.tmin.setValue(vmin)
+                self.tmin.setValue(self.vmin)
                 self.tmin.blockSignals(False)
                 self.tmax.blockSignals(True)
-                self.tmax.setValue(vmax)
+                self.tmax.setValue(self.vmax)
+                self.tmax.blockSignals(False)
+
+            self.val = val
+            if self.val < self.vmin:
+                self.vmin = self.val
+                self.tmin.blockSignals(True)
+                self.tmin.setValue(self.vmin)
+                self.tmin.blockSignals(False)
+            elif self.val > self.vmax:
+                self.vmax = self.val
+                self.tmax.blockSignals(True)
+                self.tmax.setValue(self.vmax)
                 self.tmax.blockSignals(False)
 
             self.slider.blockSignals(True)
-            self.slider.setValue(val)
-            self.value_label.setText(f"{val:.3g}")
+            self.slider.setValue(self._float_to_int(self.val))
             self.slider.blockSignals(False)
+            self.value_label.setText(f"{self.val:.3g}")
 
     class MainWindow(QtWidgets.QMainWindow):
         def __init__(self):
@@ -368,19 +342,20 @@ def make_widget(
 
         def on_parameter_change(self, from_fit=False,
                                 report_success=False):
-            if not from_fit:
-                if any(x.fit.isChecked() for x in self.parameters):
-                    saved = minuit.fixed[:]
-                    for i, x in enumerate(self.parameters):
-                        minuit.fixed[i] = not x.fit.isChecked()
-                    from_fit = True
-                    report_success = self.do_fit(plot=False)
-                    self.results_text.clear()
-                    self.results_text.setHtml(minuit._repr_html_())
-                    minuit.fixed = saved
-            else:
+            if any(x.fit.isChecked() for x in self.parameters):
+                saved = minuit.fixed[:]
+                for i, x in enumerate(self.parameters):
+                    minuit.fixed[i] = not x.fit.isChecked()
+                from_fit = True
+                report_success = self.do_fit(plot=False)
                 self.results_text.clear()
                 self.results_text.setHtml(minuit._repr_html_())
+                minuit.fixed = saved
+            elif from_fit:
+                self.results_text.clear()
+                self.results_text.setHtml(minuit._repr_html_())
+            else:
+                self.results_text.clear()
 
             for ax in self.fig.get_axes():
                 ax.clear()
