@@ -111,6 +111,7 @@ from typing import (
     cast,
     TYPE_CHECKING,
 )
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
@@ -772,6 +773,7 @@ class CostSum(Cost, ABCSequence):
         """
         if fig is None:
             from matplotlib import pyplot as plt
+
             fig = plt.gcf()
 
         n = sum(hasattr(comp, "visualize") for comp in self)
@@ -970,6 +972,7 @@ class UnbinnedCost(MaskedCost):
         """
         if ax is None:
             from matplotlib import pyplot as plt
+
             ax = plt.gca()
 
         x = np.sort(self.data)
@@ -1424,6 +1427,7 @@ class BinnedCost(MaskedCostWithPulls):
     def _visualize(self, args: Sequence[float], ax: Axes) -> None:
         if ax is None:
             from matplotlib import pyplot as plt
+
             ax = plt.gca()
 
         n, ne = self._n_err()
@@ -1889,6 +1893,7 @@ class Template(BinnedCost):
     def _visualize(self, args: Sequence[float], ax: Axes) -> None:
         if ax is None:
             from matplotlib import pyplot as plt
+
             ax = plt.gca()
 
         n, ne = self._n_err()
@@ -2336,6 +2341,7 @@ class LeastSquares(MaskedCostWithPulls):
         """
         if ax is None:
             from matplotlib import pyplot as plt
+
             ax = plt.gca()
 
         if self._ndim > 1:
@@ -2540,6 +2546,7 @@ class NormalConstraint(Cost):
         """
         if ax is None:
             from matplotlib import pyplot as plt
+
             ax = plt.gca()
 
         args = np.atleast_1d(args)

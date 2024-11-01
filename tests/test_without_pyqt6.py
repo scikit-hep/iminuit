@@ -4,6 +4,7 @@ import pytest
 
 pytest.importorskip("PyQt6")
 
+
 def test_interactive(qtbot):
     pytest.importorskip("matplotlib")
     import iminuit

@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 
 pytest.importorskip("ipywidgets")
 
+
 def test_interactive():
     pytest.importorskip("matplotlib")
     import iminuit

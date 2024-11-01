@@ -230,6 +230,7 @@ def test_interactive_ipywidgets():
         with plot.assert_call():
             fit_button.click()
 
+
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_pyqt6(qtbot):
     PyQt6 = pytest.importorskip("PyQt6")
@@ -314,11 +315,12 @@ def test_interactive_pyqt6(qtbot):
         mw.fit_button.click()
     assert_allclose(m.values, (100, -100), atol=1e-5)
     # this should trigger an exception
-    #plot.raises = True
-    #with plot.assert_call():
+    # plot.raises = True
+    # with plot.assert_call():
     #    mw.fit_button.click()
     mw.close()
     mw.deleteLater()
+
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_ipywidgets_raises():
@@ -341,6 +343,7 @@ def test_interactive_ipywidgets_raises():
         with pytest.raises(ValueError):
             m.interactive(raiser, raise_on_exception=True)
 
+
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_pyqt6_raises(qtbot):
     pytest.importorskip("PyQt6")
@@ -361,6 +364,7 @@ def test_interactive_pyqt6_raises(qtbot):
         qtbot.addWidget(mw)
         mw.close()
         mw.deleteLater()
+
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_ipywidgets_with_array_func():
@@ -386,6 +390,7 @@ def test_interactive_ipywidgets_with_array_func():
 
         m.interactive(trace_args)
         assert trace_args.nargs > 0
+
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_pyqt6_with_array_func(qtbot):

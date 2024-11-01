@@ -2357,8 +2357,11 @@ class Minuit:
         """
         try:
             from IPython import get_ipython
-            if (get_ipython().__class__.__name__ == "ZMQInteractiveShell"
-                    and "IPKernelApp" in get_ipython().config):
+
+            if (
+                get_ipython().__class__.__name__ == "ZMQInteractiveShell"
+                and "IPKernelApp" in get_ipython().config
+            ):
                 is_jupyter = True
             else:
                 is_jupyter = False
@@ -2369,9 +2372,11 @@ class Minuit:
 
         if is_jupyter:
             from iminuit.ipywidget import make_widget
+
             return make_widget(self, plot, kwargs, raise_on_exception)
         else:
             from iminuit.qtwidget import make_widget
+
             return make_widget(self, plot, kwargs, raise_on_exception, qt_exec)
 
     def _free_parameters(self) -> Set[str]:

@@ -37,25 +37,28 @@ def make_widget(
 
             size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
-                QtWidgets.QSizePolicy.Policy.Fixed)
+                QtWidgets.QSizePolicy.Policy.Fixed,
+            )
             self.setSizePolicy(size_policy)
             layout = QtWidgets.QVBoxLayout()
             self.setLayout(layout)
 
-            label = QtWidgets.QLabel(
-                par, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+            label = QtWidgets.QLabel(par, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
             label.setMinimumSize(QtCore.QSize(50, 0))
             self.value_label = QtWidgets.QLabel(
-                alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+                alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            )
             self.value_label.setMinimumSize(QtCore.QSize(50, 0))
             self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
             self.slider.setMinimum(0)
             self.slider.setMaximum(int(1e8))
             self.tmin = QtWidgets.QDoubleSpinBox(
-                alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+                alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            )
             self.tmin.setRange(_make_finite(-np.inf), _make_finite(np.inf))
             self.tmax = QtWidgets.QDoubleSpinBox(
-                alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+                alignment=QtCore.Qt.AlignmentFlag.AlignCenter
+            )
             self.tmax.setRange(_make_finite(-np.inf), _make_finite(np.inf))
             self.tmin.setSizePolicy(size_policy)
             self.tmax.setSizePolicy(size_policy)
@@ -66,8 +69,8 @@ def make_widget(
             self.fit.setCheckable(True)
             self.fit.setChecked(False)
             size_policy = QtWidgets.QSizePolicy(
-                QtWidgets.QSizePolicy.Policy.Fixed,
-                QtWidgets.QSizePolicy.Policy.Fixed)
+                QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed
+            )
             self.fix.setSizePolicy(size_policy)
             self.fit.setSizePolicy(size_policy)
             layout1 = QtWidgets.QHBoxLayout()
@@ -212,7 +215,8 @@ def make_widget(
             plot_group = QtWidgets.QGroupBox("", parent=interactive_tab)
             size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding)
+                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            )
             plot_group.setSizePolicy(size_policy)
             plot_layout = QtWidgets.QVBoxLayout(plot_group)
             # Use pyplot here to allow users to use pyplot in the plot
@@ -237,24 +241,23 @@ def make_widget(
             button_group = QtWidgets.QGroupBox("", parent=interactive_tab)
             size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.Expanding,
-                QtWidgets.QSizePolicy.Policy.Fixed)
+                QtWidgets.QSizePolicy.Policy.Fixed,
+            )
             button_group.setSizePolicy(size_policy)
             button_layout = QtWidgets.QHBoxLayout(button_group)
             self.fit_button = QtWidgets.QPushButton("Fit", parent=button_group)
-            self.fit_button.setStyleSheet(
-                "background-color: #2196F3; color: white")
+            self.fit_button.setStyleSheet("background-color: #2196F3; color: white")
             self.fit_button.clicked.connect(partial(self.do_fit, plot=True))
             button_layout.addWidget(self.fit_button)
             self.update_button = QtWidgets.QPushButton(
-                "Continuous", parent=button_group)
+                "Continuous", parent=button_group
+            )
             self.update_button.setCheckable(True)
             self.update_button.setChecked(True)
             self.update_button.clicked.connect(self.on_update_button_clicked)
             button_layout.addWidget(self.update_button)
-            self.reset_button = QtWidgets.QPushButton(
-                "Reset", parent=button_group)
-            self.reset_button.setStyleSheet(
-                "background-color: #F44336; color: white")
+            self.reset_button = QtWidgets.QPushButton("Reset", parent=button_group)
+            self.reset_button.setStyleSheet("background-color: #F44336; color: white")
             self.reset_button.clicked.connect(self.on_reset_button_clicked)
             button_layout.addWidget(self.reset_button)
             self.algo_choice = QtWidgets.QComboBox(parent=button_group)
@@ -267,7 +270,8 @@ def make_widget(
             scroll_area.setWidgetResizable(True)
             size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding)
+                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            )
             scroll_area.setSizePolicy(size_policy)
             scroll_area_contents = QtWidgets.QWidget()
             parameter_layout = QtWidgets.QVBoxLayout(scroll_area_contents)
@@ -340,8 +344,7 @@ def make_widget(
                 assert False  # pragma: no cover, should never happen
             return True
 
-        def on_parameter_change(self, from_fit=False,
-                                report_success=False):
+        def on_parameter_change(self, from_fit=False, report_success=False):
             if any(x.fit.isChecked() for x in self.parameters):
                 saved = minuit.fixed[:]
                 for i, x in enumerate(self.parameters):
@@ -368,8 +371,7 @@ def make_widget(
                 x.reset(val=minuit.values[i])
             if not plot:
                 return report_success
-            self.on_parameter_change(
-                from_fit=True, report_success=report_success)
+            self.on_parameter_change(from_fit=True, report_success=report_success)
 
         def on_update_button_clicked(self):
             for x in self.parameters:
