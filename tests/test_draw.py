@@ -308,8 +308,8 @@ def test_interactive_pyqt6(qtbot):
     qtbot.addWidget(mw)
 
     # this should modify slider range
-    assert mw.parameters[0].slider._max == 1
-    assert mw.parameters[1].slider._min == -1
+    assert mw.parameters[0].vmax == 1
+    assert mw.parameters[1].vmin == -1
     with plot.assert_call():
         mw.fit_button.click()
     assert_allclose(m.values, (100, -100), atol=1e-5)
@@ -403,5 +403,8 @@ def test_interactive_pyqt6_with_array_func(qtbot):
     trace_args = TraceArgs()
     m = Minuit(cost, (1, 2))
 
-    qtbot.addWidget(m.interactive(trace_args, qt_exec=False)[1])
+    mw = m.interactive(trace_args, qt_exec=False)[1]
+    qtbot.addWidget(mw)
     assert trace_args.nargs > 0
+    mw.close()
+    mw.deleteLater()
