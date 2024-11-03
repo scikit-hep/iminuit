@@ -262,7 +262,9 @@ def make_widget(
             button_layout.addWidget(self.reset_button)
             self.algo_choice = QtWidgets.QComboBox(parent=button_group)
             self.algo_choice.setEditable(True)
-            self.algo_choice.lineEdit().setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            self.algo_choice.lineEdit().setAlignment(
+                QtCore.Qt.AlignmentFlag.AlignCenter
+            )
             self.algo_choice.lineEdit().setReadOnly(True)
             self.algo_choice.addItems(["Migrad", "Scipy", "Simplex"])
             button_layout.addWidget(self.algo_choice)
