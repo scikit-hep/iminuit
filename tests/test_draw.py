@@ -259,13 +259,13 @@ def test_interactive_pyqt6(qtbot):
     m = Minuit(cost, 1, 1)
 
     with pytest.raises(AttributeError, match="no visualize method"):
-        mw = m.interactive(raise_on_exception=True, qt_exec=False)[1]
+        mw = m.interactive(raise_on_exception=True, qt_exec=False)
         qtbot.addWidget(mw)
         mw.close()
         mw.deleteLater()
 
     with plot.assert_call():
-        mw1 = m.interactive(plot, qt_exec=False)[1]
+        mw1 = m.interactive(plot, qt_exec=False)
     qtbot.addWidget(mw1)
     assert isinstance(mw1, PyQt6.QtWidgets.QMainWindow)
 
@@ -305,7 +305,7 @@ def test_interactive_pyqt6(qtbot):
     c = Cost()
     m = Minuit(c, 0, 0)
     with plot.assert_call():
-        mw = m.interactive(raise_on_exception=True, qt_exec=False)[1]
+        mw = m.interactive(raise_on_exception=True, qt_exec=False)
     qtbot.addWidget(mw)
 
     # this should modify slider range
@@ -354,13 +354,13 @@ def test_interactive_pyqt6_raises(qtbot):
     m = Minuit(lambda x, y: 0, 0, 1)
 
     # by default do not raise
-    mw = m.interactive(raiser, qt_exec=False)[1]
+    mw = m.interactive(raiser, qt_exec=False)
     qtbot.addWidget(mw)
     mw.close()
     mw.deleteLater()
 
     with pytest.raises(ValueError):
-        mw = m.interactive(raiser, raise_on_exception=True, qt_exec=False)[1]
+        mw = m.interactive(raiser, raise_on_exception=True, qt_exec=False)
         qtbot.addWidget(mw)
         mw.close()
         mw.deleteLater()
@@ -408,7 +408,7 @@ def test_interactive_pyqt6_with_array_func(qtbot):
     trace_args = TraceArgs()
     m = Minuit(cost, (1, 2))
 
-    mw = m.interactive(trace_args, qt_exec=False)[1]
+    mw = m.interactive(trace_args, qt_exec=False)
     qtbot.addWidget(mw)
     assert trace_args.nargs > 0
     mw.close()

@@ -385,16 +385,15 @@ def make_widget(
                 x.reset(val=minuit.values[i], limits=original_limits[i])
             self.on_parameter_change()
 
-    # Set up the Qt application
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        app = QtWidgets.QApplication([])
-    main_window = MainWindow()
-    main_window.show()
-
     if qt_exec:
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            app = QtWidgets.QApplication([])
+        main_window = MainWindow()
+        main_window.show()
         app.exec()
-    return app, main_window
+    else:
+        return MainWindow()
 
 
 def _make_finite(x: float) -> float:
