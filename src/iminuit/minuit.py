@@ -1050,6 +1050,9 @@ class Minuit:
 
         if ncall is None:
             ncall = self._migrad_maxcall()
+        
+        if type(options) is not dict:
+            raise TypeError("options must be a dictionary")
 
         cfree = ~np.array(self.fixed[:], dtype=bool)
         cpar = np.array(self.values[:])
@@ -1232,21 +1235,27 @@ class Minuit:
             else:
                 method = "BFGS"
 
+        # copy to avoid mutable problems
+        scipy_options = dict(options)
+
         # attempt to set default number of function evaluations if not provided
         # if both "maxiter" and "maxfev" / "maxfun" are provided, minimization
         # will stop at the first reached
         if "maxiter" not in options:
-            options["maxiter"] = ncall
+            scipy_options["maxiter"] = ncall
         if method in (
             "Nelder-Mead",
             "Powell",
         ):
             if "maxfev" not in options:
-                options["maxfev"] = ncall
+                scipy_options["maxfev"] = ncall
 
         if method in ("L-BFGS-B", "TNC"):
             if "maxfun" not in options:
-                options["maxfun"] = ncall
+                scipy_options["maxfun"] = ncall
+            
+            if method == "TNC":
+                del scipy_options["maxiter"]
 
         if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
             constraints = ()
@@ -1266,7 +1275,7 @@ class Minuit:
                 hess=hess,
                 hessp=hessp,
                 constraints=constraints,
-                options=options,
+                options=scipy_options,
             )
         if self.print_level > 0:
             print(r)
