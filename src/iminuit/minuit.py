@@ -1239,8 +1239,7 @@ class Minuit:
         scipy_options = dict(options)
 
         # attempt to set default number of function evaluations if not provided
-        # if both "maxiter" and "maxfev" / "maxfun" are provided, minimization
-        # will stop at the first reached
+        # various workarounds for API inconsistencies in scipy.optimize.minimize
         if "maxiter" not in options:
             scipy_options["maxiter"] = ncall
         if method in (
@@ -1249,12 +1248,15 @@ class Minuit:
         ):
             if "maxfev" not in options:
                 scipy_options["maxfev"] = ncall
+            
+            if "maxiter" not in options:
+                del scipy_options["maxiter"]
 
         if method in ("L-BFGS-B", "TNC"):
             if "maxfun" not in options:
                 scipy_options["maxfun"] = ncall
-            
-            if method == "TNC":
+
+            if "maxiter" not in options:
                 del scipy_options["maxiter"]
 
         if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
