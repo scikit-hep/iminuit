@@ -1017,7 +1017,7 @@ class Minuit:
             constraint.
         options : dict, optional
             A dictionary of solver options to pass to the SciPy minimizer through the
-            `options` parameter of :func:`scipy.optimize.minimize`. See each solver 
+            `options` parameter of :func:`scipy.optimize.minimize`. See each solver
             method for the options it accepts.
 
         Notes
@@ -1033,7 +1033,7 @@ class Minuit:
         means that usually SciPy minimizers will use more iterations than Migrad and
         the tolerance :attr:`tol` has no effect on SciPy minimizers.
 
-        You can specify convergance tolerance and other options for the SciPy minimizers  
+        You can specify convergance tolerance and other options for the SciPy minimizers
         through the `options` parameter.
         """
         try:
@@ -1050,7 +1050,7 @@ class Minuit:
 
         if ncall is None:
             ncall = self._migrad_maxcall()
-        
+
         if type(options) is not dict:
             raise ValueError("options must be a dictionary")
 
@@ -1248,7 +1248,7 @@ class Minuit:
         ):
             if "maxfev" not in options:
                 scipy_options["maxfev"] = ncall
-            
+
             if "maxiter" not in options:
                 del scipy_options["maxiter"]
 
