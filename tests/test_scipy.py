@@ -231,6 +231,12 @@ def test_bad_constraint():
         m.scipy(constraints=[{}])
 
 
+def test_bad_options():
+    m = Minuit(fcn, a=1, b=2)
+    with pytest.raises(ValueError):
+        m.scipy(options=[])
+
+
 def test_high_print_level(capsys):
     m = Minuit(fcn, a=1, b=2)
     m.scipy()

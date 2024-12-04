@@ -1052,7 +1052,7 @@ class Minuit:
             ncall = self._migrad_maxcall()
         
         if type(options) is not dict:
-            raise TypeError("options must be a dictionary")
+            raise ValueError("options must be a dictionary")
 
         cfree = ~np.array(self.fixed[:], dtype=bool)
         cpar = np.array(self.values[:])
