@@ -1034,7 +1034,11 @@ class Minuit:
         the tolerance :attr:`tol` has no effect on SciPy minimizers.
 
         You can specify convergence tolerance and other options for the SciPy minimizers
-        through the `options` parameter.
+        through the `options` parameter. Note that providing the SciPy options 
+        `"maxiter"`, `"maxfev"`, and/or `"maxfun"` (depending on the minimizer) takes 
+        precedence over providing a value for `ncall`. If you want to explicitly control 
+        the number of iterations or function evaluations for a particular SciPy minimizer, 
+        you should provide values for all of its relevant options.
         """
         try:
             from scipy.optimize import (
@@ -1050,9 +1054,6 @@ class Minuit:
 
         if ncall is None:
             ncall = self._migrad_maxcall()
-
-        if type(options) is not dict:
-            raise ValueError("options must be a dictionary")
 
         cfree = ~np.array(self.fixed[:], dtype=bool)
         cpar = np.array(self.values[:])
@@ -1239,24 +1240,26 @@ class Minuit:
 
         # attempt to set default number of function evaluations if not provided
         # various workarounds for API inconsistencies in scipy.optimize.minimize
+        added_maxiter = False
         if "maxiter" not in options:
-            scipy_options["maxiter"] = ncall
+            options["maxiter"] = ncall
+            added_maxiter = True
         if method in (
             "Nelder-Mead",
             "Powell",
         ):
             if "maxfev" not in options:
-                scipy_options["maxfev"] = ncall
+                options["maxfev"] = ncall
 
-            if "maxiter" not in options:
-                del scipy_options["maxiter"]
+            if added_maxiter:
+                del options["maxiter"]
 
         if method in ("L-BFGS-B", "TNC"):
             if "maxfun" not in options:
-                scipy_options["maxfun"] = ncall
+                options["maxfun"] = ncall
 
-            if "maxiter" not in options:
-                del scipy_options["maxiter"]
+            if added_maxiter:
+                del options["maxiter"]
 
         if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
             constraints = ()
@@ -1276,7 +1279,7 @@ class Minuit:
                 hess=hess,
                 hessp=hessp,
                 constraints=constraints,
-                options=scipy_options,
+                options=options,
             )
         if self.print_level > 0:
             print(r)
