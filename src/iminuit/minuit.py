@@ -987,7 +987,7 @@ class Minuit:
         hess: Any = None,
         hessp: Any = None,
         constraints: Iterable = None,
-        options: Dict[str, Any] = {},
+        options: Optional[Dict[str, Any]] = None,
     ) -> "Minuit":
         """
         Minimize with SciPy algorithms.
