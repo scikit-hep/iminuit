@@ -1235,8 +1235,7 @@ class Minuit:
             else:
                 method = "BFGS"
 
-        # copy to avoid mutable problems
-        scipy_options = dict(options)
+        options = options or {}
 
         # attempt to set default number of function evaluations if not provided
         # various workarounds for API inconsistencies in scipy.optimize.minimize
