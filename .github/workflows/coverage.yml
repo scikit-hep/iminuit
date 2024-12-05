@@ -32,7 +32,7 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
-    - uses: astral-sh/setup-uv@v3
+    - uses: astral-sh/setup-uv@v4
     - run: uv pip install --system nox
     - run: nox -s cov
     - uses: AndreMiras/coveralls-python-action@develop
