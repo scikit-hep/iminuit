@@ -131,6 +131,7 @@ __all__ = [
     "ExtendedUnbinnedNLL",
     "Template",
     "LeastSquares",
+    "NormalConstraint",
 ]
 
 T = TypeVar("T", float, NDArray)
