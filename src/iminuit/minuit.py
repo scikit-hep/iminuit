@@ -1034,10 +1034,10 @@ class Minuit:
         the tolerance :attr:`tol` has no effect on SciPy minimizers.
 
         You can specify convergence tolerance and other options for the SciPy minimizers
-        through the `options` parameter. Note that providing the SciPy options 
-        `"maxiter"`, `"maxfev"`, and/or `"maxfun"` (depending on the minimizer) takes 
-        precedence over providing a value for `ncall`. If you want to explicitly control 
-        the number of iterations or function evaluations for a particular SciPy minimizer, 
+        through the `options` parameter. Note that providing the SciPy options
+        `"maxiter"`, `"maxfev"`, and/or `"maxfun"` (depending on the minimizer) takes
+        precedence over providing a value for `ncall`. If you want to explicitly control
+        the number of iterations or function evaluations for a particular SciPy minimizer,
         you should provide values for all of its relevant options.
         """
         try:
