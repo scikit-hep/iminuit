@@ -1033,7 +1033,7 @@ class Minuit:
         means that usually SciPy minimizers will use more iterations than Migrad and
         the tolerance :attr:`tol` has no effect on SciPy minimizers.
 
-        You can specify convergance tolerance and other options for the SciPy minimizers
+        You can specify convergence tolerance and other options for the SciPy minimizers
         through the `options` parameter.
         """
         try:
