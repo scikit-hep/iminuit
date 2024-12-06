@@ -23,7 +23,6 @@ def make_widget(
     plot: Callable[..., None],
     kwargs: Dict[str, Any],
     raise_on_exception: bool,
-    qt_exec: bool,
 ):
     """Make interactive fitting widget."""
     original_values = minuit.values[:]
@@ -183,7 +182,7 @@ def make_widget(
                 self.slider.setValue(self._float_to_int(self.val))
             self.value_label.setText(f"{self.val:.3g}")
 
-    class MainWindow(QtWidgets.QMainWindow):
+    class Widget(QtWidgets.QWidget):
         def __init__(self):
             super().__init__()
             self.resize(1200, 600)
@@ -191,7 +190,6 @@ def make_widget(
             font.setPointSize(12)
             self.setFont(font)
             centralwidget = QtWidgets.QWidget(parent=self)
-            self.setCentralWidget(centralwidget)
             central_layout = QtWidgets.QVBoxLayout(centralwidget)
             tab = QtWidgets.QTabWidget(parent=centralwidget)
             interactive_tab = QtWidgets.QWidget()
@@ -379,15 +377,13 @@ def make_widget(
                 x.reset(val=minuit.values[i], limits=original_limits[i])
             self.on_parameter_change()
 
-    if qt_exec:
-        app = QtWidgets.QApplication.instance()
-        if app is None:
-            app = QtWidgets.QApplication([])
-        main_window = MainWindow()
-        main_window.show()
+    if QtWidgets.QApplication.instance() is None:
+        app = QtWidgets.QApplication([])
+        widget = Widget()
+        widget.show()
         app.exec()
     else:
-        return MainWindow()
+        return Widget()
 
 
 @contextmanager
