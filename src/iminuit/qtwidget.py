@@ -86,8 +86,12 @@ def make_widget(
 
             self.reset(minuit.values[par], limits=minuit.limits[par])
 
-            self.tmin.setSingleStep(1e-1 * (self.vmax - self.vmin))
-            self.tmax.setSingleStep(1e-1 * (self.vmax - self.vmin))
+            step_size = 1e-1 * (self.vmax - self.vmin)
+            decimals = max(int(-np.log10(step_size)) + 2, 0)
+            self.tmin.setSingleStep(step_size)
+            self.tmin.setDecimals(decimals)
+            self.tmax.setSingleStep(step_size)
+            self.tmax.setDecimals(decimals)
             self.tmin.setMinimum(_make_finite(minuit.limits[par][0]))
             self.tmax.setMaximum(_make_finite(minuit.limits[par][1]))
 
@@ -185,22 +189,15 @@ def make_widget(
     class Widget(QtWidgets.QWidget):
         def __init__(self):
             super().__init__()
-            self.resize(1200, 600)
+            self.resize(1200, 800)
             font = QtGui.QFont()
             font.setPointSize(12)
             self.setFont(font)
-            centralwidget = QtWidgets.QWidget(parent=self)
-            central_layout = QtWidgets.QVBoxLayout(centralwidget)
-            tab = QtWidgets.QTabWidget(parent=centralwidget)
-            interactive_tab = QtWidgets.QWidget()
-            tab.addTab(interactive_tab, "Interactive")
-            results_tab = QtWidgets.QWidget()
-            tab.addTab(results_tab, "Results")
-            central_layout.addWidget(tab)
+            self.setWindowTitle("iminuit")
 
-            interactive_layout = QtWidgets.QGridLayout(interactive_tab)
+            interactive_layout = QtWidgets.QGridLayout(self)
 
-            plot_group = QtWidgets.QGroupBox("", parent=interactive_tab)
+            plot_group = QtWidgets.QGroupBox("", parent=self)
             size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
@@ -226,7 +223,7 @@ def make_widget(
                 pass
             self.fig_width = self.fig.get_figwidth()
 
-            button_group = QtWidgets.QGroupBox("", parent=interactive_tab)
+            button_group = QtWidgets.QGroupBox("", parent=self)
             size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.Expanding,
                 QtWidgets.QSizePolicy.Policy.Fixed,
@@ -258,17 +255,17 @@ def make_widget(
             button_layout.addWidget(self.algo_choice)
             interactive_layout.addWidget(button_group, 0, 1, 1, 1)
 
-            scroll_area = QtWidgets.QScrollArea()
-            scroll_area.setWidgetResizable(True)
+            par_scroll_area = QtWidgets.QScrollArea()
+            par_scroll_area.setWidgetResizable(True)
             size_policy = QtWidgets.QSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
             )
-            scroll_area.setSizePolicy(size_policy)
+            par_scroll_area.setSizePolicy(size_policy)
             scroll_area_contents = QtWidgets.QWidget()
             parameter_layout = QtWidgets.QVBoxLayout(scroll_area_contents)
-            scroll_area.setWidget(scroll_area_contents)
-            interactive_layout.addWidget(scroll_area, 1, 1, 1, 1)
+            par_scroll_area.setWidget(scroll_area_contents)
+            interactive_layout.addWidget(par_scroll_area, 1, 1, 2, 1)
             self.parameters = []
             for par in minuit.parameters:
                 parameter = Parameter(minuit, par, self.on_parameter_change)
@@ -276,10 +273,13 @@ def make_widget(
                 parameter_layout.addWidget(parameter)
             parameter_layout.addStretch()
 
-            results_layout = QtWidgets.QVBoxLayout(results_tab)
-            self.results_text = QtWidgets.QTextEdit(parent=results_tab)
+            results_scroll_area = QtWidgets.QScrollArea()
+            results_scroll_area.setWidgetResizable(True)
+            results_scroll_area.setSizePolicy(size_policy)
+            self.results_text = QtWidgets.QTextEdit(parent=self)
             self.results_text.setReadOnly(True)
-            results_layout.addWidget(self.results_text)
+            results_scroll_area.setWidget(self.results_text)
+            interactive_layout.addWidget(results_scroll_area, 2, 0, 1, 1)
 
             self.plot_with_frame(from_fit=False, report_success=False)
 
