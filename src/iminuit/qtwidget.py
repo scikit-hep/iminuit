@@ -4,7 +4,6 @@ import warnings
 import numpy as np
 from typing import Dict, Any, Callable
 import sys
-from functools import partial
 from contextlib import contextmanager
 
 try:
@@ -238,7 +237,7 @@ def make_widget(
             button_layout = QtWidgets.QHBoxLayout(button_group)
             self.fit_button = QtWidgets.QPushButton("Fit", parent=button_group)
             self.fit_button.setStyleSheet("background-color: #2196F3; color: white")
-            self.fit_button.clicked.connect(partial(self.do_fit, plot=True))
+            self.fit_button.clicked.connect(lambda: self.do_fit(plot=True))
             button_layout.addWidget(self.fit_button)
             self.update_button = QtWidgets.QPushButton(
                 "Continuous", parent=button_group
