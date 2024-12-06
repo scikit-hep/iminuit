@@ -5,6 +5,7 @@ import numpy as np
 from typing import Dict, Any, Callable
 import sys
 from functools import partial
+from contextlib import contextmanager
 
 try:
     from PyQt6 import QtCore, QtGui, QtWidgets
@@ -113,42 +114,38 @@ def make_widget(
         def on_min_changed(self):
             tmin = self.tmin.value()
             if tmin >= self.vmax:
-                self.tmin.blockSignals(True)
-                self.tmin.setValue(self.vmin)
-                self.tmin.blockSignals(False)
+                with block_signals(self.tmin):
+                    self.tmin.setValue(self.vmin)
                 return
             self.vmin = tmin
-            self.slider.blockSignals(True)
-            if tmin > self.val:
-                self.val = tmin
-                minuit.values[self.par] = tmin
-                self.slider.setValue(0)
-                self.value_label.setText(f"{self.val:.3g}")
-                self.callback()
-            else:
-                self.slider.setValue(self._float_to_int(self.val))
-            self.slider.blockSignals(False)
+            with block_signals(self.slider):
+                if tmin > self.val:
+                    self.val = tmin
+                    minuit.values[self.par] = tmin
+                    self.slider.setValue(0)
+                    self.value_label.setText(f"{self.val:.3g}")
+                    self.callback()
+                else:
+                    self.slider.setValue(self._float_to_int(self.val))
             lim = minuit.limits[self.par]
             minuit.limits[self.par] = (tmin, lim[1])
 
         def on_max_changed(self):
             tmax = self.tmax.value()
             if tmax <= self.tmin.value():
-                self.tmax.blockSignals(True)
-                self.tmax.setValue(self.vmax)
-                self.tmax.blockSignals(False)
+                with block_signals(self.tmax):
+                    self.tmax.setValue(self.vmax)
                 return
             self.vmax = tmax
-            self.slider.blockSignals(True)
-            if tmax < self.val:
-                self.val = tmax
-                minuit.values[self.par] = tmax
-                self.slider.setValue(int(1e8))
-                self.value_label.setText(f"{self.val:.3g}")
-                self.callback()
-            else:
-                self.slider.setValue(self._float_to_int(self.val))
-            self.slider.blockSignals(False)
+            with block_signals(self.slider):
+                if tmax < self.val:
+                    self.val = tmax
+                    minuit.values[self.par] = tmax
+                    self.slider.setValue(int(1e8))
+                    self.value_label.setText(f"{self.val:.3g}")
+                    self.callback()
+                else:
+                    self.slider.setValue(self._float_to_int(self.val))
             lim = minuit.limits[self.par]
             minuit.limits[self.par] = (lim[0], tmax)
 
@@ -169,28 +166,22 @@ def make_widget(
                 step = _guess_initial_step(val, vmin, vmax)
                 self.vmin = vmin if np.isfinite(vmin) else val - 100 * step
                 self.vmax = vmax if np.isfinite(vmax) else val + 100 * step
-                self.tmin.blockSignals(True)
-                self.tmin.setValue(self.vmin)
-                self.tmin.blockSignals(False)
-                self.tmax.blockSignals(True)
-                self.tmax.setValue(self.vmax)
-                self.tmax.blockSignals(False)
+                with block_signals(self.tmin, self.tmax):
+                    self.tmin.setValue(self.vmin)
+                    self.tmax.setValue(self.vmax)
 
             self.val = val
             if self.val < self.vmin:
                 self.vmin = self.val
-                self.tmin.blockSignals(True)
-                self.tmin.setValue(self.vmin)
-                self.tmin.blockSignals(False)
+                with block_signals(self.tmin):
+                    self.tmin.setValue(self.vmin)
             elif self.val > self.vmax:
                 self.vmax = self.val
-                self.tmax.blockSignals(True)
-                self.tmax.setValue(self.vmax)
-                self.tmax.blockSignals(False)
+                with block_signals(self.tmax):
+                    self.tmax.setValue(self.vmax)
 
-            self.slider.blockSignals(True)
-            self.slider.setValue(self._float_to_int(self.val))
-            self.slider.blockSignals(False)
+            with block_signals(self.slider):
+                self.slider.setValue(self._float_to_int(self.val))
             self.value_label.setText(f"{self.val:.3g}")
 
     class MainWindow(QtWidgets.QMainWindow):
@@ -398,6 +389,17 @@ def make_widget(
         app.exec()
     else:
         return MainWindow()
+
+
+@contextmanager
+def block_signals(*widgets):
+    for w in widgets:
+        w.blockSignals(True)
+    try:
+        yield
+    finally:
+        for w in widgets:
+            w.blockSignals(False)
 
 
 def _make_finite(x: float) -> float:
