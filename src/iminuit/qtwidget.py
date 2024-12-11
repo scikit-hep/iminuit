@@ -378,11 +378,17 @@ def make_widget(
                 x.reset(val=minuit.values[i], limits=original_limits[i])
             self.on_parameter_change()
 
-    if QtWidgets.QApplication.instance() is None:
+    app = QtWidgets.QApplication.instance()
+    if app is None:
         app = QtWidgets.QApplication([])
+        app.setApplicationName("iminuit")
         widget = Widget()
         widget.show()
-        app.exec()
+        app.exec()  # this blocks the main thread
+    elif app.applicationName() == "iminuit":
+        widget = Widget()
+        widget.show()
+        app.exec()  # this blocks the main thread
     else:
         return Widget()
 
