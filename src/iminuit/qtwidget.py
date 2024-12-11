@@ -382,10 +382,8 @@ def make_widget(
     if app is None:
         app = QtWidgets.QApplication([])
         app.setApplicationName("iminuit")
-        widget = Widget()
-        widget.show()
-        app.exec()  # this blocks the main thread
-    elif app.applicationName() == "iminuit":
+
+    if app.applicationName() == "iminuit":
         widget = Widget()
         widget.show()
         app.exec()  # this blocks the main thread
