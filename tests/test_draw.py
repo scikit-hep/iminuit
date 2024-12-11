@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 from numpy.testing import assert_allclose
 import contextlib
-from unittest.mock import patch, MagicMock
 
 mpl = pytest.importorskip("matplotlib")
 plt = pytest.importorskip("matplotlib.pyplot")
@@ -303,8 +302,8 @@ def test_interactive_pyqt6(qtbot):
         mw.fit_button.click()
     assert_allclose(m.values, (100, -100), atol=1e-5)
     # this should trigger an exception
-    #plot.raises = True
-    #with plot.assert_call():
+    # plot.raises = True
+    # with plot.assert_call():
     #    mw.fit_button.click()
 
 

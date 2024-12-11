@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
+
 @pytest.fixture
 def mock_ipython():
     with patch("IPython.get_ipython") as mock_get_ipython:
