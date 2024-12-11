@@ -1,9 +1,10 @@
 """Interactive fitting widget using PyQt6."""
 
+from .util import _widget_guess_initial_step as _guess_initial_step
+from .util import _widget_make_finite as _make_finite
 import warnings
 import numpy as np
 from typing import Dict, Any, Callable
-import sys
 from contextlib import contextmanager
 
 try:
@@ -395,16 +396,3 @@ def block_signals(*widgets):
     finally:
         for w in widgets:
             w.blockSignals(False)
-
-
-def _make_finite(x: float) -> float:
-    sign = -1 if x < 0 else 1
-    if abs(x) == np.inf:
-        return sign * sys.float_info.max
-    return x
-
-
-def _guess_initial_step(val: float, vmin: float, vmax: float) -> float:
-    if np.isfinite(vmin) and np.isfinite(vmax):
-        return 1e-2 * (vmax - vmin)
-    return 1e-2
