@@ -23,6 +23,7 @@ def make_widget(
     plot: Callable[..., None],
     kwargs: Dict[str, Any],
     raise_on_exception: bool,
+    run_event_loop: bool,
 ):
     """Make interactive fitting widget."""
     original_values = minuit.values[:]
@@ -367,12 +368,11 @@ def make_widget(
                 x.reset(val=minuit.values[i], limits=original_limits[i])
             self.on_parameter_change()
 
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        app = QtWidgets.QApplication([])
-        app.setApplicationName("iminuit")
+    if run_event_loop:
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            app = QtWidgets.QApplication([])
 
-    if app.applicationName() == "iminuit":
         widget = Widget()
         widget.show()
         app.exec()  # this blocks the main thread

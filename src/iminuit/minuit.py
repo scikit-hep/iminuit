@@ -2314,6 +2314,7 @@ class Minuit:
         self,
         plot: Callable = None,
         raise_on_exception=False,
+        run_event_loop=True,
         **kwargs,
     ):
         """
@@ -2321,9 +2322,7 @@ class Minuit:
 
         Starts a fitting application (requires PyQt6, matplotlib) in which the
         fit is visualized and the parameters can be manipulated to find good
-        starting parameters and to debug the fit. If there is a QApplication
-        already running, the widget will be returned instead of starting the
-        application.
+        starting parameters and to debug the fit.
 
         When called in a Jupyter notebook (requires ipywidgets, IPython, matplotlib),
         a fitting widget is returned instead, which can be displayed.
@@ -2371,10 +2370,12 @@ class Minuit:
         if is_jupyter:
             from iminuit.ipywidget import make_widget
 
+            return make_widget(self, plot, kwargs, raise_on_exception)
         else:
             from iminuit.qtwidget import make_widget
 
-        return make_widget(self, plot, kwargs, raise_on_exception)
+            return make_widget(self, plot, kwargs, raise_on_exception,
+                               run_event_loop)
 
     def _free_parameters(self) -> Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)

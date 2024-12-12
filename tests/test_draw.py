@@ -252,10 +252,10 @@ def test_interactive_pyqt6(qtbot):
     m = Minuit(cost, 1, 1)
 
     with pytest.raises(AttributeError, match="no visualize method"):
-        m.interactive(raise_on_exception=True)
+        m.interactive(raise_on_exception=True, run_event_loop=False)
 
     with plot.assert_call():
-        mw1 = m.interactive(plot)
+        mw1 = m.interactive(plot, run_event_loop=False)
     qtbot.addWidget(mw1)
     assert isinstance(mw1, PyQt6.QtWidgets.QWidget)
 
@@ -292,7 +292,7 @@ def test_interactive_pyqt6(qtbot):
     c = Cost()
     m = Minuit(c, 0, 0)
     with plot.assert_call():
-        mw = m.interactive(raise_on_exception=True)
+        mw = m.interactive(raise_on_exception=True, run_event_loop=False)
     qtbot.addWidget(mw)
 
     # this should modify slider range
@@ -333,10 +333,10 @@ def test_interactive_pyqt6_raises(qtbot):
     m = Minuit(lambda x, y: 0, 0, 1)
 
     # by default do not raise
-    m.interactive(raiser)
+    m.interactive(raiser, run_event_loop=False)
 
     with pytest.raises(ValueError):
-        m.interactive(raiser, raise_on_exception=True)
+        m.interactive(raiser, raise_on_exception=True, run_event_loop=False)
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -375,5 +375,5 @@ def test_interactive_pyqt6_with_array_func(qtbot):
     trace_args = TraceArgs()
     m = Minuit(cost, (1, 2))
 
-    m.interactive(trace_args)
+    m.interactive(trace_args, run_event_loop=False)
     assert trace_args.nargs > 0
