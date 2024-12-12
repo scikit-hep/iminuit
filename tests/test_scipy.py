@@ -258,7 +258,7 @@ def test_options():
     # simple example of uniform pdf with bounds on b to show tolerance
     # can be improved with options
     def density(x, b):
-        return b, np.full_like(x,b)
+        return b, np.full_like(x, b)
 
     # with empty data, b=0
     c = cost.ExtendedUnbinnedNLL([], density)
@@ -273,10 +273,10 @@ def test_options():
     # try using scipy options to show it is better
     c = cost.ExtendedUnbinnedNLL([], density)
 
-    m = Minuit(c,b=0)
+    m = Minuit(c, b=0)
     m.limits["b"] = (0, None)
 
-    m.scipy(method="Powell", options = {"xtol":1e-10, "ftol": 1e-10})
+    m.scipy(method="Powell", options={"xtol": 1e-10, "ftol": 1e-10})
     b_with_options = m.values["b"]
 
     assert b_without_options > b_with_options
