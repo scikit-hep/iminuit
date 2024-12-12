@@ -254,16 +254,16 @@ def test_on_modified_state():
     assert m.valid
     assert_allclose(m.values, [0, 2], atol=1e-3)
 
+
 def test_options():
     # Create gaussian on flat background model, and place data right in the peak
     # The minimizer should return b=0 and s=1
     xr = (0, 2)
     sigma = 1
     mu = 1
+
     def density(x, s, b):
-        return s + b, (
-            s * truncnorm.pdf(x, *xr, mu, sigma) + b/xr[-1]
-        )
+        return s + b, (s * truncnorm.pdf(x, *xr, mu, sigma) + b / xr[-1])
 
     xdata = np.array([1])
     c = cost.ExtendedUnbinnedNLL(xdata, density)
@@ -281,7 +281,7 @@ def test_options():
     m = Minuit(c, s=1, b=0)
     m.limits["s", "b"] = (0, None)
 
-    m.scipy(method="Powell", options = {"xtol":1e-200, "ftol": 1e-200})
+    m.scipy(method="Powell", options={"xtol": 1e-200, "ftol": 1e-200})
     b_with_options = m.values["b"]
 
     assert b_without_options > b_with_options
