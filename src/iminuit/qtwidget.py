@@ -343,7 +343,6 @@ def make_widget(
             else:
                 self.results_text.clear()
 
-
             plt.clf()
             plt.gcf().set_size_inches(self.figsize)
             self.plot_with_frame(from_fit, report_success)
