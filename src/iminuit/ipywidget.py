@@ -1,7 +1,6 @@
 """Interactive fitting widget for Jupyter notebooks."""
 
-from .util import _widget_guess_initial_step as _guess_initial_step
-from .util import _widget_make_finite as _make_finite
+from .util import _widget_guess_initial_step, _make_finite
 import warnings
 import numpy as np
 from typing import Dict, Any, Callable
@@ -149,7 +148,7 @@ def make_widget(
         def __init__(self, minuit, par):
             val = minuit.values[par]
             vmin, vmax = minuit.limits[par]
-            step = _guess_initial_step(val, vmin, vmax)
+            step = _widget_guess_initial_step(val, vmin, vmax)
             vmin2 = vmin if np.isfinite(vmin) else val - 100 * step
             vmax2 = vmax if np.isfinite(vmax) else val + 100 * step
 

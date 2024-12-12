@@ -1,7 +1,6 @@
 """Interactive fitting widget using PyQt6."""
 
-from .util import _widget_guess_initial_step as _guess_initial_step
-from .util import _widget_make_finite as _make_finite
+from .util import _widget_guess_initial_step, _make_finite
 import warnings
 import numpy as np
 from typing import Dict, Any, Callable
@@ -166,7 +165,7 @@ def make_widget(
         def reset(self, val, limits=None):
             if limits is not None:
                 vmin, vmax = limits
-                step = _guess_initial_step(val, vmin, vmax)
+                step = _widget_guess_initial_step(val, vmin, vmax)
                 self.vmin = vmin if np.isfinite(vmin) else val - 100 * step
                 self.vmax = vmax if np.isfinite(vmax) else val + 100 * step
                 with block_signals(self.tmin, self.tmax):
