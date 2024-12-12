@@ -34,7 +34,7 @@ repos:
 
 # Ruff linter and formatter
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.7.0'
+  rev: 'v0.8.1'
   hooks:
     - id: ruff
       args: [--fix, --show-fixes]
@@ -42,7 +42,7 @@ repos:
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v19.1.2
+  rev: v19.1.4
   hooks:
   - id: clang-format
     files: "src"
@@ -58,7 +58,7 @@ repos:
 
 # Python type checking
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.12.1'
+  rev: 'v1.13.0'
   hooks:
   - id: mypy
     additional_dependencies: [numpy]
@@ -67,17 +67,17 @@ repos:
 # Clear Jupyter notebook output and remove empty cells
 # Override this by adding "keep_output": true to "metadata" block
 - repo: https://github.com/kynan/nbstripout
-  rev: 0.7.1
+  rev: 0.8.1
   hooks:
   - id: nbstripout
     args: [--drop-empty-cells]
 
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.29.4
+  rev: 0.30.0
   hooks:
   - id: check-github-workflows
 
 - repo: https://github.com/henryiii/validate-pyproject-schema-store
-  rev: 2024.10.14
+  rev: 2024.11.25
   hooks:
   - id: validate-pyproject
