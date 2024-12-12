@@ -2374,8 +2374,7 @@ class Minuit:
         else:
             from iminuit.qtwidget import make_widget
 
-            return make_widget(self, plot, kwargs, raise_on_exception,
-                               run_event_loop)
+            return make_widget(self, plot, kwargs, raise_on_exception, run_event_loop)
 
     def _free_parameters(self) -> Set[str]:
         return set(mp.name for mp in self._last_state if not mp.is_fixed)
