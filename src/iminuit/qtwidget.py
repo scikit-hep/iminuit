@@ -205,24 +205,14 @@ def make_widget(
             )
             plot_group.setSizePolicy(size_policy)
             plot_layout = QtWidgets.QVBoxLayout(plot_group)
-            # Use pyplot here to allow users to use pyplot in the plot
-            # function (not recommended / unstable)
-            self.fig, ax = plt.subplots()
-            self.canvas = FigureCanvasQTAgg(self.fig)
+            fig = plt.figure()
+            self.figsize = fig.get_size_inches()
+            manager = plt.get_current_fig_manager()
+            self.canvas = FigureCanvasQTAgg(fig)
+            self.canvas.manager = manager
             plot_layout.addWidget(self.canvas)
             plot_layout.addStretch()
             interactive_layout.addWidget(plot_group, 0, 0, 2, 1)
-            try:
-                plot(minuit.values, fig=self.fig)
-                kwargs["fig"] = self.fig
-            except Exception:
-                pass
-            try:
-                plot(minuit.values, ax=ax)
-                kwargs["ax"] = ax
-            except Exception:
-                pass
-            self.fig_width = self.fig.get_figwidth()
 
             button_group = QtWidgets.QGroupBox("", parent=self)
             size_policy = QtWidgets.QSizePolicy(
@@ -285,7 +275,7 @@ def make_widget(
             self.plot_with_frame(from_fit=False, report_success=False)
 
         def plot_with_frame(self, from_fit, report_success):
-            self.fig.set_figwidth(self.fig_width)
+            trans = plt.gca().transAxes
             try:
                 with warnings.catch_warnings():
                     minuit.visualize(plot, **kwargs)
@@ -295,7 +285,7 @@ def make_widget(
 
                 import traceback
 
-                self.fig.text(
+                plt.figtext(
                     0,
                     0.5,
                     traceback.format_exc(limit=-1),
@@ -308,19 +298,19 @@ def make_widget(
                 return
 
             fval = minuit.fmin.fval if from_fit else minuit._fcn(minuit.values)
-            self.fig.get_axes()[0].text(
+            plt.text(
                 0.05,
                 1.05,
                 f"FCN = {fval:.3f}",
-                transform=self.fig.get_axes()[0].transAxes,
+                transform=trans,
                 fontsize="x-large",
             )
             if from_fit and report_success:
-                self.fig.get_axes()[-1].text(
+                plt.text(
                     0.95,
                     1.05,
                     f"{'success' if minuit.valid and minuit.accurate else 'FAILURE'}",
-                    transform=self.fig.get_axes()[-1].transAxes,
+                    transform=trans,
                     fontsize="x-large",
                     ha="right",
                 )
@@ -353,8 +343,9 @@ def make_widget(
             else:
                 self.results_text.clear()
 
-            for ax in self.fig.get_axes():
-                ax.clear()
+
+            plt.clf()
+            plt.gcf().set_size_inches(self.figsize)
             self.plot_with_frame(from_fit, report_success)
             self.canvas.draw_idle()
 
