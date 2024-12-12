@@ -190,7 +190,7 @@ def make_widget(
     class Widget(QtWidgets.QWidget):
         def __init__(self):
             super().__init__()
-            self.resize(1200, 800)
+            self.resize(1280, 720)
             font = QtGui.QFont()
             font.setPointSize(12)
             self.setFont(font)
@@ -206,12 +206,10 @@ def make_widget(
             plot_group.setSizePolicy(size_policy)
             plot_layout = QtWidgets.QVBoxLayout(plot_group)
             fig = plt.figure()
-            self.figsize = fig.get_size_inches()
             manager = plt.get_current_fig_manager()
             self.canvas = FigureCanvasQTAgg(fig)
             self.canvas.manager = manager
             plot_layout.addWidget(self.canvas)
-            plot_layout.addStretch()
             interactive_layout.addWidget(plot_group, 0, 0, 2, 1)
 
             button_group = QtWidgets.QGroupBox("", parent=self)
@@ -220,6 +218,7 @@ def make_widget(
                 QtWidgets.QSizePolicy.Policy.Fixed,
             )
             button_group.setSizePolicy(size_policy)
+            button_group.setMaximumWidth(500)
             button_layout = QtWidgets.QHBoxLayout(button_group)
             self.fit_button = QtWidgets.QPushButton("Fit", parent=button_group)
             self.fit_button.setStyleSheet("background-color: #2196F3; color: white")
@@ -253,10 +252,11 @@ def make_widget(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
             )
             par_scroll_area.setSizePolicy(size_policy)
+            par_scroll_area.setMaximumWidth(500)
             scroll_area_contents = QtWidgets.QWidget()
             parameter_layout = QtWidgets.QVBoxLayout(scroll_area_contents)
             par_scroll_area.setWidget(scroll_area_contents)
-            interactive_layout.addWidget(par_scroll_area, 1, 1, 2, 1)
+            interactive_layout.addWidget(par_scroll_area, 1, 1, 1, 1)
             self.parameters = []
             for par in minuit.parameters:
                 parameter = Parameter(minuit, par, self.on_parameter_change)
@@ -264,21 +264,15 @@ def make_widget(
                 parameter_layout.addWidget(parameter)
             parameter_layout.addStretch()
 
-            results_scroll_area = QtWidgets.QScrollArea()
-            results_scroll_area.setWidgetResizable(True)
-            results_scroll_area.setSizePolicy(size_policy)
-            self.results_text = QtWidgets.QTextEdit(parent=self)
-            self.results_text.setReadOnly(True)
-            results_scroll_area.setWidget(self.results_text)
-            interactive_layout.addWidget(results_scroll_area, 2, 0, 1, 1)
-
             self.plot_with_frame(from_fit=False, report_success=False)
 
         def plot_with_frame(self, from_fit, report_success):
             trans = plt.gca().transAxes
             try:
                 with warnings.catch_warnings():
+                    fig_size = plt.gcf().get_size_inches()
                     minuit.visualize(plot, **kwargs)
+                    plt.gcf().set_size_inches(fig_size)
             except Exception:
                 if raise_on_exception:
                     raise
@@ -334,17 +328,9 @@ def make_widget(
                     minuit.fixed[i] = not x.fit.isChecked()
                 from_fit = True
                 report_success = self.do_fit(plot=False)
-                self.results_text.clear()
-                self.results_text.setHtml(minuit._repr_html_())
                 minuit.fixed = saved
-            elif from_fit:
-                self.results_text.clear()
-                self.results_text.setHtml(minuit._repr_html_())
-            else:
-                self.results_text.clear()
 
             plt.clf()
-            plt.gcf().set_size_inches(self.figsize)
             self.plot_with_frame(from_fit, report_success)
             self.canvas.draw_idle()
 
