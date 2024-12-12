@@ -2,7 +2,6 @@ import pytest
 from numpy.testing import assert_allclose
 from iminuit import Minuit, cost
 from iminuit.testing import rosenbrock, rosenbrock_grad
-from numba_stats import truncnorm
 import numpy as np
 
 scopt = pytest.importorskip("scipy.optimize")
@@ -256,32 +255,28 @@ def test_on_modified_state():
 
 
 def test_options():
-    # Create gaussian on flat background model, and place data right in the peak
-    # The minimizer should return b=0 and s=1
-    xr = (0, 2)
-    sigma = 1
-    mu = 1
+    # simple example of uniform pdf with bounds on b to show tolerance
+    # can be improved with options
+    def density(x, b):
+        return b, np.full_like(x,b)
 
-    def density(x, s, b):
-        return s + b, (s * truncnorm.pdf(x, *xr, mu, sigma) + b / xr[-1])
-
-    xdata = np.array([1])
-    c = cost.ExtendedUnbinnedNLL(xdata, density)
+    # with empty data, b=0
+    c = cost.ExtendedUnbinnedNLL([], density)
 
     # Minimize with scipy's Powell and store the value of b
-    m = Minuit(c, s=1, b=0)
-    m.limits["s", "b"] = (0, None)
+    m = Minuit(c, b=0)
+    m.limits["b"] = (0, None)
 
     m.scipy(method="Powell")
     b_without_options = m.values["b"]
 
     # try using scipy options to show it is better
-    c = cost.ExtendedUnbinnedNLL(xdata, density)
+    c = cost.ExtendedUnbinnedNLL([], density)
 
-    m = Minuit(c, s=1, b=0)
-    m.limits["s", "b"] = (0, None)
+    m = Minuit(c,b=0)
+    m.limits["b"] = (0, None)
 
-    m.scipy(method="Powell", options={"xtol": 1e-200, "ftol": 1e-200})
+    m.scipy(method="Powell", options = {"xtol":1e-10, "ftol": 1e-10})
     b_with_options = m.values["b"]
 
     assert b_without_options > b_with_options
