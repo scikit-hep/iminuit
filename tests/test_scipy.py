@@ -1,6 +1,6 @@
 import pytest
 from numpy.testing import assert_allclose
-from iminuit import Minuit
+from iminuit import Minuit, cost
 from iminuit.testing import rosenbrock, rosenbrock_grad
 import numpy as np
 
@@ -252,3 +252,31 @@ def test_on_modified_state():
     m.scipy()  # used to fail
     assert m.valid
     assert_allclose(m.values, [0, 2], atol=1e-3)
+
+
+def test_options():
+    # simple example of uniform pdf with bounds on b to show tolerance
+    # can be improved with options
+    def density(x, b):
+        return b, np.full_like(x, b)
+
+    # with empty data, b=0
+    c = cost.ExtendedUnbinnedNLL([], density)
+
+    # Minimize with scipy's Powell and store the value of b
+    m = Minuit(c, b=0)
+    m.limits["b"] = (0, None)
+
+    m.scipy(method="Powell")
+    b_without_options = m.values["b"]
+
+    # try using scipy options to show it is better
+    c = cost.ExtendedUnbinnedNLL([], density)
+
+    m = Minuit(c, b=0)
+    m.limits["b"] = (0, None)
+
+    m.scipy(method="Powell", options={"xtol": 1e-10, "ftol": 1e-10})
+    b_with_options = m.values["b"]
+
+    assert b_without_options > b_with_options
