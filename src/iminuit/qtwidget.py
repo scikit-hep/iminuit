@@ -306,14 +306,12 @@ def make_widget(
                 fontsize="x-large",
             )
             if from_fit and report_success:
-                plt.text(
-                    0.95,
-                    1.05,
-                    f"{'success' if minuit.valid and minuit.accurate else 'FAILURE'}",
-                    transform=trans,
-                    fontsize="x-large",
-                    ha="right",
+                self.results_text.clear()
+                self.results_text.setHtml(
+                    f"<div style='text-align: center;'>{minuit.fmin._repr_html_()}</div>"
                 )
+            else:
+                self.results_text.clear()
 
         def fit(self):
             if self.algo_choice.currentText() == "Migrad":
@@ -335,14 +333,6 @@ def make_widget(
                 from_fit = True
                 report_success = self.do_fit(plot=False)
                 minuit.fixed = saved
-
-            if from_fit:
-                self.results_text.clear()
-                self.results_text.setHtml(
-                    f"<div style='text-align: center;'>{minuit.fmin._repr_html_()}</div>"
-                )
-            else:
-                self.results_text.clear()
 
             plt.clf()
             self.plot_with_frame(from_fit, report_success)
