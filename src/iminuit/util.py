@@ -1686,6 +1686,18 @@ def is_positive_definite(m: ArrayLike) -> bool:
     return False
 
 
+def is_jupyter() -> bool:
+    try:
+         from IPython import get_ipython
+         ip = get_ipython()
+         return ip.has_trait('kernel')
+    except ImportError:
+         return False
+    except AttributeError:
+         return False
+    return False
+
+
 def _make_finite(x: float) -> float:
     sign = -1 if x < 0 else 1
     if abs(x) == np.inf:
