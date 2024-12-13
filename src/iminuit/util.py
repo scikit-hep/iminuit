@@ -1688,13 +1688,14 @@ def is_positive_definite(m: ArrayLike) -> bool:
 
 def is_jupyter() -> bool:
     try:
-         from IPython import get_ipython
-         ip = get_ipython()
-         return ip.has_trait('kernel')
+        from IPython import get_ipython
+
+        ip = get_ipython()
+        return ip.has_trait("kernel")
     except ImportError:
-         return False
+        return False
     except AttributeError:
-         return False
+        return False
     return False
 
 

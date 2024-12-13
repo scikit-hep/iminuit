@@ -18,8 +18,7 @@ def f1(x, y):
 def qtinteractive(m, plot=None, raise_on_exception=False, **kwargs):
     from iminuit.qtwidget import make_widget
 
-    return make_widget(m, plot, kwargs, raise_on_exception,
-                       run_event_loop=False)
+    return make_widget(m, plot, kwargs, raise_on_exception, run_event_loop=False)
 
 
 @pytest.fixture
