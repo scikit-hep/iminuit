@@ -338,7 +338,9 @@ def make_widget(
 
             if from_fit:
                 self.results_text.clear()
-                self.results_text.setHtml(f"<div style='text-align: center;'>{minuit.fmin._repr_html_()}</div>")
+                self.results_text.setHtml(
+                    f"<div style='text-align: center;'>{minuit.fmin._repr_html_()}</div>"
+                )
             else:
                 self.results_text.clear()
 
