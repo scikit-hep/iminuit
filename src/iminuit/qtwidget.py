@@ -23,7 +23,7 @@ def make_widget(
     plot: Callable[..., None],
     kwargs: Dict[str, Any],
     raise_on_exception: bool,
-    run_event_loop: bool,
+    run_event_loop: bool = True,
 ):
     """Make interactive fitting widget."""
     original_values = minuit.values[:]

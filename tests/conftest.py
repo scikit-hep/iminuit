@@ -6,7 +6,10 @@ from unittest.mock import patch, MagicMock
 def mock_ipython():
     with patch("IPython.get_ipython") as mock_get_ipython:
         mock_shell = MagicMock()
-        mock_shell.__class__.__name__ = "ZMQInteractiveShell"
-        mock_shell.config = {"IPKernelApp": True}
+
+        def has_trait(name):
+            return True
+
+        mock_shell.has_trait.side_effect = has_trait
         mock_get_ipython.return_value = mock_shell
         yield
