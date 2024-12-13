@@ -256,13 +256,19 @@ def make_widget(
             scroll_area_contents = QtWidgets.QWidget()
             parameter_layout = QtWidgets.QVBoxLayout(scroll_area_contents)
             par_scroll_area.setWidget(scroll_area_contents)
-            interactive_layout.addWidget(par_scroll_area, 1, 1, 1, 1)
+            interactive_layout.addWidget(par_scroll_area, 1, 1, 2, 1)
             self.parameters = []
             for par in minuit.parameters:
                 parameter = Parameter(minuit, par, self.on_parameter_change)
                 self.parameters.append(parameter)
                 parameter_layout.addWidget(parameter)
             parameter_layout.addStretch()
+
+            self.results_text = QtWidgets.QTextEdit(parent=self)
+            self.results_text.setReadOnly(True)
+            self.results_text.setSizePolicy(size_policy)
+            self.results_text.setMaximumHeight(144)
+            interactive_layout.addWidget(self.results_text, 2, 0, 1, 1)
 
             self.plot_with_frame(from_fit=False, report_success=False)
 
@@ -329,6 +335,12 @@ def make_widget(
                 from_fit = True
                 report_success = self.do_fit(plot=False)
                 minuit.fixed = saved
+
+            if from_fit:
+                self.results_text.clear()
+                self.results_text.setHtml(f"<div style='text-align: center;'>{minuit.fmin._repr_html_()}</div>")
+            else:
+                self.results_text.clear()
 
             plt.clf()
             self.plot_with_frame(from_fit, report_success)
