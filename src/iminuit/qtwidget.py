@@ -117,11 +117,11 @@ def make_widget(
         def on_min_changed(self):
             tmin = self.tmin.value()
             if tmin >= self.vmax:
-                with block_signals(self.tmin):
+                with _block_signals(self.tmin):
                     self.tmin.setValue(self.vmin)
                 return
             self.vmin = tmin
-            with block_signals(self.slider):
+            with _block_signals(self.slider):
                 if tmin > self.val:
                     self.val = tmin
                     minuit.values[self.par] = tmin
@@ -136,11 +136,11 @@ def make_widget(
         def on_max_changed(self):
             tmax = self.tmax.value()
             if tmax <= self.tmin.value():
-                with block_signals(self.tmax):
+                with _block_signals(self.tmax):
                     self.tmax.setValue(self.vmax)
                 return
             self.vmax = tmax
-            with block_signals(self.slider):
+            with _block_signals(self.slider):
                 if tmax < self.val:
                     self.val = tmax
                     minuit.values[self.par] = tmax
@@ -169,21 +169,21 @@ def make_widget(
                 step = _widget_guess_initial_step(val, vmin, vmax)
                 self.vmin = vmin if np.isfinite(vmin) else val - 100 * step
                 self.vmax = vmax if np.isfinite(vmax) else val + 100 * step
-                with block_signals(self.tmin, self.tmax):
+                with _block_signals(self.tmin, self.tmax):
                     self.tmin.setValue(self.vmin)
                     self.tmax.setValue(self.vmax)
 
             self.val = val
             if self.val < self.vmin:
                 self.vmin = self.val
-                with block_signals(self.tmin):
+                with _block_signals(self.tmin):
                     self.tmin.setValue(self.vmin)
             elif self.val > self.vmax:
                 self.vmax = self.val
-                with block_signals(self.tmax):
+                with _block_signals(self.tmax):
                     self.tmax.setValue(self.vmax)
 
-            with block_signals(self.slider):
+            with _block_signals(self.slider):
                 self.slider.setValue(self._float_to_int(self.val))
             self.value_label.setText(f"{self.val:.3g}")
 
@@ -371,7 +371,7 @@ def make_widget(
 
 
 @contextmanager
-def block_signals(*widgets):
+def _block_signals(*widgets):
     for w in widgets:
         w.blockSignals(True)
     try:
