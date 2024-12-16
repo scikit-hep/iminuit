@@ -2,10 +2,8 @@ from iminuit._hide_modules import hide_modules
 from iminuit.cost import LeastSquares
 import pytest
 
-pytest.importorskip("PyQt6")
 
-
-def test_interactive(qtbot):
+def test_interactive():
     pytest.importorskip("matplotlib")
     import iminuit
 
