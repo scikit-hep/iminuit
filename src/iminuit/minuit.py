@@ -987,6 +987,7 @@ class Minuit:
         hess: Any = None,
         hessp: Any = None,
         constraints: Iterable = None,
+        options: Optional[Dict[str, Any]] = None,
     ) -> "Minuit":
         """
         Minimize with SciPy algorithms.
@@ -1014,6 +1015,10 @@ class Minuit:
             as the original fcn, see hess parameter for details. No parameters may be
             omitted in the signature, even if those parameters are not used in the
             constraint.
+        options : dict, optional
+            A dictionary of solver options to pass to the SciPy minimizer through the
+            `options` parameter of :func:`scipy.optimize.minimize`. See each solver
+            method for the options it accepts.
 
         Notes
         -----
@@ -1027,6 +1032,13 @@ class Minuit:
         criterion is evaluated only after the original algorithm already stopped. This
         means that usually SciPy minimizers will use more iterations than Migrad and
         the tolerance :attr:`tol` has no effect on SciPy minimizers.
+
+        You can specify convergence tolerance and other options for the SciPy minimizers
+        through the `options` parameter. Note that providing the SciPy options
+        `"maxiter"`, `"maxfev"`, and/or `"maxfun"` (depending on the minimizer) takes
+        precedence over providing a value for `ncall`. If you want to explicitly control
+        the number of iterations or function evaluations for a particular SciPy minimizer,
+        you should provide values for all of its relevant options.
         """
         try:
             from scipy.optimize import (
@@ -1224,18 +1236,30 @@ class Minuit:
             else:
                 method = "BFGS"
 
+        options = options or {}
+
+        # attempt to set default number of function evaluations if not provided
         # various workarounds for API inconsistencies in scipy.optimize.minimize
-        options = {"maxiter": ncall}
+        added_maxiter = False
+        if "maxiter" not in options:
+            options["maxiter"] = ncall
+            added_maxiter = True
         if method in (
             "Nelder-Mead",
             "Powell",
         ):
-            options["maxfev"] = ncall
-            del options["maxiter"]
+            if "maxfev" not in options:
+                options["maxfev"] = ncall
+
+            if added_maxiter:
+                del options["maxiter"]
 
         if method in ("L-BFGS-B", "TNC"):
-            options["maxfun"] = ncall
-            del options["maxiter"]
+            if "maxfun" not in options:
+                options["maxfun"] = ncall
+
+            if added_maxiter:
+                del options["maxiter"]
 
         if method in ("COBYLA", "SLSQP", "trust-constr") and constraints is None:
             constraints = ()
