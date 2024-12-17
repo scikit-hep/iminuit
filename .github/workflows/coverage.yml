@@ -3,37 +3,39 @@ name: Coverage
 on:
   pull_request:
     paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+      - "doc/**"
+      - ".ci/**"
+      - "*.rst"
   push:
     branches:
       - main
       - develop
       - beta/*
     paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+      - "doc/**"
+      - ".ci/**"
+      - "*.rst"
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
-    - uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
-        create-symlink: true
-    - uses: rui314/setup-mold@v1
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - uses: astral-sh/setup-uv@v4
-    - run: sudo apt install libegl1-mesa:i386 libegl1:i386
-    - run: uv pip install --system nox
-    - run: nox -s cov
-    - uses: AndreMiras/coveralls-python-action@develop
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.*"
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
+          create-symlink: true
+      - uses: rui314/setup-mold@v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v4
+      - run: uv pip install --system nox
+      - run: nox -s cov
+      - uses: AndreMiras/coveralls-python-action@develop
