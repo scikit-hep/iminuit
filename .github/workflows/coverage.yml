@@ -33,6 +33,7 @@ jobs:
       with:
         python-version: "3.12"
     - uses: astral-sh/setup-uv@v4
+    - run: sudo apt install libegl1-mesa:i386 libegl1:i386
     - run: uv pip install --system nox
     - run: nox -s cov
     - uses: AndreMiras/coveralls-python-action@develop
