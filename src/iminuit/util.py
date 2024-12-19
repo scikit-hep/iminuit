@@ -1695,6 +1695,7 @@ def is_jupyter() -> bool:
     except ImportError:
         return False
     except AttributeError:
+        # get_ipython() returns None if no InteractiveShell instance is registered.
         return False
     return False
 
