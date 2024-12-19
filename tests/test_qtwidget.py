@@ -90,7 +90,6 @@ def test_interactive_pyqt6(qtbot):
     assert_allclose(m.limits["a"], (-1, 0), atol=1e-5)
     assert_allclose(m.values, (0, 0), atol=1e-5)
 
-
     class Cost:
         def visualize(self, args):
             return plot(args)
