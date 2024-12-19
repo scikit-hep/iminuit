@@ -358,7 +358,7 @@ def make_widget(
                 x.reset(val=minuit.values[i], limits=original_limits[i])
             self.on_parameter_change()
 
-    if run_event_loop:
+    if run_event_loop:  # pragma: no cover, should not be executed in tests
         app = QtWidgets.QApplication.instance()
         if app is None:
             app = QtWidgets.QApplication([])
