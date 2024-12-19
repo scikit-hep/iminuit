@@ -1,4 +1,4 @@
-"""Interactive fitting widget using PyQt6."""
+"""Interactive fitting widget using PySide6."""
 
 from .util import _widget_guess_initial_step, _make_finite
 import warnings
@@ -7,12 +7,12 @@ from typing import Dict, Any, Callable
 from contextlib import contextmanager
 
 try:
-    from PyQt6 import QtCore, QtGui, QtWidgets
+    from PySide6 import QtCore, QtGui, QtWidgets
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
     from matplotlib import pyplot as plt
 except ModuleNotFoundError as e:
     e.msg += (
-        "\n\nPlease install PyQt6, and matplotlib to enable interactive "
+        "\n\nPlease install PySide6, and matplotlib to enable interactive "
         "outside of Jupyter notebooks."
     )
     raise

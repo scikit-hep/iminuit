@@ -5,7 +5,7 @@ import contextlib
 
 mpl = pytest.importorskip("matplotlib")
 plt = pytest.importorskip("matplotlib.pyplot")
-PyQt6 = pytest.importorskip("PyQt6")
+PySide6 = pytest.importorskip("PySide6")
 
 mpl.use("Agg")
 
@@ -17,7 +17,7 @@ def qtinteractive(m, plot=None, raise_on_exception=False, **kwargs):
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_interactive_pyqt6(qtbot):
+def test_interactive_pyside6(qtbot):
     def cost(a, b):
         return a**2 + b**2
 
@@ -44,7 +44,7 @@ def test_interactive_pyqt6(qtbot):
     with plot.assert_call():
         mw1 = qtinteractive(m, plot)
     qtbot.addWidget(mw1)
-    assert isinstance(mw1, PyQt6.QtWidgets.QWidget)
+    assert isinstance(mw1, PySide6.QtWidgets.QWidget)
 
     # manipulate state to also check this code
     with plot.assert_call():
@@ -119,7 +119,7 @@ def test_interactive_pyqt6(qtbot):
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_interactive_pyqt6_raises(qtbot):
+def test_interactive_pyside6_raises(qtbot):
     def raiser(args):
         raise ValueError
 
@@ -133,7 +133,7 @@ def test_interactive_pyqt6_raises(qtbot):
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_interactive_pyqt6_with_array_func(qtbot):
+def test_interactive_pyside6_with_array_func(qtbot):
     def cost(par):
         return par[0] ** 2 + (par[1] / 2) ** 2
 

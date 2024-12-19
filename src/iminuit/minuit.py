@@ -2343,7 +2343,7 @@ class Minuit:
         """
         Interactive GUI for fitting.
 
-        Starts a fitting application (requires PyQt6, matplotlib) in which the
+        Starts a fitting application (requires PySide6, matplotlib) in which the
         fit is visualized and the parameters can be manipulated to find good
         starting parameters and to debug the fit.
 

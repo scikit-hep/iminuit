@@ -44,7 +44,7 @@ test = [
     "ipywidgets",
     # needed by ipywidgets >= 8.0.6
     "ipykernel",
-    "PyQt6",
+    "PySide6",
     "joblib",
     "jacobi",
     "matplotlib",
