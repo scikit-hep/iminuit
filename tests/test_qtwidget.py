@@ -69,6 +69,28 @@ def test_interactive_pyqt6(qtbot):
     with plot.assert_call():
         mw1.parameters[0].fit.click()
 
+    # check changing of limits
+    mw1.parameters[0].fit.click()
+    mw1.parameters[0].tmin.setValue(-1)
+    mw1.parameters[0].tmax.setValue(1)
+    assert_allclose(m.limits["a"], (-1, 1), atol=1e-5)
+    with plot.assert_call():
+        mw1.parameters[0].tmin.setValue(0.5)
+    assert_allclose(m.limits["a"], (0.5, 1), atol=1e-5)
+    assert_allclose(m.values, (0.5, 0), atol=1e-5)
+    mw1.parameters[0].tmin.setValue(2)
+    assert_allclose(m.limits["a"], (0.5, 1), atol=1e-5)
+    assert_allclose(m.values, (0.5, 0), atol=1e-5)
+    mw1.parameters[0].tmin.setValue(-1)
+    with plot.assert_call():
+        mw1.parameters[0].tmax.setValue(0)
+    assert_allclose(m.limits["a"], (-1, 0), atol=1e-5)
+    assert_allclose(m.values, (0, 0), atol=1e-5)
+    mw1.parameters[0].tmax.setValue(-2)
+    assert_allclose(m.limits["a"], (-1, 0), atol=1e-5)
+    assert_allclose(m.values, (0, 0), atol=1e-5)
+
+
     class Cost:
         def visualize(self, args):
             return plot(args)
