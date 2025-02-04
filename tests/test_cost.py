@@ -904,8 +904,7 @@ def test_BinnedNLL_with_pdf_3D(use_pdf):
         with pytest.raises(
             ValueError,
             match=(
-                'use_pdf="numerical" is not supported '
-                "for multidimensional histograms"
+                'use_pdf="numerical" is not supported for multidimensional histograms'
             ),
         ):
             BinnedNLL(n, xe, pdf, use_pdf=use_pdf)
