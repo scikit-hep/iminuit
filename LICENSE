@@ -1,7 +1,7 @@
-Minuit is from SEAL Minuit It's LGPL v2
-http://seal.web.cern.ch/seal/main/license.html.
+The Minuit2 C++ code is released under LGPL v2.1, see
+./extern/root/LICENSE.
 
-For iminuit, I'm releasing it as MIT license:
+The iminuit code (everything not in ./extern) is released under the MIT license:
 
 Copyright (c) 2012 Piti Ongmongkolkul
 
