@@ -3,45 +3,37 @@ name: Coverage
 on:
   pull_request:
     paths-ignore:
-      - "doc/**"
-      - ".ci/**"
-      - "*.rst"
+      - 'doc/**'
+      - '.ci/**'
+      - '*.rst'
   push:
     branches:
       - main
       - develop
       - beta/*
     paths-ignore:
-      - "doc/**"
-      - ".ci/**"
-      - "*.rst"
+      - 'doc/**'
+      - '.ci/**'
+      - '*.rst'
 
 jobs:
   coverage:
     runs-on: ubuntu-latest
 
     steps:
-      # install-qt-action also does setup-python
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          aqtversion: "==3.1.*"
-          version: "6.8.1"
-          host: "linux"
-          target: "desktop"
-          arch: "linux_gcc_64"
-      # - uses: actions/setup-python@v5
-      #   with:
-      #     python-version: "3.12"
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
-          create-symlink: true
-      - uses: rui314/setup-mold@v1
-      - uses: astral-sh/setup-uv@v4
-      - run: uv pip install --system nox
-      - run: nox -s cov
-      - uses: AndreMiras/coveralls-python-action@develop
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
+        create-symlink: true
+    - uses: rui314/setup-mold@v1
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - uses: tlambert03/setup-qt-libs@v1
+    - uses: astral-sh/setup-uv@v4
+    - run: uv pip install --system nox
+    - run: nox -s cov
+    - uses: AndreMiras/coveralls-python-action@develop

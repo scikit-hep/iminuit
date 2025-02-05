@@ -53,6 +53,7 @@ test = [
     "numba-stats; platform_python_implementation=='CPython'",
     "pytest",
     "pytest-xdist",
+    "pytest-xvfb",
     "pytest-qt",
     "scipy",
     "tabulate",
