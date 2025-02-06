@@ -2341,10 +2341,14 @@ class Minuit:
         **kwargs,
     ):
         """
-        Return fitting widget (requires ipywidgets, IPython, matplotlib).
+        Interactive GUI for fitting.
 
-        A fitting widget is returned which can be displayed and manipulated in a
-        Jupyter notebook to find good starting parameters and to debug the fit.
+        Starts a fitting application (requires PySide6, matplotlib) in which the
+        fit is visualized and the parameters can be manipulated to find good
+        starting parameters and to debug the fit.
+
+        When called in a Jupyter notebook (requires ipywidgets, IPython, matplotlib),
+        a fitting widget is returned instead, which can be displayed.
 
         Parameters
         ----------
@@ -2371,9 +2375,14 @@ class Minuit:
         --------
         Minuit.visualize
         """
-        from iminuit.ipywidget import make_widget
-
         plot = self._visualize(plot)
+
+        if mutil.is_jupyter():
+            from iminuit.ipywidget import make_widget
+
+        else:
+            from iminuit.qtwidget import make_widget
+
         return make_widget(self, plot, kwargs, raise_on_exception)
 
     def _free_parameters(self) -> Set[str]:

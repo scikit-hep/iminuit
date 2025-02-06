@@ -1,9 +1,9 @@
 """Interactive fitting widget for Jupyter notebooks."""
 
+from .util import _widget_guess_initial_step, _make_finite
 import warnings
 import numpy as np
 from typing import Dict, Any, Callable
-import sys
 
 with warnings.catch_warnings():
     # ipywidgets produces deprecation warnings through use of internal APIs :(
@@ -148,7 +148,7 @@ def make_widget(
         def __init__(self, minuit, par):
             val = minuit.values[par]
             vmin, vmax = minuit.limits[par]
-            step = _guess_initial_step(val, vmin, vmax)
+            step = _widget_guess_initial_step(val, vmin, vmax)
             vmin2 = vmin if np.isfinite(vmin) else val - 100 * step
             vmax2 = vmax if np.isfinite(vmax) else val + 100 * step
 
@@ -275,19 +275,6 @@ def make_widget(
     out = widgets.Output()
     OnParameterChange()()
     return widgets.HBox([out, ui])
-
-
-def _make_finite(x: float) -> float:
-    sign = -1 if x < 0 else 1
-    if abs(x) == np.inf:
-        return sign * sys.float_info.max
-    return x
-
-
-def _guess_initial_step(val: float, vmin: float, vmax: float) -> float:
-    if np.isfinite(vmin) and np.isfinite(vmax):
-        return 1e-2 * (vmax - vmin)
-    return 1e-2
 
 
 def _round(x: float) -> float:

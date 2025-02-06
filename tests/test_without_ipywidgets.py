@@ -5,7 +5,7 @@ import pytest
 pytest.importorskip("ipywidgets")
 
 
-def test_interactive():
+def test_interactive(mock_ipython):
     pytest.importorskip("matplotlib")
     import iminuit
 
@@ -14,5 +14,5 @@ def test_interactive():
     iminuit.Minuit(cost, 1).interactive()
 
     with hide_modules("ipywidgets", reload="iminuit.ipywidget"):
-        with pytest.raises(ModuleNotFoundError, match="Please install"):
+        with pytest.raises(ModuleNotFoundError, match="Please install ipywidgets"):
             iminuit.Minuit(cost, 1).interactive()

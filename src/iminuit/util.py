@@ -1684,3 +1684,30 @@ def is_positive_definite(m: ArrayLike) -> bool:
             return False
         return True
     return False
+
+
+def is_jupyter() -> bool:
+    try:
+        from IPython import get_ipython
+
+        ip = get_ipython()
+        return ip.has_trait("kernel")
+    except ImportError:
+        return False
+    except AttributeError:
+        # get_ipython() returns None if no InteractiveShell instance is registered.
+        return False
+    return False
+
+
+def _make_finite(x: float) -> float:
+    sign = -1 if x < 0 else 1
+    if abs(x) == np.inf:
+        return sign * sys.float_info.max
+    return x
+
+
+def _widget_guess_initial_step(val: float, vmin: float, vmax: float) -> float:
+    if np.isfinite(vmin) and np.isfinite(vmax):
+        return 1e-2 * (vmax - vmin)
+    return 1e-2

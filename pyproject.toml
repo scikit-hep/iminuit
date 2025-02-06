@@ -44,6 +44,7 @@ test = [
     "ipywidgets",
     # needed by ipywidgets >= 8.0.6
     "ipykernel",
+    "PySide6",
     "joblib",
     "jacobi",
     "matplotlib",
@@ -52,6 +53,8 @@ test = [
     "numba-stats; platform_python_implementation=='CPython'",
     "pytest",
     "pytest-xdist",
+    "pytest-xvfb",
+    "pytest-qt",
     "scipy",
     "tabulate",
     "boost_histogram",
@@ -101,6 +104,7 @@ pydocstyle.convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["B", "D"]
+"conftest.py" = ["B", "D"]
 "*.ipynb" = ["D"]
 "automatic_differentiation.ipynb" = ["F821"]
 "cython.ipynb" = ["F821"]

@@ -67,7 +67,7 @@ def pypy(session: nox.Session) -> None:
 
 
 # Python-3.12 provides coverage info faster
-@nox.session(python="3.12", venv_backend="uv", reuse_venv=True)
+@nox.session(venv_backend="uv", reuse_venv=True)
 def cov(session: nox.Session) -> None:
     """Run covage and place in 'htmlcov' directory."""
     session.install("--only-binary=:all:", "-e.[test,doc]")
