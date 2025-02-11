@@ -1414,7 +1414,7 @@ class BinnedCost(MaskedCostWithPulls):
             cx = np.arange(len(n)).astype(float)
         else:
             xe = self.xe
-            cx = 0.5 * (xe[1:] + xe[:-1])
+            cx = 0.5 * (xe[1:] + xe[:-1])  # type: ignore
         plt.errorbar(cx, n, ne, fmt="ok")
         plt.stairs(mu, xe, fill=True, color="C0")
 
@@ -1875,7 +1875,7 @@ class Template(BinnedCost):
             cx = np.arange(len(n)).astype(float)
         else:
             xe = self.xe
-            cx = 0.5 * (xe[1:] + xe[:-1])
+            cx = 0.5 * (xe[1:] + xe[:-1])  # type: ignore
 
         plt.errorbar(cx, n, ne, fmt="ok")
 
