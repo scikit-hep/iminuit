@@ -35,55 +35,36 @@ def make_widget(
             self.par = par
             self.callback = callback
 
-            size_policy = QtWidgets.QSizePolicy(
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
-                QtWidgets.QSizePolicy.Policy.Fixed,
-            )
-            self.setSizePolicy(size_policy)
-            layout = QtWidgets.QVBoxLayout()
-            self.setLayout(layout)
+            vlayout = QtWidgets.QVBoxLayout(self)
 
-            label = QtWidgets.QLabel(par, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
-            label.setMinimumSize(QtCore.QSize(50, 0))
-            self.value_label = QtWidgets.QLabel(
-                alignment=QtCore.Qt.AlignmentFlag.AlignCenter
-            )
-            self.value_label.setMinimumSize(QtCore.QSize(50, 0))
+            label = QtWidgets.QLabel(par)
+            label.setMinimumWidth(40)
+            self.value_label = QtWidgets.QLabel()
             self.slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
             self.slider.setMinimum(0)
             self.slider.setMaximum(int(1e8))
-            self.tmin = QtWidgets.QDoubleSpinBox(
-                alignment=QtCore.Qt.AlignmentFlag.AlignCenter
-            )
-            self.tmin.setRange(_make_finite(-np.inf), _make_finite(np.inf))
-            self.tmax = QtWidgets.QDoubleSpinBox(
-                alignment=QtCore.Qt.AlignmentFlag.AlignCenter
-            )
-            self.tmax.setRange(_make_finite(-np.inf), _make_finite(np.inf))
-            self.tmin.setSizePolicy(size_policy)
-            self.tmax.setSizePolicy(size_policy)
+            self.tmin = QtWidgets.QDoubleSpinBox()
+            vmin, vmax = minuit.limits[par]
+            self.tmin.setRange(_make_finite(vmin), _make_finite(np.inf))
+            self.tmax = QtWidgets.QDoubleSpinBox()
+            self.tmax.setRange(_make_finite(-np.inf), _make_finite(vmax))
             self.fix = QtWidgets.QPushButton("Fix")
             self.fix.setCheckable(True)
             self.fix.setChecked(minuit.fixed[par])
             self.fit = QtWidgets.QPushButton("Fit")
             self.fit.setCheckable(True)
             self.fit.setChecked(False)
-            size_policy = QtWidgets.QSizePolicy(
-                QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed
-            )
-            self.fix.setSizePolicy(size_policy)
-            self.fit.setSizePolicy(size_policy)
-            layout1 = QtWidgets.QHBoxLayout()
-            layout.addLayout(layout1)
-            layout1.addWidget(label)
-            layout1.addWidget(self.slider)
-            layout1.addWidget(self.value_label)
-            layout1.addWidget(self.fix)
-            layout2 = QtWidgets.QHBoxLayout()
-            layout.addLayout(layout2)
-            layout2.addWidget(self.tmin)
-            layout2.addWidget(self.tmax)
-            layout2.addWidget(self.fit)
+            hlayout1 = QtWidgets.QHBoxLayout()
+            vlayout.addLayout(hlayout1)
+            hlayout1.addWidget(label)
+            hlayout1.addWidget(self.slider)
+            hlayout1.addWidget(self.value_label)
+            hlayout1.addWidget(self.fix)
+            hlayout2 = QtWidgets.QHBoxLayout()
+            vlayout.addLayout(hlayout2)
+            hlayout2.addWidget(self.tmin)
+            hlayout2.addWidget(self.tmax)
+            hlayout2.addWidget(self.fit)
 
             self.reset(minuit.values[par], limits=minuit.limits[par])
 
@@ -190,35 +171,58 @@ def make_widget(
     class Widget(QtWidgets.QWidget):
         def __init__(self):
             super().__init__()
-            self.resize(1280, 720)
             font = QtGui.QFont()
-            font.setPointSize(12)
+            font.setPointSize(11)
             self.setFont(font)
             self.setWindowTitle("iminuit")
 
-            interactive_layout = QtWidgets.QGridLayout(self)
+            hlayout = QtWidgets.QHBoxLayout(self)
 
-            plot_group = QtWidgets.QGroupBox("", parent=self)
-            size_policy = QtWidgets.QSizePolicy(
+            plot_group = self.make_plot_group()
+            button_group = self.make_button_group()
+            parameter_scroll_area = self.make_parameter_scroll_area()
+
+            self.results_text = QtWidgets.QTextEdit(parent=self)
+            self.results_text.setReadOnly(True)
+            self.results_text.setSizePolicy(
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
                 QtWidgets.QSizePolicy.Policy.MinimumExpanding,
             )
-            plot_group.setSizePolicy(size_policy)
+            self.results_text.setMaximumHeight(150)
+
+            vlayout_left = QtWidgets.QVBoxLayout()
+            vlayout_left.addWidget(plot_group)
+            vlayout_left.addWidget(self.results_text)
+
+            vlayout_right = QtWidgets.QVBoxLayout()
+            vlayout_right.addWidget(button_group)
+            vlayout_right.addWidget(parameter_scroll_area)
+
+            hlayout.addLayout(vlayout_left)
+            hlayout.addLayout(vlayout_right)
+
+            self.plot_with_frame(from_fit=False, report_success=False)
+
+        def make_plot_group(self):
+            plot_group = QtWidgets.QGroupBox("", parent=self)
+            plot_group.setSizePolicy(
+                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            )
             plot_layout = QtWidgets.QVBoxLayout(plot_group)
             fig = plt.figure()
             manager = plt.get_current_fig_manager()
             self.canvas = FigureCanvasQTAgg(fig)
             self.canvas.manager = manager
             plot_layout.addWidget(self.canvas)
-            interactive_layout.addWidget(plot_group, 0, 0, 2, 1)
+            return plot_group
 
+        def make_button_group(self):
             button_group = QtWidgets.QGroupBox("", parent=self)
-            size_policy = QtWidgets.QSizePolicy(
-                QtWidgets.QSizePolicy.Policy.Expanding,
+            button_group.setSizePolicy(
+                QtWidgets.QSizePolicy.Policy.Minimum,
                 QtWidgets.QSizePolicy.Policy.Fixed,
             )
-            button_group.setSizePolicy(size_policy)
-            button_group.setMaximumWidth(500)
             button_layout = QtWidgets.QHBoxLayout(button_group)
             self.fit_button = QtWidgets.QPushButton("Fit", parent=button_group)
             self.fit_button.setStyleSheet("background-color: #2196F3; color: white")
@@ -237,40 +241,31 @@ def make_widget(
             button_layout.addWidget(self.reset_button)
             self.algo_choice = QtWidgets.QComboBox(parent=button_group)
             self.algo_choice.setEditable(True)
-            self.algo_choice.lineEdit().setAlignment(
-                QtCore.Qt.AlignmentFlag.AlignCenter
-            )
             self.algo_choice.lineEdit().setReadOnly(True)
             self.algo_choice.addItems(["Migrad", "Scipy", "Simplex"])
             button_layout.addWidget(self.algo_choice)
-            interactive_layout.addWidget(button_group, 0, 1, 1, 1)
+            return button_group
 
-            par_scroll_area = QtWidgets.QScrollArea()
+        def make_parameter_scroll_area(self):
+            par_scroll_area = QtWidgets.QScrollArea(parent=self)
+            par_scroll_area.setContentsMargins(0, 0, 0, 0)
+            par_scroll_area.setFrameShape(QtWidgets.QFrame.NoFrame)
             par_scroll_area.setWidgetResizable(True)
-            size_policy = QtWidgets.QSizePolicy(
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
-                QtWidgets.QSizePolicy.Policy.MinimumExpanding,
+            par_scroll_area.setSizePolicy(
+                QtWidgets.QSizePolicy.Policy.Minimum,
+                QtWidgets.QSizePolicy.Policy.Minimum,
             )
-            par_scroll_area.setSizePolicy(size_policy)
-            par_scroll_area.setMaximumWidth(500)
-            scroll_area_contents = QtWidgets.QWidget()
+            scroll_area_contents = QtWidgets.QWidget(par_scroll_area)
             parameter_layout = QtWidgets.QVBoxLayout(scroll_area_contents)
+            parameter_layout.setContentsMargins(0, 0, 0, 0)
             par_scroll_area.setWidget(scroll_area_contents)
-            interactive_layout.addWidget(par_scroll_area, 1, 1, 2, 1)
             self.parameters = []
             for par in minuit.parameters:
                 parameter = Parameter(minuit, par, self.on_parameter_change)
                 self.parameters.append(parameter)
                 parameter_layout.addWidget(parameter)
             parameter_layout.addStretch()
-
-            self.results_text = QtWidgets.QTextEdit(parent=self)
-            self.results_text.setReadOnly(True)
-            self.results_text.setSizePolicy(size_policy)
-            self.results_text.setMaximumHeight(144)
-            interactive_layout.addWidget(self.results_text, 2, 0, 1, 1)
-
-            self.plot_with_frame(from_fit=False, report_success=False)
+            return par_scroll_area
 
         def plot_with_frame(self, from_fit, report_success):
             trans = plt.gca().transAxes
@@ -320,7 +315,6 @@ def make_widget(
                 minuit.scipy()
             elif self.algo_choice.currentText() == "Simplex":
                 minuit.simplex()
-                return False
             else:
                 assert False  # pragma: no cover, should never happen
             return True
