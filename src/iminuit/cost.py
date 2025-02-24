@@ -963,13 +963,12 @@ class UnbinnedCost(MaskedCost):
             ym = self.scaled_pdf(xm, *args)
         elif model_points > 0:
             if _detect_log_spacing(x):
-                xm = np.geomspace(x[0], x[-1], model_points)
+                xm = np.geomspace(np.min(x), np.max(x), model_points)
             else:
-                xm = np.linspace(x[0], x[-1], model_points)
+                xm = np.linspace(np.min(x), np.max(x), model_points)
             ym = self.scaled_pdf(xm, *args)
         else:
-            xm, ym = _smart_sampling(lambda x: self.scaled_pdf(x, *args), x[0], x[-1])
-
+            xm, ym = _smart_sampling(lambda x: self.scaled_pdf(x, *args), np.min(x), np.max(x)) 
         # use xm for range, which may be narrower or wider than x range
         n, xe = np.histogram(x, bins=bins, range=(xm[0], xm[-1]))
         cx = 0.5 * (xe[1:] + xe[:-1])
@@ -2311,12 +2310,12 @@ class LeastSquares(MaskedCostWithPulls):
             ym = self.model(xm, *args)
         elif model_points > 0:
             if _detect_log_spacing(x):
-                xm = np.geomspace(x[0], x[-1], model_points)
+                xm = np.geomspace(np.min(x), np.max(x), model_points)
             else:
-                xm = np.linspace(x[0], x[-1], model_points)
+                xm = np.linspace(np.min(x), np.max(x), model_points)
             ym = self.model(xm, *args)
         else:
-            xm, ym = _smart_sampling(lambda x: self.model(x, *args), x[0], x[-1])
+            xm, ym = _smart_sampling(lambda x: self.model(x, *args), np.min(x), np.max(x))
         plt.plot(xm, ym)
         return (x, y, ye), (xm, ym)
 
