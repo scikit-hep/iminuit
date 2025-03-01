@@ -33,7 +33,7 @@ jobs:
       with:
         python-version: "3.12"
     - uses: tlambert03/setup-qt-libs@v1
-    - uses: astral-sh/setup-uv@v4
+    - uses: astral-sh/setup-uv@v5
     - run: uv pip install --system nox
     - run: nox -s cov
     - uses: AndreMiras/coveralls-python-action@develop
