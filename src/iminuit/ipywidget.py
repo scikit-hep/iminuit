@@ -88,12 +88,12 @@ def make_widget(
         return True
 
     class OnParameterChange:
-        # Ugly implementation notes:
-        # We want the plot when the user moves the slider widget, but not when
-        # we update the slider value manually from our code. Unfortunately,
-        # the latter also calls OnParameterChange, which leads to superfluous plotting.
-        # I could not find a nice way to prevent that (and I tried many), so as a workaround
-        # we optionally skip a number of calls, when the slider is updated.
+        # Ugly implementation notes: We want the plot when the user moves the slider
+        # widget, but not when we update the slider value manually from our code.
+        # Unfortunately, the latter also calls OnParameterChange, which leads to
+        # superfluous plotting. I could not find a nice way to prevent that (and I tried
+        # many), so as a workaround we optionally skip a number of calls, when the
+        # slider is updated.
         def __init__(self, skip: int = 0):
             self.skip = skip
 
