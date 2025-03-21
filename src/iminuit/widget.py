@@ -1,7 +1,6 @@
 """Fitting widget."""
 
 import warnings
-from contextlib import contextmanager
 from typing import Any, Callable, List, Protocol
 
 import numpy as np
