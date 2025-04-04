@@ -5,6 +5,14 @@
 Changelog
 =========
 
+2.31.0 (April 04, 2025)
+-----------------------
+- Fix qt widget sizing issues and simplify code (`#1075 <https://github.com/scikit-hep/iminuit/pull/1075>`_)
+- Minuit.interactive outside of jupyter notebooks (`#1056 <https://github.com/scikit-hep/iminuit/pull/1056>`_)
+- Add ability to pass options to scipy minimizers (`#1060 <https://github.com/scikit-hep/iminuit/pull/1060>`_)
+- Fix normalconstraint not appearing in docs (`#1059 <https://github.com/scikit-hep/iminuit/pull/1059>`_)
+- Bump the actions group with 3 updates (`#1057 <https://github.com/scikit-hep/iminuit/pull/1057>`_)
+
 2.30.2 (October 12, 2024)
 -------------------------
 - Fix docs (`#1052 <https://github.com/scikit-hep/iminuit/pull/1052>`_)
