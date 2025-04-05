@@ -124,6 +124,8 @@ jobs:
         with:
           subject-path: "dist/iminuit-*"
 
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
   release:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: [release_check, upload]
