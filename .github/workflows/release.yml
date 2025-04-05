@@ -9,6 +9,10 @@ on:
     paths:
       - .github/workflows/release.yml
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
 env:
   # Latest Jupyter requires this to acknowledge deprecation
   JUPYTER_PLATFORM_DIRS: 1
