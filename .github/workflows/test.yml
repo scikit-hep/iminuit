@@ -2,10 +2,13 @@ name: Test
 
 on:
   pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+    paths:
+      - src
+      - extern
+      - tests
+      - pyproject.toml
+      - noxfile.py
+      - CMakeLists.txt
 
 env:
   CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
