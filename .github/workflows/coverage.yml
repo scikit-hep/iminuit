@@ -2,19 +2,31 @@ name: Coverage
 
 on:
   pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+    paths:
+      - src
+      - extern
+      - tests
+      - pyproject.toml
+      - noxfile.py
+      - CMakeLists.txt
+      - .github/workflows/coverage.yml
   push:
     branches:
       - main
       - develop
       - beta/*
-    paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+    paths:
+      - src
+      - extern
+      - tests
+      - pyproject.toml
+      - noxfile.py
+      - CMakeLists.txt
+      - .github/workflows/coverage.yml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 jobs:
   coverage:
@@ -32,6 +44,7 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
+    # without this, the Qt tests abort because a lib is missing
     - uses: tlambert03/setup-qt-libs@v1
     - uses: astral-sh/setup-uv@v4
     - run: uv pip install --system nox

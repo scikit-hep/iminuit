@@ -2,10 +2,13 @@ name: Test
 
 on:
   pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+    paths:
+      - src
+      - extern
+      - tests
+      - pyproject.toml
+      - CMakeLists.txt
+      - .github/workflows/test.yml
 
 env:
   CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -50,4 +53,4 @@ jobs:
     # pip install .[test] is not used here to test minimum (faster)
     # cov workflow runs all tests
     - run: uv pip install --system . pytest pytest-xdist ${{ matrix.installs }}
-    - run: python -m pytest -n 3
+    - run: pytest -n 3
