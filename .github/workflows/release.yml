@@ -85,7 +85,9 @@ jobs:
 
       # without this, the Qt tests abort because a lib is missing
       - uses: tlambert03/setup-qt-libs@v1
-      - run: uv run build --sdist
+      - run: |
+          uv pip install --system build
+          uv run python -m build --sdist
 
       - run: uv pip install --system -v $(echo dist/iminuit-*)[test]
       # we don't use nox here, because nox generates its own environment

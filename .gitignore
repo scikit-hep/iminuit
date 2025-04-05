@@ -66,3 +66,5 @@ doc/index.rst
 testcase
 
 *venv*
+
+uv.lock
