@@ -3,9 +3,9 @@ name: Coverage
 on:
   pull_request:
     paths:
-      - src
-      - extern
-      - tests
+      - src/**
+      - extern/**
+      - tests/**
       - pyproject.toml
       - noxfile.py
       - CMakeLists.txt
@@ -16,9 +16,9 @@ on:
       - develop
       - beta/*
     paths:
-      - src
-      - extern
-      - tests
+      - src/**
+      - extern/**
+      - tests/**
       - pyproject.toml
       - noxfile.py
       - CMakeLists.txt
