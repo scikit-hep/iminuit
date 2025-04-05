@@ -5,9 +5,10 @@
 Changelog
 =========
 
-2.31.1rc0 (April 05, 2025)
---------------------------
-- Fix ccache keys (`#1082 <https://github.com/scikit-hep/iminuit/pull/1082>`_)
+2.31.1 (April 05, 2025)
+-----------------------
+- Improve minos cl docstring (`#1085 <https://github.com/scikit-hep/iminuit/pull/1085>`_)
+- Fix leastsquares visualize on unsorted x-values (`#1084 <https://github.com/scikit-hep/iminuit/pull/1084>`_)
 
 2.31.0 (April 04, 2025)
 -----------------------
@@ -15,7 +16,7 @@ Changelog
 - Minuit.interactive outside of jupyter notebooks (`#1056 <https://github.com/scikit-hep/iminuit/pull/1056>`_)
 - Add ability to pass options to scipy minimizers (`#1060 <https://github.com/scikit-hep/iminuit/pull/1060>`_)
 - Fix normalconstraint not appearing in docs (`#1059 <https://github.com/scikit-hep/iminuit/pull/1059>`_)
-- Bump the actions group with 3 updates (`#1057 <https://github.com/scikit-hep/iminuit/pull/1057>`_)
+- Note: Release is missing on PyPI due to error in release pipeline
 
 2.30.2 (October 12, 2024)
 -------------------------
@@ -23,6 +24,7 @@ Changelog
 - Fix: use old license text (`#1050 <https://github.com/scikit-hep/iminuit/pull/1050>`_)
 - Chore: some minor updates (`#1051 <https://github.com/scikit-hep/iminuit/pull/1051>`_)
 - Ci: use official gha for uv (`#1048 <https://github.com/scikit-hep/iminuit/pull/1048>`_)
+- Note: Release is missing on PyPI due to error in release pipeline
 
 2.30.1 (October 08, 2024)
 -------------------------
