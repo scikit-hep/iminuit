@@ -82,6 +82,7 @@ jobs:
         with:
           submodules: true
       - uses: astral-sh/setup-uv@v4
+      - uses: actions/setup-python@v5
 
       # without this, the Qt tests abort because a lib is missing
       - uses: tlambert03/setup-qt-libs@v1
