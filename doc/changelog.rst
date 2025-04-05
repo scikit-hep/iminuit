@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.31.1rc0 (April 05, 2025)
+--------------------------
+- Fix ccache keys (`#1082 <https://github.com/scikit-hep/iminuit/pull/1082>`_)
+
 2.31.0 (April 04, 2025)
 -----------------------
 - Fix qt widget sizing issues and simplify code (`#1075 <https://github.com/scikit-hep/iminuit/pull/1075>`_)
