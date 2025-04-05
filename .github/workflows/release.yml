@@ -81,12 +81,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - uses: astral-sh/setup-uv@v4
 
-      - run: pipx run build --sdist
+      # without this, the Qt tests abort because a lib is missing
+      - uses: tlambert03/setup-qt-libs@v1
+      - run: uv run build --sdist
 
-      - run: python -m pip install --upgrade pip setuptools
-      - run: python -m pip install -v $(echo dist/iminuit-*)[test]
-      - run: python -m pytest
+      - run: uv pip install --system -v $(echo dist/iminuit-*)[test]
+      # we don't use nox here, because nox generates its own environment
+      - run: pytest -n 3
 
       - uses: actions/upload-artifact@v4
         with:
