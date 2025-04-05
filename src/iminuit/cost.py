@@ -2305,18 +2305,21 @@ class LeastSquares(MaskedCostWithPulls):
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
         x, y, ye = self._masked.T
+        xmin = np.min(x)
+        xmax = np.max(x)
         plt.errorbar(x, y, ye, fmt="ok")
         if isinstance(model_points, Iterable):
             xm = np.array(model_points)
             ym = self.model(xm, *args)
         elif model_points > 0:
+            # beware, x may not be sorted
             if _detect_log_spacing(x):
-                xm = np.geomspace(x[0], x[-1], model_points)
+                xm = np.geomspace(xmin, xmax, model_points)
             else:
-                xm = np.linspace(x[0], x[-1], model_points)
+                xm = np.linspace(xmin, xmax, model_points)
             ym = self.model(xm, *args)
         else:
-            xm, ym = _smart_sampling(lambda x: self.model(x, *args), x[0], x[-1])
+            xm, ym = _smart_sampling(lambda x: self.model(x, *args), xmin, xmax)
         plt.plot(xm, ym)
         return (x, y, ye), (xm, ym)
 

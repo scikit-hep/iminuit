@@ -1389,6 +1389,16 @@ def test_LeastSquares_visualize():
     assert_equal(xm, np.linspace(1, 100))
 
 
+def test_LeastSquares_visualize_unsorted():
+    # make sure that xm uses max and min of x, not assuming x is sorted
+    pytest.importorskip("matplotlib")
+
+    c = LeastSquares([1, 0, 3, 2], [2, 1, 4, 3], 0.1, line)
+    xm, _ = c.visualize((1, 1))[1]
+    assert xm[0] == 0
+    assert xm[-1] == 3
+
+
 def test_LeastSquares_visualize_par_array():
     pytest.importorskip("matplotlib")
 
