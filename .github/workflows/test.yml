@@ -7,8 +7,8 @@ on:
       - extern
       - tests
       - pyproject.toml
-      - noxfile.py
       - CMakeLists.txt
+      - .github/workflows/test.yml
 
 env:
   CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache

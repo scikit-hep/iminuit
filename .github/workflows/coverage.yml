@@ -2,19 +2,27 @@ name: Coverage
 
 on:
   pull_request:
-    paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+    paths:
+      - src
+      - extern
+      - tests
+      - pyproject.toml
+      - noxfile.py
+      - CMakeLists.txt
+      - .github/workflows/coverage.yml
   push:
     branches:
       - main
       - develop
       - beta/*
-    paths-ignore:
-      - 'doc/**'
-      - '.ci/**'
-      - '*.rst'
+    paths:
+      - src
+      - extern
+      - tests
+      - pyproject.toml
+      - noxfile.py
+      - CMakeLists.txt
+      - .github/workflows/coverage.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
