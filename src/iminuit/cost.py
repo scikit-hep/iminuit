@@ -2305,9 +2305,10 @@ class LeastSquares(MaskedCostWithPulls):
             raise ValueError("visualize is not implemented for multi-dimensional data")
 
         x, y, ye = self._masked.T
+        plt.errorbar(x, y, ye, fmt="ok")
+
         xmin = np.min(x)
         xmax = np.max(x)
-        plt.errorbar(x, y, ye, fmt="ok")
         if isinstance(model_points, Iterable):
             xm = np.array(model_points)
             ym = self.model(xm, *args)
