@@ -27,7 +27,7 @@ jobs:
     # must come after checkout
     - uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
+        create-symlink: true
     - uses: actions/setup-python@v5
       with:
         python-version: "3.11"

@@ -38,7 +38,6 @@ jobs:
         submodules: true
     - uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
         create-symlink: true
     - uses: rui314/setup-mold@v1
     - uses: actions/setup-python@v5
