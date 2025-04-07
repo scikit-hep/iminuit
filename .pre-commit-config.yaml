@@ -34,7 +34,7 @@ repos:
 
 # Ruff linter and formatter
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.11.2'
+  rev: 'v0.11.4'
   hooks:
     - id: ruff
       args: [--fix, --show-fixes]
@@ -78,6 +78,6 @@ repos:
   - id: check-github-workflows
 
 - repo: https://github.com/henryiii/validate-pyproject-schema-store
-  rev: 2025.03.24
+  rev: 2025.04.07
   hooks:
   - id: validate-pyproject
