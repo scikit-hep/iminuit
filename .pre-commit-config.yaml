@@ -34,7 +34,7 @@ repos:
 
 # Ruff linter and formatter
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: 'v0.11.6'
+  rev: 'v0.11.9'
   hooks:
     - id: ruff
       args: [--fix, --show-fixes]
@@ -42,7 +42,7 @@ repos:
 
 # C++ formatting
 - repo: https://github.com/pre-commit/mirrors-clang-format
-  rev: v20.1.0
+  rev: v20.1.4
   hooks:
   - id: clang-format
     files: "src"
@@ -78,6 +78,6 @@ repos:
   - id: check-github-workflows
 
 - repo: https://github.com/henryiii/validate-pyproject-schema-store
-  rev: 2025.04.07
+  rev: 2025.05.12
   hooks:
   - id: validate-pyproject
