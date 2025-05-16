@@ -175,16 +175,43 @@ def params(mps):
             v, e = pdg_format(mp.value, mp.error)
             mem = ""
             mep = ""
+
+        name_style = ""
+        limit_lower_style = ""
+        limit_upper_style = ""
+
+        # Check Hesse error against limits
+        if mp.error is not None:
+            if mp.lower_limit is not None and (mp.value - mp.error) < mp.lower_limit:
+                name_style = warn_style
+                limit_lower_style = warn_style
+            if mp.upper_limit is not None and (mp.value + mp.error) > mp.upper_limit:
+                name_style = warn_style
+                limit_upper_style = warn_style
+        
+        if me:  # me is mp.merror, which should have .lower and .upper attributes
+            # Check if Minos lower error goes below the parameter's lower limit
+            if mp.lower_limit is not None and hasattr(me, 'lower') and \
+               (mp.value + me.lower) < mp.lower_limit:
+                name_style = warn_style
+                limit_lower_style = warn_style
+            
+            # Check if Minos upper error goes above the parameter's upper limit
+            if mp.upper_limit is not None and hasattr(me, 'upper') and \
+               (mp.value + me.upper) > mp.upper_limit:
+                name_style = warn_style
+                limit_upper_style = warn_style
+
         rows.append(
             tr(
                 th(str(i)),
-                td(_parse_latex(mp.name)),
+                td(_parse_latex(mp.name), style=name_style),
                 td(v),
-                td(e),
-                td(mem),
-                td(mep),
-                td("%.3G" % mp.lower_limit if mp.lower_limit is not None else ""),
-                td("%.3G" % mp.upper_limit if mp.upper_limit is not None else ""),
+                td(e),  # Hesse error - no style from limits
+                td(mem),  # Minos Error- - no style from limits
+                td(mep),  # Minos Error+ - no style from limits
+                td("%.3G" % mp.lower_limit if mp.lower_limit is not None else "", style=limit_lower_style),
+                td("%.3G" % mp.upper_limit if mp.upper_limit is not None else "", style=limit_upper_style),
                 td("yes" if mp.is_fixed else ("CONST" if mp.is_const else "")),
             )
         )
