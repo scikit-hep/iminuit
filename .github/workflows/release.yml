@@ -65,9 +65,9 @@ jobs:
       - if: ${{ matrix.arch == 'aarch64' }}
         uses: docker/setup-qemu-action@v3
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v6
 
-      - uses: pypa/cibuildwheel@v2.22
+      - uses: pypa/cibuildwheel@v2.23
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
           CIBW_ARCHS: ${{ matrix.arch }}
@@ -120,7 +120,7 @@ jobs:
           path: dist
 
       - name: Generate artifact attestation for sdist and wheels
-        uses: actions/attest-build-provenance@ef244123eb79f2f7a7e75d99086184180e6d0018 # v1.4.4
+        uses: actions/attest-build-provenance@db473fddc028af60658334401dc6fa3ffd8669fd # v2.3.0
         with:
           subject-path: "dist/iminuit-*"
 
