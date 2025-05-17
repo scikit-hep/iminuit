@@ -61,7 +61,8 @@ def tag(name, *args, **kwargs):
     head = "<" + name
     for k in sorted(kwargs):
         v = kwargs[k]
-        head += f' {k}="{v}"'
+        if v is not None:
+            head += f' {k}="{v}"'
     head += ">"
     tail = "</%s>" % name
     if len(args) == 0:
@@ -176,9 +177,9 @@ def params(mps):
             mem = ""
             mep = ""
 
-        name_style = ""
-        limit_lower_style = ""
-        limit_upper_style = ""
+        name_style = None
+        limit_lower_style = None
+        limit_upper_style = None
 
         # Check Hesse error against limits
         if mp.error is not None:
@@ -191,20 +192,12 @@ def params(mps):
 
         if me:  # me is mp.merror, which should have .lower and .upper attributes
             # Check if Minos lower error goes below the parameter's lower limit
-            if (
-                mp.lower_limit is not None
-                and hasattr(me, "lower")
-                and (mp.value + me.lower) < mp.lower_limit
-            ):
+            if mp.lower_limit is not None and (mp.value + me.lower) < mp.lower_limit:
                 name_style = warn_style
                 limit_lower_style = warn_style
 
             # Check if Minos upper error goes above the parameter's upper limit
-            if (
-                mp.upper_limit is not None
-                and hasattr(me, "upper")
-                and (mp.value + me.upper) > mp.upper_limit
-            ):
+            if mp.upper_limit is not None and (mp.value + me.upper) > mp.upper_limit:
                 name_style = warn_style
                 limit_upper_style = warn_style
 
