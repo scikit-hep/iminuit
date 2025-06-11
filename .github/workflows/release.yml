@@ -67,7 +67,7 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
 
-      - uses: pypa/cibuildwheel@v2.23
+      - uses: pypa/cibuildwheel@v3.0
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
           CIBW_ARCHS: ${{ matrix.arch }}
