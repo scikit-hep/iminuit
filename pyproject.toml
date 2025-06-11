@@ -134,15 +134,7 @@ UV_ONLY_BINARY = ":all:"
 PIP_ONLY_BINARY = ":all:"
 
 [[tool.cibuildwheel.overrides]]
-# to match numpy, we use manylinux2010 for cp39
-select = "cp39-manylinux*"
-manylinux-x86_64-image = "manylinux2010"
-manylinux-i686-image = "manylinux2010"
-build-frontend = "build"
-
-[[tool.cibuildwheel.overrides]]
-# to match numpy, we use manylinux2014 for cp310
-select = "cp310-manylinux*"
+# to match numpy, we use manylinux2014 for cp310 (and 3.9, since manylinux2010 is dead)
+select = "cp3{9,10}-manylinux*"
 manylinux-x86_64-image = "manylinux2014"
-manylinux-i686-image = "manylinux2014"
 build-frontend = "build"
