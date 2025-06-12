@@ -46,35 +46,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-        arch: [auto, aarch64]
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14, ubuntu-24.04-arm, windows-11-arm]
         py: [cp39, cp310, cp311, cp312, cp313]
         exclude:
-          - os: windows-latest
-            arch: aarch64
-          - os: macos-13
-            arch: aarch64
-          - os: macos-14
-            arch: aarch64
+          - os: ubuntu-24.04-arm
+            py: cp39
+          - os: windows-11-arm
+            py: cp39
+          - os: windows-11-arm
+            py: cp310
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - if: ${{ matrix.arch == 'aarch64' }}
-        uses: docker/setup-qemu-action@v3
-
       - uses: astral-sh/setup-uv@v6
 
-      - uses: pypa/cibuildwheel@v2.23
+      - uses: pypa/cibuildwheel@v3.0
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
-          CIBW_ARCHS: ${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: wheel-${{ matrix.py }}-${{ matrix.os }}-${{ matrix.arch }}
+          name: wheel-${{ matrix.py }}-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   sdist:
