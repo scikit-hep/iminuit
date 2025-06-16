@@ -1315,6 +1315,7 @@ class Minuit:
                 if hessp:
                     matrix = [hessp(r.x, ei) for ei in np.eye(self.nfit)]
                 else:
+                    assert hess is not None
                     matrix = hess(r.x)
                 needs_invert = True
 
