@@ -80,8 +80,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      # without this, the Qt tests abort because a lib is missing
-      - uses: tlambert03/setup-qt-libs@v1
 
       - uses: actions/setup-python@v5
         with:
@@ -89,8 +87,8 @@ jobs:
 
       - run: pipx run build --sdist
 
-      - run: python -m pip install --upgrade pip setuptools
-      - run: python -m pip install -v $(echo dist/iminuit-*)[test]
+      - run: python -m pip install --upgrade pip setuptools pytest
+      - run: python -m pip install -v $(echo dist/iminuit-*)
       - run: python -m pytest
 
       - uses: actions/upload-artifact@v4
