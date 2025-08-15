@@ -32,8 +32,8 @@ jobs:
           - os: ubuntu-latest
             python-version: "pypy-3.9"
           - os: ubuntu-latest
-            python-version: "3.13"
-            installs: "'numpy>=2' scipy matplotlib"
+            python-version: "3.14"
+            installs: "'numpy>=2' scipy~=1.15.0 matplotlib"
       fail-fast: false
     steps:
     - uses: actions/checkout@v4
