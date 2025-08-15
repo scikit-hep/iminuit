@@ -64,10 +64,13 @@ def mvnorm(mux, muy, sx, sy):
         def rvs(size=None, random_state=None):
             if random_state is None:
                 random_state = np.random.default_rng()
-            return np.transpose([
-                stats.norm(mux, sx).rvs(size=size, random_state=random_state),          
-                stats.norm(muy, sy).rvs(size=size, random_state=random_state),          
-            ])
+            return np.transpose(
+                [
+                    stats.norm(mux, sx).rvs(size=size, random_state=random_state),
+                    stats.norm(muy, sy).rvs(size=size, random_state=random_state),
+                ]
+            )
+
     return mvnorm
 
 
