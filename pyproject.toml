@@ -48,7 +48,6 @@ test = [
     "joblib",
     "jacobi",
     "matplotlib",
-    "numpy",
     "numba; platform_python_implementation=='CPython'",
     "numba-stats; platform_python_implementation=='CPython'",
     "pytest",
@@ -62,6 +61,7 @@ test = [
     "unicodeitplus",
     "pydantic",
     "annotated_types",
+    "nox"
 ]
 doc = [
     "sphinx-rtd-theme", # installs correct sphinx as well
