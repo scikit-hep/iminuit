@@ -44,24 +44,26 @@ test = [
     "ipywidgets",
     # needed by ipywidgets >= 8.0.6
     "ipykernel",
-    # "PySide6",
+    "PySide6",
     "joblib",
     "jacobi",
     "matplotlib",
-    "numpy",
-    # "numba; platform_python_implementation=='CPython'",
-    # "numba-stats; platform_python_implementation=='CPython'",
+    "numba; platform_python_implementation=='CPython'",
+    "numba-stats; platform_python_implementation=='CPython'",
     "pytest",
     "pytest-xdist",
     "pytest-xvfb",
     "pytest-qt",
-    # "scipy",
+    # scipy 1.16.1 breaks iminuit tests, needs investigation
+    # Potentially related: https://github.com/scipy/scipy/issues/23413
+    "scipy~=1.15.0",
     "tabulate",
-    # "boost_histogram",
+    "boost_histogram",
     "resample",
     "unicodeitplus",
     "pydantic",
     "annotated_types",
+    "nox"
 ]
 doc = [
     "sphinx-rtd-theme", # installs correct sphinx as well
