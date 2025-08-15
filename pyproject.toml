@@ -54,10 +54,7 @@ test = [
     "pytest-xdist",
     "pytest-xvfb",
     "pytest-qt",
-    # scipy 1.16.x breaks iminuit tests, root cause is scipy.stats.multivariate_normal
-    # Issue: https://github.com/scipy/scipy/issues/23469
-    # Potentially related: https://github.com/scipy/scipy/issues/23413
-    "scipy~=1.15.0",
+    "scipy",
     "tabulate",
     "boost_histogram",
     "resample",
