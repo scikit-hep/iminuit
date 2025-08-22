@@ -70,7 +70,7 @@ def pypy(session: nox.Session) -> None:
 @nox.session(venv_backend="uv", reuse_venv=True)
 def cov(session: nox.Session) -> None:
     """Run covage and place in 'htmlcov' directory."""
-    session.install("--only-binary=numpy", "-e.[test,doc]")
+    session.install("--only-binary=:all:", "-e.[test,doc]")
     session.run("coverage", "run", "-m", "pytest", env=ENV)
     session.run("coverage", "html", "-d", "build/htmlcov")
     session.run("coverage", "report", "-m")
@@ -80,7 +80,7 @@ def cov(session: nox.Session) -> None:
 @nox.session(python="3.11", reuse_venv=True)
 def doc(session: nox.Session) -> None:
     """Build html documentation."""
-    session.install("--only-binary=numpy", "-e.[test,doc]")
+    session.install("--only-binary=:all:", "-e.[test,doc]")
 
     # link check
     session.run(

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core>=0.11", "pybind11 @ git+https://github.com/henryiii/pybind11@henryiii/fix/limitwarning"]
+requires = ["scikit-build-core>=0.11", "pybind11>=3.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
