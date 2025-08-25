@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
+requires = ["scikit-build-core>=0.11", "pybind11>=3.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -125,7 +125,6 @@ build-frontend = "build[uv]"
 skip = ["cp39-musllinux_i686"]                    # no numpy wheel
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
-test-skip = ["*universal2:arm64"]
 enable = ["cpython-freethreading"]
 
 [tool.cibuildwheel.environment]
@@ -137,4 +136,4 @@ PIP_ONLY_BINARY = ":all:"
 # to match numpy, we use manylinux2014 for cp310 (and 3.9, since manylinux2010 is dead)
 select = "cp3{9,10}-manylinux*"
 manylinux-x86_64-image = "manylinux2014"
-build-frontend = "build"
+manylinux-i686-image = "manylinux2014"
