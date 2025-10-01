@@ -33,14 +33,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: true
     - uses: hendrikmuhs/ccache-action@v1.2
       with:
         create-symlink: true
     - uses: rui314/setup-mold@v1
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.12"
     # without this, the Qt tests abort because a lib is missing

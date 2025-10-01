@@ -20,7 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: true
         fetch-depth: 0  # needed to get correct ROOT version
@@ -28,14 +28,14 @@ jobs:
     - uses: hendrikmuhs/ccache-action@v1.2
       with:
         create-symlink: true
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.11"
     - run: sudo apt-get install pandoc
     - uses: astral-sh/setup-uv@v6
     - run: uv pip install --system nox
     - run: nox -s doc
-    - uses: actions/upload-pages-artifact@v3
+    - uses: actions/upload-pages-artifact@v4
       with:
         path: './build/html'
 
