@@ -5,7 +5,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "iminuit"
 description = "Jupyter-friendly Python frontend for MINUIT2 in C++"
-version = "2.31.2"
+version = "2.31.3"
 maintainers = [{ name = "Hans Dembinski", email = "hans.dembinski@gmail.com" }]
 readme = "README.rst"
 requires-python = ">=3.9"
@@ -40,21 +40,21 @@ documentation = "https://scikit-hep.org/iminuit"
 test = [
     "coverage",
     "ipywidgets",
-    "ipykernel",
-    "PySide6",
+    "ipykernel; platform_python_implementation=='CPython'",
+    "PySide6; platform_python_implementation=='CPython'",
     "joblib",
     "jacobi",
-    "matplotlib",
+    "matplotlib; platform_python_implementation=='CPython'",
     "numba; platform_python_implementation=='CPython'",
     "numba-stats; platform_python_implementation=='CPython'",
     "pytest",
     "pytest-xdist",
     "pytest-xvfb",
-    "pytest-qt",
-    "scipy",
+    "pytest-qt; platform_python_implementation=='CPython'",
+    "scipy; platform_python_implementation=='CPython'",
     "tabulate",
     "boost_histogram",
-    "resample",
+    "resample; platform_python_implementation=='CPython'",
     "unicodeitplus",
     "pydantic",
     "annotated_types",

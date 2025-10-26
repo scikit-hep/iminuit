@@ -24,33 +24,33 @@ jobs:
         include:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
-            python-version: "3.11"
+            python-version: "3.12"
             installs: "numpy>=2"
           - os: macos-14
             python-version: "3.9"
             installs: "numpy==1.21.0 scipy matplotlib"
           - os: ubuntu-latest
-            python-version: "pypy-3.9"
+            python-version: "pypy-3.11"
           - os: ubuntu-latest
-            python-version: "3.13"
+            python-version: "3.14"
             installs: "'numpy>=2' scipy matplotlib"
       fail-fast: false
     steps:
-    - uses: actions/checkout@v5
-      with:
-        submodules: true
-    # must come after checkout
-    - uses: hendrikmuhs/ccache-action@v1.2
-      with:
-        key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
-    - uses: rui314/setup-mold@v1
-      if: runner.os == 'Linux'
-    - uses: astral-sh/setup-uv@v6
-    - uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    # pip install .[test] is not used here to test minimum (faster)
-    # cov workflow runs all tests
-    - run: uv pip install --system . pytest pytest-xdist ${{ matrix.installs }}
-    - run: pytest -n 3
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+      # must come after checkout
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
+      - uses: rui314/setup-mold@v1
+        if: runner.os == 'Linux'
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      # pip install .[test] is not used here to test minimum (faster)
+      # cov workflow runs all tests
+      - run: uv pip install --system . pytest pytest-xdist ${{ matrix.installs }}
+      - run: pytest -n 3
