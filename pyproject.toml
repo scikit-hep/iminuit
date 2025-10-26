@@ -76,8 +76,14 @@ doc = [
 minimum-version = "build-system.requires"
 build-dir = "build/{wheel_tag}"
 sdist.exclude = ["extern/root"]
-sdist.include = ["extern/root/math/minuit2/inc", "extern/root/math/minuit2/src"]
-build.tool-args = ["/v:detailed"]
+sdist.include = [
+    "extern/root/math/minuit2/inc",
+    "extern/root/math/minuit2/src",
+    "extern/root/core/foundation/inc",
+    "extern/root/core/base/inc",
+    "extern/root/math/mathcore/inc"
+]
+# build.tool-args = ["/v:detailed"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
