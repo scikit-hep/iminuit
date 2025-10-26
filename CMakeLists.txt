@@ -64,8 +64,8 @@ set(SOURCES_B
     extern/root/math/minuit2/src/ScanBuilder.cxx
     extern/root/math/minuit2/src/VariableMetricBuilder.cxx
     extern/root/math/minuit2/src/VariableMetricEDMEstimator.cxx
-    extern/root/math/minuit2/src/mntplot.cxx
-    extern/root/math/minuit2/src/mnbins.cxx)
+    extern/root/math/minuit2/src/mnbins.cxx
+    extern/root/math/minuit2/src/mntplot.cxx)
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 
 target_include_directories(
