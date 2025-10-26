@@ -25,8 +25,8 @@ file(GLOB SOURCES_B "extern/root/math/minuit2/src/*.cxx")
 
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 
-target_include_directories(_core PRIVATE extern/root/math/minuit2/inc)
-target_include_directories(_core PRIVATE extern/root/core/foundation/inc)
+target_include_directories(_core PRIVATE extern/root/core/foundation/inc
+                                         extern/root/math/minuit2/inc)
 target_compile_definitions(_core PUBLIC PYBIND11_DETAILED_ERROR_MESSAGES=1)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 if(ipo_supported)
