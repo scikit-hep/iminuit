@@ -5,6 +5,12 @@
 Changelog
 =========
 
+2.31.2 (October 26, 2025)
+-------------------------
+- Add python 3.14 wheels (`#1099 <https://github.com/scikit-hep/iminuit/pull/1099>`_)
+- Add free-threading wheels (missing!) (`#1100 <https://github.com/scikit-hep/iminuit/pull/1100>`_)
+- Fixing test suite after regression of scipy.stats.multivariate_normal in scipy-1.16.0 (`#1102 <https://github.com/scikit-hep/iminuit/pull/1102>`_)
+
 2.31.1 (April 05, 2025)
 -----------------------
 - Improve minos cl docstring (`#1085 <https://github.com/scikit-hep/iminuit/pull/1085>`_)
