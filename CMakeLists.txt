@@ -13,7 +13,7 @@ include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported OUTPUT error)
 
 set(CMAKE_CXX_STANDARD
-    14
+    17
     CACHE STRING "C++ version selection") # or 11, 14, 17, 20
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # optional, ensure standard is supported
 set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
@@ -21,6 +21,7 @@ set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
 file(GLOB SOURCES_A "src/*.cpp")
+# Keep in sync with tool.scikit-build.sdist.include in pyproject.toml
 set(SOURCES_B
     extern/root/math/mathcore/src/Util.cxx
     extern/root/math/minuit2/src/AnalyticalGradientCalculator.cxx
@@ -68,9 +69,11 @@ set(SOURCES_B
     extern/root/math/minuit2/src/mntplot.cxx)
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 
+# Keep in sync with tool.scikit-build.sdist.include in pyproject.toml
 target_include_directories(
   _core PRIVATE src extern/root/math/minuit2/inc extern/root/math/mathcore/inc
                 extern/root/core/foundation/inc)
+
 target_compile_definitions(_core PUBLIC PYBIND11_DETAILED_ERROR_MESSAGES=1)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 if(ipo_supported)
@@ -79,7 +82,7 @@ endif()
 
 # Add compiler-specific extra warnings
 if(MSVC)
-  target_compile_options(_core PRIVATE /std:c++17 /Y-)
+  target_compile_options(_core PRIVATE /Y-)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # lots of warnings from gcc, including odr violations
   target_compile_options(
