@@ -469,3 +469,20 @@ def test_text_minuit():
     assert str(m) == str(m.fmin) + "\n" + str(m.params) + "\n" + str(
         m.merrors
     ) + "\n" + str(m.covariance)
+
+
+def test_issue_1111():
+    from iminuit.cost import LeastSquares
+
+    def line(x, α, β):
+        return α + x * β
+
+    least_squares = LeastSquares([1], [2], 1, line)
+
+    m = Minuit(least_squares, α=0, β=0)
+
+    m.migrad()
+    m.minos()
+
+    m.limits = [(0, None), (0, 10)]
+    assert m.params._repr_html_() == ref("params_with_limits_and_merrors.txt")

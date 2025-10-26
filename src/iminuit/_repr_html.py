@@ -190,14 +190,15 @@ def params(mps):
                 name_style = warn_style
                 limit_upper_style = warn_style
 
-        if me:  # me is mp.merror, which should have .lower and .upper attributes
+        if me:  # me is a tuple
+            me_lower, me_upper = me
             # Check if Minos lower error goes below the parameter's lower limit
-            if mp.lower_limit is not None and (mp.value + me.lower) < mp.lower_limit:
+            if mp.lower_limit is not None and (mp.value + me_lower) < mp.lower_limit:
                 name_style = warn_style
                 limit_lower_style = warn_style
 
             # Check if Minos upper error goes above the parameter's upper limit
-            if mp.upper_limit is not None and (mp.value + me.upper) > mp.upper_limit:
+            if mp.upper_limit is not None and (mp.value + me_upper) > mp.upper_limit:
                 name_style = warn_style
                 limit_upper_style = warn_style
 
