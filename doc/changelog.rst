@@ -5,6 +5,10 @@
 Changelog
 =========
 
+2.31.3 (October 26, 2025)
+-------------------------
+- Fix bug in _repr_html_ when both minos and limits are used (`#1112 <https://github.com/scikit-hep/iminuit/pull/1112>`_)
+
 2.31.2 (October 26, 2025)
 -------------------------
 - Add python 3.14 wheels (`#1099 <https://github.com/scikit-hep/iminuit/pull/1099>`_)
