@@ -39,10 +39,7 @@ documentation = "https://scikit-hep.org/iminuit"
 [project.optional-dependencies]
 test = [
     "coverage",
-    # ipywidgets 8.0.5 and 8.0.6 are broken
-    # see https://github.com/jupyter-widgets/ipywidgets/issues/3731
     "ipywidgets",
-    # needed by ipywidgets >= 8.0.6
     "ipykernel",
     "PySide6",
     "joblib",
