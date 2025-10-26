@@ -21,13 +21,56 @@ set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
 file(GLOB SOURCES_A "src/*.cpp")
-file(GLOB SOURCES_B "extern/root/math/minuit2/src/*.cxx")
-
+set(SOURCES_B
+    extern/root/math/mathcore/src/Util.cxx
+    extern/root/math/minuit2/src/AnalyticalGradientCalculator.cxx
+    extern/root/math/minuit2/src/BFGSErrorUpdator.cxx
+    extern/root/math/minuit2/src/DavidonErrorUpdator.cxx
+    extern/root/math/minuit2/src/HessianGradientCalculator.cxx
+    extern/root/math/minuit2/src/ExternalInternalGradientCalculator.cxx
+    extern/root/math/minuit2/src/InitialGradientCalculator.cxx
+    extern/root/math/minuit2/src/MPIProcess.cxx
+    extern/root/math/minuit2/src/MinimumBuilder.cxx
+    extern/root/math/minuit2/src/MnApplication.cxx
+    extern/root/math/minuit2/src/MnContours.cxx
+    extern/root/math/minuit2/src/MnCovarianceSqueeze.cxx
+    extern/root/math/minuit2/src/MnFcn.cxx
+    extern/root/math/minuit2/src/MnFunctionCross.cxx
+    extern/root/math/minuit2/src/MnGlobalCorrelationCoeff.cxx
+    extern/root/math/minuit2/src/MnHesse.cxx
+    extern/root/math/minuit2/src/MnLineSearch.cxx
+    extern/root/math/minuit2/src/MnMachinePrecision.cxx
+    extern/root/math/minuit2/src/MnMatrix.cxx
+    extern/root/math/minuit2/src/MnMinos.cxx
+    extern/root/math/minuit2/src/MnParabolaFactory.cxx
+    extern/root/math/minuit2/src/MnParameterScan.cxx
+    extern/root/math/minuit2/src/MnParameterTransformation.cxx
+    extern/root/math/minuit2/src/MnPlot.cxx
+    extern/root/math/minuit2/src/MnPosDef.cxx
+    extern/root/math/minuit2/src/MnPrint.cxx
+    extern/root/math/minuit2/src/MnSeedGenerator.cxx
+    extern/root/math/minuit2/src/MnStrategy.cxx
+    extern/root/math/minuit2/src/MnScan.cxx
+    extern/root/math/minuit2/src/MnTraceObject.cxx
+    extern/root/math/minuit2/src/MnUserParameterState.cxx
+    extern/root/math/minuit2/src/MnUserParameters.cxx
+    extern/root/math/minuit2/src/MnUserTransformation.cxx
+    extern/root/math/minuit2/src/ModularFunctionMinimizer.cxx
+    extern/root/math/minuit2/src/NegativeG2LineSearch.cxx
+    extern/root/math/minuit2/src/Numerical2PGradientCalculator.cxx
+    extern/root/math/minuit2/src/SimplexSeedGenerator.cxx
+    extern/root/math/minuit2/src/SimplexBuilder.cxx
+    extern/root/math/minuit2/src/SimplexParameters.cxx
+    extern/root/math/minuit2/src/ScanBuilder.cxx
+    extern/root/math/minuit2/src/VariableMetricBuilder.cxx
+    extern/root/math/minuit2/src/VariableMetricEDMEstimator.cxx
+    extern/root/math/minuit2/src/mntplot.cxx
+    extern/root/math/minuit2/src/mnbins.cxx)
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 
 target_include_directories(
-  _core PRIVATE src extern/root/core/foundation/inc extern/root/core/base/inc
-                extern/root/math/mathcore/inc extern/root/math/minuit2/inc)
+  _core PRIVATE src extern/root/math/minuit2/inc extern/root/math/mathcore/inc
+                extern/root/core/foundation/inc)
 target_compile_definitions(_core PUBLIC PYBIND11_DETAILED_ERROR_MESSAGES=1)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 if(ipo_supported)

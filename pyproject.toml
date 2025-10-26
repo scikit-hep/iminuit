@@ -79,9 +79,9 @@ sdist.exclude = ["extern/root"]
 sdist.include = [
     "extern/root/math/minuit2/inc",
     "extern/root/math/minuit2/src",
+    "extern/root/math/mathcore/inc",
+    "extern/root/math/mathcore/src",
     "extern/root/core/foundation/inc",
-    "extern/root/core/base/inc",
-    "extern/root/math/mathcore/inc"
 ]
 # build.tool-args = ["/v:detailed"]
 

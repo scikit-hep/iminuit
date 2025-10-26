@@ -13,8 +13,8 @@ bool operator==(const MnUserParameterState& a, const MnUserParameterState& b) {
          a.IntParameters() == b.IntParameters() &&
          a.IntCovariance().Data() == b.IntCovariance().Data() &&
          a.CovarianceStatus() == b.CovarianceStatus() && a.IsValid() == b.IsValid() &&
-         a.HasCovariance() == b.HasCovariance() && a.HasGlobalCC() == b.HasGlobalCC() &&
-         a.Fval() == b.Fval() && a.Edm() == b.Edm() && a.NFcn() == b.NFcn();
+         a.HasCovariance() == b.HasCovariance() && a.Fval() == b.Fval() &&
+         a.Edm() == b.Edm() && a.NFcn() == b.NFcn();
 }
 
 } // namespace Minuit2
@@ -37,6 +37,10 @@ const MinuitParameter& getitem(const MnUserParameterState& self, int i) {
 auto iter(const MnUserParameterState& self) {
   return py::make_iterator(self.MinuitParameters().begin(),
                            self.MinuitParameters().end());
+}
+
+bool has_global_cc(const MnUserParameterState& self) {
+  return self.GlobalCC().IsValid();
 }
 
 py::object globalcc2py(const MnGlobalCorrelationCoeff& gcc) {
@@ -106,10 +110,10 @@ void bind_userparameterstate(py::module m) {
       .def(py::pickle(
           [](const MnUserParameterState& self) {
             return py::make_tuple(self.IsValid(), self.HasCovariance(),
-                                  self.HasGlobalCC(), self.CovarianceStatus(),
-                                  self.Fval(), self.Edm(), self.NFcn(), self.Trafo(),
-                                  self.Covariance(), globalcc2py(self.GlobalCC()),
-                                  self.IntParameters(), self.IntCovariance());
+                                  self.CovarianceStatus(), self.Fval(), self.Edm(),
+                                  self.NFcn(), self.Trafo(), self.Covariance(),
+                                  globalcc2py(self.GlobalCC()), self.IntParameters(),
+                                  self.IntCovariance());
           },
           [](py::tuple tp) {
             static_assert(std::is_standard_layout<MnUserParameterState>(), "");
