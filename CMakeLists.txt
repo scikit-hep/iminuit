@@ -35,7 +35,7 @@ endif()
 
 # Add compiler-specific extra warnings
 if(MSVC)
-  target_compile_options(_core PRIVATE /std:c++14 /Y-)
+  target_compile_options(_core PRIVATE /std:c++17 /Y-)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # lots of warnings from gcc, including odr violations
   target_compile_options(
