@@ -110,10 +110,10 @@ void bind_userparameterstate(py::module m) {
       .def(py::pickle(
           [](const MnUserParameterState& self) {
             return py::make_tuple(self.IsValid(), self.HasCovariance(),
-                                  self.CovarianceStatus(), self.Fval(), self.Edm(),
-                                  self.NFcn(), self.Trafo(), self.Covariance(),
-                                  globalcc2py(self.GlobalCC()), self.IntParameters(),
-                                  self.IntCovariance());
+                                  has_global_cc(self), self.CovarianceStatus(),
+                                  self.Fval(), self.Edm(), self.NFcn(), self.Trafo(),
+                                  self.Covariance(), globalcc2py(self.GlobalCC()),
+                                  self.IntParameters(), self.IntCovariance());
           },
           [](py::tuple tp) {
             static_assert(std::is_standard_layout<MnUserParameterState>(), "");
