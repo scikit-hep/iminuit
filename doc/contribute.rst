@@ -55,6 +55,22 @@ Generate a coverage report:
     nox -s cov
     <your-web-browser> build/htmlcov/index.htm
 
+If you change something on the C++ side and want a fast and verbose develop/build cycle, you should do the following:
+
+- Install ``build``, ``pybind11``, ``scikit-build-core``
+
+.. code-block:: bash
+
+    python -m build --no-isolation
+
+If you need to debug the build, you can increase output by adding
+
+.. code-block:: toml
+
+    build.tool-args = ["/v:detailed"]
+
+to the ``[tool.scikit-build]`` section in ``pyproject.toml``.
+
 Build the docs:
 
 .. code-block:: bash

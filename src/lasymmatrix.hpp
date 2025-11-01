@@ -2,7 +2,7 @@
 #define IMINUIT_LASYMMATRIX
 
 #include "pybind11.hpp"
-#include <Minuit2/LASymMatrix.h>
+#include <Minuit2/MnMatrix.h>
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
