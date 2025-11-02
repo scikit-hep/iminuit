@@ -20,8 +20,8 @@ struct FCN : ROOT::Minuit2::FCNBase {
 
   double operator()(const std::vector<double>& x) const override;
   std::vector<double> Gradient(const std::vector<double>&) const override;
-  std::vector<double> G2(std::vector<double> const&) const;
-  std::vector<double> Hessian(std::vector<double> const&) const;
+  std::vector<double> G2(std::vector<double> const&) const override;
+  std::vector<double> Hessian(std::vector<double> const&) const override;
 
   double Up() const override;
 

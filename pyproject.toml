@@ -84,8 +84,9 @@ sdist.include = [
     "extern/root/math/mathcore/src/Util.cxx",
     "extern/root/core/foundation/inc",
 ]
-cmake.build-type = "DEBUG"
-build.verbose = true
+## Uncomment to debug C++
+# cmake.build-type = "DEBUG"
+# build.verbose = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
