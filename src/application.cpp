@@ -10,6 +10,7 @@ void bind_application(py::module m) {
 
       .def("__call__", &MnApplication::operator())
       .def_property_readonly("strategy", &MnApplication::Strategy)
-
-      ;
+      .def_property(
+          "precision", [](const MnApplication& self) { return self.Precision().Eps(); },
+          [](MnApplication& self, double eps) { self.State().SetPrecision(eps); });
 }

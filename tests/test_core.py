@@ -7,7 +7,6 @@ from iminuit._core import (
     MnScan,
     FunctionMinimum,
     MnSimplex,
-    MnPrint,
     MnUserCovariance,
     MinimumState,
 )
@@ -15,16 +14,6 @@ from pytest import approx
 import pytest
 import pickle
 import numpy as np
-
-
-@pytest.fixture
-def debug():
-    prev = MnPrint.global_level
-    MnPrint.global_level = 3
-    MnPrint.show_prefix_stack(True)
-    yield
-    MnPrint.global_level = prev
-    MnPrint.show_prefix_stack(False)
 
 
 def test_MnStrategy():
