@@ -110,21 +110,20 @@ void bind_userparameterstate(py::module m) {
       .def(py::pickle(
           [](const MnUserParameterState& self) {
             return py::make_tuple(self.IsValid(), self.HasCovariance(),
-                                  has_global_cc(self), self.CovarianceStatus(),
-                                  self.Fval(), self.Edm(), self.NFcn(), self.Trafo(),
-                                  self.Covariance(), globalcc2py(self.GlobalCC()),
-                                  self.IntParameters(), self.IntCovariance());
+                                  self.CovarianceStatus(), self.Fval(), self.Edm(),
+                                  self.NFcn(), self.Trafo(), self.Covariance(),
+                                  globalcc2py(self.GlobalCC()), self.IntParameters(),
+                                  self.IntCovariance());
           },
           [](py::tuple tp) {
             static_assert(std::is_standard_layout<MnUserParameterState>(), "");
             static_assert(std::is_standard_layout<MnUserParameters>(), "");
 
-            if (tp.size() != 12) throw std::runtime_error("invalid state");
+            if (tp.size() != 11) throw std::runtime_error("invalid state");
 
             struct Layout {
               bool fValid;
               bool fCovarianceValid;
-              bool fGCCValid;
               int fCovStatus; // covariance matrix status
               double fFVal;
               double fEDM;
@@ -132,7 +131,6 @@ void bind_userparameterstate(py::module m) {
 
               MnUserParameters fParameters;
               MnUserCovariance fCovariance;
-              MnGlobalCorrelationCoeff fGlobalCC;
 
               std::vector<double> fIntParameters;
               MnUserCovariance fIntCovariance;
@@ -145,7 +143,6 @@ void bind_userparameterstate(py::module m) {
 
             d->fValid = tp[0].cast<bool>();
             d->fCovarianceValid = tp[1].cast<bool>();
-            d->fGCCValid = tp[2].cast<bool>();
             d->fCovStatus = tp[3].cast<int>();
             d->fFVal = tp[4].cast<double>();
             d->fEDM = tp[5].cast<double>();

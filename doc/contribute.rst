@@ -19,9 +19,6 @@ Direct contributions related to these items are welcome, too! If you want to con
 Development setup
 -----------------
 
-git
-+++
-
 To hack on ``iminuit``, start by cloning the repository from `Github`_:
 
 .. code-block:: bash
@@ -40,7 +37,7 @@ Now you are in a feature branch, commit your edits here.
 Development workflow
 --------------------
 
-You have the source code now, but you also want to build and test. We recommend to use ``nox``, which automatically creates a dedicated virtual environment for ``iminuit``, separate from the Python installation you use for other projects.
+You have the source code now, next you want to build and test. We recommend to use ``nox``, which automatically creates a dedicated virtual environment for ``iminuit``, separate from the Python installation you use for other projects.
 
 .. code-block:: bash
 
@@ -55,32 +52,55 @@ Generate a coverage report:
     nox -s cov
     <your-web-browser> build/htmlcov/index.htm
 
-If you change something on the C++ side and want a fast and verbose develop/build cycle, you should do the following:
+If you change something on the C++ side, then ``nox`` is not ideal. In this case you should install the build dependencies ``build``, ``pybind11``, ``scikit-build-core``.
 
-- Install ``build``, ``pybind11``, ``scikit-build-core``
+Then you can run
 
 .. code-block:: bash
 
     python -m build --no-isolation
 
+Note, however, that this only builds the package and does not install it.
+
 If you need to debug the build, you can increase output by adding
 
 .. code-block:: toml
 
-    build.tool-args = ["/v:detailed"]
+    [tool.scikit-build]
+    build.verbose = true
 
-to the ``[tool.scikit-build]`` section in ``pyproject.toml``.
+in ``pyproject.toml``. To debug crashes or other issues in the C++ code, you need to compile the wheel with debugging symbols. Add this to the ``pyproject.toml``
 
-Build the docs:
+.. code-block:: toml
+
+    [tool.scikit-build]
+    cmake.build-type = "DEBUG"
+
+compile again and install a debugger. On Linux and MacOS, you can use the GNU debugger
+
+.. code-block:: bash
+
+    gdb --args python -m pytest
+
+Build the documentation
+-----------------------
+
+The documentation is automatically build by the CI/CD pipeline, but if there are issues, you need to build the documentation locally to debug them. You can do that with ``nox``.
 
 .. code-block:: bash
 
    nox -s doc
    <your-web-browser> build/html/index.html
 
+Making a release
+----------------
+
 Maintainers that prepare a release, should follow the instructions in `doc/README.md`
 
-To check your ``iminuit`` version number and install location:
+Misc
+----
+
+Check your ``iminuit`` version number and install location:
 
 .. code-block:: bash
 
