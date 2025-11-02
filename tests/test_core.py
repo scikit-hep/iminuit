@@ -110,44 +110,14 @@ def test_MnMigrad_grad():
 
 
 def test_MnMigrad_g2():
-    fcn = FCN(lambda x: 10 + x**2, lambda x: [2 * x], lambda x: [2], None, False, 1)
-    state = MnUserParameterState()
-    state.add("x", 5, 0.1)
-    migrad = MnMigrad(fcn, state, 1)
-    fmin = migrad(0, 0.1)
-    state = fmin.state
-    assert len(state) == 1
-    assert state[0].number == 0
-    assert state[0].name == "x"
-    assert state[0].value == approx(0, abs=1e-3)
-    assert state[0].error == approx(1, abs=1e-3)
-    assert fcn._nfcn > 0
-    assert fcn._ngrad > 0
-    assert fcn._ng2 > 0
-
-
-def test_MnMigrad_hessian():
-    fcn = FCN(lambda x: 10 + x**2, lambda x: [2 * x], None, lambda x: [2], False, 1)
-    state = MnUserParameterState()
-    state.add("x", 5, 0.1)
-    migrad = MnMigrad(fcn, state, 1)
-    fmin = migrad(0, 0.1)
-    state = fmin.state
-    assert len(state) == 1
-    assert state[0].number == 0
-    assert state[0].name == "x"
-    assert state[0].value == approx(0, abs=1e-3)
-    assert state[0].error == approx(1, abs=1e-3)
-    assert fcn._nfcn > 0
-    assert fcn._ngrad > 0
-    assert fcn._ng2 == 0
-    assert fcn._nhessian > 0
-
-
-def test_MnMigrad_g2_hessian():
-    # if both g2 and hessian are available, hessian is used
+    # g2 is diagonal of hessian(chi2) / 4
     fcn = FCN(
-        lambda x: 10 + x**2, lambda x: [2 * x], lambda x: [2], lambda x: [2], False, 1
+        lambda x: 10 + (x / 4) ** 2,
+        lambda x: [x / 2],
+        lambda x: [0.125],
+        None,
+        False,
+        1,
     )
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
@@ -158,7 +128,62 @@ def test_MnMigrad_g2_hessian():
     assert state[0].number == 0
     assert state[0].name == "x"
     assert state[0].value == approx(0, abs=1e-3)
-    assert state[0].error == approx(1, abs=1e-3)
+    assert state[0].error == approx(4, abs=1e-3)
+    assert fcn._nfcn > 0
+    assert fcn._ngrad > 0
+    assert fcn._ng2 > 0
+
+
+def test_MnMigrad_hessian():
+    fcn = FCN(
+        lambda x: 10 + (x / 4) ** 2,
+        lambda x: [x / 2],
+        None,
+        lambda x: [0.125],
+        False,
+        1,
+    )
+    state = MnUserParameterState()
+    state.add("x", 5, 0.1)
+    migrad = MnMigrad(fcn, state, 1)
+    fmin = migrad(0, 0.1)
+    state = fmin.state
+    assert len(state) == 1
+    assert state[0].number == 0
+    assert state[0].name == "x"
+    assert state[0].value == approx(0, abs=1e-3)
+    assert state[0].error == approx(4, abs=1e-3)
+    assert fcn._nfcn > 0
+    assert fcn._ngrad > 0
+    assert fcn._ng2 == 0
+    assert fcn._nhessian > 0
+
+
+def test_MnMigrad_g2_hessian():
+    # if both g2 and hessian are available, hessian is used
+    fcn = FCN(
+        lambda x, y: 10 + (2 * x) ** 2 + ((y - 1) / 4) ** 2,
+        lambda x, y: [4 * x, (y - 1) / 2],
+        lambda x, y: [-1, -1],  # not used if hessian is passed as well
+        lambda x, y: [8.0, 0.0, 0.125],
+        False,
+        1,
+    )
+    state = MnUserParameterState()
+    state.add("x", 5, 0.1)
+    state.add("y", 5, 0.1)
+    migrad = MnMigrad(fcn, state, 1)
+    fmin = migrad(0, 0.1)
+    state = fmin.state
+    assert len(state) == 2
+    assert state[0].number == 0
+    assert state[0].name == "x"
+    assert state[0].value == approx(0, abs=1e-2)
+    assert state[0].error == approx(0.5, abs=1e-2)
+    assert state[1].number == 1
+    assert state[1].name == "y"
+    assert state[1].value == approx(1, abs=1e-2)
+    assert state[1].error == approx(4, abs=1e-2)
     assert fcn._nfcn > 0
     assert fcn._ngrad > 0
     assert fcn._ng2 == 0
