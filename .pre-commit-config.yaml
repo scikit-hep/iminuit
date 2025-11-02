@@ -88,4 +88,14 @@ repos:
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
     rev: 2025.10.25
     hooks:
-    - id: validate-pyproject
+      - id: validate-pyproject
+
+  # Make sure that the ROOT version in the docs corresponds to the
+  # actual version used in the repository
+  - repo: local
+    hooks:
+      - id: check-root-version
+        language: python
+        name: check-root-version
+        files: "doc/conf.py"
+        entry: python doc/check_root_version.py
