@@ -13,8 +13,8 @@ bool operator==(const MnUserParameterState& a, const MnUserParameterState& b) {
          a.IntParameters() == b.IntParameters() &&
          a.IntCovariance().Data() == b.IntCovariance().Data() &&
          a.CovarianceStatus() == b.CovarianceStatus() && a.IsValid() == b.IsValid() &&
-         a.HasCovariance() == b.HasCovariance() && a.HasGlobalCC() == b.HasGlobalCC() &&
-         a.Fval() == b.Fval() && a.Edm() == b.Edm() && a.NFcn() == b.NFcn();
+         a.HasCovariance() == b.HasCovariance() && a.Fval() == b.Fval() &&
+         a.Edm() == b.Edm() && a.NFcn() == b.NFcn();
 }
 
 } // namespace Minuit2
@@ -106,21 +106,20 @@ void bind_userparameterstate(py::module m) {
       .def(py::pickle(
           [](const MnUserParameterState& self) {
             return py::make_tuple(self.IsValid(), self.HasCovariance(),
-                                  self.HasGlobalCC(), self.CovarianceStatus(),
-                                  self.Fval(), self.Edm(), self.NFcn(), self.Trafo(),
-                                  self.Covariance(), globalcc2py(self.GlobalCC()),
+                                  self.CovarianceStatus(), self.Fval(), self.Edm(),
+                                  self.NFcn(), self.Trafo(), self.Covariance(),
                                   self.IntParameters(), self.IntCovariance());
           },
           [](py::tuple tp) {
             static_assert(std::is_standard_layout<MnUserParameterState>(), "");
             static_assert(std::is_standard_layout<MnUserParameters>(), "");
 
-            if (tp.size() != 12) throw std::runtime_error("invalid state");
+            if (tp.size() != 10)
+              throw std::runtime_error("MnUserParameterState invalid state");
 
             struct Layout {
               bool fValid;
               bool fCovarianceValid;
-              bool fGCCValid;
               int fCovStatus; // covariance matrix status
               double fFVal;
               double fEDM;
@@ -128,7 +127,6 @@ void bind_userparameterstate(py::module m) {
 
               MnUserParameters fParameters;
               MnUserCovariance fCovariance;
-              MnGlobalCorrelationCoeff fGlobalCC;
 
               std::vector<double> fIntParameters;
               MnUserCovariance fIntCovariance;
@@ -141,17 +139,15 @@ void bind_userparameterstate(py::module m) {
 
             d->fValid = tp[0].cast<bool>();
             d->fCovarianceValid = tp[1].cast<bool>();
-            d->fGCCValid = tp[2].cast<bool>();
-            d->fCovStatus = tp[3].cast<int>();
-            d->fFVal = tp[4].cast<double>();
-            d->fEDM = tp[5].cast<double>();
-            d->fNFcn = tp[6].cast<unsigned>();
+            d->fCovStatus = tp[2].cast<int>();
+            d->fFVal = tp[3].cast<double>();
+            d->fEDM = tp[4].cast<double>();
+            d->fNFcn = tp[5].cast<unsigned>();
             reinterpret_cast<MnUserTransformation&>(d->fParameters) =
-                tp[7].cast<MnUserTransformation>();
-            d->fCovariance = tp[8].cast<MnUserCovariance>();
-            d->fGlobalCC = py2globalcc(tp[9]);
-            d->fIntParameters = tp[10].cast<std::vector<double>>();
-            d->fIntCovariance = tp[11].cast<MnUserCovariance>();
+                tp[6].cast<MnUserTransformation>();
+            d->fCovariance = tp[7].cast<MnUserCovariance>();
+            d->fIntParameters = tp[8].cast<std::vector<double>>();
+            d->fIntCovariance = tp[9].cast<MnUserCovariance>();
 
             return st;
           }))

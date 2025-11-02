@@ -2,7 +2,7 @@
 #define IMINUIT_LAVECTOR
 
 #include "pybind11.hpp"
-#include <Minuit2/LAVector.h>
+#include <Minuit2/MnMatrix.h>
 
 namespace py = pybind11;
 using namespace ROOT::Minuit2;

@@ -7,7 +7,6 @@ from iminuit._core import (
     MnScan,
     FunctionMinimum,
     MnSimplex,
-    MnPrint,
     MnUserCovariance,
     MinimumState,
 )
@@ -15,16 +14,6 @@ from pytest import approx
 import pytest
 import pickle
 import numpy as np
-
-
-@pytest.fixture
-def debug():
-    prev = MnPrint.global_level
-    MnPrint.global_level = 3
-    MnPrint.show_prefix_stack(True)
-    yield
-    MnPrint.global_level = prev
-    MnPrint.show_prefix_stack(False)
 
 
 def test_MnStrategy():
@@ -88,7 +77,7 @@ def test_MnUserParameterState():
 
 
 def test_MnMigrad():
-    fcn = FCN(fn, None, False, 1)
+    fcn = FCN(fn, None, None, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     state.add("y", 3, 0.2, -5, 5)
@@ -105,7 +94,7 @@ def test_MnMigrad():
 
 
 def test_MnMigrad_grad():
-    fcn = FCN(lambda x: 10 + x**2, lambda x: [2 * x], False, 1)
+    fcn = FCN(lambda x: 10 + x**2, lambda x: [2 * x], None, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     migrad = MnMigrad(fcn, state, 1)
@@ -135,7 +124,8 @@ def test_MnMigrad_cfunc():
             r += (y[i] - x[i]) ** 2
         return r
 
-    fcn = FCN(fcn, None, True, 1)
+    fcn = FCN(fcn, None, None, None, True, 1)
+    assert fcn._cfcn is True
     state = MnUserParameterState()
     for i in range(len(y)):
         state.add(f"x{i}", 5, 0.1)
@@ -153,6 +143,8 @@ def test_MnMigrad_np():
     fcn = FCN(
         lambda xy: 10 + xy[0] ** 2 + ((xy[1] - 1) / 2) ** 2,
         lambda xy: [2 * xy[0], (xy[1] - 1)],
+        None,
+        None,
         True,
         1,
     )
@@ -178,7 +170,7 @@ def test_MnMigrad_np():
 
 
 def test_MnScan():
-    fcn = FCN(lambda x: 10 + x**2, None, False, 1)
+    fcn = FCN(lambda x: 10 + x**2, None, None, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 2, 5)
     scan = MnScan(fcn, state, 1)
@@ -190,7 +182,7 @@ def test_MnScan():
 
 
 def test_MnSimplex():
-    fcn = FCN(lambda x: 10 + x**2, None, False, 1)
+    fcn = FCN(lambda x: 10 + x**2, None, None, None, False, 1)
     state = MnUserParameterState()
     state.add("x", 2, 5)
     simplex = MnSimplex(fcn, state, 1)
@@ -202,7 +194,7 @@ def test_MnSimplex():
 
 
 def test_FunctionMinimum():
-    fcn = FCN(lambda x: 10 + x**2, None, False, 1)
+    fcn = FCN(lambda x: 10 + x**2, None, None, None, False, 1)
     st = MnUserParameterState()
     st.add("x", 0.01, 5)
     str = MnStrategy(1)
@@ -218,7 +210,7 @@ def test_FunctionMinimum_pickle():
     st = MnUserParameterState()
     st.add("x", 1, 0.1)
     st.add("y", 2, 0.1, 1, 3)
-    fm = FunctionMinimum(FCN(fn, None, False, 1), st, 1, 0.1)
+    fm = FunctionMinimum(FCN(fn, None, None, None, False, 1), st, 1, 0.1)
 
     pkl = pickle.dumps(fm)
     fm2 = pickle.loads(pkl)

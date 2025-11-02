@@ -60,7 +60,8 @@ void bind_usertransformation(py::module m) {
                                   d->fExtOfInt, self.InitialParValues());
           },
           [](py::tuple tp) {
-            if (tp.size() != 4) throw std::runtime_error("invalid state");
+            if (tp.size() != 4)
+              throw std::runtime_error("MnUserTransformation invalid state");
 
             MnUserTransformation tr;
             tr.SetPrecision(tp[0].cast<double>());

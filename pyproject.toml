@@ -76,7 +76,17 @@ doc = [
 minimum-version = "build-system.requires"
 build-dir = "build/{wheel_tag}"
 sdist.exclude = ["extern/root"]
-sdist.include = ["extern/root/math/minuit2/inc", "extern/root/math/minuit2/src"]
+sdist.include = [
+    "extern/root/math/minuit2/inc",
+    "extern/root/math/minuit2/src",
+    "extern/root/math/mathcore/inc/Math/Util.h",
+    "extern/root/math/mathcore/inc/Math/Types.h",
+    "extern/root/math/mathcore/src/Util.cxx",
+    "extern/root/core/foundation/inc",
+]
+## Uncomment to debug C++
+# cmake.build-type = "DEBUG"
+# build.verbose = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"

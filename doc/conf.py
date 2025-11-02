@@ -4,11 +4,12 @@ import os
 from iminuit import __version__ as version
 
 # We set the root_version manually, because it setting it
-# automatically and efficiently in CI is difficult.
-# To update the number:
-# - Make sure you have a full clone, not a shallow clone of ROOT.
-# - Run `doc/root_version.py` and copy the string here.
-root_version = "v6-25-02-9213-g754d22635f"
+# in CI requires a full checkout of the ROOT repository, and
+# that's expensive. The root_version is kept manually in sync
+# via the local pre-commit hook check-root-version, which will
+# fail if this version number does not correspond to the actual
+# version.
+root_version = "v6-37-01-8658-g56be091a18"
 
 
 with open("../README.rst") as f:

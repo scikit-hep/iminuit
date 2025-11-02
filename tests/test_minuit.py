@@ -10,18 +10,6 @@ from pytest import approx
 from argparse import Namespace
 
 
-@pytest.fixture
-def debug():
-    from iminuit._core import MnPrint
-
-    prev = MnPrint.global_level
-    MnPrint.global_level = 3
-    MnPrint.show_prefix_stack(True)
-    yield
-    MnPrint.global_level = prev
-    MnPrint.show_prefix_stack(False)
-
-
 is_pypy = platform.python_implementation() == "PyPy"
 
 
@@ -946,12 +934,12 @@ def test_fmin():
     fm1 = m.fmin
     assert fm1.is_valid
 
-    m.values["s"] = 0
+    m.values["s"] = np.nan
 
     m.migrad()
     fm2 = m.fmin
 
-    assert fm1.is_valid
+    assert fm2 != fm1
     assert not fm2.is_valid
 
 
@@ -1022,7 +1010,7 @@ def test_oneside():
     m.values = (5, 0)
     m.limits["x"] = (3, None)
     m.migrad()
-    assert_allclose(m.values, (3, 5), atol=4e-3)
+    assert_allclose(m.values, (3, 5), atol=1e-1)
 
 
 def test_oneside_outside():

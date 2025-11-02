@@ -22,7 +22,7 @@ py::tuple fmin_getstate(const FunctionMinimum& self) {
 FunctionMinimum fmin_setstate(py::tuple tp) {
   static_assert(std::is_standard_layout<FunctionMinimum>(), "");
 
-  if (tp.size() != 6) throw std::runtime_error("invalid state");
+  if (tp.size() != 6) throw std::runtime_error("FunctionMinimum invalid state");
 
   struct Layout {
     MinimumSeed fSeed;
