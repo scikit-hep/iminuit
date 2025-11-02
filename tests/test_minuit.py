@@ -927,14 +927,14 @@ def test_values(minuit):
         minuit.values[:] = [2]
 
 
-def test_fmin(debug):
+def test_fmin():
     m = Minuit(lambda x, s: (x * s) ** 2, x=1, s=1)
     m.fixed["s"] = True
     m.migrad()
     fm1 = m.fmin
     assert fm1.is_valid
 
-    m.values["s"] = 0
+    m.values["s"] = np.nan
 
     m.migrad()
     fm2 = m.fmin
