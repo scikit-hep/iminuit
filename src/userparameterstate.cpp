@@ -39,10 +39,6 @@ auto iter(const MnUserParameterState& self) {
                            self.MinuitParameters().end());
 }
 
-bool has_global_cc(const MnUserParameterState& self) {
-  return self.GlobalCC().IsValid();
-}
-
 py::object globalcc2py(const MnGlobalCorrelationCoeff& gcc) {
   if (gcc.IsValid()) return py::cast(gcc.GlobalCC());
   return py::cast(nullptr);
@@ -112,8 +108,7 @@ void bind_userparameterstate(py::module m) {
             return py::make_tuple(self.IsValid(), self.HasCovariance(),
                                   self.CovarianceStatus(), self.Fval(), self.Edm(),
                                   self.NFcn(), self.Trafo(), self.Covariance(),
-                                  globalcc2py(self.GlobalCC()), self.IntParameters(),
-                                  self.IntCovariance());
+                                  self.IntParameters(), self.IntCovariance());
           },
           [](py::tuple tp) {
             static_assert(std::is_standard_layout<MnUserParameterState>(), "");
@@ -150,9 +145,8 @@ void bind_userparameterstate(py::module m) {
             reinterpret_cast<MnUserTransformation&>(d->fParameters) =
                 tp[7].cast<MnUserTransformation>();
             d->fCovariance = tp[8].cast<MnUserCovariance>();
-            d->fGlobalCC = py2globalcc(tp[9]);
-            d->fIntParameters = tp[10].cast<std::vector<double>>();
-            d->fIntCovariance = tp[11].cast<MnUserCovariance>();
+            d->fIntParameters = tp[9].cast<std::vector<double>>();
+            d->fIntCovariance = tp[10].cast<MnUserCovariance>();
 
             return st;
           }))
