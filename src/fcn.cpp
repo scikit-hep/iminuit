@@ -134,6 +134,7 @@ void bind_fcn(py::module m) {
       .def_readwrite("_throw_nan", &FCN::throw_nan_)
       .def_property("_errordef", &FCN::Up, &set_errordef)
       .def_readonly("_array_call", &FCN::array_call_)
+      .def_property_readonly("_cfcn", [](const FCN& self) { return bool(self.cfcn_); })
       .def_readonly("_fcn", &FCN::fcn_)
       .def_readonly("_grad", &FCN::grad_)
       .def_readonly("_g2", &FCN::g2_)

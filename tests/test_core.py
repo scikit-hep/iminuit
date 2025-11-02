@@ -136,6 +136,7 @@ def test_MnMigrad_cfunc():
         return r
 
     fcn = FCN(fcn, None, None, None, True, 1)
+    assert fcn._cfcn is True
     state = MnUserParameterState()
     for i in range(len(y)):
         state.add(f"x{i}", 5, 0.1)

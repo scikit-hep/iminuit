@@ -114,7 +114,7 @@ void bind_userparameterstate(py::module m) {
             static_assert(std::is_standard_layout<MnUserParameterState>(), "");
             static_assert(std::is_standard_layout<MnUserParameters>(), "");
 
-            if (tp.size() != 11) throw std::runtime_error("invalid state");
+            if (tp.size() != 10) throw std::runtime_error("invalid state");
 
             struct Layout {
               bool fValid;
@@ -138,15 +138,15 @@ void bind_userparameterstate(py::module m) {
 
             d->fValid = tp[0].cast<bool>();
             d->fCovarianceValid = tp[1].cast<bool>();
-            d->fCovStatus = tp[3].cast<int>();
-            d->fFVal = tp[4].cast<double>();
-            d->fEDM = tp[5].cast<double>();
-            d->fNFcn = tp[6].cast<unsigned>();
+            d->fCovStatus = tp[2].cast<int>();
+            d->fFVal = tp[3].cast<double>();
+            d->fEDM = tp[4].cast<double>();
+            d->fNFcn = tp[5].cast<unsigned>();
             reinterpret_cast<MnUserTransformation&>(d->fParameters) =
-                tp[7].cast<MnUserTransformation>();
-            d->fCovariance = tp[8].cast<MnUserCovariance>();
-            d->fIntParameters = tp[9].cast<std::vector<double>>();
-            d->fIntCovariance = tp[10].cast<MnUserCovariance>();
+                tp[6].cast<MnUserTransformation>();
+            d->fCovariance = tp[7].cast<MnUserCovariance>();
+            d->fIntParameters = tp[8].cast<std::vector<double>>();
+            d->fIntCovariance = tp[9].cast<MnUserCovariance>();
 
             return st;
           }))
