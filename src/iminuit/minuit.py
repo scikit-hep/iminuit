@@ -676,6 +676,8 @@ class Minuit:
         self._fcn = FCN(
             fcn,
             grad,
+            None,
+            None,
             array_call,
             getattr(fcn, "errordef", 1.0),
         )

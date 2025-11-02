@@ -114,7 +114,8 @@ void bind_userparameterstate(py::module m) {
             static_assert(std::is_standard_layout<MnUserParameterState>(), "");
             static_assert(std::is_standard_layout<MnUserParameters>(), "");
 
-            if (tp.size() != 10) throw std::runtime_error("invalid state");
+            if (tp.size() != 10)
+              throw std::runtime_error("MnUserParameterState invalid state");
 
             struct Layout {
               bool fValid;

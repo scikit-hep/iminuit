@@ -149,7 +149,7 @@ void bind_fcn(py::module m) {
                                   self.nfcn_, self.ngrad_, self.ng2_, self.nhessian_);
           },
           [](py::tuple tp) {
-            if (tp.size() != 7) throw std::runtime_error("invalid state");
+            if (tp.size() != 11) throw std::runtime_error("FCN invalid state");
             FCN fcn{
                 tp[0], tp[1], tp[2], tp[3], tp[4].cast<bool>(), tp[5].cast<double>()};
             fcn.throw_nan_ = tp[6].cast<bool>();

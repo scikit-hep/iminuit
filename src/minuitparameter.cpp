@@ -48,7 +48,8 @@ void bind_minuitparameter(py::module m) {
           [](py::tuple tp) {
             static_assert(std::is_standard_layout<MinuitParameter>(), "");
 
-            if (tp.size() != 10) throw std::runtime_error("invalid state");
+            if (tp.size() != 10)
+              throw std::runtime_error("MinuitParameter invalid state");
 
             MinuitParameter p{tp[0].cast<unsigned>(), tp[1].cast<std::string>(),
                               tp[2].cast<double>(), tp[3].cast<double>()};
