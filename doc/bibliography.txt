@@ -25,5 +25,5 @@
 .. _MINUIT paper: https://doi.org/10.1016/0010-4655(75)90039-9
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 .. _pytest: http://pytest.org
-.. _zenodo: https://zenodo.org/record/4310361
+.. _Zenodo: https://zenodo.org/records/3949207
 .. _RooFit: https://root.cern/manual/roofit/

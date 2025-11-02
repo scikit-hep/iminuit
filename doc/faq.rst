@@ -28,7 +28,7 @@ The MINUIT2 user's guide explains all about it, see pages 6-8 and 38-40.
 I want to cite iminuit in my paper. Help?
 ------------------------------------------------
 
-We use Zenodo to make each iminuit release citable. You can either cite iminuit as a software or you can cite the exact version that was used for your analysis. For more details, see :ref:`citation`.
+We use Zenodo to make each iminuit release citable. You can either cite iminuit as a software or you can cite the exact version that was used for your analysis. For more details, see `Zenodo`_.
 
 Can I have parameter limits that depend on each other (e.g. x^2 + y^2 < 3)?
 ---------------------------------------------------------------------------
