@@ -55,7 +55,7 @@ if __name__ == "__main__":
     try:
         root_version = get_root_version()
     except (RuntimeError, subp.CalledProcessError):
-        print("Warning: cannot check root version with shallow checkout")
+        print("Warning: cannot check ROOT version with shallow checkout")
         sys.exit(0)
     conf_root_version = get_root_version_from_conf()
 
