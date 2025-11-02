@@ -44,31 +44,39 @@ double FCN::operator()(const std::vector<double>& x) const {
 
 std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
   ++ngrad_;
+  const unsigned npar = x.size();
   if (array_call_) {
     py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
-    return check_vector(py::cast<std::vector<double>>(grad_(a)), x);
+    return check_vector(py::cast<std::vector<double>>(grad_(a)), x, "Gradient", npar);
   }
-  return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))), x);
+  return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))), x, "Gradient",
+                      npar);
 }
 
 std::vector<double> FCN::G2(const std::vector<double>& x) const {
   ++ng2_;
+  const unsigned npar = x.size();
   if (array_call_) {
     py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
-    return check_vector(py::cast<std::vector<double>>(g2_(a)), x);
+    return check_vector(py::cast<std::vector<double>>(g2_(a)), x, "G2", npar);
   }
-  return check_vector(py::cast<std::vector<double>>(g2_(*py::cast(x))), x);
+  return check_vector(py::cast<std::vector<double>>(g2_(*py::cast(x))), x, "G2", npar);
 }
 
 std::vector<double> FCN::Hessian(const std::vector<double>& x) const {
   ++nhessian_;
+  const unsigned npar = x.size();
+  // Symmetric hessian is stored in compressed format
+  const unsigned npar_hessian = npar * (npar + 1) / 2;
   if (array_call_) {
     py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
     // TODO convert properly from a 2d numpy array on python side
-    return check_vector(py::cast<std::vector<double>>(hessian_(a)), x);
+    return check_vector(py::cast<std::vector<double>>(hessian_(a)), x, "Hessian",
+                        npar_hessian);
   }
   // TODO convert properly from a 2d numpy array on python side
-  return check_vector(py::cast<std::vector<double>>(hessian_(*py::cast(x))), x);
+  return check_vector(py::cast<std::vector<double>>(hessian_(*py::cast(x))), x,
+                      "Hessian", npar_hessian);
 }
 
 double FCN::Up() const { return errordef_; }
@@ -80,7 +88,7 @@ void set_errordef(FCN& self, double value) {
     throw std::invalid_argument("errordef must be a positive number");
 }
 
-std::string error_message(const std::vector<double>& x) {
+std::string result_contains_nan_message(const std::vector<double>& x) {
   std::ostringstream msg;
   msg << "result is NaN for [ ";
   for (auto&& xi : x) msg << xi << " ";
@@ -88,26 +96,40 @@ std::string error_message(const std::vector<double>& x) {
   return msg.str();
 }
 
+std::string result_has_wrong_size_message(const std::vector<double>& x, unsigned size) {
+  std::ostringstream msg;
+  msg << "result has size " << x.size() << " but expected size is " << size;
+  return msg.str();
+}
+
 double FCN::check_value(double r, const std::vector<double>& x) const {
   if (std::isnan(r)) {
     if (throw_nan_)
-      throw std::runtime_error(error_message(x));
+      throw std::runtime_error(result_contains_nan_message(x));
     else {
-      MnPrint("FCN").Warn([&](std::ostream& os) { os << error_message(x); });
+      MnPrint("FCN").Warn(
+          [&](std::ostream& os) { os << result_contains_nan_message(x); });
     }
   }
   return r;
 }
 
 std::vector<double> FCN::check_vector(std::vector<double> r,
-                                      const std::vector<double>& x) const {
+                                      const std::vector<double>& x, const char* label,
+                                      unsigned size) const {
+  if (r.size() != size)
+    throw std::runtime_error(result_has_wrong_size_message(r, size));
   bool has_nan = false;
   for (auto&& ri : r) has_nan |= std::isnan(ri);
   if (has_nan) {
     if (throw_nan_)
-      throw std::runtime_error(error_message(x));
+      throw std::runtime_error(result_contains_nan_message(x));
     else {
-      MnPrint("FCN::Gradient").Warn([&](std::ostream& os) { os << error_message(x); });
+      std::string msg("FCN::");
+      msg += label;
+      MnPrint(msg.c_str()).Warn([&](std::ostream& os) {
+        os << result_contains_nan_message(x);
+      });
     }
   }
   return r;
