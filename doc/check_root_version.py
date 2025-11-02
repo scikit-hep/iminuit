@@ -18,8 +18,8 @@ def get_root_version() -> str:
         parts = item.split()
         if PurePath(parts[1]) != PurePath("extern") / "root":
             continue
-
-        assert len(parts) == 3, "module is not checked out"
+        if len(parts) == 3:
+            raise RuntimeError("module is not checked out")
         break
 
     # git submodule status does not yield the right state
@@ -52,8 +52,12 @@ def get_root_version_from_conf() -> str:
 
 
 if __name__ == "__main__":
+    try:
+        root_version = get_root_version()
+    except ValueError:
+        print("Warning: cannot check root version with shallow checkout")
+        sys.exit(0)
     conf_root_version = get_root_version_from_conf()
-    root_version = get_root_version()
 
     if conf_root_version != root_version:
         print(
