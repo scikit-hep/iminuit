@@ -110,11 +110,11 @@ def test_MnMigrad_grad():
 
 
 def test_MnMigrad_g2():
-    # g2 is diagonal of hessian(chi2) / 4
+    # g2 is diagonal of hessian(chi2)
     fcn = FCN(
         lambda x: 10 + (x / 4) ** 2,
-        lambda x: [x / 2],
-        lambda x: [0.125],
+        lambda x: [x / 8],
+        lambda x: [1 / 8],
         None,
         False,
         1,
@@ -137,9 +137,9 @@ def test_MnMigrad_g2():
 def test_MnMigrad_hessian():
     fcn = FCN(
         lambda x: 10 + (x / 4) ** 2,
-        lambda x: [x / 2],
+        lambda x: [x / 8],
         None,
-        lambda x: [0.125],
+        lambda x: [1 / 8],
         False,
         1,
     )
@@ -163,12 +163,15 @@ def test_MnMigrad_g2_hessian():
     # if both g2 and hessian are available, hessian is used
     fcn = FCN(
         lambda x, y: 10 + (2 * x) ** 2 + ((y - 1) / 4) ** 2,
-        lambda x, y: [4 * x, (y - 1) / 2],
-        lambda x, y: [-1, -1],  # not used if hessian is passed as well
-        lambda x, y: [8.0, 0.0, 0.125],
+        lambda x, y: [8 * x, (y - 1) / 8],
+        lambda x, y: [-1, -1],  # not used
+        lambda x, y: [8, 0, 1 / 8],
         False,
         1,
     )
+    # cov = inv(hessian / 2) = [[1/4, 0], [0, 16]]
+    # err[0] = cov[0, 0]**0.5 = 0.5
+    # err[1] = cov[1, 1]**0.5 = 4
     state = MnUserParameterState()
     state.add("x", 5, 0.1)
     state.add("y", 5, 0.1)
