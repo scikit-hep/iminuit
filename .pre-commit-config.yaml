@@ -95,6 +95,8 @@ repos:
   - repo: local
     hooks:
       - id: check-root-version
+        always_run: true
+        verbose: true
         language: python
         name: check-root-version
         files: "doc/conf.py"

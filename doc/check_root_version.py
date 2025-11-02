@@ -18,7 +18,7 @@ def get_root_version() -> str:
         parts = item.split()
         if PurePath(parts[1]) != PurePath("extern") / "root":
             continue
-        if len(parts) == 3:
+        if len(parts) != 3:
             raise RuntimeError("module is not checked out")
         break
 
