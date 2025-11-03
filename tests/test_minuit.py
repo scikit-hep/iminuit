@@ -1695,7 +1695,9 @@ def test_bad_grad():
     def cost(a, b):
         return a**2 + b**2
 
-    with pytest.raises(ValueError, match="provided gradient is not a CostGradient"):
+    with pytest.raises(
+        ValueError, match="provided gradient function is not a CostVector"
+    ):
         Minuit(cost, 0, 0, grad="foo")
 
 
