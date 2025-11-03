@@ -86,7 +86,7 @@ repos:
       - id: check-github-workflows
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2025.10.25
+    rev: 2025.11.02
     hooks:
       - id: validate-pyproject
 
