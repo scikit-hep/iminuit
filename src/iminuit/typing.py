@@ -17,7 +17,6 @@ from numpy.typing import NDArray
 import numpy as np
 import dataclasses
 
-
 # Key for ValueView, ErrorView, etc.
 Key = Union[int, str, slice, List[Union[int, str]]]
 
@@ -50,12 +49,16 @@ class Cost(Protocol):
 
 
 @runtime_checkable
-class CostGradient(Protocol):
-    """Type for user-defined gradient of a cost function."""
+class CostVector(Protocol):
+    """Type for user-defined gradient, G2, Hessian of a cost function."""
 
     def __call__(self, *args: float) -> np.ndarray:
-        """Evaluate gradient and return results as an array."""
+        """Evaluate gradient, G2, or Hessian and return results as an array."""
         ...  # pragma: no cover
+
+
+# for backward compatibility
+CostGradient = CostVector
 
 
 @runtime_checkable

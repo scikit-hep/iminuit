@@ -9,10 +9,10 @@ import inspect
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
-from iminuit.typing import Key, UserBound, Cost, CostGradient
+from iminuit.typing import Key, UserBound, Cost, CostVector
 from iminuit.warnings import IMinuitWarning, HesseFailedWarning, PerformanceWarning
 import numpy as np
-from numpy.typing import NDArray, ArrayLike
+from numpy.typing import NDArray, ArrayLike, DTypeLike
 from typing import (
     overload,
     Any,
@@ -407,7 +407,19 @@ class SymMatrix(np.ndarray):
     the Hessian to iminuit.
     """
 
-    def __new__(cls, size_or_iterable, dtype=float):
+    def __new__(
+        cls: NDArray,
+        size_or_iterable: Union[int, Iterable],
+        dtype: DTypeLike = float,
+    ):
+        """Create new SymMatrix.
+
+        Parameters
+        ----------
+        cls: This class.
+        size_or_iterable: Either number of columns for the matrix or an iterable in compressed form that represents the matrix.
+        dtype: Data type of the values stored in the matrix.
+        """
         if isinstance(size_or_iterable, int):
             size = size_or_iterable
             buffer = None
@@ -427,6 +439,7 @@ class SymMatrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
+        """Propagate special field of the SymMatrix."""
         if obj is None:
             return
         self._symmatrix_size = getattr(obj, "_symmatrix_size", None)
@@ -444,16 +457,19 @@ class SymMatrix(np.ndarray):
         return j + i * (i + 1) // 2
 
     def __getitem__(self, key):
+        """Get value at index (i, j)."""
         if isinstance(key, tuple) and len(key) == 2:
             key = self._index(self._symmatrix_size, *key)
         return super().__getitem__(key)
 
     def __setitem__(self, key, value):
+        """Set value at index (i, j)."""
         if isinstance(key, tuple) and len(key) == 2:
             key = self._index(self._symmatrix_size, *key)
         super().__setitem__(key, value)
 
     def to_dense(self) -> np.ndarray:
+        """Return compressed matrix in standard dense form."""
         n = self._symmatrix_size
         M = np.zeros((n, n), dtype=self.dtype)
         for i in range(n):
@@ -462,6 +478,7 @@ class SymMatrix(np.ndarray):
         return M
 
     def __str__(self) -> str:
+        """Return string showing matrix in standard dense form."""
         return str(self.to_dense())
 
     # ndarray uses __reduce__ for pickling instead of __getstate__
@@ -1709,7 +1726,7 @@ def _detect_log_spacing(x: NDArray) -> bool:
     return log_rel_std < lin_rel_std
 
 
-def gradient(fcn: Cost) -> Optional[CostGradient]:
+def gradient(fcn: Cost) -> Optional[CostVector]:
     """
     Return a callable which computes the gradient of fcn or None.
 
@@ -1731,10 +1748,64 @@ def gradient(fcn: Cost) -> Optional[CostGradient]:
     callable or None
         The gradient function or None
     """
-    grad = getattr(fcn, "grad", None)
-    has_grad = getattr(fcn, "has_grad", True)
-    if grad and isinstance(grad, CostGradient) and has_grad:
-        return grad
+    return _cost_extra_impl(fcn, "grad")
+
+
+def g2(fcn: Cost) -> Optional[CostVector]:
+    """
+    Return a callable which computes the diagonal of the Hessian of fcn or None.
+
+    Parameters
+    ----------
+    fcn: Cost
+        Cost function which may provide a callable g2 function. How the g2
+        is detected is specified below in the Notes.
+
+    Notes
+    -----
+    This function checks whether the following attributes exist: `fcn.g2` and
+    `fcn.has_g2`. If `fcn.g2` exists and is a CostVector, it is returned unless
+    `fcn.has_g2` exists and is False. If no useable gradient is detected, None is
+    returned.
+
+    Returns
+    -------
+    callable or None
+        The gradient function or None
+    """
+    return _cost_extra_impl(fcn, "g2")
+
+
+def hessian(fcn: Cost) -> Optional[CostVector]:
+    """
+    Return a callable which computes the Hessian of fcn in compressed form or None.
+
+    Parameters
+    ----------
+    fcn: Cost
+        Cost function which may provide a callable Hessian function. How the Hessian
+        is detected is specified below in the Notes.
+
+    Notes
+    -----
+    This function checks whether the following attributes exist: `fcn.hessian` and
+    `fcn.has_hessian`. If `fcn.hessian` exists and is a CostGradient, it is returned unless
+    `fcn.has_grad` exists and is False. If no useable gradient is detected, None is
+    returned.
+
+    Returns
+    -------
+    callable or None
+        The gradient function or None
+    """
+    return _cost_extra_impl(fcn, "hessian")
+
+
+def _cost_extra_impl(fcn: Cost, kind: str) -> Optional[CostVector]:
+    aux = getattr(fcn, kind, None)
+    has_aux = getattr(fcn, f"has_{kind}", True)
+    if aux and isinstance(aux, CostVector) and has_aux:
+        return aux
     return None
 
 

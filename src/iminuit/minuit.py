@@ -33,7 +33,7 @@ from typing import (
     Set,
     Sized,
 )
-from iminuit.typing import UserBound, Cost, CostGradient
+from iminuit.typing import UserBound, Cost, CostVector
 from iminuit._optional_dependencies import optional_module_for
 from numpy.typing import ArrayLike
 
@@ -500,11 +500,23 @@ class Minuit:
         """Get total number of gradient calls."""
         return self._fcn._ngrad  # type:ignore
 
+    @property
+    def ng2(self) -> int:
+        """Get total number of G2 calls."""
+        return self._fcn._ng2  # type:ignore
+
+    @property
+    def nhessian(self) -> int:
+        """Get total number of Hessian calls."""
+        return self._fcn._nhessian  # type:ignore
+
     def __init__(
         self,
         fcn: Cost,
         *args: Union[float, ArrayLike],
-        grad: Union[CostGradient, bool, None] = None,
+        grad: Union[CostVector, bool, None] = None,
+        g2: Union[CostVector, bool, None] = None,
+        hessian: Union[CostVector, bool, None] = None,
         name: Collection[str] = None,
         **kwds: float,
     ):
@@ -533,6 +545,15 @@ class Minuit:
             override this detection. If grad=True is used, a ValueError is raised if no
             useable gradient is found. If grad=False, Minuit will internally compute the
             gradient numerically.
+        g2 : callable, bool, or None, optional
+            Analog to grad, but computes G2, the diagonal of the hessian matrix. If None
+            (default), Minuit will call the function :func:`iminuit.util.g2` on `fcn`.
+        hessian : callable, bool, or None, optional
+            Analog to grad, but computes the Hessian matrix. The Hessian matrix must be an
+            iterable in compressed form, we provide class:`iminuit.symmatrix.SymMatrix`
+            for convenience. Returning a numpy array is the most efficient way, but any
+            one-dimensional iterable works. If None (default), Minuit will call the
+            function :func:`iminuit.util.hessian` on `fcn`.
         name : sequence of str, optional
             If it is set, it overrides iminuit's function signature detection.
         **kwds :
@@ -670,14 +691,40 @@ class Minuit:
         elif grad is False:
             grad = None
 
-        if grad is not None and not isinstance(grad, CostGradient):
-            raise ValueError("provided gradient is not a CostGradient")
+        if grad is not None and not isinstance(grad, CostVector):
+            raise ValueError("provided gradient function is not a CostVector")
+
+        if g2 is None:
+            g2 = mutil.g2(fcn)
+        elif g2 is True:
+            g2 = mutil.g2(fcn)
+            if g2 is None:
+                raise ValueError("g2 enforced, but iminuit.util.g2 returned None")
+        elif g2 is False:
+            g2 = None
+
+        if g2 is not None and not isinstance(g2, CostVector):
+            raise ValueError("provided g2 function is not a CostVector")
+
+        if hessian is None:
+            hessian = mutil.hessian(fcn)
+        elif hessian is True:
+            hessian = mutil.hessian(fcn)
+            if hessian is None:
+                raise ValueError(
+                    "hessian enforced, but iminuit.util.hessian returned None"
+                )
+        elif hessian is False:
+            hessian = None
+
+        if hessian is not None and not isinstance(hessian, CostVector):
+            raise ValueError("provided hessian function is not a CostVector")
 
         self._fcn = FCN(
             fcn,
             grad,
-            None,
-            None,
+            g2,
+            hessian,
             array_call,
             getattr(fcn, "errordef", 1.0),
         )
