@@ -86,6 +86,7 @@ sdist.include = [
 ]
 ## Uncomment to debug C++
 # cmake.build-type = "DEBUG"
+## Uncomment to debug C++ build
 # build.verbose = true
 
 [tool.pytest.ini_options]
