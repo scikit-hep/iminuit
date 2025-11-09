@@ -59,6 +59,8 @@ __all__ = (
     "describe",
     "gradient",
     "is_positive_definite",
+    "is_jupyter",
+    "is_module_available",
 )
 
 
@@ -1871,6 +1873,7 @@ def is_positive_definite(m: ArrayLike) -> bool:
 
 
 def is_jupyter() -> bool:
+    """Return True if we are running in Jupyter."""
     try:
         from IPython import get_ipython
 
@@ -1879,6 +1882,17 @@ def is_jupyter() -> bool:
             return False
         return ip.has_trait("kernel")
     except (ModuleNotFoundError, ImportError):
+        return False
+
+
+def is_module_available(module: str) -> bool:
+    """Return True if a module is available."""
+    try:
+        import importlib
+
+        importlib.import_module(module)
+        return True
+    except ModuleNotFoundError:
         return False
 
 
