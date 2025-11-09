@@ -28,6 +28,7 @@ from typing import (
     Sequence,
     TypeVar,
     Annotated,
+    Self,
     get_args,
     get_origin,
 )
@@ -35,6 +36,7 @@ import abc
 from time import monotonic
 import warnings
 import sys
+from functools import reduce
 
 T = TypeVar("T")
 
@@ -159,20 +161,20 @@ def _ndim(obj: Any) -> int:
 class ValueView(BasicView):
     """Array-like view of parameter values."""
 
-    def _get(self, i: int) -> float:
-        return self._minuit._last_state[i].value  # type:ignore
+    def _get(self, idx: int) -> float:
+        return self._minuit._last_state[idx].value  # type:ignore
 
-    def _set(self, i: int, value: float) -> None:
-        self._minuit._last_state.set_value(i, value)
+    def _set(self, idx: int, value: float) -> None:
+        self._minuit._last_state.set_value(idx, value)
 
 
 class ErrorView(BasicView):
     """Array-like view of parameter errors."""
 
-    def _get(self, i: int) -> float:
-        return self._minuit._last_state[i].error  # type:ignore
+    def _get(self, idx: int) -> float:
+        return self._minuit._last_state[idx].error  # type:ignore
 
-    def _set(self, i: int, value: float) -> None:
+    def _set(self, idx: int, value: float) -> None:
         if value <= 0:
             warnings.warn(
                 "Assigned errors must be positive. "
@@ -180,20 +182,20 @@ class ErrorView(BasicView):
                 IMinuitWarning,
             )
             value = _guess_initial_step(value)
-        self._minuit._last_state.set_error(i, value)
+        self._minuit._last_state.set_error(idx, value)
 
 
 class FixedView(BasicView):
     """Array-like view of whether parameters are fixed."""
 
-    def _get(self, i: int) -> bool:
-        return self._minuit._last_state[i].is_fixed  # type:ignore
+    def _get(self, idx: int) -> bool:
+        return self._minuit._last_state[idx].is_fixed  # type:ignore
 
-    def _set(self, i: int, fix: bool) -> None:
-        if fix:
-            self._minuit._last_state.fix(i)
+    def _set(self, idx: int, value: bool) -> None:
+        if value:
+            self._minuit._last_state.fix(idx)
         else:
-            self._minuit._last_state.release(i)
+            self._minuit._last_state.release(idx)
 
     def __invert__(self) -> list:
         """Return list with inverted elements."""
@@ -207,36 +209,36 @@ class LimitView(BasicView):
         # Users should not call this __init__, instances are created by the library
         super(LimitView, self).__init__(minuit, 1)
 
-    def _get(self, i: int) -> Tuple[float, float]:
-        p = self._minuit._last_state[i]
+    def _get(self, idx: int) -> Tuple[float, float]:
+        p = self._minuit._last_state[idx]
         return (
             p.lower_limit if p.has_lower_limit else -np.inf,
             p.upper_limit if p.has_upper_limit else np.inf,
         )
 
-    def _set(self, i: int, arg: UserBound) -> None:
+    def _set(self, idx: int, value: UserBound) -> None:
         state = self._minuit._last_state
-        val = state[i].value
-        err = state[i].error
+        val = state[idx].value
+        err = state[idx].error
         # changing limits is a cheap operation, start from clean state
-        state.remove_limits(i)
-        low, high = _normalize_limit(arg)
+        state.remove_limits(idx)
+        low, high = _normalize_limit(value)
         if low != -np.inf and high != np.inf:  # both must be set
             if low == high:
-                state.fix(i)
+                state.fix(idx)
             else:
-                state.set_limits(i, low, high)
+                state.set_limits(idx, low, high)
         elif low != -np.inf:  # lower limit must be set
-            state.set_lower_limit(i, low)
+            state.set_lower_limit(idx, low)
         elif high != np.inf:  # lower limit must be set
-            state.set_upper_limit(i, high)
+            state.set_upper_limit(idx, high)
         # bug in Minuit2: must set parameter value and error again after changing limits
         if val < low:
             val = low
         elif val > high:
             val = high
-        state.set_value(i, val)
-        state.set_error(i, err)
+        state.set_value(idx, val)
+        state.set_error(idx, err)
 
 
 def _normalize_limit(lim: Optional[Iterable]) -> Tuple[float, float]:
@@ -294,7 +296,7 @@ class Matrix(np.ndarray):
             if isinstance(key, str):
                 return var2pos[key]
             if isinstance(key, slice):
-                return slice(trafo(key.start), trafo(key.stop), key.step)
+                return slice(trafo(key.start), trafo(key.stop), key.step)  # type:ignore
             if isinstance(key, tuple):
                 return tuple(trafo(k) for k in key)
             return key
@@ -308,8 +310,8 @@ class Matrix(np.ndarray):
         if isinstance(key, Iterable) and not isinstance(key, np.ndarray):
             # iterable returns square matrix
             index2 = [trafo(k) for k in key]  # type:ignore
-            t = super().__getitem__(index2).T
-            return np.ndarray.__getitem__(t, index2).T
+            t = super().__getitem__(index2).T  # type:ignore
+            return np.ndarray.__getitem__(t, index2).T  # type:ignore
         return super().__getitem__(key)
 
     def to_dict(self) -> Dict[Tuple[str, str], float]:
@@ -405,11 +407,23 @@ class SymMatrix(np.ndarray):
 
     Use this for convenience when you write a function that passes
     the Hessian to iminuit.
+
+    Notes
+    -----
+    This class is provided for convenience so that you do not need to remember
+    how the compressed format is defined, but if you need to know the implementation,
+    the linear index is computed as follows::
+
+        index = j + i * (i + 1) // 2
+
+    where i is the first index of the corresponding matrix and j the second.
     """
 
+    _symmatrix_size: int
+
     def __new__(
-        cls: NDArray,
-        size_or_iterable: Union[int, Iterable],
+        cls: type[SymMatrix],
+        arg: Union[int, ArrayLike, Dict[Tuple[int, int], int | float]],
         dtype: DTypeLike = float,
     ):
         """Create new SymMatrix.
@@ -417,24 +431,32 @@ class SymMatrix(np.ndarray):
         Parameters
         ----------
         cls: This class.
-        size_or_iterable: Either number of columns for the matrix or an iterable in compressed form that represents the matrix.
+        arg: Either number of columns for the matrix, an ArrayLike in compressed form that represents the matrix, or a dictionary from matrix indices to values.
         dtype: Data type of the values stored in the matrix.
         """
-        if isinstance(size_or_iterable, int):
-            size = size_or_iterable
+        if isinstance(arg, int):
+            size = arg
             buffer = None
-        else:
-            buffer = np.atleast_1d(size_or_iterable)
-            if np.ndim(buffer) != 1:
+        elif isinstance(arg, dict):
+            size = max(sum(arg, ())) + 1
+            buffer = np.zeros(size * (size + 1) // 2, dtype=dtype)
+            for (i, j), val in arg.items():
+                buffer[cls._index(size, i, j)] = val
+        elif isinstance(arg, Iterable):
+            buffer = np.asarray(arg, dtype=dtype)
+            if buffer.ndim != 1:
                 msg = "buffer must be 1D"
                 raise ValueError(msg)
             size = int((-1 + np.sqrt(1 + 8 * len(buffer))) / 2)
+        else:
+            msg = f"invalid argument {arg=}"
+            raise ValueError(msg)
         n = size * (size + 1) // 2
         if buffer is not None:
             if len(buffer) != n:
                 msg = f"buffer with length {len(buffer)} is not a symmetric matrix"
                 raise ValueError(msg)
-        obj = super().__new__(cls, shape=(n,), buffer=buffer, dtype=dtype)
+        obj = super().__new__(cls, shape=(n,), buffer=buffer, dtype=dtype)  # type:ignore
         obj._symmatrix_size = size
         return obj
 
@@ -912,10 +934,11 @@ class Params(tuple):
     def __getitem__(self, key):
         """Get item at key, which can be an index or a parameter name."""
         if isinstance(key, str):
+            key = len(self)
             for i, p in enumerate(self):
                 if p.name == key:
+                    key = i
                     break
-            key = i
         return super(Params, self).__getitem__(key)
 
     def __str__(self):
@@ -1047,10 +1070,11 @@ class MErrors(OrderedDict):
                 key += len(self)
             if key < 0 or key >= len(self):
                 raise IndexError("index out of range")
+            key = len(self)
             for i, k in enumerate(self):
                 if i == key:
+                    key = k
                     break
-            key = k
         return OrderedDict.__getitem__(self, key)
 
 
@@ -1095,7 +1119,7 @@ def propagate(
     if not np.all(dx >= 0):
         raise ValueError("diagonal elements of covariance matrix must be non-negative")
     y = fn(vx)
-    jac = np.atleast_2d(approx_fprime(vx, fn, dx))
+    jac = np.atleast_2d(approx_fprime(vx, fn, dx))  # type:ignore
     ycov = np.einsum("ij,kl,jl", jac, jac, vcov)
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
 
@@ -1226,7 +1250,7 @@ def describe(callable: Callable) -> List[str]: ...  # pragma: no cover
 
 @overload
 def describe(
-    callable: Callable, annotations: bool
+    callable: Callable, *, annotations: bool
 ) -> Dict[str, Optional[Tuple[float, float]]]: ...  # pragma: no cover
 
 
@@ -1392,6 +1416,7 @@ def _describe_impl_docstring(callable):
     start += len(token)
 
     nbrace = 1
+    ich = 0
     for ich, ch in enumerate(doc[start:]):
         if ch == "(":
             nbrace += 1
@@ -1723,7 +1748,7 @@ def _detect_log_spacing(x: NDArray) -> bool:
     d_log = np.diff(np.log(x))
     lin_rel_std = np.std(d_lin) / np.mean(d_lin)
     log_rel_std = np.std(d_log) / np.mean(d_log)
-    return log_rel_std < lin_rel_std
+    return bool(log_rel_std < lin_rel_std)
 
 
 def gradient(fcn: Cost) -> Optional[CostVector]:
@@ -1839,7 +1864,7 @@ def is_positive_definite(m: ArrayLike) -> bool:
 
 def is_jupyter() -> bool:
     try:
-        from IPython import get_ipython
+        from IPython.core import get_ipython
 
         ip = get_ipython()
         return ip.has_trait("kernel")

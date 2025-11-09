@@ -18,7 +18,7 @@ from iminuit._core import (
     MnUserParameterState,
     FunctionMinimum,
 )
-from iminuit.warnings import ErrordefAlreadySetWarning
+from iminuit.warnings import ErrordefAlreadySetWarning, IMinuitWarning
 import numpy as np
 from typing import (
     Union,
@@ -517,7 +517,7 @@ class Minuit:
         grad: Union[CostVector, bool, None] = None,
         g2: Union[CostVector, bool, None] = None,
         hessian: Union[CostVector, bool, None] = None,
-        name: Collection[str] = None,
+        name: Optional[Collection[str]] = None,
         **kwds: float,
     ):
         """
@@ -719,6 +719,11 @@ class Minuit:
 
         if hessian is not None and not isinstance(hessian, CostVector):
             raise ValueError("provided hessian function is not a CostVector")
+
+        if hessian is not None and g2 is not None:
+            warnings.warn(
+                "hessian overrides g2, passing g2 has no effect", IMinuitWarning
+            )
 
         self._fcn = FCN(
             fcn,

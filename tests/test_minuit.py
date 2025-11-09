@@ -1,9 +1,10 @@
+# type:ignore
 import platform
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
-from iminuit.util import Param, make_func_code
+from iminuit.util import Param, make_func_code, SymMatrix
 from iminuit.warnings import IMinuitWarning, ErrordefAlreadySetWarning
 from iminuit.typing import Annotated
 from pytest import approx
@@ -27,6 +28,17 @@ def func0_grad(x, y):
     dfdx = (x - 2.0) / 2.0
     dfdy = 2.0 * (y - 5.0) * np.exp((y - 5.0) ** 2)
     return [dfdx, dfdy]
+
+
+def func0_g2(x, y):
+    df2_dxdx = 1 / 2.0
+    df2_dydy = ((2 * y - 10.0) * (2.0 * y - 10.0) + 2.0) * np.exp((y - 5.0) ** 2)
+    return [df2_dxdx, df2_dydy]
+
+
+def func0_hessian(x, y):
+    df2_dxdx, df2_dydy = func0_g2(x, y)
+    return SymMatrix({(0, 0): df2_dxdx, (1, 1): df2_dydy})
 
 
 class Func1:
@@ -123,8 +135,8 @@ data_y = [
 data_x = list(range(len(data_y)))
 
 
-def func_test_helper(f, grad=None, errordef=None):
-    m = Minuit(f, x=0, y=0, grad=grad)
+def func_test_helper(f, grad=None, g2=None, hessian=None, errordef=None):
+    m = Minuit(f, x=0, y=0, grad=grad, g2=g2, hessian=hessian)
     if errordef:
         m.errordef = errordef
     m.migrad()
@@ -166,10 +178,36 @@ def test_mncontour_interpolated_2():
 def test_func0():
     m1 = func_test_helper(func0)
     m2 = func_test_helper(func0, grad=func0_grad)
+    m3 = func_test_helper(func0, grad=func0_grad, g2=func0_g2)
+    m4 = func_test_helper(func0, grad=func0_grad, hessian=func0_hessian)
+    with pytest.warns(IMinuitWarning, match="passing g2 has no effect"):
+        m5 = func_test_helper(
+            func0, grad=func0_grad, g2=func0_g2, hessian=func0_hessian
+        )
+
     assert m1.ngrad == 0
+    assert m1.ng2 == 0
+    assert m1.nhessian == 0
     assert m2.ngrad > 0
-    # check that providing gradient improves convergence
+    assert m2.ng2 == 0
+    assert m2.nhessian == 0
+    # check that providing gradient reduces number of function calls
     assert m2.nfcn < m1.nfcn
+    assert m3.ngrad > 0
+    assert m3.ng2 > 0
+    assert m3.nhessian == 0
+    # check that providing gradient and g2 further reduces number of function calls
+    assert m3.nfcn < m2.nfcn
+    assert m4.ngrad > 0
+    assert m4.ng2 == 0
+    assert m4.nhessian > 0
+    # check that providing gradient and hessian further reduces number of function calls
+    assert m4.nfcn < m2.nfcn
+    # g2 should be ignored when hessian is passed, m5 is equivalent to m4
+    assert m5.ngrad == m4.ngrad
+    assert m5.ng2 == 0
+    assert m5.nhessian == m4.nhessian
+    assert m5.nfcn == m4.nfcn
 
 
 def test_lambda():
