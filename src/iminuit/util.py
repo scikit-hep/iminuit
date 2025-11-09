@@ -58,6 +58,8 @@ __all__ = (
     "merge_signatures",
     "describe",
     "gradient",
+    "g2",
+    "hessian",
     "is_positive_definite",
     "is_jupyter",
     "is_module_available",
@@ -1649,9 +1651,9 @@ def gradient(fcn: Cost) -> Optional[CostVector]:
     Notes
     -----
     This function checks whether the following attributes exist: `fcn.grad` and
-    `fcn.has_grad`. If `fcn.grad` exists and is a CostGradient, it is returned unless
-    `fcn.has_grad` exists and is False. If no useable gradient is detected, None is
-    returned.
+    `fcn.has_grad`. If `fcn.grad` exists and and satisfies the
+    :class:`iminuit.typing.CostVector` protocol, it is returned unless `fcn.has_grad`
+    exists and is False. If no useable gradient is detected, None is returned.
 
     Returns
     -------
@@ -1674,9 +1676,9 @@ def g2(fcn: Cost) -> Optional[CostVector]:
     Notes
     -----
     This function checks whether the following attributes exist: `fcn.g2` and
-    `fcn.has_g2`. If `fcn.g2` exists and is a CostVector, it is returned unless
-    `fcn.has_g2` exists and is False. If no useable gradient is detected, None is
-    returned.
+    `fcn.has_g2`. If `fcn.g2` exists and and satisfies the
+    :class:`iminuit.typing.CostVector` protocol, it is returned unless `fcn.has_g2` exists
+    and is False. If no useable gradient is detected, None is returned.
 
     Returns
     -------
@@ -1688,7 +1690,7 @@ def g2(fcn: Cost) -> Optional[CostVector]:
 
 def hessian(fcn: Cost) -> Optional[CostVector]:
     """
-    Return a callable which computes the Hessian of fcn in compressed form or None.
+    Return a callable which computes the Hessian matrix of fcn or None.
 
     Parameters
     ----------
@@ -1699,9 +1701,9 @@ def hessian(fcn: Cost) -> Optional[CostVector]:
     Notes
     -----
     This function checks whether the following attributes exist: `fcn.hessian` and
-    `fcn.has_hessian`. If `fcn.hessian` exists and is a CostGradient, it is returned unless
-    `fcn.has_grad` exists and is False. If no useable gradient is detected, None is
-    returned.
+    `fcn.has_hessian`. If `fcn.hessian` exists and satisfies the
+    :class:`iminuit.typing.CostVector` protocol, it is returned unless `fcn.has_grad`
+    exists and is False. If no useable gradient is detected, None is returned.
 
     Returns
     -------
