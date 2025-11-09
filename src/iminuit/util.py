@@ -807,39 +807,24 @@ class FMin:
             p.text(str(self))
 
 
+@dataclass
 class Param:
     """Data object for a single Parameter."""
 
-    __slots__ = (
-        "number",
-        "name",
-        "value",
-        "error",
-        "merror",
-        "is_const",
-        "is_fixed",
-        "lower_limit",
-        "upper_limit",
-    )
-
-    def __init__(
-        self,
-        *args: Union[int, str, float, Optional[Tuple[float, float]], bool],
-    ):
-        # Users should not call this __init__, instances are created by the library
-        assert len(args) == len(self.__slots__)
-        for k, arg in zip(self.__slots__, args):
-            setattr(self, k, arg)
-
-    def __eq__(self, other: object) -> bool:
-        """Return True if all values are equal."""
-        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+    number: int
+    name: str
+    value: float
+    error: float
+    merror: Optional[Tuple[float, float]]
+    is_const: bool
+    is_fixed: bool
+    lower_limit: Optional[float]
+    upper_limit: Optional[float]
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
         pairs = []
-        for k in self.__slots__:
-            v = getattr(self, k)
+        for k, v in asdict(self).items():
             pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
 
