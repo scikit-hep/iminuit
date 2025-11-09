@@ -444,10 +444,18 @@ class SymMatrix(np.ndarray):
                 buffer[cls._index(size, i, j)] = val
         elif isinstance(arg, Iterable):
             buffer = np.asarray(arg, dtype=dtype)
-            if buffer.ndim != 1:
-                msg = "buffer must be 1D"
+            if buffer.ndim == 1:
+                size = int((-1 + np.sqrt(1 + 8 * len(buffer))) / 2)
+            elif buffer.ndim == 2:
+                size = len(buffer)
+                tmp = np.empty(size * (size + 1) // 2, buffer.dtype)
+                for i in range(size):
+                    for j in range(i, size):
+                        tmp[cls._index(size, i, j)] = buffer[i, j]
+                buffer = tmp
+            else:
+                msg = "buffer must be 1D or 2D"
                 raise ValueError(msg)
-            size = int((-1 + np.sqrt(1 + 8 * len(buffer))) / 2)
         else:
             msg = f"invalid argument {arg=}"
             raise ValueError(msg)

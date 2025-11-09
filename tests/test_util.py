@@ -409,6 +409,9 @@ def test_SymMatrix():
     assert_equal(m, m3)
     m4 = util.SymMatrix({(0, 0): 1, (1, 1): 2})
     assert_equal(m4.to_dense(), [[1, 0], [0, 2]])
+    dense = [[1, 2, 3], [2, 4, 5], [3, 5, 6]]
+    m5 = util.SymMatrix(dense)
+    assert_equal(m5.to_dense(), dense)
 
     # bad size
     with pytest.raises(ValueError, match="is not a symmetric matrix"):
