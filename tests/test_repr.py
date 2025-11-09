@@ -132,7 +132,7 @@ def fmin_good():
         errordef=1,
         state=[],
     )
-    return FMin(fm, "Migrad", 10, 3, 0, 0, 10, 1e-4, 0.01)
+    return FMin(fm, "Migrad", 10, 3, 0, 1, 10, 1e-4, 0.01)
 
 
 @pytest.fixture

@@ -51,6 +51,10 @@ def fmin_fields(fm):
     s_ncall = f"Nfcn = {fm.nfcn}"
     if fm.ngrad > 0:
         s_ncall += f", Ngrad = {fm.ngrad}"
+    if fm.ng2 > 0:
+        s_ncall += f", Ng2 = {fm.ng2}"
+    if fm.nhessian > 0:
+        s_ncall += f", Nhessian = {fm.nhessian}"
 
     if fm.hesse_failed:
         covariance_msg1 = "Hesse FAILED"
