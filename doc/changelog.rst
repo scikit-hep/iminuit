@@ -5,6 +5,11 @@
 Changelog
 =========
 
+2.32.0 (November 09, 2025)
+--------------------------
+- Support user-provided g2 and hessian (`#1117 <https://github.com/scikit-hep/iminuit/pull/1117>`_)
+- Update external root (`#1113 <https://github.com/scikit-hep/iminuit/pull/1113>`_)
+
 2.31.3 (October 26, 2025)
 -------------------------
 - Fix bug in _repr_html_ when both minos and limits are used (`#1112 <https://github.com/scikit-hep/iminuit/pull/1112>`_)
