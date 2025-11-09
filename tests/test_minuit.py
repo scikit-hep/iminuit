@@ -1,3 +1,4 @@
+# type:ignore
 import platform
 import pytest
 import numpy as np
@@ -27,6 +28,17 @@ def func0_grad(x, y):
     dfdx = (x - 2.0) / 2.0
     dfdy = 2.0 * (y - 5.0) * np.exp((y - 5.0) ** 2)
     return [dfdx, dfdy]
+
+
+def func0_g2(x, y):
+    df2_dxdx = 1 / 2.0
+    df2_dydy = ((2 * y - 10.0) * (2.0 * y - 10.0) + 2.0) * np.exp((y - 5.0) ** 2)
+    return [df2_dxdx, df2_dydy]
+
+
+def func0_hessian(x, y):
+    df2_dxdx, df2_dydy = func0_g2(x, y)
+    return [[df2_dxdx, 0], [0, df2_dydy]]
 
 
 class Func1:
@@ -96,6 +108,10 @@ def func_np_grad(x):  # test numpy support
     return 2 * (x - 1)
 
 
+def func_np_hessian(x):  # test numpy support
+    return 2 * np.eye(len(x))
+
+
 data_y = [
     0.552,
     0.735,
@@ -123,8 +139,8 @@ data_y = [
 data_x = list(range(len(data_y)))
 
 
-def func_test_helper(f, grad=None, errordef=None):
-    m = Minuit(f, x=0, y=0, grad=grad)
+def func_test_helper(f, grad=None, g2=None, hessian=None, errordef=None):
+    m = Minuit(f, x=0, y=0, grad=grad, g2=g2, hessian=hessian)
     if errordef:
         m.errordef = errordef
     m.migrad()
@@ -166,10 +182,36 @@ def test_mncontour_interpolated_2():
 def test_func0():
     m1 = func_test_helper(func0)
     m2 = func_test_helper(func0, grad=func0_grad)
+    m3 = func_test_helper(func0, grad=func0_grad, g2=func0_g2)
+    m4 = func_test_helper(func0, grad=func0_grad, hessian=func0_hessian)
+    with pytest.warns(IMinuitWarning, match="passing g2 has no effect"):
+        m5 = func_test_helper(
+            func0, grad=func0_grad, g2=func0_g2, hessian=func0_hessian
+        )
+
     assert m1.ngrad == 0
+    assert m1.ng2 == 0
+    assert m1.nhessian == 0
     assert m2.ngrad > 0
-    # check that providing gradient improves convergence
+    assert m2.ng2 == 0
+    assert m2.nhessian == 0
+    # check that providing gradient reduces number of function calls
     assert m2.nfcn < m1.nfcn
+    assert m3.ngrad > 0
+    assert m3.ng2 > 0
+    assert m3.nhessian == 0
+    # check that providing gradient and g2 further reduces number of function calls
+    assert m3.nfcn < m2.nfcn
+    assert m4.ngrad > 0
+    assert m4.ng2 == 0
+    assert m4.nhessian > 0
+    # check that providing gradient and hessian further reduces number of function calls
+    assert m4.nfcn < m2.nfcn
+    # g2 should be ignored when hessian is passed, m5 is equivalent to m4
+    assert m5.ngrad == m4.ngrad
+    assert m5.ng2 == 0
+    assert m5.nhessian == m4.nhessian
+    assert m5.nfcn == m4.nfcn
 
 
 def test_lambda():
@@ -286,6 +328,29 @@ def test_array_func_2():
     assert m.limits["a"] == (0, 2)
     m.migrad()
     assert m.fmin.ngrad > 0
+    assert_allclose(m.values, (1, 1), rtol=1e-2)
+    c = m.covariance
+    assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)
+    m.minos()
+    assert len(m.merrors) == 1
+    assert m.merrors[0].lower == approx(-1, abs=1e-2)
+    assert m.merrors[0].name == "a"
+
+
+def test_array_func_3():
+    m = Minuit(
+        func_np, (2, 1), grad=func_np_grad, hessian=func_np_hessian, name=("a", "b")
+    )
+    m.fixed = (False, True)
+    m.errors = (0.5, 0.5)
+    m.limits = ((0, 2), (-np.inf, np.inf))
+    assert m.values == (2, 1)
+    assert m.errors == (0.5, 0.5)
+    assert m.fixed == (False, True)
+    assert m.limits["a"] == (0, 2)
+    m.migrad()
+    assert m.fmin.ngrad > 0
+    assert m.fmin.nhessian > 0
     assert_allclose(m.values, (1, 1), rtol=1e-2)
     c = m.covariance
     assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)
@@ -1695,7 +1760,9 @@ def test_bad_grad():
     def cost(a, b):
         return a**2 + b**2
 
-    with pytest.raises(ValueError, match="provided gradient is not a CostGradient"):
+    with pytest.raises(
+        ValueError, match="provided gradient function is not a CostVector"
+    ):
         Minuit(cost, 0, 0, grad="foo")
 
 

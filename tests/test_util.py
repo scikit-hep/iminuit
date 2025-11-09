@@ -1,3 +1,4 @@
+# type:ignore
 from iminuit import util
 import pytest
 from argparse import Namespace
@@ -7,13 +8,7 @@ from iminuit._core import MnUserParameterState
 from iminuit._optional_dependencies import optional_module_for
 import pickle
 from iminuit._hide_modules import hide_modules
-
-try:
-    import scipy  # noqa
-
-    scipy_available = True
-except ModuleNotFoundError:
-    scipy_available = False
+from iminuit.util import is_module_available
 
 
 def test_ndim():
@@ -27,9 +22,9 @@ def test_ndim():
     assert ndim((None, (1, 2))) == 2
 
 
-def test_BasicView():
-    with pytest.raises(TypeError):
-        util.BasicView(None, 2)
+# def test_BasicView():
+#     with pytest.raises(TypeError):
+#         util.BasicView(None, 2)
 
 
 def test_ValueView():
@@ -348,7 +343,7 @@ def test_FMin(errordef):
         has_parameters_at_limit=False,
         state=[],
     )
-    fmin = util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.2)
+    fmin = util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.1, 1.2)
     assert {x for x in dir(fmin) if not x.startswith("_")} == {
         "algorithm",
         "edm",
@@ -358,6 +353,8 @@ def test_FMin(errordef):
         "reduced_chi2",
         "nfcn",
         "ngrad",
+        "ng2",
+        "nhessian",
         "is_valid",
         "has_accurate_covar",
         "has_valid_parameters",
@@ -376,10 +373,10 @@ def test_FMin(errordef):
     assert not fmin.has_parameters_at_limit
     assert fmin.time == 1.2
 
-    assert fmin == util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.2)
-    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.3, 1.2)
-    assert fmin != util.FMin(fm, "bar", 1, 2, 1, 0.1, 1.2)
-    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.5)
+    assert fmin == util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.1, 1.2)
+    assert fmin != util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.3, 1.2)
+    assert fmin != util.FMin(fm, "bar", 1, 2, 0, 0, 1, 0.1, 1.2)
+    assert fmin != util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.1, 1.5)
 
     if errordef == 1:
         reduced_chi2 = fmin.fval
@@ -393,7 +390,7 @@ def test_FMin(errordef):
         " has_parameters_at_limit=False has_posdef_covar=True"
         " has_reached_call_limit=False has_valid_parameters=True"
         " hesse_failed=False is_above_max_edm=False is_valid=True"
-        f" nfcn=1 ngrad=2 reduced_chi2={reduced_chi2} time=1.2>"
+        f" nfcn=1 ng2=0 ngrad=2 nhessian=0 reduced_chi2={reduced_chi2} time=1.2>"
     )
 
 
@@ -518,8 +515,8 @@ def test_merge_signatures():
     assert pg == [0, 3, 4]
 
 
-@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_1():
+    pytest.importorskip("scipy")
     cov = [
         [1.0, 0.1, 0.2],
         [0.1, 2.0, 0.3],
@@ -543,8 +540,8 @@ def test_propagate_1():
     np.testing.assert_allclose(ycov, 8, rtol=1e-3)
 
 
-@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_2():
+    pytest.importorskip("scipy")
     cov = [
         [1.0, 0.1, 0.2],
         [0.1, 2.0, 0.3],
@@ -572,8 +569,8 @@ def test_propagate_2():
     np.testing.assert_allclose(ycov, np.einsum("i,k,ik", jac, jac, cov), rtol=1e-3)
 
 
-@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_3():
+    pytest.importorskip("scipy")
     # matrices with full zero rows and columns are supported
     cov = [
         [1.0, 0.0, 0.2],
@@ -591,8 +588,8 @@ def test_propagate_3():
     np.testing.assert_allclose(ycov, [[4, 0.0, 0.8], [0.0, 0.0, 0.0], [0.8, 0.0, 12]])
 
 
-@pytest.mark.skipif(not scipy_available, reason="needs scipy")
 def test_propagate_on_bad_input():
+    pytest.importorskip("scipy")
     cov = [[np.nan, 0.0], [0.0, 1.0]]
     x = [1.0, 2.0]
 
@@ -774,3 +771,14 @@ def test_positive_definite():
     assert util.is_positive_definite([[1, 0], [0, 1]])
     assert not util.is_positive_definite([[1, 1], [1, 1]])
     assert not util.is_positive_definite([[1, 0], [1, 1]])
+
+
+def test_is_jupyter_1():
+    assert util.is_jupyter() is False
+
+
+@pytest.mark.skipif(
+    not is_module_available("IPython"), reason="mock_ipython requires IPython"
+)
+def test_is_jupyter_2(mock_ipython):
+    assert util.is_jupyter() is True

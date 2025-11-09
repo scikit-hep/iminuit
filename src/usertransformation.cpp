@@ -7,6 +7,8 @@ using namespace ROOT::Minuit2;
 
 static_assert(std::is_standard_layout<MnUserTransformation>(), "");
 
+// We cannot define this struct inside the body of the lambda,
+// MSVC will crash if we do
 struct Layout {
   MnMachinePrecision fPrecision;
 

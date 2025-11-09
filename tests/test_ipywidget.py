@@ -10,7 +10,6 @@ ipywidgets = pytest.importorskip("ipywidgets")
 mpl.use("Agg")
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_ipywidgets(mock_ipython):
     pytest.importorskip("scipy")
 
@@ -103,7 +102,6 @@ def test_interactive_ipywidgets(mock_ipython):
         fit_button.click()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_ipywidgets_raises(mock_ipython):
     def raiser(args):
         raise ValueError
@@ -117,7 +115,6 @@ def test_interactive_ipywidgets_raises(mock_ipython):
         m.interactive(raiser, raise_on_exception=True)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_ipywidgets_with_array_func(mock_ipython):
     def cost(par):
         return par[0] ** 2 + (par[1] / 2) ** 2

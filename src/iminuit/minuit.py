@@ -18,7 +18,7 @@ from iminuit._core import (
     MnUserParameterState,
     FunctionMinimum,
 )
-from iminuit.warnings import ErrordefAlreadySetWarning
+from iminuit.warnings import ErrordefAlreadySetWarning, IMinuitWarning
 import numpy as np
 from typing import (
     Union,
@@ -33,7 +33,7 @@ from typing import (
     Set,
     Sized,
 )
-from iminuit.typing import UserBound, Cost, CostGradient
+from iminuit.typing import UserBound, Cost, CostVector
 from iminuit._optional_dependencies import optional_module_for
 from numpy.typing import ArrayLike
 
@@ -81,6 +81,16 @@ class Minuit:
     def grad(self) -> Callable[[np.ndarray], np.ndarray]:
         """Get gradient function of the cost function."""
         return self._fcn.gradient  # type:ignore
+
+    @property
+    def g2(self) -> Callable[[np.ndarray], np.ndarray]:
+        """Get g2 function of the cost function."""
+        return self._fcn.g2  # type:ignore
+
+    @property
+    def hessian(self) -> Callable[[np.ndarray], np.ndarray]:
+        """Get hessian function of the cost function."""
+        return self._fcn.hessian  # type:ignore
 
     @property
     def pos2var(self) -> Tuple[str, ...]:
@@ -500,12 +510,24 @@ class Minuit:
         """Get total number of gradient calls."""
         return self._fcn._ngrad  # type:ignore
 
+    @property
+    def ng2(self) -> int:
+        """Get total number of G2 calls."""
+        return self._fcn._ng2  # type:ignore
+
+    @property
+    def nhessian(self) -> int:
+        """Get total number of Hessian calls."""
+        return self._fcn._nhessian  # type:ignore
+
     def __init__(
         self,
         fcn: Cost,
         *args: Union[float, ArrayLike],
-        grad: Union[CostGradient, bool, None] = None,
-        name: Collection[str] = None,
+        grad: Union[CostVector, bool, None] = None,
+        g2: Union[CostVector, bool, None] = None,
+        hessian: Union[CostVector, bool, None] = None,
+        name: Optional[Collection[str]] = None,
         **kwds: float,
     ):
         """
@@ -533,6 +555,14 @@ class Minuit:
             override this detection. If grad=True is used, a ValueError is raised if no
             useable gradient is found. If grad=False, Minuit will internally compute the
             gradient numerically.
+        g2 : callable, bool, or None, optional
+            Analog to grad, but computes G2, the diagonal of the hessian matrix. If None
+            (default), Minuit will call the function :func:`iminuit.util.g2` on `fcn`.
+        hessian : callable, bool, or None, optional
+            Analog to grad, but computes the Hessian matrix. The Hessian matrix must be
+            a square symmetric matrix. Returning numpy arrays is the most efficient
+            way, but any array-like works. If None (default), Minuit will call the
+            function :func:`iminuit.util.hessian` on `fcn`.
         name : sequence of str, optional
             If it is set, it overrides iminuit's function signature detection.
         **kwds :
@@ -670,14 +700,45 @@ class Minuit:
         elif grad is False:
             grad = None
 
-        if grad is not None and not isinstance(grad, CostGradient):
-            raise ValueError("provided gradient is not a CostGradient")
+        if grad is not None and not isinstance(grad, CostVector):
+            raise ValueError("provided gradient function is not a CostVector")
+
+        if g2 is None:
+            g2 = mutil.g2(fcn)
+        elif g2 is True:
+            g2 = mutil.g2(fcn)
+            if g2 is None:
+                raise ValueError("g2 enforced, but iminuit.util.g2 returned None")
+        elif g2 is False:
+            g2 = None
+
+        if g2 is not None and not isinstance(g2, CostVector):
+            raise ValueError("provided g2 function is not a CostVector")
+
+        if hessian is None:
+            hessian = mutil.hessian(fcn)
+        elif hessian is True:
+            hessian = mutil.hessian(fcn)
+            if hessian is None:
+                raise ValueError(
+                    "hessian enforced, but iminuit.util.hessian returned None"
+                )
+        elif hessian is False:
+            hessian = None
+
+        if hessian is not None and not isinstance(hessian, CostVector):
+            raise ValueError("provided hessian function is not a CostVector")
+
+        if hessian is not None and g2 is not None:
+            warnings.warn(
+                "hessian overrides g2, passing g2 has no effect", IMinuitWarning
+            )
 
         self._fcn = FCN(
             fcn,
             grad,
-            None,
-            None,
+            g2,
+            hessian,
             array_call,
             getattr(fcn, "errordef", 1.0),
         )
@@ -806,6 +867,8 @@ class Minuit:
             "Migrad",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             self._edm_goal(migrad_factor=True),
             t.value,
@@ -863,6 +926,8 @@ class Minuit:
             "Simplex",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             self._edm_goal(),
             t.value,
@@ -973,6 +1038,8 @@ class Minuit:
             "Scan",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             edm_goal,
             t.value,
@@ -1362,6 +1429,8 @@ class Minuit:
             f"SciPy[{method}]",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             edm_goal,
             t.value,
@@ -1454,7 +1523,15 @@ class Minuit:
                 edm_goal,
             )
             self._fmin = mutil.FMin(
-                fm, "External", self.nfcn, self.ngrad, self.ndof, edm_goal, 0
+                fm,
+                "External",
+                self.nfcn,
+                self.ngrad,
+                self.ng2,
+                self.nhessian,
+                self.ndof,
+                edm_goal,
+                0,
             )
             self._merrors = mutil.MErrors()
 
@@ -1475,6 +1552,8 @@ class Minuit:
             self._fmin.algorithm,
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             self._fmin.edm_goal,
             t.value,

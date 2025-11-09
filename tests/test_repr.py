@@ -132,7 +132,7 @@ def fmin_good():
         errordef=1,
         state=[],
     )
-    return FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    return FMin(fm, "Migrad", 10, 3, 0, 1, 10, 1e-4, 0.01)
 
 
 @pytest.fixture
@@ -165,7 +165,7 @@ def fmin_bad():
             )
         ],
     )
-    return FMin(fm, "SciPy[L-BFGS-B]", 100000, 200000, 1, 1e-5, 1.2)
+    return FMin(fm, "SciPy[L-BFGS-B]", 100000, 200000, 0, 0, 1, 1e-5, 1.2)
 
 
 @pytest.fixture
@@ -187,7 +187,7 @@ def fmin_no_cov():
         errordef=1,
         state=[],
     )
-    return FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    return FMin(fm, "Migrad", 10, 3, 0, 0, 10, 1e-4, 0.01)
 
 
 def test_html_fmin_good(fmin_good):
@@ -291,7 +291,7 @@ def test_text_fmin_not_posdef():
         errordef=1,
         state=[],
     )
-    fmin = FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    fmin = FMin(fm, "Migrad", 10, 3, 0, 0, 10, 1e-4, 0.01)
     assert _repr_text.fmin(fmin) == ref("fmin_not_posdef.txt")
 
 
@@ -313,7 +313,7 @@ def test_text_fmin_made_posdef():
         errordef=1,
         state=[],
     )
-    fmin = FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    fmin = FMin(fm, "Migrad", 10, 3, 0, 0, 10, 1e-4, 0.01)
     assert _repr_text.fmin(fmin) == ref("fmin_made_posdef.txt")
 
 
@@ -335,7 +335,7 @@ def test_text_fmin_approximate():
         errordef=1,
         state=[],
     )
-    fmin = FMin(fm, "Migrad", 10, 3, 10, 1e-4, 0.01)
+    fmin = FMin(fm, "Migrad", 10, 3, 0, 0, 10, 1e-4, 0.01)
     assert _repr_text.fmin(fmin) == ref("fmin_approximate.txt")
 
 

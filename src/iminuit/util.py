@@ -9,7 +9,7 @@ import inspect
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
-from iminuit.typing import Key, UserBound, Cost, CostGradient
+from iminuit.typing import Key, UserBound, Cost, CostVector
 from iminuit.warnings import IMinuitWarning, HesseFailedWarning, PerformanceWarning
 import numpy as np
 from numpy.typing import NDArray, ArrayLike
@@ -28,6 +28,7 @@ from typing import (
     Sequence,
     TypeVar,
     Annotated,
+    SupportsIndex,
     get_args,
     get_origin,
 )
@@ -35,6 +36,7 @@ import abc
 from time import monotonic
 import warnings
 import sys
+from dataclasses import dataclass, asdict
 
 T = TypeVar("T")
 
@@ -56,7 +58,11 @@ __all__ = (
     "merge_signatures",
     "describe",
     "gradient",
+    "g2",
+    "hessian",
     "is_positive_definite",
+    "is_jupyter",
+    "is_module_available",
 )
 
 
@@ -159,20 +165,20 @@ def _ndim(obj: Any) -> int:
 class ValueView(BasicView):
     """Array-like view of parameter values."""
 
-    def _get(self, i: int) -> float:
-        return self._minuit._last_state[i].value  # type:ignore
+    def _get(self, idx: int) -> float:
+        return self._minuit._last_state[idx].value  # type:ignore
 
-    def _set(self, i: int, value: float) -> None:
-        self._minuit._last_state.set_value(i, value)
+    def _set(self, idx: int, value: float) -> None:
+        self._minuit._last_state.set_value(idx, value)
 
 
 class ErrorView(BasicView):
     """Array-like view of parameter errors."""
 
-    def _get(self, i: int) -> float:
-        return self._minuit._last_state[i].error  # type:ignore
+    def _get(self, idx: int) -> float:
+        return self._minuit._last_state[idx].error  # type:ignore
 
-    def _set(self, i: int, value: float) -> None:
+    def _set(self, idx: int, value: float) -> None:
         if value <= 0:
             warnings.warn(
                 "Assigned errors must be positive. "
@@ -180,20 +186,20 @@ class ErrorView(BasicView):
                 IMinuitWarning,
             )
             value = _guess_initial_step(value)
-        self._minuit._last_state.set_error(i, value)
+        self._minuit._last_state.set_error(idx, value)
 
 
 class FixedView(BasicView):
     """Array-like view of whether parameters are fixed."""
 
-    def _get(self, i: int) -> bool:
-        return self._minuit._last_state[i].is_fixed  # type:ignore
+    def _get(self, idx: int) -> bool:
+        return self._minuit._last_state[idx].is_fixed  # type:ignore
 
-    def _set(self, i: int, fix: bool) -> None:
-        if fix:
-            self._minuit._last_state.fix(i)
+    def _set(self, idx: int, value: bool) -> None:
+        if value:
+            self._minuit._last_state.fix(idx)
         else:
-            self._minuit._last_state.release(i)
+            self._minuit._last_state.release(idx)
 
     def __invert__(self) -> list:
         """Return list with inverted elements."""
@@ -207,36 +213,36 @@ class LimitView(BasicView):
         # Users should not call this __init__, instances are created by the library
         super(LimitView, self).__init__(minuit, 1)
 
-    def _get(self, i: int) -> Tuple[float, float]:
-        p = self._minuit._last_state[i]
+    def _get(self, idx: int) -> Tuple[float, float]:
+        p = self._minuit._last_state[idx]
         return (
             p.lower_limit if p.has_lower_limit else -np.inf,
             p.upper_limit if p.has_upper_limit else np.inf,
         )
 
-    def _set(self, i: int, arg: UserBound) -> None:
+    def _set(self, idx: int, value: UserBound) -> None:
         state = self._minuit._last_state
-        val = state[i].value
-        err = state[i].error
+        val = state[idx].value
+        err = state[idx].error
         # changing limits is a cheap operation, start from clean state
-        state.remove_limits(i)
-        low, high = _normalize_limit(arg)
+        state.remove_limits(idx)
+        low, high = _normalize_limit(value)
         if low != -np.inf and high != np.inf:  # both must be set
             if low == high:
-                state.fix(i)
+                state.fix(idx)
             else:
-                state.set_limits(i, low, high)
+                state.set_limits(idx, low, high)
         elif low != -np.inf:  # lower limit must be set
-            state.set_lower_limit(i, low)
+            state.set_lower_limit(idx, low)
         elif high != np.inf:  # lower limit must be set
-            state.set_upper_limit(i, high)
+            state.set_upper_limit(idx, high)
         # bug in Minuit2: must set parameter value and error again after changing limits
         if val < low:
             val = low
         elif val > high:
             val = high
-        state.set_value(i, val)
-        state.set_error(i, err)
+        state.set_value(idx, val)
+        state.set_error(idx, err)
 
 
 def _normalize_limit(lim: Optional[Iterable]) -> Tuple[float, float]:
@@ -294,7 +300,7 @@ class Matrix(np.ndarray):
             if isinstance(key, str):
                 return var2pos[key]
             if isinstance(key, slice):
-                return slice(trafo(key.start), trafo(key.stop), key.step)
+                return slice(trafo(key.start), trafo(key.stop), key.step)  # type:ignore
             if isinstance(key, tuple):
                 return tuple(trafo(k) for k in key)
             return key
@@ -308,8 +314,8 @@ class Matrix(np.ndarray):
         if isinstance(key, Iterable) and not isinstance(key, np.ndarray):
             # iterable returns square matrix
             index2 = [trafo(k) for k in key]  # type:ignore
-            t = super().__getitem__(index2).T
-            return np.ndarray.__getitem__(t, index2).T
+            t = super().__getitem__(index2).T  # type:ignore
+            return np.ndarray.__getitem__(t, index2).T  # type:ignore
         return super().__getitem__(key)
 
     def to_dict(self) -> Dict[Tuple[str, str], float]:
@@ -424,6 +430,8 @@ class FMin:
         "_has_parameters_at_limit",
         "_nfcn",
         "_ngrad",
+        "_ng2",
+        "_nhessian",
         "_ndof",
         "_edm_goal",
         "_time",
@@ -435,6 +443,8 @@ class FMin:
         algorithm: str,
         nfcn: int,
         ngrad: int,
+        ng2: int,
+        nhessian: int,
         ndof: int,
         edm_goal: float,
         time: float,
@@ -454,6 +464,8 @@ class FMin:
             self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
         self._nfcn = nfcn
         self._ngrad = ngrad
+        self._ng2 = ng2
+        self._nhessian = nhessian
         self._ndof = ndof
         self._edm_goal = edm_goal
         self._time = time
@@ -519,8 +531,18 @@ class FMin:
 
     @property
     def ngrad(self) -> int:
-        """Get number of function gradient calls so far."""
+        """Get number of gradient calls so far."""
         return self._ngrad
+
+    @property
+    def ng2(self) -> int:
+        """Get number of g2 calls so far."""
+        return self._ng2
+
+    @property
+    def nhessian(self) -> int:
+        """Get number of hessian calls so far."""
+        return self._nhessian
 
     @property
     def is_valid(self) -> bool:
@@ -688,39 +710,24 @@ class FMin:
             p.text(str(self))
 
 
+@dataclass
 class Param:
     """Data object for a single Parameter."""
 
-    __slots__ = (
-        "number",
-        "name",
-        "value",
-        "error",
-        "merror",
-        "is_const",
-        "is_fixed",
-        "lower_limit",
-        "upper_limit",
-    )
-
-    def __init__(
-        self,
-        *args: Union[int, str, float, Optional[Tuple[float, float]], bool],
-    ):
-        # Users should not call this __init__, instances are created by the library
-        assert len(args) == len(self.__slots__)
-        for k, arg in zip(self.__slots__, args):
-            setattr(self, k, arg)
-
-    def __eq__(self, other: object) -> bool:
-        """Return True if all values are equal."""
-        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+    number: int
+    name: str
+    value: float
+    error: float
+    merror: Optional[Tuple[float, float]]
+    is_const: bool
+    is_fixed: bool
+    lower_limit: Optional[float]
+    upper_limit: Optional[float]
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
         pairs = []
-        for k in self.__slots__:
-            v = getattr(self, k)
+        for k, v in asdict(self).items():
             pairs.append(f"{k}={v!r}")
         return "Param(" + ", ".join(pairs) + ")"
 
@@ -755,10 +762,10 @@ class Params(tuple):
 
     __slots__ = ()
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         return _repr_html.params(self)
 
-    def to_table(self):
+    def to_table(self) -> Tuple[List[List[str]], List[str]]:
         """
         Convert parameter data to a tabular format.
 
@@ -812,16 +819,28 @@ class Params(tuple):
             tab.append(row)
         return tab, header
 
-    def __getitem__(self, key):
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> Param: ...
+
+    @overload
+    def __getitem__(self, key: slice) -> tuple[Param, ...]: ...
+
+    @overload
+    def __getitem__(self, key: str) -> Param: ...
+
+    def __getitem__(
+        self, key: str | SupportsIndex | slice
+    ) -> Param | tuple[Param, ...]:
         """Get item at key, which can be an index or a parameter name."""
         if isinstance(key, str):
             for i, p in enumerate(self):
                 if p.name == key:
+                    key = i
                     break
-            key = i
+        assert isinstance(key, (int, slice))
         return super(Params, self).__getitem__(key)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get user-friendly text representation."""
         return _repr_text.params(self)
 
@@ -832,6 +851,7 @@ class Params(tuple):
             p.text(str(self))
 
 
+@dataclass
 class MError:
     """
     Minos data object.
@@ -870,39 +890,26 @@ class MError:
         Function value at the new minimum.
     """
 
-    __slots__ = (
-        "number",
-        "name",
-        "lower",
-        "upper",
-        "is_valid",
-        "lower_valid",
-        "upper_valid",
-        "at_lower_limit",
-        "at_upper_limit",
-        "at_lower_max_fcn",
-        "at_upper_max_fcn",
-        "lower_new_min",
-        "upper_new_min",
-        "nfcn",
-        "min",
-    )
-
-    def __init__(self, *args: Union[int, str, float, bool]):
-        # Users should not call this __init__, instances are created by the library
-        assert len(args) == len(self.__slots__)
-        for k, arg in zip(self.__slots__, args):
-            setattr(self, k, arg)
-
-    def __eq__(self, other: object) -> bool:
-        """Return True if all values are equal."""
-        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+    number: int
+    name: str
+    lower: float
+    upper: float
+    is_valid: bool
+    lower_valid: bool
+    upper_valid: bool
+    at_lower_limit: bool
+    at_upper_limit: bool
+    at_lower_max_fcn: bool
+    at_upper_max_fcn: bool
+    lower_new_min: float
+    upper_new_min: float
+    nfcn: int
+    min: float
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
         s = "<MError"
-        for idx, k in enumerate(self.__slots__):
-            v = getattr(self, k)
+        for k, v in asdict(self).items():
             s += f" {k}={v!r}"
         s += ">"
         return s
@@ -926,14 +933,14 @@ class MErrors(OrderedDict):
 
     __slots__ = ()
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         return _repr_html.merrors(self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Get detailed text representation."""
         return "<MErrors\n  " + ",\n  ".join(repr(x) for x in self.values()) + "\n>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get user-friendly text representation."""
         return _repr_text.merrors(self)
 
@@ -943,7 +950,7 @@ class MErrors(OrderedDict):
         else:
             p.text(str(self))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[int, str]) -> MError:
         """Get item at key, which can be an index or a parameter name."""
         if isinstance(key, int):
             if key < 0:
@@ -952,8 +959,9 @@ class MErrors(OrderedDict):
                 raise IndexError("index out of range")
             for i, k in enumerate(self):
                 if i == key:
+                    key = k
                     break
-            key = k
+        assert isinstance(key, str)
         return OrderedDict.__getitem__(self, key)
 
 
@@ -998,7 +1006,7 @@ def propagate(
     if not np.all(dx >= 0):
         raise ValueError("diagonal elements of covariance matrix must be non-negative")
     y = fn(vx)
-    jac = np.atleast_2d(approx_fprime(vx, fn, dx))
+    jac = np.atleast_2d(approx_fprime(vx, fn, dx))  # type:ignore
     ycov = np.einsum("ij,kl,jl", jac, jac, vcov)
     return y, np.squeeze(ycov) if np.ndim(y) == 0 else ycov
 
@@ -1129,7 +1137,7 @@ def describe(callable: Callable) -> List[str]: ...  # pragma: no cover
 
 @overload
 def describe(
-    callable: Callable, annotations: bool
+    callable: Callable, *, annotations: bool
 ) -> Dict[str, Optional[Tuple[float, float]]]: ...  # pragma: no cover
 
 
@@ -1295,6 +1303,7 @@ def _describe_impl_docstring(callable):
     start += len(token)
 
     nbrace = 1
+    ich = 0
     for ich, ch in enumerate(doc[start:]):
         if ch == "(":
             nbrace += 1
@@ -1626,10 +1635,10 @@ def _detect_log_spacing(x: NDArray) -> bool:
     d_log = np.diff(np.log(x))
     lin_rel_std = np.std(d_lin) / np.mean(d_lin)
     log_rel_std = np.std(d_log) / np.mean(d_log)
-    return log_rel_std < lin_rel_std
+    return bool(log_rel_std < lin_rel_std)
 
 
-def gradient(fcn: Cost) -> Optional[CostGradient]:
+def gradient(fcn: Cost) -> Optional[CostVector]:
     """
     Return a callable which computes the gradient of fcn or None.
 
@@ -1642,19 +1651,73 @@ def gradient(fcn: Cost) -> Optional[CostGradient]:
     Notes
     -----
     This function checks whether the following attributes exist: `fcn.grad` and
-    `fcn.has_grad`. If `fcn.grad` exists and is a CostGradient, it is returned unless
-    `fcn.has_grad` exists and is False. If no useable gradient is detected, None is
-    returned.
+    `fcn.has_grad`. If `fcn.grad` exists and and satisfies the
+    :class:`iminuit.typing.CostVector` protocol, it is returned unless `fcn.has_grad`
+    exists and is False. If no useable gradient is detected, None is returned.
 
     Returns
     -------
     callable or None
         The gradient function or None
     """
-    grad = getattr(fcn, "grad", None)
-    has_grad = getattr(fcn, "has_grad", True)
-    if grad and isinstance(grad, CostGradient) and has_grad:
-        return grad
+    return _cost_extra_impl(fcn, "grad")
+
+
+def g2(fcn: Cost) -> Optional[CostVector]:
+    """
+    Return a callable which computes the diagonal of the Hessian of fcn or None.
+
+    Parameters
+    ----------
+    fcn: Cost
+        Cost function which may provide a callable g2 function. How the g2
+        is detected is specified below in the Notes.
+
+    Notes
+    -----
+    This function checks whether the following attributes exist: `fcn.g2` and
+    `fcn.has_g2`. If `fcn.g2` exists and and satisfies the
+    :class:`iminuit.typing.CostVector` protocol, it is returned unless `fcn.has_g2` exists
+    and is False. If no useable gradient is detected, None is returned.
+
+    Returns
+    -------
+    callable or None
+        The gradient function or None
+    """
+    return _cost_extra_impl(fcn, "g2")
+
+
+def hessian(fcn: Cost) -> Optional[CostVector]:
+    """
+    Return a callable which computes the Hessian matrix of fcn or None.
+
+    Parameters
+    ----------
+    fcn: Cost
+        Cost function which may provide a callable Hessian function. How the Hessian
+        is detected is specified below in the Notes.
+
+    Notes
+    -----
+    This function checks whether the following attributes exist: `fcn.hessian` and
+    `fcn.has_hessian`. If `fcn.hessian` exists and satisfies the
+    :class:`iminuit.typing.CostVector` protocol, it is returned unless `fcn.has_grad`
+    exists and is False. If no useable gradient is detected, None is returned.
+
+    Returns
+    -------
+    callable or None
+        The gradient function or None
+    """
+    return _cost_extra_impl(fcn, "hessian")
+
+
+def _cost_extra_impl(fcn: Cost, kind: str) -> Optional[CostVector]:
+    aux = getattr(fcn, kind, None)
+    has_aux = getattr(fcn, f"has_{kind}", True)
+    if aux and isinstance(aux, CostVector) and has_aux:
+        return aux
     return None
 
 
@@ -1687,17 +1750,27 @@ def is_positive_definite(m: ArrayLike) -> bool:
 
 
 def is_jupyter() -> bool:
+    """Return True if we are running in Jupyter."""
     try:
         from IPython import get_ipython
 
         ip = get_ipython()
+        if ip is None:
+            return False
         return ip.has_trait("kernel")
-    except ImportError:
+    except (ModuleNotFoundError, ImportError):
         return False
-    except AttributeError:
-        # get_ipython() returns None if no InteractiveShell instance is registered.
+
+
+def is_module_available(module: str) -> bool:
+    """Return True if a module is available."""
+    try:
+        import importlib
+
+        importlib.import_module(module)
+        return True
+    except ModuleNotFoundError:
         return False
-    return False
 
 
 def _make_finite(x: float) -> float:

@@ -1,5 +1,6 @@
 import numpy as np
 import warnings
+import pytest
 
 
 def test_issue_424():
@@ -192,3 +193,50 @@ def test_issue_923():
     m.migrad()
     # this used to trigger an endless (?) loop
     m.visualize()
+
+
+def test_jax_hessian(debug):
+    pytest.importorskip("jax")
+    import jax
+    from jax import numpy as jnp
+    from jax.scipy.special import erf
+    from iminuit import Minuit
+
+    jax.config.update(
+        "jax_enable_x64", True
+    )  # enable float64 precision, default is float32
+
+    # generate some toy data
+    rng = np.random.default_rng(seed=1)
+    n, xe = np.histogram(rng.normal(size=10000), bins=1000)
+
+    def cdf(x, mu, sigma):
+        # cdf of a normal distribution, needed to compute the expected counts per bin
+        # better alternative for real code: from jax.scipy.stats.norm import cdf
+        z = (x - mu) / sigma
+        return 0.5 * (1 + erf(z / np.sqrt(2)))
+
+    def nll(par):  # negative log-likelihood with constants stripped
+        amp = par[0]
+        mu, sigma = par[1:]
+        p = cdf(xe, mu, sigma)
+        mu = amp * jnp.diff(p)
+        result = jnp.sum(mu - n + n * jnp.log(n / (mu + 1e-100) + 1e-100))
+        return result
+
+    start_values = (1.5 * np.sum(n), 1.0, 2.0)
+    limits = ((0, None), (None, None), (0, None))
+
+    m = Minuit(
+        fcn,
+        start_values,
+        grad=jax.grad(nll),
+        hessian=jax.hessian(nll),
+        name=("amp", "mu", "sigma"),
+    )
+    m.errordef = Minuit.LIKELIHOOD
+    m.limits = limits
+    m.strategy = 0  # do not explicitly compute hessian after minimisation
+    m.migrad()
+    assert m.ngrad > 0
+    assert m.nhessian > 0

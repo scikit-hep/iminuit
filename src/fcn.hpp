@@ -30,8 +30,8 @@ struct FCN : ROOT::Minuit2::FCNBase {
   bool HasHessian() const override { return !hessian_.is_none(); }
 
   double check_value(double r, const std::vector<double>& x) const;
-  std::vector<double> check_vector(std::vector<double> r,
-                                   const std::vector<double>& x) const;
+  std::vector<double> check_vector(std::vector<double> r, const std::vector<double>& x,
+                                   const char* label, unsigned size) const;
 
   double ndata() const;
 

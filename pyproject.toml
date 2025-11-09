@@ -86,6 +86,7 @@ sdist.include = [
 ]
 ## Uncomment to debug C++
 # cmake.build-type = "DEBUG"
+## Uncomment to debug C++ build
 # build.verbose = true
 
 [tool.pytest.ini_options]
@@ -122,7 +123,6 @@ pydocstyle.convention = "numpy"
 [tool.mypy]
 ignore_missing_imports = true
 allow_redefinition = true
-plugins = "numpy.typing.mypy_plugin"
 pretty = true
 files = ["src"]
 no_implicit_optional = false

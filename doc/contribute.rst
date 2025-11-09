@@ -82,6 +82,8 @@ compile again and install a debugger. On Linux and MacOS, you can use the GNU de
 
     gdb --args python -m pytest
 
+On Windows, you can use the wsl shell.
+
 Build the documentation
 -----------------------
 
