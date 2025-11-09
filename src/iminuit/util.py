@@ -1859,11 +1859,10 @@ def is_jupyter() -> bool:
         from IPython import get_ipython
 
         ip = get_ipython()
+        if ip is None:
+            return False
         return ip.has_trait("kernel")
-    except ImportError:
-        return False
-    except AttributeError:
-        # get_ipython() returns None if no InteractiveShell instance is registered.
+    except (ModuleNotFoundError, ImportError):
         return False
 
 

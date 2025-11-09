@@ -11,6 +11,21 @@
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
+std::vector<double> normalize_hessian(py::array_t<double> arg) {
+  if (arg.ndim() == 1) return py::cast<std::vector<double>>(arg);
+  if (arg.ndim() == 2) {
+    // transform to compressed format
+    auto r = arg.unchecked<2>(); // x must have ndim = 3; can be non-writeable
+    const unsigned size = arg.shape(0);
+    std::vector<double> result(size * (size + 1) / 2);
+    if (arg.shape(1) != size) throw std::runtime_error("2D matrix is not square");
+    for (py::ssize_t i = 0; i < size; ++i)
+      for (py::ssize_t j = i; j < size; ++j) result[j + i * (i + 1) / 2] = r(i, j);
+    return result;
+  }
+  throw std::runtime_error("number of dimensions must be 1 or 2");
+}
+
 FCN::FCN(py::object fcn, py::object grad, py::object g2, py::object hessian,
          bool array_call, double errordef)
     : fcn_{fcn}
@@ -71,12 +86,11 @@ std::vector<double> FCN::Hessian(const std::vector<double>& x) const {
   if (array_call_) {
     py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
     // TODO convert properly from a 2d numpy array on python side
-    return check_vector(py::cast<std::vector<double>>(hessian_(a)), x, "Hessian",
-                        npar_hessian);
+    return check_vector(normalize_hessian(hessian_(a)), x, "Hessian", npar_hessian);
   }
   // TODO convert properly from a 2d numpy array on python side
-  return check_vector(py::cast<std::vector<double>>(hessian_(*py::cast(x))), x,
-                      "Hessian", npar_hessian);
+  return check_vector(normalize_hessian(hessian_(*py::cast(x))), x, "Hessian",
+                      npar_hessian);
 }
 
 double FCN::Up() const { return errordef_; }

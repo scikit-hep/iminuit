@@ -159,13 +159,20 @@ def test_MnMigrad_hessian():
     assert fcn._nhessian > 0
 
 
-def test_MnMigrad_g2_hessian():
+@pytest.mark.parametrize(
+    "hessian",
+    [
+        lambda x, y: [8.0, 0, 1 / 8],  # compressed format
+        lambda x, y: [[8.0, 0], [0, 1 / 8]],  # dense format
+    ],
+)
+def test_MnMigrad_g2_hessian(hessian):
     # if both g2 and hessian are available, hessian is used
     fcn = FCN(
         lambda x, y: 10 + (2 * x) ** 2 + ((y - 1) / 4) ** 2,
         lambda x, y: [8 * x, (y - 1) / 8],
         lambda x, y: [-1, -1],  # not used
-        lambda x, y: [8, 0, 1 / 8],
+        hessian,
         False,
         1,
     )

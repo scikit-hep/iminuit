@@ -549,10 +549,11 @@ class Minuit:
             Analog to grad, but computes G2, the diagonal of the hessian matrix. If None
             (default), Minuit will call the function :func:`iminuit.util.g2` on `fcn`.
         hessian : callable, bool, or None, optional
-            Analog to grad, but computes the Hessian matrix. The Hessian matrix must be an
-            iterable in compressed form, we provide class:`iminuit.symmatrix.SymMatrix`
-            for convenience. Returning a numpy array is the most efficient way, but any
-            one-dimensional iterable works. If None (default), Minuit will call the
+            Analog to grad, but computes the Hessian matrix. The Hessian matrix must be
+            either a square symmetric matrix or an iterable in compressed form, we provide
+            class:`iminuit.symmatrix.SymMatrix` for convenience to constructed the
+            compressed version. Either way returning numpy arrays is the most efficient
+            way, but any array-like works. If None (default), Minuit will call the
             function :func:`iminuit.util.hessian` on `fcn`.
         name : sequence of str, optional
             If it is set, it overrides iminuit's function signature detection.
