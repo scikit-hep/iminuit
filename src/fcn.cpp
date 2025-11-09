@@ -11,19 +11,17 @@
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
-std::vector<double> normalize_hessian(py::array_t<double> arg) {
-  if (arg.ndim() == 1) return py::cast<std::vector<double>>(arg);
-  if (arg.ndim() == 2) {
-    // transform to compressed format
-    auto r = arg.unchecked<2>(); // x must have ndim = 3; can be non-writeable
-    const unsigned size = arg.shape(0);
-    std::vector<double> result(size * (size + 1) / 2);
-    if (arg.shape(1) != size) throw std::runtime_error("2D matrix is not square");
-    for (py::ssize_t i = 0; i < size; ++i)
-      for (py::ssize_t j = i; j < size; ++j) result[j + i * (i + 1) / 2] = r(i, j);
-    return result;
-  }
-  throw std::runtime_error("number of dimensions must be 1 or 2");
+std::vector<double> flatten_hessian(py::array_t<double> arg) {
+  if (arg.ndim() != 2) throw std::runtime_error("number of dimensions must be 2");
+
+  // flatten the matrix
+  auto r = arg.unchecked<2>();
+  const unsigned size = arg.shape(0);
+  if (arg.shape(1) != size) throw std::runtime_error("2D matrix is not square");
+  std::vector<double> result(size * size);
+  for (unsigned i = 0; i < size; ++i)
+    for (unsigned j = 0; j < size; ++j) result[i * size + j] = r(i, j);
+  return result;
 }
 
 FCN::FCN(py::object fcn, py::object grad, py::object g2, py::object hessian,
@@ -61,7 +59,7 @@ std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
   ++ngrad_;
   const unsigned npar = x.size();
   if (array_call_) {
-    py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
+    py::array_t<double> a(static_cast<py::ssize_t>(npar), x.data());
     return check_vector(py::cast<std::vector<double>>(grad_(a)), x, "Gradient", npar);
   }
   return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))), x, "Gradient",
@@ -72,7 +70,7 @@ std::vector<double> FCN::G2(const std::vector<double>& x) const {
   ++ng2_;
   const unsigned npar = x.size();
   if (array_call_) {
-    py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
+    py::array_t<double> a(static_cast<py::ssize_t>(npar), x.data());
     return check_vector(py::cast<std::vector<double>>(g2_(a)), x, "G2", npar);
   }
   return check_vector(py::cast<std::vector<double>>(g2_(*py::cast(x))), x, "G2", npar);
@@ -81,16 +79,13 @@ std::vector<double> FCN::G2(const std::vector<double>& x) const {
 std::vector<double> FCN::Hessian(const std::vector<double>& x) const {
   ++nhessian_;
   const unsigned npar = x.size();
-  // Symmetric hessian is stored in compressed format
-  const unsigned npar_hessian = npar * (npar + 1) / 2;
   if (array_call_) {
-    py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
-    // TODO convert properly from a 2d numpy array on python side
-    return check_vector(normalize_hessian(hessian_(a)), x, "Hessian", npar_hessian);
+    py::array_t<double> a(static_cast<py::ssize_t>(npar), x.data());
+    return check_vector(flatten_hessian(hessian_(a)), x, "Hessian", npar * npar);
   }
   // TODO convert properly from a 2d numpy array on python side
-  return check_vector(normalize_hessian(hessian_(*py::cast(x))), x, "Hessian",
-                      npar_hessian);
+  return check_vector(flatten_hessian(hessian_(*py::cast(x))), x, "Hessian",
+                      npar * npar);
 }
 
 double FCN::Up() const { return errordef_; }

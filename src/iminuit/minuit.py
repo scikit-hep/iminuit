@@ -560,9 +560,7 @@ class Minuit:
             (default), Minuit will call the function :func:`iminuit.util.g2` on `fcn`.
         hessian : callable, bool, or None, optional
             Analog to grad, but computes the Hessian matrix. The Hessian matrix must be
-            either a square symmetric matrix or an iterable in compressed form, we provide
-            class:`iminuit.symmatrix.SymMatrix` for convenience to constructed the
-            compressed version. Either way returning numpy arrays is the most efficient
+            a square symmetric matrix. Returning numpy arrays is the most efficient
             way, but any array-like works. If None (default), Minuit will call the
             function :func:`iminuit.util.hessian` on `fcn`.
         name : sequence of str, optional

@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
 from iminuit import Minuit
-from iminuit.util import Param, make_func_code, SymMatrix
+from iminuit.util import Param, make_func_code
 from iminuit.warnings import IMinuitWarning, ErrordefAlreadySetWarning
 from iminuit.typing import Annotated
 from pytest import approx
@@ -38,7 +38,7 @@ def func0_g2(x, y):
 
 def func0_hessian(x, y):
     df2_dxdx, df2_dydy = func0_g2(x, y)
-    return SymMatrix({(0, 0): df2_dxdx, (1, 1): df2_dydy})
+    return [[df2_dxdx, 0], [0, df2_dydy]]
 
 
 class Func1:

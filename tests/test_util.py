@@ -394,38 +394,6 @@ def test_FMin(errordef):
     )
 
 
-def test_SymMatrix():
-    m = util.SymMatrix(2)
-    m[0, 0] = 1
-    m[0, 1] = 2
-    m[1, 1] = 3
-    assert m[1, 0] == 2
-    assert_equal(m.to_dense(), [[1, 2], [2, 3]])
-    assert m[-1, -1] == 3
-    assert m[0, -1] == 2
-    assert m[-1, 0] == 2
-    assert str(m) == "[[1. 2.]\n [2. 3.]]"
-    assert repr(m) == "SymMatrix([1., 2., 3.])"
-    m2 = util.SymMatrix([1, 2, 3])
-    assert_equal(m, m2)
-    m3 = util.SymMatrix({(0, 0): 1, (1, 0): 2, (1, 1): 3})
-    assert_equal(m, m3)
-    m4 = util.SymMatrix({(0, 0): 1, (1, 1): 2})
-    assert_equal(m4.to_dense(), [[1, 0], [0, 2]])
-    dense = [[1, 2, 3], [2, 4, 5], [3, 5, 6]]
-    m5 = util.SymMatrix(dense)
-    assert_equal(m5.to_dense(), dense)
-
-    # bad size
-    with pytest.raises(ValueError, match="is not a symmetric matrix"):
-        util.SymMatrix([1.0, 2.0])
-
-    pkl = pickle.dumps(m)
-    m2 = pickle.loads(pkl)
-
-    assert_equal(m2.to_dense(), m.to_dense())
-
-
 def test_normalize_limit():
     assert util._normalize_limit(None) == (-np.inf, np.inf)
     assert util._normalize_limit((None, 2)) == (-np.inf, 2)

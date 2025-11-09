@@ -12,7 +12,7 @@ from iminuit import _repr_html, _repr_text, _deprecated
 from iminuit.typing import Key, UserBound, Cost, CostVector
 from iminuit.warnings import IMinuitWarning, HesseFailedWarning, PerformanceWarning
 import numpy as np
-from numpy.typing import NDArray, ArrayLike, DTypeLike
+from numpy.typing import NDArray, ArrayLike
 from typing import (
     overload,
     Any,
@@ -397,131 +397,6 @@ class Matrix(np.ndarray):
     def __setstate__(self, state):
         """Restore from pickled state."""
         state, self._var2pos = state
-        super().__setstate__(state)
-
-
-class SymMatrix(np.ndarray):
-    """
-    Symmetric matrix stored in compressed form.
-
-    Instead of a full square matrix, this compressed form
-    only stores n * (n + 1) / 2 numbers, exploiting the symmetry.
-
-    Use this for convenience when you write a function that passes
-    the Hessian to iminuit.
-
-    Notes
-    -----
-    This class is provided for convenience so that you do not need to remember
-    how the compressed format is defined, but if you need to know the implementation,
-    the linear index is computed as follows::
-
-        index = j + i * (i + 1) // 2
-
-    where i is the first index of the corresponding matrix and j the second.
-    """
-
-    _symmatrix_size: int
-
-    def __new__(
-        cls: type[SymMatrix],
-        arg: Union[int, ArrayLike, Dict[Tuple[int, int], int | float]],
-        dtype: DTypeLike = float,
-    ):
-        """Create new SymMatrix.
-
-        Parameters
-        ----------
-        cls: This class.
-        arg: Either number of columns for the matrix, an ArrayLike in compressed form that represents the matrix, or a dictionary from matrix indices to values.
-        dtype: Data type of the values stored in the matrix.
-        """
-        if isinstance(arg, int):
-            size = arg
-            buffer = None
-        elif isinstance(arg, dict):
-            size = max(sum(arg, ())) + 1
-            buffer = np.zeros(size * (size + 1) // 2, dtype=dtype)
-            for (i, j), val in arg.items():
-                buffer[cls._index(size, i, j)] = val
-        elif isinstance(arg, Iterable):
-            buffer = np.asarray(arg, dtype=dtype)
-            if buffer.ndim == 1:
-                size = int((-1 + np.sqrt(1 + 8 * len(buffer))) / 2)
-            elif buffer.ndim == 2:
-                size = len(buffer)
-                tmp = np.empty(size * (size + 1) // 2, buffer.dtype)
-                for i in range(size):
-                    for j in range(i, size):
-                        tmp[cls._index(size, i, j)] = buffer[i, j]
-                buffer = tmp
-            else:
-                msg = "buffer must be 1D or 2D"
-                raise ValueError(msg)
-        else:
-            msg = f"invalid argument {arg=}"
-            raise ValueError(msg)
-        n = size * (size + 1) // 2
-        if buffer is not None:
-            if len(buffer) != n:
-                msg = f"buffer with length {len(buffer)} is not a symmetric matrix"
-                raise ValueError(msg)
-        obj = super().__new__(cls, shape=(n,), buffer=buffer, dtype=dtype)  # type:ignore
-        obj._symmatrix_size = size
-        return obj
-
-    def __array_finalize__(self, obj):
-        """Propagate special field of the SymMatrix."""
-        if obj is None:
-            return
-        self._symmatrix_size = getattr(obj, "_symmatrix_size", None)
-
-    @staticmethod
-    def _index(n: int, i: int, j: int) -> int:
-        if not (-n + 1 <= i < n and -n + 1 <= j < n):
-            raise IndexError(f"Index ({i},{j}) out of bounds for {n}x{n} SymMatrix")
-        if i < 0:
-            i += n
-        if j < 0:
-            j += n
-        if j > i:
-            i, j = j, i
-        return j + i * (i + 1) // 2
-
-    def __getitem__(self, key):
-        """Get value at index (i, j)."""
-        if isinstance(key, tuple) and len(key) == 2:
-            key = self._index(self._symmatrix_size, *key)
-        return super().__getitem__(key)
-
-    def __setitem__(self, key, value):
-        """Set value at index (i, j)."""
-        if isinstance(key, tuple) and len(key) == 2:
-            key = self._index(self._symmatrix_size, *key)
-        super().__setitem__(key, value)
-
-    def to_dense(self) -> np.ndarray:
-        """Return compressed matrix in standard dense form."""
-        n = self._symmatrix_size
-        M = np.zeros((n, n), dtype=self.dtype)
-        for i in range(n):
-            for j in range(n):
-                M[i, j] = self[i, j]
-        return M
-
-    def __str__(self) -> str:
-        """Return string showing matrix in standard dense form."""
-        return str(self.to_dense())
-
-    # ndarray uses __reduce__ for pickling instead of __getstate__
-    def __reduce__(self):
-        """Get representation for pickling and copying."""
-        restore, args, state = super().__reduce__()
-        return restore, args, (state, self._symmatrix_size)
-
-    def __setstate__(self, state):
-        """Restore from pickled state."""
-        state, self._symmatrix_size = state
         super().__setstate__(state)
 
 
