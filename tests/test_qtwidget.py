@@ -10,13 +10,14 @@ PySide6 = pytest.importorskip("PySide6")
 mpl.use("Agg")
 
 
-def qtinteractive(m, plot=None, raise_on_exception=False, **kwargs):
+def qtinteractive(qtbot, m, plot=None, raise_on_exception=False, **kwargs):
     from iminuit.qtwidget import make_widget
 
-    return make_widget(m, plot, kwargs, raise_on_exception, run_event_loop=False)
+    w = make_widget(m, plot, kwargs, raise_on_exception, run_event_loop=False)
+    qtbot.addWidget(w)
+    return w
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_pyside6(qtbot):
     def cost(a, b):
         return a**2 + b**2
@@ -42,8 +43,7 @@ def test_interactive_pyside6(qtbot):
     m = Minuit(cost, 1, 1)
 
     with plot.assert_call():
-        mw1 = qtinteractive(m, plot)
-    qtbot.addWidget(mw1)
+        mw1 = qtinteractive(qtbot, m, plot)
     assert isinstance(mw1, PySide6.QtWidgets.QWidget)
 
     # manipulate state to also check this code
@@ -72,8 +72,7 @@ def test_interactive_pyside6(qtbot):
     # check changing of limits
     m = Minuit(cost, 0, 0)
     m.limits["a"] = (-2, 2)
-    mw2 = qtinteractive(m, plot)
-    qtbot.addWidget(mw2)
+    mw2 = qtinteractive(qtbot, m, plot)
     mw2.parameters[0].tmin.setValue(-1)
     mw2.parameters[0].tmax.setValue(1)
     assert_allclose(m.limits["a"], (-1, 1), atol=1e-5)
@@ -103,8 +102,7 @@ def test_interactive_pyside6(qtbot):
     c = Cost()
     m = Minuit(c, 0, 0)
     with plot.assert_call():
-        mw = qtinteractive(m, raise_on_exception=True)
-    qtbot.addWidget(mw)
+        mw = qtinteractive(qtbot, m, raise_on_exception=True)
 
     # this should modify slider range
     assert mw.parameters[0].vmax == 1
@@ -118,7 +116,6 @@ def test_interactive_pyside6(qtbot):
     #    mw.fit_button.click()
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_pyside6_raises(qtbot):
     def raiser(args):
         raise ValueError
@@ -126,13 +123,12 @@ def test_interactive_pyside6_raises(qtbot):
     m = Minuit(lambda x, y: 0, 0, 1)
 
     # by default do not raise
-    qtinteractive(m, raiser)
+    qtinteractive(qtbot, m, raiser)
 
     with pytest.raises(ValueError):
-        qtinteractive(m, raiser, raise_on_exception=True)
+        qtinteractive(qtbot, m, raiser, raise_on_exception=True)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_interactive_pyside6_with_array_func(qtbot):
     def cost(par):
         return par[0] ** 2 + (par[1] / 2) ** 2
@@ -146,5 +142,5 @@ def test_interactive_pyside6_with_array_func(qtbot):
     trace_args = TraceArgs()
     m = Minuit(cost, (1, 2))
 
-    qtinteractive(m, trace_args)
+    qtinteractive(qtbot, m, trace_args)
     assert trace_args.nargs > 0

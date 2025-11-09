@@ -28,6 +28,7 @@ from typing import (
     Sequence,
     TypeVar,
     Annotated,
+    SupportsIndex,
     get_args,
     get_origin,
 )
@@ -35,6 +36,7 @@ import abc
 from time import monotonic
 import warnings
 import sys
+from dataclasses import dataclass, asdict
 
 T = TypeVar("T")
 
@@ -872,10 +874,10 @@ class Params(tuple):
 
     __slots__ = ()
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         return _repr_html.params(self)
 
-    def to_table(self):
+    def to_table(self) -> Tuple[List[List[str]], List[str]]:
         """
         Convert parameter data to a tabular format.
 
@@ -929,17 +931,28 @@ class Params(tuple):
             tab.append(row)
         return tab, header
 
-    def __getitem__(self, key):
+    @overload
+    def __getitem__(self, key: SupportsIndex) -> Param: ...
+
+    @overload
+    def __getitem__(self, key: slice) -> tuple[Param, ...]: ...
+
+    @overload
+    def __getitem__(self, key: str) -> Param: ...
+
+    def __getitem__(
+        self, key: str | SupportsIndex | slice
+    ) -> Param | tuple[Param, ...]:
         """Get item at key, which can be an index or a parameter name."""
         if isinstance(key, str):
-            key = len(self)
             for i, p in enumerate(self):
                 if p.name == key:
                     key = i
                     break
+        assert isinstance(key, (int, slice))
         return super(Params, self).__getitem__(key)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get user-friendly text representation."""
         return _repr_text.params(self)
 
@@ -950,6 +963,7 @@ class Params(tuple):
             p.text(str(self))
 
 
+@dataclass
 class MError:
     """
     Minos data object.
@@ -988,39 +1002,26 @@ class MError:
         Function value at the new minimum.
     """
 
-    __slots__ = (
-        "number",
-        "name",
-        "lower",
-        "upper",
-        "is_valid",
-        "lower_valid",
-        "upper_valid",
-        "at_lower_limit",
-        "at_upper_limit",
-        "at_lower_max_fcn",
-        "at_upper_max_fcn",
-        "lower_new_min",
-        "upper_new_min",
-        "nfcn",
-        "min",
-    )
-
-    def __init__(self, *args: Union[int, str, float, bool]):
-        # Users should not call this __init__, instances are created by the library
-        assert len(args) == len(self.__slots__)
-        for k, arg in zip(self.__slots__, args):
-            setattr(self, k, arg)
-
-    def __eq__(self, other: object) -> bool:
-        """Return True if all values are equal."""
-        return all(getattr(self, k) == getattr(other, k) for k in self.__slots__)
+    number: int
+    name: str
+    lower: float
+    upper: float
+    is_valid: bool
+    lower_valid: bool
+    upper_valid: bool
+    at_lower_limit: bool
+    at_upper_limit: bool
+    at_lower_max_fcn: bool
+    at_upper_max_fcn: bool
+    lower_new_min: float
+    upper_new_min: float
+    nfcn: int
+    min: float
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
         s = "<MError"
-        for idx, k in enumerate(self.__slots__):
-            v = getattr(self, k)
+        for k, v in asdict(self).items():
             s += f" {k}={v!r}"
         s += ">"
         return s
@@ -1044,14 +1045,14 @@ class MErrors(OrderedDict):
 
     __slots__ = ()
 
-    def _repr_html_(self):
+    def _repr_html_(self) -> str:
         return _repr_html.merrors(self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Get detailed text representation."""
         return "<MErrors\n  " + ",\n  ".join(repr(x) for x in self.values()) + "\n>"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Get user-friendly text representation."""
         return _repr_text.merrors(self)
 
@@ -1061,18 +1062,18 @@ class MErrors(OrderedDict):
         else:
             p.text(str(self))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[int, str]) -> MError:
         """Get item at key, which can be an index or a parameter name."""
         if isinstance(key, int):
             if key < 0:
                 key += len(self)
             if key < 0 or key >= len(self):
                 raise IndexError("index out of range")
-            key = len(self)
             for i, k in enumerate(self):
                 if i == key:
                     key = k
                     break
+        assert isinstance(key, str)
         return OrderedDict.__getitem__(self, key)
 
 
@@ -1862,7 +1863,7 @@ def is_positive_definite(m: ArrayLike) -> bool:
 
 def is_jupyter() -> bool:
     try:
-        from IPython.core import get_ipython
+        from IPython import get_ipython
 
         ip = get_ipython()
         return ip.has_trait("kernel")
@@ -1871,7 +1872,6 @@ def is_jupyter() -> bool:
     except AttributeError:
         # get_ipython() returns None if no InteractiveShell instance is registered.
         return False
-    return False
 
 
 def _make_finite(x: float) -> float:

@@ -797,3 +797,11 @@ def test_positive_definite():
     assert util.is_positive_definite([[1, 0], [0, 1]])
     assert not util.is_positive_definite([[1, 1], [1, 1]])
     assert not util.is_positive_definite([[1, 0], [1, 1]])
+
+
+def test_is_jupyter_1():
+    assert util.is_jupyter() is False
+
+
+def test_is_jupyter_2(mock_ipython):
+    assert util.is_jupyter() is True
