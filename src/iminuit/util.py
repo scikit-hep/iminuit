@@ -28,7 +28,6 @@ from typing import (
     Sequence,
     TypeVar,
     Annotated,
-    Self,
     get_args,
     get_origin,
 )
@@ -36,7 +35,6 @@ import abc
 from time import monotonic
 import warnings
 import sys
-from functools import reduce
 
 T = TypeVar("T")
 
