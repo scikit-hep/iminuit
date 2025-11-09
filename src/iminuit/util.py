@@ -551,6 +551,8 @@ class FMin:
         "_has_parameters_at_limit",
         "_nfcn",
         "_ngrad",
+        "_ng2",
+        "_nhessian",
         "_ndof",
         "_edm_goal",
         "_time",
@@ -562,6 +564,8 @@ class FMin:
         algorithm: str,
         nfcn: int,
         ngrad: int,
+        ng2: int,
+        nhessian: int,
         ndof: int,
         edm_goal: float,
         time: float,
@@ -581,6 +585,8 @@ class FMin:
             self._has_parameters_at_limit |= min(v - lb, ub - v) < 0.5 * e
         self._nfcn = nfcn
         self._ngrad = ngrad
+        self._ng2 = ng2
+        self._nhessian = nhessian
         self._ndof = ndof
         self._edm_goal = edm_goal
         self._time = time
@@ -646,8 +652,18 @@ class FMin:
 
     @property
     def ngrad(self) -> int:
-        """Get number of function gradient calls so far."""
+        """Get number of gradient calls so far."""
         return self._ngrad
+
+    @property
+    def ng2(self) -> int:
+        """Get number of g2 calls so far."""
+        return self._ng2
+
+    @property
+    def nhessian(self) -> int:
+        """Get number of hessian calls so far."""
+        return self._nhessian
 
     @property
     def is_valid(self) -> bool:

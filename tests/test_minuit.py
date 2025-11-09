@@ -108,6 +108,10 @@ def func_np_grad(x):  # test numpy support
     return 2 * (x - 1)
 
 
+def func_np_hessian(x):  # test numpy support
+    return 2 * np.eye(len(x))
+
+
 data_y = [
     0.552,
     0.735,
@@ -324,6 +328,29 @@ def test_array_func_2():
     assert m.limits["a"] == (0, 2)
     m.migrad()
     assert m.fmin.ngrad > 0
+    assert_allclose(m.values, (1, 1), rtol=1e-2)
+    c = m.covariance
+    assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)
+    m.minos()
+    assert len(m.merrors) == 1
+    assert m.merrors[0].lower == approx(-1, abs=1e-2)
+    assert m.merrors[0].name == "a"
+
+
+def test_array_func_3():
+    m = Minuit(
+        func_np, (2, 1), grad=func_np_grad, hessian=func_np_hessian, name=("a", "b")
+    )
+    m.fixed = (False, True)
+    m.errors = (0.5, 0.5)
+    m.limits = ((0, 2), (-np.inf, np.inf))
+    assert m.values == (2, 1)
+    assert m.errors == (0.5, 0.5)
+    assert m.fixed == (False, True)
+    assert m.limits["a"] == (0, 2)
+    m.migrad()
+    assert m.fmin.ngrad > 0
+    assert m.fmin.nhessian > 0
     assert_allclose(m.values, (1, 1), rtol=1e-2)
     c = m.covariance
     assert_allclose(c, ((1, 0), (0, 0)), rtol=1e-2)

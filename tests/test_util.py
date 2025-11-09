@@ -342,7 +342,7 @@ def test_FMin(errordef):
         has_parameters_at_limit=False,
         state=[],
     )
-    fmin = util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.2)
+    fmin = util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.1, 1.2)
     assert {x for x in dir(fmin) if not x.startswith("_")} == {
         "algorithm",
         "edm",
@@ -352,6 +352,8 @@ def test_FMin(errordef):
         "reduced_chi2",
         "nfcn",
         "ngrad",
+        "ng2",
+        "nhessian",
         "is_valid",
         "has_accurate_covar",
         "has_valid_parameters",
@@ -370,10 +372,10 @@ def test_FMin(errordef):
     assert not fmin.has_parameters_at_limit
     assert fmin.time == 1.2
 
-    assert fmin == util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.2)
-    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.3, 1.2)
-    assert fmin != util.FMin(fm, "bar", 1, 2, 1, 0.1, 1.2)
-    assert fmin != util.FMin(fm, "foo", 1, 2, 1, 0.1, 1.5)
+    assert fmin == util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.1, 1.2)
+    assert fmin != util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.3, 1.2)
+    assert fmin != util.FMin(fm, "bar", 1, 2, 0, 0, 1, 0.1, 1.2)
+    assert fmin != util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.1, 1.5)
 
     if errordef == 1:
         reduced_chi2 = fmin.fval
@@ -387,7 +389,7 @@ def test_FMin(errordef):
         " has_parameters_at_limit=False has_posdef_covar=True"
         " has_reached_call_limit=False has_valid_parameters=True"
         " hesse_failed=False is_above_max_edm=False is_valid=True"
-        f" nfcn=1 ngrad=2 reduced_chi2={reduced_chi2} time=1.2>"
+        f" nfcn=1 ng2=0 ngrad=2 nhessian=0 reduced_chi2={reduced_chi2} time=1.2>"
     )
 
 

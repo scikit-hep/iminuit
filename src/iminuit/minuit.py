@@ -83,6 +83,16 @@ class Minuit:
         return self._fcn.gradient  # type:ignore
 
     @property
+    def g2(self) -> Callable[[np.ndarray], np.ndarray]:
+        """Get g2 function of the cost function."""
+        return self._fcn.g2  # type:ignore
+
+    @property
+    def hessian(self) -> Callable[[np.ndarray], np.ndarray]:
+        """Get hessian function of the cost function."""
+        return self._fcn.hessian  # type:ignore
+
+    @property
     def pos2var(self) -> Tuple[str, ...]:
         """Map variable index to name."""
         return self._pos2var
@@ -859,6 +869,8 @@ class Minuit:
             "Migrad",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             self._edm_goal(migrad_factor=True),
             t.value,
@@ -916,6 +928,8 @@ class Minuit:
             "Simplex",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             self._edm_goal(),
             t.value,
@@ -1026,6 +1040,8 @@ class Minuit:
             "Scan",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             edm_goal,
             t.value,
@@ -1415,6 +1431,8 @@ class Minuit:
             f"SciPy[{method}]",
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             edm_goal,
             t.value,
@@ -1507,7 +1525,15 @@ class Minuit:
                 edm_goal,
             )
             self._fmin = mutil.FMin(
-                fm, "External", self.nfcn, self.ngrad, self.ndof, edm_goal, 0
+                fm,
+                "External",
+                self.nfcn,
+                self.ngrad,
+                self.ng2,
+                self.nhessian,
+                self.ndof,
+                edm_goal,
+                0,
             )
             self._merrors = mutil.MErrors()
 
@@ -1528,6 +1554,8 @@ class Minuit:
             self._fmin.algorithm,
             self.nfcn,
             self.ngrad,
+            self.ng2,
+            self.nhessian,
             self.ndof,
             self._fmin.edm_goal,
             t.value,
