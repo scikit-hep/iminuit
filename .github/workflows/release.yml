@@ -23,7 +23,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: true
           fetch-depth: 0
@@ -57,13 +57,13 @@ jobs:
             py: cp310
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: true
 
       - uses: astral-sh/setup-uv@v7
 
-      - uses: pypa/cibuildwheel@v3.2
+      - uses: pypa/cibuildwheel@v3.3
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
 
@@ -77,7 +77,7 @@ jobs:
     name: source package
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: true
 
@@ -128,7 +128,7 @@ jobs:
     needs: [release_check, upload]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: softprops/action-gh-release@v2
         with:
           name: v${{ needs.release_check.outputs.tag }}
