@@ -1527,7 +1527,9 @@ class BinnedCostWithModel(BinnedCost):
             self._pred_impl = self._pred_cdf
         elif use_pdf == "custom":
             if integrator is None:
-                raise ValueError('use_pdf="custom" requires an integrator to be provided')
+                raise ValueError(
+                    'use_pdf="custom" requires an integrator to be provided'
+                )
             # _pred_impl set after super().__init__() when _ndim and xe are available
         else:
             msg = (
