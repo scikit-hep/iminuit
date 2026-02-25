@@ -1609,7 +1609,9 @@ class BinnedCostWithModel(BinnedCost):
             n = len(xe) - 1
 
             def _pred_impl(args: Sequence[float]) -> NDArray:
-                pdf = lambda x: self._model(x, *args)
+                def pdf(x):
+                    return self._model(x, *args)
+
                 d = np.empty(n)
                 for i in range(n):
                     d[i] = integrator(pdf, xe[i], xe[i + 1])
@@ -1622,7 +1624,9 @@ class BinnedCostWithModel(BinnedCost):
             ndim = self._ndim
 
             def _pred_impl(args: Sequence[float]) -> NDArray:
-                pdf = lambda x: self._model(x, *args)
+                def pdf(x):
+                    return self._model(x, *args)
+
                 d = np.empty(shape)
                 for idx in itertools.product(*[range(nb) for nb in nbins]):
                     a = np.array([xe_list[dim][idx[dim]] for dim in range(ndim)])
