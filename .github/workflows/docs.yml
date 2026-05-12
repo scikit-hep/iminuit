@@ -35,7 +35,7 @@ jobs:
     - uses: astral-sh/setup-uv@v8.0.0
     - run: uv pip install --system nox
     - run: nox -s doc
-    - uses: actions/upload-pages-artifact@v4
+    - uses: actions/upload-pages-artifact@v5
       with:
         path: './build/html'
 
@@ -55,5 +55,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/configure-pages@v5
-    - uses: actions/deploy-pages@v4
+    - uses: actions/configure-pages@v6
+    - uses: actions/deploy-pages@v5
