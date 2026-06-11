@@ -220,7 +220,7 @@ def _unpack(values):
 
 def _unpacked_index(values, index):
     k = 0
-    for i in range(index):
+    for _ in range(index):
         k += 2 if values[k] < 0 else 1
     return k
 

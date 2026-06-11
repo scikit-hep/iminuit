@@ -58,7 +58,7 @@ def maxtest(session: nox.Session) -> None:
     session.run("pytest", *extra_args, env=ENV)
 
 
-@nox.session(python="pypy3.9")
+@nox.session(python="pypy3.11")
 def pypy(session: nox.Session) -> None:
     """Run the unit and regular tests."""
     session.install("-e.")

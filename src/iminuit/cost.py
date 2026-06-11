@@ -533,8 +533,7 @@ class Cost(abc.ABC):
         return len(self._parameters)
 
     @abc.abstractmethod
-    def _ndata(self):
-        NotImplemented  # pragma: no cover
+    def _ndata(self): ...  # pragma: no cover
 
     @property
     def verbose(self):
@@ -1771,7 +1770,7 @@ class Template(BinnedCost):
         except KeyError:
             raise ValueError(
                 f"method {method} is not understood, allowed values: {known_methods}"
-            )
+            ) from None
 
         if method == "hpd":
             warnings.warn(
@@ -1816,7 +1815,7 @@ class Template(BinnedCost):
                 mu_var += np.ones_like(mu) * 1e-300
                 i += t2
             else:  # never arrive here
-                assert False  # pragma: no cover
+                raise AssertionError  # pragma: no cover
         return mu, mu_var
 
     def _value(self, args: Sequence[float]) -> float:
@@ -2548,7 +2547,7 @@ def _normalize_output(x, kind, *shape, msg=None):
             msg = f"{kind} should return numpy array, but returns {type(x)}"
         else:
             msg = f"{kind} should return numpy array {msg}, but returns {type(x)}"
-        warnings.warn(msg, PerformanceWarning)
+        warnings.warn(msg, PerformanceWarning, stacklevel=2)
         x = np.array(x)
         if x.dtype.kind != "f":
             return x.astype(float)

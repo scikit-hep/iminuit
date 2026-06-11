@@ -84,7 +84,7 @@ def make_widget(
             minuit.simplex()
             return False
         else:
-            assert False  # pragma: no cover, should never happen
+            raise AssertionError  # pragma: no cover, should never happen
         return True
 
     class OnParameterChange:
@@ -97,7 +97,7 @@ def make_widget(
         def __init__(self, skip: int = 0):
             self.skip = skip
 
-        def __call__(self, change: Dict[str, Any] = {}):
+        def __call__(self, change: Dict[str, Any] = {}):  # noqa: B006
             if self.skip > 0:
                 self.skip -= 1
                 return

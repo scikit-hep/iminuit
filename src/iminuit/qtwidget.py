@@ -316,7 +316,7 @@ def make_widget(
             elif self.algo_choice.currentText() == "Simplex":
                 minuit.simplex()
             else:
-                assert False  # pragma: no cover, should never happen
+                raise AssertionError  # pragma: no cover, should never happen
             return True
 
         def on_parameter_change(self, from_fit=False, report_success=False):

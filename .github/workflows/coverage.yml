@@ -46,6 +46,9 @@ jobs:
     # without this, the Qt tests abort because a lib is missing
     - uses: tlambert03/setup-qt-libs@v1
     - uses: astral-sh/setup-uv@v8.2.0
-    - run: uv pip install --system nox
+    - run: uv pip install --system nox coverage
     - run: nox -s cov
-    - uses: AndreMiras/coveralls-python-action@develop
+    - run: coverage lcov -o coverage.lcov
+    - uses: coverallsapp/github-action@v2
+      with:
+        file: coverage.lcov
