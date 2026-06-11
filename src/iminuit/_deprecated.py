@@ -1,5 +1,6 @@
 import warnings
-from typing import Callable, Any
+from typing import Any
+from collections.abc import Callable
 from importlib.metadata import version
 from iminuit._parse_version import parse_version
 

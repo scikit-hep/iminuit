@@ -47,7 +47,6 @@ https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
 
 import math
-from typing import List
 
 
 term = (" %s", " +%s", " ± %s", " (%s)", "(%s)E%+03i", True, None)
@@ -162,7 +161,7 @@ def pdg_format(value, error, *errors, labels=None, format=term, leader=None, exp
         return fmt_sc % (s, nexp)
 
 
-def _strip(items: List[str]) -> List[str]:
+def _strip(items: list[str]) -> list[str]:
     assert all("e" not in x for x in items)
     # ignore inf and nan
     mask = tuple(i for (i, s) in enumerate(items) if "." in s)
