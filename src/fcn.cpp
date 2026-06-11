@@ -42,6 +42,27 @@ FCN::FCN(py::object fcn, py::object grad, py::object g2, py::object hessian,
   }
 }
 
+// Convert the value returned by the Python cost function into a double.
+//
+// In addition to plain Python floats/ints, this accepts numpy scalars and
+// numpy arrays of size 1 (0-d or shape (1,)). Older numpy versions allowed
+// such arrays to be converted implicitly via float(), but numpy >= 2 raises
+// for arrays with ndim > 0, which silently broke user cost functions that
+// return e.g. ``np.diff(...)``. We restore the previous behavior by calling
+// ``.item()`` on numpy arrays, which works for any size-1 array and raises a
+// clear error otherwise.
+double as_double(py::handle obj) {
+  if (py::isinstance<py::array>(obj)) {
+    auto arr = py::reinterpret_borrow<py::array>(obj);
+    if (arr.size() != 1)
+      throw std::runtime_error(
+          "cost function must return a scalar, but returned an array of size " +
+          std::to_string(arr.size()));
+    return py::cast<double>(arr.attr("item")());
+  }
+  return py::cast<double>(obj);
+}
+
 double FCN::operator()(const std::vector<double>& x) const {
   ++nfcn_;
   if (array_call_) {
@@ -49,10 +70,10 @@ double FCN::operator()(const std::vector<double>& x) const {
       return cfcn_(x.size(), x.data());
     } else {
       py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
-      return check_value(py::cast<double>(fcn_(a)), x);
+      return check_value(as_double(fcn_(a)), x);
     }
   }
-  return check_value(py::cast<double>(fcn_(*py::cast(x))), x);
+  return check_value(as_double(fcn_(*py::cast(x))), x);
 }
 
 std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
