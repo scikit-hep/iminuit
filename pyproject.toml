@@ -8,7 +8,7 @@ description = "Jupyter-friendly Python frontend for MINUIT2 in C++"
 version = "2.33.0"
 maintainers = [{ name = "Hans Dembinski", email = "hans.dembinski@gmail.com" }]
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT AND LGPL-2.1-or-later"
 license-files = ["LICENSE"]
 classifiers = [
@@ -19,6 +19,11 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development",
@@ -29,7 +34,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
 ]
-dependencies = ["numpy >=1.21"]
+dependencies = ["numpy >=1.21.3"]
 
 [project.optional-dependencies]
 scipy = ["scipy >=1.9"]
@@ -198,6 +203,6 @@ PIP_ONLY_BINARY = ":all:"
 PIP_EXTRA_INDEX_URL = "https://pypi.anaconda.org/beeware/simple/"
 
 [[tool.cibuildwheel.overrides]]
-# to match numpy, we use manylinux2014 for cp310 (and 3.9, since manylinux2010 is dead)
-select = "cp3{9,10}-manylinux*"
+# to match numpy, we use manylinux2014 for cp310
+select = "cp310-manylinux*"
 manylinux-x86_64-image = "manylinux2014"
