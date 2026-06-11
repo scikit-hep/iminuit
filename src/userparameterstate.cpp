@@ -13,8 +13,8 @@ bool operator==(const MnUserParameterState& a, const MnUserParameterState& b) {
          a.IntParameters() == b.IntParameters() &&
          a.IntCovariance().Data() == b.IntCovariance().Data() &&
          a.CovarianceStatus() == b.CovarianceStatus() && a.IsValid() == b.IsValid() &&
-         a.HasCovariance() == b.HasCovariance() && a.Fval() == b.Fval() &&
-         a.Edm() == b.Edm() && a.NFcn() == b.NFcn();
+         a.HasCovariance() == b.HasCovariance() && a.Edm() == b.Edm() &&
+         a.NFcn() == b.NFcn();
 }
 
 } // namespace Minuit2
@@ -30,7 +30,7 @@ int size(const MnUserParameterState& self) {
 const MinuitParameter& getitem(const MnUserParameterState& self, int i) {
   const int n = size(self);
   if (i < 0) i += n;
-  if (i >= n) throw py::index_error();
+  if (i < 0 || i >= n) throw py::index_error();
   return self.Parameter(i);
 }
 
@@ -100,7 +100,7 @@ void bind_userparameterstate(py::module m) {
 
       .def("__len__", size)
       .def("__getitem__", getitem)
-      .def("__iter__", iter)
+      .def("__iter__", iter, py::keep_alive<0, 1>())
       .def(py::self == py::self)
 
       .def(py::pickle(

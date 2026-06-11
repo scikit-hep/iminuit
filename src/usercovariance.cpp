@@ -27,7 +27,12 @@ void bind_usercovariance(py::module m) {
 
       .def("__getitem__",
            [](const MnUserCovariance& self, py::object args) {
-             const auto tup = py::cast<std::pair<int, int>>(args);
+             auto tup = py::cast<std::pair<int, int>>(args);
+             const int n = static_cast<int>(self.Nrow());
+             if (tup.first < 0) tup.first += n;
+             if (tup.second < 0) tup.second += n;
+             if (tup.first < 0 || tup.first >= n || tup.second < 0 || tup.second >= n)
+               throw py::index_error();
              return self(tup.first, tup.second);
            })
 
