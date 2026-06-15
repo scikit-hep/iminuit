@@ -17,10 +17,10 @@ def test_params():
     assert (
         framed(tab.tabulate(*m.params.to_table()))
         == """
-  pos  name      value    error  error-    error+    limit-    limit+    fixed
+  pos  name      value    error    error-    error+    limit-    limit+  fixed
 -----  ------  -------  -------  --------  --------  --------  --------  -------
     0  x             0      0.1                                          yes
-    1  y             0      1.5  -1.0      1.0       -1.0      1.0
+    1  y             0      1.5        -1         1        -1         1
 """
     )
 
