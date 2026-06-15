@@ -366,6 +366,25 @@ def test_wrong_use_of_array_init():
         m.migrad()
 
 
+@pytest.mark.parametrize(
+    "wrap", [lambda v: np.array(v), lambda v: np.array([v]), lambda v: np.float64(v)]
+)
+def test_cost_returns_size_one_array(wrap):
+    # cost functions that return a numpy scalar or a size-1 array (0-d or
+    # shape (1,)) must be accepted; numpy >= 2 no longer converts size-1
+    # arrays via float(), which used to silently break such functions.
+    m = Minuit(lambda x, y: wrap(x**2 + (y - 1) ** 2), x=1, y=0)
+    m.migrad()
+    assert m.valid
+    assert_allclose(m.values, (0, 1), atol=1e-3)
+
+
+def test_cost_returns_wrong_size_array():
+    m = Minuit(lambda x: np.array([x, x]), x=1)
+    with pytest.raises(RuntimeError, match="must return a scalar"):
+        m.migrad()
+
+
 def test_reset():
     m = Minuit(func0, x=0, y=0)
     m.migrad()
