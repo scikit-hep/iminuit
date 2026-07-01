@@ -36,7 +36,7 @@ jobs:
             installs: "'numpy>=2' scipy matplotlib"
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: true
       # must come after checkout
@@ -45,7 +45,7 @@ jobs:
           key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
       - uses: rui314/setup-mold@v1
         if: runner.os == 'Linux'
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@v8.2.0
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}

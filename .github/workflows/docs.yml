@@ -20,7 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0  # needed to get correct ROOT version
@@ -32,7 +32,7 @@ jobs:
       with:
         python-version: "3.11"
     - run: sudo apt-get install pandoc
-    - uses: astral-sh/setup-uv@v8.0.0
+    - uses: astral-sh/setup-uv@v8.2.0
     - run: uv pip install --system nox
     - run: nox -s doc
     - uses: actions/upload-pages-artifact@v5
