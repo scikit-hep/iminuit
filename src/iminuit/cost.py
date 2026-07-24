@@ -767,7 +767,7 @@ class CostSum(Cost, ABCSequence):
 
         fig = plt.gcf()
         fig.set_figwidth(n * fig.get_figwidth() / 1.5)
-        _, ax = plt.subplots(1, n, num=fig.number)
+        _, ax = plt.subplots(1, n, num=fig.number, clear=True)
 
         if component_kwargs is None:
             component_kwargs = {}
