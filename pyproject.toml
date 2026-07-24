@@ -132,7 +132,6 @@ build-frontend = "build[uv]"
 skip = ["cp39-musllinux_i686"]                    # no numpy wheel
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
-enable = ["cpython-freethreading"]
 
 [tool.cibuildwheel.environment]
 # this makes sure that we build only on platforms that have a corresponding numpy wheel

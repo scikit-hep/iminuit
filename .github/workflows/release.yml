@@ -23,7 +23,7 @@ jobs:
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: true
           fetch-depth: 0
@@ -57,13 +57,13 @@ jobs:
             py: cp310
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: true
 
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@v8.2.0
 
-      - uses: pypa/cibuildwheel@v3.4
+      - uses: pypa/cibuildwheel@v4.1
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
 
@@ -77,7 +77,7 @@ jobs:
     name: source package
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: true
 
@@ -117,7 +117,7 @@ jobs:
           path: dist
 
       - name: Generate artifact attestation for sdist and wheels
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: "dist/iminuit-*"
 
@@ -128,7 +128,7 @@ jobs:
     needs: [release_check, upload]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: softprops/action-gh-release@v3
         with:
           name: v${{ needs.release_check.outputs.tag }}
