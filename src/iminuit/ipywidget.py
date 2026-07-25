@@ -3,7 +3,8 @@
 from .util import _widget_guess_initial_step, _make_finite
 import warnings
 import numpy as np
-from typing import Dict, Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 with warnings.catch_warnings():
     # ipywidgets produces deprecation warnings through use of internal APIs :(
@@ -24,7 +25,7 @@ with warnings.catch_warnings():
 def make_widget(
     minuit: Any,
     plot: Callable[..., None],
-    kwargs: Dict[str, Any],
+    kwargs: dict[str, Any],
     raise_on_exception: bool,
 ):
     """Make interactive fitting widget."""
@@ -97,7 +98,7 @@ def make_widget(
         def __init__(self, skip: int = 0):
             self.skip = skip
 
-        def __call__(self, change: Dict[str, Any] = {}):
+        def __call__(self, change: dict[str, Any] = {}):
             if self.skip > 0:
                 self.skip -= 1
                 return

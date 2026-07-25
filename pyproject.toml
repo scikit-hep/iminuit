@@ -8,7 +8,7 @@ description = "Jupyter-friendly Python frontend for MINUIT2 in C++"
 version = "2.32.0"
 maintainers = [{ name = "Hans Dembinski", email = "hans.dembinski@gmail.com" }]
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT+LGPL" }
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -20,6 +20,10 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development",
@@ -30,7 +34,7 @@ classifiers = [
     "Operating System :: Unix",
     "Operating System :: MacOS",
 ]
-dependencies = ["numpy >=1.21"]
+dependencies = ["numpy >=1.21.3"]
 
 [project.urls]
 repository = "http://github.com/scikit-hep/iminuit"
@@ -129,7 +133,7 @@ no_implicit_optional = false
 
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
-skip = ["cp39-musllinux_i686"]                    # no numpy wheel
+skip = ["cp310-musllinux_i686"]                   # no numpy wheel
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 
@@ -139,7 +143,7 @@ UV_ONLY_BINARY = ":all:"
 PIP_ONLY_BINARY = ":all:"
 
 [[tool.cibuildwheel.overrides]]
-# to match numpy, we use manylinux2014 for cp310 (and 3.9, since manylinux2010 is dead)
-select = "cp3{9,10}-manylinux*"
+# to match numpy, we use manylinux2014 for cp310
+select = "cp310-manylinux*"
 manylinux-x86_64-image = "manylinux2014"
 manylinux-i686-image = "manylinux2014"

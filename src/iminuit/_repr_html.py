@@ -68,7 +68,7 @@ def tag(name, *args, **kwargs):
     if len(args) == 0:
         return [head + tail]
     if len(args) == 1 and isinstance(args[0], str):
-        return ["{} {} {}".format(head, args[0], tail)]
+        return [f"{head} {args[0]} {tail}"]
     return [head, *args, tail]
 
 

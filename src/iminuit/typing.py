@@ -4,11 +4,10 @@ Types for iminuit.
 These are used by mypy and similar tools.
 """
 
+from __future__ import annotations
+
 from typing import (
     Protocol,
-    Optional,
-    List,
-    Union,
     runtime_checkable,
     NamedTuple,
     Annotated,
@@ -18,7 +17,7 @@ import numpy as np
 import dataclasses
 
 # Key for ValueView, ErrorView, etc.
-Key = Union[int, str, slice, List[Union[int, str]]]
+Key = int | str | slice | list[int | str]
 
 
 @runtime_checkable
@@ -73,8 +72,8 @@ class LossFunction(Protocol):
 class UserBound(NamedTuple):
     """Type for user-defined limit."""
 
-    min: Optional[float]
-    max: Optional[float]
+    min: float | None
+    max: float | None
 
 
 @dataclasses.dataclass
@@ -109,10 +108,10 @@ class Le:
 class Interval:
     """Annotation compatible with annotated-types."""
 
-    gt: Optional[float] = None
-    ge: Optional[float] = None
-    lt: Optional[float] = None
-    le: Optional[float] = None
+    gt: float | None = None
+    ge: float | None = None
+    lt: float | None = None
+    le: float | None = None
 
 
 # common convenience types
