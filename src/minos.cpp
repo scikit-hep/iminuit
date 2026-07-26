@@ -30,7 +30,8 @@ void bind_minos(py::module m) {
 
   py::class_<MnMinos>(m, "MnMinos")
 
-      .def(py::init<const FCNBase&, const FunctionMinimum&, const MnStrategy&>())
+      .def(py::init<const FCNBase&, const FunctionMinimum&, const MnStrategy&>(),
+           py::keep_alive<1, 2>(), py::keep_alive<1, 3>())
       // int ipar, unsigned maxcalls, double toler
       .def("__call__", &MnMinos::Minos)
 

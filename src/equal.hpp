@@ -1,13 +1,7 @@
 #ifndef IMINUIT_EQUAL_HPP
 #define IMINUIT_EQUAL_HPP
 
-#include <vector>
-
 bool nan_equal(double a, double b);
-
-namespace std {
-bool operator==(const vector<double>& a, const vector<double>& b);
-} // namespace std
 
 namespace ROOT {
 namespace Minuit2 {

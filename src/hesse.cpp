@@ -9,7 +9,7 @@ namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
 void update_fmin(MnHesse& self, const FCNBase& fcn, FunctionMinimum& min,
-                 unsigned maxcalls, float maxedm) {
+                 unsigned maxcalls, double maxedm) {
   // We reset call counter here in contrast to MnHesse.cxx:83
   MnUserFcn mfcn(fcn, min.UserState().Trafo(), 0);
 

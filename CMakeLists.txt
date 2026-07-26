@@ -20,7 +20,7 @@ set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
 set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG REQUIRED)
 
-file(GLOB SOURCES_A "src/*.cpp")
+file(GLOB SOURCES_A CONFIGURE_DEPENDS "src/*.cpp")
 # Keep in sync with tool.scikit-build.sdist.include in pyproject.toml
 set(SOURCES_B
     extern/root/math/mathcore/src/Util.cxx

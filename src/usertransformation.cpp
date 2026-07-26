@@ -52,7 +52,7 @@ void bind_usertransformation(py::module m) {
                              &MnUserTransformation::VariableParameters)
 
       .def("__len__", size)
-      .def("__iter__", iter)
+      .def("__iter__", iter, py::keep_alive<0, 1>())
       .def("__getitem__", getitem)
 
       .def(py::pickle(

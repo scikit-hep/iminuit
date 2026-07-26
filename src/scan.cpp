@@ -9,7 +9,8 @@ using namespace ROOT::Minuit2;
 void bind_scan(py::module m) {
   py::class_<MnScan, MnApplication>(m, "MnScan")
 
-      .def(py::init<const FCNBase&, const MnUserParameterState&, const MnStrategy&>())
+      .def(py::init<const FCNBase&, const MnUserParameterState&, const MnStrategy&>(),
+           py::keep_alive<1, 2>())
 
       ;
 }
