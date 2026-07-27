@@ -2557,7 +2557,7 @@ def _normalize_output(x, kind, *shape, msg=None):
         warnings.warn(msg, PerformanceWarning, stacklevel=2)
         x = np.array(x)
         if x.dtype.kind != "f":
-            return x.astype(float)
+            x = x.astype(float)
     if x.ndim < len(shape):
         return x.reshape(*shape)
     elif x.shape != shape:

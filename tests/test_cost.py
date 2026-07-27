@@ -1791,6 +1791,21 @@ def test_NormalConstraint_pickle():
     assert_equal(c.covariance, c2.covariance)
 
 
+def test_model_wrong_shape_int_output():
+    # a model that returns an integer sequence with the wrong shape must still
+    # raise the shape error instead of slipping through the float early-return
+    def model(x, a):
+        return [1, 2]
+
+    c = LeastSquares([1.0, 2.0, 3.0], [1.0, 2.0, 3.0], 1.0, model)
+    with pytest.warns(PerformanceWarning):
+        with pytest.raises(
+            ValueError,
+            match=r"output of model has shape \(2,\), but \(3,\) is required",
+        ):
+            c(1)
+
+
 def test_NormalConstraint_bad_input_1():
     with pytest.raises(ValueError, match="scalar or one-dimensional"):
         NormalConstraint("par", [[[1, 2]]], np.eye(2))
