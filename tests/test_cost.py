@@ -1632,6 +1632,18 @@ def test_CostSum_visualize():
     c.visualize((1, 2))
 
 
+def test_CostSum_visualize_single_component():
+    # regression test: a CostSum with exactly one visualizable component must
+    # not crash; subplots(1, 1) returns a bare Axes unless squeeze=False
+    pytest.importorskip("matplotlib")
+    from matplotlib import pyplot as plt
+
+    c = UnbinnedNLL([1.0, 2.0, 3.0], norm_pdf) + 10.0
+    plt.figure()
+    c.visualize((0.0, 1.0))
+    plt.close("all")
+
+
 def test_NormalConstraint_1():
     c1 = NormalConstraint("a", 1, 1.5)
     c2 = NormalConstraint(("a", "b"), (1, 2), (3, 4))
