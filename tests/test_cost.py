@@ -384,6 +384,21 @@ def test_UnbinnedNLL_properties(log):
     assert c.verbose == 1
 
 
+def test_UnbinnedNLL_scaled_pdf_2D():
+    # for multivariate data of shape (D, N) the scale must be the number of
+    # data points N, not D * N
+    def model(x_y, mux, muy, sx, sy):
+        return mvnorm(mux, muy, sx, sy).pdf(x_y.T)
+
+    truth = 0.1, 0.2, 0.3, 0.4
+    x, y = mvnorm(*truth).rvs(size=15, random_state=1).T
+    c = UnbinnedNLL((x, y), model)
+
+    assert c.data.shape == (2, 15)
+    expected = 15 * model(c.data, *truth)
+    assert_allclose(c.scaled_pdf(c.data, *truth), expected)
+
+
 @pytest.mark.parametrize("log", (False, True))
 def test_UnbinnedNLL_visualize(log):
     pytest.importorskip("matplotlib")
