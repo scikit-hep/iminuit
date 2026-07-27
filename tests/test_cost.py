@@ -887,6 +887,23 @@ def test_BinnedNLL_mask():
     assert_allclose(c.grad(2), ref(2))
 
 
+def test_BinnedNLL_mask_grad_multipar():
+    # regression test: the masked gradient renormalization correction must be
+    # per-parameter; with >=2 parameters a scalar correction is wrong
+    pytest.importorskip("jacobi")
+    xe = np.linspace(-2, 2, 6)
+    n = np.diff(norm_cdf(xe, 0.1, 1.2)) * 1000
+    c = BinnedNLL(n, xe, norm_cdf, grad=numerical_model_gradient(norm_cdf))
+    c.mask = np.arange(len(n)) != 2
+
+    ref = numerical_cost_gradient(c)
+    # evaluate away from the truth so the gradient is clearly non-zero
+    for args in [(0.0, 1.0), (0.3, 0.8), (-0.2, 1.5)]:
+        g = c.grad(*args)
+        assert np.linalg.norm(g) > 1.0
+        assert_allclose(g, ref(*args), rtol=1e-3)
+
+
 def test_BinnedNLL_properties():
     def cdf(x, a, b):
         return 0

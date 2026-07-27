@@ -2022,7 +2022,7 @@ class BinnedNLL(BinnedCostWithModel):
         # normalise probability of remaining bins
         if ma is not None:
             psum = np.sum(p[ma])
-            pg = pg / psum - p * np.sum(pg[:, ma]) / psum**2
+            pg = pg / psum - p * np.sum(pg[:, ma], axis=1)[:, np.newaxis] / psum**2
             p /= psum
         # scale probabilities with total number of entries of unmasked bins in histogram
         n = self._counts()
