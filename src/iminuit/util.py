@@ -97,8 +97,7 @@ class BasicView(abc.ABC):
         return NotImplemented  # pragma: no cover
 
     @abc.abstractmethod
-    def _set(self, idx: int, value: Any) -> None:
-        NotImplemented  # pragma: no cover
+    def _set(self, idx: int, value: Any) -> None: ...  # pragma: no cover
 
     def __getitem__(self, key: Key) -> Any:
         """
@@ -184,6 +183,7 @@ class ErrorView(BasicView):
                 "Assigned errors must be positive. "
                 "Non-positive values are replaced by a heuristic.",
                 IMinuitWarning,
+                stacklevel=2,
             )
             value = _guess_initial_step(value)
         self._minuit._last_state.set_error(idx, value)
@@ -1117,7 +1117,7 @@ def merge_signatures(
 
     for f in callables:
         amap = []
-        for i, (k, ann) in enumerate(describe(f, annotations=True).items()):
+        for k, ann in describe(f, annotations=True).items():
             if k in args:
                 amap.append(args.index(k))
             else:
@@ -1304,7 +1304,7 @@ def _describe_impl_docstring(callable):
 
     nbrace = 1
     ich = 0
-    for ich, ch in enumerate(doc[start:]):
+    for ich, ch in enumerate(doc[start:]):  # noqa: B007
         if ch == "(":
             nbrace += 1
         elif ch == ")":
@@ -1590,14 +1590,14 @@ def _smart_sampling(f, xmin, xmax, start=20, tol=5e-3, maxiter=20, maxtime=10):
                 f"Iteration limit {maxiter} in smart sampling reached, "
                 f"produced {len(y)} points"
             )
-            warnings.warn(msg, RuntimeWarning)
+            warnings.warn(msg, RuntimeWarning, stacklevel=2)
             break
         if monotonic() - t0 > maxtime:
             msg = (
                 f"Time limit {maxtime} in smart sampling reached, "
                 f"produced {len(y)} points"
             )
-            warnings.warn(msg, RuntimeWarning)
+            warnings.warn(msg, RuntimeWarning, stacklevel=2)
             break
         xnew = 0.5 * (a + b)
         ynew = f(xnew)

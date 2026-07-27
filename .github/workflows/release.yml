@@ -8,9 +8,10 @@ on:
   pull_request:
     paths:
       - .github/workflows/release.yml
+      - pyproject.toml
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:

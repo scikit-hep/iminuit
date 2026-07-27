@@ -67,7 +67,9 @@ def minimize(
         raise ValueError("Constraints are not supported by Minuit, only bounds")
 
     if hess or hessp:
-        warnings.warn("hess and hessp arguments cannot be handled and are ignored")
+        warnings.warn(
+            "hess and hessp arguments cannot be handled and are ignored", stacklevel=2
+        )
 
     def wrapped(func, args, callback=None):
         if callback is None:
@@ -103,10 +105,14 @@ def minimize(
     if options:
         m.print_level = 2 if options.get("disp", False) else 0
         if "maxiter" in options:
-            warnings.warn("maxiter not supported, acts like maxfun instead")
+            warnings.warn(
+                "maxiter not supported, acts like maxfun instead", stacklevel=2
+            )
         if "maxfev" in options:
             warnings.warn(
-                "maxfev is deprecated, use maxfun instead", DeprecationWarning
+                "maxfev is deprecated, use maxfun instead",
+                DeprecationWarning,
+                stacklevel=2,
             )
         ncall = options.get("maxfun", options.get("maxfev", options.get("maxiter", 0)))
         errors = options.get("eps", None)

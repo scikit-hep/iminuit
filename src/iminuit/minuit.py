@@ -146,7 +146,7 @@ class Minuit:
                 f"cost function has an errordef attribute equal to {fcn_errordef}, "
                 "you should not override this with Minuit.errordef"
             )
-            warnings.warn(msg, ErrordefAlreadySetWarning)
+            warnings.warn(msg, ErrordefAlreadySetWarning, stacklevel=2)
         if value <= 0:
             raise ValueError(f"errordef={value} must be a positive number")
         self._fcn._errordef = value
@@ -731,7 +731,9 @@ class Minuit:
 
         if hessian is not None and g2 is not None:
             warnings.warn(
-                "hessian overrides g2, passing g2 has no effect", IMinuitWarning
+                "hessian overrides g2, passing g2 has no effect",
+                IMinuitWarning,
+                stacklevel=2,
             )
 
         self._fcn = FCN(
@@ -1636,6 +1638,7 @@ class Minuit:
                     warnings.warn(
                         f"Cannot scan over fixed parameter {pname!r}",
                         mutil.IMinuitWarning,
+                        stacklevel=2,
                     )
                 else:
                     ipars.append(ip)
@@ -1766,7 +1769,9 @@ class Minuit:
             )
             if not fm.is_valid:
                 warnings.warn(
-                    f"MIGRAD fails to converge for {pname}={v}", mutil.IMinuitWarning
+                    f"MIGRAD fails to converge for {pname}={v}",
+                    mutil.IMinuitWarning,
+                    stacklevel=2,
                 )
             status[i] = fm.is_valid
             y[i] = fm.fval
@@ -2367,7 +2372,7 @@ class Minuit:
                     fmax = max(fmax, f)
                     plt.axhline(f, color=f"C{k}")
                 bound = fmax**0.5 + 1
-                for iter in range(5):
+                for _ in range(5):
                     x, y, ok = self.mnprofile(par1, bound=bound, subtract_min=True)
                     x = x[ok]
                     y = y[ok]
@@ -2498,6 +2503,7 @@ class Minuit:
             warnings.warn(
                 "Specified nsigma bound, but error matrix is not accurate",
                 mutil.IMinuitWarning,
+                stacklevel=2,
             )
         start = self.values[vname]
         sigma = self.errors[vname]
@@ -2658,8 +2664,8 @@ class Minuit:
 
             def args(z):
                 r = u @ (
-                    z * s[0] * np.cos(phi),
-                    z * s[1] * np.sin(phi),
+                    z * s[0] * np.cos(phi),  # noqa: B023
+                    z * s[1] * np.sin(phi),  # noqa: B023
                 )
                 x = r[0] + center[0]
                 lim = self.limits[ix]
