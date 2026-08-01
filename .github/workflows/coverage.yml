@@ -40,12 +40,12 @@ jobs:
       with:
         create-symlink: true
     - uses: rui314/setup-mold@v1
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@v7
       with:
         python-version: "3.12"
     # without this, the Qt tests abort because a lib is missing
     - uses: tlambert03/setup-qt-libs@v1
-    - uses: astral-sh/setup-uv@v8.2.0
+    - uses: astral-sh/setup-uv@v9.0.0
     - run: uv pip install --system nox coverage
     - run: nox -s cov
     - run: coverage lcov -o coverage.lcov

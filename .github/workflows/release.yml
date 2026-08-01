@@ -28,7 +28,7 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -62,7 +62,7 @@ jobs:
         with:
           submodules: true
 
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: astral-sh/setup-uv@v9.0.0
 
       - uses: pypa/cibuildwheel@v4.1
         env:
@@ -82,7 +82,7 @@ jobs:
         with:
           submodules: true
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
