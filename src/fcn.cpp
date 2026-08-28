@@ -11,6 +11,19 @@
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
+namespace {
+// Build a tuple of plain Python floats from the parameter vector. Used to unpack the
+// parameters into positional arguments in the scalar (non-array) calling convention.
+// This avoids a round-trip through a numpy array (one array allocation plus one
+// np.float64 temporary per element) and means user functions receive Python floats.
+py::tuple args_as_floats(const std::vector<double>& x) {
+  const std::size_t n = x.size();
+  py::tuple t(n);
+  for (std::size_t i = 0; i < n; ++i) t[i] = py::float_(x[i]);
+  return t;
+}
+} // namespace
+
 std::vector<double> flatten_hessian(py::array_t<double> arg) {
   if (arg.ndim() != 2) throw std::runtime_error("number of dimensions must be 2");
 
@@ -73,7 +86,7 @@ double FCN::operator()(const std::vector<double>& x) const {
       return check_value(as_double(fcn_(a)), x);
     }
   }
-  return check_value(as_double(fcn_(*py::cast(x))), x);
+  return check_value(as_double(fcn_(*args_as_floats(x))), x);
 }
 
 std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
@@ -83,8 +96,8 @@ std::vector<double> FCN::Gradient(const std::vector<double>& x) const {
     py::array_t<double> a(static_cast<py::ssize_t>(npar), x.data());
     return check_vector(py::cast<std::vector<double>>(grad_(a)), x, "Gradient", npar);
   }
-  return check_vector(py::cast<std::vector<double>>(grad_(*py::cast(x))), x, "Gradient",
-                      npar);
+  return check_vector(py::cast<std::vector<double>>(grad_(*args_as_floats(x))), x,
+                      "Gradient", npar);
 }
 
 std::vector<double> FCN::G2(const std::vector<double>& x) const {
@@ -94,7 +107,8 @@ std::vector<double> FCN::G2(const std::vector<double>& x) const {
     py::array_t<double> a(static_cast<py::ssize_t>(npar), x.data());
     return check_vector(py::cast<std::vector<double>>(g2_(a)), x, "G2", npar);
   }
-  return check_vector(py::cast<std::vector<double>>(g2_(*py::cast(x))), x, "G2", npar);
+  return check_vector(py::cast<std::vector<double>>(g2_(*args_as_floats(x))), x, "G2",
+                      npar);
 }
 
 std::vector<double> FCN::Hessian(const std::vector<double>& x) const {
@@ -105,7 +119,7 @@ std::vector<double> FCN::Hessian(const std::vector<double>& x) const {
     return check_vector(flatten_hessian(hessian_(a)), x, "Hessian", npar * npar);
   }
   // TODO convert properly from a 2d numpy array on python side
-  return check_vector(flatten_hessian(hessian_(*py::cast(x))), x, "Hessian",
+  return check_vector(flatten_hessian(hessian_(*args_as_floats(x))), x, "Hessian",
                       npar * npar);
 }
 

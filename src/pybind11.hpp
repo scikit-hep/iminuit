@@ -25,7 +25,21 @@ struct type_caster<std::vector<double>> {
 
   bool load(handle src, bool convert) {
     value.clear();
-    // TODO optimize for python objects that support buffer protocol
+    // Fast path: copy contiguous numpy arrays through the buffer protocol instead of
+    // iterating element by element (which allocates a np.float64 temporary per
+    // element).
+    if (array::check_(src)) {
+      // Normalize to a contiguous C-style array of doubles. forcecast lets us accept
+      // other numeric dtypes; ensure() returns a null handle on failure (e.g. an
+      // object-dtype array that cannot be converted), in which case we report failure
+      // just like the generic path would for an invalid element.
+      auto arr = array_t<double, array::c_style | array::forcecast>::ensure(src);
+      if (!arr) return false;
+      const double* ptr = arr.data();
+      const std::size_t n = static_cast<std::size_t>(arr.size());
+      value.assign(ptr, ptr + n);
+      return true;
+    }
     if (isinstance<iterable>(src)) {
       auto seq = reinterpret_borrow<iterable>(src);
       if (hasattr(seq, "__len__")) value.reserve(static_cast<std::size_t>(len(seq)));
