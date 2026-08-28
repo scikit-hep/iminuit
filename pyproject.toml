@@ -100,15 +100,36 @@ filterwarnings = [
     "error::FutureWarning",
 ]
 
-[tool.ruff.lint]
-extend-select = [
+[tool.ruff]
+show-fixes = true
+extend-exclude = ["extern/*"]
+lint.extend-select = [
     "B", # flake8-bugbear
     "D", # pydocstyle
 ]
-ignore = [
+lint.ignore = [
     "D212", # multi-line-summary-first-line
+    "I", # TODO
+    "UP", # TODO
+    "PL", # TODO
+    "SIM", # TODO
+    "BLE001", # TODO
+    "C401", # TODO
+    "DTZ011", # TODO
+    "FA100", # TODO
+    "FLY002", # TODO
+    "PIE790", # TODO
+    "PT031", # TODO
+    "RUF013", # TODO
+    "RUF046", # TODO
+    "RUF059", # TODO
+    "RUF023", # TODO
+    "RUF022", # TODO
+    "RUF010", # TODO
+    "S110", # TODO
+    "TRY004", # TODO
 ]
-pydocstyle.convention = "numpy"
+lint.pydocstyle.convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["B", "D"]
