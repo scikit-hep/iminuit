@@ -126,10 +126,10 @@ def test_FixedView_comparison_with_broadcasting():
     assert_equal(f, [False, False, False])
 
     # broadcasting
-    assert f == False  # noqa
+    assert f == False
     f[0] = True
     assert_equal(f, [True, False, False])
-    assert f != False  # noqa
+    assert f != False
 
 
 def test_Matrix():
