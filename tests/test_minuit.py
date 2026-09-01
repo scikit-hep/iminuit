@@ -1830,3 +1830,24 @@ def test_migrad_iterative_with_precision():
     m2.migrad(iterate=1)
 
     assert m2.fmin.nfcn < m1.fmin.nfcn
+
+
+def test_mncontour_experimental_per_param_limits():
+    pytest.importorskip("scipy.optimize")
+
+    def cost(x, y):
+        return x**2 + y**2
+
+    m = Minuit(cost, x=0.5, y=0.5)
+    m.limits["x"] = (-0.3, 5)
+    m.limits["y"] = (-5, 0.3)
+    m.migrad()
+
+    cont = m.mncontour(0, 1, size=30, experimental=True)
+    # regression: y was clamped with the limits of x
+    assert np.all(cont[:, 0] >= -0.3 - 1e-9)
+    assert np.all(cont[:, 1] <= 0.3 + 1e-9)
+
+    cont0 = m.mncontour(0, 1, size=30, experimental=False)
+    assert np.all(cont0[:, 0] >= -0.3 - 1e-9)
+    assert np.all(cont0[:, 1] <= 0.3 + 1e-9)
