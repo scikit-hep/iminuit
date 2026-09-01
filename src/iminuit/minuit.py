@@ -2525,7 +2525,6 @@ class Minuit:
         if self._last_state.has_covariance:
             cov = self._last_state.covariance
             m = mutil.Matrix(self._var2pos)
-            n = len(m)
             if cov.nrow < self.npar:
                 ext2int = {}
                 k = 0
@@ -2867,11 +2866,12 @@ def _robust_low_level_fit(
     if precision is not None:
         migrad.precision = precision
     fm = migrad(ncall, tolerance)
-    strategy = MnStrategy(2)
-    migrad = MnMigrad(fcn, fm.state, strategy)
+    # If we have to iterate, we have a pathological case. Increasing the
+    # strategy to 2 in this case was found to be beneficial.
+    if not fm.is_valid and not fm.has_reached_call_limit and iterate > 1:
+        strategy = MnStrategy(2)
+        migrad = MnMigrad(fcn, fm.state, strategy)
     while not fm.is_valid and not fm.has_reached_call_limit and iterate > 1:
-        # If we have to iterate, we have a pathological case. Increasing the
-        # strategy to 2 in this case was found to be beneficial.
         if use_simplex:
             simplex = MnSimplex(fcn, fm.state, strategy)
             if precision is not None:
