@@ -18,7 +18,7 @@ packages = [
 
 install(packages)
 
-import tomli  # noqa
+import tomli
 
 with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as f:
     d = tomli.load(f)

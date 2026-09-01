@@ -45,8 +45,8 @@ jobs:
           key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.python-version }}
       - uses: rui314/setup-mold@v1
         if: runner.os == 'Linux'
-      - uses: astral-sh/setup-uv@v8.2.0
-      - uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v9.0.0
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true

@@ -904,12 +904,14 @@ class UnbinnedCost(MaskedCost):
         self._model_grad = grad
         super().__init__(_model_parameters(model, name), _norm(data), verbose)
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def pdf(self):
         """Get probability density model."""
         ...  # pragma: no cover
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def scaled_pdf(self):
         """Get number density model."""
         ...  # pragma: no cover
@@ -1039,7 +1041,9 @@ class UnbinnedNLL(UnbinnedCost):
     @property
     def scaled_pdf(self):
         """Get number density model."""
-        scale = np.prod(self.data.shape)
+        # number of data points: for multivariate data of shape (D, N) this
+        # is N, the last axis; for 1D data of shape (N,) it is also N
+        scale = self.data.shape[-1]
         if self._log:
             return lambda *args: scale * np.exp(self._model(*args))
         return lambda *args: scale * self._model(*args)
@@ -1302,12 +1306,13 @@ class BinnedCost(MaskedCostWithPulls):
     :meta private:
     """
 
-    __slots__ = "_xe", "_ndim", "_bohm_zech_n", "_bohm_zech_s"
+    __slots__ = "_xe", "_ndim", "_bohm_zech_n", "_bohm_zech_s", "_counts_total"
 
     _xe: Union[NDArray, Tuple[NDArray, ...]]
     _ndim: int
     _bohm_zech_n: NDArray
     _bohm_zech_s: Optional[NDArray]
+    _counts_total: float
 
     n = MaskedCost.data
 
@@ -1457,6 +1462,8 @@ class BinnedCost(MaskedCostWithPulls):
             self._bohm_zech_n = val * s
         else:
             self._bohm_zech_n = n
+        # cache the total number of entries in the unmasked bins
+        self._counts_total = np.sum(self._counts())
 
     def _transformed(self, val: NDArray) -> Tuple[NDArray, NDArray]:
         s = self._bohm_zech_s
@@ -1790,8 +1797,8 @@ class Template(BinnedCost):
         self._model_len = np.prod(self._xe_shape)
 
     def _pred(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
-        mu: NDArray = 0  # type:ignore
-        mu_var: NDArray = 0  # type:ignore
+        mu = np.zeros(self._data.shape[: self._ndim])
+        mu_var = np.zeros_like(mu)
         i = 0
         for t1, t2 in self._model_data:
             if isinstance(t1, np.ndarray) and isinstance(t2, np.ndarray):
@@ -1810,7 +1817,9 @@ class Template(BinnedCost):
                 # subtraction, we set negative values to zero
                 d[d < 0] = 0
                 mu += d
-                mu_var += np.ones_like(mu) * 1e-300
+                # add a tiny floor to the variance to avoid exactly zero values;
+                # a scalar add avoids allocating full temporaries
+                mu_var += 1e-300
                 i += t2
             else:  # never arrive here
                 raise AssertionError  # pragma: no cover
@@ -1983,7 +1992,7 @@ class BinnedNLL(BinnedCostWithModel):
         if ma is not None:
             p /= np.sum(p[ma])
         # scale probabilities with total number of entries of unmasked bins in histogram
-        return p * np.sum(self._counts())
+        return p * self._counts_total
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
@@ -2002,7 +2011,7 @@ class BinnedNLL(BinnedCostWithModel):
             p /= psum
         # scale probabilities with total number of entries of unmasked bins in histogram
         n = self._counts()
-        ntot = np.sum(n)
+        ntot = self._counts_total
         mu = p * ntot
         gmu = pg * ntot
         ma = self.mask
@@ -2548,7 +2557,7 @@ def _normalize_output(x, kind, *shape, msg=None):
         warnings.warn(msg, PerformanceWarning, stacklevel=2)
         x = np.array(x)
         if x.dtype.kind != "f":
-            return x.astype(float)
+            x = x.astype(float)
     if x.ndim < len(shape):
         return x.reshape(*shape)
     elif x.shape != shape:

@@ -7,10 +7,12 @@ from typing import Dict, Any, Callable
 from contextlib import contextmanager
 
 try:
-    from PySide6 import QtCore, QtGui, QtWidgets
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
     from matplotlib import pyplot as plt
-except ModuleNotFoundError as e:
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+    from PySide6 import QtCore, QtGui, QtWidgets
+except ImportError as e:
+    # Not only ModuleNotFoundError: if no Qt binding at all is installed,
+    # matplotlib.backends.qt_compat raises a plain ImportError.
     e.msg += (
         "\n\nPlease install PySide6, and matplotlib to enable interactive "
         "outside of Jupyter notebooks."
