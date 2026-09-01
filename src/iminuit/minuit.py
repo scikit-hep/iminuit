@@ -963,6 +963,11 @@ class Minuit:
             actual number will be close to this, the scan uses ncall^(1/npar) steps per
             cube dimension. If no value is given, a heuristic is used to set ncall.
 
+        Raises
+        ------
+        RuntimeError
+            If all parameters are fixed, there is nothing to scan.
+
         Notes
         -----
         The scan can return an invalid minimum, this is not a cause for alarm. It just
@@ -996,9 +1001,11 @@ class Minuit:
         #  self._fmin = mutil.FMin(fm, self._fcn.nfcn, self._fcn.ngrad, self._tolerance)
 
         n = self.nfit
+        if n == 0:
+            raise RuntimeError("all parameters are fixed")
         if ncall is None:
             ncall = self._migrad_maxcall()
-        nstep = int(ncall ** (1 / n))
+        nstep = max(2, int(ncall ** (1 / n)))
 
         if self._last_state == self._init_state:
             # avoid overriding initial state
