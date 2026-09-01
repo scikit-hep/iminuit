@@ -792,6 +792,7 @@ class Minuit:
                 for i, v in zip(index, value):
                     self.fixto(i, v)
         else:
+            self._copy_state_if_needed()
             self._last_state.fix(index)
             self._last_state.set_value(index, value)
         return self  # return self for method chaining
@@ -807,6 +808,8 @@ class Minuit:
         self._fmin = None
         self._fcn._nfcn = 0
         self._fcn._ngrad = 0
+        self._fcn._ng2 = 0
+        self._fcn._nhessian = 0
         self._merrors = mutil.MErrors()
         self._covariance: mutil.Matrix = None
         return self  # return self for method chaining and to autodisplay current state
