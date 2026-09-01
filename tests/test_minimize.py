@@ -131,6 +131,13 @@ def test_bounds():
     assert_equal(r1.x, r2.x)
 
 
+def test_bounds_scalar():
+    # scipy.optimize.Bounds allows scalar lb/ub that broadcast over all parameters
+    r = minimize(func, (1.5, 1.7, 1.5), bounds=opt.Bounds(0.5, 1.5))
+    assert r.success
+    assert_allclose(r.x, (0.5, 1, 1.5), atol=1e-2)
+
+
 def test_method_warn():
     with pytest.raises(ValueError):
         minimize(func, (1.5, 1.7, 1.5), method="foo")
@@ -145,7 +152,7 @@ def test_unreliable_uncertainties():
     r = minimize(func, (1.5, 1.7, 1.5), options={"stra": 0})
     assert (
         r.message
-        == "Optimization terminated successfully, but uncertainties are unrealiable."
+        == "Optimization terminated successfully, but uncertainties are unreliable."
     )
 
 

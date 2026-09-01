@@ -30,6 +30,12 @@ def minimize(
     For a general description of the arguments of this function, see
     ``scipy.optimize.minimize``. We list only a few in the following.
 
+    .. note::
+
+        Unlike ``scipy.optimize.minimize``, where ``callback`` is invoked once per
+        iteration, here ``callback`` is invoked on *every* function evaluation. This
+        is a deviation from the scipy API.
+
     Parameters
     ----------
     method: str
@@ -95,7 +101,11 @@ def minimize(
     m = Minuit(wrapped_fun, x0, grad=wrapped_grad)
     if bounds is not None:
         if isinstance(bounds, Bounds):
-            m.limits = [(a, b) for a, b in zip(bounds.lb, bounds.ub)]
+            # scipy.optimize.Bounds allows scalar lb/ub, which broadcast over all
+            # parameters; mirror that here so e.g. Bounds(0, 1) works.
+            lb = np.broadcast_to(bounds.lb, len(x0))
+            ub = np.broadcast_to(bounds.ub, len(x0))
+            m.limits = [(a, b) for a, b in zip(lb, ub)]
         else:
             m.limits = bounds
     if tol:
@@ -132,7 +142,7 @@ def minimize(
         if m.accurate:
             message += "."
         else:
-            message += ", but uncertainties are unrealiable."
+            message += ", but uncertainties are unreliable."
     else:
         message = "Optimization failed."
         fmin = m.fmin
