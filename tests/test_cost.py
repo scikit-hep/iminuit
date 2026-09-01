@@ -952,6 +952,57 @@ def test_BinnedNLL_with_pdf_3D(use_pdf):
         assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-3)
 
 
+def test_BinnedNLL_custom_integrator():
+    pytest.importorskip("scipy")
+    from scipy.integrate import simpson
+
+    xe = np.array([0, 0.1, 0.2, 0.3])
+    n = [1, 2, 3]
+
+    def integrator(pdf, a, b):
+        x = np.linspace(a, b, 11)
+        return simpson(pdf(x), x=x)
+
+    c = BinnedNLL(n, xe, norm_pdf, use_pdf="custom", integrator=integrator)
+    par = [0.05, 1]
+    ref = np.diff(norm_cdf(xe, *par)) * np.sum(n)
+    assert_allclose(c.prediction(par), ref, rtol=1e-5)
+
+
+def test_BinnedNLL_custom_integrator_2D():
+    pytest.importorskip("scipy")
+    from scipy.integrate import simpson
+
+    xe = (np.array([0, 0.1, 0.2]), np.array([0, 0.1, 0.2]))
+    n = [[1, 2], [3, 4]]
+
+    def pdf(r, mx, my, sx, sy):
+        x, y = r
+        return norm_pdf(x, mx, sx) * norm_pdf(y, my, sy)
+
+    def cdf(r, mx, my, sx, sy):
+        x, y = r
+        return norm_cdf(x, mx, sx) * norm_cdf(y, my, sy)
+
+    def integrator(pdf, a, b):
+        x0 = np.linspace(a[0], b[0], 11)
+        x1 = np.linspace(a[1], b[1], 11)
+        X0, X1 = np.meshgrid(x0, x1, indexing="ij")
+        pts = np.array([X0.ravel(), X1.ravel()])
+        y = pdf(pts).reshape(11, 11)
+        return simpson(simpson(y, x=x1, axis=1), x=x0)
+
+    c1 = BinnedNLL(n, xe, pdf, use_pdf="custom", integrator=integrator)
+    c2 = BinnedNLL(n, xe, cdf)
+    par = [0.05, 0.05, 1, 1]
+    assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-5)
+
+
+def test_BinnedNLL_custom_integrator_no_integrator():
+    with pytest.raises(ValueError, match='use_pdf="custom" requires an integrator'):
+        BinnedNLL([1, 2], [1, 2, 3], norm_pdf, use_pdf="custom")
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_ExtendedBinnedNLL(binned, verbose, use_grad):
@@ -1057,6 +1108,60 @@ def test_ExtendedBinnedNLL_negative_weights(use_grad):
 def test_ExtendedBinnedNLL_bad_input():
     with pytest.raises(ValueError):
         ExtendedBinnedNLL([1], [1], lambda x, a: 0)
+
+
+def test_ExtendedBinnedNLL_custom_integrator():
+    pytest.importorskip("scipy")
+    from scipy.integrate import simpson
+
+    xe = np.array([0, 0.1, 0.2, 0.3])
+    n = [1, 2, 3]
+
+    def scaled_pdf(x, n, mu, sigma):
+        return n * norm_pdf(x, mu, sigma)
+
+    def integrator(pdf, a, b):
+        x = np.linspace(a, b, 11)
+        return simpson(pdf(x), x=x)
+
+    c = ExtendedBinnedNLL(n, xe, scaled_pdf, use_pdf="custom", integrator=integrator)
+    par = [100, 0.05, 1]
+    ref = par[0] * np.diff(norm_cdf(xe, par[1], par[2]))
+    assert_allclose(c.prediction(par), ref, rtol=1e-5)
+
+
+def test_ExtendedBinnedNLL_custom_integrator_2D():
+    pytest.importorskip("scipy")
+    from scipy.integrate import simpson
+
+    xe = (np.array([0, 0.1, 0.2]), np.array([0, 0.1, 0.2]))
+    n = [[1, 2], [3, 4]]
+
+    def scaled_pdf(r, n, mx, my, sx, sy):
+        x, y = r
+        return n * norm_pdf(x, mx, sx) * norm_pdf(y, my, sy)
+
+    def scaled_cdf(r, n, mx, my, sx, sy):
+        x, y = r
+        return n * norm_cdf(x, mx, sx) * norm_cdf(y, my, sy)
+
+    def integrator(pdf, a, b):
+        x0 = np.linspace(a[0], b[0], 11)
+        x1 = np.linspace(a[1], b[1], 11)
+        X0, X1 = np.meshgrid(x0, x1, indexing="ij")
+        pts = np.array([X0.ravel(), X1.ravel()])
+        y = pdf(pts).reshape(11, 11)
+        return simpson(simpson(y, x=x1, axis=1), x=x0)
+
+    c1 = ExtendedBinnedNLL(n, xe, scaled_pdf, use_pdf="custom", integrator=integrator)
+    c2 = ExtendedBinnedNLL(n, xe, scaled_cdf)
+    par = [100, 0.05, 0.05, 1, 1]
+    assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-5)
+
+
+def test_ExtendedBinnedNLL_custom_integrator_no_integrator():
+    with pytest.raises(ValueError, match='use_pdf="custom" requires an integrator'):
+        ExtendedBinnedNLL([1, 2], [1, 2, 3], lambda x, a: a, use_pdf="custom")
 
 
 @pytest.mark.parametrize("use_grad", (False, True))

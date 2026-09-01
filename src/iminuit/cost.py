@@ -1515,7 +1515,7 @@ class BinnedCostWithModel(BinnedCost):
     _model_xe: np.ndarray
     _xe_shape: Union[Tuple[int], Tuple[int, ...]]
 
-    def __init__(self, n, xe, model, verbose, grad, use_pdf, name):
+    def __init__(self, n, xe, model, verbose, grad, use_pdf, integrator, name):
         """For internal use."""
         self._model = model
         self._model_grad = grad
@@ -1529,10 +1529,16 @@ class BinnedCostWithModel(BinnedCost):
             self._pred_impl = self._pred_numerical
         elif use_pdf == "":
             self._pred_impl = self._pred_cdf
+        elif use_pdf == "custom":
+            if integrator is None:
+                raise ValueError(
+                    'use_pdf="custom" requires an integrator to be provided'
+                )
+            # _pred_impl set after super().__init__() when _ndim and xe are available
         else:
             msg = (
-                f"use_pdf={use_pdf} is not understood, "
-                "allowed values are '', 'approximate', or 'numerical'"
+                f"use_pdf={use_pdf!r} is not understood, "
+                "allowed values are '', 'approximate', 'numerical', or 'custom'"
             )
             raise ValueError(msg)
 
@@ -1541,7 +1547,7 @@ class BinnedCostWithModel(BinnedCost):
         if self._ndim == 1:
             self._xe_shape = (len(self.xe),)
             self._model_xe = _norm(self.xe)
-            if use_pdf:
+            if use_pdf in ("approximate", "numerical"):
                 dx = np.diff(self._model_xe)
                 self._model_dx = dx
                 self._model_xm = self._model_xe[:-1] + 0.5 * dx
@@ -1562,6 +1568,9 @@ class BinnedCostWithModel(BinnedCost):
                     'use_pdf="numerical" is not supported for '
                     "multidimensional histograms"
                 )
+
+        if use_pdf == "custom":
+            self._pred_impl = self._make_pred_custom(integrator)
 
         self._model_len = np.prod(self._xe_shape)
 
@@ -1595,6 +1604,41 @@ class BinnedCostWithModel(BinnedCost):
             b = self._model_xe[i + 1]
             d[i] = quad(lambda x: self._model(x, *args), a, b)[0]
         return d
+
+    def _make_pred_custom(self, integrator: Callable) -> Callable:
+        import itertools
+
+        if self._ndim == 1:
+            xe = self._model_xe
+            n = len(xe) - 1
+
+            def _pred_impl(args: Sequence[float]) -> NDArray:
+                def pdf(x):
+                    return self._model(x, *args)
+
+                d = np.empty(n)
+                for i in range(n):
+                    d[i] = integrator(pdf, xe[i], xe[i + 1])
+                return d
+
+        else:
+            xe_list = self.xe
+            nbins = [len(xei) - 1 for xei in xe_list]
+            shape = tuple(nbins)
+            ndim = self._ndim
+
+            def _pred_impl(args: Sequence[float]) -> NDArray:
+                def pdf(x):
+                    return self._model(x, *args)
+
+                d = np.empty(shape)
+                for idx in itertools.product(*[range(nb) for nb in nbins]):
+                    a = np.array([xe_list[dim][idx[dim]] for dim in range(ndim)])
+                    b = np.array([xe_list[dim][idx[dim] + 1] for dim in range(ndim)])
+                    d[idx] = integrator(pdf, a, b)
+                return d
+
+        return _pred_impl
 
     def _pred_grad(self, args: Sequence[float]) -> NDArray:
         d = self._model_grad(self._model_xe, *args)
@@ -1934,6 +1978,7 @@ class BinnedNLL(BinnedCostWithModel):
         verbose: int = 0,
         grad: Optional[ModelGradient] = None,
         use_pdf: str = "",
+        integrator: Optional[Callable] = None,
         name: Optional[Sequence[str]] = None,
     ):
         """
@@ -1965,20 +2010,29 @@ class BinnedNLL(BinnedCostWithModel):
             N), where N is the number of data points and K is the number of parameters.
             The gradient can be used by Minuit to improve or speed up convergence.
         use_pdf: str, optional
-            Either "", "numerical", or "approximate" (Default is ""). If the model cdf
-            is not available, but the model pdf is, this option can be set to
-            "numerical" or "approximate" to compute the integral of the pdf over the bin
-            patch. The option "numerical" uses numerical integration, which is accurate
-            but computationally expensive and only supported for 1D histograms. The
-            option "approximate" uses the zero-order approximation of evaluating the pdf
-            at the bin center, multiplied with the bin area. This is fast and works in
-            higher dimensions, but can lead to biased results if the curvature of the
-            pdf inside the bin is significant.
+            Either "", "numerical", "approximate", or "custom" (Default is ""). If the
+            model cdf is not available, but the model pdf is, this option can be set to
+            "numerical", "approximate", or "custom" to compute the integral of the pdf
+            over each bin. The option "numerical" uses numerical integration via
+            scipy.integrate.quad, which is accurate but computationally expensive and
+            only supported for 1D histograms. The option "approximate" uses the
+            zero-order approximation of evaluating the pdf at the bin center, multiplied
+            with the bin area. This is fast and works in higher dimensions, but can lead
+            to biased results if the curvature of the pdf inside the bin is significant.
+            The option "custom" requires an integrator to be supplied via the
+            ``integrator`` keyword.
+        integrator: callable or None, optional
+            Custom integrator used when ``use_pdf="custom"``. Must have the signature
+            ``integrator(pdf, a, b) -> float``, where ``pdf`` is the model pdf with
+            parameters already bound, and ``a``, ``b`` are the bin edges. For 1D
+            histograms ``a`` and ``b`` are scalars; for N-D histograms they are
+            1-D arrays of length N representing the corners of the bin hyper-rectangle.
+            Default is None.
         name : sequence of str or None, optional
             Optional names for each parameter of the model (in order). Must have the
             same length as there are model parameters. Default is None.
         """
-        super().__init__(n, xe, cdf, verbose, grad, use_pdf, name)
+        super().__init__(n, xe, cdf, verbose, grad, use_pdf, integrator, name)
         if self._bohm_zech_s is None:
             self._chi2 = multinomial_chi2
         else:
@@ -2063,6 +2117,7 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
         verbose: int = 0,
         grad: Optional[ModelGradient] = None,
         use_pdf: str = "",
+        integrator: Optional[Callable] = None,
         name: Optional[Sequence[str]] = None,
     ):
         """
@@ -2092,20 +2147,28 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
             N), where N is the number of data points and K is the number of parameters.
             The gradient can be used by Minuit to improve or speed up convergence.
         use_pdf: str, optional
-            Either "", "numerical", or "approximate". If the model cdf is not available,
-            but the model pdf is, this option can be set to "numerical" or "approximate"
-            to compute the integral of the pdf over the bin patch. The option
-            "numerical" uses numerical integration, which is accurate but
-            computationally expensive and only supported for 1D histograms. The option
-            "approximate" uses the zero-order approximation of evaluating the pdf at the
-            bin center, multiplied with the bin area. This is fast and works in higher
-            dimensions, but can lead to biased results if the curvature of the pdf
-            inside the bin is significant.
+            Either "", "numerical", "approximate", or "custom". If the model cdf is not
+            available, but the model pdf is, this option can be set to "numerical",
+            "approximate", or "custom" to compute the integral of the pdf over each bin.
+            The option "numerical" uses numerical integration via scipy.integrate.quad,
+            which is accurate but computationally expensive and only supported for 1D
+            histograms. The option "approximate" uses the zero-order approximation of
+            evaluating the pdf at the bin center, multiplied with the bin area. This is
+            fast and works in higher dimensions, but can lead to biased results if the
+            curvature of the pdf inside the bin is significant. The option "custom"
+            requires an integrator to be supplied via the ``integrator`` keyword.
+        integrator: callable or None, optional
+            Custom integrator used when ``use_pdf="custom"``. Must have the signature
+            ``integrator(pdf, a, b) -> float``, where ``pdf`` is the model pdf with
+            parameters already bound, and ``a``, ``b`` are the bin edges. For 1D
+            histograms ``a`` and ``b`` are scalars; for N-D histograms they are
+            1-D arrays of length N representing the corners of the bin hyper-rectangle.
+            Default is None.
         name : sequence of str or None, optional
             Optional names for each parameter of the model (in order). Must have the
             same length as there are model parameters. Default is None.
         """
-        super().__init__(n, xe, scaled_cdf, verbose, grad, use_pdf, name)
+        super().__init__(n, xe, scaled_cdf, verbose, grad, use_pdf, integrator, name)
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
