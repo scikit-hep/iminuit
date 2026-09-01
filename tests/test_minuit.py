@@ -913,6 +913,31 @@ def test_mnprofile_bad_grid():
         m.mnprofile("y", grid=[[10, 20]])
 
 
+def test_normalize_key_negative_and_numpy_int():
+    m = Minuit(func0, x=0, y=0)
+    m.migrad()
+
+    # negative index
+    x, y, _ = m.mnprofile(-1, size=3)
+    x2, y2, _ = m.mnprofile(1, size=3)
+    assert_allclose(x, x2)
+
+    # numpy integer index
+    x3, y3, _ = m.mnprofile(np.int64(0), size=3)
+    x4, y4, _ = m.mnprofile(0, size=3)
+    assert_allclose(x3, x4)
+
+    # out-of-range index gives a clear error mentioning the correct max
+    with pytest.raises(ValueError, match="out of range"):
+        m.mnprofile(2)
+    with pytest.raises(ValueError, match="out of range"):
+        m.mnprofile(-3)
+
+    # a key that is neither a string nor index-able is reported as unknown
+    with pytest.raises(ValueError, match="unknown parameter 1.5"):
+        m.mnprofile(1.5)
+
+
 def test_contour_subtract():
     m = Minuit(func0, x=1.0, y=2.0)
     m.migrad()
