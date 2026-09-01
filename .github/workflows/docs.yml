@@ -32,7 +32,7 @@ jobs:
       with:
         python-version: "3.11"
     - run: sudo apt-get install pandoc
-    - uses: astral-sh/setup-uv@v9.0.0
+    - uses: astral-sh/setup-uv@v10.0.1
     - run: uv pip install --system nox
     - run: nox -s doc
     - uses: actions/upload-pages-artifact@v5
