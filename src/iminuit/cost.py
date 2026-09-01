@@ -1043,7 +1043,9 @@ class UnbinnedNLL(UnbinnedCost):
     @property
     def scaled_pdf(self):
         """Get number density model."""
-        scale = np.prod(self.data.shape)
+        # number of data points: for multivariate data of shape (D, N) this
+        # is N, the last axis; for 1D data of shape (N,) it is also N
+        scale = self.data.shape[-1]
         if self._log:
             return lambda *args: scale * np.exp(self._model(*args))
         return lambda *args: scale * self._model(*args)
