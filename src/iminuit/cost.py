@@ -179,6 +179,16 @@ def _replace_none(x, replacement):
     return x
 
 
+def _exclusion_from_mask(mask: NDArray, n: int) -> NDArray:
+    # Return a boolean array of length n that is True for excluded entries.
+    # mask may be a boolean array or an array of indices of selected entries.
+    if mask.dtype == bool:
+        return ~mask
+    excluded = np.ones(n, dtype=bool)
+    excluded[mask] = False
+    return excluded
+
+
 def chi2(y: ArrayLike, ye: ArrayLike, ym: ArrayLike) -> float:
     """
     Compute (potentially) chi2-distributed cost.
@@ -851,7 +861,8 @@ class MaskedCostWithPulls(MaskedCost):
         -------
         array
             Array of pull values. If the cost function is masked, the array contains NaN
-            values where the mask value is False.
+            values where the mask value is False. Data points with zero error also
+            yield NaN.
 
         Notes
         -----
@@ -1436,7 +1447,11 @@ class BinnedCost(MaskedCostWithPulls):
         # mask values where error is zero
         ma = err == 0
         if self.mask is not None:
-            ma = ~self.mask
+            # the mask acts on the first dimension; broadcast the per-bin
+            # exclusion across the remaining dimensions before combining
+            excluded = _exclusion_from_mask(self.mask, n.shape[0])
+            excluded = excluded.reshape((-1,) + (1,) * (n.ndim - 1))
+            ma = ma | excluded
         n[ma] = np.nan
         err[ma] = np.nan
         return n, err
@@ -2351,10 +2366,11 @@ class LeastSquares(MaskedCostWithPulls):
         ye = self.yerror.copy()
         ym = self.prediction(args)
 
+        ma = ye == 0
         if self.mask is not None:
-            ma = ~self.mask
-            y[ma] = np.nan
-            ye[ma] = np.nan
+            ma = ma | _exclusion_from_mask(self.mask, y.shape[0])
+        y[ma] = np.nan
+        ye[ma] = np.nan
         return (y - ym) / ye
 
     def _pred(self, args: Sequence[float]) -> NDArray:

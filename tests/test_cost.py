@@ -658,6 +658,38 @@ def test_BinnedNLL_pulls(binned):
     assert np.nanvar(pulls) == pytest.approx(1, abs=0.2)
 
 
+def test_BinnedNLL_pulls_mask():
+    # masked bins must produce NaN pulls for both boolean and index masks
+    n = np.array([5, 1000, 50, 1])
+    xe = [0, 1, 2, 3, 4]
+    c = BinnedNLL(n, xe, expon_cdf)
+    args = (1.0,)
+
+    full = c.pulls(args)
+    assert not np.any(np.isnan(full))
+
+    # boolean mask: masked bin is NaN, the rest finite
+    c.mask = np.array([True, True, False, True])
+    p = c.pulls(args)
+    assert np.isnan(p[2])
+    assert not np.any(np.isnan(p[[0, 1, 3]]))
+
+    # index mask selecting the same bins must give identical pulls;
+    # bitwise NOT of an index array would poison the wrong bins
+    c.mask = np.array([0, 1, 3])
+    p2 = c.pulls(args)
+    assert np.isnan(p2[2])
+    assert_allclose(p2[[0, 1, 3]], p[[0, 1, 3]])
+
+    # a zero-count bin has zero error and must give NaN in addition to the mask
+    c = BinnedNLL([5, 0, 50, 1], xe, expon_cdf)
+    c.mask = np.array([True, True, False, True])
+    p = c.pulls(args)
+    assert np.isnan(p[1])
+    assert np.isnan(p[2])
+    assert not np.any(np.isnan(p[[0, 3]]))
+
+
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_BinnedNLL_weighted(use_grad):
     xe = np.array([0, 0.2, 0.4, 0.8, 1.5, 10])
@@ -1470,6 +1502,24 @@ def test_LeastSquares_pulls():
     assert_equal(c.pulls((0, 1)), [10, 10])
     c.mask = [True, False]
     assert_equal(c.pulls((0, 1)), [10, np.nan])
+
+
+def test_LeastSquares_pulls_mask_index():
+    # an index mask must mask the same bins as the equivalent boolean mask;
+    # bitwise NOT of an index array would poison the wrong bins
+    c = LeastSquares([1, 2, 3], [2, 3, 4], 0.1, line)
+    c.mask = [0, 2]
+    assert_equal(c.pulls((0, 1)), [10, np.nan, 10])
+
+
+def test_LeastSquares_pulls_zero_error():
+    # bins with zero error must yield NaN pulls, not +-inf, with or without a mask
+    c = LeastSquares([1, 2, 3], [2, 3, 4], [0.1, 0.0, 0.1], line)
+    p = c.pulls((0, 1))
+    assert_equal(p, [10, np.nan, 10])
+    c.mask = [True, True, True]
+    p = c.pulls((0, 1))
+    assert_equal(p, [10, np.nan, 10])
 
 
 @pytest.mark.parametrize("use_grad", (False, True))
