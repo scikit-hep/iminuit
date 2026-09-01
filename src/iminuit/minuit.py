@@ -1252,7 +1252,18 @@ class Minuit:
 
             for i, c in enumerate(constraints):
                 if isinstance(c, NonlinearConstraint):
-                    c.fun = Wrapped(c.fun)
+                    # build a new constraint instead of mutating the user's
+                    # object, which would double-wrap fun on a second call
+                    constraints[i] = NonlinearConstraint(
+                        Wrapped(c.fun),
+                        c.lb,
+                        c.ub,
+                        jac=c.jac,
+                        hess=c.hess,
+                        keep_feasible=c.keep_feasible,
+                        finite_diff_rel_step=c.finite_diff_rel_step,
+                        finite_diff_jac_sparsity=c.finite_diff_jac_sparsity,
+                    )
                 elif isinstance(c, LinearConstraint):
                     if not no_fixed_parameters:
                         x = cpar.copy()

@@ -205,6 +205,29 @@ def test_scipy_constraints_1(lb, fixed):
     assert m.accurate
 
 
+def test_scipy_nonlinear_constraint_not_mutated():
+    def fcn(a, x, y):
+        return a + x**2 + y**2
+
+    def confun(a, x, y):
+        return a
+
+    nc = scopt.NonlinearConstraint(confun, 0, np.inf)
+    fun_before = nc.fun
+
+    m = Minuit(fcn, a=3, x=1, y=2)
+    m.scipy(constraints=[nc])
+    assert_allclose(m.values, [0, 0, 0], atol=1e-3)
+    assert nc.fun is fun_before
+
+    # a second call fails if fun is double-wrapped, because the wrapper expects
+    # the original positional signature
+    m2 = Minuit(fcn, a=3, x=1, y=2)
+    m2.scipy(constraints=[nc])
+    assert_allclose(m2.values, [0, 0, 0], atol=1e-3)
+    assert nc.fun is fun_before
+
+
 @pytest.mark.parametrize("fixed", (False, True))
 def test_scipy_constraints_2(fixed):
     def fcn(x, y):
