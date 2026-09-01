@@ -757,8 +757,6 @@ class CostSum(Cost, ABCSequence):
             Dict that maps an index to dict of keyword arguments. This can be
             used to pass keyword arguments to a visualize method of a component with
             that index.
-        **kwargs :
-            Other keyword arguments are forwarded to all components.
         """
         from matplotlib import pyplot as plt
 
@@ -766,7 +764,7 @@ class CostSum(Cost, ABCSequence):
 
         fig = plt.gcf()
         fig.set_figwidth(n * fig.get_figwidth() / 1.5)
-        _, ax = plt.subplots(1, n, num=fig.number, clear=True)
+        _, ax = plt.subplots(1, n, num=fig.number, squeeze=False, clear=True)
 
         if component_kwargs is None:
             component_kwargs = {}
@@ -776,7 +774,7 @@ class CostSum(Cost, ABCSequence):
             if not hasattr(comp, "visualize"):
                 continue
             kwargs = component_kwargs.get(k, {})
-            plt.sca(ax[i])
+            plt.sca(ax[0, i])
             comp.visualize(cargs, **kwargs)
             i += 1
 
