@@ -861,7 +861,8 @@ class MaskedCostWithPulls(MaskedCost):
         -------
         array
             Array of pull values. If the cost function is masked, the array contains NaN
-            values where the mask value is False.
+            values where the mask value is False. Data points with zero error also
+            yield NaN.
 
         Notes
         -----
