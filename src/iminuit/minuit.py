@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import operator
 import warnings
 from iminuit import util as mutil
@@ -1252,7 +1253,11 @@ class Minuit:
 
             for i, c in enumerate(constraints):
                 if isinstance(c, NonlinearConstraint):
+                    # copy instead of mutating the user's object, which would
+                    # double-wrap fun on a second call
+                    c = copy.copy(c)
                     c.fun = Wrapped(c.fun)
+                    constraints[i] = c
                 elif isinstance(c, LinearConstraint):
                     if not no_fixed_parameters:
                         x = cpar.copy()
