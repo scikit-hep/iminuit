@@ -1698,7 +1698,7 @@ class Minuit:
         vname : int or str
             Parameter to scan over.
         size : int, optional
-            Number of scanning points (Default: 100). Ignored if grid is set.
+            Number of scanning points (Default: 30). Ignored if grid is set.
         bound : tuple of float or float, optional
             If bound is tuple, (left, right) scanning bound.
             If bound is a number, it specifies an interval of N :math:`\sigma`
@@ -2384,6 +2384,9 @@ class Minuit:
                 a, b = prange[par1]
                 extremes = []
                 for k, (xk, yk) in enumerate(zip(x, y)):
+                    if k == 0:
+                        # y[k - 1] would wrap around to the last point
+                        continue
                     if yk < fmax and y[k - 1] > fmax:
                         extremes.append(x[k - 1])
                     if yk > fmax and y[k - 1] < fmax:
@@ -2668,12 +2671,11 @@ class Minuit:
                     z * s[1] * np.sin(phi),  # noqa: B023
                 )
                 x = r[0] + center[0]
-                lim = self.limits[ix]
-                if lim is not None:
-                    x = max(lim[0], min(x, lim[1]))
+                xlim = self.limits[ix]
+                x = max(xlim[0], min(x, xlim[1]))
                 y = r[1] + center[1]
-                if lim is not None:
-                    y = max(lim[0], min(y, lim[1]))
+                ylim = self.limits[iy]
+                y = max(ylim[0], min(y, ylim[1]))
                 return x, y
 
             def scan(z):
