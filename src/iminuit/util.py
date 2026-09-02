@@ -293,6 +293,13 @@ class Matrix(np.ndarray):
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
+    def _names(self) -> Tuple[str, ...]:
+        # Positional labels if names are unknown or stale, e.g. after numpy
+        # fancy indexing produced a non-square matrix.
+        if self.ndim == 2 and self.shape[0] == self.shape[1] == len(self._var2pos):
+            return tuple(self._var2pos)
+        return tuple(str(i) for i in range(len(self)))
+
     def __getitem__(  # type:ignore
         self,
         key: Union[Key, Tuple[Key, Key], Iterable[Key], NDArray],
@@ -312,15 +319,21 @@ class Matrix(np.ndarray):
         if isinstance(key, slice):
             # slice returns square matrix
             sl = trafo(key)
-            return super().__getitem__((sl, sl))
-        if isinstance(key, (str, tuple)):
-            return super().__getitem__(trafo(key))
-        if isinstance(key, Iterable) and not isinstance(key, np.ndarray):
+            sub = super().__getitem__((sl, sl))
+            positions = range(len(self))[sl]
+        elif isinstance(key, Iterable) and not isinstance(
+            key, (str, tuple, np.ndarray)
+        ):
             # iterable returns square matrix
-            index2 = [trafo(k) for k in key]  # type:ignore
-            t = super().__getitem__(index2).T  # type:ignore
-            return np.ndarray.__getitem__(t, index2).T  # type:ignore
-        return super().__getitem__(key)
+            positions = [trafo(k) for k in key]  # type:ignore
+            sub = super().__getitem__(np.ix_(positions, positions))
+        else:
+            return super().__getitem__(trafo(key))
+
+        # names of the square sub-matrix, if the names of this matrix are known
+        names = tuple(var2pos) if len(var2pos) == len(self) else ()
+        sub._var2pos = {names[p]: i for i, p in enumerate(positions)} if names else {}
+        return sub
 
     def to_dict(self) -> Dict[Tuple[str, str], float]:
         """
@@ -329,7 +342,7 @@ class Matrix(np.ndarray):
         Since the matrix is symmetric, the dict only contains the upper triangular
         matrix.
         """
-        names = tuple(self._var2pos)
+        names = self._names()
         d = {}
         for i, pi in enumerate(names):
             for j in range(i, len(names)):
@@ -355,7 +368,7 @@ class Matrix(np.ndarray):
         x     1   -0
         y    -0    4
         """
-        names = tuple(self._var2pos)  # type:ignore
+        names = self._names()
         nums = _repr_text.matrix_format(self)
         tab = []
         n = len(self)

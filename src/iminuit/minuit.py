@@ -961,7 +961,8 @@ class Minuit:
         ncall :
             Approximate number of function calls to spend on the scan. The
             actual number will be close to this, the scan uses ncall^(1/npar) steps per
-            cube dimension. If no value is given, a heuristic is used to set ncall.
+            cube dimension, but at least 2. If no value is given, a heuristic is used
+            to set ncall.
 
         Raises
         ------

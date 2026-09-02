@@ -188,12 +188,37 @@ def test_Matrix():
     #  3 4 5
     #  6 7 8]
 
-    # m1 = m[:2]
-    # assert_equal(m1, [[0, 1], [3, 4]])
+    m1 = m[:2]
+    assert_equal(m1, [[0, 1], [3, 4]])
+    # sub-matrices track their names (regression test for stale _var2pos)
+    assert m1._names() == ("a", "b")
+    assert m1.to_dict() == {("a", "a"): 0, ("a", "b"): 1, ("b", "b"): 4}
+
     m2 = m[[0, 2]]
     assert_equal(m2, [[0, 2], [6, 8]])
+    assert m2._names() == ("a", "c")
+
     m3 = m[["a", "c"]]
     assert_equal(m3, [[0, 2], [6, 8]])
+    assert m3.to_dict() == {("a", "a"): 0, ("a", "c"): 2, ("c", "c"): 8}
+    tab, header = m3.to_table()
+    assert header == ("a", "c")
+    assert [row[0] for row in tab] == ["a", "c"]
+    assert "a" in str(m3)
+    assert "a" in m3._repr_html_()
+
+    # negative indices map to the right name
+    assert m[[-1]]._names() == ("c",)
+
+    # fancy indexing with a numpy array is not tracked; labels are positional
+    m4 = m[np.array([0, 2])]
+    assert_equal(m4, [[0, 1, 2], [6, 7, 8]])  # 2x3, not square
+    assert m4._names() == ("0", "1")
+
+    # slicing an untracked matrix stays untracked instead of raising
+    m5 = m4[:1]
+    assert m5._names() == ("0",)
+    assert "0" in str(m5)
 
     d = m.to_dict()
     assert list(d.keys()) == [
