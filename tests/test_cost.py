@@ -904,6 +904,27 @@ def test_BinnedNLL_mask_grad_multipar():
         assert_allclose(g, ref(*args), rtol=1e-3)
 
 
+def test_BinnedNLL_2D_mask_grad():
+    # regression test: with a multi-dimensional histogram, the mask selects along
+    # the first axis only, so the correction must sum over the remaining axes too
+    pytest.importorskip("jacobi")
+    truth = (0.1, 0.2, 0.9, 1.1)
+    x, y = mvnorm(*truth).rvs(size=1000, random_state=1).T
+    w, xe, ye = np.histogram2d(x, y, bins=(6, 5))
+
+    def model(xy, mux, muy, sx, sy):
+        return mvnorm(mux, muy, sx, sy).cdf(xy.T)
+
+    c = BinnedNLL(w, (xe, ye), model, grad=numerical_model_gradient(model))
+    c.mask = np.arange(len(w)) != 2
+
+    ref = numerical_cost_gradient(c)
+    args = (0.0, 0.1, 1.0, 1.0)
+    g = c.grad(*args)
+    assert np.linalg.norm(g) > 1.0
+    assert_allclose(g, ref(*args), rtol=1e-3)
+
+
 def test_BinnedNLL_properties():
     def cdf(x, a, b):
         return 0
