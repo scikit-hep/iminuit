@@ -45,6 +45,13 @@ You have the source code now, next you want to build and test. We recommend to u
 
 This installs your version of ``iminuit`` locally and all the dependencies needed to run the tests, and then runs the tests.
 
+If you prefer to manage the virtual environment yourself, the dependency groups ``test``, ``doc``, and ``dev`` (both) in ``pyproject.toml`` list what you need. For example, with ``uv``:
+
+.. code-block:: bash
+
+    uv pip install -e. --group test
+    python -m pytest -n auto
+
 Generate a coverage report:
 
 .. code-block:: bash
