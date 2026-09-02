@@ -1876,3 +1876,39 @@ def test_mncontour_experimental_per_param_limits():
     cont0 = m.mncontour(0, 1, size=30, experimental=False)
     assert np.all(cont0[:, 0] >= -0.3 - 1e-9)
     assert np.all(cont0[:, 1] <= 0.3 + 1e-9)
+
+
+def test_fixto_does_not_mutate_fmin():
+    # fixto after migrad must not mutate the (immutable) FunctionMinimum state
+    m = Minuit(func0, x=0, y=0)
+    m.migrad()
+    values_before = [p.value for p in m.fmin._src.state]
+
+    # before fixto, _last_state is a reference to the FunctionMinimum's state
+    assert not m._fmin_does_not_exist_or_last_state_was_modified()
+
+    m.fixto("x", 1.0)
+
+    # the stored FunctionMinimum must be unchanged
+    values_after = [p.value for p in m.fmin._src.state]
+    assert values_after == values_before
+    assert values_before[0] != 1.0
+
+    # fixto modified _last_state, so the next hesse must rebuild from a seed
+    assert m._fmin_does_not_exist_or_last_state_was_modified()
+
+
+def test_reset_resets_all_counters():
+    m = Minuit(func0, grad=func0_grad, x=0, y=0)
+    m.migrad()
+    # all four FCN counters are reset, including _ng2 and _nhessian which
+    # reset() previously left untouched
+    m._fcn._ng2 = 7
+    m._fcn._nhessian = 3
+    assert m._fcn._nfcn > 0
+    assert m._fcn._ngrad > 0
+    m.reset()
+    assert m._fcn._nfcn == 0
+    assert m._fcn._ngrad == 0
+    assert m._fcn._ng2 == 0
+    assert m._fcn._nhessian == 0
