@@ -1389,8 +1389,8 @@ def _get_limit(
     if get_origin(annotation) is not Annotated:
         return None
 
-    tp, *constraints = get_args(annotation)
-    assert tp is float
+    # The base type (first argument) is irrelevant for limit extraction.
+    _, *constraints = get_args(annotation)
     lower = -np.inf
     upper = np.inf
     for c in constraints:

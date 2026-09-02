@@ -225,6 +225,24 @@ def test_with_type_hints():
     assert r == {"x": None, "a": (0, 1), "b": None}
 
 
+def test_with_type_hints_non_float_base():
+    # The base type of an Annotated hint is irrelevant for limit extraction.
+    # Bases other than float (e.g. int or np.float64) must not crash describe()
+    # (regression test for an AssertionError that broke Minuit construction).
+    def foo(
+        x: NDArray,
+        a: Annotated[int, Gt(0), Lt(1)],
+        b: Annotated[np.float64, Ge(1)],
+    ): ...
+
+    r = describe(foo, annotations=True)
+    assert r == {
+        "x": None,
+        "a": (0, 1),
+        "b": (1, np.inf),
+    }
+
+
 def test_with_pydantic_types():
     tp = pytest.importorskip("pydantic.types")
 
