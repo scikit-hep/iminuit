@@ -6,6 +6,7 @@ You can look up the interface of data classes that iminuit uses here.
 
 from __future__ import annotations
 import inspect
+import operator
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
@@ -675,6 +676,8 @@ class FMin:
 
     def __eq__(self, other: object) -> bool:
         """Return True if all attributes are equal."""
+        if not isinstance(other, FMin):
+            return NotImplemented
 
         def relaxed_equal(k: str, a: object, b: object) -> bool:
             a = getattr(a, k)
@@ -837,7 +840,8 @@ class Params(tuple):
                 if p.name == key:
                     key = i
                     break
-        assert isinstance(key, (int, slice))
+            else:
+                raise KeyError(key)
         return super(Params, self).__getitem__(key)
 
     def __str__(self) -> str:
@@ -950,18 +954,26 @@ class MErrors(OrderedDict):
         else:
             p.text(str(self))
 
-    def __getitem__(self, key: Union[int, str]) -> MError:
+    def __getitem__(self, key: Union[SupportsIndex, str]) -> MError:
         """Get item at key, which can be an index or a parameter name."""
-        if isinstance(key, int):
-            if key < 0:
-                key += len(self)
-            if key < 0 or key >= len(self):
+        if not isinstance(key, str):
+            # Accept any integer-like key (including numpy integers) by
+            # converting it with operator.index, which raises TypeError for
+            # non-integer, non-str keys.
+            try:
+                index = operator.index(key)
+            except TypeError:
+                raise TypeError(
+                    f"key must be an integer or parameter name, not {key!r}"
+                ) from None
+            if index < 0:
+                index += len(self)
+            if index < 0 or index >= len(self):
                 raise IndexError("index out of range")
             for i, k in enumerate(self):
-                if i == key:
+                if i == index:
                     key = k
                     break
-        assert isinstance(key, str)
         return OrderedDict.__getitem__(self, key)
 
 
