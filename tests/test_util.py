@@ -20,6 +20,11 @@ def test_ndim():
     assert ndim((None, None)) == 1
     assert ndim(((1, 2), None)) == 2
     assert ndim((None, (1, 2))) == 2
+    # a str is treated as a scalar; otherwise this would loop forever, since
+    # indexing a 1-char str yields the str itself (reachable via e.g.
+    # m.limits[:] = "ab" typos)
+    assert ndim("ab") == 0
+    assert ndim("") == 0
 
 
 # def test_BasicView():
@@ -78,6 +83,21 @@ def test_ValueView():
     assert_equal(v[[2, 0]], (3, 1))
     v[["x", "z"]] = (3, 1)
     assert_equal(v, (3, 2, 1))
+
+    # boolean masks must be honored as masks, not silently read as integer
+    # indices. This must hold for both plain-bool lists and numpy bool arrays,
+    # since np.bool_ is not a subclass of the builtin bool.
+    v[:] = (1, 2, 3)
+    assert_equal(v[[True, False, True]], (1, 3))
+    assert_equal(v[np.array([True, False, True])], (1, 3))
+    v[np.array([True, False, True])] = (4, 5)
+    assert_equal(v, (4, 2, 5))
+    v[[True, False, True]] = (1, 3)
+    assert_equal(v, (1, 2, 3))
+
+    # an empty key selects nothing instead of raising IndexError
+    assert_equal(v[[]], [])
+    assert_equal(v[np.array([], dtype=bool)], [])
 
 
 def test_FixedView_as_mask_for_other_views():

@@ -150,7 +150,9 @@ class BasicView(abc.ABC):
 
 def _ndim(obj: Any) -> int:
     nd = 0
-    while isinstance(obj, Iterable):
+    # A str is Iterable, but indexing it yields another str, which would
+    # cause an infinite loop here; treat it (and other str-likes) as scalar.
+    while isinstance(obj, Iterable) and not isinstance(obj, str):
         nd += 1
         for x in obj:
             if x is not None:
@@ -1442,8 +1444,13 @@ def _key2index(
     if isinstance(key, slice):
         return _key2index_from_slice(var2pos, key)
     if not isinstance(key, str) and isinstance(key, Iterable):
-        # convert boolean masks into list of indices
-        if isinstance(key[0], bool):
+        # convert into a list so we can index it and check for emptiness;
+        # this also materializes generators and numpy arrays
+        key = list(key)
+        # convert boolean masks into list of indices; np.bool_ is not a
+        # subclass of bool, so we must check for it explicitly, otherwise
+        # numpy booleans would be silently interpreted as integer indices
+        if key and isinstance(key[0], (bool, np.bool_)):
             key = [k for k in range(len(var2pos)) if key[k]]
         return [_key2index_item(var2pos, k) for k in key]
     return _key2index_item(var2pos, key)
