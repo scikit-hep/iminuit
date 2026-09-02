@@ -10,7 +10,7 @@ import sys
 sys.path.append(".")
 import python_releases
 
-nox.needs_version = ">=2024.3.2"
+nox.needs_version = ">=2025.2.9"
 nox.options.default_venv_backend = "uv|virtualenv"
 
 ENV = {
@@ -21,6 +21,7 @@ ENV = {
 PYPROJECT = nox.project.load_toml("pyproject.toml")
 MINIMUM_PYTHON = PYPROJECT["project"]["requires-python"].strip(">=")
 LATEST_PYTHON = str(python_releases.latest())
+DEPS = {g: nox.project.dependency_groups(PYPROJECT, g) for g in ("test", "dev")}
 
 nox.options.sessions = ["test", "mintest", "maxtest"]
 
@@ -28,7 +29,7 @@ nox.options.sessions = ["test", "mintest", "maxtest"]
 @nox.session(reuse_venv=True)
 def test(session: nox.Session) -> None:
     """Run all tests."""
-    session.install("--only-binary=:all:", "-e.[test]")
+    session.install("--only-binary=:all:", "-e.", *DEPS["test"])
     extra_args = session.posargs if session.posargs else ("-n=auto",)
     session.run("pytest", *extra_args, env=ENV)
 
@@ -70,7 +71,7 @@ def pypy(session: nox.Session) -> None:
 @nox.session(venv_backend="uv", reuse_venv=True)
 def cov(session: nox.Session) -> None:
     """Run covage and place in 'htmlcov' directory."""
-    session.install("--only-binary=:all:", "-e.[test,doc]")
+    session.install("--only-binary=:all:", "-e.", *DEPS["dev"])
     session.run("coverage", "run", "-m", "pytest", env=ENV)
     session.run("coverage", "html", "-d", "build/htmlcov")
     session.run("coverage", "report", "-m")
@@ -80,7 +81,7 @@ def cov(session: nox.Session) -> None:
 @nox.session(python="3.11", reuse_venv=True)
 def doc(session: nox.Session) -> None:
     """Build html documentation."""
-    session.install("--only-binary=:all:", "-e.[test,doc]")
+    session.install("--only-binary=:all:", "-e.", *DEPS["dev"])
 
     # link check
     session.run(
@@ -96,7 +97,7 @@ def doc(session: nox.Session) -> None:
 @nox.session(python="3.11", reuse_venv=True)
 def links(session: nox.Session) -> None:
     """Check all links in the documentation."""
-    session.install("--only-binary=:all:", "-e.[test,doc]")
+    session.install("--only-binary=:all:", "-e.", *DEPS["dev"])
 
     # link check
     session.run(

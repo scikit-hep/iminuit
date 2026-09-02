@@ -35,7 +35,7 @@ dependencies = ["numpy >=1.21"]
 repository = "https://github.com/scikit-hep/iminuit"
 documentation = "https://scikit-hep.org/iminuit"
 
-[project.optional-dependencies]
+[dependency-groups]
 test = [
     "coverage",
     "ipywidgets",
@@ -70,6 +70,7 @@ doc = [
     "jaxlib",
     "pytest-xdist",
 ]
+dev = [{ include-group = "test" }, { include-group = "doc" }]
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
