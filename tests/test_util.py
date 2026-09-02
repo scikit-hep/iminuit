@@ -237,6 +237,10 @@ def test_Params():
     assert p["foo"].number == 0
     assert p["bar"].number == 1
 
+    # an unknown name raises KeyError, not a bare AssertionError
+    with pytest.raises(KeyError):
+        p["baz"]
+
 
 def test_MError():
     me = util.MError(
@@ -324,6 +328,24 @@ def test_MErrors():
 
     assert repr(mes) == f"<MErrors\n  {mes['x']!r}\n>"
 
+    # indexing works with str and integer keys, including numpy integers
+    assert mes["x"].name == "x"
+    assert mes[0].name == "x"
+    assert mes[np.int64(0)].name == "x"
+    assert mes[-1].name == "x"
+
+    # out-of-range integer raises IndexError
+    with pytest.raises(IndexError):
+        mes[1]
+
+    # unknown name raises KeyError
+    with pytest.raises(KeyError):
+        mes["y"]
+
+    # a non-integer, non-str key raises TypeError, not a bare AssertionError
+    with pytest.raises(TypeError):
+        mes[1.5]
+
 
 @pytest.mark.parametrize("errordef", (0.5, 1.0))
 def test_FMin(errordef):
@@ -377,6 +399,12 @@ def test_FMin(errordef):
     assert fmin != util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.3, 1.2)
     assert fmin != util.FMin(fm, "bar", 1, 2, 0, 0, 1, 0.1, 1.2)
     assert fmin != util.FMin(fm, "foo", 1, 2, 0, 0, 1, 0.1, 1.5)
+
+    # comparison with non-FMin objects returns False instead of raising
+    assert fmin != 5
+    assert fmin != None
+    assert not (fmin == None)
+    assert (fmin == 5) is False
 
     if errordef == 1:
         reduced_chi2 = fmin.fval
