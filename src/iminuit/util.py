@@ -285,16 +285,16 @@ class Matrix(np.ndarray):
     def __array_finalize__(self, obj: Any) -> None:
         """For internal use."""
         if obj is None:
-            self._var2pos: Optional[Dict[str, int]] = {}
+            self._var2pos: Dict[str, int] = {}
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
     def _names(self) -> Tuple[str, ...]:
-        # Fall back to positional labels if the names could not be tracked,
-        # for example after fancy numpy indexing.
-        if self._var2pos is None:
-            return tuple(str(i) for i in range(len(self)))
-        return tuple(self._var2pos)
+        # Positional labels if names are unknown or stale, e.g. after numpy
+        # fancy indexing produced a non-square matrix.
+        if self.ndim == 2 and self.shape[0] == self.shape[1] == len(self._var2pos):
+            return tuple(self._var2pos)
+        return tuple(str(i) for i in range(len(self)))
 
     def __getitem__(  # type:ignore
         self,
@@ -312,39 +312,23 @@ class Matrix(np.ndarray):
                 return tuple(trafo(k) for k in key)
             return key
 
-        def sub_var2pos(positions):
-            # Rebuild the name mapping of a square sub-matrix from the original
-            # positions of the selected parameters. None if not trackable.
-            if self._var2pos is None:
-                return None
-            pos2var = {v: k for k, v in self._var2pos.items()}
-            try:
-                names = [pos2var[p] for p in positions]
-            except KeyError:
-                return None
-            return {name: i for i, name in enumerate(names)}
-
         if isinstance(key, slice):
             # slice returns square matrix
             sl = trafo(key)
             sub = super().__getitem__((sl, sl))
-            if isinstance(sub, Matrix):
-                sub._var2pos = sub_var2pos(list(range(len(self)))[sl])
-            return sub
-        if isinstance(key, (str, tuple)):
-            return super().__getitem__(trafo(key))
-        if isinstance(key, Iterable) and not isinstance(key, np.ndarray):
+            positions = range(len(self))[sl]
+        elif isinstance(key, Iterable) and not isinstance(
+            key, (str, tuple, np.ndarray)
+        ):
             # iterable returns square matrix
-            index2 = [trafo(k) for k in key]  # type:ignore
-            t = super().__getitem__(index2).T  # type:ignore
-            sub = np.ndarray.__getitem__(t, index2).T  # type:ignore
-            if isinstance(sub, Matrix):
-                sub._var2pos = sub_var2pos(index2)
-            return sub
-        sub = super().__getitem__(key)
-        if isinstance(sub, Matrix) and sub.ndim == 2 and sub is not self:
-            # fancy indexing we cannot track; drop the now stale name mapping
-            sub._var2pos = None
+            positions = [trafo(k) for k in key]  # type:ignore
+            sub = super().__getitem__(np.ix_(positions, positions))
+        else:
+            return super().__getitem__(trafo(key))
+
+        # names of the square sub-matrix, if the names of this matrix are known
+        names = tuple(var2pos) if len(var2pos) == len(self) else ()
+        sub._var2pos = {names[p]: i for i, p in enumerate(positions)} if names else {}
         return sub
 
     def to_dict(self) -> Dict[Tuple[str, str], float]:

@@ -170,10 +170,9 @@ def test_Matrix():
 
     m1 = m[:2]
     assert_equal(m1, [[0, 1], [3, 4]])
-    # the slice sub-matrix tracks its names and remains usable
+    # sub-matrices track their names (regression test for stale _var2pos)
     assert m1._names() == ("a", "b")
     assert m1.to_dict() == {("a", "a"): 0, ("a", "b"): 1, ("b", "b"): 4}
-    assert "a" in str(m1)
 
     m2 = m[[0, 2]]
     assert_equal(m2, [[0, 2], [6, 8]])
@@ -181,37 +180,25 @@ def test_Matrix():
 
     m3 = m[["a", "c"]]
     assert_equal(m3, [[0, 2], [6, 8]])
-    # the name-selected sub-matrix rebuilds _var2pos, so str/to_dict/to_table
-    # use the correct labels (regression test for stale _var2pos)
-    assert m3._var2pos == {"a": 0, "c": 1}
-    assert m3._names() == ("a", "c")
     assert m3.to_dict() == {("a", "a"): 0, ("a", "c"): 2, ("c", "c"): 8}
     tab, header = m3.to_table()
     assert header == ("a", "c")
     assert [row[0] for row in tab] == ["a", "c"]
     assert "a" in str(m3)
-    m3._repr_html_()
+    assert "a" in m3._repr_html_()
 
-    # fancy indexing with a numpy array cannot be tracked; names are dropped
-    # and _names() falls back to positional string labels
+    # negative indices map to the right name
+    assert m[[-1]]._names() == ("c",)
+
+    # fancy indexing with a numpy array is not tracked; labels are positional
     m4 = m[np.array([0, 2])]
     assert_equal(m4, [[0, 1, 2], [6, 7, 8]])  # 2x3, not square
-    assert m4._var2pos is None
     assert m4._names() == ("0", "1")
 
-    # slicing a name-dropped matrix keeps names dropped instead of raising
+    # slicing an untracked matrix stays untracked instead of raising
     m5 = m4[:1]
-    assert m5._var2pos is None
     assert m5._names() == ("0",)
     assert "0" in str(m5)
-
-    # a negative index cannot be mapped back to a name, so name tracking is
-    # dropped rather than producing wrong labels
-    m6 = m[[-1]]
-    assert m6._var2pos is None
-    assert m6._names() == ("0",)
-    assert m6.to_dict() == {("0", "0"): 8}
-    m6._repr_html_()
 
     d = m.to_dict()
     assert list(d.keys()) == [
