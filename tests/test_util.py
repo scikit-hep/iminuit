@@ -668,6 +668,48 @@ def test_replace_none():
     assert util._replace_none(3, 2) == 3
 
 
+def test_is_module_available():
+    assert is_module_available("numpy") is True
+    assert is_module_available("a_module_that_does_not_exist_xyz") is False
+    # a missing parent package must not raise, just return False
+    assert is_module_available("a_module_that_does_not_exist_xyz.sub") is False
+
+
+def test_hide_modules_restores_on_exception():
+    import sys
+
+    import json  # noqa: F401  (imported so it can be hidden and restored)
+
+    meta_path_before = list(sys.meta_path)
+
+    with pytest.raises(RuntimeError):
+        with hide_modules("json"):
+            assert "json" not in sys.modules
+            raise RuntimeError("boom")
+
+    # both sys.meta_path and the hidden module are restored despite the error
+    assert list(sys.meta_path) == meta_path_before
+    assert "json" in sys.modules
+
+
+def test_hide_modules_finder_already_removed():
+    import sys
+
+    import json  # noqa: F401
+
+    meta_path_before = list(sys.meta_path)
+
+    with hide_modules("json"):
+        # code inside the block rebuilds sys.meta_path without our finder;
+        # exit must not raise even though there is nothing to remove
+        sys.meta_path = [
+            f for f in sys.meta_path if type(f).__name__ != "HiddenModules"
+        ]
+
+    assert list(sys.meta_path) == meta_path_before
+    assert "json" in sys.modules
+
+
 def test_progressbar(capsys):
     with util.ProgressBar(max_value=4) as bar:
         for i in range(4):
