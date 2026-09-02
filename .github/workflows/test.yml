@@ -34,6 +34,9 @@ jobs:
           - os: ubuntu-latest
             python-version: "3.14"
             installs: "'numpy>=2' scipy matplotlib"
+          - os: ubuntu-latest
+            python-version: "3.15"
+            installs: "'numpy>=2' scipy"
       fail-fast: false
     steps:
       - uses: actions/checkout@v7
