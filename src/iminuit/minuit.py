@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import operator
 import warnings
 from iminuit import util as mutil
 from iminuit.util import _replace_none as replace_none
@@ -32,6 +33,7 @@ from typing import (
     Collection,
     Set,
     Sized,
+    SupportsIndex,
 )
 from iminuit.typing import UserBound, Cost, CostVector
 from iminuit._optional_dependencies import optional_module_for
@@ -2487,11 +2489,20 @@ class Minuit:
             pr.eps = self._precision
         return pr
 
-    def _normalize_key(self, key: Union[int, str]) -> Tuple[int, str]:
-        if isinstance(key, int):
-            if key >= self.npar:
-                raise ValueError(f"parameter {key} is out of range (max: {self.npar})")
-            return key, self._pos2var[key]
+    def _normalize_key(self, key: Union[SupportsIndex, str]) -> Tuple[int, str]:
+        if not isinstance(key, str):
+            # accept Python int, numpy integers, and other SupportsIndex types
+            try:
+                i = operator.index(key)
+            except TypeError:
+                raise ValueError(f"unknown parameter {key!r}") from None
+            if i < 0:
+                i += self.npar
+            if i < 0 or i >= self.npar:
+                raise ValueError(
+                    f"parameter {key} is out of range (max: {self.npar - 1})"
+                )
+            return i, self._pos2var[i]
         if key not in self._var2pos:
             raise ValueError(f"unknown parameter {key!r}")
         return self._var2pos[key], key
