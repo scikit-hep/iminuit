@@ -1912,3 +1912,23 @@ def test_reset_resets_all_counters():
     assert m._fcn._ngrad == 0
     assert m._fcn._ng2 == 0
     assert m._fcn._nhessian == 0
+
+
+def test_scan_all_fixed():
+    m = Minuit(func0, x=1, y=2)
+    m.fixed = True
+    with pytest.raises(RuntimeError, match="all parameters are fixed"):
+        m.scan()
+
+
+def test_scan_many_free_params():
+    # with many free parameters, the old code computed nstep == 1 (degenerate);
+    # the scan should still vary every parameter and find the minimum
+    def cost(*par):
+        return sum((p - i) ** 2 for i, p in enumerate(par))
+
+    n = 5
+    m = Minuit(cost, *([0.0] * n), name=[f"p{i}" for i in range(n)])
+    m.limits = (-5, 5)
+    m.scan(ncall=20)
+    assert_allclose(m.values, range(n), atol=1.0)
