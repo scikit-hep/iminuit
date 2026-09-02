@@ -294,6 +294,31 @@ def test_text_fmin_not_posdef():
     assert _repr_text.fmin(fmin) == ref("fmin_not_posdef.txt")
 
 
+def test_text_fmin_hesse_failed_but_posdef():
+    # An unexpected state combination from Minuit2 (Hesse failed while still
+    # reporting a positive definite covariance) must not make str(fmin) raise.
+    fm = Namespace(
+        fval=11.456,
+        edm=1.23456e-10,
+        up=0.5,
+        is_valid=False,
+        has_valid_parameters=False,
+        has_accurate_covar=False,
+        has_posdef_covar=True,
+        has_made_posdef_covar=False,
+        hesse_failed=True,
+        has_covariance=False,
+        is_above_max_edm=False,
+        has_reached_call_limit=False,
+        has_parameters_at_limit=False,
+        errordef=1,
+        state=[],
+    )
+    fmin = FMin(fm, "Migrad", 10, 3, 0, 0, 10, 1e-4, 0.01)
+    text = _repr_text.fmin(fmin)
+    assert "Hesse FAILED" in text
+
+
 def test_text_fmin_made_posdef():
     fm = Namespace(
         fval=11.456,
