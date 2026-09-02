@@ -49,8 +49,7 @@ If you prefer to manage the virtual environment yourself, the dependency groups 
 
 .. code-block:: bash
 
-    uv pip install -e. --group test
-    python -m pytest -n auto
+    uv run pytest -n auto
 
 Generate a coverage report:
 
