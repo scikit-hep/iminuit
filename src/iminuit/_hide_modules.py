@@ -46,5 +46,7 @@ def hide_modules(*modules, reload=None):
         yield
     finally:
         _forget(reload)
-        sys.meta_path.remove(finder)
+        # already gone if the block itself modified sys.meta_path
+        with contextlib.suppress(ValueError):
+            sys.meta_path.remove(finder)
         sys.modules.update(saved)

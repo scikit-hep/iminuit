@@ -7,6 +7,7 @@ You can look up the interface of data classes that iminuit uses here.
 from __future__ import annotations
 import inspect
 import operator
+import importlib.util
 from collections import OrderedDict
 from argparse import Namespace
 from iminuit import _repr_html, _repr_text, _deprecated
@@ -1784,11 +1785,10 @@ def is_jupyter() -> bool:
 def is_module_available(module: str) -> bool:
     """Return True if a module is available."""
     try:
-        import importlib
-
-        importlib.import_module(module)
-        return True
+        # find_spec only inspects metadata; it is much cheaper than a full import.
+        return importlib.util.find_spec(module) is not None
     except ModuleNotFoundError:
+        # raised if a parent package of a dotted name is missing
         return False
 
 
