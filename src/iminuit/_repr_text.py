@@ -200,7 +200,7 @@ def merrors(mes):
 
 
 def matrix(arr):
-    names = [_parse_latex(x) for x in arr._var2pos]
+    names = [_parse_latex(x) for x in arr._names()]
 
     n = len(arr)
     nums = matrix_format(arr)
