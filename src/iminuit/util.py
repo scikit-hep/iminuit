@@ -1377,8 +1377,7 @@ def _get_limit(
     if get_origin(annotation) is not Annotated:
         return None
 
-    # The base type (first argument) is irrelevant for limit extraction;
-    # accept any base type, not just float.
+    # The base type (first argument) is irrelevant for limit extraction.
     _, *constraints = get_args(annotation)
     lower = -np.inf
     upper = np.inf
