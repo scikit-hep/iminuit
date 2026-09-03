@@ -75,8 +75,13 @@ jobs:
 
   pyodide:
     needs: release_check
-    name: pyodide
+    name: ${{ matrix.py }} pyodide
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        py: [cp313, cp314, cp315]
+
     steps:
       - uses: actions/checkout@v7
         with:
@@ -85,10 +90,12 @@ jobs:
       - uses: pypa/cibuildwheel@v4.2
         env:
           CIBW_PLATFORM: pyodide
+          CIBW_BUILD: ${{ matrix.py }}-*
+          CIBW_ENABLE: pyodide-prerelease
 
       - uses: actions/upload-artifact@v7
         with:
-          name: pyodide-wheels
+          name: wheel-${{ matrix.py }}-pyodide
           path: ./wheelhouse/*.whl
 
   sdist:
@@ -129,10 +136,9 @@ jobs:
       attestations: write
 
     steps:
-      # pyodide wheels are not accepted by PyPI; they go on the GitHub release
       - uses: actions/download-artifact@v8
         with:
-          pattern: "{sdist,wheel-*}"
+          pattern: "*"
           merge-multiple: true
           path: dist
 
@@ -149,14 +155,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
-        with:
-          name: pyodide-wheels
-          path: pyodide
       - uses: softprops/action-gh-release@v3
         with:
           name: v${{ needs.release_check.outputs.tag }}
           tag_name: v${{ needs.release_check.outputs.tag }}
           target_commitish: ${{ github.ref_name }}
           generate_release_notes: true
-          files: pyodide/*.whl
