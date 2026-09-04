@@ -73,6 +73,31 @@ jobs:
           name: wheel-${{ matrix.py }}-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
+  pyodide:
+    needs: release_check
+    name: ${{ matrix.py }} pyodide
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        py: [cp313, cp314, cp315]
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: pypa/cibuildwheel@v4.2
+        env:
+          CIBW_PLATFORM: pyodide
+          CIBW_BUILD: ${{ matrix.py }}-*
+          CIBW_ENABLE: pyodide-prerelease
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheel-${{ matrix.py }}-pyodide
+          path: ./wheelhouse/*.whl
+
   sdist:
     needs: release_check
     name: source package
@@ -99,7 +124,7 @@ jobs:
 
   upload:
     if: ${{ github.ref == 'refs/heads/main' }}
-    needs: [wheels, sdist]
+    needs: [wheels, pyodide, sdist]
     runs-on: ubuntu-latest
 
     environment:

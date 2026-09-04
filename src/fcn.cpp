@@ -29,11 +29,11 @@ std::vector<double> flatten_hessian(py::array_t<double> arg) {
 
   // flatten the matrix
   auto r = arg.unchecked<2>();
-  const unsigned size = arg.shape(0);
+  const py::ssize_t size = arg.shape(0);
   if (arg.shape(1) != size) throw std::runtime_error("2D matrix is not square");
   std::vector<double> result(size * size);
-  for (unsigned i = 0; i < size; ++i)
-    for (unsigned j = 0; j < size; ++j) result[i * size + j] = r(i, j);
+  for (py::ssize_t i = 0; i < size; ++i)
+    for (py::ssize_t j = 0; j < size; ++j) result[i * size + j] = r(i, j);
   return result;
 }
 
