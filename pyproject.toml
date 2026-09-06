@@ -155,6 +155,7 @@ skip = [
     "cp39-musllinux_i686", # no numpy wheel
     "*t-win32",            # no numpy wheel
 ]
+test-skip = ["*-ios_*"] # no simulator device on CI
 test-requires = "pytest"
 test-command = "python -m pytest {package}/tests"
 
@@ -162,6 +163,18 @@ test-command = "python -m pytest {package}/tests"
 # this makes sure that we build only on platforms that have a corresponding numpy wheel
 UV_ONLY_BINARY = ":all:"
 PIP_ONLY_BINARY = ":all:"
+
+[tool.cibuildwheel.ios]
+build-frontend = "build"
+xbuild-tools = ["cmake", "ninja"]
+test-sources = ["tests"]
+test-command = "python -m pytest tests"
+
+[tool.cibuildwheel.ios.environment]
+UV_ONLY_BINARY = ":all:"
+PIP_ONLY_BINARY = ":all:"
+# beeware hosts the iOS wheels for numpy
+PIP_EXTRA_INDEX_URL = "https://pypi.anaconda.org/beeware/simple/"
 
 [[tool.cibuildwheel.overrides]]
 # to match numpy, we use manylinux2014 for cp310 (and 3.9, since manylinux2010 is dead)
