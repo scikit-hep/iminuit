@@ -214,6 +214,11 @@ def test_Matrix():
     m4 = m[np.array([0, 2])]
     assert_equal(m4, [[0, 1, 2], [6, 7, 8]])  # 2x3, not square
     assert m4._names() == ("0", "1")
+    # non-square matrices fall back to the plain ndarray repr
+    assert str(m4) == repr(m4)
+    assert "<pre>" in m4._repr_html_()
+    assert str(m[0]) == repr(m[0])
+    assert "<pre>" in m[0]._repr_html_()
 
     # slicing an untracked matrix stays untracked instead of raising
     m5 = m4[:1]

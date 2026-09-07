@@ -293,10 +293,13 @@ class Matrix(np.ndarray):
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
+    def _is_square(self) -> bool:
+        return self.ndim == 2 and self.shape[0] == self.shape[1]
+
     def _names(self) -> Tuple[str, ...]:
         # Positional labels if names are unknown or stale, e.g. after numpy
         # fancy indexing produced a non-square matrix.
-        if self.ndim == 2 and self.shape[0] == self.shape[1] == len(self._var2pos):
+        if self._is_square() and self.shape[0] == len(self._var2pos):
             return tuple(self._var2pos)
         return tuple(str(i) for i in range(len(self)))
 
@@ -394,11 +397,13 @@ class Matrix(np.ndarray):
 
     def __str__(self):
         """Get user-friendly text representation."""
-        if self.ndim != 2:
+        if not self._is_square():
             return repr(self)
         return _repr_text.matrix(self)
 
     def _repr_html_(self):
+        if not self._is_square():
+            return f"<pre>{repr(self)}</pre>"
         return _repr_html.matrix(self)
 
     def _repr_pretty_(self, p, cycle):
