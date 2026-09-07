@@ -114,9 +114,6 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.0.1
 
-      # the preinstalled cmake cannot cross-compile to iOS
-      - run: brew uninstall cmake; brew install cmake
-
       - uses: pypa/cibuildwheel@v4.2
         env:
           CIBW_PLATFORM: ios
