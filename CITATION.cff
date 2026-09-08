@@ -75,4 +75,4 @@ keywords:
   - statistics
   - data analysis
   - Scikit-HEP
-license: MIT
+license: [MIT, LGPL-2.1-or-later]
