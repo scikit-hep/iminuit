@@ -98,6 +98,31 @@ jobs:
           name: wheel-${{ matrix.py }}-pyodide
           path: ./wheelhouse/*.whl
 
+  ios:
+    needs: release_check
+    name: ${{ matrix.os }} ios
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, macos-26-intel]
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - uses: astral-sh/setup-uv@v10.0.1
+
+      - uses: pypa/cibuildwheel@v4.2
+        env:
+          CIBW_PLATFORM: ios
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheel-ios-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
   sdist:
     needs: release_check
     name: source package
@@ -124,7 +149,7 @@ jobs:
 
   upload:
     if: ${{ github.ref == 'refs/heads/main' }}
-    needs: [wheels, pyodide, sdist]
+    needs: [wheels, pyodide, ios, sdist]
     runs-on: ubuntu-latest
 
     environment:
