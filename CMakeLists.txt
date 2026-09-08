@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...3.26)
+cmake_minimum_required(VERSION 3.15...4.0)
 
 project(iminuit LANGUAGES CXX)
 
@@ -11,13 +11,15 @@ endif()
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported OUTPUT error)
+# Set before pybind11_add_module() so it skips linking its own pybind11::lto
+# target
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ${ipo_supported})
 
 set(CMAKE_CXX_STANDARD
     17
     CACHE STRING "C++ version selection") # or 11, 14, 17, 20
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # optional, ensure standard is supported
-set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensionsn off
-set(PYBIND11_FINDPYTHON ON)
+set(CMAKE_CXX_EXTENSIONS OFF) # optional, keep compiler extensions off
 find_package(pybind11 CONFIG REQUIRED)
 
 file(GLOB SOURCES_A CONFIGURE_DEPENDS "src/*.cpp")
@@ -74,11 +76,8 @@ target_include_directories(
   _core PRIVATE src extern/root/math/minuit2/inc extern/root/math/mathcore/inc
                 extern/root/core/foundation/inc)
 
-target_compile_definitions(_core PUBLIC PYBIND11_DETAILED_ERROR_MESSAGES=1)
+target_compile_definitions(_core PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES=1)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-if(ipo_supported)
-  set_target_properties(_core PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
 
 # Add compiler-specific extra warnings
 if(MSVC)
