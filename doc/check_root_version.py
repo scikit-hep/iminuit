@@ -2,8 +2,25 @@ import subprocess as subp
 from pathlib import PurePath
 import sys
 import ast
+import re
 
 doc_path = PurePath(__file__).parent
+
+# matches `git describe --tags` output: <tag>-<count>-g<hash>
+# the tag itself may contain dashes (e.g. "v6-37-01"), so it is matched greedily
+DESCRIBE_RE = re.compile(r"^(?P<tag>.+)-(?P<count>\d+)-g(?P<hash>[0-9a-f]+)$")
+
+
+def describe_matches(a: str, b: str) -> bool:
+    """Compare two `git describe --tags` strings, tolerating hash abbreviation length."""
+    ma = DESCRIBE_RE.match(a)
+    mb = DESCRIBE_RE.match(b)
+    if not ma or not mb:
+        return a == b
+    if ma["tag"] != mb["tag"] or ma["count"] != mb["count"]:
+        return False
+    ha, hb = ma["hash"], mb["hash"]
+    return ha.startswith(hb) or hb.startswith(ha)
 
 
 def get_root_version() -> str:
@@ -60,7 +77,7 @@ if __name__ == "__main__":
         sys.exit(0)
     conf_root_version = get_root_version_from_conf()
 
-    if conf_root_version != root_version:
+    if not describe_matches(conf_root_version, root_version):
         print(
             f"Please update root_version in doc/conf.py from {conf_root_version} to {root_version}"
         )
