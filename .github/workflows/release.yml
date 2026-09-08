@@ -138,7 +138,7 @@ jobs:
           python-version: "3.12"
       - uses: astral-sh/setup-uv@v10.0.1
 
-      - run: pipx run build --sdist
+      - run: uv build --sdist
 
       - run: uv pip install --system pytest
       - run: uv pip install --system -v $(echo dist/iminuit-*)
