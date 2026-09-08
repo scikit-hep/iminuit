@@ -1898,6 +1898,40 @@ def test_fixto_does_not_mutate_fmin():
     assert m._fmin_does_not_exist_or_last_state_was_modified()
 
 
+@pytest.mark.parametrize(
+    "attr,value",
+    (
+        ("values", 1.0),
+        ("errors", 3.0),
+        ("fixed", True),
+        ("limits", (-10, 10)),
+    ),
+)
+def test_modification_does_not_mutate_fmin(attr, value):
+    m = Minuit(func0, x=0, y=0)
+    m.migrad()
+
+    # _last_state is a reference to the FunctionMinimum state until it is modified
+    assert m._last_state is m._fmin._src.state
+    fmin = m.fmin
+    state_before = [(p.value, p.error, p.is_fixed) for p in m._fmin._src.state]
+
+    getattr(m, attr)["x"] = value
+
+    assert m._last_state is not m._fmin._src.state
+    assert m.fmin is fmin
+    assert [(p.value, p.error, p.is_fixed) for p in m._fmin._src.state] == state_before
+
+
+def test_scan_does_not_mutate_init_state():
+    m = Minuit(func0, x=0, y=0)
+    m.limits = (-10, 10)
+    init_params = m.init_params
+    m.scan(ncall=20)
+    assert m.init_params == init_params
+    assert m.values != [p.value for p in init_params]
+
+
 def test_reset_resets_all_counters():
     m = Minuit(func0, grad=func0_grad, x=0, y=0)
     m.migrad()
