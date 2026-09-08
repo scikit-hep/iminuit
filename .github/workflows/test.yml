@@ -25,7 +25,7 @@ jobs:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
             python-version: "3.12"
-            installs: "numpy>=2"
+            installs: "'numpy>=2'"
           - os: macos-14
             python-version: "3.9"
             installs: "numpy==1.21.0 scipy matplotlib"
