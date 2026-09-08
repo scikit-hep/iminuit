@@ -17,6 +17,6 @@
 
   - Every push to `main` triggers building wheels, uploading to PyPI, and tagging/publishing on GitHub
   - If there are problems with the wheels, commit fixes to `develop`, then merge again into `main`
-  - Note: Upload to PyPI uses API tokens configured in PyPI and Github "Secrets"
+  - Note: Upload to PyPI uses trusted publishing (OIDC) from the `release.yml` workflow, with build provenance attestations; no API token is stored
 
 - conda-forge should pick up our release automatically and generate conda packages
