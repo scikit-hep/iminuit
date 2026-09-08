@@ -25,7 +25,7 @@ jobs:
           # version number must be string, otherwise 3.10 becomes 3.1
           - os: windows-latest
             python-version: "3.12"
-            installs: "'numpy>=2'"
+            installs: "numpy"
           - os: macos-14
             python-version: "3.9"
             installs: "numpy==1.21.0 scipy matplotlib"
@@ -33,10 +33,10 @@ jobs:
             python-version: "pypy-3.11"
           - os: ubuntu-latest
             python-version: "3.14"
-            installs: "'numpy>=2' scipy matplotlib"
+            installs: "numpy scipy matplotlib"
           - os: ubuntu-latest
             python-version: "3.15"
-            installs: "'numpy>=2' scipy"
+            installs: "numpy scipy"
       fail-fast: false
     steps:
       - uses: actions/checkout@v7
