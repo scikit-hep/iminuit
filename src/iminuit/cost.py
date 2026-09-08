@@ -157,9 +157,8 @@ def log_or_zero(x):
         Elementwise contains log(x) for x > 0 and zero otherwise.
     """
     # return 0 for x <= 0
-    # x * 1.0 promotes integer input to float; np.zeros_like(x) alone would
-    # inherit an integer dtype from x and truncate the logarithm, while
-    # dtype=np.float64 would downcast extended precision such as float128
+    # integers truncate the logarithm; x * 1.0 promotes integer input
+    # to float but keeps the precision and works in numba.
     r = np.zeros_like(x * 1.0)
     ma = x > 0
     r[ma] = np.log(x[ma])
