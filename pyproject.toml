@@ -37,6 +37,7 @@ plot = ["matplotlib"]
 numba = ["numba"]
 ipywidgets = ["ipywidgets", "matplotlib"]
 qt = ["PySide6", "matplotlib"]
+interactive = ["iminuit[ipywidgets,qt]"]
 unicode = ["unicodeitplus"]
 all = ["iminuit[scipy,plot,numba,ipywidgets,qt,unicode]"]
 

@@ -25,7 +25,7 @@ Optional features need extra packages. Install them with extras, for example:
 
     $ pip install "iminuit[scipy,plot]"
 
-Available extras are ``scipy``, ``plot`` (matplotlib), ``numba``, ``ipywidgets`` (interactive fitting in Jupyter), ``qt`` (interactive fitting outside of Jupyter, uses PySide6), ``unicode``, and ``all``.
+Available extras are ``scipy``, ``plot`` (matplotlib), ``numba``, ``ipywidgets`` (interactive fitting in Jupyter), ``qt`` (interactive fitting outside of Jupyter, uses PySide6), ``interactive`` (both), ``unicode``, and ``all``.
 
 Conda
 -----

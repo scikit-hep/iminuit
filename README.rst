@@ -55,7 +55,7 @@ Minimal dependencies
 - ``scipy``: SciPy minimizers, Minos intervals for arbitrary confidence levels, and more
 - ``unicodeitplus``: Render names of model parameters in simple LaTeX as Unicode
 
-Use the extras ``iminuit[numba]``, ``iminuit[plot]``, ``iminuit[ipywidgets]``, ``iminuit[qt]``, ``iminuit[scipy]``, ``iminuit[unicode]``, or ``iminuit[all]`` to install them with ``pip``.
+Use the extras ``iminuit[numba]``, ``iminuit[plot]``, ``iminuit[ipywidgets]``, ``iminuit[qt]``, ``iminuit[interactive]`` (both), ``iminuit[scipy]``, ``iminuit[unicode]``, or ``iminuit[all]`` to install them with ``pip``.
 
 Documentation
 -------------
