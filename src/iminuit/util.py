@@ -1266,6 +1266,11 @@ def describe(callable, *, annotations=False):
         def fcn(a, b, c=1): ...
         # describe returns [a, b, c];
         # positional arguments with default values are detected
+
+        def fcn(a, b, *, c=1): ...
+        # describe returns [a, b];
+        # keyword-only arguments are ignored, since the function is called
+        # with positional arguments only
     """
     if _address_of_cfunc(callable) != 0:
         return {} if annotations else []
@@ -1305,6 +1310,9 @@ def _describe_impl_inspect(callable):
             break
         # stop when keyword argument is encountered
         if par.kind is inspect.Parameter.VAR_KEYWORD:
+            break
+        # stop at keyword-only arguments, the FCN calls the function positionally
+        if par.kind is inspect.Parameter.KEYWORD_ONLY:
             break
         r[name] = _get_limit(par.annotation)
     return r
@@ -1396,8 +1404,8 @@ def _get_limit(
         # have a lot of problems, see https://peps.python.org/pep-0649.
         try:
             annotation = eval(annotation, None, typing.__dict__)
-        except NameError:
-            # We ignore unknown annotations to fix issue #846.
+        except Exception:
+            # We ignore annotations that cannot be evaluated to fix issue #846.
             # I cannot replicate here what inspect.signature(..., eval_str=True) does.
             # I need a dict with the global objects at the call site of describe, but
             # it is not globals(). Anyway, when using strings, only the annotations
@@ -1421,7 +1429,7 @@ def _get_limit(
             if c.stop is not None:
                 upper = c.stop
             continue
-        if isinstance(c, Sequence):
+        if isinstance(c, Sequence) and not isinstance(c, (str, bytes)):
             lower, upper = c
             continue
 
