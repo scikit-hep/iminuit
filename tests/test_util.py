@@ -893,6 +893,14 @@ def test_positive_definite():
     assert not util.is_positive_definite([[1, 0], [1, 1]])
 
 
+def test_timer_accumulates():
+    fmin = Namespace(time=1.0)
+    t = util._Timer(fmin)
+    with t:
+        pass
+    assert t.value >= 1.0
+
+
 def test_is_jupyter_1():
     assert util.is_jupyter() is False
 
