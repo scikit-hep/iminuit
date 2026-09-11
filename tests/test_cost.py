@@ -1906,6 +1906,55 @@ def test_NormalConstraint_pickle():
     assert_equal(c.covariance, c2.covariance)
 
 
+def test_NormalConstraint_does_not_modify_inputs():
+    value = np.array([1.0, 2.0])
+    error = np.array([3.0, 4.0])
+
+    c = NormalConstraint(("a", "b"), value, error)
+    assert_equal(value, [1.0, 2.0])
+    assert_equal(error, [3.0, 4.0])
+
+    c.value = [5.0, 6.0]
+    c.covariance = [7.0, 8.0]
+    assert_equal(value, [1.0, 2.0])
+    assert_equal(error, [3.0, 4.0])
+
+
+def test_NormalConstraint_does_not_modify_inputs_2d():
+    value = np.array([1.0, 2.0])
+    cov = 2 * np.eye(2)
+
+    c = NormalConstraint(("a", "b"), value, cov)
+    assert_equal(cov, 2 * np.eye(2))
+
+    c.covariance = 3 * np.eye(2)
+    assert_equal(value, [1.0, 2.0])
+    assert_equal(cov, 2 * np.eye(2))
+
+
+def test_UnbinnedNLL_does_not_modify_inputs():
+    x = np.array([1.0, 2.0, 3.0])
+
+    c = UnbinnedNLL(x, norm_pdf)
+    assert_equal(x, [1.0, 2.0, 3.0])
+
+    c.data = [4.0, 5.0, 6.0]
+    assert_equal(x, [1.0, 2.0, 3.0])
+
+
+@pytest.mark.parametrize("Cost", (BinnedNLL, ExtendedBinnedNLL))
+def test_BinnedNLL_does_not_modify_inputs(Cost):
+    n = np.array([1.0, 2.0])
+    xe = np.array([0.0, 1.0, 2.0])
+
+    c = Cost(n, xe, norm_cdf)
+    assert_equal(n, [1.0, 2.0])
+
+    c.n = [3.0, 4.0]
+    assert_equal(n, [1.0, 2.0])
+    assert_equal(xe, [0.0, 1.0, 2.0])
+
+
 def test_model_wrong_shape_int_output():
     # a model that returns an integer sequence with the wrong shape must still
     # raise the shape error instead of slipping through the float early-return
