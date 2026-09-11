@@ -809,7 +809,8 @@ class MaskedCost(Cost):
         verbose: int,
     ):
         """For internal use."""
-        self._data = data
+        # copy, since the setters write into this array
+        self._data = data.copy()
         self._mask = None
         self._update_cache()
         Cost.__init__(self, parameters, verbose)
@@ -2455,13 +2456,14 @@ class NormalConstraint(Cost):
         """
         tp_args = (args,) if isinstance(args, str) else tuple(args)
         nargs = len(tp_args)
-        self._expected = _norm(value)
+        # copy, since the setters write into these arrays
+        self._expected = _norm(value).copy()
         if self._expected.ndim > 1:
             raise ValueError("value must be a scalar or one-dimensional")
         # args can be a vector of values, in this case we have nargs == 1
         if nargs > 1 and len(self._expected) != nargs:
             raise ValueError("size of value does not match size of args")
-        self._cov = _norm(error)
+        self._cov = _norm(error).copy()
         if len(self._cov) != len(self._expected):
             raise ValueError("size of error does not match size of value")
         if self._cov.ndim < 2:
