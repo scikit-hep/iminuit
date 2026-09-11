@@ -2,6 +2,8 @@ import pytest
 from iminuit import Minuit
 from numpy.testing import assert_allclose
 import contextlib
+import subprocess
+import sys
 
 mpl = pytest.importorskip("matplotlib")
 plt = pytest.importorskip("matplotlib.pyplot")
@@ -144,3 +146,17 @@ def test_interactive_pyside6_with_array_func(qtbot):
 
     qtinteractive(qtbot, m, trace_args)
     assert trace_args.nargs > 0
+
+
+def test_import_in_fresh_process():
+    # regression test: importing backend_qt5agg before PySide6 forces
+    # matplotlib to look only for PyQt5/PySide2, so a process that only has
+    # PySide6 installed and never imported PySide6 before iminuit.qtwidget
+    # fails with "Failed to import any of the following Qt binding modules:
+    # PyQt5, PySide2"
+    result = subprocess.run(
+        [sys.executable, "-c", "import iminuit.qtwidget"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr

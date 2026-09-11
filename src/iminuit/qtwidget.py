@@ -8,11 +8,16 @@ from contextlib import contextmanager
 
 try:
     from matplotlib import pyplot as plt
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+
+    # PySide6 must be imported before any matplotlib Qt backend: importing
+    # backend_qt5agg first makes matplotlib.backends.qt_compat only look for
+    # PyQt5/PySide2, so it fails to find an already-installed PySide6.
     from PySide6 import QtCore, QtGui, QtWidgets
+    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 except ImportError as e:
-    # Not only ModuleNotFoundError: if no Qt binding at all is installed,
-    # matplotlib.backends.qt_compat raises a plain ImportError.
+    # Not only ModuleNotFoundError: matplotlib.backends.qt_compat can also
+    # raise a plain ImportError, e.g. if PySide6 fails to load for other
+    # reasons than being absent.
     e.msg += (
         "\n\nPlease install PySide6, and matplotlib to enable interactive "
         "outside of Jupyter notebooks."
