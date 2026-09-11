@@ -10,6 +10,9 @@ on:
       - CMakeLists.txt
       - .github/workflows/test.yml
 
+permissions:
+  contents: read
+
 env:
   CMAKE_ARGS: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
   # Latest Jupyter requires this to acknowledge deprecation
@@ -18,6 +21,7 @@ env:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     strategy:
       matrix:
