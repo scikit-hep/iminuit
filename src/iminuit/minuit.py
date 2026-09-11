@@ -2677,12 +2677,18 @@ class Minuit:
 
         center = self.values[[ix, iy]]
         assert self.covariance is not None
-        t, u = np.linalg.eig(
+        # the covariance block is symmetric, so eigh gives real eigenvalues;
+        # eig would return complex128 even for real symmetric input (numpy >= 2.5).
+        # eigh sorts ascending, reverse to descending to keep the phase of the
+        # phi parametrization below stable under the discrete size grid
+        t, u = np.linalg.eigh(
             [
                 [self.covariance[ix, ix], self.covariance[ix, iy]],
                 [self.covariance[ix, iy], self.covariance[iy, iy]],
             ]
         )
+        t = t[::-1]
+        u = u[:, ::-1]
         s = (t * factor) ** 0.5
 
         # strategy 0 to avoid expensive computation of Hesse matrix
