@@ -36,24 +36,28 @@ repository = "https://github.com/scikit-hep/iminuit"
 documentation = "https://scikit-hep.org/iminuit"
 
 [dependency-groups]
-test = [
-    "coverage",
+# Packages that the tutorial notebooks import; also used on Binder
+notebook = [
+    "boost_histogram",
     "ipywidgets",
-    "ipykernel; platform_python_implementation=='CPython'",
-    "PySide6; platform_python_implementation=='CPython'",
-    "joblib",
     "jacobi",
+    "joblib",
     "matplotlib; platform_python_implementation=='CPython'",
     "numba; platform_python_implementation=='CPython'",
     "numba-stats; platform_python_implementation=='CPython'",
+    "resample; platform_python_implementation=='CPython'",
+    "scipy; platform_python_implementation=='CPython'",
+    "tabulate",
+]
+test = [
+    { include-group = "notebook" },
+    "coverage",
+    "ipykernel; platform_python_implementation=='CPython'",
+    "PySide6; platform_python_implementation=='CPython'",
     "pytest",
     "pytest-xdist",
     "pytest-xvfb",
     "pytest-qt; platform_python_implementation=='CPython'",
-    "scipy; platform_python_implementation=='CPython'",
-    "tabulate",
-    "boost_histogram",
-    "resample; platform_python_implementation=='CPython'",
     "unicodeitplus",
     "pydantic",
     "annotated_types",

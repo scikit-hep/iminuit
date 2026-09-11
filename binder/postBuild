@@ -1,1 +1,1 @@
-python -m pip install iminuit[test]
+python -m pip install iminuit --group notebook
