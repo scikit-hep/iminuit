@@ -160,6 +160,49 @@ def test_MnPrint_prefix():
         MnPrint.global_level = prev
 
 
+def test_MnPrint_out_of_order_destruction(capsys):
+    # MnPrint pushes the prefix on a thread-local stack; Python can destroy the
+    # objects in any order, so each object must own its prefix
+    prev = MnPrint.global_level
+    try:
+        MnPrint.global_level = 3
+        a = MnPrint("AAA", 3)
+        b = MnPrint("BBB", 3)
+        del a
+        MnPrint.show_prefix_stack(True)
+        b.warn("hi")
+    finally:
+        MnPrint.show_prefix_stack(False)
+        MnPrint.global_level = prev
+
+    captured = capsys.readouterr().out
+    assert "BBB" in captured
+    assert "hi" in captured
+    assert "AAA" not in captured
+
+
+def test_MnPrint_static_methods():
+    p = MnPrint("some_prefix", 1)
+    # these are static methods, but must also work on an instance
+    p.show_prefix_stack(False)
+    p.add_filter("some_prefix")
+    p.clear_filter()
+
+
+def test_MnPrint_trace_level(capsys):
+    from iminuit import Minuit
+
+    m = Minuit(lambda x: (x - 1) ** 2, x=0)
+    m.print_level = 4
+    try:
+        m.migrad()
+    finally:
+        m.print_level = 0
+
+    assert m.valid
+    assert capsys.readouterr().out != ""
+
+
 def test_MnMigrad():
     fcn = FCN(fn, None, None, None, False, 1)
     state = MnUserParameterState()
