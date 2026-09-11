@@ -26,7 +26,8 @@ class PythonVersionParser(HTMLParser):
         """Extract Python version from entry."""
         if self.found_version:
             self.found_version = False
-            match = re.search(r"Python (\d+)\.(\d+)\.(\d+)?", data)
+            # negative lookahead excludes pre-releases like "3.15.0rc2"
+            match = re.search(r"Python (\d+)\.(\d+)\.(\d+)(?!\w)", data)
             if match:
                 major = int(match.group(1))
                 minor = int(match.group(2))
@@ -54,6 +55,12 @@ def versions():
 def latest():
     """Return version of latest Python release."""
     return max(versions())
+
+
+def latest_str():
+    """Return 'major.minor' string of the latest Python release."""
+    major, minor, _ = latest()
+    return f"{major}.{minor}"
 
 
 def main():

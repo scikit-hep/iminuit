@@ -20,7 +20,7 @@ ENV = {
 
 PYPROJECT = nox.project.load_toml("pyproject.toml")
 MINIMUM_PYTHON = PYPROJECT["project"]["requires-python"].strip(">=")
-LATEST_PYTHON = str(python_releases.latest())
+LATEST_PYTHON = python_releases.latest_str()
 DEPS = {g: nox.project.dependency_groups(PYPROJECT, g) for g in ("test", "dev")}
 
 nox.options.sessions = ["test", "mintest", "maxtest"]
