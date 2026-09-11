@@ -31,6 +31,16 @@ classifiers = [
 ]
 dependencies = ["numpy >=1.21"]
 
+[project.optional-dependencies]
+scipy = ["scipy >=1.9"]
+plot = ["matplotlib >=3.5"]
+numba = ["numba >=0.55"]
+ipywidgets = ["ipywidgets >=7.7.4", "matplotlib >=3.5"]
+qt = ["PySide6 >=6.2", "matplotlib >=3.5"]
+interactive = ["iminuit[ipywidgets,qt]"]
+unicode = ["unicodeitplus >=0.1"]
+all = ["iminuit[scipy,plot,numba,ipywidgets,qt,unicode]"]
+
 [project.urls]
 repository = "https://github.com/scikit-hep/iminuit"
 documentation = "https://scikit-hep.org/iminuit"

@@ -19,6 +19,14 @@ To install the latest stable version from https://pypi.org/project/iminuit/ with
 If your platform is not supported by a binary wheel, ``pip install`` requires that you
 have a C++ compiler available but otherwise runs the compilation automatically.
 
+Optional features need extra packages. Install them with extras, for example:
+
+.. code-block:: bash
+
+    $ pip install "iminuit[scipy,plot]"
+
+Available extras are ``scipy``, ``plot`` (matplotlib), ``numba``, ``ipywidgets`` (interactive fitting in Jupyter), ``qt`` (interactive fitting outside of Jupyter, uses PySide6), ``interactive`` (both), ``unicode``, and ``all``.
+
 Conda
 -----
 

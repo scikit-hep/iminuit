@@ -50,9 +50,12 @@ Minimal dependencies
 
 - ``numba``: Cost functions are partially JIT-compiled if ``numba`` is installed.
 - ``matplotlib``: Visualization of fitted model for builtin cost functions
-- ``ipywidgets``: Interactive fitting, see example below (also requires ``matplotlib``)
-- ``scipy``: Compute Minos intervals for arbitrary confidence levels
+- ``ipywidgets``: Interactive fitting in Jupyter notebooks, see example below (also requires ``matplotlib``)
+- ``PySide6``: Interactive fitting outside of Jupyter notebooks (also requires ``matplotlib``)
+- ``scipy``: SciPy minimizers, Minos intervals for arbitrary confidence levels, and more
 - ``unicodeitplus``: Render names of model parameters in simple LaTeX as Unicode
+
+Use the extras ``iminuit[numba]``, ``iminuit[plot]``, ``iminuit[ipywidgets]``, ``iminuit[qt]``, ``iminuit[interactive]`` (both), ``iminuit[scipy]``, ``iminuit[unicode]``, or ``iminuit[all]`` to install them with ``pip``.
 
 Documentation
 -------------
