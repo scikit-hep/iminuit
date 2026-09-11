@@ -1355,6 +1355,29 @@ def test_hesse_without_migrad():
     assert m.fmin.hesse_failed
 
 
+def test_hesse_without_migrad_nonzero_fval():
+    # f(x) at the start value is not zero, Hesse needs a proper step size
+    m = Minuit(lambda x: (x - 1) ** 2, x=0)
+    m.errordef = Minuit.LEAST_SQUARES
+    m.hesse()
+    assert not m.fmin.hesse_failed
+    assert m.covariance is not None
+    assert m.errors["x"] == approx(1.0, abs=1e-4)
+    assert m.fmin.nfcn > 0
+
+
+def test_hesse_after_modifying_values():
+    m = Minuit(lambda x, y: (x - 1) ** 2 + (y - 2) ** 2, x=0, y=0)
+    m.errordef = Minuit.LEAST_SQUARES
+    m.migrad()
+    m.values["x"] = 0
+    m.hesse()
+    assert not m.fmin.hesse_failed
+    assert m.covariance is not None
+    assert m.errors["x"] == approx(1.0, abs=1e-4)
+    assert m.errors["y"] == approx(1.0, abs=1e-4)
+
+
 def test_edm_goal():
     m = Minuit(func0, x=0, y=0)
     m.migrad()
