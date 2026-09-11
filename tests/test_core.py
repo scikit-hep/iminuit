@@ -98,6 +98,75 @@ def test_MnUserParameterState():
             st[bad]
 
 
+def test_MnUserCovariance_bad_length():
+    # data length must match n * (n + 1) / 2, else reads run past the end
+    with pytest.raises(ValueError):
+        MnUserCovariance((1.0,), 3)
+    with pytest.raises(ValueError):
+        MnUserCovariance((1, 2, 3, 4), 2)
+
+
+@pytest.mark.parametrize(
+    "method,args",
+    [
+        ("fix", ()),
+        ("release", ()),
+        ("remove_limits", ()),
+        ("set_value", (1.0,)),
+        ("set_error", (0.5,)),
+        ("set_limits", (0.0, 2.0)),
+        ("set_upper_limit", (2.0,)),
+        ("set_lower_limit", (0.0,)),
+    ],
+)
+def test_MnUserParameterState_setter_index(method, args):
+    st = MnUserParameterState()
+    st.add("x", 1, 0.1)
+
+    # valid negative index works
+    getattr(st, method)(-1, *args)
+
+    # out-of-range indices raise IndexError instead of crashing (SIGBUS)
+    for bad in (-2, 1, 5):
+        with pytest.raises(IndexError):
+            getattr(st, method)(bad, *args)
+
+
+def test_MnUserTransformation_index():
+    st = MnUserParameterState()
+    st.add("x", 1, 0.1, 0, 2)
+    st.add("y", 1, 0.1)
+    st.fix(1)
+    tr = st.trafo
+
+    assert len(tr) == 2
+    assert tr.variable_parameters == 1
+
+    # external indices
+    assert tr.name(-1) == "y"
+    tr.ext2int(0, 1.0)
+    assert tr.int_of_ext(0) == 0
+    for bad in (-3, 2, 5):
+        with pytest.raises(IndexError):
+            tr.name(bad)
+        with pytest.raises(IndexError):
+            tr.ext2int(bad, 1.0)
+        with pytest.raises(IndexError):
+            tr.int_of_ext(bad)
+
+    # internal indices, only one parameter is free
+    tr.int2ext(0, 0.0)
+    tr.dint2ext(0, 0.0)
+    assert tr.ext_of_int(-1) == 0
+    for bad in (-2, 1, 5):
+        with pytest.raises(IndexError):
+            tr.int2ext(bad, 0.0)
+        with pytest.raises(IndexError):
+            tr.dint2ext(bad, 0.0)
+        with pytest.raises(IndexError):
+            tr.ext_of_int(bad)
+
+
 def test_MnUserParameterState_limit_equality():
     # parameters/states differing only in their limit values must not compare equal
     a = MnUserParameterState()
