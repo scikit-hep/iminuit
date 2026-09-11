@@ -30,10 +30,23 @@ auto iter(const MnUserTransformation& self) {
   return py::make_iterator(self.Parameters().begin(), self.Parameters().end());
 }
 
+// Minuit2 only asserts on the index, which is compiled out in release builds
+unsigned ext_index(const MnUserTransformation& self, int i) {
+  const int n = size(self);
+  if (i < 0) i += n;
+  if (i < 0 || i >= n) throw py::index_error();
+  return static_cast<unsigned>(i);
+}
+
+unsigned int_index(const MnUserTransformation& self, int i) {
+  const int n = static_cast<int>(self.VariableParameters());
+  if (i < 0) i += n;
+  if (i < 0 || i >= n) throw py::index_error();
+  return static_cast<unsigned>(i);
+}
+
 const auto& getitem(const MnUserTransformation& self, int i) {
-  if (i < 0) i += size(self);
-  if (i < 0 || i >= size(self)) throw py::index_error();
-  return self.Parameter(i);
+  return self.Parameter(ext_index(self, i));
 }
 
 void bind_usertransformation(py::module m) {
@@ -41,13 +54,21 @@ void bind_usertransformation(py::module m) {
 
       .def(py::init<>())
 
-      .def("name", &MnUserTransformation::GetName)
+      .def("name",
+           [](const MnUserTransformation& self, int i) -> const std::string& {
+             return self.GetName(ext_index(self, i));
+           })
       .def("index", &MnUserTransformation::FindIndex)
-      .def("ext2int", &MnUserTransformation::Ext2int)
-      .def("int2ext", &MnUserTransformation::Int2ext)
-      .def("dint2ext", &MnUserTransformation::DInt2Ext)
-      .def("ext_of_int", &MnUserTransformation::ExtOfInt)
-      .def("int_of_ext", &MnUserTransformation::IntOfExt)
+      .def("ext2int", [](const MnUserTransformation& self, int i,
+                         double x) { return self.Ext2int(ext_index(self, i), x); })
+      .def("int2ext", [](const MnUserTransformation& self, int i,
+                         double x) { return self.Int2ext(int_index(self, i), x); })
+      .def("dint2ext", [](const MnUserTransformation& self, int i,
+                          double x) { return self.DInt2Ext(int_index(self, i), x); })
+      .def("ext_of_int", [](const MnUserTransformation& self,
+                            int i) { return self.ExtOfInt(int_index(self, i)); })
+      .def("int_of_ext", [](const MnUserTransformation& self,
+                            int i) { return self.IntOfExt(ext_index(self, i)); })
       .def_property_readonly("variable_parameters",
                              &MnUserTransformation::VariableParameters)
 

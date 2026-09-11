@@ -27,11 +27,16 @@ int size(const MnUserParameterState& self) {
   return static_cast<int>(self.MinuitParameters().size());
 }
 
-const MinuitParameter& getitem(const MnUserParameterState& self, int i) {
+// Minuit2 only asserts on the index, which is compiled out in release builds
+unsigned index(const MnUserParameterState& self, int i) {
   const int n = size(self);
   if (i < 0) i += n;
   if (i < 0 || i >= n) throw py::index_error();
-  return self.Parameter(i);
+  return static_cast<unsigned>(i);
+}
+
+const MinuitParameter& getitem(const MnUserParameterState& self, int i) {
+  return self.Parameter(index(self, i));
 }
 
 auto iter(const MnUserParameterState& self) {
@@ -73,20 +78,21 @@ void bind_userparameterstate(py::module m) {
                       &MnUserParameterState::Add))
       .def("add", py::overload_cast<const std::string&, double, double, double, double>(
                       &MnUserParameterState::Add))
-      .def("fix", py::overload_cast<unsigned>(&MnUserParameterState::Fix))
-      .def("release", py::overload_cast<unsigned>(&MnUserParameterState::Release))
-      .def("set_value",
-           py::overload_cast<unsigned, double>(&MnUserParameterState::SetValue))
-      .def("set_error",
-           py::overload_cast<unsigned, double>(&MnUserParameterState::SetError))
-      .def("set_limits", py::overload_cast<unsigned, double, double>(
-                             &MnUserParameterState::SetLimits))
-      .def("set_upper_limit",
-           py::overload_cast<unsigned, double>(&MnUserParameterState::SetUpperLimit))
-      .def("set_lower_limit",
-           py::overload_cast<unsigned, double>(&MnUserParameterState::SetLowerLimit))
+      .def("fix", [](MnUserParameterState& self, int i) { self.Fix(index(self, i)); })
+      .def("release",
+           [](MnUserParameterState& self, int i) { self.Release(index(self, i)); })
+      .def("set_value", [](MnUserParameterState& self, int i,
+                           double x) { self.SetValue(index(self, i), x); })
+      .def("set_error", [](MnUserParameterState& self, int i,
+                           double x) { self.SetError(index(self, i), x); })
+      .def("set_limits", [](MnUserParameterState& self, int i, double a,
+                            double b) { self.SetLimits(index(self, i), a, b); })
+      .def("set_upper_limit", [](MnUserParameterState& self, int i,
+                                 double x) { self.SetUpperLimit(index(self, i), x); })
+      .def("set_lower_limit", [](MnUserParameterState& self, int i,
+                                 double x) { self.SetLowerLimit(index(self, i), x); })
       .def("remove_limits",
-           py::overload_cast<unsigned>(&MnUserParameterState::RemoveLimits))
+           [](MnUserParameterState& self, int i) { self.RemoveLimits(index(self, i)); })
       .def_property_readonly("fval", &MnUserParameterState::Fval)
       .def_property_readonly("edm", &MnUserParameterState::Edm)
       .def_property_readonly("covariance", &MnUserParameterState::Covariance)
