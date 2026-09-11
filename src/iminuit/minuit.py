@@ -86,14 +86,14 @@ class Minuit:
         return self._fcn.gradient  # type:ignore
 
     @property
-    def g2(self) -> Callable[[np.ndarray], np.ndarray]:
-        """Get g2 function of the cost function."""
-        return self._fcn.g2  # type:ignore
+    def g2(self) -> Optional[Callable[[np.ndarray], np.ndarray]]:
+        """Get user-provided second derivative function, or None if not set."""
+        return self._fcn._g2  # type:ignore
 
     @property
-    def hessian(self) -> Callable[[np.ndarray], np.ndarray]:
-        """Get hessian function of the cost function."""
-        return self._fcn.hessian  # type:ignore
+    def hessian(self) -> Optional[Callable[[np.ndarray], np.ndarray]]:
+        """Get user-provided Hessian function, or None if not set."""
+        return self._fcn._hessian  # type:ignore
 
     @property
     def pos2var(self) -> Tuple[str, ...]:
