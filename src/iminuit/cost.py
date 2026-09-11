@@ -287,10 +287,7 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
 
 def _n_over_mu_or_zero(n: NDArray, mu: NDArray) -> NDArray:
     # log_or_zero is constant for mu <= 0, so the derivative vanishes in those bins
-    ma = mu > 0
-    r = np.zeros_like(mu * 1.0)
-    r[ma] = n[ma] / mu[ma]
-    return r
+    return np.divide(n, mu, out=np.zeros_like(mu, dtype=float), where=mu > 0)
 
 
 def _poisson_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
