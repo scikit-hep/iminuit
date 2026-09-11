@@ -9,6 +9,7 @@ from iminuit._optional_dependencies import optional_module_for
 import pickle
 from iminuit._hide_modules import hide_modules
 from iminuit.util import is_module_available
+from iminuit.typing import Annotated, Gt, Lt
 
 
 def test_ndim():
@@ -591,6 +592,20 @@ def test_merge_signatures():
     assert args == ["x", "y", "z", "a", "b"]
     assert pf == [0, 1, 2]
     assert pg == [0, 3, 4]
+
+
+def test_merge_signatures_annotations():
+    def f(x, y: Annotated[float, Gt(0)]):
+        return x + y
+
+    def g(x: Annotated[float, Lt(0)], y):
+        return x + y
+
+    anns, _ = util.merge_signatures([f, g], annotations=True)
+    assert anns == {"x": (-np.inf, 0), "y": (0, np.inf)}
+
+    anns, _ = util.merge_signatures([g, f], annotations=True)
+    assert anns == {"x": (-np.inf, 0), "y": (0, np.inf)}
 
 
 def test_propagate_1():

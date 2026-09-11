@@ -449,6 +449,18 @@ def test_UnbinnedNLL_annotated():
     assert m.limits[1] == (0, np.inf)
 
 
+@pytest.mark.parametrize("reverse", (False, True))
+def test_CostSum_annotated(reverse):
+    nll = UnbinnedNLL([], annotated_pdf)
+    nc = NormalConstraint("sigma", 1.0, 0.1)
+    c = nc + nll if reverse else nll + nc
+
+    assert describe(c, annotations=True) == {"mu": None, "sigma": (0, np.inf)}
+
+    m = Minuit(c, mu=0, sigma=1)
+    assert m.limits["sigma"] == (0, np.inf)
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("model", (logpdf, pdf))
 @pytest.mark.parametrize("use_grad", (False, True))
