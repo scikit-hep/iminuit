@@ -88,20 +88,10 @@ def make_widget(
         return True
 
     class OnParameterChange:
-        # Ugly implementation notes:
-        # We want the plot when the user moves the slider widget, but not when
-        # we update the slider value manually from our code. Unfortunately,
-        # the latter also calls OnParameterChange, which leads to superfluous plotting.
-        # I could not find a nice way to prevent that (and I tried many), so as a workaround
-        # we optionally skip a number of calls, when the slider is updated.
-        def __init__(self, skip: int = 0):
-            self.skip = skip
-
+        # We want to plot when the user moves the slider widget, but not when we
+        # update the slider value from our code. Parameter.reset therefore removes
+        # the observer while it writes the new value.
         def __call__(self, change: Dict[str, Any] = {}):  # noqa: B006
-            if self.skip > 0:
-                self.skip -= 1
-                return
-
             from_fit = change.get("from_fit", False)
             report_success = change.get("report_success", False)
             if not from_fit:
@@ -226,13 +216,12 @@ def make_widget(
             super().__init__([tlabel, tmin, self.slider, tmax, self.fix, self.fit])
 
         def reset(self, value, limits=None):
+            # Block notifications while we write the new value.
             self.slider.unobserve_all("value")
             self.slider.value = value
             if limits:
                 self.slider.min, self.slider.max = limits
-            # Installing the observer actually triggers a notification,
-            # we skip it. See notes in OnParameterChange.
-            self.slider.observe(OnParameterChange(1), "value")
+            self.slider.observe(OnParameterChange(), "value")
 
     longest_par = max(len(par) for par in minuit.parameters)
     parameters = [Parameter(minuit, par) for par in minuit.parameters]
