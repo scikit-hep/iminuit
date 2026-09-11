@@ -155,6 +155,10 @@ class Minuit:
         self._fcn._errordef = value
         if self._fmin:
             self._fmin._src.errordef = value
+            # Minuit2 rescaled the errors in the user state, refresh our copy of the
+            # covariance matrix, unless the user already modified the state.
+            if self._last_state is self._fmin._src.state:
+                self._make_covariance()
 
     @property
     def precision(self) -> Optional[float]:
@@ -882,6 +886,7 @@ class Minuit:
             t.value,
         )
         self._make_covariance()
+        self._merrors = mutil.MErrors()
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -1455,6 +1460,8 @@ class Minuit:
             edm_goal,
             t.value,
         )
+
+        self._merrors = mutil.MErrors()
 
         if accurate_covar:
             self._make_covariance()

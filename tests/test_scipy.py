@@ -155,6 +155,17 @@ def test_scipy_fixed(grad):
         assert m.fmin.ngrad == 0
 
 
+def test_scipy_clears_merrors():
+    m = Minuit(fcn, a=1, b=2)
+    m.migrad()
+    m.minos()
+    assert len(m.merrors) == 2
+    m.values = (5, 5)
+    m.scipy()
+    assert len(m.merrors) == 0
+    assert m.params[0].merror is None
+
+
 @pytest.mark.parametrize("stra", (0, 1))
 @pytest.mark.parametrize("grad", (None, grad))
 def test_scipy_errordef(stra, grad):

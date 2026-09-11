@@ -1213,6 +1213,16 @@ def test_errordef():
         m.errordef = 0
 
 
+def test_errordef_updates_covariance():
+    m = Minuit(lambda x: x**2, 0)
+    m.migrad()
+    assert_allclose(m.covariance[0, 0], 1)
+    m.errordef = 0.5
+    assert_allclose(m.errors["x"] ** 2, 0.5)
+    assert_allclose(m.covariance[0, 0], 0.5)
+    assert m.fmin.errordef == 0.5
+
+
 def test_print_level():
     from iminuit._core import MnPrint
 
@@ -1705,6 +1715,19 @@ def test_minos_new_min():
     # ...but interval is correct
     assert m.merrors["x"].lower == approx(-0.9, abs=1e-2)
     assert m.merrors["x"].upper == approx(1.1, abs=1e-2)
+
+
+@pytest.mark.parametrize("algorithm", ("migrad", "simplex", "scan"))
+def test_minos_cleared_by_new_minimization(algorithm):
+    m = Minuit(func0, x=0, y=0)
+    m.migrad()
+    m.minos()
+    assert len(m.merrors) == 2
+    assert m.params[0].merror is not None
+    m.values = (5, 5)
+    getattr(m, algorithm)()
+    assert len(m.merrors) == 0
+    assert m.params[0].merror is None
 
 
 def test_minos_without_migrad():
