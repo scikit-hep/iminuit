@@ -1601,6 +1601,27 @@ def test_cfunc():
     assert_allclose(m.values, (0, 1, 2), atol=1e-8)
 
 
+def test_cfunc_throw_nan():
+    nb = pytest.importorskip("numba")
+
+    c_sig = nb.types.double(nb.types.uintc, nb.types.CPointer(nb.types.double))
+
+    @nb.cfunc(c_sig)
+    def fcn(n, x):
+        return np.nan
+
+    m = Minuit(fcn, (1, 2))
+    assert m._fcn._cfcn is True
+    m.migrad()
+    assert m.nfcn > 0
+
+    m.reset()
+    m.throw_nan = True
+    with pytest.raises(RuntimeError, match="result is NaN"):
+        m.migrad()
+    assert m.nfcn > 0
+
+
 @pytest.mark.parametrize("cl", (0.5, None, 0.9))
 @pytest.mark.parametrize("experimental", (False, True))
 def test_confidence_level(cl, experimental):
