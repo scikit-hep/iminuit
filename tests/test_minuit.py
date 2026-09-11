@@ -1359,7 +1359,7 @@ def test_fmin_time_accumulates():
     m = Minuit(lambda x: x**2, x=1)
     m.migrad()
     t1 = m.fmin.time
-    assert t1 > 0
+    assert t1 >= 0  # monotonic() has coarse resolution on Windows
     m.hesse()
     assert m.fmin.time >= t1
 
