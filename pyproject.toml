@@ -156,8 +156,7 @@ no_implicit_optional = false
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
 skip = [
-    "cp39-musllinux_i686", # no numpy wheel
-    "*t-win32",            # no numpy wheel
+    "*t-win32", # no numpy wheel
 ]
 test-skip = ["*-ios_*"] # no simulator device on CI
 test-requires = "pytest"
@@ -184,4 +183,3 @@ PIP_EXTRA_INDEX_URL = "https://pypi.anaconda.org/beeware/simple/"
 # to match numpy, we use manylinux2014 for cp310 (and 3.9, since manylinux2010 is dead)
 select = "cp3{9,10}-manylinux*"
 manylinux-x86_64-image = "manylinux2014"
-manylinux-i686-image = "manylinux2014"

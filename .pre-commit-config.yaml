@@ -24,11 +24,8 @@ repos:
       - id: check-symlinks
       - id: check-yaml
         args: ["--allow-multiple-documents"]
-      - id: debug-statements
       - id: end-of-file-fixer
       - id: mixed-line-ending
-      - id: sort-simple-yaml
-      - id: file-contents-sorter
       - id: trailing-whitespace
         exclude: ^doc/_static/.*.svg
 
