@@ -42,8 +42,6 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
   }
 
   MinimumParameters minp(val, err, seed.Fval());
-  // keep the seed gradient; MnHesse uses its step sizes to start the numerical
-  // second derivatives, an empty gradient makes them collapse to near zero
   std::vector<MinimumState> minstv(
       1, MinimumState(minp, MinimumError(n), seed.Gradient(), seed.Edm(), fcn.nfcn_));
   if (minstv.back().Edm() < edm_goal) return FunctionMinimum(seed, minstv, fcn.Up());
