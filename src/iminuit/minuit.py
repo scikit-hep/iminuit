@@ -1008,7 +1008,7 @@ class Minuit:
             ncall = self._migrad_maxcall()
         nstep = max(2, int(ncall ** (1 / n)))
 
-        if self._last_state == self._init_state:
+        if self._last_state is self._init_state:
             # avoid overriding initial state
             self._last_state = MnUserParameterState(self._last_state)
 
@@ -2548,7 +2548,7 @@ class Minuit:
         #
         # If FunctionMinimum does not exist, we don't want to copy. We want to
         # implicitly modify _init_state; _last_state is an alias for _init_state, then.
-        if self._fmin and self._last_state == self._fmin._src.state:
+        if self._fmin and self._last_state is self._fmin._src.state:
             self._last_state = MnUserParameterState(self._last_state)
 
     def _make_covariance(self) -> None:
