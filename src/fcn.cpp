@@ -80,7 +80,7 @@ double FCN::operator()(const std::vector<double>& x) const {
   ++nfcn_;
   if (array_call_) {
     if (cfcn_) {
-      return cfcn_(x.size(), x.data());
+      return check_value(cfcn_(x.size(), x.data()), x);
     } else {
       py::array_t<double> a(static_cast<py::ssize_t>(x.size()), x.data());
       return check_value(as_double(fcn_(a)), x);
