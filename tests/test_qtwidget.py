@@ -144,3 +144,90 @@ def test_interactive_pyside6_with_array_func(qtbot):
 
     qtinteractive(qtbot, m, trace_args)
     assert trace_args.nargs > 0
+
+
+def test_interactive_pyside6_fix_fit_exclusive(qtbot):
+    def cost(a, b):
+        return a**2 + b**2
+
+    def plot(args):
+        pass
+
+    m = Minuit(cost, 1, 1)
+    mw = qtinteractive(qtbot, m, plot)
+    p = mw.parameters[0]
+
+    p.fix.click()
+    assert list(m.fixed) == [True, False]
+
+    # Fit toggle unchecks Fix, this must release the parameter
+    p.fit.click()
+    assert p.fix.isChecked() is False
+    assert list(m.fixed) == [False, False]
+    assert p.slider.isEnabled() is False
+
+    # Fix toggle unchecks Fit, this must re-enable the slider
+    p.fix.click()
+    assert p.fit.isChecked() is False
+    assert p.slider.isEnabled() is True
+    assert list(m.fixed) == [True, False]
+
+
+def test_interactive_pyside6_fixed_restored_on_error(qtbot):
+    class Cost:
+        raises = False
+
+        def visualize(self, args):
+            pass
+
+        def __call__(self, a, b):
+            if self.raises:
+                raise ValueError("foo")
+            return a**2 + b**2
+
+    c = Cost()
+    m = Minuit(c, 1, 1)
+    mw = qtinteractive(qtbot, m, raise_on_exception=True)
+
+    c.raises = True
+    with qtbot.capture_exceptions() as exceptions:
+        mw.parameters[1].fit.click()
+    assert len(exceptions) == 1
+    assert exceptions[0][0] is ValueError
+    assert list(m.fixed) == [False, False]
+
+
+def test_interactive_pyside6_reset_fixed(qtbot):
+    def cost(a, b):
+        return a**2 + b**2
+
+    def plot(args):
+        pass
+
+    m = Minuit(cost, 1, 1)
+    mw = qtinteractive(qtbot, m, plot)
+    p0, p1 = mw.parameters
+
+    # before any fit
+    p0.fix.click()
+    assert list(m.fixed) == [True, False]
+    mw.reset_button.click()
+    assert list(m.fixed) == [False, False]
+    assert p0.fix.isChecked() is False
+
+    # after a fit
+    p0.fix.click()
+    mw.fit_button.click()
+    assert_allclose(m.values, (1, 0), atol=1e-5)
+    mw.reset_button.click()
+    assert list(m.fixed) == [False, False]
+    assert p0.fix.isChecked() is False
+    assert_allclose(m.values, (1, 1), atol=1e-5)
+
+    # fit toggle must not survive reset and must not trigger a fit
+    p1.fit.click()
+    assert_allclose(m.values[1], 0, atol=1e-5)
+    mw.reset_button.click()
+    assert p1.fit.isChecked() is False
+    assert p1.slider.isEnabled() is True
+    assert_allclose(m.values, (1, 1), atol=1e-5)
