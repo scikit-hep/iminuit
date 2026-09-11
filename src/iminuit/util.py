@@ -1049,10 +1049,10 @@ class _Timer:
         self.value = fmin.time if fmin else 0.0
 
     def __enter__(self):
-        self.value += monotonic()
+        self.value -= monotonic()
 
     def __exit__(self, *args):
-        self.value = monotonic() - self.value
+        self.value += monotonic()
 
 
 @_deprecated.deprecated(
