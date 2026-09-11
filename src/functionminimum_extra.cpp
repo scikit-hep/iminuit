@@ -42,7 +42,8 @@ FunctionMinimum init(const FCN& fcn, const MnUserParameterState& st,
   }
 
   MinimumParameters minp(val, err, seed.Fval());
-  std::vector<MinimumState> minstv(1, MinimumState(minp, seed.Edm(), fcn.nfcn_));
+  std::vector<MinimumState> minstv(
+      1, MinimumState(minp, MinimumError(n), seed.Gradient(), seed.Edm(), fcn.nfcn_));
   if (minstv.back().Edm() < edm_goal) return FunctionMinimum(seed, minstv, fcn.Up());
   return FunctionMinimum(seed, minstv, fcn.Up(), FunctionMinimum::MnAboveMaxEdm);
 }
