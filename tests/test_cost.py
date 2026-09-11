@@ -751,6 +751,17 @@ def test_BinnedNLL_negative_weights(use_grad):
         assert m2.ngrad == 0
 
 
+def test_BinnedNLL_grad_with_zero_prediction():
+    # the expected counts underflow to zero in the tail bins
+    n = [48, 7, 0, 0, 0]
+    xe = np.array([0.0, 1.41453733, 2.82907465, 4.24361198, 5.6581493, 7.07268663])
+    c = BinnedNLL(n, xe, expon_cdf, grad=numerical_model_gradient(expon_cdf))
+
+    ref = numerical_cost_gradient(c)
+    for a in (0.1, 1):
+        assert_allclose(c.grad(a), ref(a))
+
+
 def test_BinnedNLL_name(binned):
     mle, nx, xe = binned
 
@@ -1105,11 +1116,13 @@ def test_ExtendedBinnedNLL_negative_weights(use_grad):
         w, xe, scaled_expon_cdf, grad=numerical_model_gradient(scaled_expon_cdf)
     )
 
-    # if use_grad:
-    #     ref = numerical_cost_gradient(c)
-    #     assert_allclose(c.grad(1, 0.1), ref(1, 0.1))
-    #     assert_allclose(c.grad(1, 1), ref(1, 1))
-    #     assert_allclose(c.grad(2, 12), ref(2, 12))
+    if use_grad:
+        ref = numerical_cost_gradient(c)
+        # the prediction underflows to zero in the tail bins, which makes the
+        # numerical reference gradient inaccurate
+        assert_allclose(c.grad(1, 0.1), ref(1, 0.1), rtol=1e-4)
+        assert_allclose(c.grad(1, 1), ref(1, 1))
+        assert_allclose(c.grad(2, 12), ref(2, 12))
 
     m2 = Minuit(c, 50, 1, grad=use_grad)
     m2.limits = (0, None)

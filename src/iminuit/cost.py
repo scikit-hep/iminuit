@@ -285,9 +285,14 @@ def poisson_chi2(n: ArrayLike, mu: ArrayLike) -> float:
     return 2 * np.sum(n * (log_or_zero(n) - log_or_zero(mu)) + mu - n)
 
 
+def _n_over_mu_or_zero(n: NDArray, mu: NDArray) -> NDArray:
+    # log_or_zero is constant for mu <= 0, so the derivative vanishes in those bins
+    return np.divide(n, mu, out=np.zeros_like(mu, dtype=float), where=mu > 0)
+
+
 def _poisson_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
     assert gmu.ndim == 2
-    return 2 * np.sum((1.0 - n / mu) * gmu, axis=1)
+    return 2 * np.sum((1.0 - _n_over_mu_or_zero(n, mu)) * gmu, axis=1)
 
 
 def multinomial_chi2(n: ArrayLike, mu: ArrayLike) -> float:
@@ -319,7 +324,7 @@ def multinomial_chi2(n: ArrayLike, mu: ArrayLike) -> float:
 
 def _multinomial_chi2_grad(n: NDArray, mu: NDArray, gmu: NDArray) -> NDArray:
     assert gmu.ndim == 2
-    return -2 * np.sum(n / mu * gmu, axis=1)
+    return -2 * np.sum(_n_over_mu_or_zero(n, mu) * gmu, axis=1)
 
 
 def template_chi2_jsc(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
