@@ -130,3 +130,69 @@ def test_interactive_ipywidgets_with_array_func(mock_ipython):
 
     m.interactive(trace_args)
     assert trace_args.nargs > 0
+
+
+def _ipywidgets_controls(out):
+    ui = out.children[1]
+    header, parameters = ui.children
+    fit_button, update_button, reset_button, algo_select = header.children
+    return fit_button, reset_button, parameters.children
+
+
+def test_interactive_ipywidgets_fixed_restored_on_error(mock_ipython):
+    class Cost:
+        raises = False
+
+        def visualize(self, args):
+            pass
+
+        def __call__(self, a, b):
+            if self.raises:
+                raise ValueError("foo")
+            return a**2 + b**2
+
+    c = Cost()
+    m = Minuit(c, 1, 1)
+    out = m.interactive(raise_on_exception=True)
+    _, _, parameters = _ipywidgets_controls(out)
+
+    c.raises = True
+    with pytest.raises(ValueError):
+        parameters[1].fit.value = True
+    assert list(m.fixed) == [False, False]
+
+
+def test_interactive_ipywidgets_reset_fixed(mock_ipython):
+    def cost(a, b):
+        return a**2 + b**2
+
+    def plot(args):
+        pass
+
+    m = Minuit(cost, 1, 1)
+    out = m.interactive(plot)
+    fit_button, reset_button, parameters = _ipywidgets_controls(out)
+
+    # before any fit
+    parameters[0].fix.value = True
+    assert list(m.fixed) == [True, False]
+    reset_button.click()
+    assert list(m.fixed) == [False, False]
+    assert parameters[0].fix.value is False
+
+    # after a fit
+    parameters[0].fix.value = True
+    fit_button.click()
+    assert_allclose(m.values, (1, 0), atol=1e-5)
+    reset_button.click()
+    assert list(m.fixed) == [False, False]
+    assert parameters[0].fix.value is False
+    assert_allclose(m.values, (1, 1), atol=1e-5)
+
+    # fit toggle must not survive reset and must not trigger a fit
+    parameters[1].fit.value = True
+    assert_allclose(m.values[1], 0, atol=1e-5)
+    reset_button.click()
+    assert parameters[1].fit.value is False
+    assert parameters[1].slider.disabled is False
+    assert_allclose(m.values, (1, 1), atol=1e-5)
