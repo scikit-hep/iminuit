@@ -1009,6 +1009,20 @@ def test_grad():
     assert_equal(g, func0_grad(2.0, 5.0))
 
 
+def test_g2_and_hessian():
+    m = Minuit(func0, grad=func0_grad, g2=func0_g2, x=0, y=0)
+    assert m.g2 is func0_g2
+    assert_equal(m.g2(2.0, 5.0), func0_g2(2.0, 5.0))
+
+    m = Minuit(func0, grad=func0_grad, hessian=func0_hessian, x=0, y=0)
+    assert m.hessian is func0_hessian
+    assert_equal(m.hessian(2.0, 5.0), func0_hessian(2.0, 5.0))
+
+    m = Minuit(func0, x=0, y=0)
+    assert m.g2 is None
+    assert m.hessian is None
+
+
 def test_values(minuit):
     expected = [2.0, 5.0]
     assert len(minuit.values) == 2
