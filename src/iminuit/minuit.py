@@ -2596,6 +2596,16 @@ class Minuit:
     def _fmin_does_not_exist_or_last_state_was_modified(self) -> bool:
         return not self._fmin or self._fmin._src.state is not self._last_state
 
+    def __setstate__(self, state: Tuple[Any, Dict[str, Any]]) -> None:
+        """Restore a pickled or copied instance."""
+        for k, v in state[1].items():
+            setattr(self, k, v)
+        # Copying breaks the identity of _last_state and the state inside the
+        # FunctionMinimum, which is how a user modification is detected. Restore it,
+        # so that hesse() and minos() can still reuse the existing minimum.
+        if self._fmin and self._fmin._src.state == self._last_state:
+            self._last_state = self._fmin._src.state
+
     def __repr__(self):
         """Get detailed text representation."""
         s = []

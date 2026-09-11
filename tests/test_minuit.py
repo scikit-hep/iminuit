@@ -1690,6 +1690,42 @@ def test_pickle(grad):
     assert m2.fmin.ngrad == m.fmin.ngrad
 
 
+def func_simple(x, y):
+    return (x - 1) ** 2 + (y - 2) ** 2
+
+
+@pytest.mark.parametrize("copy_fn", ("pickle", "deepcopy"))
+def test_pickle_reuses_minimum(copy_fn):
+    import pickle
+    import copy
+
+    m = Minuit(func_simple, x=0, y=0)
+    m.migrad()
+
+    if copy_fn == "pickle":
+        m2 = pickle.loads(pickle.dumps(m))
+    else:
+        m2 = copy.deepcopy(m)
+
+    # the copy must see its own minimum state, not an equal-but-distinct copy
+    assert m2._last_state is m2._fmin._src.state
+
+    n1 = m.fmin.nfcn
+    n2 = m2.fmin.nfcn
+
+    m.hesse()
+    m2.hesse()
+
+    # hesse must not restart the minimization on the copy
+    assert m2.fmin.algorithm == "Migrad"
+    assert m2.fmin.nfcn - n2 == m.fmin.nfcn - n1
+
+    # modifying the copy still does not change the stored minimum
+    m2.values["x"] = 3
+    assert m2._last_state is not m2._fmin._src.state
+    assert m2._fmin._src.state[0].value == approx(1, abs=1e-3)
+
+
 def test_minos_new_min():
     xref = [1.0]
     m = Minuit(lambda x: (x - xref[0]) ** 2, x=0)
