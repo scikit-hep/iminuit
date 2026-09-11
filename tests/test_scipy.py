@@ -303,3 +303,40 @@ def test_options():
     b_with_options = m.values["b"]
 
     assert b_without_options > b_with_options
+
+
+def test_options_not_modified():
+    m = Minuit(fcn, a=1, b=2)
+    opts = {"disp": False}
+    m.scipy(options=opts)
+    assert m.valid
+    assert opts == {"disp": False}
+
+
+def test_ncall_counts_only_current_run():
+    def rosen3(x):
+        return sum(100 * (x[1:] - x[:-1] ** 2) ** 2 + (1 - x[:-1]) ** 2)
+
+    m = Minuit(rosen3, np.zeros(3))
+    m.errordef = 1
+    m.migrad()
+    nfcn_before = m.nfcn
+    assert nfcn_before > 100
+    m.strategy = 0
+    m.values = (0.9, 0.9, 0.9)
+    m.scipy(ncall=100)
+    assert m.valid
+    assert not m.fmin.has_reached_call_limit
+    assert m.fmin.nfcn == m.nfcn
+    assert m.fmin.nfcn > nfcn_before
+
+
+def test_covariance_updated_with_strategy_0():
+    m = Minuit(fcn, a=1, b=2)
+    m.migrad()
+    cov1 = np.array(m.covariance)
+    m.strategy = 0
+    m.values = (5, 5)
+    m.scipy()
+    assert m._last_state.has_covariance
+    assert not np.array_equal(np.array(m.covariance), cov1)
