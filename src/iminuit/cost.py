@@ -166,8 +166,9 @@ def log_or_zero(x):
 
 
 def _unbinned_nll(x):
-    # sorting makes sum more accurate, protect against x = 0
-    return -np.sum(np.sort(np.log(x + _TINY_FLOAT)))
+    # adding tiny protects against x = 0; np.sum sums pairwise, which is accurate
+    # enough that pre-sorting is not worth its cost
+    return -np.sum(np.log(x + _TINY_FLOAT))
 
 
 def _z_squared(y, ye, ym):
@@ -447,14 +448,8 @@ try:
     def _ol_z_squared(y, ye, ym):
         return _z_squared  # pragma: no cover
 
-    _unbinned_nll_np = _unbinned_nll
-    _unbinned_nll_nb = jit(_unbinned_nll_np)
-
-    def _unbinned_nll(x):
-        if x.dtype in (np.float32, np.float64):
-            return _unbinned_nll_nb(x)
-        # fallback to numpy for float128
-        return _unbinned_nll_np(x)
+    # _unbinned_nll is not jitted: numba's naive sum is both slower and less accurate
+    # than the pairwise sum of np.sum.
 
     _multinomial_chi2_np = multinomial_chi2
     _multinomial_chi2_nb = jit(_multinomial_chi2_np)
