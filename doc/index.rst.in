@@ -1,3 +1,7 @@
+.. meta::
+   :description: iminuit is a Jupyter-friendly Python interface to the Minuit2
+      C++ minimizer, with built-in cost functions for likelihood fits.
+
 .. include:: bibliography.txt
 
 .. toctree::
