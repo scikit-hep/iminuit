@@ -35,7 +35,7 @@ from typing import (
     get_origin,
 )
 import abc
-from time import monotonic
+from time import perf_counter
 import warnings
 import sys
 from dataclasses import dataclass, asdict
@@ -1049,10 +1049,10 @@ class _Timer:
         self.value = fmin.time if fmin else 0.0
 
     def __enter__(self):
-        self.value += monotonic()
+        self.value -= perf_counter()
 
     def __exit__(self, *args):
-        self.value = monotonic() - self.value
+        self.value += perf_counter()
 
 
 @_deprecated.deprecated(
@@ -1624,7 +1624,7 @@ def _histogram_segments(mask, xe, masked):
 
 
 def _smart_sampling(f, xmin, xmax, start=20, tol=5e-3, maxiter=20, maxtime=10):
-    t0 = monotonic()
+    t0 = perf_counter()
     x = np.linspace(xmin, xmax, start)
     ynew = f(x)
     ymin = np.min(ynew)
@@ -1642,7 +1642,7 @@ def _smart_sampling(f, xmin, xmax, start=20, tol=5e-3, maxiter=20, maxtime=10):
             )
             warnings.warn(msg, RuntimeWarning, stacklevel=2)
             break
-        if monotonic() - t0 > maxtime:
+        if perf_counter() - t0 > maxtime:
             msg = (
                 f"Time limit {maxtime} in smart sampling reached, "
                 f"produced {len(y)} points"

@@ -1419,6 +1419,15 @@ def test_hesse_after_modifying_values():
     assert m.errors["y"] == approx(1.0, abs=1e-4)
 
 
+def test_fmin_time_accumulates():
+    m = Minuit(lambda x: x**2, x=1)
+    m.migrad()
+    t1 = m.fmin.time
+    assert t1 > 0
+    m.hesse()
+    assert m.fmin.time >= t1
+
+
 def test_edm_goal():
     m = Minuit(func0, x=0, y=0)
     m.migrad()
