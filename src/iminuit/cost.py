@@ -924,7 +924,9 @@ class UnbinnedCost(MaskedCost):
         self._model = model
         self._log = log
         self._model_grad = grad
-        super().__init__(_model_parameters(model, name), _norm(data), verbose)
+        super().__init__(
+            _model_parameters(model, name), _norm(data, copy=True), verbose
+        )
 
     @property
     @abc.abstractmethod
@@ -1361,7 +1363,7 @@ class BinnedCost(MaskedCostWithPulls):
         else:
             self._xe = tuple(_norm(xei) for xei in xe)
 
-        n = _norm(n)
+        n = _norm(n, copy=True)
 
         is_weighted = n.ndim > self._ndim and n.shape[-1] == 2
 
@@ -2464,13 +2466,14 @@ class NormalConstraint(Cost):
         """
         tp_args = (args,) if isinstance(args, str) else tuple(args)
         nargs = len(tp_args)
-        self._expected = _norm(value)
+        # copy, since the setters write into these arrays
+        self._expected = _norm(value, copy=True)
         if self._expected.ndim > 1:
             raise ValueError("value must be a scalar or one-dimensional")
         # args can be a vector of values, in this case we have nargs == 1
         if nargs > 1 and len(self._expected) != nargs:
             raise ValueError("size of value does not match size of args")
-        self._cov = _norm(error)
+        self._cov = _norm(error, copy=True)
         if len(self._cov) != len(self._expected):
             raise ValueError("size of error does not match size of value")
         if self._cov.ndim < 2:
@@ -2566,12 +2569,11 @@ class NormalConstraint(Cost):
         plt.ylim(-n + 0.5, 0.5)
 
 
-def _norm(value: ArrayLike) -> NDArray:
+def _norm(value: ArrayLike, copy: bool = False) -> NDArray:
     value = np.atleast_1d(value)
-    dtype = value.dtype
-    if dtype.kind != "f":
-        value = value.astype(np.float64)
-    return value
+    dtype = value.dtype if value.dtype.kind == "f" else np.float64
+    # copy=None means copy only if needed (numpy 2), and is False in numpy 1
+    return np.array(value, dtype=dtype, copy=copy or None)
 
 
 def _covinv(array):
