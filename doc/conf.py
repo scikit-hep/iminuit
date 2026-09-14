@@ -43,7 +43,14 @@ extensions = [
     "matplotlib.sphinxext.plot_directive",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
+    "sphinx_llm.txt",
 ]
+
+# The default is the full README, which is too long for the summary block
+llms_txt_description = (
+    "Documentation of iminuit, a Jupyter-friendly Python interface to the"
+    " Minuit2 C++ minimizer, with cost functions for likelihood fits."
+)
 
 nbsphinx_kernel_name = "python3"
 nbsphinx_execute_arguments = [
@@ -63,7 +70,8 @@ autodoc_type_aliases = {"ArrayLike": "ArrayLike"}
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ["_build", "_themes"]
+# interactive_demo.ipynb is only the source for a gif, not a page
+exclude_patterns = ["_build", "_themes", "_static/interactive_demo.ipynb"]
 
 # html_logo = "_static/iminuit_logo.svg"
 

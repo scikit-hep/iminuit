@@ -83,6 +83,7 @@ doc = [
     "jax",
     "jaxlib",
     "pytest-xdist",
+    "sphinx-llm",
 ]
 dev = [{ include-group = "test" }, { include-group = "doc" }]
 
