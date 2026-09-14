@@ -2314,7 +2314,7 @@ class LeastSquares(MaskedCostWithPulls):
         x = np.atleast_2d(x)
         # Fortran order makes the columns contiguous views, which speeds up the
         # model and the cost while in-place edits of the data stay visible
-        data = np.asfortranarray(np.column_stack(np.broadcast_arrays(*x, y, yerror)))
+        data = np.stack(np.broadcast_arrays(*x, y, yerror)).T
         super().__init__(_model_parameters(model, name), data, verbose)
 
     def _update_cache(self):
