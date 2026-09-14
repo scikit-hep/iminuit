@@ -1330,7 +1330,7 @@ class Minuit:
             else:
                 method = "BFGS"
 
-        options = options or {}
+        options = dict(options or {})
 
         # attempt to set default number of function evaluations if not provided
         # various workarounds for API inconsistencies in scipy.optimize.minimize
@@ -1443,7 +1443,7 @@ class Minuit:
             r.fun,
             self.errordef,
             edm_goal,
-            self.nfcn,
+            r["nfev"],
             ncall,
             accurate_covar,
         )
@@ -1463,11 +1463,10 @@ class Minuit:
 
         self._merrors = mutil.MErrors()
 
-        if accurate_covar:
-            self._make_covariance()
+        if not accurate_covar and self.strategy.strategy > 0:
+            self.hesse()
         else:
-            if self.strategy.strategy > 0:
-                self.hesse()
+            self._make_covariance()
 
         return self
 
