@@ -120,7 +120,7 @@ def test_decorated_function():
 
     assert describe(one_arg) == list("x")
     assert describe(many_arg) == list("xyzt")
-    assert describe(kw_only) == list("xyz")
+    assert describe(kw_only) == list("x")
 
 
 def test_ambiguous_1():
@@ -308,3 +308,32 @@ def test_string_annotation_3():
         pass
 
     assert describe(f, annotations=True) == {"x": None, "mu": None}
+
+
+def test_string_annotation_4():
+    # annotation that raises something other than NameError when evaluated;
+    # np.float_ was removed in numpy-2
+    def f(x, mu: "np.float_"):
+        pass
+
+    assert describe(f, annotations=True) == {"x": None, "mu": None}
+
+
+def test_annotation_with_string_metadata():
+    # a str is a Sequence, but it is not a limit
+    def f(x: Annotated[float, "units: meters"], y: Annotated[float, "ab"]):  # noqa: F821
+        pass
+
+    # no constraint found, limits are infinite
+    assert describe(f, annotations=True) == {
+        "x": (-np.inf, np.inf),
+        "y": (-np.inf, np.inf),
+    }
+
+
+def test_keyword_only():
+    def f(x, *, y=1):
+        pass
+
+    assert describe(f) == ["x"]
+    assert describe(f, annotations=True) == {"x": None}

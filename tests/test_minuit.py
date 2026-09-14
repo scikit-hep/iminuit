@@ -1,5 +1,6 @@
 # type:ignore
 import platform
+import warnings
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
@@ -718,6 +719,22 @@ def test_mncontour(grad, cl, experimental):
     assert_allclose((x + xm.upper, y + ym.upper), cmax, atol=1e-2)
 
 
+def test_mncontour_experimental_real_dtype():
+    # np.linalg.eig returns complex dtype even for symmetric input on
+    # numpy >= 2.5; the covariance block here is symmetric, so eigh
+    # (real dtype) must be used instead
+    pytest.importorskip("scipy.optimize")
+
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        pts = m.mncontour("x", "y", size=10, experimental=True)
+    pts = np.asarray(pts)
+    assert pts.dtype.kind == "f"
+    assert np.all(np.isfinite(pts))
+
+
 @pytest.mark.parametrize("experimental", (False, True))
 def test_mncontour_limits(experimental):
     pytest.importorskip("scipy.optimize")
@@ -1009,6 +1026,20 @@ def test_grad():
     assert_equal(g, func0_grad(2.0, 5.0))
 
 
+def test_g2_and_hessian():
+    m = Minuit(func0, grad=func0_grad, g2=func0_g2, x=0, y=0)
+    assert m.g2 is func0_g2
+    assert_equal(m.g2(2.0, 5.0), func0_g2(2.0, 5.0))
+
+    m = Minuit(func0, grad=func0_grad, hessian=func0_hessian, x=0, y=0)
+    assert m.hessian is func0_hessian
+    assert_equal(m.hessian(2.0, 5.0), func0_hessian(2.0, 5.0))
+
+    m = Minuit(func0, x=0, y=0)
+    assert m.g2 is None
+    assert m.hessian is None
+
+
 def test_values(minuit):
     expected = [2.0, 5.0]
     assert len(minuit.values) == 2
@@ -1211,6 +1242,16 @@ def test_errordef():
     assert_allclose(m.errors["x"], 1)
     with pytest.raises(ValueError):
         m.errordef = 0
+
+
+def test_errordef_updates_covariance():
+    m = Minuit(lambda x: x**2, 0)
+    m.migrad()
+    assert_allclose(m.covariance[0, 0], 1)
+    m.errordef = 0.5
+    assert_allclose(m.errors["x"] ** 2, 0.5)
+    assert_allclose(m.covariance[0, 0], 0.5)
+    assert m.fmin.errordef == 0.5
 
 
 def test_print_level():
@@ -1690,6 +1731,42 @@ def test_pickle(grad):
     assert m2.fmin.ngrad == m.fmin.ngrad
 
 
+def func_simple(x, y):
+    return (x - 1) ** 2 + (y - 2) ** 2
+
+
+@pytest.mark.parametrize("copy_fn", ("pickle", "deepcopy"))
+def test_pickle_reuses_minimum(copy_fn):
+    import pickle
+    import copy
+
+    m = Minuit(func_simple, x=0, y=0)
+    m.migrad()
+
+    if copy_fn == "pickle":
+        m2 = pickle.loads(pickle.dumps(m))
+    else:
+        m2 = copy.deepcopy(m)
+
+    # the copy must see its own minimum state, not an equal-but-distinct copy
+    assert m2._last_state is m2._fmin._src.state
+
+    n1 = m.fmin.nfcn
+    n2 = m2.fmin.nfcn
+
+    m.hesse()
+    m2.hesse()
+
+    # hesse must not restart the minimization on the copy
+    assert m2.fmin.algorithm == "Migrad"
+    assert m2.fmin.nfcn - n2 == m.fmin.nfcn - n1
+
+    # modifying the copy still does not change the stored minimum
+    m2.values["x"] = 3
+    assert m2._last_state is not m2._fmin._src.state
+    assert m2._fmin._src.state[0].value == approx(1, abs=1e-3)
+
+
 def test_minos_new_min():
     xref = [1.0]
     m = Minuit(lambda x: (x - xref[0]) ** 2, x=0)
@@ -1705,6 +1782,19 @@ def test_minos_new_min():
     # ...but interval is correct
     assert m.merrors["x"].lower == approx(-0.9, abs=1e-2)
     assert m.merrors["x"].upper == approx(1.1, abs=1e-2)
+
+
+@pytest.mark.parametrize("algorithm", ("migrad", "simplex", "scan"))
+def test_minos_cleared_by_new_minimization(algorithm):
+    m = Minuit(func0, x=0, y=0)
+    m.migrad()
+    m.minos()
+    assert len(m.merrors) == 2
+    assert m.params[0].merror is not None
+    m.values = (5, 5)
+    getattr(m, algorithm)()
+    assert len(m.merrors) == 0
+    assert m.params[0].merror is None
 
 
 def test_minos_without_migrad():

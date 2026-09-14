@@ -86,14 +86,14 @@ class Minuit:
         return self._fcn.gradient  # type:ignore
 
     @property
-    def g2(self) -> Callable[[np.ndarray], np.ndarray]:
-        """Get g2 function of the cost function."""
-        return self._fcn.g2  # type:ignore
+    def g2(self) -> Optional[Callable[[np.ndarray], np.ndarray]]:
+        """Get user-provided second derivative function, or None if not set."""
+        return self._fcn._g2  # type:ignore
 
     @property
-    def hessian(self) -> Callable[[np.ndarray], np.ndarray]:
-        """Get hessian function of the cost function."""
-        return self._fcn.hessian  # type:ignore
+    def hessian(self) -> Optional[Callable[[np.ndarray], np.ndarray]]:
+        """Get user-provided Hessian function, or None if not set."""
+        return self._fcn._hessian  # type:ignore
 
     @property
     def pos2var(self) -> Tuple[str, ...]:
@@ -155,6 +155,10 @@ class Minuit:
         self._fcn._errordef = value
         if self._fmin:
             self._fmin._src.errordef = value
+            # Minuit2 rescaled the errors in the user state, refresh our copy of the
+            # covariance matrix, unless the user already modified the state.
+            if self._last_state is self._fmin._src.state:
+                self._make_covariance()
 
     @property
     def precision(self) -> Optional[float]:
@@ -882,6 +886,7 @@ class Minuit:
             t.value,
         )
         self._make_covariance()
+        self._merrors = mutil.MErrors()
 
         return self  # return self for method chaining and to autodisplay current state
 
@@ -1455,6 +1460,8 @@ class Minuit:
             edm_goal,
             t.value,
         )
+
+        self._merrors = mutil.MErrors()
 
         if not accurate_covar and self.strategy.strategy > 0:
             self.hesse()
@@ -2595,6 +2602,16 @@ class Minuit:
     def _fmin_does_not_exist_or_last_state_was_modified(self) -> bool:
         return not self._fmin or self._fmin._src.state is not self._last_state
 
+    def __setstate__(self, state: Tuple[Any, Dict[str, Any]]) -> None:
+        """Restore a pickled or copied instance."""
+        for k, v in state[1].items():
+            setattr(self, k, v)
+        # Copying breaks the identity of _last_state and the state inside the
+        # FunctionMinimum, which is how a user modification is detected. Restore it,
+        # so that hesse() and minos() can still reuse the existing minimum.
+        if self._fmin and self._fmin._src.state == self._last_state:
+            self._last_state = self._fmin._src.state
+
     def __repr__(self):
         """Get detailed text representation."""
         s = []
@@ -2676,12 +2693,18 @@ class Minuit:
 
         center = self.values[[ix, iy]]
         assert self.covariance is not None
-        t, u = np.linalg.eig(
+        # the covariance block is symmetric, so eigh gives real eigenvalues;
+        # eig would return complex128 even for real symmetric input (numpy >= 2.5).
+        # eigh sorts ascending, reverse to descending to keep the phase of the
+        # phi parametrization below stable under the discrete size grid
+        t, u = np.linalg.eigh(
             [
                 [self.covariance[ix, ix], self.covariance[ix, iy]],
                 [self.covariance[ix, iy], self.covariance[iy, iy]],
             ]
         )
+        t = t[::-1]
+        u = u[:, ::-1]
         s = (t * factor) ** 0.5
 
         # strategy 0 to avoid expensive computation of Hesse matrix
