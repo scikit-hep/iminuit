@@ -1,5 +1,6 @@
 # type:ignore
 import platform
+import warnings
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose, assert_equal
@@ -716,6 +717,22 @@ def test_mncontour(grad, cl, experimental):
     x, y = m.values
     assert_allclose((x + xm.lower, y + ym.lower), cmin, atol=1e-2)
     assert_allclose((x + xm.upper, y + ym.upper), cmax, atol=1e-2)
+
+
+def test_mncontour_experimental_real_dtype():
+    # np.linalg.eig returns complex dtype even for symmetric input on
+    # numpy >= 2.5; the covariance block here is symmetric, so eigh
+    # (real dtype) must be used instead
+    pytest.importorskip("scipy.optimize")
+
+    m = Minuit(func0, x=1.0, y=2.0)
+    m.migrad()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        pts = m.mncontour("x", "y", size=10, experimental=True)
+    pts = np.asarray(pts)
+    assert pts.dtype.kind == "f"
+    assert np.all(np.isfinite(pts))
 
 
 @pytest.mark.parametrize("experimental", (False, True))
