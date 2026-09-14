@@ -328,7 +328,11 @@ class Matrix(np.ndarray):
             key, (str, tuple, np.ndarray)
         ):
             # iterable returns square matrix
-            positions = [trafo(k) for k in key]  # type:ignore
+            key = list(key)
+            if key and all(isinstance(k, (bool, np.bool_)) for k in key):
+                positions = list(np.flatnonzero(key))
+            else:
+                positions = [trafo(k) for k in key]
             sub = super().__getitem__(np.ix_(positions, positions))
         else:
             return super().__getitem__(trafo(key))
