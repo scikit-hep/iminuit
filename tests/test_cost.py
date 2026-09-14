@@ -1474,12 +1474,23 @@ def test_LeastSquares_mask_2():
 
 
 def test_LeastSquares_data_setter():
-    # the cached x, y, yerror columns must follow the data setter
     c = LeastSquares([1, 2], [1, 5], 1, lambda x, a: a * x)
     assert c(2) == pytest.approx(2)
     c.data = np.column_stack(([2, 4], [4, 8], [1, 1]))
     assert c(2) == pytest.approx(0)
     assert c(1) == pytest.approx(20)
+
+
+def test_LeastSquares_inplace_edit():
+    # in-place edits of the data must be visible without calling a setter
+    c = LeastSquares([1, 2], [1, 5], 1, lambda x, a: a * x)
+    assert c(2) == pytest.approx(2)
+    c.x[0] = 10
+    assert c(2) == pytest.approx(19**2 + 1)
+    c.data[1, 1] = 99
+    assert c(2) == pytest.approx(19**2 + 95**2)
+    c.yerror[:] = 2
+    assert c(2) == pytest.approx((19**2 + 95**2) / 4)
 
 
 def test_LeastSquares_2D_mask():

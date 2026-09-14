@@ -2170,17 +2170,7 @@ class LeastSquares(MaskedCostWithPulls):
     :meth:`__init__` for details on how to use a multivariate model.
     """
 
-    __slots__ = (
-        "_loss",
-        "_cost",
-        "_cost_grad",
-        "_model",
-        "_model_grad",
-        "_ndim",
-        "_masked_x",
-        "_masked_y",
-        "_masked_ye",
-    )
+    __slots__ = "_loss", "_cost", "_cost_grad", "_model", "_model_grad", "_ndim"
 
     _loss: Union[str, LossFunction]
     _cost: Callable[[ArrayLike, ArrayLike, ArrayLike], float]
@@ -2188,9 +2178,6 @@ class LeastSquares(MaskedCostWithPulls):
     _model: Model
     _model_grad: Optional[ModelGradient]
     _ndim: int
-    _masked_x: NDArray
-    _masked_y: NDArray
-    _masked_ye: NDArray
 
     @property
     def x(self):
@@ -2325,19 +2312,20 @@ class LeastSquares(MaskedCostWithPulls):
         self.loss = loss
 
         x = np.atleast_2d(x)
-        data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
+        # Fortran order makes the columns contiguous views, which speeds up the
+        # model and the cost while in-place edits of the data stay visible
+        data = np.asfortranarray(np.column_stack(np.broadcast_arrays(*x, y, yerror)))
         super().__init__(_model_parameters(model, name), data, verbose)
 
     def _update_cache(self):
         super()._update_cache()
-        # columns of _masked are strided views; the model and the cost run
-        # noticeably faster on contiguous copies
+        if self._mask is not None:
+            # fancy indexing returns a C-ordered copy
+            self._masked = np.asfortranarray(self._masked)
+
+    def _masked_x(self) -> NDArray:
         t = self._masked.T
-        self._masked_x = np.ascontiguousarray(
-            t[0] if self._ndim == 1 else t[: self._ndim]
-        )
-        self._masked_y = np.ascontiguousarray(t[self._ndim])
-        self._masked_ye = np.ascontiguousarray(t[self._ndim + 1])
+        return t[0] if self._ndim == 1 else t[: self._ndim]
 
     def _ndata(self):
         return len(self._masked)
@@ -2414,25 +2402,27 @@ class LeastSquares(MaskedCostWithPulls):
         return (y - ym) / ye
 
     def _pred(self, args: Sequence[float]) -> NDArray:
-        ym = self._model(self._masked_x, *args)
+        ym = self._model(self._masked_x(), *args)
         return _normalize_output(ym, "model", self._ndata())
 
     def _pred_grad(self, args: Sequence[float]) -> NDArray:
         if self._model_grad is None:
             raise ValueError("no gradient available")  # pragma: no cover
-        ymg = self._model_grad(self._masked_x, *args)
+        ymg = self._model_grad(self._masked_x(), *args)
         return _normalize_output(ymg, "model gradient", self.npar, self._ndata())
 
     def _value(self, args: Sequence[float]) -> float:
+        y, ye = self._masked.T[self._ndim :]
         ym = self._pred(args)
-        return self._cost(self._masked_y, self._masked_ye, ym)
+        return self._cost(y, ye, ym)
 
     def _grad(self, args: Sequence[float]) -> NDArray:
         if self._cost_grad is None:
             raise ValueError("no cost gradient available")  # pragma: no cover
+        y, ye = self._masked.T[self._ndim :]
         ym = self._pred(args)
         ymg = self._pred_grad(args)
-        return self._cost_grad(self._masked_y, self._masked_ye, ym, ymg)
+        return self._cost_grad(y, ye, ym, ymg)
 
     def _has_grad(self) -> bool:
         return self._model_grad is not None and self._cost_grad is not None
