@@ -849,7 +849,11 @@ class MaskedCost(Cost):
         self._update_cache()
 
     def _update_cache(self):
-        self._masked = self._data[_replace_none(self._mask, ...)]
+        masked = self._data[_replace_none(self._mask, ...)]
+        if self._data.flags.f_contiguous and not self._data.flags.c_contiguous:
+            # fancy indexing returns a C-ordered copy, keep the layout of _data
+            masked = np.asfortranarray(masked)
+        self._masked = masked
 
 
 class MaskedCostWithPulls(MaskedCost):
@@ -2182,9 +2186,7 @@ class LeastSquares(MaskedCostWithPulls):
     @property
     def x(self):
         """Get explanatory variables."""
-        if self._ndim == 1:
-            return self.data[:, 0]
-        return self.data.T[: self._ndim]
+        return self._x_columns(self.data)
 
     @x.setter
     def x(self, value):
@@ -2312,19 +2314,12 @@ class LeastSquares(MaskedCostWithPulls):
         self.loss = loss
 
         x = np.atleast_2d(x)
-        # Fortran order makes the columns contiguous views, which speeds up the
-        # model and the cost while in-place edits of the data stay visible
+        # .T of the stack is Fortran-ordered, so columns are contiguous views
         data = np.stack(np.broadcast_arrays(*x, y, yerror)).T
         super().__init__(_model_parameters(model, name), data, verbose)
 
-    def _update_cache(self):
-        super()._update_cache()
-        if self._mask is not None:
-            # fancy indexing returns a C-ordered copy
-            self._masked = np.asfortranarray(self._masked)
-
-    def _masked_x(self) -> NDArray:
-        t = self._masked.T
+    def _x_columns(self, data: NDArray) -> NDArray:
+        t = data.T
         return t[0] if self._ndim == 1 else t[: self._ndim]
 
     def _ndata(self):
@@ -2402,13 +2397,13 @@ class LeastSquares(MaskedCostWithPulls):
         return (y - ym) / ye
 
     def _pred(self, args: Sequence[float]) -> NDArray:
-        ym = self._model(self._masked_x(), *args)
+        ym = self._model(self._x_columns(self._masked), *args)
         return _normalize_output(ym, "model", self._ndata())
 
     def _pred_grad(self, args: Sequence[float]) -> NDArray:
         if self._model_grad is None:
             raise ValueError("no gradient available")  # pragma: no cover
-        ymg = self._model_grad(self._masked_x(), *args)
+        ymg = self._model_grad(self._x_columns(self._masked), *args)
         return _normalize_output(ymg, "model gradient", self.npar, self._ndata())
 
     def _value(self, args: Sequence[float]) -> float:
