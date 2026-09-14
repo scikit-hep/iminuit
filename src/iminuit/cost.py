@@ -809,7 +809,6 @@ class MaskedCost(Cost):
         verbose: int,
     ):
         """For internal use."""
-        # data must be a fresh array, since the setters write into it
         self._data = data
         self._mask = None
         self._update_cache()
