@@ -199,6 +199,12 @@ def test_Matrix():
     assert_equal(m2, [[0, 2], [6, 8]])
     assert m2._names() == ("a", "c")
 
+    # boolean selectors are masks, not positions
+    m3 = m[[True, False, True]]
+    assert_equal(m3, [[0, 2], [6, 8]])
+    assert m3._names() == ("a", "c")
+    assert m3["c", "c"] == 8
+
     m3 = m[["a", "c"]]
     assert_equal(m3, [[0, 2], [6, 8]])
     assert m3.to_dict() == {("a", "a"): 0, ("a", "c"): 2, ("c", "c"): 8}
