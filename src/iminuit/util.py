@@ -1152,7 +1152,11 @@ def merge_signatures(
         amap = []
         for k, ann in describe(f, annotations=True).items():
             if k in args:
-                amap.append(args.index(k))
+                i = args.index(k)
+                amap.append(i)
+                # an annotation from a later callable fills a missing one
+                if anns[i] is None:
+                    anns[i] = ann
             else:
                 amap.append(len(args))
                 args.append(k)
