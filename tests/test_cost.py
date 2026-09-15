@@ -910,6 +910,22 @@ def test_BinnedNLL_mask():
     assert_allclose(c.grad(2), ref(2))
 
 
+def test_BinnedNLL_inplace_edit():
+    # in-place edits of the counts must be visible without calling a setter
+    def cdf(x, a):
+        return x**a
+
+    def grad(x, a):
+        return (x**a * np.log(x + 1e-300))[np.newaxis]
+
+    c = BinnedNLL([1, 1], [0, 0.5, 1], cdf, grad=grad)
+    assert c(1) == pytest.approx(0)
+    c.n[:] = 2
+    assert_allclose(c.prediction([1]), [2, 2])
+    assert c(1) == pytest.approx(0)
+    assert_allclose(c.grad(1), numerical_cost_gradient(c)(1.0), atol=1e-6)
+
+
 def test_BinnedNLL_mask_grad_multipar():
     # regression test: the masked gradient renormalization correction must be
     # per-parameter; with >=2 parameters a scalar correction is wrong

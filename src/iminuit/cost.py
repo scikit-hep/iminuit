@@ -1334,13 +1334,12 @@ class BinnedCost(MaskedCostWithPulls):
     :meta private:
     """
 
-    __slots__ = "_xe", "_ndim", "_bohm_zech_n", "_bohm_zech_s", "_counts_total"
+    __slots__ = "_xe", "_ndim", "_bohm_zech_n", "_bohm_zech_s"
 
     _xe: Union[NDArray, Tuple[NDArray, ...]]
     _ndim: int
     _bohm_zech_n: NDArray
     _bohm_zech_s: Optional[NDArray]
-    _counts_total: float
 
     n = MaskedCost.data
 
@@ -1494,8 +1493,6 @@ class BinnedCost(MaskedCostWithPulls):
             self._bohm_zech_n = val * s
         else:
             self._bohm_zech_n = n
-        # cache the total number of entries in the unmasked bins
-        self._counts_total = np.sum(self._counts())
 
     def _transformed(self, val: NDArray) -> Tuple[NDArray, NDArray]:
         s = self._bohm_zech_s
@@ -2023,8 +2020,9 @@ class BinnedNLL(BinnedCostWithModel):
         ma = self.mask
         if ma is not None:
             p /= np.sum(p[ma])
-        # scale probabilities with total number of entries of unmasked bins in histogram
-        return p * self._counts_total
+        # scale probabilities with total number of entries of unmasked bins in
+        # histogram; not cached, so that in-place edits of the counts are visible
+        return p * self._counts().sum()
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
@@ -2046,7 +2044,7 @@ class BinnedNLL(BinnedCostWithModel):
             p /= psum
         # scale probabilities with total number of entries of unmasked bins in histogram
         n = self._counts()
-        ntot = self._counts_total
+        ntot = n.sum()
         mu = p * ntot
         gmu = pg * ntot
         ma = self.mask
