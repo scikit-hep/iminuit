@@ -5,6 +5,87 @@
 Changelog
 =========
 
+2.33.0 (September 15, 2026)
+---------------------------
+This release collects a large number of bug fixes in the Python API and the C++
+bindings, several performance improvements, and new optional dependencies for easy setup.
+
+Note: cost functions now receive plain ``float`` values instead of ``numpy.float64``
+(`#1136 <https://github.com/scikit-hep/iminuit/pull/1136>`_).
+
+New features
+~~~~~~~~~~~~
+- Add optional dependency extras (`#1189 <https://github.com/scikit-hep/iminuit/pull/1189>`_)
+- Add ``llms.txt`` and Markdown page versions to the documentation (`#1210 <https://github.com/scikit-hep/iminuit/pull/1210>`_)
+
+Fixes in Minuit and util
+~~~~~~~~~~~~~~~~~~~~~~~~
+- Keep the minimum usable after pickle or deepcopy (`#1201 <https://github.com/scikit-hep/iminuit/pull/1201>`_)
+- Clear stale Minos errors and refresh the covariance (`#1202 <https://github.com/scikit-hep/iminuit/pull/1202>`_)
+- Fix ``scipy()``, which mutated options, misreported the call limit, and kept a stale covariance (`#1203 <https://github.com/scikit-hep/iminuit/pull/1203>`_)
+- ``Minuit.scipy`` no longer mutates a user ``NonlinearConstraint`` (`#1155 <https://github.com/scikit-hep/iminuit/pull/1155>`_)
+- Keep the seed gradient when Hesse runs without a minimum (`#1207 <https://github.com/scikit-hep/iminuit/pull/1207>`_)
+- Return the user callables from ``Minuit.g2`` and ``Minuit.hessian`` (`#1193 <https://github.com/scikit-hep/iminuit/pull/1193>`_)
+- Accumulate ``FMin.time`` correctly across migrad, hesse, and minos (`#1194 <https://github.com/scikit-hep/iminuit/pull/1194>`_)
+- Fix ``fixto`` and ``reset``, which did not handle the Minuit state correctly (`#1138 <https://github.com/scikit-hep/iminuit/pull/1138>`_)
+- Fix ``scan`` with all parameters fixed or with many free parameters (`#1158 <https://github.com/scikit-hep/iminuit/pull/1158>`_)
+- Use ``eigh`` for the symmetric covariance block in ``mncontour`` (`#1199 <https://github.com/scikit-hep/iminuit/pull/1199>`_)
+- Fix per-parameter limits in experimental ``mncontour`` and an off-by-one in ``draw_mnmatrix`` (`#1160 <https://github.com/scikit-hep/iminuit/pull/1160>`_)
+- Accept negative and numpy integer parameter indices (`#1159 <https://github.com/scikit-hep/iminuit/pull/1159>`_)
+- Honor numpy boolean masks in parameter views (`#1166 <https://github.com/scikit-hep/iminuit/pull/1166>`_)
+- Label ``Matrix`` sub-matrices correctly for boolean selectors (`#1213 <https://github.com/scikit-hep/iminuit/pull/1213>`_)
+- Keep parameter names on ``Matrix`` sub-selection (`#1139 <https://github.com/scikit-hep/iminuit/pull/1139>`_)
+- Fall back to the ndarray repr for a non-square ``Matrix`` (`#1170 <https://github.com/scikit-hep/iminuit/pull/1170>`_)
+- Raise proper exceptions from ``Params``/``MErrors`` indexing and ``FMin`` equality (`#1163 <https://github.com/scikit-hep/iminuit/pull/1163>`_)
+- Do not assert in the ``FMin`` text repr when Hesse failed (`#1165 <https://github.com/scikit-hep/iminuit/pull/1165>`_)
+- ``describe()`` accepts ``Annotated`` with a non-float base type (`#1164 <https://github.com/scikit-hep/iminuit/pull/1164>`_)
+- Handle keyword-only parameters and odd annotations in ``describe`` (`#1197 <https://github.com/scikit-hep/iminuit/pull/1197>`_)
+- Keep annotations when merging signatures (`#1196 <https://github.com/scikit-hep/iminuit/pull/1196>`_)
+- ``minimize`` accepts scalar ``Bounds`` and documents the callback behaviour (`#1157 <https://github.com/scikit-hep/iminuit/pull/1157>`_)
+- Honor ``throw_nan`` for numba cfunc cost functions (`#1205 <https://github.com/scikit-hep/iminuit/pull/1205>`_)
+- Make ``hide_modules`` exception-safe and cheapen ``is_module_available`` (`#1167 <https://github.com/scikit-hep/iminuit/pull/1167>`_, `#1151 <https://github.com/scikit-hep/iminuit/pull/1151>`_)
+
+Fixes in cost functions
+~~~~~~~~~~~~~~~~~~~~~~~
+- Copy input arrays in the cost constructors (`#1206 <https://github.com/scikit-hep/iminuit/pull/1206>`_)
+- Recompute the total counts in ``BinnedNLL`` so in-place edits are visible (`#1212 <https://github.com/scikit-hep/iminuit/pull/1212>`_)
+- Avoid NaN in binned chi2 gradients when mu is zero (`#1204 <https://github.com/scikit-hep/iminuit/pull/1204>`_)
+- Fix the masked ``BinnedNLL`` gradient (`#1137 <https://github.com/scikit-hep/iminuit/pull/1137>`_)
+- Fix mask handling in ``BinnedCost._n_err`` and ``LeastSquares._pulls`` (`#1145 <https://github.com/scikit-hep/iminuit/pull/1145>`_)
+- Fix the ``UnbinnedNLL.scaled_pdf`` scale for multivariate data (`#1146 <https://github.com/scikit-hep/iminuit/pull/1146>`_)
+- Keep shape validation in ``_normalize_output`` for non-float output (`#1148 <https://github.com/scikit-hep/iminuit/pull/1148>`_)
+- ``log_or_zero`` no longer downcasts integer input (`#1191 <https://github.com/scikit-hep/iminuit/pull/1191>`_)
+- Fix ``CostSum.visualize`` with a single visualizable component (`#1147 <https://github.com/scikit-hep/iminuit/pull/1147>`_)
+- Fix figure reuse in ``CostSum.visualize`` with matplotlib >= 3.11 (`#1141 <https://github.com/scikit-hep/iminuit/pull/1141>`_)
+
+Fixes in the widgets and C++ bindings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Keep the fixed state in sync in the interactive widgets (`#1200 <https://github.com/scikit-hep/iminuit/pull/1200>`_)
+- Import PySide6 before the matplotlib Qt backend in ``qtwidget`` (`#1195 <https://github.com/scikit-hep/iminuit/pull/1195>`_)
+- Check indices in ``MnUserParameterState`` and ``MnUserTransformation`` (`#1209 <https://github.com/scikit-hep/iminuit/pull/1209>`_)
+- Make the ``MnPrint`` bindings memory-safe (`#1208 <https://github.com/scikit-hep/iminuit/pull/1208>`_)
+- Fix bounds, lifetime, and equality bugs in the C++ bindings (`#1134 <https://github.com/scikit-hep/iminuit/pull/1134>`_)
+
+Performance
+~~~~~~~~~~~
+- Avoid numpy round-trips in the FCN hot loop (`#1136 <https://github.com/scikit-hep/iminuit/pull/1136>`_)
+- Store ``LeastSquares`` data in Fortran order for contiguous columns (`#1176 <https://github.com/scikit-hep/iminuit/pull/1176>`_)
+- Cache the total counts and avoid temporaries in ``Template._pred`` (`#1149 <https://github.com/scikit-hep/iminuit/pull/1149>`_)
+- Use an identity check before copying the parameter state (`#1174 <https://github.com/scikit-hep/iminuit/pull/1174>`_)
+- Construct the strategy-2 ``MnMigrad`` only when retrying (`#1156 <https://github.com/scikit-hep/iminuit/pull/1156>`_)
+
+Packaging and infrastructure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add Python 3.15 to the tests and wheels (`#1169 <https://github.com/scikit-hep/iminuit/pull/1169>`_)
+- Build Pyodide wheels (`#1171 <https://github.com/scikit-hep/iminuit/pull/1171>`_) and iOS wheels (`#1172 <https://github.com/scikit-hep/iminuit/pull/1172>`_)
+- Use dependency groups instead of extras (`#1162 <https://github.com/scikit-hep/iminuit/pull/1162>`_)
+- Use uv in the release workflow (`#1182 <https://github.com/scikit-hep/iminuit/pull/1182>`_) and describe trusted publishing in the release notes (`#1186 <https://github.com/scikit-hep/iminuit/pull/1186>`_)
+- Set permissions, timeouts, and concurrency groups in the workflows (`#1180 <https://github.com/scikit-hep/iminuit/pull/1180>`_)
+- Modernize CMakeLists.txt (`#1183 <https://github.com/scikit-hep/iminuit/pull/1183>`_) and remove dead tooling configuration (`#1184 <https://github.com/scikit-hep/iminuit/pull/1184>`_)
+- Install the notebook dependencies on Binder (`#1185 <https://github.com/scikit-hep/iminuit/pull/1185>`_)
+- Make the ROOT version check tolerant of hash length (`#1178 <https://github.com/scikit-hep/iminuit/pull/1178>`_)
+- List both licenses in CITATION.cff (`#1187 <https://github.com/scikit-hep/iminuit/pull/1187>`_)
+
 2.32.0 (November 09, 2025)
 --------------------------
 - Support user-provided g2 and hessian (`#1117 <https://github.com/scikit-hep/iminuit/pull/1117>`_)
