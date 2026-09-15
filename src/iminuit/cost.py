@@ -2022,7 +2022,7 @@ class BinnedNLL(BinnedCostWithModel):
             p /= np.sum(p[ma])
         # scale probabilities with total number of entries of unmasked bins in
         # histogram; not cached, so that in-place edits of the counts are visible
-        return p * np.sum(self._counts())
+        return p * self._counts().sum()
 
     def _value(self, args: Sequence[float]) -> float:
         mu = self._pred(args)
@@ -2044,7 +2044,7 @@ class BinnedNLL(BinnedCostWithModel):
             p /= psum
         # scale probabilities with total number of entries of unmasked bins in histogram
         n = self._counts()
-        ntot = np.sum(n)
+        ntot = n.sum()
         mu = p * ntot
         gmu = pg * ntot
         ma = self.mask
