@@ -1382,6 +1382,12 @@ def test_LeastSquares_2D():
     c.x = (y, x)
     assert_equal(c.x, (y, x))
 
+    c.mask = [True, False, True]
+    assert c.ndata == 2
+    assert c(1.5, 0.2) == pytest.approx(
+        np.sum(((2 * f - 1.5 * y - 0.2 * x) / fe)[::2] ** 2)
+    )
+
 
 def test_LeastSquares_3D():
     def model(xyz, a, b):
@@ -1471,6 +1477,21 @@ def test_LeastSquares_mask_2():
     c.yerror = [2, 2]
     assert c(2) == pytest.approx(0)
     assert c(1) == pytest.approx(1)
+
+
+def test_LeastSquares_inplace_edit():
+    # in-place edits of the data must be visible without calling a setter
+    c = LeastSquares([1, 2], [1, 5], 1, lambda x, a: a * x)
+    assert c(2) == pytest.approx(2)
+    c.x[0] = 10
+    assert c(2) == pytest.approx(19**2 + 1)
+    c.data[1, 1] = 99
+    assert c(2) == pytest.approx(19**2 + 95**2)
+    c.yerror[:] = 2
+    assert c(2) == pytest.approx((19**2 + 95**2) / 4)
+    c.data = np.column_stack(([2, 4], [4, 8], [1, 1]))
+    assert c(2) == pytest.approx(0)
+    assert c(1) == pytest.approx(20)
 
 
 def test_LeastSquares_properties():

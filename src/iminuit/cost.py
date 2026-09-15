@@ -849,7 +849,11 @@ class MaskedCost(Cost):
         self._update_cache()
 
     def _update_cache(self):
-        self._masked = self._data[_replace_none(self._mask, ...)]
+        masked = self._data[_replace_none(self._mask, ...)]
+        if self._data.flags.f_contiguous and not self._data.flags.c_contiguous:
+            # fancy indexing returns a C-ordered copy, keep the layout of _data
+            masked = np.asfortranarray(masked)
+        self._masked = masked
 
 
 class MaskedCostWithPulls(MaskedCost):
@@ -2182,9 +2186,7 @@ class LeastSquares(MaskedCostWithPulls):
     @property
     def x(self):
         """Get explanatory variables."""
-        if self._ndim == 1:
-            return self.data[:, 0]
-        return self.data.T[: self._ndim]
+        return self._x_columns(self.data)
 
     @x.setter
     def x(self, value):
@@ -2312,8 +2314,13 @@ class LeastSquares(MaskedCostWithPulls):
         self.loss = loss
 
         x = np.atleast_2d(x)
-        data = np.column_stack(np.broadcast_arrays(*x, y, yerror))
+        # .T of the stack is Fortran-ordered, so columns are contiguous views
+        data = np.stack(np.broadcast_arrays(*x, y, yerror)).T
         super().__init__(_model_parameters(model, name), data, verbose)
+
+    def _x_columns(self, data: NDArray) -> NDArray:
+        t = data.T
+        return t[0] if self._ndim == 1 else t[: self._ndim]
 
     def _ndata(self):
         return len(self._masked)
@@ -2390,15 +2397,13 @@ class LeastSquares(MaskedCostWithPulls):
         return (y - ym) / ye
 
     def _pred(self, args: Sequence[float]) -> NDArray:
-        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
-        ym = self._model(x, *args)
+        ym = self._model(self._x_columns(self._masked), *args)
         return _normalize_output(ym, "model", self._ndata())
 
     def _pred_grad(self, args: Sequence[float]) -> NDArray:
         if self._model_grad is None:
             raise ValueError("no gradient available")  # pragma: no cover
-        x = self._masked.T[0] if self._ndim == 1 else self._masked.T[: self._ndim]
-        ymg = self._model_grad(x, *args)
+        ymg = self._model_grad(self._x_columns(self._masked), *args)
         return _normalize_output(ymg, "model gradient", self.npar, self._ndata())
 
     def _value(self, args: Sequence[float]) -> float:
