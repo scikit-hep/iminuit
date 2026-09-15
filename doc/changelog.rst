@@ -8,18 +8,15 @@ Changelog
 2.33.0 (September 15, 2026)
 ---------------------------
 This release collects a large number of bug fixes in the Python API and the C++
-bindings, several performance improvements, and new packaging extras.
+bindings, several performance improvements, and new optional dependencies for easy setup.
 
 Note: cost functions now receive plain ``float`` values instead of ``numpy.float64``
-(`#1136 <https://github.com/scikit-hep/iminuit/pull/1136>`_). Test and documentation
-dependencies moved from extras to dependency groups
-(`#1162 <https://github.com/scikit-hep/iminuit/pull/1162>`_), while new optional
-runtime extras were added (`#1189 <https://github.com/scikit-hep/iminuit/pull/1189>`_).
+(`#1136 <https://github.com/scikit-hep/iminuit/pull/1136>`_).
 
 New features
 ~~~~~~~~~~~~
 - Add optional dependency extras (`#1189 <https://github.com/scikit-hep/iminuit/pull/1189>`_)
-- Add llms.txt and Markdown page versions to the documentation (`#1210 <https://github.com/scikit-hep/iminuit/pull/1210>`_)
+- Add ``llms.txt`` and Markdown page versions to the documentation (`#1210 <https://github.com/scikit-hep/iminuit/pull/1210>`_)
 
 Fixes in Minuit and util
 ~~~~~~~~~~~~~~~~~~~~~~~~
