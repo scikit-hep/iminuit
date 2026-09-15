@@ -104,6 +104,13 @@ sdist.include = [
 ## Uncomment to debug C++ build
 # build.verbose = true
 
+# Avoids reading the version with importlib.metadata, which is slow to import
+[[tool.scikit-build.generate]]
+path = "iminuit/_version.py"
+template = '''
+version = "${version}"
+'''
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = ["-q", "-ra", "--ff", "--strict-config", "--strict-markers"]

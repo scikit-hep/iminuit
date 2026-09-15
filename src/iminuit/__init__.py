@@ -24,8 +24,6 @@ Further information:
 from iminuit.minuit import Minuit
 from iminuit.minimize import minimize
 from iminuit.util import describe
-from importlib import metadata
-
-__version__ = metadata.version("iminuit")
+from iminuit._version import version as __version__
 
 __all__ = ["Minuit", "minimize", "describe", "__version__"]
