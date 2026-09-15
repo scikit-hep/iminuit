@@ -1,3 +1,5 @@
+__lazy_modules__ = {"typing", "warnings"}
+
 import warnings
 from typing import Callable, Any
 from importlib.metadata import version

@@ -5,6 +5,19 @@ You can look up the interface of data classes that iminuit uses here.
 """
 
 from __future__ import annotations
+
+__lazy_modules__ = {
+    "argparse",
+    "iminuit.typing",
+    "iminuit.warnings",
+    "importlib",
+    "importlib.util",
+    "inspect",
+    "numpy.typing",
+    "operator",
+    "warnings",
+}
+
 import inspect
 import operator
 import importlib.util

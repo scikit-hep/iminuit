@@ -21,6 +21,8 @@ Further information:
 * Docs: https://scikit-hep.org/iminuit
 """
 
+__lazy_modules__ = {"iminuit.minimize", "iminuit.minuit", "iminuit.util"}
+
 from iminuit.minuit import Minuit
 from iminuit.minimize import minimize
 from iminuit.util import describe

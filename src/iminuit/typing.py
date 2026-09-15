@@ -4,6 +4,8 @@ Types for iminuit.
 These are used by mypy and similar tools.
 """
 
+__lazy_modules__ = {"numpy", "numpy.typing"}
+
 from typing import (
     Protocol,
     Optional,
