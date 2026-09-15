@@ -1,5 +1,5 @@
 The Minuit2 C++ code is released under LGPL v2.1, see
-./extern/root/LICENSE.
+./extern/Minuit2/LICENSE.
 
 The iminuit code (everything not in ./extern) is released under the MIT license:
 
