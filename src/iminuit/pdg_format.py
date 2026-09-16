@@ -46,6 +46,8 @@ Documentation follows these guidelines:
 https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
 
+__lazy_modules__ = {"math", "typing"}
+
 import math
 from typing import List
 

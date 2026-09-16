@@ -7,6 +7,8 @@ warning.
 Use at your own risk.
 """
 
+__lazy_modules__ = {f"{__spec__.parent}.util"}
+
 from .util import merge_signatures
 
 
