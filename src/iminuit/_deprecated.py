@@ -1,10 +1,10 @@
 import warnings
 from typing import Callable, Any
-from importlib.metadata import version
 from iminuit._parse_version import parse_version
+from iminuit._version import version
 
 
-CURRENT_VERSION = parse_version(version("iminuit"))
+CURRENT_VERSION = parse_version(version)
 
 
 class deprecated:
