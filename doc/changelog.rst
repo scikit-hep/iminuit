@@ -5,7 +5,7 @@
 Changelog
 =========
 
-2.33.0 (September 15, 2026)
+2.33.0 (September 16, 2026)
 ---------------------------
 This release collects a large number of bug fixes in the Python API and the C++
 bindings, several performance improvements, and new optional dependencies for easy setup.
@@ -71,6 +71,7 @@ Performance
 - Avoid numpy round-trips in the FCN hot loop (`#1136 <https://github.com/scikit-hep/iminuit/pull/1136>`_)
 - Store ``LeastSquares`` data in Fortran order for contiguous columns (`#1176 <https://github.com/scikit-hep/iminuit/pull/1176>`_)
 - Cache the total counts and avoid temporaries in ``Template._pred`` (`#1149 <https://github.com/scikit-hep/iminuit/pull/1149>`_)
+- Generate ``_version.py`` at build time instead of reading package metadata on import (`#1217 <https://github.com/scikit-hep/iminuit/pull/1217>`_)
 - Use an identity check before copying the parameter state (`#1174 <https://github.com/scikit-hep/iminuit/pull/1174>`_)
 - Construct the strategy-2 ``MnMigrad`` only when retrying (`#1156 <https://github.com/scikit-hep/iminuit/pull/1156>`_)
 
