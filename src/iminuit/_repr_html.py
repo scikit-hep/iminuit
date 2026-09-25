@@ -1,3 +1,5 @@
+__lazy_modules__ = {f"{__spec__.parent}._repr_text"}
+
 from ._repr_text import pdg_format, matrix_format, fmin_fields, _parse_latex
 
 good_style = "background-color:#92CCA6;color:black"

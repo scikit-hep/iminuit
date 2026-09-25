@@ -1,3 +1,5 @@
+__lazy_modules__ = {"iminuit.warnings", "typing", "warnings"}
+
 import contextlib
 import warnings
 from iminuit.warnings import OptionalDependencyWarning

@@ -1,3 +1,5 @@
+__lazy_modules__ = {"re", "typing"}
+
 import re
 from typing import Tuple, Union
 

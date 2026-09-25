@@ -37,6 +37,14 @@ repos:
         args: [--fix, --show-fixes]
       - id: ruff-format
 
+  # Lazy import declarations
+  - repo: https://github.com/henryiii/flake8-lazy
+    rev: v0.9.0
+    hooks:
+      - id: flake8-lazy
+        args: [--apply=set]
+        files: "^src/"
+
   # C++ formatting
   - repo: https://github.com/pre-commit/mirrors-clang-format
     rev: v23.1.1

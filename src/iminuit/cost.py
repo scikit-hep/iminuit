@@ -83,6 +83,8 @@ class documentation for details.
 
 from __future__ import annotations
 
+__lazy_modules__ = {"warnings", f"{__spec__.parent}.typing", f"{__spec__.parent}.util"}
+
 from .util import (
     describe,
     merge_signatures,
