@@ -33,7 +33,7 @@ def get_root_version() -> str:
 
     for item in git_submodule.strip().split("\n"):
         parts = item.split()
-        if PurePath(parts[1]) != PurePath("extern") / "root":
+        if PurePath(parts[1]) != PurePath("extern") / "Minuit2":
             continue
         if len(parts) != 3:
             raise RuntimeError("module is not checked out")
@@ -43,7 +43,7 @@ def get_root_version() -> str:
     # we must use git describe --tags
     root_version = (
         subp.check_output(
-            ["git", "describe", "--tags"], cwd=project_dir / "extern" / "root"
+            ["git", "describe", "--tags"], cwd=project_dir / "extern" / "Minuit2"
         )
         .decode()
         .strip()
