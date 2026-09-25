@@ -21,8 +21,6 @@
 .. image:: https://img.shields.io/badge/ascl-2108.024-blue.svg?colorB=262255
    :target: https://ascl.net/2108.024
    :alt: ascl:2108.024
-.. image:: https://img.shields.io/gitter/room/Scikit-HEP/iminuit
-   :target: https://gitter.im/Scikit-HEP/iminuit
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/scikit-hep/iminuit/develop?filepath=doc%2Ftutorial
 
@@ -60,7 +58,8 @@ Use the extras ``iminuit[numba]``, ``iminuit[plot]``, ``iminuit[ipywidgets]``, `
 Documentation
 -------------
 
-Checkout our large and comprehensive list of `tutorials`_ that take you all the way from beginner to power user. For help and how-to questions, please use the `discussions`_ on GitHub or `gitter`_.
+Check out our large and comprehensive list of `tutorials`_ that take you all the way from beginner to power user.
+For help and how-to questions, please use the `discussions`_ or `issues`_ on GitHub.
 
 **Lecture by Glen Cowan**
 
@@ -160,7 +159,7 @@ All interface changes from 1.x to 2.x are documented in the `changelog`_ with re
 .. _changelog: https://scikit-hep.org/iminuit/changelog.html
 .. _tutorials: https://scikit-hep.org/iminuit/tutorials.html
 .. _discussions: https://github.com/scikit-hep/iminuit/discussions
-.. _gitter: https://gitter.im/Scikit-HEP/iminuit
+.. _issues: https://github.com/scikit-hep/iminuit/issues
 .. _jacobi: https://github.com/hdembinski/jacobi
 .. _numba_stats: https://github.com/HDembinski/numba-stats
 .. _boost-histogram: https://github.com/scikit-hep/boost-histogram
