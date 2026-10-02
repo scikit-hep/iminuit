@@ -49,7 +49,7 @@ jobs:
         python-version: "3.12"
     # without this, the Qt tests abort because a lib is missing
     - uses: tlambert03/setup-qt-libs@v1
-    - uses: astral-sh/setup-uv@v10.0.1
+    - uses: astral-sh/setup-uv@v10.2.0
     - run: uv pip install --system nox coverage
     - run: nox -s cov
     - run: coverage lcov -o coverage.lcov
