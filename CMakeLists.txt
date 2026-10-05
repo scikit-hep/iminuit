@@ -25,58 +25,57 @@ find_package(pybind11 CONFIG REQUIRED)
 file(GLOB SOURCES_A CONFIGURE_DEPENDS "src/*.cpp")
 # Keep in sync with tool.scikit-build.sdist.include in pyproject.toml
 set(SOURCES_B
-    extern/root/math/mathcore/src/Util.cxx
-    extern/root/math/minuit2/src/AnalyticalGradientCalculator.cxx
-    extern/root/math/minuit2/src/BFGSErrorUpdator.cxx
-    extern/root/math/minuit2/src/DavidonErrorUpdator.cxx
-    extern/root/math/minuit2/src/HessianGradientCalculator.cxx
-    extern/root/math/minuit2/src/ExternalInternalGradientCalculator.cxx
-    extern/root/math/minuit2/src/InitialGradientCalculator.cxx
-    extern/root/math/minuit2/src/MPIProcess.cxx
-    extern/root/math/minuit2/src/MinimumBuilder.cxx
-    extern/root/math/minuit2/src/MnApplication.cxx
-    extern/root/math/minuit2/src/MnContours.cxx
-    extern/root/math/minuit2/src/MnCovarianceSqueeze.cxx
-    extern/root/math/minuit2/src/MnFcn.cxx
-    extern/root/math/minuit2/src/MnFunctionCross.cxx
-    extern/root/math/minuit2/src/MnGlobalCorrelationCoeff.cxx
-    extern/root/math/minuit2/src/MnHesse.cxx
-    extern/root/math/minuit2/src/MnLineSearch.cxx
-    extern/root/math/minuit2/src/MnMachinePrecision.cxx
-    extern/root/math/minuit2/src/MnMatrix.cxx
-    extern/root/math/minuit2/src/MnMinos.cxx
-    extern/root/math/minuit2/src/MnParabolaFactory.cxx
-    extern/root/math/minuit2/src/MnParameterScan.cxx
-    extern/root/math/minuit2/src/MnParameterTransformation.cxx
-    extern/root/math/minuit2/src/MnPlot.cxx
-    extern/root/math/minuit2/src/MnPosDef.cxx
-    extern/root/math/minuit2/src/MnPrint.cxx
-    extern/root/math/minuit2/src/MnSeedGenerator.cxx
-    extern/root/math/minuit2/src/MnStrategy.cxx
-    extern/root/math/minuit2/src/MnScan.cxx
-    extern/root/math/minuit2/src/MnTraceObject.cxx
-    extern/root/math/minuit2/src/MnUserParameterState.cxx
-    extern/root/math/minuit2/src/MnUserParameters.cxx
-    extern/root/math/minuit2/src/MnUserTransformation.cxx
-    extern/root/math/minuit2/src/ModularFunctionMinimizer.cxx
-    extern/root/math/minuit2/src/NegativeG2LineSearch.cxx
-    extern/root/math/minuit2/src/Numerical2PGradientCalculator.cxx
-    extern/root/math/minuit2/src/SimplexSeedGenerator.cxx
-    extern/root/math/minuit2/src/SimplexBuilder.cxx
-    extern/root/math/minuit2/src/SimplexParameters.cxx
-    extern/root/math/minuit2/src/ScanBuilder.cxx
-    extern/root/math/minuit2/src/VariableMetricBuilder.cxx
-    extern/root/math/minuit2/src/VariableMetricEDMEstimator.cxx
-    extern/root/math/minuit2/src/mnbins.cxx
-    extern/root/math/minuit2/src/mntplot.cxx)
+    extern/Minuit2/src/math/Util.cxx
+    extern/Minuit2/src/AnalyticalGradientCalculator.cxx
+    extern/Minuit2/src/BFGSErrorUpdator.cxx
+    extern/Minuit2/src/DavidonErrorUpdator.cxx
+    extern/Minuit2/src/HessianGradientCalculator.cxx
+    extern/Minuit2/src/ExternalInternalGradientCalculator.cxx
+    extern/Minuit2/src/InitialGradientCalculator.cxx
+    extern/Minuit2/src/MPIProcess.cxx
+    extern/Minuit2/src/MinimumBuilder.cxx
+    extern/Minuit2/src/MnApplication.cxx
+    extern/Minuit2/src/MnContours.cxx
+    extern/Minuit2/src/MnCovarianceSqueeze.cxx
+    extern/Minuit2/src/MnFcn.cxx
+    extern/Minuit2/src/MnFunctionCross.cxx
+    extern/Minuit2/src/MnGlobalCorrelationCoeff.cxx
+    extern/Minuit2/src/MnHesse.cxx
+    extern/Minuit2/src/MnLineSearch.cxx
+    extern/Minuit2/src/MnMachinePrecision.cxx
+    extern/Minuit2/src/MnMatrix.cxx
+    extern/Minuit2/src/MnMinos.cxx
+    extern/Minuit2/src/MnParabolaFactory.cxx
+    extern/Minuit2/src/MnParameterScan.cxx
+    extern/Minuit2/src/MnParameterTransformation.cxx
+    extern/Minuit2/src/MnPlot.cxx
+    extern/Minuit2/src/MnPosDef.cxx
+    extern/Minuit2/src/MnPrint.cxx
+    extern/Minuit2/src/MnSeedGenerator.cxx
+    extern/Minuit2/src/MnStrategy.cxx
+    extern/Minuit2/src/MnScan.cxx
+    extern/Minuit2/src/MnTraceObject.cxx
+    extern/Minuit2/src/MnUserParameterState.cxx
+    extern/Minuit2/src/MnUserParameters.cxx
+    extern/Minuit2/src/MnUserTransformation.cxx
+    extern/Minuit2/src/ModularFunctionMinimizer.cxx
+    extern/Minuit2/src/NegativeG2LineSearch.cxx
+    extern/Minuit2/src/Numerical2PGradientCalculator.cxx
+    extern/Minuit2/src/SimplexSeedGenerator.cxx
+    extern/Minuit2/src/SimplexBuilder.cxx
+    extern/Minuit2/src/SimplexParameters.cxx
+    extern/Minuit2/src/ScanBuilder.cxx
+    extern/Minuit2/src/VariableMetricBuilder.cxx
+    extern/Minuit2/src/VariableMetricEDMEstimator.cxx
+    extern/Minuit2/src/mnbins.cxx
+    extern/Minuit2/src/mntplot.cxx)
 pybind11_add_module(_core MODULE ${SOURCES_A} ${SOURCES_B})
 
 # Keep in sync with tool.scikit-build.sdist.include in pyproject.toml
-target_include_directories(
-  _core PRIVATE src extern/root/math/minuit2/inc extern/root/math/mathcore/inc
-                extern/root/core/foundation/inc)
+target_include_directories(_core PRIVATE src extern/Minuit2/inc)
 
-target_compile_definitions(_core PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES=1)
+target_compile_definitions(_core PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES=1
+                                         ROOT_Math_VecTypes MATHCORE_STANDALONE)
 set_target_properties(_core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 # Add compiler-specific extra warnings

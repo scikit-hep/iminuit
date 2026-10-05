@@ -5,7 +5,7 @@
 namespace ROOT {
 namespace Minuit2 {
 bool operator==(const MnStrategy& a, const MnStrategy& b) {
-  return a.Strategy() == b.Strategy() && a.GradientNCycles() == b.GradientNCycles() &&
+  return a.GradientNCycles() == b.GradientNCycles() &&
          a.GradientStepTolerance() == b.GradientStepTolerance() &&
          a.GradientTolerance() == b.GradientTolerance() &&
          a.HessianNCycles() == b.HessianNCycles() &&
@@ -20,21 +20,34 @@ bool operator==(const MnStrategy& a, const MnStrategy& b) {
 namespace py = pybind11;
 using namespace ROOT::Minuit2;
 
-void set_strategy(MnStrategy& self, unsigned s) {
-  switch (s) {
-    case 0: self.SetLowStrategy(); break;
-    case 1: self.SetMediumStrategy(); break;
-    case 2: self.SetHighStrategy(); break;
-    default: throw std::invalid_argument("invalid strategy");
-  }
+// MnStrategy no longer exposes its level, so we remember it here.
+struct PyStrategy : MnStrategy {
+  unsigned level;
+  PyStrategy() : MnStrategy(), level(1) {}
+  explicit PyStrategy(unsigned s) : MnStrategy(s), level(s) {}
+};
+
+bool operator==(const PyStrategy& a, const PyStrategy& b) {
+  return a.level == b.level &&
+         static_cast<const MnStrategy&>(a) == static_cast<const MnStrategy&>(b);
+}
+
+void set_strategy(PyStrategy& self, unsigned s) {
+  if (s > 2) throw std::invalid_argument("invalid strategy");
+  self = PyStrategy(s);
 }
 
 void bind_strategy(py::module m) {
-  py::class_<MnStrategy>(m, "MnStrategy")
+  // Minuit2 classes take const MnStrategy&, so implicit int conversion must
+  // also be registered for the base.
+  py::class_<MnStrategy>(m, "_MnStrategyBase").def(py::init<unsigned>());
+
+  py::class_<PyStrategy, MnStrategy>(m, "MnStrategy")
 
       .def(py::init<>())
       .def(py::init<unsigned>())
-      .def_property("strategy", &MnStrategy::Strategy, set_strategy)
+      .def_property(
+          "strategy", [](const PyStrategy& s) { return s.level; }, set_strategy)
 
       .def_property("gradient_ncycles", &MnStrategy::GradientNCycles,
                     &MnStrategy::SetGradientNCycles)
@@ -56,15 +69,15 @@ void bind_strategy(py::module m) {
       .def(py::self == py::self)
 
       .def(py::pickle(
-          [](const MnStrategy& self) {
+          [](const PyStrategy& self) {
             return py::make_tuple(
-                self.Strategy(), self.GradientNCycles(), self.GradientStepTolerance(),
+                self.level, self.GradientNCycles(), self.GradientStepTolerance(),
                 self.GradientTolerance(), self.HessianNCycles(),
                 self.HessianStepTolerance(), self.HessianG2Tolerance(),
                 self.HessianGradientNCycles(), self.StorageLevel());
           },
           [](py::tuple tp) {
-            MnStrategy str(tp[0].cast<unsigned>());
+            PyStrategy str(tp[0].cast<unsigned>());
             str.SetGradientNCycles(tp[1].cast<unsigned>());
             str.SetGradientStepTolerance(tp[2].cast<double>());
             str.SetGradientTolerance(tp[3].cast<double>());
@@ -78,5 +91,6 @@ void bind_strategy(py::module m) {
 
       ;
 
+  py::implicitly_convertible<unsigned, PyStrategy>();
   py::implicitly_convertible<unsigned, MnStrategy>();
 }

@@ -90,14 +90,14 @@ dev = [{ include-group = "test" }, { include-group = "doc" }]
 [tool.scikit-build]
 minimum-version = "build-system.requires"
 build-dir = "build/{wheel_tag}"
-sdist.exclude = ["extern/root"]
+sdist.exclude = ["extern/Minuit2"]
 sdist.include = [
-    "extern/root/math/minuit2/inc",
-    "extern/root/math/minuit2/src",
-    "extern/root/math/mathcore/inc/Math/Util.h",
-    "extern/root/math/mathcore/inc/Math/Types.h",
-    "extern/root/math/mathcore/src/Util.cxx",
-    "extern/root/core/foundation/inc",
+    "extern/Minuit2/inc",
+    "extern/Minuit2/src/*.cxx",
+    "extern/Minuit2/src/MPIProcess.h",
+    "extern/Minuit2/src/math/Util.cxx",
+    "extern/Minuit2/LICENSE",
+    "extern/Minuit2/LGPL2_1.txt",
 ]
 ## Uncomment to debug C++
 # cmake.build-type = "DEBUG"
