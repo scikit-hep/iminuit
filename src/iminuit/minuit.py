@@ -2,6 +2,19 @@
 
 from __future__ import annotations
 
+__lazy_modules__ = {
+    "copy",
+    "iminuit._optional_dependencies",
+    "iminuit.typing",
+    "iminuit.util",
+    "iminuit.warnings",
+    "numpy",
+    "numpy.typing",
+    "operator",
+    "typing",
+    "warnings",
+}
+
 import copy
 import operator
 import warnings
