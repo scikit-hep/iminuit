@@ -9,7 +9,7 @@ from iminuit import __version__ as version
 # via the local pre-commit hook check-root-version, which will
 # fail if this version number does not correspond to the actual
 # version.
-root_version = "v6-37-01-8658-g56be091a18"
+root_version = "v6-37-01-8658-g56be091a18c"
 
 
 with open("../README.rst") as f:

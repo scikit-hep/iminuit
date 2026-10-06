@@ -32,7 +32,7 @@ def format_row(widths, *args) -> str:
     return (
         "".join(
             ("│{0:^%i}" % w if w > 0 else "│ {0:%i}" % (-w - 1)).format(a)
-            for (w, a) in zip(widths, args)
+            for (w, a) in zip(widths, args, strict=False)
         )
         + "│"
     )
@@ -40,7 +40,7 @@ def format_row(widths, *args) -> str:
 
 def format_line(widths, edges):
     s = edges[0]
-    for w, e in zip(widths, edges[1:]):
+    for w, e in zip(widths, edges[1:], strict=False):
         s += "─" * abs(w)
         s += e
     return s

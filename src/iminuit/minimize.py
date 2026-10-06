@@ -105,7 +105,7 @@ def minimize(
             # parameters; mirror that here so e.g. Bounds(0, 1) works.
             lb = np.broadcast_to(bounds.lb, len(x0))
             ub = np.broadcast_to(bounds.ub, len(x0))
-            m.limits = [(a, b) for a, b in zip(lb, ub)]
+            m.limits = [(a, b) for a, b in zip(lb, ub, strict=False)]
         else:
             m.limits = bounds
     if tol:
