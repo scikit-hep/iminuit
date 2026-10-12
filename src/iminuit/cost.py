@@ -829,7 +829,8 @@ class MaskedCost(Cost):
         Boolean array, array of indices, or None.
 
         If not None, only values selected by the mask are considered. The mask acts on
-        the first dimension of a value array, i.e. values[mask]. Default is None.
+        the last dimension of multidimensional unbinned data, i.e. data[..., mask].
+        For other data, it acts on the first dimension, i.e. data[mask]. Default is None.
         """
         return self._mask
 
@@ -952,6 +953,12 @@ class UnbinnedCost(MaskedCost):
         # cannot use len(self._masked) because multi-dimensional data has format
         # (K, N) with K dimensions and N points
         return self._masked.shape[-1]
+
+    def _update_cache(self):
+        masked = self._data if self._mask is None else self._data[..., self._mask]
+        if self._data.flags.f_contiguous and not self._data.flags.c_contiguous:
+            masked = np.asfortranarray(masked)
+        self._masked = masked
 
     @deprecated_parameter(bins="nbins")
     def visualize(
