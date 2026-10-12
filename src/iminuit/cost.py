@@ -2500,11 +2500,24 @@ class NormalConstraint(Cost):
 
     @covariance.setter
     def covariance(self, value):
-        value = np.asarray(value)
-        if value.ndim == 2 and not is_positive_definite(value):
-            raise ValueError("covariance matrix is not positive definite")
-        self._cov[:] = value
-        self._covinv = _covinv(self._cov)
+        value = _norm(value)
+        if value.ndim == 1:
+            value = np.broadcast_to(value, self._expected.shape)
+        elif value.ndim == 2:
+            size = len(self._expected)
+            if value.shape != (size, size):
+                raise ValueError("size of covariance does not match size of value")
+            if not is_positive_definite(value):
+                raise ValueError("covariance matrix is not positive definite")
+        else:
+            raise ValueError("covariance matrix cannot have more than two dimensions")
+        cov = np.array(value, dtype=self._cov.dtype, copy=True)
+        covinv = _covinv(cov)
+        if cov.shape == self._cov.shape:
+            self._cov[...] = cov
+        else:
+            self._cov = cov
+        self._covinv = covinv
 
     @property
     def value(self):
