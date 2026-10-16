@@ -18,19 +18,19 @@ def test_interactive_ipywidgets(mock_ipython):
 
     class Plot:
         def __init__(self):
-            self.called = False
+            self.n = 0
             self.raises = False
 
         def __call__(self, args):
-            self.called = True
+            self.n += 1
             if self.raises:
                 raise ValueError("foo")
 
         @contextlib.contextmanager
-        def assert_call(self):
-            self.called = False
+        def assert_call(self, n=1):
+            self.n = 0
             yield
-            assert self.called
+            assert self.n == n
 
     plot = Plot()
 
@@ -63,10 +63,16 @@ def test_interactive_ipywidgets(mock_ipython):
         fit_button.click()
 
     update_button.value = False
+    # the first slider move after a fit or reset must already take effect
     with plot.assert_call():
-        # because of implementation details, we have to trigger the slider several times
-        for i in range(5):
-            parameters.children[0].slider.value = i  # change first slider
+        parameters.children[0].slider.value = 0.5
+    assert_allclose(m.values, (0.5, 0), atol=1e-5)
+    with plot.assert_call():
+        reset_button.click()
+    assert_allclose(m.values, (1, 1), atol=1e-5)
+    with plot.assert_call():
+        parameters.children[0].slider.value = 0.5
+    assert_allclose(m.values, (0.5, 1), atol=1e-5)
     parameters.children[0].fix.value = True
     with plot.assert_call():
         parameters.children[0].fit.value = True
