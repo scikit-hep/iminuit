@@ -18,22 +18,13 @@ from numpy.typing import NDArray, ArrayLike
 from typing import (
     overload,
     Any,
-    List,
-    Union,
-    Dict,
-    Iterable,
-    Generator,
-    Tuple,
-    Optional,
-    Callable,
-    Collection,
-    Sequence,
     TypeVar,
     Annotated,
     SupportsIndex,
     get_args,
     get_origin,
 )
+from collections.abc import Iterable, Generator, Callable, Collection, Sequence
 import abc
 from time import perf_counter
 import warnings
@@ -127,7 +118,7 @@ class BasicView(abc.ABC):
             else:
                 if len(value) != len(index):
                     raise ValueError("length of argument does not match slice")
-                for i, v in zip(index, value):
+                for i, v in zip(index, value, strict=False):
                     self._set(i, v)
         else:
             self._set(index, value)
@@ -140,12 +131,12 @@ class BasicView(abc.ABC):
     def __repr__(self) -> str:
         """Get detailed text representation."""
         s = f"<{self.__class__.__name__}"
-        for k, v in zip(self._minuit._pos2var, self):
+        for k, v in zip(self._minuit._pos2var, self, strict=False):
             s += f" {k}={v}"
         s += ">"
         return s
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Obtain dict representation."""
         return {k: self._get(i) for i, k in enumerate(self._minuit._pos2var)}
 
@@ -215,9 +206,9 @@ class LimitView(BasicView):
 
     def __init__(self, minuit: Any):
         # Users should not call this __init__, instances are created by the library
-        super(LimitView, self).__init__(minuit, 1)
+        super().__init__(minuit, 1)
 
-    def _get(self, idx: int) -> Tuple[float, float]:
+    def _get(self, idx: int) -> tuple[float, float]:
         p = self._minuit._last_state[idx]
         return (
             p.lower_limit if p.has_lower_limit else -np.inf,
@@ -249,7 +240,7 @@ class LimitView(BasicView):
         state.set_error(idx, err)
 
 
-def _normalize_limit(lim: Optional[Iterable]) -> Tuple[float, float]:
+def _normalize_limit(lim: Iterable | None) -> tuple[float, float]:
     if lim is None:
         return (-np.inf, np.inf)
     a, b = lim
@@ -273,7 +264,7 @@ class Matrix(np.ndarray):
 
     __slots__ = ("_var2pos",)
 
-    def __new__(cls, parameters: Union[Dict, Tuple]) -> Any:  # noqa D102
+    def __new__(cls, parameters: dict | tuple) -> Any:  # noqa D102
         # Users should not call __new__, instances are created by the library
         if isinstance(parameters, dict):
             var2pos = parameters
@@ -289,14 +280,14 @@ class Matrix(np.ndarray):
     def __array_finalize__(self, obj: Any) -> None:
         """For internal use."""
         if obj is None:
-            self._var2pos: Dict[str, int] = {}
+            self._var2pos: dict[str, int] = {}
         else:
             self._var2pos = getattr(obj, "_var2pos", {})
 
     def _is_square(self) -> bool:
         return self.ndim == 2 and self.shape[0] == self.shape[1]
 
-    def _names(self) -> Tuple[str, ...]:
+    def _names(self) -> tuple[str, ...]:
         # Positional labels if names are unknown or stale, e.g. after numpy
         # fancy indexing produced a non-square matrix.
         if self._is_square() and self.shape[0] == len(self._var2pos):
@@ -305,7 +296,7 @@ class Matrix(np.ndarray):
 
     def __getitem__(  # type:ignore
         self,
-        key: Union[Key, Tuple[Key, Key], Iterable[Key], NDArray],
+        key: Key | tuple[Key, Key] | Iterable[Key] | NDArray,
     ) -> NDArray:
         """Get matrix element at key."""
         var2pos = self._var2pos
@@ -342,7 +333,7 @@ class Matrix(np.ndarray):
         sub._var2pos = {names[p]: i for i, p in enumerate(positions)} if names else {}
         return sub
 
-    def to_dict(self) -> Dict[Tuple[str, str], float]:
+    def to_dict(self) -> dict[tuple[str, str], float]:
         """
         Convert matrix to dict.
 
@@ -357,7 +348,7 @@ class Matrix(np.ndarray):
                 d[pi, pj] = float(self[i, j])
         return d
 
-    def to_table(self) -> Tuple[List[List[str]], Tuple[str, ...]]:
+    def to_table(self) -> tuple[list[list[str]], tuple[str, ...]]:
         """
         Convert matrix to tabular format.
 
@@ -397,7 +388,7 @@ class Matrix(np.ndarray):
 
     def __repr__(self):
         """Get detailed text representation."""
-        return super(Matrix, self).__str__()
+        return super().__str__()
 
     def __str__(self):
         """Get user-friendly text representation."""
@@ -746,11 +737,11 @@ class Param:
     name: str
     value: float
     error: float
-    merror: Optional[Tuple[float, float]]
+    merror: tuple[float, float] | None
     is_const: bool
     is_fixed: bool
-    lower_limit: Optional[float]
-    upper_limit: Optional[float]
+    lower_limit: float | None
+    upper_limit: float | None
 
     def __repr__(self) -> str:
         """Get detailed text representation."""
@@ -793,7 +784,7 @@ class Params(tuple):
     def _repr_html_(self) -> str:
         return _repr_html.params(self)
 
-    def to_table(self) -> Tuple[List[List[str]], List[str]]:
+    def to_table(self) -> tuple[list[list[str]], list[str]]:
         """
         Convert parameter data to a tabular format.
 
@@ -867,7 +858,7 @@ class Params(tuple):
                     break
             else:
                 raise KeyError(key)
-        return super(Params, self).__getitem__(key)
+        return super().__getitem__(key)
 
     def __str__(self) -> str:
         """Get user-friendly text representation."""
@@ -979,7 +970,7 @@ class MErrors(OrderedDict):
         else:
             p.text(str(self))
 
-    def __getitem__(self, key: Union[SupportsIndex, str]) -> MError:
+    def __getitem__(self, key: SupportsIndex | str) -> MError:
         """Get item at key, which can be an index or a parameter name."""
         if not isinstance(key, str):
             # Accept any integer-like key (including numpy integers) by
@@ -1007,7 +998,7 @@ def propagate(
     fn: Callable,
     x: Collection[float],
     cov: Collection[Collection[float]],
-) -> Tuple[NDArray, NDArray]:
+) -> tuple[NDArray, NDArray]:
     """
     Numerically propagates the covariance into a new space.
 
@@ -1105,7 +1096,7 @@ def make_with_signature(
         for old, new in replacements.items():
             i = args.index(old)
             args[i] = new
-        pars = {new: pars[old] for (new, old) in zip(args, pars)}
+        pars = {new: pars[old] for (new, old) in zip(args, pars, strict=False)}
 
     class Caller:
         def __init__(self, parameters):
@@ -1119,7 +1110,7 @@ def make_with_signature(
 
 def merge_signatures(
     callables: Iterable[Callable], annotations: bool = False
-) -> Tuple[Any, List[List[int]]]:
+) -> tuple[Any, list[list[int]]]:
     """
     Merge signatures of callables with positional arguments.
 
@@ -1148,8 +1139,8 @@ def merge_signatures(
         mapping contains the mapping of parameters indices from the merged signature to
         the original signatures.
     """
-    args: List[str] = []
-    anns: List[Optional[Tuple[float, float]]] = []
+    args: list[str] = []
+    anns: list[tuple[float, float] | None] = []
     mapping = []
 
     for f in callables:
@@ -1168,18 +1159,18 @@ def merge_signatures(
         mapping.append(amap)
 
     if annotations:
-        return {k: a for (k, a) in zip(args, anns)}, mapping
+        return {k: a for (k, a) in zip(args, anns, strict=False)}, mapping
     return args, mapping
 
 
 @overload
-def describe(callable: Callable) -> List[str]: ...  # pragma: no cover
+def describe(callable: Callable) -> list[str]: ...  # pragma: no cover
 
 
 @overload
 def describe(
     callable: Callable, *, annotations: bool
-) -> Dict[str, Optional[Tuple[float, float]]]: ...  # pragma: no cover
+) -> dict[str, tuple[float, float] | None]: ...  # pragma: no cover
 
 
 def describe(callable, *, annotations=False):
@@ -1403,8 +1394,8 @@ def _describe_impl_docstring(callable):
 
 
 def _get_limit(
-    annotation: Union[type, Annotated[float, Any], str],
-) -> Optional[Tuple[float, float]]:
+    annotation: type | Annotated[float, Any] | str,
+) -> tuple[float, float] | None:
     from iminuit import typing
 
     if isinstance(annotation, str):
@@ -1464,14 +1455,14 @@ def _guess_initial_step(val: float) -> float:
     return 1e-2 * abs(val) if val != 0 else 1e-1  # heuristic
 
 
-def _key2index_from_slice(var2pos: Dict[str, int], key: slice) -> List[int]:
+def _key2index_from_slice(var2pos: dict[str, int], key: slice) -> list[int]:
     start = var2pos[key.start] if isinstance(key.start, str) else key.start
     stop = var2pos[key.stop] if isinstance(key.stop, str) else key.stop
     start, stop, step = slice(start, stop, key.step).indices(len(var2pos))
     return list(range(start, stop, step))
 
 
-def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
+def _key2index_item(var2pos: dict[str, int], key: str | int) -> int:
     if isinstance(key, str):
         return var2pos[key]
     i = key
@@ -1483,9 +1474,9 @@ def _key2index_item(var2pos: Dict[str, int], key: Union[str, int]) -> int:
 
 
 def _key2index(
-    var2pos: Dict[str, int],
+    var2pos: dict[str, int],
     key: Key,
-) -> Union[int, List[int]]:
+) -> int | list[int]:
     if key is ...:
         return list(range(len(var2pos)))
     if isinstance(key, slice):
@@ -1525,11 +1516,10 @@ def _iterate(x):
     if not isinstance(x, Iterable):
         yield x
     else:
-        for xi in x:
-            yield xi
+        yield from x
 
 
-def _replace_none(x: Optional[T], v: T) -> T:
+def _replace_none(x: T | None, v: T) -> T:
     if x is None:
         return v
     return x
@@ -1633,7 +1623,7 @@ def _smart_sampling(f, xmin, xmax, start=20, tol=5e-3, maxiter=20, maxtime=10):
     ynew = f(x)
     ymin = np.min(ynew)
     ymax = np.max(ynew)
-    y = {xi: yi for (xi, yi) in zip(x, ynew)}
+    y = {xi: yi for (xi, yi) in zip(x, ynew, strict=False)}
     a = x[:-1]
     b = x[1:]
     niter = 0
@@ -1657,7 +1647,7 @@ def _smart_sampling(f, xmin, xmax, start=20, tol=5e-3, maxiter=20, maxtime=10):
         ynew = f(xnew)
         ymin = min(ymin, np.min(ynew))
         ymax = max(ymax, np.max(ynew))
-        for xi, yi in zip(xnew, ynew):
+        for xi, yi in zip(xnew, ynew, strict=False):
             y[xi] = yi
         yint = 0.5 * (
             np.fromiter((y[ai] for ai in a), float)
@@ -1692,7 +1682,7 @@ def _detect_log_spacing(x: NDArray) -> bool:
     return bool(log_rel_std < lin_rel_std)
 
 
-def gradient(fcn: Cost) -> Optional[CostVector]:
+def gradient(fcn: Cost) -> CostVector | None:
     """
     Return a callable which computes the gradient of fcn or None.
 
@@ -1717,7 +1707,7 @@ def gradient(fcn: Cost) -> Optional[CostVector]:
     return _cost_extra_impl(fcn, "grad")
 
 
-def g2(fcn: Cost) -> Optional[CostVector]:
+def g2(fcn: Cost) -> CostVector | None:
     """
     Return a callable which computes the diagonal of the Hessian of fcn or None.
 
@@ -1742,7 +1732,7 @@ def g2(fcn: Cost) -> Optional[CostVector]:
     return _cost_extra_impl(fcn, "g2")
 
 
-def hessian(fcn: Cost) -> Optional[CostVector]:
+def hessian(fcn: Cost) -> CostVector | None:
     """
     Return a callable which computes the Hessian matrix of fcn or None.
 
@@ -1767,7 +1757,7 @@ def hessian(fcn: Cost) -> Optional[CostVector]:
     return _cost_extra_impl(fcn, "hessian")
 
 
-def _cost_extra_impl(fcn: Cost, kind: str) -> Optional[CostVector]:
+def _cost_extra_impl(fcn: Cost, kind: str) -> CostVector | None:
     aux = getattr(fcn, kind, None)
     has_aux = getattr(fcn, f"has_{kind}", True)
     if aux and isinstance(aux, CostVector) and has_aux:

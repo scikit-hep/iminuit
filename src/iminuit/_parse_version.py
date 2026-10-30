@@ -1,8 +1,7 @@
 import re
-from typing import Tuple, Union
 
 
-def parse_version(s: str) -> Union[Tuple[int, int], Tuple[int, int, int]]:
+def parse_version(s: str) -> tuple[int, int] | tuple[int, int, int]:
     """
     Parse version string and return tuple of integer parts to allow for comparison.
 

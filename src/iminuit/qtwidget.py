@@ -3,7 +3,8 @@
 from .util import _widget_guess_initial_step, _make_finite
 import warnings
 import numpy as np
-from typing import Dict, Any, Callable
+from typing import Any
+from collections.abc import Callable
 from contextlib import contextmanager
 
 try:
@@ -28,7 +29,7 @@ except ImportError as e:
 def make_widget(
     minuit: Any,
     plot: Callable[..., None],
-    kwargs: Dict[str, Any],
+    kwargs: dict[str, Any],
     raise_on_exception: bool,
     run_event_loop: bool = True,
 ):

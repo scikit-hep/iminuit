@@ -97,19 +97,11 @@ from numpy.typing import NDArray, ArrayLike
 from collections.abc import Sequence as ABCSequence
 import abc
 from typing import (
-    List,
-    Tuple,
-    Union,
-    Sequence,
-    Collection,
-    Dict,
     Any,
-    Iterable,
-    Optional,
     TypeVar,
-    Callable,
     cast,
 )
+from collections.abc import Sequence, Collection, Iterable, Callable
 import warnings
 from ._deprecated import deprecated_parameter
 
@@ -523,7 +515,7 @@ class Cost(abc.ABC):
 
     __slots__ = ("_parameters", "_verbose")
 
-    _parameters: Dict[str, Optional[Tuple[float, float]]]
+    _parameters: dict[str, tuple[float, float] | None]
     _verbose: int
 
     @property
@@ -569,9 +561,7 @@ class Cost(abc.ABC):
     def verbose(self, value: int):
         self._verbose = value
 
-    def __init__(
-        self, parameters: Dict[str, Optional[Tuple[float, float]]], verbose: int
-    ):
+    def __init__(self, parameters: dict[str, tuple[float, float] | None], verbose: int):
         """For internal use."""
         self._parameters = parameters
         self._verbose = verbose
@@ -706,7 +696,7 @@ class CostSum(Cost, ABCSequence):
 
     __slots__ = "_items", "_maps"
 
-    def __init__(self, *items: Union[Cost, float]):
+    def __init__(self, *items: Cost | float):
         """
         Initialize with cost functions.
 
@@ -715,7 +705,7 @@ class CostSum(Cost, ABCSequence):
         *items : Cost
             Cost functions. May also be other CostSum functions.
         """
-        self._items: List[Cost] = []
+        self._items: list[Cost] = []
         for item in items:
             if isinstance(item, CostSum):
                 self._items += item._items
@@ -728,7 +718,7 @@ class CostSum(Cost, ABCSequence):
         super().__init__(signatures, max(c.verbose for c in self._items))
 
     def _split(self, args: Sequence[float]):
-        for component, cmap in zip(self._items, self._maps):
+        for component, cmap in zip(self._items, self._maps, strict=False):
             component_args = tuple(args[i] for i in cmap)
             yield component, component_args
 
@@ -740,7 +730,7 @@ class CostSum(Cost, ABCSequence):
 
     def _grad(self, args: Sequence[float]) -> NDArray:
         r = np.zeros(self.npar)
-        for component, indices in zip(self._items, self._maps):
+        for component, indices in zip(self._items, self._maps, strict=False):
             component_args = tuple(args[i] for i in indices)
             r[indices] += component._grad(component_args) / component.errordef
         return r
@@ -760,7 +750,7 @@ class CostSum(Cost, ABCSequence):
         return self._items.__getitem__(key)
 
     def visualize(
-        self, args: Sequence[float], component_kwargs: Dict[int, Dict[str, Any]] = None
+        self, args: Sequence[float], component_kwargs: dict[int, dict[str, Any]] = None
     ):
         """
         Visualize data and model agreement (requires matplotlib).
@@ -809,11 +799,11 @@ class MaskedCost(Cost):
 
     __slots__ = "_data", "_mask", "_masked"
 
-    _mask: Optional[NDArray]
+    _mask: NDArray | None
 
     def __init__(
         self,
-        parameters: Dict[str, Optional[Tuple[float, float]]],
+        parameters: dict[str, tuple[float, float] | None],
         data: NDArray,
         verbose: int,
     ):
@@ -834,7 +824,7 @@ class MaskedCost(Cost):
         return self._mask
 
     @mask.setter
-    def mask(self, mask: Optional[ArrayLike]):
+    def mask(self, mask: ArrayLike | None):
         self._mask = None if mask is None else np.asarray(mask)
         self._update_cache()
 
@@ -921,8 +911,8 @@ class UnbinnedCost(MaskedCost):
         model: Model,
         verbose: int,
         log: bool,
-        grad: Optional[ModelGradient],
-        name: Optional[Sequence[str]],
+        grad: ModelGradient | None,
+        name: Sequence[str] | None,
     ):
         """For internal use."""
         self._model = model
@@ -957,7 +947,7 @@ class UnbinnedCost(MaskedCost):
     def visualize(
         self,
         args: Sequence[float],
-        model_points: Union[int, Sequence[float]] = 0,
+        model_points: int | Sequence[float] = 0,
         bins: int = 50,
     ):
         """
@@ -1083,8 +1073,8 @@ class UnbinnedNLL(UnbinnedCost):
         *,
         verbose: int = 0,
         log: bool = False,
-        grad: Optional[ModelGradient] = None,
-        name: Optional[Sequence[str]] = None,
+        grad: ModelGradient | None = None,
+        name: Sequence[str] | None = None,
     ):
         """
         Initialize UnbinnedNLL with data and model.
@@ -1195,8 +1185,8 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         *,
         verbose: int = 0,
         log: bool = False,
-        grad: Optional[ModelGradient] = None,
-        name: Optional[Sequence[str]] = None,
+        grad: ModelGradient | None = None,
+        name: Sequence[str] | None = None,
     ):
         """
         Initialize cost function with data and model.
@@ -1259,13 +1249,13 @@ class ExtendedUnbinnedNLL(UnbinnedCost):
         _, f = self._eval_model(args)
         return g / f - (gint / m)[:, np.newaxis]
 
-    def _eval_model(self, args: Sequence[float]) -> Tuple[float, float]:
+    def _eval_model(self, args: Sequence[float]) -> tuple[float, float]:
         data = self._masked
         fint, f = self._model(data, *args)
         f = _normalize_output(f, "model", self._npoints(), msg="in second position")
         return fint, f
 
-    def _eval_model_grad(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
+    def _eval_model_grad(self, args: Sequence[float]) -> tuple[NDArray, NDArray]:
         if self._model_grad is None:
             raise ValueError("no gradient available")  # pragma: no cover
         data = self._masked
@@ -1336,10 +1326,10 @@ class BinnedCost(MaskedCostWithPulls):
 
     __slots__ = "_xe", "_ndim", "_bohm_zech_n", "_bohm_zech_s"
 
-    _xe: Union[NDArray, Tuple[NDArray, ...]]
+    _xe: NDArray | tuple[NDArray, ...]
     _ndim: int
     _bohm_zech_n: NDArray
-    _bohm_zech_s: Optional[NDArray]
+    _bohm_zech_s: NDArray | None
 
     n = MaskedCost.data
 
@@ -1350,9 +1340,9 @@ class BinnedCost(MaskedCostWithPulls):
 
     def __init__(
         self,
-        parameters: Dict[str, Optional[Tuple[float, float]]],
+        parameters: dict[str, tuple[float, float] | None],
         n: ArrayLike,
-        xe: Union[ArrayLike, Sequence[ArrayLike]],
+        xe: ArrayLike | Sequence[ArrayLike],
         verbose: int,
     ):
         """For internal use."""
@@ -1386,9 +1376,7 @@ class BinnedCost(MaskedCostWithPulls):
         self._bohm_zech_s = np.zeros(0) if is_weighted else None
         super().__init__(parameters, n, verbose)
 
-    def prediction(
-        self, args: Sequence[float]
-    ) -> Union[NDArray, Tuple[NDArray, NDArray]]:
+    def prediction(self, args: Sequence[float]) -> NDArray | tuple[NDArray, NDArray]:
         """
         Return the bin-wise expectation for the fitted model.
 
@@ -1450,9 +1438,9 @@ class BinnedCost(MaskedCostWithPulls):
     @abc.abstractmethod
     def _pred(
         self, args: Sequence[float]
-    ) -> Union[NDArray, Tuple[NDArray, NDArray]]: ...  # pragma: no cover
+    ) -> NDArray | tuple[NDArray, NDArray]: ...  # pragma: no cover
 
-    def _n_err(self) -> Tuple[NDArray, NDArray]:
+    def _n_err(self) -> tuple[NDArray, NDArray]:
         d = self.data
         if self._bohm_zech_s is None:
             n = d.copy()
@@ -1494,7 +1482,7 @@ class BinnedCost(MaskedCostWithPulls):
         else:
             self._bohm_zech_n = n
 
-    def _transformed(self, val: NDArray) -> Tuple[NDArray, NDArray]:
+    def _transformed(self, val: NDArray) -> tuple[NDArray, NDArray]:
         s = self._bohm_zech_s
         ma = self.mask
         if ma is not None:
@@ -1506,7 +1494,7 @@ class BinnedCost(MaskedCostWithPulls):
 
     def _transformed2(
         self, val: NDArray, var: NDArray
-    ) -> Tuple[NDArray, NDArray, NDArray]:
+    ) -> tuple[NDArray, NDArray, NDArray]:
         s = self._bohm_zech_s
         ma = self.mask
         if ma is not None:
@@ -1542,7 +1530,7 @@ class BinnedCostWithModel(BinnedCost):
     )
 
     _model_xe: np.ndarray
-    _xe_shape: Union[Tuple[int], Tuple[int, ...]]
+    _xe_shape: tuple[int] | tuple[int, ...]
 
     def __init__(self, n, xe, model, verbose, grad, use_pdf, name):
         """For internal use."""
@@ -1581,7 +1569,10 @@ class BinnedCostWithModel(BinnedCost):
             )
             if use_pdf == "approximate":
                 dx = [np.diff(xe) for xe in self.xe]
-                xm = [xei[:-1] + 0.5 * dxi for (xei, dxi) in zip(self.xe, dx)]
+                xm = [
+                    xei[:-1] + 0.5 * dxi
+                    for (xei, dxi) in zip(self.xe, dx, strict=False)
+                ]
                 xm = np.meshgrid(*xm, indexing="ij")
                 dx = np.meshgrid(*dx, indexing="ij")
                 self._model_xm = np.array(xm)
@@ -1690,22 +1681,17 @@ class Template(BinnedCost):
 
     __slots__ = "_model_data", "_model_xe", "_xe_shape", "_impl", "_model_len"
 
-    _model_data: List[
-        Union[
-            Tuple[NDArray, NDArray],
-            Tuple[Model, float],
-        ]
-    ]
+    _model_data: list[tuple[NDArray, NDArray] | tuple[Model, float]]
     _model_xe: np.ndarray
-    _xe_shape: Union[Tuple[int], Tuple[int, ...]]
+    _xe_shape: tuple[int] | tuple[int, ...]
 
     def __init__(
         self,
         n: ArrayLike,
-        xe: Union[ArrayLike, Sequence[ArrayLike]],
-        model_or_template: Collection[Union[Model, ArrayLike]],
+        xe: ArrayLike | Sequence[ArrayLike],
+        model_or_template: Collection[Model | ArrayLike],
         *,
-        name: Optional[Sequence[str]] = None,
+        name: Sequence[str] | None = None,
         verbose: int = 0,
         method: str = "da",
     ):
@@ -1751,7 +1737,7 @@ class Template(BinnedCost):
         ndim = len(shape)
 
         npar = 0
-        annotated: Dict[str, Optional[Tuple[float, float]]] = {}
+        annotated: dict[str, tuple[float, float] | None] = {}
         self._model_data = []
         for i, t in enumerate(model_or_template):
             if isinstance(t, Collection):
@@ -1791,7 +1777,9 @@ class Template(BinnedCost):
                     "number of names must match number of templates and "
                     "model parameters"
                 )
-            annotated = {new: annotated[old] for (old, new) in zip(annotated, name)}
+            annotated = {
+                new: annotated[old] for (old, new) in zip(annotated, name, strict=False)
+            }
 
         known_methods = {
             "jsc": template_chi2_jsc,
@@ -1825,7 +1813,7 @@ class Template(BinnedCost):
             )
         self._model_len = np.prod(self._xe_shape)
 
-    def _pred(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
+    def _pred(self, args: Sequence[float]) -> tuple[NDArray, NDArray]:
         mu = np.zeros(self._data.shape[: self._ndim])
         mu_var = np.zeros_like(mu)
         i = 0
@@ -1869,7 +1857,7 @@ class Template(BinnedCost):
     def _errordef(self) -> float:
         return NEGATIVE_LOG_LIKELIHOOD if self._impl is template_nll_asy else CHISQUARE
 
-    def prediction(self, args: Sequence[float]) -> Tuple[NDArray, NDArray]:
+    def prediction(self, args: Sequence[float]) -> tuple[NDArray, NDArray]:
         """
         Return the fitted template and its standard deviation.
 
@@ -1957,13 +1945,13 @@ class BinnedNLL(BinnedCostWithModel):
     def __init__(
         self,
         n: ArrayLike,
-        xe: Union[ArrayLike, Sequence[ArrayLike]],
+        xe: ArrayLike | Sequence[ArrayLike],
         cdf: Model,
         *,
         verbose: int = 0,
-        grad: Optional[ModelGradient] = None,
+        grad: ModelGradient | None = None,
         use_pdf: str = "",
-        name: Optional[Sequence[str]] = None,
+        name: Sequence[str] | None = None,
     ):
         """
         Initialize cost function with data and model.
@@ -2090,13 +2078,13 @@ class ExtendedBinnedNLL(BinnedCostWithModel):
     def __init__(
         self,
         n: ArrayLike,
-        xe: Union[ArrayLike, Sequence[ArrayLike]],
+        xe: ArrayLike | Sequence[ArrayLike],
         scaled_cdf: Model,
         *,
         verbose: int = 0,
-        grad: Optional[ModelGradient] = None,
+        grad: ModelGradient | None = None,
         use_pdf: str = "",
-        name: Optional[Sequence[str]] = None,
+        name: Sequence[str] | None = None,
     ):
         """
         Initialize cost function with data and model.
@@ -2174,11 +2162,11 @@ class LeastSquares(MaskedCostWithPulls):
 
     __slots__ = "_loss", "_cost", "_cost_grad", "_model", "_model_grad", "_ndim"
 
-    _loss: Union[str, LossFunction]
+    _loss: str | LossFunction
     _cost: Callable[[ArrayLike, ArrayLike, ArrayLike], float]
-    _cost_grad: Optional[Callable[[NDArray, NDArray, NDArray, NDArray], NDArray]]
+    _cost_grad: Callable[[NDArray, NDArray, NDArray, NDArray], NDArray] | None
     _model: Model
-    _model_grad: Optional[ModelGradient]
+    _model_grad: ModelGradient | None
     _ndim: int
 
     @property
@@ -2230,7 +2218,7 @@ class LeastSquares(MaskedCostWithPulls):
         return self._loss
 
     @loss.setter
-    def loss(self, loss: Union[str, LossFunction]):
+    def loss(self, loss: str | LossFunction):
         self._loss = loss
         if isinstance(loss, str):
             if loss == "linear":
@@ -2256,10 +2244,10 @@ class LeastSquares(MaskedCostWithPulls):
         yerror: ArrayLike,
         model: Model,
         *,
-        loss: Union[str, LossFunction] = "linear",
+        loss: str | LossFunction = "linear",
         verbose: int = 0,
-        grad: Optional[ModelGradient] = None,
-        name: Optional[Sequence[str]] = None,
+        grad: ModelGradient | None = None,
+        name: Sequence[str] | None = None,
     ):
         """
         Initialize cost function with data and model.
@@ -2324,8 +2312,8 @@ class LeastSquares(MaskedCostWithPulls):
         return len(self._masked)
 
     def visualize(
-        self, args: ArrayLike, model_points: Union[int, Sequence[float]] = 0
-    ) -> Tuple[Tuple[NDArray, NDArray, NDArray], Tuple[NDArray, NDArray]]:
+        self, args: ArrayLike, model_points: int | Sequence[float] = 0
+    ) -> tuple[tuple[NDArray, NDArray, NDArray], tuple[NDArray, NDArray]]:
         """
         Visualize data and model agreement (requires matplotlib).
 
@@ -2450,7 +2438,7 @@ class NormalConstraint(Cost):
 
     def __init__(
         self,
-        args: Union[str, Iterable[str]],
+        args: str | Iterable[str],
         value: ArrayLike,
         error: ArrayLike,
     ):
@@ -2559,7 +2547,7 @@ class NormalConstraint(Cost):
 
         i = 0
         max_pull = 0
-        for v, e, a in zip(val, err, args):
+        for v, e, a in zip(val, err, args, strict=False):
             pull = (a - v) / e
             max_pull = max(abs(pull), max_pull)
             plt.errorbar(pull, -i, 0, 1, fmt="o", color="C0")
@@ -2619,7 +2607,7 @@ def _model_parameters(model, name):
     params = {k: ann[k] for k in args}
     if name:
         if len(params) == len(name):
-            params = {n: att for (n, att) in zip(name, params.values())}
+            params = {n: att for (n, att) in zip(name, params.values(), strict=False)}
         elif len(params) > 0:
             raise ValueError("length of name does not match number of model parameters")
         else:
