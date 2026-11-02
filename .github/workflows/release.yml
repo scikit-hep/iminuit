@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v10.3.3
 
       - if: ${{ github.ref == 'refs/heads/main' }}
         run: |
@@ -63,9 +63,9 @@ jobs:
         with:
           submodules: true
 
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v10.3.3
 
-      - uses: pypa/cibuildwheel@v4.2
+      - uses: pypa/cibuildwheel@v4.3
         env:
           CIBW_BUILD: ${{ matrix.py }}-*
 
@@ -89,7 +89,7 @@ jobs:
         with:
           submodules: true
 
-      - uses: pypa/cibuildwheel@v4.2
+      - uses: pypa/cibuildwheel@v4.3
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: ${{ matrix.py }}-*
@@ -115,9 +115,9 @@ jobs:
         with:
           submodules: true
 
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v10.3.3
 
-      - uses: pypa/cibuildwheel@v4.2
+      - uses: pypa/cibuildwheel@v4.3
         env:
           CIBW_PLATFORM: ios
 
@@ -139,7 +139,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: astral-sh/setup-uv@v10.3.3
 
       - run: uv build --sdist
 
