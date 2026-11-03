@@ -1968,6 +1968,47 @@ def test_NormalConstraint_pickle():
     assert_equal(c.covariance, c2.covariance)
 
 
+@pytest.mark.parametrize("initial_full", (False, True))
+@pytest.mark.parametrize("target_full", (False, True))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
+def test_NormalConstraint_covariance_representation(initial_full, target_full, dtype):
+    initial = np.array([[4.0, 1.0], [1.0, 9.0]]) if initial_full else [2.0, 3.0]
+    target = np.array([[2.0, 0.5], [0.5, 3.0]]) if target_full else np.array([2.0, 3.0])
+    c = NormalConstraint(("a", "b"), [1.0, 2.0], np.asarray(initial, dtype=dtype))
+    previous = c.covariance
+    original = target.copy()
+    c.covariance = target
+    expected_cov = target if target_full else np.diag(target)
+    precision = np.linalg.inv(expected_cov)
+    delta = np.array([2.0, -1.0])
+    values = [1.0, 2.0] + delta
+    assert_allclose(c(*values), delta @ precision @ delta)
+    assert_allclose(c.grad(*values), 2 * precision @ delta)
+    assert_equal(c.covariance, target)
+    assert c.covariance.dtype == dtype
+    if initial_full == target_full:
+        assert c.covariance is previous
+    assert_equal(target, original)
+    target[...] = 99
+    assert_equal(c.covariance, original)
+
+
+def test_NormalConstraint_covariance_broadcast_and_failed_assignment():
+    c = NormalConstraint(("a", "b"), [1.0, 2.0], [2.0, 3.0])
+    c.covariance = 4
+    assert_equal(c.covariance, [4, 4])
+    c.covariance = [[2.0, 0.5], [0.5, 3.0]]
+    cov = c.covariance.copy()
+    value = c(3, 1)
+    grad = c.grad(3, 1)
+    for invalid in (np.ones((3, 3)), np.ones((2, 2, 2)), [[1, 1], [1, 1]]):
+        with pytest.raises(ValueError):
+            c.covariance = invalid
+        assert_equal(c.covariance, cov)
+        assert_allclose(c(3, 1), value)
+        assert_allclose(c.grad(3, 1), grad)
+
+
 def test_NormalConstraint_does_not_modify_inputs():
     value = np.array([1.0, 2.0])
     error = np.array([3.0, 4.0])
