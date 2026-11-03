@@ -31,7 +31,7 @@ repos:
 
   # Ruff linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.17.2"
+    rev: "v0.17.3"
     hooks:
       - id: ruff-check
         args: [--fix, --show-fixes]
@@ -55,7 +55,7 @@ repos:
 
   # Python type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v2.4.0"
+    rev: "v2.4.1"
     hooks:
       - id: mypy
         files: "src"
@@ -77,12 +77,12 @@ repos:
         additional_dependencies: ["blacken-docs"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.2
+    rev: 0.39.0
     hooks:
       - id: check-github-workflows
 
   - repo: https://github.com/henryiii/validate-pyproject-schema-store
-    rev: 2026.10.23
+    rev: 2026.10.30
     hooks:
       - id: validate-pyproject
 
