@@ -10,6 +10,10 @@ on:
       - CMakeLists.txt
       - .github/workflows/test.yml
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -30,7 +34,7 @@ jobs:
           - os: windows-latest
             python-version: "3.12"
             installs: "numpy"
-          - os: macos-14
+          - os: macos-latest
             python-version: "3.10"
             installs: "numpy==1.21.3 scipy matplotlib"
           - os: ubuntu-latest
