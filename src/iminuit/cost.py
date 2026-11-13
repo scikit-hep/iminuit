@@ -411,7 +411,7 @@ def template_nll_asy(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
         Expected counts. This is the sum of the normalised templates scaled
         with the component yields.
     mu_var : array-like
-        Expected variance of mu. Must be positive everywhere.
+        Expected variance of mu. Zero variance uses the Poisson likelihood.
 
     Returns
     -------
@@ -419,12 +419,21 @@ def template_nll_asy(n: ArrayLike, mu: ArrayLike, mu_var: ArrayLike) -> float:
         Negative log-likelihood function value.
     """
     from scipy.special import loggamma as lg
+    from scipy.special import xlogy
 
     n, mu, mu_var = np.atleast_1d(n, mu, mu_var)
+    poisson = 0.0
+    if np.any(mu_var == 0):
+        n, mu, mu_var = np.broadcast_arrays(n, mu, mu_var)
+        deterministic = mu_var == 0
+        observed, expected = n[deterministic], mu[deterministic]
+        poisson = np.sum(expected - xlogy(observed, expected) + lg(observed + 1))
+        stochastic = ~deterministic
+        n, mu, mu_var = n[stochastic], mu[stochastic], mu_var[stochastic]
 
     alpha = mu**2 / mu_var + 1
     beta = mu / mu_var
-    return -np.sum(
+    return poisson - np.sum(
         alpha * np.log(beta)
         + lg(n + alpha)
         - (lg(n + 1) + (n + alpha) * np.log(1 + beta) + lg(alpha))
@@ -1834,9 +1843,9 @@ class Template(BinnedCost):
                 # subtraction, we set negative values to zero
                 d[d < 0] = 0
                 mu += d
-                # add a tiny floor to the variance to avoid exactly zero values;
-                # a scalar add avoids allocating full temporaries
-                mu_var += 1e-300
+                if self._impl is not template_nll_asy:
+                    # The profiled methods require positive template variances.
+                    mu_var += 1e-300
                 i += t2
             else:  # never arrive here
                 raise AssertionError  # pragma: no cover

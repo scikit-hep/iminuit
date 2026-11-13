@@ -2321,6 +2321,44 @@ def test_Template_with_model():
     assert m.valid
 
 
+def test_Template_asy_with_only_model():
+    stats = pytest.importorskip("scipy.stats")
+    n = np.array([3, 0, 6])
+    xe = np.arange(4)
+
+    def model(x, amplitude):
+        return amplitude * x
+
+    c = Template(n, xe, (model,), method="asy")
+    for amplitude in (1, 3, 8, 1000):
+        assert c(amplitude) == pytest.approx(-stats.poisson.logpmf(n, amplitude).sum())
+
+    m = Minuit(c, 8)
+    m.limits[0] = (0.01, None)
+    m.migrad()
+    assert m.valid
+    assert m.values[0] == pytest.approx(n.mean(), abs=0.01)
+
+
+def test_Template_asy_with_mixed_variance():
+    stats = pytest.importorskip("scipy.stats")
+    n = np.array([3, 4, 6])
+    xe = np.arange(4)
+
+    def model(x, amplitude):
+        return amplitude * x
+
+    c = Template(n, xe, ([0, 10, 0], model), method="asy")
+    amplitude, yield_ = 3, 5
+    mu = amplitude + yield_
+    variance = yield_**2 / 10
+    alpha = mu**2 / variance + 1
+    beta = mu / variance
+    expected = -stats.poisson.logpmf(n[[0, 2]], amplitude).sum()
+    expected -= stats.nbinom.logpmf(n[1], alpha, beta / (1 + beta))
+    assert c(yield_, amplitude) == pytest.approx(expected)
+
+
 def test_Template_with_model_2D():
     truth1 = (1.0, 0.1, 0.2, 0.1, 0.4)
     x1, y1 = mvnorm(*truth1[1:]).rvs(size=int(truth1[0] * 1000), random_state=1).T
