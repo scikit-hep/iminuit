@@ -1061,6 +1061,32 @@ def test_BinnedNLL_with_pdf_3D(use_pdf):
         assert_allclose(c1.prediction(par), c2.prediction(par), rtol=1e-3)
 
 
+@pytest.mark.parametrize("cost", (BinnedNLL, ExtendedBinnedNLL))
+def test_binned_cost_with_pdf_approximate_2D(cost):
+    # the pdf must receive points with shape (D, N), like the cdf; a non-square
+    # histogram checks that the bin axes are not swapped
+    xe = np.linspace(-1, 1, 21)
+    ye = np.linspace(-1, 1, 11)
+    n = np.ones((20, 10))
+    scale = 1 if cost is BinnedNLL else np.sum(n)
+
+    def cdf(xy, mux, muy):
+        return scale * mvnorm(mux, muy, 0.2, 0.5).cdf(xy.T)
+
+    def pdf(xy, mux, muy):
+        assert xy.shape == (2, 200)
+        return scale * mvnorm(mux, muy, 0.2, 0.5).pdf(xy.T)
+
+    c1 = cost(n, (xe, ye), pdf, use_pdf="approximate")
+    c2 = cost(n, (xe, ye), cdf)
+
+    par = (0.1, -0.2)
+    mu1 = c1.prediction(par)
+    mu2 = c2.prediction(par)
+    assert mu1.shape == (20, 10)
+    assert_allclose(mu1, mu2, atol=0.02 * np.max(mu2))
+
+
 @pytest.mark.parametrize("verbose", (0, 1))
 @pytest.mark.parametrize("use_grad", (False, True))
 def test_ExtendedBinnedNLL(binned, verbose, use_grad):
