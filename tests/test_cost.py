@@ -384,6 +384,67 @@ def test_UnbinnedNLL_properties(log):
     assert c.verbose == 1
 
 
+@pytest.mark.parametrize("Cost", (UnbinnedNLL, ExtendedUnbinnedNLL))
+@pytest.mark.parametrize("log", (False, True))
+@pytest.mark.parametrize("order", ("C", "F"))
+@pytest.mark.parametrize(
+    "mask",
+    (
+        [True, False, True, False, True],
+        [4, 0, 2],
+        [4, 0, 4],
+        [-1, 0, 2],
+        [1, 0],
+        np.array([], dtype=int),
+    ),
+)
+def test_UnbinnedNLL_multidimensional_mask(Cost, log, order, mask):
+    data = np.array([[0, 1, 3, 4, 6], [2, 1, -1, 3, 5]], dtype=float, order=order)
+
+    def pdf(x, a, b):
+        lp = -0.5 * ((x[0] - a) ** 2 + (x[1] - b) ** 2) - np.log(2 * np.pi)
+        return lp if log else np.exp(lp)
+
+    def pdf_grad(x, a, b):
+        g = np.array([x[0] - a, x[1] - b])
+        return g if log else g * pdf(x, a, b)
+
+    def scaled_pdf(x, a, b, n):
+        return n, pdf(x, a, b) + np.log(n) if log else n * pdf(x, a, b)
+
+    def scaled_pdf_grad(x, a, b, n):
+        g = pdf_grad(x, a, b)
+        if log:
+            g = np.vstack((g, np.full(g.shape[1], 1 / n)))
+        else:
+            g = np.vstack((n * g, pdf(x, a, b)))
+        return np.array([0, 0, 1]), g
+
+    if Cost is UnbinnedNLL:
+        c = Cost(data, pdf, log=log, grad=pdf_grad)
+        args = (1, 2)
+    else:
+        c = Cost(data, scaled_pdf, log=log, grad=scaled_pdf_grad)
+        args = (1, 2, 8)
+
+    unmasked = c(*args)
+    c.mask = mask
+    selected = data[:, mask]
+    npoints = selected.shape[1]
+    delta = selected - np.array([[1], [2]])
+    expected = np.sum(delta**2) + 2 * npoints * np.log(2 * np.pi)
+    expected_grad = -2 * np.sum(delta, axis=1)
+    if Cost is ExtendedUnbinnedNLL:
+        expected += 2 * (8 - npoints * np.log(8))
+        expected_grad = np.append(expected_grad, 2 * (1 - npoints / 8))
+    assert_allclose(c(*args), expected)
+    if npoints or Cost is UnbinnedNLL:
+        assert_allclose(c.grad(*args), expected_grad, atol=1e-12)
+    c.mask = None
+    assert_allclose(c(*args), unmasked)
+    assert_equal(c.data, data)
+
+
 def test_UnbinnedNLL_scaled_pdf_2D():
     # for multivariate data of shape (D, N) the scale must be the number of
     # data points N, not D * N
