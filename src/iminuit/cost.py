@@ -1575,7 +1575,8 @@ class BinnedCostWithModel(BinnedCost):
                 ]
                 xm = np.meshgrid(*xm, indexing="ij")
                 dx = np.meshgrid(*dx, indexing="ij")
-                self._model_xm = np.array(xm)
+                # the model expects points with shape (D, N), like the cdf
+                self._model_xm = np.vstack([x.flatten() for x in xm])
                 self._model_dx = np.prod(dx, axis=0)
             elif use_pdf == "numerical":
                 raise ValueError(
@@ -1602,6 +1603,9 @@ class BinnedCostWithModel(BinnedCost):
 
     def _pred_approximate(self, args: Sequence[float]) -> NDArray:
         y = self._model(self._model_xm, *args)
+        if self._ndim > 1:
+            y = _normalize_output(y, "model", self._model_dx.size)
+            y = y.reshape(self._model_dx.shape)
         return y * self._model_dx
 
     def _pred_numerical(self, args: Sequence[float]) -> NDArray:
