@@ -1,5 +1,7 @@
 """Interactive fitting widget using PySide6."""
 
+__lazy_modules__ = {"numpy", "typing", "warnings", f"{__spec__.parent}.util"}
+
 from .util import _widget_guess_initial_step, _make_finite
 import warnings
 import numpy as np

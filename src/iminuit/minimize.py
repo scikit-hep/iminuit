@@ -1,5 +1,7 @@
 """Scipy interface for Minuit."""
 
+__lazy_modules__ = {"numpy", "warnings", f"{__spec__.parent}.minuit"}
+
 from .minuit import Minuit
 import warnings
 import numpy as np

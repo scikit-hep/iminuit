@@ -1,3 +1,10 @@
+__lazy_modules__ = {
+    "iminuit._optional_dependencies",
+    "numpy",
+    "re",
+    f"{__spec__.parent}.pdg_format",
+}
+
 from .pdg_format import _round, _strip
 from iminuit._optional_dependencies import optional_module_for
 import re
