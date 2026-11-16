@@ -11,6 +11,10 @@
 #     pre-commit autoupdate
 #
 # See https://github.com/pre-commit/pre-commit
+ci:
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_schedule: monthly
 
 repos:
   # Standard hooks
