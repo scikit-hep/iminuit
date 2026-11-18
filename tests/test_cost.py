@@ -1354,6 +1354,24 @@ def test_LeastSquares(loss, verbose, use_grad):
         assert m.ngrad == 0
 
 
+@pytest.mark.parametrize(
+    "x",
+    (
+        [0, 1, 2],
+        [0.0, 1.0, 2.0],
+        np.array([0, 1, 2]),
+        np.array([0, 1, 2], dtype=np.float32),
+        np.array([0, 1, 2], dtype=np.float64),
+    ),
+)
+def test_LeastSquares_input_types(x):
+    y = line(np.asarray(x), 1, 2)
+    cost = LeastSquares(x, y, 1, line)
+    assert_equal(cost.x, x)
+    assert_equal(cost.y, y)
+    assert cost(1, 2) == 0
+
+
 def test_LeastSquares_name():
     rng = np.random.default_rng(1)
 

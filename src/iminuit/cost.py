@@ -2563,8 +2563,10 @@ class NormalConstraint(Cost):
 def _norm(value: ArrayLike, copy: bool = False) -> NDArray:
     value = np.atleast_1d(value)
     dtype = value.dtype if value.dtype.kind == "f" else np.float64
-    # copy=None means copy only if needed (numpy 2), and is False in numpy 1
-    return np.array(value, dtype=dtype, copy=copy or None)
+    if copy:
+        return np.array(value, dtype=dtype, copy=True)
+    # np.asarray copies only if needed on both NumPy 1 and 2.
+    return np.asarray(value, dtype=dtype)
 
 
 def _covinv(array):
