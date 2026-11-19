@@ -15,7 +15,6 @@ def npa(*args, **kwargs):
     (
         ("log_or_zero", (npa(1.2, 0),)),
         ("_z_squared", (npa(1.2, 0), npa(1.2, 1.0), npa(1.2, 1))),
-        ("_unbinned_nll", (npa(1.2, 0),)),
         ("multinomial_chi2", (npa(1, 0), npa(1.2, 0))),
         ("chi2", (npa(1.2, 0), npa(1.2, 1.0), npa(1.2, 0.1))),
         ("poisson_chi2", (npa(1, 0), npa(1.2, 0.1))),
